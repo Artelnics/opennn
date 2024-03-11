@@ -297,16 +297,7 @@ struct BackPropagationLM
     BackPropagationLM();
 
     explicit BackPropagationLM(const Index&, LossIndex*);
-/*
-    Tensor<type, 2>& get_output_deltas() const
-    {
-        //const Index layers_number = neural_network.layers.size();
 
-        //neural_network.layers()
-
-        return 
-    }
-*/
     void set(const Index&, LossIndex*);
 
     void print() const;

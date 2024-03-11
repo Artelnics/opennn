@@ -2046,9 +2046,9 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 Tensor<string,1> sort_string_tensor(Tensor<string, 1> tensor)
 {
     auto compareStringLength = [](const string& a, const string& b)
-        {
-            return a.length() > b.length();
-        };
+    {
+        return a.length() > b.length();
+    };
 
     vector<string> tensor_as_vector(tensor.data(), tensor.data() + tensor.size());
     

@@ -85,13 +85,22 @@ void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    // Neural network
+
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation
-            = static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
+    // Batch 
 
     const Index batch_samples_number = batch.get_batch_samples_number();
+
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+
+    const TensorMap<Tensor<type, 3>> targets(targets_pair.first,
+        targets_pair.second[0],
+        targets_pair.second[1],
+        targets_pair.second[2]);
+
+    // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
     
@@ -100,17 +109,12 @@ void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
                                              outputs_pair.second[1],
                                              outputs_pair.second[2]);
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 3>> targets(targets_pair.first, 
-                                             targets_pair.second[0],
-                                             targets_pair.second[1],
-                                             targets_pair.second[2]);
-    /*
-    cout << "Targets: " << endl << targets.chip(0, 0) << endl;
-    cout << "Outputs: " << endl << outputs.chip(0, 0) << endl;
-    cout << "Deltas: " << endl << (targets / (outputs * type(-batch_samples_number))).chip(0, 0) << endl;
-    */
+    // Back propagation
+
+    ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation
+        = static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(last_trainable_layer_index));
+
     Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas;
     
     deltas.device(*thread_pool_device) = targets / (outputs * type(-batch_samples_number));

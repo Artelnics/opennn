@@ -307,9 +307,11 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
                                                     ForwardPropagation&,
                                                     BackPropagation& back_propagation) const
 {
+    // Data set
+
     const Index total_samples_number = data_set->get_samples_number();
 
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     // Batch
 
@@ -319,13 +321,13 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 
-    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(last_trainable_layer_index);
 
     const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();  
 
     TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
 
-    const type coefficient = type(2) / (type(batch_samples_number) / type(total_samples_number) * normalization_coefficient);
+    const type coefficient = (type(2)*type(total_samples_number)) / (type(batch_samples_number)*normalization_coefficient);
 
     deltas.device(*thread_pool_device) = coefficient*errors;
 }

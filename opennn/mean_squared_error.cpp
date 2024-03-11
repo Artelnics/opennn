@@ -134,9 +134,13 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagationLM& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    // Neural network
 
-    LayerBackPropagationLM* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+
+    // Back propagation
+
+    LayerBackPropagationLM* output_layer_back_propagation = back_propagation.neural_network.layers(last_trainable_layer_index);
 
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;

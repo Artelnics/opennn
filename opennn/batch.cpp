@@ -70,7 +70,7 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
         fill_submatrix(data, samples_indices, context_indices, context_data);
     }
 
-    /// todo dimensions
+    /// @todo dimensions
 
     fill_submatrix(data, samples_indices, targets_indices, targets_data);
 }

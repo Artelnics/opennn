@@ -408,16 +408,6 @@ protected:
         dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
     }
 
-
-    /// @todo inefficient code
-/*
-    void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx, Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 2>&) const;
-
-    void softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
-
-    void softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
-*/
-
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};

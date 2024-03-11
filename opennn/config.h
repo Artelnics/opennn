@@ -26,6 +26,7 @@
 
 
 //#define OPENNN_CUDA
+
 #ifdef OPENNN_CUDA
 
 #include "../../opennn-cuda/opennn-cuda/kernel.cuh"
@@ -34,6 +35,10 @@
 #include "cublas_v2.h"
 #include <cublasXt.h>
 #include <curand.h>
+//#include <cudnn.lib> 
+
+
+
 
 #endif
 

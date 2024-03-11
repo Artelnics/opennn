@@ -1803,7 +1803,7 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<pair<type*,
 
         cell_states_weights_derivatives.device(*thread_pool_device) += forget_combinations_weights_derivatives;
 /*
-        copy(/*execution::par,execution::par,
+        copy(/*execution::par,
             cell_states_weights_derivatives.data(),
             cell_states_weights_derivatives.data() + cell_states_weights_derivatives.size(),
             hidden_states_weights_derivatives.data());

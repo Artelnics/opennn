@@ -104,11 +104,7 @@ public:
     void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&layer,
                            LayerForwardPropagation*,
                            const bool&) final;
-    /*
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                           Tensor<type, 1>&,
-                           LayerForwardPropagation*) final;
-    */
+
     // Delta methods
 
     void calculate_hidden_delta(LayerForwardPropagation*,

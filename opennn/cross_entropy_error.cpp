@@ -150,14 +150,11 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
                                                       ForwardPropagation& forward_propagation,
                                                       BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    // Neural network
+
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(last_trainable_layer_index));
-
-    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-            = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
+    // Batch
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
@@ -165,7 +162,18 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
+    // Forward propagation
+
+    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+            = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(last_trainable_layer_index));
+
+    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+            = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(last_trainable_layer_index));
+
+
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
+
+    // Back propagation
 
     Tensor<type, 2>& deltas = probabilistic_layer_back_propagation->deltas;
 
