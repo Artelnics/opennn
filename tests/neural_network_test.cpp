@@ -59,7 +59,7 @@ void NeuralNetworkTest::test_constructor()
 
     assert_true(neural_network_3.get_layers_number() == 5, LOG);
     assert_true(neural_network_3.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-    assert_true(neural_network_3.get_layer(1)->get_type() == Layer::Type::Perceptron, LOG);
+    assert_true(neural_network_3.get_layer(1)->get_type() == Layer::Type::Recurrent, LOG);
     assert_true(neural_network_3.get_layer(2)->get_type() == Layer::Type::Perceptron, LOG);
     assert_true(neural_network_3.get_layer(3)->get_type() == Layer::Type::Unscaling, LOG);
 

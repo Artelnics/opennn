@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "sum_squared_error_test.h"
-#include "../opennn/loss_index_back_propagation.h"
+#include "../opennn/back_propagation.h"
 
 SumSquaredErrorTest::SumSquaredErrorTest() : UnitTesting() 
 {
