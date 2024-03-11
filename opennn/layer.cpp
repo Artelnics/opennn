@@ -284,7 +284,7 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
     y.device(*thread_pool_device) = y / y_sum;
 }
 
-
+/*
 void Layer::softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
 {
     const Index rows_number = x.dimension(0);
@@ -345,7 +345,7 @@ void Layer::softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx
         }
     }
 }
-
+*/
 }
 
 // OpenNN: Open Neural Networks Library.

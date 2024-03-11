@@ -839,7 +839,9 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
         const TensorMap<Tensor<type, 3>> head_softmax_attention_scores((type*) softmax_attention_scores.data() + head_index * context_size*input_size*batch_samples_number,
             context_size, input_size, batch_samples_number);
 
-        softmax_derivatives(head_softmax_attention_scores, softmax_activations_derivatives);
+        // !!! Do we need this???
+
+        //softmax_derivatives(head_softmax_attention_scores, softmax_activations_derivatives);
 
         const TensorMap<Tensor<type, 3>> head_softmax_attention_scores_derivatives((type*)error_softmax_attention_scores_derivatives.data() + head_index * context_size*input_size*batch_samples_number,
             context_size, input_size, batch_samples_number);

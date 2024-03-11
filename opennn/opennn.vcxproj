@@ -281,8 +281,8 @@
     <ClCompile Include="long_short_term_memory_layer.cpp" />
     <ClInclude Include="loss_index.h" />
     <ClCompile Include="loss_index.cpp" />
-    <ClInclude Include="loss_index_back_propagation.h" />
-    <ClInclude Include="loss_index_back_propagation_lm.h" />
+    <ClInclude Include="back_propagation.h" />
+    <ClInclude Include="back_propagation_lm.h" />
     <ClInclude Include="loss_index_forward_propagation.h" />
     <ClInclude Include="mean_squared_error.h" />
     <ClCompile Include="mean_squared_error.cpp" />

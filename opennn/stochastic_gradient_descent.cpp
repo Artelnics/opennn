@@ -8,7 +8,7 @@
 
 #include "stochastic_gradient_descent.h"
 #include "neural_network_forward_propagation.h"
-#include "loss_index_back_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
@@ -312,7 +312,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     // Update parameters
 
-    back_propagation.loss_index->get_neural_network()->set_parameters(back_propagation.parameters);
+    back_propagation.loss_index->get_neural_network()->set_parameters(parameters);
 }
 
 

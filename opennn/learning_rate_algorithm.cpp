@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "learning_rate_algorithm.h"
-#include "loss_index_back_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {

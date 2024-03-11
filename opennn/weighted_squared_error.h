@@ -67,8 +67,6 @@ public:
 
    void set_data_set(DataSet*) final;
 
-   type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y) const;
-
    string get_error_type() const final;
 
    string get_error_type_text() const final;
