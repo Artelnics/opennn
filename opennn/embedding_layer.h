@@ -108,8 +108,9 @@ public:
     // Delta methods
 
     void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerBackPropagation*) const final;
+                                LayerBackPropagation*,
+                                LayerForwardPropagation*,
+                                LayerBackPropagation*) const final;
 
     void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
                                 MultiheadAttentionLayerBackPropagation*,

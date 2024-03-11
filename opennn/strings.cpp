@@ -4734,11 +4734,12 @@ Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<stri
 
     return(top_words_correlations);
 }
+*/
 
 
-
-void TextAnalytics::load_documents(const string& path)
+void load_documents(const string& path)
 {
+/*
     const Index original_size = documents.size();
 
     if(path.empty())
@@ -4858,20 +4859,20 @@ void TextAnalytics::load_documents(const string& path)
     Tensor<string,1> document_copy(lines_count);
     Tensor<string,1> document_target_copy(lines_count);
 
-    copy(/*execution::par,
-        document.data(),
-        document.data() + lines_count,
-        document_copy.data());
+//    copy(/*execution::par,*/
+//        document.data(),
+//        document.data() + lines_count,
+//        document_copy.data());
 
-    copy(/*execution::par,
-        document_target.data(),
-        document_target.data() + lines_count,
-        document_target_copy.data());
+//    copy(/*execution::par,*/
+//        document_target.data(),
+//        document_target.data() + lines_count,
+//        document_target_copy.data());
 
-    documents(original_size) = document_copy;
-    targets(original_size) = document_target_copy;
+//    documents(original_size) = document_copy;
+//    targets(original_size) = document_target_copy;
 
-    file2.close();
+//    file2.close();
 }
 
 
@@ -4880,7 +4881,7 @@ void TextAnalytics::load_documents(const string& path)
 /// @param input_string Input string given by the user
 /// @param max_length Maximum length of the returned string
 /// @param one_word Boolean, if true returns just one word, if false returns a phrase
-
+/*
 string TextAnalytics::calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet, const string& input_string, const Index& max_length, const bool& one_word)
 {
     string result = one_word ? generate_word(text_generation_alphabet, input_string, max_length) : generate_phrase(text_generation_alphabet, input_string, max_length);

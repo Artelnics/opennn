@@ -735,6 +735,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
 void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                             LayerBackPropagation* next_back_propagation,
+                                            LayerForwardPropagation*,
                                             LayerBackPropagation* current_layer_back_propagation) const
 {
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =

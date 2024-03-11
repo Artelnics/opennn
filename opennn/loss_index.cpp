@@ -717,7 +717,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             next_layer_forward_propagation = forward_propagation.layers(i + 1);
             next_layer_back_propagation = back_propagation.neural_network.layers(i + 1);
 
-            layer->calculate_hidden_delta(next_layer_forward_propagation, next_layer_back_propagation, layer_back_propagation);
+            layer->calculate_hidden_delta(next_layer_forward_propagation, next_layer_back_propagation, layer_forward_propagation, layer_back_propagation);
         }
         
         if(i == first_trainable_layer_index)

@@ -77,8 +77,6 @@ public:
 
     void set(const Index&, const Index&, const Index&, const Index&, const Index&);
 
-    void set_image_data_source_path(const string&);
-
     void set_channels_number(const int&);
     void set_image_width(const int&);
     void set_image_height(const int&);
@@ -97,14 +95,12 @@ public:
 
     void set_categories_number(const Index&);
 
-    void fill_image_data(const string&, const vector<string>&, const vector<string>&, const vector<int>&, const int&, const int&, const int&, const Tensor<type, 2>&);
+    void fill_image_data();
 
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;
 
 private:
-
-    string image_data_source_path;
 
     Index images_number = 0;
     Index channels_number = 0;

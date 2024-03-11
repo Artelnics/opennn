@@ -163,6 +163,7 @@ public:
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
+                               LayerForwardPropagation*,
                                LayerBackPropagation*) const final;
 
    void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,

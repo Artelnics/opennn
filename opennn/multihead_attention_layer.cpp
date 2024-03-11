@@ -610,6 +610,7 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
 
 void MultiheadAttentionLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                                      LayerBackPropagation* next_back_propagation,
+                                                     LayerForwardPropagation*,
                                                      LayerBackPropagation* back_propagation) const
 {
     MultiheadAttentionLayerBackPropagation* multihead_layer_back_propagation =

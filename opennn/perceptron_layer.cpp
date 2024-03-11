@@ -623,7 +623,8 @@ void PerceptronLayer::calculate_error_combinations_derivatives(const Tensor<type
 
 
 void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                             LayerBackPropagation* next_back_propagation,
+                                             LayerBackPropagation* next_back_propagation, 
+                                             LayerForwardPropagation*,
                                              LayerBackPropagation* layer_back_propagation) const
 {
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
@@ -1271,7 +1272,7 @@ PerceptronLayerBackPropagation::~PerceptronLayerBackPropagation()
 }
 
 
-std::pair<type *, dimensions> PerceptronLayerBackPropagation::get_deltas_pair() const
+pair<type *, dimensions> PerceptronLayerBackPropagation::get_deltas_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
     

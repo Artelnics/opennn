@@ -148,6 +148,7 @@ void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
 void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                           LayerBackPropagation* next_back_propagation,
+                                          LayerForwardPropagation*,
                                           LayerBackPropagation* this_back_propagation) const
 {
     FlattenLayerBackPropagation* flatten_layer_back_propagation =

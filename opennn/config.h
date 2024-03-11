@@ -37,9 +37,6 @@
 #include <curand.h>
 //#include <cudnn.lib> 
 
-
-
-
 #endif
 
 #include <omp.h>

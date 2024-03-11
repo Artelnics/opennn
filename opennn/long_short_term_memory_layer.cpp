@@ -1475,8 +1475,9 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-    LayerBackPropagation* next_back_propagation,
-    LayerBackPropagation* back_propagation) const
+                                                      LayerBackPropagation* next_back_propagation,
+                                                      LayerForwardPropagation*,
+                                                      LayerBackPropagation* back_propagation) const
 {
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
         static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
