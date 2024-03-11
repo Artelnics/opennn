@@ -450,12 +450,7 @@ void TransformerTest::test_forward_propagate()
         assert_true(probabilistic_activations.dimension(1) == inputs_length, LOG);
         assert_true(probabilistic_activations.dimension(2) == inputs_dimension, LOG);
 
-        const Tensor<type, 2> activations_sums = probabilistic_activations.sum(Eigen::array<Index, 1>({ 2 }));
-        Tensor<bool, 0> correct_activations = ((activations_sums - activations_sums.constant(1)).abs() < type(1e-2)).all();
-
-        cout << "Activations sums:" << endl << activations_sums << endl;
-
-        assert_true(correct_activations(0), LOG);
+        assert_true(check_activations_sums(probabilistic_activations), LOG);
     }
     
     {
@@ -525,11 +520,16 @@ void TransformerTest::test_forward_propagate()
         assert_true(probabilistic_activations.dimension(1) == inputs_length, LOG);
         assert_true(probabilistic_activations.dimension(2) == inputs_dimension, LOG);
 
-        const Tensor<type, 2> activations_sums = probabilistic_activations.sum(Eigen::array<Index, 1>({ 2 }));
-        Tensor<bool, 0> correct_activations = ((activations_sums - activations_sums.constant(1)).abs() < type(1e-2)).all();
-
-        assert_true(correct_activations(0), LOG);
+        assert_true(check_activations_sums(probabilistic_activations), LOG);
     }
+}
+
+bool TransformerTest::check_activations_sums(const Tensor<type, 3>& probabilistic_activations)
+{
+    const Tensor<type, 2> activations_sums = probabilistic_activations.sum(Eigen::array<Index, 1>({ 2 }));
+    Tensor<bool, 0> correct_activations = ((activations_sums - activations_sums.constant(1)).abs() < type(1e-2)).all();
+
+    return correct_activations(0);
 }
 
 

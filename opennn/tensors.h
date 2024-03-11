@@ -89,6 +89,8 @@ void divide_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&
 
 bool has_NAN(const Tensor<type, 1>&);
 bool has_NAN(Tensor<type, 2>&);
+bool has_NAN(Tensor<type, 3>&);
+bool has_NAN(Tensor<type, 4>&);
 
 bool is_zero(const Tensor<type, 1>&);
 bool is_zero(const Tensor<type,1>&, const type&);

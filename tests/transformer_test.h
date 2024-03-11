@@ -42,6 +42,8 @@ public:
 
     void test_forward_propagate();
 
+    bool check_activations_sums(const Tensor<type, 3>&);
+
     // Unit testing methods
 
     void run_test_case();

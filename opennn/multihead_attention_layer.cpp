@@ -505,11 +505,11 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 {
     const Index batch_size = query.dimension(0);
 
-    batch_matrix_multiplication(thread_pool_device, key, query, attention_scores, AT_B);
+    batch_matrix_multiplication(thread_pool_device, key, query, attention_scores, A_BT);
 
     attention_scores = attention_scores * scaling_factor;
 
-    if(causal_mask)
+    if (causal_mask)
     {
         apply_causal_mask(attention_scores);
     }
@@ -576,9 +576,9 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
     Tensor<type, 4>& value = multihead_attention_layer_forward_propagation->value;
     
     calculate_transformation(input, query, query_weights);
-    
+
     calculate_transformation(context, key, key_weights);
-    
+
     calculate_transformation(context, value, value_weights);
 
     Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
@@ -605,7 +605,6 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
 
     calculate_output_projection(attention_outputs,
                                 outputs);
-
 }
 
 

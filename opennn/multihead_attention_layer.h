@@ -186,7 +186,7 @@ protected:
 
     // Scaling factor used for attention computation in each head
 
-    type scaling_factor;
+    type scaling_factor = 1;
 
     /// Linear transformation weights
 

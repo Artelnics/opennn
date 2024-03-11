@@ -1350,6 +1350,28 @@ bool has_NAN(Tensor<type, 2>& x)
 }
 
 
+bool has_NAN(Tensor<type, 3>& x)
+{
+    for (Index i = 0; i < x.size(); i++)
+    {
+        if (isnan(x(i))) return true;
+    }
+
+    return false;
+}
+
+
+bool has_NAN(Tensor<type, 4>& x)
+{
+    for (Index i = 0; i < x.size(); i++)
+    {
+        if (isnan(x(i))) return true;
+    }
+
+    return false;
+}
+
+
 Index count_empty(const Tensor<string, 1>& vector)
 {
     const Index words_number = vector.size();
