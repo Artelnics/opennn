@@ -52,7 +52,7 @@ private:
 
     Index batch_samples_number = 0;
 
-    Index inputs_length = 0;
+    Index input_length = 0;
     Index context_length = 0;
     Index inputs_dimension = 0;
     Index context_dimension = 0;

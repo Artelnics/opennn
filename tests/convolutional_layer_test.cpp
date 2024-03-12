@@ -172,7 +172,7 @@ void ConvolutionalLayerTest::test_constructor()
 
     assert_true(convolutional_layer.get_inputs_channels_number() == 3 &&
                 convolutional_layer.get_inputs_rows_number() == 23 &&
-                convolutional_layer.get_inputs_raw_variables_number() == 64, LOG);
+                convolutional_layer.get_inputs_columns_number() == 64, LOG);
 }
 
 

@@ -22,6 +22,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "batch.h"
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
@@ -194,7 +195,8 @@ public:
    Index get_long_short_term_memory_layers_number() const;
    Index get_recurrent_layers_number() const;
 
-   bool is_starting_layer(const Index&) const;
+   bool is_input_layer(const Tensor<Index, 1>&) const;
+   bool is_context_layer(const Tensor<Index, 1>&) const;
 
    // Architecture
 
@@ -272,7 +274,7 @@ public:
    void save_outputs(Tensor<type, 2>&, const string&);
 
    /// Calculate forward propagation in neural network
-
+   
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
                           ForwardPropagation&, 
                           const bool& = false) const;

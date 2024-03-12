@@ -1669,16 +1669,20 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 }
 
 
-bool NeuralNetwork::is_starting_layer(const Index& layer_index) const
+bool NeuralNetwork::is_input_layer(const Tensor<Index, 1>& layer_inputs_indices) const
 {
-    Tensor<Index, 1> layer_input_indices = layers_inputs_indices(layer_index);
+    for (Index i = 0; i < layer_inputs_indices.size(); i++)
+        if (layer_inputs_indices(i) == -1) return true;
 
-    for(Index i = 0; i < layer_input_indices.size(); i++)
-    {
-        if(layer_input_indices(i) != -1) return false;
-    }
+    return false;
+}
 
-    return true;
+bool NeuralNetwork::is_context_layer(const Tensor<Index, 1>& layer_inputs_indices) const
+{
+    for (Index i = 0; i < layer_inputs_indices.size(); i++)
+        if (layer_inputs_indices(i) == -2) return true;
+
+    return false;
 }
 
 
@@ -1742,6 +1746,8 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 
     const Tensor<Layer*, 1> layers = get_layers();
 
+    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = get_layers_inputs_indices();
+
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
@@ -1756,25 +1762,38 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
     else
     {
         first_layer_index = 0;
-        last_layer_index = layers_number-1;
+        last_layer_index = layers_number - 1;
     }
 
-    Tensor<pair<type*, dimensions>, 1> layer_inputs_pair;
+    Tensor<pair<type*, dimensions>, 1> layer_inputs;
 
-    for(Index i = first_layer_index; i <= last_layer_index; i++)
+    for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
-        if (i == first_layer_index)
+        if (i == first_layer_index || is_input_layer(layers_inputs_indices(i)))
         {
-            layer_inputs_pair = inputs_pair;
+            layer_inputs.resize(1);
+
+            layer_inputs(0) = inputs_pair(0);
+        }
+        else if (is_context_layer(layers_inputs_indices(i)))
+        {
+            layer_inputs.resize(1);
+
+            layer_inputs(0) = inputs_pair(1);
         }
         else
         {
-            layer_inputs_pair = tensor_wrapper(forward_propagation.layers(i - 1)->get_outputs_pair());
+            layer_inputs.resize(layers_inputs_indices(i).size());
+
+            for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
+            {
+                layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
+            }
         }
 
-        layers(i)->forward_propagate(layer_inputs_pair,
-                                     forward_propagation.layers(i),
-                                     is_training);
+        layers(i)->forward_propagate(layer_inputs,
+            forward_propagation.layers(i),
+            is_training);
     }
 }
 

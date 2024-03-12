@@ -53,11 +53,6 @@ public:
     void set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
              const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& number_of_layers);
 
-    /// @todo move to NeuralNetwork
-    void forward_propagate(const Batch&, ForwardPropagation&, const bool&) const;
-    bool is_input_layer(const Tensor<Index, 1>&) const;
-    bool is_context_layer(const Tensor<Index, 1>&) const;
-
 protected:
 
     string name = "transformer";

@@ -264,6 +264,17 @@ Tensor<T, 1> tensor_wrapper(T obj)
     return wrapper;
 }
 
+template<int rank>
+pair<type*, dimensions> to_pair(Tensor<type, rank>& tensor)
+{
+    dimensions tensor_dimensions(rank);
+
+    for (Index i = 0; i < rank; i++)
+        tensor_dimensions[i] = tensor.dimension(i);
+
+    return pair<type*, dimensions>(tensor.data(), tensor_dimensions);
+}
+
 }
 
 #endif
