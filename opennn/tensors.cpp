@@ -387,6 +387,21 @@ void substract_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 }
 
 
+void substract_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+    const Index channels_number = tensor.dimension(2);
+
+    for (Index i = 0; i < channels_number; i++)
+    {
+        TensorMap<Tensor<type, 2>> slice(tensor.data() + i * rows_number * columns_number, rows_number, columns_number);
+
+        slice.device(*thread_pool_device) = slice - matrix;
+    }
+}
+
+
 bool is_zero(const Tensor<type, 1>& tensor)
 {
     const Index size = tensor.size();

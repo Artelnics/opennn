@@ -131,11 +131,8 @@ public:
                                Tensor<type, 3>&) const;
 
    void calculate_activations(const Tensor<type, 3>&,
-                              Tensor<type, 3>&) const;
-
-   void calculate_activations_derivatives(const Tensor<type, 3>&,
-                                          Tensor<type, 3>&,
-                                          Tensor<type, 4>&) const;
+                              Tensor<type, 3>&,
+                              Tensor<type, 2>&) const;
 
    // Outputs
 
@@ -231,13 +228,11 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     {
         cout << "Outputs:" << endl;
         cout << outputs << endl;
-
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
     }
 
     Tensor<type, 3> outputs;
-    Tensor<type, 4> activations_derivatives;
+
+    Tensor<type, 2> aux_rows_columns;
 };
 
 
@@ -280,8 +275,7 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 
     Tensor<type, 3> deltas;
 
-    Tensor<type, 1> deltas_row;
-    Tensor<type, 2> activations_derivatives_matrix;
+    Tensor<type, 3> targets;
 
     Tensor<type, 3> error_combinations_derivatives;
 

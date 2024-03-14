@@ -3386,6 +3386,13 @@ void DataSet::set_raw_variable_type(const string& name, const RawVariableType& n
 }
 
 
+void DataSet::set_all_raw_variables_type(const RawVariableType& new_type)
+{
+    for(Index i = 0; i < raw_variables.size(); i ++)
+        raw_variables[i].type = new_type;
+}
+
+
 /// This method set the name of a single variable.
 /// @param index Index of variable.
 /// @param new_name Name of variable.
@@ -9520,18 +9527,18 @@ void DataSet::read_csv_1()
     // raw_variables types
 
     if(display) cout << "Setting raw_variables types..." << endl;
-
+    
     Index raw_variable_index = 0;
 
     for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
     {
         if(has_rows_labels && i == 0) continue;
-
+        
         string data_file_preview_1 = data_file_preview(1)(i);
         string data_file_preview_2 = data_file_preview(2)(i);
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
-
+        
 /*        if(nans_columns(column_index))
         {
             columns(column_index).type = ColumnType::Constant;
@@ -9577,7 +9584,7 @@ void DataSet::read_csv_1()
         data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
         data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
     }
-
+    
 }
 
 
@@ -9820,132 +9827,6 @@ void DataSet::read_csv_3_simple()
     if(display) cout << "Checking binary raw_variables..." << endl;
 
     set_binary_simple_raw_variables();
-}
-
-
-void DataSet::read_csv_3_language_model()
-{
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
-
-#ifdef _WIN32
-
-    if(std::regex_search(data_source_path, accent_regex))
-    {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_source_path);
-        file.open(file_name_wide);
-    }else
-    {
-        file.open(data_source_path.c_str());
-    }
-
-#else
-    file.open(data_source_path.c_str());
-#endif
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_3_simple() method.\n"
-               << "Cannot open data file: " << data_source_path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    const bool is_float = is_same<type, float>::value;
-
-    const char separator_char = get_separator_char();
-
-    string line;
-
-    // Read header
-
-    if(has_raw_variables_names)
-    {
-        while(file.good())
-        {
-            getline(file, line);
-
-            line = decode(line);
-
-            if(line.empty()) continue;
-
-            break;
-        }
-    }
-
-    // Read data
-
-    const Index raw_raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
-
-    Tensor<string, 1> tokens(raw_raw_variables_number);
-
-    const Index samples_number = data.dimension(0);
-
-    if(has_rows_labels) rows_labels.resize(samples_number);
-
-    if(display) cout << "Reading data..." << endl;
-
-    Index sample_index = 0;
-    Index raw_variable_index = 0;
-
-    while(file.good())
-    {
-        getline(file, line);
-
-        line = decode(line);
-
-        trim(line);
-
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        fill_tokens(line, separator_char, tokens);
-
-        for(Index j = 0; j < raw_raw_variables_number; j++)
-        {
-            trim(tokens(j));
-
-            if(has_rows_labels && j == 0)
-            {
-                rows_labels(sample_index) = tokens(j);
-            }
-            else if(tokens(j) == missing_values_label || tokens(j).empty())
-            {
-                data(sample_index, raw_variable_index) = type(NAN);
-                raw_variable_index++;
-            }
-            else if(is_float)
-            {
-                data(sample_index, raw_variable_index) = type(strtof(tokens(j).data(), nullptr));
-                raw_variable_index++;
-            }
-            else
-            {
-                data(sample_index, raw_variable_index) = type(stof(tokens(j)));
-                raw_variable_index++;
-            }
-        }
-
-        raw_variable_index = 0;
-        sample_index++;
-    }
-
-    const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;
-
-    data_file_preview(data_file_preview_index) = tokens;
-
-    file.close();
-
-    if(display) cout << "Data read succesfully..." << endl;
-
-    // Check Constant
-
-    check_constant_raw_variables();
 }
 
 

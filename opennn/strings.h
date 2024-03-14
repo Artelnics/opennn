@@ -125,6 +125,19 @@ namespace opennn
 
     string output_to_str(const Tensor<type, 2>&);
 
+    // Preprocess methods
+
+    Index count(const Tensor<Tensor<string, 1>, 1>& documents);
+    Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&);
+    void to_lower(Tensor<string, 1>& documents);
+    void split_punctuation(Tensor<string, 1>&);
+    void delete_non_printable_chars(Tensor<string, 1>&);
+    void delete_extra_spaces(Tensor<string, 1>&);
+    void aux_remove_non_printable_chars(Tensor<string, 1>&);
+    Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>&);
+    void delete_emails(Tensor<Tensor<string, 1>, 1>&);
+    void delete_blanks(Tensor<string, 1>&);
+    void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
 }
 

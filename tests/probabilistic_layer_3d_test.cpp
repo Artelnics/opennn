@@ -122,6 +122,8 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 1> parameters;
 
+    Tensor<type, 2> aux_rows_columns;
+
     Tensor<type, 3> inputs;
     Tensor<type, 3> combinations;
     Tensor<type, 3> activations;
@@ -156,7 +158,9 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        probabilistic_layer_3d.calculate_activations(combinations, activations);
+        aux_rows_columns.resize(samples_number, inputs_number);
+
+        probabilistic_layer_3d.calculate_activations(combinations, activations, aux_rows_columns);
 
         assert_true(
             activations.rank() == 3 &&
@@ -197,7 +201,9 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        probabilistic_layer_3d.calculate_activations(combinations, activations);
+        aux_rows_columns.resize(samples_number, inputs_number);
+
+        probabilistic_layer_3d.calculate_activations(combinations, activations, aux_rows_columns);
 
         assert_true(
             activations.rank() == 3 &&
@@ -238,7 +244,9 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        probabilistic_layer_3d.calculate_activations(combinations, activations);
+        aux_rows_columns.resize(samples_number, inputs_number);
+
+        probabilistic_layer_3d.calculate_activations(combinations, activations, aux_rows_columns);
 
         assert_true(
             activations.rank() == 3 &&
@@ -264,7 +272,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
 
 
 void ProbabilisticLayer3DTest::test_calculate_activations_derivatives()
-{
+{/*
     cout << "test_calculate_activations_derivatives\n";
 
     Tensor<type, 3> combinations;
@@ -348,7 +356,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations_derivatives()
             abs(activations_derivatives(0, 0, 2, 0) - (-activations(0, 0, 2) * activations(0, 0, 0))) < type(1e-3) &&
             abs(activations_derivatives(0, 0, 2, 1) - (-activations(0, 0, 2) * activations(0, 0, 1))) < type(1e-3) &&
             abs(activations_derivatives(0, 0, 2, 2) - (activations(0, 0, 2) - activations(0, 0, 2) * activations(0, 0, 2))) < type(1e-3), LOG);
-        */
+        
     }
 
     {
@@ -382,7 +390,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations_derivatives()
             activations_derivatives.dimension(3) == neurons_number, LOG);
 
         assert_true(check_softmax_derivatives(activations, activations_derivatives), LOG);
-    }
+    }*/
 }
 
 bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activations, Tensor<type, 4>& activations_derivatives) const
@@ -432,20 +440,17 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
 
         probabilistic_layer_3d.set_parameters_constant(type(1));
 
-        Tensor<type, 2> inputs(samples_number, inputs_number);
+        Tensor<type, 3> inputs(samples_number, inputs_number, inputs_depth);
         inputs.setConstant(type(1));
-
-        /*
-
-        const pair<type*, dimensions> inputs_pair = get_pair(inputs);
-
+        
         //Forward propagate
 
         probabilistic_layer_3d_forward_propagation.set(samples_number, &probabilistic_layer_3d);
         
-        probabilistic_layer_3d.forward_propagate(inputs_pair,
-            &probabilistic_layer_3d_forward_propagation,
-            is_training);
+        probabilistic_layer_3d.forward_propagate(tensor_wrapper(to_pair(inputs)),
+                                                 &probabilistic_layer_3d_forward_propagation,
+                                                 is_training);
+        
         Tensor<type, 3> outputs = probabilistic_layer_3d_forward_propagation.outputs;
 
         bool correct_outputs = true;
@@ -459,21 +464,17 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
             outputs.dimension(2) == neurons_number, LOG);
 
         assert_true(correct_outputs, LOG);
+        
+    }
 
-        Tensor<type, 4> activations_derivatives;
-        activations_derivatives = probabilistic_layer_3d_forward_propagation.activations_derivatives;
-
-        assert_true(check_softmax_derivatives(outputs, activations_derivatives), LOG);
-    */}
-
-    {/*
+    {
         // Test 2
 
         samples_number = 1;
         inputs_number = 1;
         inputs_depth = 3;
         neurons_number = 4;
-
+        
         probabilistic_layer_3d.set(inputs_number, inputs_depth, neurons_number);
 
         Tensor<type, 1> biases(neurons_number);
@@ -488,16 +489,14 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
         probabilistic_layer_3d.set_biases(biases);
 
-        Tensor<type, 2> inputs(samples_number, inputs_number);
+        Tensor<type, 3> inputs(samples_number, inputs_number, inputs_depth);
         inputs.setConstant(type(1));
-
-        const pair<type*, dimensions> inputs_pair = get_pair(inputs);
         
         //Forward propagate
 
         probabilistic_layer_3d_forward_propagation.set(samples_number, &probabilistic_layer_3d);
 
-        probabilistic_layer_3d.forward_propagate(inputs_pair,
+        probabilistic_layer_3d.forward_propagate(tensor_wrapper(to_pair(inputs)),
                                                  &probabilistic_layer_3d_forward_propagation,
                                                  is_training);
 
@@ -510,13 +509,9 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         Tensor<type, 1> softmax_solution = combination_solution.exp() / softmax_sum(0);
 
         bool correct_outputs = true;
-
-        //cout << "Outputs: " << endl << outputs << endl;
-        //cout << "Softmax solution: " << endl << softmax_solution << endl;
         
         for (Index i = 0; i < outputs.size(); i++)
             if (abs(outputs(i) - softmax_solution(i) > type(1e-3))) correct_outputs = false;
-        
 
         assert_true(
             outputs.dimension(0) == samples_number &&
@@ -524,12 +519,6 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
             outputs.dimension(2) == neurons_number, LOG);
 
         assert_true(correct_outputs, LOG);
-
-        Tensor<type, 4> activations_derivatives;
-        activations_derivatives = probabilistic_layer_3d_forward_propagation.activations_derivatives;
-
-        assert_true(check_softmax_derivatives(outputs, activations_derivatives), LOG);
-        */
     }
 }
 
@@ -547,7 +536,7 @@ void ProbabilisticLayer3DTest::run_test_case()
 
     test_calculate_combinations();
     test_calculate_activations();
-    test_calculate_activations_derivatives();
+    //test_calculate_activations_derivatives();
 
     test_forward_propagate();
 

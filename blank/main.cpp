@@ -5,7 +5,7 @@
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-/*
+
 // System includes
 
 #include <stdio.h>
@@ -50,8 +50,8 @@ int main()
        return 1;
    }
 }
-*/
 
+/*
 #include "../opennn/opennn.h"
 
 #include <iostream>
@@ -136,7 +136,7 @@ int main() {
 
     return 0;
 }
-
+*/
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) Artificial Intelligence Techniques SL.
 //
