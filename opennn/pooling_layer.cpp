@@ -437,269 +437,119 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     outputs.device(*thread_pool_device)
             = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
 
-//    image_patches.argmax(1);
+    // Extract maximum indices
 
+    pooling_layer_forward_propagation->inputs_max_indices.resize(inputs.size());
+    pooling_layer_forward_propagation->inputs_max_indices.setZero();
+    Index outputs_index = 0;
+
+    for(Index i = 0; i < pooling_layer_forward_propagation->inputs_max_indices.size(); i++)
+    {
+        if(inputs(i) - outputs(outputs_index) < 1e-3)
+        {
+            pooling_layer_forward_propagation->inputs_max_indices(i) = 1;
+            outputs_index++;
+        }
+    }
 }
 
 
 void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                           LayerBackPropagation* next_back_propagation,
-                                          LayerForwardPropagation*, 
+                                          LayerForwardPropagation* this_forward_propagation,
                                           LayerBackPropagation* this_back_propagation) const
 {
-    /// @todo put switch
+    PoolingLayerBackPropagation* this_pooling_layer_back_propagation =
+             static_cast<PoolingLayerBackPropagation*>(this_back_propagation);
 
-    if(pooling_method == PoolingMethod::NoPooling)
-    {
-        //return next_layer_delta;
-    }
-    else
-    {
-        const Type layer_type = next_forward_propagation->layer->get_type();
+     switch(next_back_propagation->layer->get_type())
+     {
+     case Type::Convolutional: //? -->
+     {
+//         ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+//                 static_cast<ConvolutionalLayerForwardPropagation*>(next_forward_propagation);
 
-        if(layer_type == Type::Convolutional)
-        {
-            // ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer);
+//         ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
+//                 static_cast<ConvolutionalLayerBackPropagation*>(next_back_propagation);
 
-            // return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
-        }
-        else if(layer_type == Type::Pooling)
-        {
-            // PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer);
+//         calculate_hidden_delta(convolutional_layer_forward_propagation,
+//                                convolutional_layer_back_propagation,
+//                                this_forward_propagation,
+//                                this_pooling_layer_back_propagation);
 
-            // return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
-        }
-    }
+     };
+     case Type::Flatten:
+     {
+         FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
+                 static_cast<FlattenLayerForwardPropagation*>(next_forward_propagation);
+
+         FlattenLayerBackPropagation* flatten_layer_back_propagation =
+                 static_cast<FlattenLayerBackPropagation*>(next_back_propagation);
+
+         calculate_hidden_delta(flatten_layer_forward_propagation,
+                                flatten_layer_back_propagation,
+                                this_forward_propagation,
+                                this_pooling_layer_back_propagation);
+
+     };
+     case Type::Pooling:
+     {
+         PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
+                 static_cast<PoolingLayerForwardPropagation*>(next_forward_propagation);
+
+         PoolingLayerBackPropagation* pooling_layer_back_propagation =
+                 static_cast<PoolingLayerBackPropagation*>(next_back_propagation);
+
+         calculate_hidden_delta(pooling_layer_forward_propagation,
+                                pooling_layer_back_propagation,
+                                this_forward_propagation,
+                                this_pooling_layer_back_propagation);
+
+     };
+     default:
+     {
+         cout << "Neural network structure not implemented: " << next_back_propagation->layer->get_type_string() << endl;
+         return;
+     }
+     }
 }
 
 
-void PoolingLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_forward_propagation,
-                                          ConvolutionalLayerBackPropagation* next_back_propagation,
-                                          ConvolutionalLayerBackPropagation* this_back_propagation) const
+void PoolingLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
+                            ConvolutionalLayerBackPropagation*,
+                            LayerForwardPropagation*,
+                            LayerBackPropagation*) const
 {
-    /*
-    // Current layer's values
-
-//    const Index batch_samples_number = this_back_propagation->batch_samples_number;
-    const Index channels_number = get_channels_number();
-    const Index output_rows_number = get_outputs_rows_number();
-    const Index output_raw_variables_number = get_outputs_raw_variables_number();
-
-    // Next layer's values
-
-    const ConvolutionalLayer* convolutional_layer
-            = static_cast<ConvolutionalLayer*>(next_forward_propagation->layer);
-
-    const Index next_layers_filters_number = convolutional_layer->get_kernels_number();
-    const Index next_layers_filter_rows = convolutional_layer->get_kernels_rows_number();
-    const Index next_layers_filter_raw_variables = convolutional_layer->get_kernels_raw_variables_number();
-    const Index next_layers_output_rows = convolutional_layer->get_outputs_rows_number();
-    const Index next_layers_output_raw_variables = convolutional_layer->get_outputs_raw_variables_number();
-    const Index next_layers_row_stride = convolutional_layer->get_row_stride();
-    const Index next_layers_raw_variable_stride = convolutional_layer->get_raw_variable_stride();
-
-    const Tensor<type, 4> next_layers_weights = next_layer->get_synaptic_weights();
-
-    // Hidden delta calculation
-
-        Tensor<type, 4> hidden_delta(images_number, channels_number, output_rows_number, output_raw_variables_number);
-
-        const Index size = hidden_delta.size();
-
-        #pragma omp parallel for
-
-        for(Index tensor_index = 0; tensor_index < size; tensor_index++)
-        {
-            const Index image_index = tensor_index/(channels_number*output_rows_number*output_raw_variables_number);
-            const Index channel_index = (tensor_index/(output_rows_number*output_raw_variables_number))%channels_number;
-            const Index row_index = (tensor_index/output_raw_variables_number)%output_rows_number;
-            const Index raw_variable_index = tensor_index%output_raw_variables_number;
-
-            long double sum = 0.0;
-
-            const Index lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
-            const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-            const Index lower_raw_variable_index = (raw_variable_index - next_layers_filter_raw_variables)/next_layers_raw_variable_stride + 1;
-            const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_raw_variables);
-
-            for(Index i = 0; i < next_layers_filters_number; i++)
-            {
-                for(Index j = lower_row_index; j < upper_row_index; j++)
-                {
-                    for(Index k = lower_raw_variable_index; k < upper_raw_variable_index; k++)
-                    {
-                        const type delta_element = next_layer_delta(image_index, i, j, k);
-
-                        const type weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, raw_variable_index - k*next_layers_raw_variable_stride);
-
-                        sum += delta_element*weight;
-                    }
-                }
-            }
-
-            hidden_delta(image_index, channel_index, row_index, raw_variable_index) = sum;
-        }
-*/
+    return;
 }
 
 
-void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_forward_propagation,
-                                          PoolingLayerBackPropagation* next_back_propagation,
-                                          ConvolutionalLayerBackPropagation* this_back_propagation) const
+void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation,
+                                          PoolingLayerBackPropagation* next_pooling_layer_back_propagation,
+                                          PoolingLayerForwardPropagation* this_layer_forward_propagation,
+                                          PoolingLayerBackPropagation* this_pooling_layer_back_propagation) const
 {
-/*
-        switch(next_layer->get_pooling_method())
-        {
-            case opennn::PoolingLayer::PoolingMethod::NoPooling:
-            {
-                return next_layer_delta;
-            }
+    return;
+}
 
-            case opennn::PoolingLayer::PoolingMethod::AveragePooling:
-            {
-                // Current layer's values
+void PoolingLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation,
+                                          FlattenLayerBackPropagation* next_flatten_layer_back_propagation,
+                                          PoolingLayerForwardPropagation* this_pooling_layer_forward_propagation,
+                                          PoolingLayerBackPropagation* this_pooling_layer_back_propagation) const
+{
+    FlattenLayer* next_flatten_layer = static_cast<FlattenLayer*>(next_flatten_layer_forward_propagation->layer);
 
-                const Index batch_samples_number = next_layer_delta.dimension(0);
-                const Index channels_number = get_channels_number();
-                const Index output_rows_number = get_outputs_rows_number();
-                const Index output_raw_variables_number = get_outputs_raw_variables_number();
+    const Index batch_samples_number = this_pooling_layer_back_propagation->batch_samples_number;
 
-                // Next layer's values
+    const Index next_flatten_layer_neurons_number = next_flatten_layer->get_neurons_number();
 
-                const Index next_layers_pool_rows = next_layer->get_pool_rows_number();
-                const Index next_layers_pool_raw_variables = next_layer->get_pool_raw_variables_number();
-                const Index next_layers_output_rows = next_layer->get_outputs_rows_number();
-                const Index next_layers_output_raw_variables = next_layer->get_outputs_raw_variables_number();
-                const Index next_layers_row_stride = next_layer->get_row_stride();
-                const Index next_layers_raw_variable_stride = next_layer->get_raw_variable_stride();
+    copy(/*execution::par,*/
+         next_flatten_layer_back_propagation->deltas.data(),
+         next_flatten_layer_back_propagation->deltas.data() +
+         batch_samples_number * next_flatten_layer_neurons_number,
+         this_pooling_layer_back_propagation->deltas.data());
 
-                // Hidden delta calculation
-
-                Tensor<type, 4> hidden_delta(batch_samples_number, channels_number, output_rows_number, output_raw_variables_number);
-
-                const Index size = hidden_delta.size();
-
-                #pragma omp parallel for
-
-                for(Index tensor_index = 0; tensor_index < size; tensor_index++)
-                {
-                    const Index image_index = tensor_index/(channels_number*output_rows_number*output_raw_variables_number);
-                    const Index channel_index = (tensor_index/(output_rows_number*output_raw_variables_number))%channels_number;
-                    const Index row_index = (tensor_index/output_raw_variables_number)%output_rows_number;
-                    const Index raw_variable_index = tensor_index%output_raw_variables_number;
-
-                    long double sum = 0.0;
-
-                    const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
-                    const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-                    const Index lower_raw_variable_index = (raw_variable_index - next_layers_pool_raw_variables)/next_layers_raw_variable_stride + 1;
-                    const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_raw_variables);
-
-                    for(Index i = lower_row_index; i < upper_row_index; i++)
-                    {
-                        for(Index j = lower_raw_variable_index; j < upper_raw_variable_index; j++)
-                        {
-                            const type delta_element = next_layer_delta(image_index, channel_index, i, j);
-
-                            sum += delta_element;
-                        }
-                    }
-
-                    hidden_delta(image_index, channel_index, row_index, raw_variable_index) = sum;
-                }
-
-//                return hidden_delta/(next_layers_pool_rows*next_layers_pool_raw_variables);
-            }
-
-            case opennn::PoolingLayer::PoolingMethod::MaxPooling:
-            {
-                // Current layer's values
-
-                const Index images_number = next_layer_delta.dimension(0);
-                const Index channels_number = get_channels_number();
-                const Index output_rows_number = get_outputs_rows_number();
-                const Index output_raw_variables_number = get_outputs_raw_variables_number();
-
-                // Next layer's values
-
-                const Index next_layers_pool_rows = next_layer->get_pool_rows_number();
-                const Index next_layers_pool_raw_variables = next_layer->get_pool_raw_variables_number();
-                const Index next_layers_output_rows = next_layer->get_outputs_rows_number();
-                const Index next_layers_output_raw_variables = next_layer->get_outputs_raw_variables_number();
-                const Index next_layers_row_stride = next_layer->get_row_stride();
-                const Index next_layers_raw_variable_stride = next_layer->get_raw_variable_stride();
-
-                // Hidden delta calculation
-
-                Tensor<type, 4> hidden_delta(images_number, channels_number, output_rows_number, output_raw_variables_number);
-
-                const Index size = hidden_delta.size();
-
-                #pragma omp parallel for
-
-                for(Index tensor_index = 0; tensor_index < size; tensor_index++)
-                {
-                    const Index image_index = tensor_index/(channels_number*output_rows_number*output_raw_variables_number);
-                    const Index channel_index = (tensor_index/(output_rows_number*output_raw_variables_number))%channels_number;
-                    const Index row_index = (tensor_index/output_raw_variables_number)%output_rows_number;
-                    const Index raw_variable_index = tensor_index%output_raw_variables_number;
-
-                    long double sum = 0.0;
-
-                    const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
-                    const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-                    const Index lower_raw_variable_index = (raw_variable_index - next_layers_pool_raw_variables)/next_layers_raw_variable_stride + 1;
-                    const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_raw_variables);
-
-                    for(Index i = lower_row_index; i < upper_row_index; i++)
-                    {
-                        for(Index j = lower_raw_variable_index; j < upper_raw_variable_index; j++)
-                        {
-                            Tensor<type, 2> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_raw_variables);
-
-                            for(Index submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
-                            {
-                                for(Index submatrix_raw_variable_index = 0; submatrix_raw_variable_index < next_layers_pool_raw_variables; submatrix_raw_variable_index++)
-                                {
-                                    activations_current_submatrix(submatrix_row_index, submatrix_raw_variable_index) =
-                                            activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_raw_variable_stride + submatrix_raw_variable_index);
-                                }
-                            }
-
-                            Tensor<type, 2> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_raw_variables);
-
-                            type max_value = activations_current_submatrix(0,0);
-
-                            for(Index submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
-                            {
-                                for(Index submatrix_raw_variable_index = 0; submatrix_raw_variable_index < next_layers_pool_raw_variables; submatrix_raw_variable_index++)
-                                {
-                                    if(activations_current_submatrix(submatrix_row_index, submatrix_raw_variable_index) > max_value)
-                                    {
-                                        max_value = activations_current_submatrix(submatrix_row_index, submatrix_raw_variable_index);
-
-                                        //multiply_not_multiply.resize(next_layers_pool_rows, next_layers_pool_raw_variables, 0.0);
-                                        //multiply_not_multiply(submatrix_row_index, submatrix_raw_variable_index) = type(1);
-                                    }
-                                }
-                            }
-
-                            const type delta_element = next_layer_delta(image_index, channel_index, i, j);
-
-                            const type max_derivative = multiply_not_multiply(row_index - i*next_layers_row_stride, raw_variable_index - j*next_layers_raw_variable_stride);
-
-                            sum += delta_element*max_derivative;
-                        }
-                    }
-
-                    hidden_delta(image_index, channel_index, row_index, raw_variable_index) = sum;
-                }
-
-                return hidden_delta;
-                break;
-            }
-        }
-*/
+    return;
 }
 
 

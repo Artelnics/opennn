@@ -147,15 +147,18 @@ public:
 
     void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
                                 ConvolutionalLayerBackPropagation*,
-                                ConvolutionalLayerBackPropagation*) const;
+                                LayerForwardPropagation*,
+                                LayerBackPropagation*) const;
 
     void calculate_hidden_delta(PoolingLayerForwardPropagation*,
                                 PoolingLayerBackPropagation*,
-                                ConvolutionalLayerBackPropagation*) const;
+                                PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*) const;
 
     void calculate_hidden_delta(FlattenLayerForwardPropagation*,
                                 FlattenLayerBackPropagation*,
-                                ConvolutionalLayerBackPropagation*) const;
+                                PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*) const;
 
     // Serialization methods
 
@@ -207,6 +210,8 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 4> outputs;
 
     Tensor<type, 5> image_patches;
+
+    Tensor<Index, 1> inputs_max_indices;
 };
 
 
