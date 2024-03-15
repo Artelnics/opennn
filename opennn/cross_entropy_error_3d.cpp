@@ -50,10 +50,9 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 3>> targets(targets_pair.first,
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first,
                                              targets_pair.second[0],
-                                             targets_pair.second[1],
-                                             targets_pair.second[2]);
+                                             targets_pair.second[1]);
 
     // Forward propagation
     
@@ -70,12 +69,18 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(layers_number - 1));
-
+    
     probabilistic_layer_3d_back_propagation->targets = targets;
-
+    
+    Tensor<type, 2> cross_entropy_errors(targets.dimension(0), targets.dimension(1));
     Tensor<type, 0> cross_entropy_error;
+    
+#pragma omp parallel for
+    for (Index i = 0; i < targets.dimension(0); i++)
+        for (Index j = 0; j < targets.dimension(1); j++)
+            cross_entropy_errors(i, j) = log( outputs(i, j, Index(targets(i, j))) );
 
-    cross_entropy_error.device(*thread_pool_device) = -(targets*outputs.log()).sum();
+    cross_entropy_error.device(*thread_pool_device) = -cross_entropy_errors.sum();
 
     back_propagation.error = cross_entropy_error()/type(batch_samples_number);
 
@@ -96,39 +101,7 @@ void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
-    // Neural network
-
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
-    // Batch 
-
-    const Index batch_samples_number = batch.get_batch_samples_number();
-
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
-
-    const TensorMap<Tensor<type, 3>> targets(targets_pair.first,
-        targets_pair.second[0],
-        targets_pair.second[1],
-        targets_pair.second[2]);
-
-    // Forward propagation
-
-    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
-    
-    const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
-                                             outputs_pair.second[0],
-                                             outputs_pair.second[1],
-                                             outputs_pair.second[2]);
-
-
-    // Back propagation
-
-    ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation
-        = static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(last_trainable_layer_index));
-
-    Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas;
-    
-    deltas.device(*thread_pool_device) = targets / (outputs * type(-batch_samples_number));
+    // ProbabilisticLayer3D does not have deltas. Error combinations derivatives are calculated directly.
 }
 
 

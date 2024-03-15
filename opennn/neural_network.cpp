@@ -5109,9 +5109,21 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         }
         break;
 
+        case Layer::Type::Perceptron3D:
+        {
+            layers(i) = new PerceptronLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
         case Layer::Type::Probabilistic:
         {
             layers(i) = new ProbabilisticLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Probabilistic3D:
+        {
+            layers(i) = new ProbabilisticLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
 
@@ -5142,6 +5154,18 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         case Layer::Type::Flatten:
         {
             layers(i) = new FlattenLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Embedding:
+        {
+            layers(i) = new EmbeddingLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::MultiheadAttention:
+        {
+            layers(i) = new MultiheadAttentionLayerBackPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
 

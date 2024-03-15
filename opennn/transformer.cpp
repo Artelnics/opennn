@@ -156,7 +156,7 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
     // Final layer
     
-    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(inputs_length, embedding_depth, inputs_dimension);
+    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(inputs_length, embedding_depth, inputs_dimension + 1);
 
     final_layer->set_name("probabilistic");
     add_layer(final_layer);

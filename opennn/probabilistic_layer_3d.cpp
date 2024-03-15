@@ -582,13 +582,11 @@ void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
             static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
-    const Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas;
-
-    const Tensor<type, 3>& targets = probabilistic_layer_3d_back_propagation->targets;
+    const Tensor<type, 2>& targets = probabilistic_layer_3d_back_propagation->targets;
 
     Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
 
-    error_combinations_derivatives.device(*thread_pool_device) = outputs - targets;
+    calculate_error_combinations_derivatives(outputs, targets, error_combinations_derivatives);
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_3d_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives;
@@ -600,6 +598,21 @@ void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
 
     synaptic_weights_derivatives.device(*thread_pool_device) =
         inputs.contract(error_combinations_derivatives, contraction_indices);
+}
+
+
+void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets, Tensor<type, 3>& error_combinations_derivatives) const
+{
+    Index batch_samples_number = outputs.dimension(0);
+
+    error_combinations_derivatives.device(*thread_pool_device) = outputs;
+
+#pragma omp parallel for
+    for (Index i = 0; i < targets.dimension(0); i++)
+        for (Index j = 0; j < targets.dimension(1); j++)
+            error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
+
+    error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number);
 }
 
 
@@ -1028,11 +1041,7 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
     const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
 
-    deltas.resize(batch_samples_number, inputs_number, neurons_number);
-
-    deltas_data = deltas.data();
-
-    targets.resize(batch_samples_number, inputs_number, neurons_number);
+    targets.resize(batch_samples_number, inputs_number);
 
     biases_derivatives.resize(neurons_number);
 

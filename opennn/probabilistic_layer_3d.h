@@ -146,6 +146,10 @@ public:
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
+   void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
+                                                 const Tensor<type, 2>&,
+                                                 Tensor<type, 3>&) const;
+
    void insert_gradient(LayerBackPropagation*, 
                         const Index&, 
                         Tensor<type, 1>&) const final;
@@ -263,9 +267,6 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;
 
@@ -273,9 +274,7 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
         cout << synaptic_weights_derivatives << endl;
     }
 
-    Tensor<type, 3> deltas;
-
-    Tensor<type, 3> targets;
+    Tensor<type, 2> targets;
 
     Tensor<type, 3> error_combinations_derivatives;
 

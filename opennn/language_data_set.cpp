@@ -14,6 +14,7 @@ namespace opennn
 LanguageDataSet::LanguageDataSet() : DataSet()
 {
     context_variables_dimensions.resize(1);
+    context_variables_dimensions.setZero();
 }
 
 

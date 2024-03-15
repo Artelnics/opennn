@@ -25,6 +25,8 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 #include "multihead_attention_layer.h"
+#include "perceptron_layer_3d.h"
+#include "probabilistic_layer_3d.h"
 
 namespace opennn
 {
@@ -88,6 +90,8 @@ public:
     void set_depth(const Index&);
 
     void set_embedding_weights();
+
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
     void set_parameters_random() final;
     void set_parameters_constant(const type&) final;
 
@@ -116,11 +120,21 @@ public:
                                 MultiheadAttentionLayerBackPropagation*,
                                 EmbeddingLayerBackPropagation*) const;
 
+    void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
+                                PerceptronLayer3DBackPropagation*,
+                                EmbeddingLayerBackPropagation*) const;
+
+    void calculate_hidden_delta(ProbabilisticLayer3DForwardPropagation*,
+                                ProbabilisticLayer3DBackPropagation*,
+                                EmbeddingLayerBackPropagation*) const;
+
     // Gradient methods
 
     void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
+
+    void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
     // Expression methods
 
@@ -252,7 +266,6 @@ protected:
             //cout << deltas << endl;
 
         }
-
 
         Tensor<type, 3> deltas;
 
