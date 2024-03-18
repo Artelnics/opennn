@@ -57,9 +57,7 @@ public:
 
     /// Enumeration of the available activation functions for the perceptron neuron model.
 
-    enum class ActivationFunction{Threshold,
-                                  SymmetricThreshold,
-                                  Logistic,
+    enum class ActivationFunction{Logistic,
                                   HyperbolicTangent,
                                   Linear,
                                   RectifiedLinear,

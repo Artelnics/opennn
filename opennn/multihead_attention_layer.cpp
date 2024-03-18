@@ -595,14 +595,14 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
     }
 
     Tensor<type, 4>& attention_outputs = multihead_attention_layer_forward_propagation->attention_outputs;
-
+    
     compute_attention_outputs(value,
                              softmax_attention_scores,
                              attention_outputs);
 
 
     Tensor<type, 3>& outputs = multihead_attention_layer_forward_propagation->outputs;
-
+    
     calculate_output_projection(attention_outputs,
                                 outputs);
 }

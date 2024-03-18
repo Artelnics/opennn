@@ -147,15 +147,18 @@ public:
 
     void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
                                 ConvolutionalLayerBackPropagation*,
-                                ConvolutionalLayerBackPropagation*) const;
+                                LayerForwardPropagation*,
+                                LayerBackPropagation*) const;
 
     void calculate_hidden_delta(PoolingLayerForwardPropagation*,
                                 PoolingLayerBackPropagation*,
-                                ConvolutionalLayerBackPropagation*) const;
+                                PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*) const;
 
     void calculate_hidden_delta(FlattenLayerForwardPropagation*,
                                 FlattenLayerBackPropagation*,
-                                ConvolutionalLayerBackPropagation*) const;
+                                PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*) const;
 
     // Serialization methods
 
@@ -182,7 +185,7 @@ protected:
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
+//    #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
 #endif
 
 };
@@ -207,6 +210,8 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 4> outputs;
 
     Tensor<type, 5> image_patches;
+
+    Tensor<Index, 1> inputs_max_indices;
 };
 
 
@@ -230,9 +235,8 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 };
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+//    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
 #endif
-
 
 }
 

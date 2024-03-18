@@ -2871,8 +2871,6 @@ string NeuralNetwork::write_expression_c() const
 
     bool logistic     = false;
     bool ReLU         = false;
-    bool Threshold    = false;
-    bool SymThreshold = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
     bool HSigmoid     = false;
@@ -2988,8 +2986,6 @@ string NeuralNetwork::write_expression_c() const
 
     string target_string0("Logistic");
     string target_string1("ReLU");
-    string target_string2("Threshold");
-    string target_string3("SymmetricThreshold");
     string target_string4("ExponentialLinear");
     string target_string5("ScaledExponentialLinear");
     string target_string6("HardSigmoid");
@@ -3002,8 +2998,6 @@ string NeuralNetwork::write_expression_c() const
 
         size_t substring_length0 = t.find(target_string0);
         size_t substring_length1 = t.find(target_string1);
-        size_t substring_length2 = t.find(target_string2);
-        size_t substring_length3 = t.find(target_string3);
         size_t substring_length4 = t.find(target_string4);
         size_t substring_length5 = t.find(target_string5);
         size_t substring_length6 = t.find(target_string6);
@@ -3012,8 +3006,6 @@ string NeuralNetwork::write_expression_c() const
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
-        if(substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
-        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
         if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
@@ -3034,34 +3026,6 @@ string NeuralNetwork::write_expression_c() const
     {
         buffer << "float ReLU(float x) {" << endl;
         buffer << "float z = max(0, x);" << endl;
-        buffer << "return z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(Threshold)
-    {
-        buffer << "float Threshold(float x) {" << endl;
-        buffer << "float z;" << endl;
-        buffer << "if(x < 0) {" << endl;
-        buffer << "z = 0;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "z = 1;" << endl;
-        buffer << "}" << endl;
-        buffer << "return z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(SymThreshold)
-    {
-        buffer << "float SymmetricThreshold(float x) {" << endl;
-        buffer << "float z" << endl;
-        buffer << "if(x < 0) {" << endl;
-        buffer << "z = -1;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "z=1;" << endl;
-        buffer << "}" << endl;
         buffer << "return z;" << endl;
         buffer << "}" << endl;
         buffer << "\n" << endl;
@@ -3329,8 +3293,6 @@ string NeuralNetwork::write_expression_api() const
 
     bool logistic     = false;
     bool ReLU         = false;
-    bool Threshold    = false;
-    bool SymThreshold = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
     bool HSigmoid     = false;
@@ -3567,8 +3529,6 @@ string NeuralNetwork::write_expression_api() const
 
     string target_string0("Logistic");
     string target_string1("ReLU");
-    string target_string2("Threshold");
-    string target_string3("SymmetricThreshold");
     string target_string4("ExponentialLinear");
     string target_string5("ScaledExponentialLinear");
     string target_string6("HardSigmoid");
@@ -3596,8 +3556,6 @@ string NeuralNetwork::write_expression_api() const
 
         substring_length0 = t.find(target_string0);
         substring_length1 = t.find(target_string1);
-        substring_length2 = t.find(target_string2);
-        substring_length3 = t.find(target_string3);
         substring_length4 = t.find(target_string4);
         substring_length5 = t.find(target_string5);
         substring_length6 = t.find(target_string6);
@@ -3606,8 +3564,6 @@ string NeuralNetwork::write_expression_api() const
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic     = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU         = true; }
-        if(substring_length2 < t.size() && substring_length2!=0){ Threshold    = true; }
-        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear   = true; }
         if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid     = true; }
@@ -3689,36 +3645,6 @@ string NeuralNetwork::write_expression_api() const
         buffer << "<?php" << endl;
         buffer << "function ReLU(int $x) {" << endl;
         buffer << "$z = max(0, $x);" << endl;
-        buffer << "return $z;" << endl;
-        buffer << "}" << endl;
-        buffer << "?>" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(Threshold)
-    {
-        buffer << "<?php" << endl;
-        buffer << "function Threshold(int $x) {" << endl;
-        buffer << "if($x < 0) {" << endl;
-        buffer << "$z = 0;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "$z=1;" << endl;
-        buffer << "}" << endl;
-        buffer << "return $z;" << endl;
-        buffer << "}" << endl;
-        buffer << "?>" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(SymThreshold)
-    {
-        buffer << "<?php" << endl;
-        buffer << "function SymmetricThreshold(int $x) {" << endl;
-        buffer << "if($x < 0) {" << endl;
-        buffer << "$z = -1;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "$z=1;" << endl;
-        buffer << "}" << endl;
         buffer << "return $z;" << endl;
         buffer << "}" << endl;
         buffer << "?>" << endl;
@@ -3859,8 +3785,6 @@ string NeuralNetwork::write_expression_javascript() const
 
     bool logistic     = false;
     bool ReLU         = false;
-    bool Threshold    = false;
-    bool SymThreshold = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
     bool HSigmoid     = false;
@@ -4227,8 +4151,6 @@ string NeuralNetwork::write_expression_javascript() const
 
     string target_string_0("Logistic");
     string target_string_1("ReLU");
-    string target_string_2("Threshold");
-    string target_string_3("SymmetricThreshold");
     string target_string_4("ExponentialLinear");
     string target_string_5("ScaledExponentialLinear");
     string target_string_6("HardSigmoid");
@@ -4248,8 +4170,6 @@ string NeuralNetwork::write_expression_javascript() const
 
         const size_t substring_length_0 = t.find(target_string_0);
         const size_t substring_length_1 = t.find(target_string_1);
-        const size_t substring_length_2 = t.find(target_string_2);
-        const size_t substring_length_3 = t.find(target_string_3);
         const size_t substring_length_4 = t.find(target_string_4);
         const size_t substring_length_5 = t.find(target_string_5);
         const size_t substring_length_6 = t.find(target_string_6);
@@ -4261,10 +4181,8 @@ string NeuralNetwork::write_expression_javascript() const
         if(substring_length_6 < t.size() && substring_length_6!=0){ HSigmoid = true; }
         if(substring_length_7 < t.size() && substring_length_7!=0){ SoftPlus = true; }
         if(substring_length_8 < t.size() && substring_length_8!=0){ SoftSign = true; }
-        if(substring_length_2 < t.size() && substring_length_2!=0){ Threshold = true; }
         if(substring_length_4 < t.size() && substring_length_4!=0){ ExpLinear = true; }
         if(substring_length_5 < t.size() && substring_length_5!=0){ SExpLinear = true; }
-        if(substring_length_3 < t.size() && substring_length_3!=0){ SymThreshold = true; }
 
         for(int i = 0; i < found_mathematical_expressions.dimension(0); i++)
         {
@@ -4339,32 +4257,6 @@ string NeuralNetwork::write_expression_javascript() const
     {
         buffer << "function ReLU(x) {" << endl;
         buffer << "\tvar z = Math.max(0, x);" << endl;
-        buffer << "\treturn z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(Threshold)
-    {
-        buffer << "function Threshold(x) {" << endl;
-        buffer << "\tif(x < 0) {" << endl;
-        buffer << "\t\tvar z = 0;" << endl;
-        buffer << "\t}else{" << endl;
-        buffer << "\t\tvar z = 1;" << endl;
-        buffer << "\t}" << endl;
-        buffer << "\treturn z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(SymThreshold)
-    {
-        buffer << "function SymmetricThreshold(x) {" << endl;
-        buffer << "\tif(x < 0) {" << endl;
-        buffer << "\t\tvar z = -1;" << endl;
-        buffer << "\t}else{" << endl;
-        buffer << "\t\tvar z=1;" << endl;
-        buffer << "\t}" << endl;
         buffer << "\treturn z;" << endl;
         buffer << "}" << endl;
         buffer << "\n" << endl;
@@ -4476,8 +4368,6 @@ string NeuralNetwork::write_expression_python() const
 
     bool logistic     = false;
     bool ReLU         = false;
-    bool Threshold    = false;
-    bool SymThreshold = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
     bool HSigmoid     = false;
@@ -4541,8 +4431,6 @@ string NeuralNetwork::write_expression_python() const
 
     const string target_string0("Logistic");
     const string target_string1("ReLU");
-    const string target_string2("Threshold");
-    const string target_string3("SymmetricThreshold");
     const string target_string4("ExponentialLinear");
     const string target_string5("SELU");
     const string target_string6("HardSigmoid");
@@ -4556,8 +4444,6 @@ string NeuralNetwork::write_expression_python() const
 
         const size_t substring_length0 = t.find(target_string0);
         const size_t substring_length1 = t.find(target_string1);
-        const size_t substring_length2 = t.find(target_string2);
-        const size_t substring_length3 = t.find(target_string3);
         const size_t substring_length4 = t.find(target_string4);
         const size_t substring_length5 = t.find(target_string5);
         const size_t substring_length6 = t.find(target_string6);
@@ -4566,8 +4452,6 @@ string NeuralNetwork::write_expression_python() const
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
-        if(substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
-        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
         if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
@@ -4686,28 +4570,6 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\n" << endl;
     }
 
-    if(Threshold)
-    {
-        buffer << "\tdef Threshold (x):" << endl;
-        buffer << "\t\t"   << "if(x < 0):" << endl;
-        buffer << "\t\t\t" << "z = 0" << endl;
-        buffer << "\t\t"   << "else:" << endl;
-        buffer << "\t\t\t" << "z = 1" << endl;
-        buffer << "\t\t"   << "return z" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(SymThreshold)
-    {
-        buffer << "\tdef SymmetricThreshold (x):" << endl;
-        buffer << "\t\t"   << "if(x < 0):" << endl;
-        buffer << "\t\t\t" << "z = -1" << endl;
-        buffer << "\t\t"   << "else:" << endl;
-        buffer << "\t\t\t" << "z = 1" << endl;
-        buffer << "\t\t"   << "return z" << endl;
-        buffer << "\n" << endl;
-    }
-
     if(ExpLinear)
     {
         buffer << "\tdef ExponentialLinear (x):" << endl;
@@ -4789,8 +4651,6 @@ string NeuralNetwork::write_expression_python() const
 
     push_back_string(found_mathematical_expressions, "Logistic");
     push_back_string(found_mathematical_expressions, "ReLU");
-    push_back_string(found_mathematical_expressions, "Threshold");
-    push_back_string(found_mathematical_expressions, "SymmetricThreshold");
     push_back_string(found_mathematical_expressions, "ExponentialLinear");
     push_back_string(found_mathematical_expressions, "SELU");
     push_back_string(found_mathematical_expressions, "HardSigmoid");
@@ -5109,9 +4969,21 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         }
         break;
 
+        case Layer::Type::Perceptron3D:
+        {
+            layers(i) = new PerceptronLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
         case Layer::Type::Probabilistic:
         {
             layers(i) = new ProbabilisticLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Probabilistic3D:
+        {
+            layers(i) = new ProbabilisticLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
 
@@ -5142,6 +5014,18 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         case Layer::Type::Flatten:
         {
             layers(i) = new FlattenLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Embedding:
+        {
+            layers(i) = new EmbeddingLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::MultiheadAttention:
+        {
+            layers(i) = new MultiheadAttentionLayerBackPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
 

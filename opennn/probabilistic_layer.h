@@ -38,7 +38,6 @@ struct ProbabilisticLayerBackPropagationLM;
     #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
 #endif
 
-
 /// This class represents a layer of probabilistic neurons.
 
 ///

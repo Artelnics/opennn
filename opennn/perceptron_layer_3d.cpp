@@ -185,7 +185,7 @@ const PerceptronLayer3D::ActivationFunction& PerceptronLayer3D::get_activation_f
 
 
 /// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string PerceptronLayer3D::write_activation_function() const
 {
@@ -196,12 +196,6 @@ string PerceptronLayer3D::write_activation_function() const
 
     case ActivationFunction::HyperbolicTangent:
         return "HyperbolicTangent";
-
-    /*case ActivationFunction::Threshold:
-        return "Threshold";
-
-    case ActivationFunction::SymmetricThreshold:
-        return "SymmetricThreshold";*/
 
     case ActivationFunction::Linear:
         return "Linear";
@@ -369,7 +363,7 @@ void PerceptronLayer3D::set_activation_function(const PerceptronLayer3D::Activat
 }
 
 /// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
+/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
 /// @param new_activation_function Activation function for that layer.
 
 void PerceptronLayer3D::set_activation_function(const string& new_activation_function_name)
@@ -381,14 +375,6 @@ void PerceptronLayer3D::set_activation_function(const string& new_activation_fun
     else if(new_activation_function_name == "HyperbolicTangent")
     {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Threshold")
-    {
-        //activation_function = ActivationFunction::Threshold;
-    }
-    else if(new_activation_function_name == "SymmetricThreshold")
-    {
-        //activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_activation_function_name == "Linear")
     {
@@ -530,10 +516,6 @@ void PerceptronLayer3D::calculate_activations(const Tensor<type, 3>& combination
 //    case ActivationFunction::Logistic: logistic(combinations, activations); return;
 
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
-
-//    case ActivationFunction::Threshold: threshold(combinations, activations); return;
-
-//    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, activations); return;
 
     case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
 
@@ -1109,14 +1091,11 @@ string PerceptronLayer3D::write_activation_function_expression() const
 {
     switch(activation_function)
     {
-    /*case ActivationFunction::Threshold:
-        return "threshold";
-
-    case ActivationFunction::SymmetricThreshold:
-        return "symmetric_threshold";
-
+    /*
+    
     case ActivationFunction::Logistic:
-        return "logistic";*/
+        return "logistic";
+        */
 
     case ActivationFunction::HyperbolicTangent:
         return "tanh";

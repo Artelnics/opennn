@@ -41,11 +41,20 @@ public:
     Tensor<string, 1> get_context_vocabulary() const;
     Tensor<string, 1> get_completion_vocabulary() const;
 
+    Index get_context_vocabulary_size() const;
+    Index get_completion_vocabulary_size() const;
+
+    Index get_context_length() const;
+    Index get_completion_length() const;
+
     Index get_context_variables_number() const;
     const Tensor<Index, 1>& get_context_variables_dimensions() const;
     Tensor<Index, 1> get_context_variables_indices() const;
     Index get_context_raw_variables_number() const;
     Tensor<Index, 1> get_context_raw_variables_indices() const;
+
+    const Tensor<Tensor<string, 1>, 1> get_documents() const;
+    const Tensor<Tensor<string, 1>, 1> get_targets() const;
 
     void set_default_raw_variables_uses();
     void set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses);
@@ -62,6 +71,11 @@ public:
 
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;
+
+    void load_documents(const string&);
+    Tensor<Tensor<string, 1>, 1> preprocess(const Tensor<string, 1>&) const;
+    const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>&) const;
+    void read_csv_3_language_model();
 
     void read_csv_language_model();
 
@@ -84,6 +98,10 @@ private:
     Index max_completion_length;
 
     Index max_context_length;
+
+    Tensor<Tensor<string, 1>, 1> documents;
+
+    Tensor<Tensor<string, 1>, 1> targets;
 };
 
 }

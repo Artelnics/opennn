@@ -175,7 +175,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     {
         inputs_dimensions = {{batch_size, input_variables_number}};
 
-        inputs_tensor.resize(1);
         inputs_tensor.resize(batch_size*input_variables_number);
     }
     else if(input_variables_dimensions.size() == 2)
@@ -185,7 +184,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         inputs_dimensions = {{batch_size, rows_number, raw_variables_number}};
 
-        inputs_tensor.resize(1);
         inputs_tensor.resize(batch_size*rows_number*raw_variables_number);
     }
     else if(input_variables_dimensions.size() == 3)
@@ -196,7 +194,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         inputs_dimensions = {{batch_size, channels_number, rows_number, raw_variables_number}};
 
-        inputs_tensor.resize(1);
         inputs_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
 
@@ -206,7 +203,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     {
         targets_dimensions = {{batch_size, target_variables_number}};
 
-        targets_tensor.resize(1);
         targets_tensor.resize(batch_size*target_variables_number);
     }
     else if(target_variables_dimensions.size() == 2)
@@ -216,7 +212,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         targets_dimensions = {{batch_size, rows_number, raw_variables_number}};
 
-        targets_tensor.resize(1);
         targets_tensor.resize(batch_size*rows_number*raw_variables_number);
     }
     else if(target_variables_dimensions.size() == 3)
@@ -227,7 +222,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         targets_dimensions = {{batch_size, channels_number, rows_number, raw_variables_number}};
 
-        targets_tensor.resize(1);
         targets_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
 
@@ -249,7 +243,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         {
             context_dimensions = { {batch_size, context_variables_number} };
 
-            context_tensor.resize(1);
             context_tensor.resize(batch_size * context_variables_number);
         }
         else if (context_variables_dimensions.size() == 2)
@@ -259,7 +252,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
             context_dimensions = { {batch_size, rows_number, raw_variables_number} };
 
-            context_tensor.resize(1);
             context_tensor.resize(batch_size * rows_number * raw_variables_number);
         }
         else if (context_variables_dimensions.size() == 3)
@@ -270,7 +262,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
             context_dimensions = { {batch_size, channels_number, rows_number, raw_variables_number} };
 
-            context_tensor.resize(1);
             context_tensor.resize(batch_size * channels_number * rows_number * raw_variables_number);
         }
 

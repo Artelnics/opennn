@@ -262,25 +262,11 @@ protected:
     }
 
 
-    template <int rank>
-    void symmetric_threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
-    {
-        y.device(*thread_pool_device) = (x > type(0)).select(x.constant(type(1)), x.constant(type(-1)));
-    }
-
-
-    template <int rank>
-    void threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
-    {
-        y.device(*thread_pool_device) = (x >= type(0)).select(x.constant(type(1)), x.constant(type(0)));
-    }
-
-
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
 
-    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;
+    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 2>&) const;
 
     void softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const;
 

@@ -42,9 +42,15 @@ public:
 
     /// Enumeration of the available activation functions for the long-short-term memory layer.
 
-    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
-                            Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear,
-                            SoftPlus, SoftSign, HardSigmoid};
+    enum class ActivationFunction{Logistic, 
+                                  HyperbolicTangent,
+                                  Linear, 
+                                  RectifiedLinear, 
+                                  ExponentialLinear, 
+                                  ScaledExponentialLinear,
+                                  SoftPlus, 
+                                  SoftSign, 
+                                  HardSigmoid};
 
    // Constructors
 
@@ -266,7 +272,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/long_short_term_memory_layer_cuda.h"
+//    #include "../../opennn-cuda/opennn-cuda/long_short_term_memory_layer_cuda.h"
 #endif
 
 };

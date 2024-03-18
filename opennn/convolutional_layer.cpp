@@ -273,10 +273,6 @@ void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& convolutio
 
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(convolutions, activations); return;
 
-    case ActivationFunction::Threshold: threshold(convolutions, activations); return;
-
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold(convolutions, activations); return;
-
     case ActivationFunction::RectifiedLinear: rectified_linear(convolutions, activations); return;
 
     case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(convolutions, activations); return;
@@ -437,6 +433,19 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_fo
     }
         return;
 
+    case Type::Pooling: //? Move to pooling
+    {
+        PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation =
+                static_cast<PoolingLayerForwardPropagation*>(next_forward_propagation);
+
+        PoolingLayerBackPropagation* next_pooling_layer_back_propagation =
+                static_cast<PoolingLayerBackPropagation*>(next_back_propagation);
+
+        calculate_hidden_delta(next_pooling_layer_forward_propagation,
+                               next_pooling_layer_back_propagation,
+                               this_convolutional_layer_back_propagation);
+    }
+
     default:
     {
         cout << "Neural network structure not implemented: "
@@ -464,6 +473,27 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
     }
 
     next_deltas * next_convolutional_layer_forward_propagation->activations_derivatives;
+}
+
+
+void ConvolutionalLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation,
+                                                PoolingLayerBackPropagation* next_pooling_layer_back_propagation,
+                                                ConvolutionalLayerBackPropagation* this_convolutional_layer_back_propagation) const
+{
+    const Index inputs_size = next_pooling_layer_forward_propagation->inputs_max_indices.size();
+
+    Index delta_index = 0;
+
+    this_convolutional_layer_back_propagation->deltas.setZero();
+
+    for(Index i = 0; i < inputs_size; i++)
+    {
+        if(next_pooling_layer_forward_propagation->inputs_max_indices(delta_index) == 1)
+        {
+            this_convolutional_layer_back_propagation->deltas(i) = next_pooling_layer_back_propagation->deltas(i);
+            delta_index++;
+        }
+    }
 }
 
 
@@ -637,7 +667,7 @@ ConvolutionalLayer::ActivationFunction ConvolutionalLayer::get_activation_functi
 
 
 /// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string ConvolutionalLayer::write_activation_function() const
 {
@@ -648,12 +678,6 @@ string ConvolutionalLayer::write_activation_function() const
 
     case ActivationFunction::HyperbolicTangent:
         return "HyperbolicTangent";
-
-    case ActivationFunction::Threshold:
-        return "Threshold";
-
-    case ActivationFunction::SymmetricThreshold:
-        return "SymmetricThreshold";
 
     case ActivationFunction::Linear:
         return "Linear";
@@ -985,7 +1009,7 @@ void ConvolutionalLayer::set_activation_function(const ConvolutionalLayer::Activ
 }
 
 /// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
+/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
 /// @param new_activation_function Activation function for that layer.
 
 void ConvolutionalLayer::set_activation_function(const string& new_activation_function_name)
@@ -998,14 +1022,6 @@ void ConvolutionalLayer::set_activation_function(const string& new_activation_fu
     else if(new_activation_function_name == "HyperbolicTangent")
     {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Threshold")
-    {
-        activation_function = ActivationFunction::Threshold;
-    }
-    else if(new_activation_function_name == "SymmetricThreshold")
-    {
-        activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_activation_function_name == "Linear")
     {

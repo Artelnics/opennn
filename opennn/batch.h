@@ -62,12 +62,9 @@ struct Batch
     bool has_context = false;
 };
 
-
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/batch_cuda.h"
 #endif
-
 
 }
 #endif

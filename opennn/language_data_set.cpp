@@ -14,6 +14,7 @@ namespace opennn
 LanguageDataSet::LanguageDataSet() : DataSet()
 {
     context_variables_dimensions.resize(1);
+    context_variables_dimensions.setZero();
 }
 
 
@@ -44,6 +45,26 @@ Tensor<string, 1> LanguageDataSet::get_context_vocabulary() const
 Tensor<string, 1> LanguageDataSet::get_completion_vocabulary() const
 {
     return completion_vocabulary;
+}
+
+Index LanguageDataSet::get_context_vocabulary_size() const
+{
+    return context_vocabulary.size();
+}
+
+Index LanguageDataSet::get_completion_vocabulary_size() const
+{
+    return completion_vocabulary.size();
+}
+
+Index LanguageDataSet::get_context_length() const
+{
+    return max_context_length + 2;
+}
+
+Index LanguageDataSet::get_completion_length() const
+{
+    return max_completion_length + 1;
 }
 
 
@@ -166,6 +187,16 @@ Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
     return context_raw_variables_indices;
 }
 
+
+const Tensor<Tensor<string, 1>, 1> LanguageDataSet::get_documents() const
+{
+    return documents;
+}
+
+const Tensor<Tensor<string, 1>, 1> LanguageDataSet::get_targets() const
+{
+    return targets;
+}
 
 void LanguageDataSet::set_default_raw_variables_uses()
 {
@@ -1268,6 +1299,311 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
+void LanguageDataSet::load_documents(const string& path)
+{
+        const Index original_size = documents.size();
+
+        if(path.empty())
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: TextAnalytics class.\n"
+                   << "void load_documents() method.\n"
+                   << "Data file name is empty.\n";
+
+            throw runtime_error(buffer.str());
+        }
+
+        ifstream file(path.c_str());
+
+        if(!file.is_open())
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: TextAnalytics class.\n"
+                   << "void load_documents() method.\n"
+                   << "Cannot open data file: " << path << "\n";
+
+            throw runtime_error(buffer.str());
+        }
+
+        Tensor<Tensor<string,1>, 1> documents_copy(documents);
+
+        documents.resize(original_size + 1);
+
+        Tensor<Tensor<string,1>, 1> targets_copy(targets);
+
+        targets.resize(original_size + 1);
+
+        for(Index i = 0; i < original_size; i++)
+        {
+            documents(i) = documents_copy(i);
+            targets(i) = targets_copy(i);
+        }
+
+        Index lines_count = 0;
+        Index lines_number = 0;
+
+        string line;
+
+        while(file.good())
+        {
+            getline(file, line);
+            trim(line);
+            erase(line, '"');
+
+            if(line.empty()) continue;
+
+            lines_number++;
+
+            if(file.peek() == EOF) break;
+        }
+
+        file.close();
+
+        Tensor<string, 1> document(lines_number);
+        Tensor<string, 1> document_target(lines_number);
+
+        ifstream file2(path.c_str());
+
+        Index tokens_number = 0;
+
+        string delimiter = "";
+        char separator = get_separator_char();
+
+        while(file2.good())
+        {
+            getline(file2, line);
+
+            if(line.empty()) continue;
+
+            if(line[0]=='"')
+            {
+                replace(line,"\"\"", "\"");
+                line = "\""+line;
+                delimiter = "\"\"";
+            }
+
+            if( line.find("\"" + separator) != string::npos) replace(line,"\"" + separator, "\"\"" + separator);
+
+            //tokens_number = count_tokens(line,delimiter + separator);
+            Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
+            tokens_number = tokens.size();
+
+            if(tokens_number == 1)
+            {
+                if(tokens(0).find(delimiter,0) == 0) document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
+                else document(lines_count) += " " + tokens(0);
+            }
+            else
+            {
+                if(tokens_number > 2)
+                {
+                    ostringstream buffer;
+
+                    buffer << "OpenNN Exception: TextAnalytics class.\n"
+                           << "void load_documents() method.\n"
+                           << "Found more than one separator in line: " << line << "\n";
+
+                    throw runtime_error(buffer.str());
+                }
+                if(tokens(0).empty() && tokens(1).empty())  continue;
+
+                document(lines_count) += " " + tokens(0);
+                document_target(lines_count) += tokens(1);
+                delimiter = "";
+                lines_count++;
+
+            }
+
+            if(file2.peek() == EOF) break;
+        }
+
+        Tensor<string,1> document_copy(lines_count);
+        Tensor<string,1> document_target_copy(lines_count);
+
+        copy(/*execution::par,*/
+            document.data(),
+            document.data() + lines_count,
+            document_copy.data());
+
+        copy(/*execution::par,*/
+            document_target.data(),
+            document_target.data() + lines_count,
+            document_target_copy.data());
+
+        documents(original_size) = document_copy;
+        targets(original_size) = document_target_copy;
+
+        file2.close();
+}
+
+
+Tensor<Tensor<string, 1>, 1> LanguageDataSet::preprocess(const Tensor<string, 1>& documents) const
+{
+    Tensor<string, 1> documents_copy(documents);
+
+    to_lower(documents_copy);
+
+    split_punctuation(documents_copy);
+
+    delete_non_printable_chars(documents_copy);
+
+    delete_extra_spaces(documents_copy);
+
+    aux_remove_non_printable_chars(documents_copy);
+
+    Tensor<Tensor<string, 1>, 1> tokenized_documents = tokenize(documents_copy);
+
+    delete_emails(tokenized_documents);
+
+    delete_blanks(tokenized_documents);
+
+    return tokenized_documents;
+}
+
+
+const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens) const
+{
+    const Tensor<string, 1> total = join(tokens);
+
+    const Tensor<Index, 1> count = count_unique(total);
+
+    const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
+
+    const Tensor<string, 1> words = sort_by_rank(get_unique_elements(total), descending_rank);
+
+    return words;
+}
+
+
+void LanguageDataSet::read_csv_3_language_model()
+{
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+#ifdef _WIN32
+
+    if (std::regex_search(data_source_path, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_source_path);
+        file.open(file_name_wide);
+    }
+    else
+    {
+        file.open(data_source_path.c_str());
+    }
+
+#else
+    file.open(data_source_path.c_str());
+#endif
+
+    if (!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+            << "void read_csv_3_simple() method.\n"
+            << "Cannot open data file: " << data_source_path << "\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    const bool is_float = is_same<type, float>::value;
+
+    const char separator_char = get_separator_char();
+
+    string line;
+
+    // Read header
+
+    if (has_raw_variables_names)
+    {
+        while (file.good())
+        {
+            getline(file, line);
+
+            line = decode(line);
+
+            if (line.empty()) continue;
+
+            break;
+        }
+    }
+
+    // Read data
+
+    const Index raw_raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
+
+    Tensor<string, 1> tokens(raw_raw_variables_number);
+
+    const Index samples_number = data.dimension(0);
+
+    if (has_rows_labels) rows_labels.resize(samples_number);
+
+    if (display) cout << "Reading data..." << endl;
+
+    Index sample_index = 0;
+    Index raw_variable_index = 0;
+
+    while (file.good())
+    {
+        getline(file, line);
+
+        line = decode(line);
+
+        trim(line);
+
+        erase(line, '"');
+
+        if (line.empty()) continue;
+
+        fill_tokens(line, separator_char, tokens);
+
+        for (Index j = 0; j < raw_raw_variables_number; j++)
+        {
+            trim(tokens(j));
+
+            if (has_rows_labels && j == 0)
+            {
+                rows_labels(sample_index) = tokens(j);
+            }
+            else if (tokens(j) == missing_values_label || tokens(j).empty())
+            {
+                data(sample_index, raw_variable_index) = type(NAN);
+                raw_variable_index++;
+            }
+            else if (is_float)
+            {
+                data(sample_index, raw_variable_index) = type(strtof(tokens(j).data(), nullptr));
+                raw_variable_index++;
+            }
+            else
+            {
+                data(sample_index, raw_variable_index) = type(stof(tokens(j)));
+                raw_variable_index++;
+            }
+        }
+
+        raw_variable_index = 0;
+        sample_index++;
+    }
+
+    const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;
+
+    data_file_preview(data_file_preview_index) = tokens;
+
+    file.close();
+
+    if (display) cout << "Data read succesfully..." << endl;
+
+    // Check Constant
+
+    check_constant_raw_variables();
+}
+
+
 void LanguageDataSet::read_csv_language_model()
 {
     read_csv_1();
@@ -1281,24 +1617,12 @@ void LanguageDataSet::read_csv_language_model()
 void LanguageDataSet::read_txt_language_model()
 {
     cout << "Reading .txt file..." << endl;
-/*
-    TextAnalytics text_analytics;
 
-    text_analytics.set_separator(get_text_separator_string());
-    text_analytics.set_short_words_length(short_words_length);
-    text_analytics.set_long_words_length(long_words_length);
-    text_analytics.set_stop_words(stop_words);
-
-    cout << "Loading documents..." << endl;
-
-    text_analytics.load_documents(data_source_path);
-
-    const Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
-    const Tensor<Tensor<string, 1>, 1> targets = text_analytics.get_targets();
-
-    Index entry_number = document(0).size();
-    for(Index i = 1; i < document.size(); i++)
-        entry_number += document(i).size();
+    load_documents(data_source_path);
+    
+    Index entry_number = documents(0).size();
+    for(Index i = 1; i < documents.size(); i++)
+        entry_number += documents(i).size();
 
     Index completion_entry_number = targets(0).size();
     for(Index i = 1; i < targets.size(); i++)
@@ -1319,11 +1643,11 @@ void LanguageDataSet::read_txt_language_model()
 
     Index entry_index = 0;
 
-    for(Index i = 0; i < document.size(); i++)
+    for(Index i = 0; i < documents.size(); i++)
     {
-        for(Index j = 0; j < document(i).size(); j++)
+        for(Index j = 0; j < documents(i).size(); j++)
         {
-            context(entry_index) = document(i)(j);
+            context(entry_index) = documents(i)(j);
             entry_index++;
         }
     }
@@ -1342,16 +1666,16 @@ void LanguageDataSet::read_txt_language_model()
     }
 
     cout << "Processing documents..." << endl;
-
-    Tensor<Tensor<string, 1>, 1> context_tokens = text_analytics.preprocess_language_model(context);
-    Tensor<Tensor<string, 1>, 1> completion_tokens = text_analytics.preprocess_language_model(completion);
+    
+    const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess(context);
+    const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess(completion);
 
     cout << "Calculating vocabularies..." << endl;
+    
+    context_vocabulary = calculate_vocabulary(context_tokens);
 
-    context_vocabulary = text_analytics.calculate_word_bag(context_tokens).words;
-
-    completion_vocabulary = text_analytics.calculate_word_bag(completion_tokens).words;
-
+    completion_vocabulary = calculate_vocabulary(completion_tokens);
+    
     Index LIMIT = 50;
 
     Index max_context_tokens = context_tokens(0).size();
@@ -1373,7 +1697,7 @@ void LanguageDataSet::read_txt_language_model()
     // Output
 
     cout << "Writting data file..." << endl;
-
+    
     string transformed_data_path = data_source_path;
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
@@ -1390,7 +1714,7 @@ void LanguageDataSet::read_txt_language_model()
     for(Index i  = type(0); i < max_completion_length; i++)
         file << "target_token_position_" << i << ";";
     file << "target_token_position_" << max_completion_length << "\n";
-
+    
     // Data file preview
 
     Index preview_size = 4;
@@ -1406,26 +1730,26 @@ void LanguageDataSet::read_txt_language_model()
     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
 
-    Tensor<type, 1> context_row(max_context_length + 2);
-    Tensor<type, 1> completion_row(max_completion_length + 2);
-
     Index context_vocabulary_size = context_vocabulary.size();
     Index completion_vocabulary_size = completion_vocabulary.size();
 
-    Tensor<string,1> line_tokens;
-    bool line_ended;
+    Tensor<type, 1> context_row(max_context_length + 2);
+    Tensor<type, 1> completion_row(max_completion_length + 2);
 
-#pragma omp parallel for
+    Tensor<string, 1> line_tokens;
+    bool line_ended;
 
     for(Index i = 0; i < entry_number; i++)
     {
+        // Context
+
         context_row.setZero();
         context_row(0) = 1; /// start indicator
-
+        
         line_ended = false;
-
+        
         line_tokens = context_tokens(i);
-
+        
         for(Index j = 1; j < max_context_length + 2; j++)
         {
             if( j <= line_tokens.size() && contains(context_vocabulary, line_tokens(j - 1)) )
@@ -1452,6 +1776,8 @@ void LanguageDataSet::read_txt_language_model()
 
         for(Index j = 0; j < max_context_length + 2; j++)
             file << context_row(j) << ";";
+
+        // Completion
 
         completion_row.setZero();
         completion_row(0) = 1;
@@ -1490,8 +1816,9 @@ void LanguageDataSet::read_txt_language_model()
         for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
             file << completion_row(j) << ";";
         file << completion_row(max_completion_length + 1) << "\n";
+        
     }
-
+    
     file.close();
 
     data_source_path = transformed_data_path;
@@ -1500,15 +1827,17 @@ void LanguageDataSet::read_txt_language_model()
 
     read_csv_language_model();
 
-    for(Index i = 0; i < get_raw_variables_number(); i++)
-    {
-        set_raw_variable_type(i, ColumnType::Numeric);
-        if(i < max_context_length + max_completion_length + 4)
-            set_raw_variable_use(i, VariableUse::Input);
-        else
-            set_raw_variable_use(i, VariableUse::Target);
-    }
-*/
+    set_all_raw_variables_type(RawVariableType::Numeric);
+
+    for(Index i = 0; i < max_context_length + 2; i++)
+        set_raw_variable_use(i, VariableUse::Context);
+
+    for (Index i = 0; i < max_completion_length + 1; i++)
+        set_raw_variable_use(i + max_context_length + 2, VariableUse::Input);
+
+    for (Index i = 0; i < max_completion_length + 1; i++)
+        set_raw_variable_use(i + max_context_length + max_completion_length + 3, VariableUse::Target);
+    
 }
 
 }

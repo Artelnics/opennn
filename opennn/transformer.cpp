@@ -59,13 +59,13 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
 
     // Embedding Layers
-
+    
     EmbeddingLayer* input_embedding_layer = new EmbeddingLayer(inputs_dimension, inputs_length, embedding_depth, true);
 
     input_embedding_layer->set_name("input_embedding");
     add_layer(input_embedding_layer);
     set_layer_inputs_indices("input_embedding", "input");
-
+    
 
     EmbeddingLayer* context_embedding_layer = new EmbeddingLayer(context_dimension, context_length, embedding_depth, true);
 
@@ -155,12 +155,13 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
 
     // Final layer
+    
+    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(inputs_length, embedding_depth, inputs_dimension + 1);
 
-    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(inputs_length, embedding_depth, inputs_dimension);
     final_layer->set_name("probabilistic");
     add_layer(final_layer);
     set_layer_inputs_indices("probabilistic", "decoder_external_perceptron_" + to_string(number_of_layers));
-
+    
 }
 
 
