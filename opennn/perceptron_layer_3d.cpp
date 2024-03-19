@@ -39,7 +39,7 @@ PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number, const Index
 
     layer_type = Type::Perceptron3D;
 
-    layer_name = "perceptron_layer";
+    layer_name = "perceptron_layer_3d";
 }
 
 
