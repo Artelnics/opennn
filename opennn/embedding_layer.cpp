@@ -381,7 +381,7 @@ const Tensor<type, 2> EmbeddingLayer::build_positional_encoding_matrix()
     Tensor<type, 2> positional_encoding_matrix(input_length, depth);
     positional_encoding_matrix.setZero();
 
-    type half_depth = type(depth)/2;
+    const Index half_depth = type(depth)/2;
 
 #pragma omp parallel for collapse(2)
     for(Index i = 0; i < input_length; i++)
@@ -391,7 +391,11 @@ const Tensor<type, 2> EmbeddingLayer::build_positional_encoding_matrix()
             positional_encoding_matrix(i, 2*j) = sin( (i + 1) / pow(100000, (j + 1) / half_depth) );
             positional_encoding_matrix(i, 2*j+1) = cos( (i + 1) / pow(100000, (j + 1) / half_depth) );
         }
+    }
 
+#pragma omp parallel for
+    for(Index i = 0; i < input_length; i++)
+    {
         if(depth % 2 == 0)
         {
             positional_encoding_matrix(i, depth - 2) = sin( (i+1) / 10000 );
@@ -404,6 +408,7 @@ const Tensor<type, 2> EmbeddingLayer::build_positional_encoding_matrix()
     }
 
     return positional_encoding_matrix;
+
 };
 
 

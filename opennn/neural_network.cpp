@@ -5024,13 +5024,15 @@ string NeuralNetwork::write_expression_api() const
 
 /// Returns a string with the javaScript function of the expression represented by the neural network.
 
-string NeuralNetwork::write_expression_javascript() const
+string NeuralNetwork::write_expression_javascript(const Tensor<string, 1>& variables, const Tensor<Index, 1>& used_variables, const Tensor<Tensor<string, 1>, 1>& all_categories) const
 {
     Tensor<string, 1> tokens;
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
     Tensor<string, 1> inputs =  get_inputs_names();
     Tensor<string, 1> outputs = get_outputs_names();
+
+    cout << get_inputs_names() << endl;
 
     ostringstream buffer_to_fix;
 
@@ -5234,31 +5236,96 @@ string NeuralNetwork::write_expression_javascript() const
 
         const Tensor<Descriptives, 1>  inputs_descriptives = get_scaling_layer_pointer()->get_descriptives();
 
-        for(int i = 0; i < inputs.dimension(0); i++)
-        {
-            min_value = inputs_descriptives(i).minimum;
-            max_value = inputs_descriptives(i).maximum;
+        Index i = 0; // Input vector pointers index
+        Index j = 0; // Number of categorical & binary variables found
 
-            buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
-            buffer << "<tr style=\"height:3.5em\">" << endl;
-            buffer << "<td> " << inputs_names[i] << " </td>" << endl;
-            buffer << "<td style=\"text-align:center\">" << endl;
+        for (int k = 0; k < variables.dimension(0); ++k) {
 
-            if (min_value==0 && min_value==0)
+            const string variable = variables(k);
+            const Index use_of_variable = used_variables(k);
+            const Tensor<string, 1> categories = all_categories(k);
+
+            if (use_of_variable == 1 && categories.size()==0 ) // INPUT & NUMERIC
             {
-                buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
-                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
-            }
-            else
-            {
-                buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
-                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
-            }
+                min_value = inputs_descriptives(i).minimum;
+                max_value = inputs_descriptives(i).maximum;
 
-            buffer << "</td>" << endl;
-            buffer << "</tr>" << endl;
-            buffer << "\n" << endl;
+                buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
+                buffer << "<tr style=\"height:3.5em\">" << endl;
+                buffer << "<td> " << inputs_names[i] << " </td>" << endl;
+                buffer << "<td style=\"text-align:center\">" << endl;
+
+                if (min_value==0 && min_value==0)
+                {
+                    buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
+                    buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
+                }
+                else
+                {
+                    buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
+                    buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
+                }
+
+                buffer << "</td>" << endl;
+                buffer << "</tr>" << endl;
+                buffer << "\n" << endl;
+
+                i += 1;
+            }
+            else if (use_of_variable == 1 && categories.size() == 2 ) // INPUT & BINARY
+            {
+                buffer << "<!-- ComboBox Ultima pasada-->" << endl;
+                buffer << "<!-- 5scaling layer -->" << endl;
+                buffer << "<tr style=\"height:3.5em\">" << endl;
+
+                buffer << "<td> " << variable << " </td>" << endl;
+
+                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<select id=\"Select" << j << "\">" << endl;
+
+                if(categories(0) == "1")
+                {
+                    buffer << "<option value=\"" << "0" << "\">" << categories(0) << "</option>" << endl;
+                    buffer << "<option value=\"" << "1" << "\">" << categories(1) << "</option>" << endl;
+                }
+                else
+                {
+                    buffer << "<option value=\"" << "1" << "\">" << categories(0) << "</option>" << endl;
+                    buffer << "<option value=\"" << "0" << "\">" << categories(1) << "</option>" << endl;
+                }
+
+                buffer << "</select>" << endl;
+                buffer << "</td>" << endl;
+                buffer << "</tr>" << endl;
+
+                j += 1;
+                i += categories.size();
+            }
+            else if (use_of_variable == 1 && categories.size() > 2 ) // INPUT & BINARY & CATEGORICAL
+            {
+                buffer << "<!-- ComboBox Ultima pasada-->" << endl;
+                buffer << "<!-- 5scaling layer -->" << endl;
+                buffer << "<tr style=\"height:3.5em\">" << endl;
+
+                buffer << "<td> " << variable << " </td>" << endl;
+
+                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<select id=\"Select" << j << "\">" << endl;
+
+                for (int l = 0; l < categories.size(); ++l)
+                {
+                    buffer << "<option value=\"" << l << "\">" << categories(l) << "</option>" << endl;
+                }
+
+                buffer << "</select>" << endl;
+                buffer << "</td>" << endl;
+                buffer << "</tr>" << endl;
+
+                j += 1;
+                i += categories.size();
+            }
         }
+
     }
     else
     {
@@ -5369,11 +5436,110 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "{" << endl;
     buffer << "\t" << "var inputs = [];" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-    {
-        buffer << "\t" << "var " << inputs[i] << " =" << " document.getElementById(\"" << inputs[i] << "\").value; " << endl;
-        buffer << "\t" << "inputs.push(" << inputs[i] << ");" << endl;
+    Index i = 0; // Input vector pointers index
+    Index j = 0; // Number of categorical & binary variables found
+
+    for (int k = 0; k < variables.dimension(0); ++k) {
+
+        const string variable = variables(k);
+        const Index use_of_variable = used_variables(k);
+        const Tensor<string, 1> categories = all_categories(k);
+
+        if (use_of_variable == 1 && categories.size()==0 ) // INPUT & NUMERIC
+        {
+            buffer << "\t" << "var " << inputs[i] << " =" << " document.getElementById(\"" << inputs[i] << "\").value; " << endl;
+            buffer << "\t" << "inputs.push(" << inputs[i] << ");" << endl;
+
+            i += 1;
+        }
+        else if (use_of_variable == 1 && categories.size() >= 2 ) // INPUT & (BINARY || CATEGORICAL)
+        {
+            string aux_buffer = "";
+
+            buffer << "var selectElement" << j << "= document.getElementById('Select" << j << "');" << endl;
+            buffer << "var selectedValue" << j << "= +selectElement" << j << ".value;" << endl;
+
+            for (int l = 0; l < categories.size(); ++l)
+            {
+                if (categories(l) == "0")
+                {
+                    buffer << "var " << "zero" << "= 0;" << endl;
+                    aux_buffer = aux_buffer + "inputs.push(" + "zero" + ");" + "\n";
+                }
+                else if(categories(l) == "1")
+                {
+                    buffer << "var " << "one" << "= 0;" << endl;
+                    aux_buffer = aux_buffer + "inputs.push(" + "one" + ");" + "\n";
+                }
+                else
+                {
+                    buffer << "var " << categories(l) << "= 0;" << endl;
+                    aux_buffer = aux_buffer + "inputs.push(" + categories(l) + ");" + "\n";
+                }
+
+            }
+
+            buffer << "switch (selectedValue" << j << "){" << endl;
+
+            if (categories.size() == 2 && categories(0) == "0" ) // FIRST BINARY VARIABLE IS A ZERO
+            {
+                buffer << "case " << "1" << ":" << endl;
+                buffer << "\t" << "zero" << " = " << "1;" << endl;
+                buffer << "\tbreak;" << endl;
+
+                buffer << "case " << "0" << ":" << endl;
+                buffer << "\t" << "one" << " = " << "1;" << endl;
+                buffer << "\tbreak;" << endl;
+            }
+            else if (categories.size() == 2 && categories(0) == "1" ) // FIRST BINARY VARIABLE IS A ONE
+            {
+                buffer << "case " << "1" << ":" << endl;
+                buffer << "\t" << "one" << " = " << "1;" << endl;
+                buffer << "\tbreak;" << endl;
+
+                buffer << "case " << "0" << ":" << endl;
+                buffer << "\t" << "zero" << " = " << "1;" << endl;
+                buffer << "\tbreak;" << endl;
+            }
+            else if (categories.size() == 2 && categories(0) != "1" ) // FIRST BINARY VARIABLE IS NOR A ZERO OR ONE
+            {
+                buffer << "case " << "1" << ":" << endl;
+                buffer << "\t" << categories(1) << " = " << "1;" << endl;
+                buffer << "\tbreak;" << endl;
+
+                buffer << "case " << "0" << ":" << endl;
+                buffer << "\t" << categories(0) << " = " << "1;" << endl;
+                buffer << "\tbreak;" << endl;
+            }
+            else
+            {
+                for (int l = 0; l < categories.size(); ++l)
+                {
+                    buffer << "case " << l << ":";
+                    buffer << "\t" << categories(l) << " = " << "1;" << endl;
+                    buffer << "\tbreak;" << endl;
+                }
+            }
+
+            buffer << "default:" << endl;
+            buffer << "\tbreak;" << endl;
+            buffer << "}" << endl;
+
+            buffer << aux_buffer << endl;
+
+            j += 1;
+            i += categories.size();
+        }
     }
+
+
+    //for(int i = 0; i < inputs.dimension(0); i++)
+    //{
+    //    buffer << "\t" << "var " << inputs[i] << " =" << " document.getElementById(\"" << inputs[i] << "\").value; " << endl;
+    //    buffer << "\t" << "inputs.push(" << inputs[i] << ");" << endl;
+    //}
+
+    // -- LUEGO SE MIRA --
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
@@ -5387,14 +5553,6 @@ string NeuralNetwork::write_expression_javascript() const
     {
         buffer << "\t" << "updateSelectedCategory();" << endl;
     }
-    //else
-    //{
-    //    for (int i = 0; i < outputs.dimension(0); i++)
-    //    {
-    //        buffer << "\t" << "var " << outputs[i] << " = document.getElementById(\"" << outputs[i] << "\");" << endl;
-    //        buffer << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
-    //    }
-    //}
 
     buffer << "\t" << "update_LSTM();" << endl;
     buffer << "}" << "\n" << endl;
@@ -6239,7 +6397,7 @@ void NeuralNetwork::save_expression_api(const string& file_name) const
 /// Saves the javascript function of the expression represented by the neural network to a text file.
 /// @param file_name Name of the expression text file.
 
-void NeuralNetwork::save_expression_javascript(const string& file_name) const
+void NeuralNetwork::save_expression_javascript(const string& file_name, const Tensor<string, 1>& variables, const Tensor<Index, 1>& used_variables, const Tensor<Tensor<string, 1>, 1>& categories) const
 {
     std::ofstream file(file_name.c_str());
 
@@ -6254,7 +6412,7 @@ void NeuralNetwork::save_expression_javascript(const string& file_name) const
         throw invalid_argument(buffer.str());
     }
 
-    file << write_expression_javascript();
+    file << write_expression_javascript(variables, used_variables, categories);
 
     file.close();
 }

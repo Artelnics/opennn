@@ -331,7 +331,15 @@ public:
     Tensor<Index, 1> get_used_columns_indices() const;
     Tensor<Index, 1> get_numerical_input_columns() const;
 
+    //---------------------------
+    //new -----------------------
+
     Tensor<string, 1> get_columns_names() const;
+    Tensor<Index, 1> get_uses_of_columns() const;
+    Tensor<Tensor<string, 1>, 1> get_columns_categories_number() const;
+
+    //new -----------------------
+    //---------------------------
 
     Tensor<string, 1> get_input_columns_names() const;
     Tensor<string, 1> get_target_columns_names() const;
