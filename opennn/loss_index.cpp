@@ -289,6 +289,29 @@ bool LossIndex::has_selection() const
 }
 
 
+Index LossIndex::get_next_layer_index(const Tensor<Tensor<Index, 1>, 1>& layers_inputs_indices, const Index layer_index) const
+{
+    Index next_layer_index = layer_index + 1;
+    bool found = false;
+
+    for (Index i = layer_index + 1; i < layers_inputs_indices.size(); i++)
+    {
+        for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
+        {
+            if (layers_inputs_indices(i)(j) == layer_index)
+            {
+                next_layer_index = i;
+                found = true;
+                break;
+            }
+        }
+        if (found)  break;
+    }
+
+    return next_layer_index;
+}
+
+
 /// Checks whether there is a neural network associated with the error term.
 /// If some of the above conditions is not hold, the method throws an exception.
 
@@ -687,6 +710,8 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
+    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = neural_network->get_layers_inputs_indices();
+
     if(layers_number == 0) return;
 
     Layer* layer = nullptr;
@@ -697,7 +722,8 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     LayerForwardPropagation* next_layer_forward_propagation = nullptr;
     LayerBackPropagation* next_layer_back_propagation = nullptr;
 
-    Tensor<pair<type*, dimensions>, 1> inputs_pair;
+    Tensor<pair<type*, dimensions>, 1> layer_inputs;
+    Index next_layer_index;
 
     // Hidden layers
     
@@ -714,24 +740,37 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
         }
         else
         {
-            next_layer_forward_propagation = forward_propagation.layers(i + 1);
-            next_layer_back_propagation = back_propagation.neural_network.layers(i + 1);
+            next_layer_index = get_next_layer_index(layers_inputs_indices, i);
+
+            next_layer_forward_propagation = forward_propagation.layers(next_layer_index);
+            next_layer_back_propagation = back_propagation.neural_network.layers(next_layer_index);
 
             layer->calculate_hidden_delta(next_layer_forward_propagation, next_layer_back_propagation, layer_forward_propagation, layer_back_propagation);
         }
         
-        if(i == first_trainable_layer_index)
+        if(i == first_trainable_layer_index || neural_network->is_input_layer(layers_inputs_indices(i)))
         {
-            inputs_pair = batch.get_inputs_pair();
+            layer_inputs.resize(1);
+
+            layer_inputs(0) = batch.get_inputs_pair()(0);
+        }
+        else if (neural_network->is_context_layer(layers_inputs_indices(i)))
+        {
+            layer_inputs.resize(1);
+
+            layer_inputs(0) = batch.get_inputs_pair()(1);
         }
         else
         {
-            previous_layer_forward_propagation = forward_propagation.layers(i-1);
+            layer_inputs.resize(layers_inputs_indices(i).size());
 
-            inputs_pair = tensor_wrapper(previous_layer_forward_propagation->get_outputs_pair());
+            for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
+            {
+                layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
+            }
         }
         
-        layer->calculate_error_gradient(inputs_pair, layer_forward_propagation, layer_back_propagation);
+        layer->calculate_error_gradient(layer_inputs, layer_forward_propagation, layer_back_propagation);
     }
 }
 

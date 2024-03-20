@@ -151,6 +151,8 @@ public:
 
    bool has_selection() const;
 
+   Index get_next_layer_index(const Tensor<Tensor<Index, 1>, 1>&, const Index) const;
+
    // Numerical differentiation
 
    type calculate_eta() const;

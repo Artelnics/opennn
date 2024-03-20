@@ -42,14 +42,14 @@ public:
 
 private:
 
-    Index samples_number = 0;
+    Index batch_samples_number = 0;
     Index inputs_number = 0;
     Index inputs_dimension = 0;
     Index depth = 0;
 
     bool is_training = true;
 
-    Tensor<type, 3> data;
+    Tensor<type, 2> data;
 
     Tensor<Index, 1> training_samples_indices;
     Tensor<Index, 1> input_variables_indices;

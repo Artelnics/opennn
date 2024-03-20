@@ -45,15 +45,16 @@ void CrossEntropyError3DTest::test_back_propagate()
 
     // Test all zero
     {
-        samples_number = 1;
+        batch_samples_number = 1;
         inputs_number = 1;
         inputs_dimension = 0;
         depth = 1;
         
         // Data set
 
-        Tensor<type, 2> data(samples_number, 2 * inputs_number);
+        data.resize(batch_samples_number, 2 * inputs_number);
         data.setValues({ {0, 0} });
+
         data_set.set_data(data);
 
         data_set.set_raw_variable_use(0, DataSet::VariableUse::Input);
@@ -66,7 +67,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        batch.set(samples_number, &data_set);
+        batch.set(batch_samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
         
         // Neural network
@@ -81,12 +82,12 @@ void CrossEntropyError3DTest::test_back_propagate()
         
         neural_network.set_parameters_constant(type(0));
 
-        forward_propagation.set(samples_number, &neural_network);
+        forward_propagation.set(batch_samples_number, &neural_network);
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
         
         // Loss index
 
-        back_propagation.set(samples_number, &cross_entropy_error_3d);
+        back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
         
         assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
@@ -97,16 +98,16 @@ void CrossEntropyError3DTest::test_back_propagate()
     
     // Test all random
     {
-        samples_number = type(1) + rand() % 5;
+        batch_samples_number = type(1) + rand() % 5;
         inputs_number = type(1) + rand() % 5;
         inputs_dimension = type(1) + rand() % 5;
         depth = type(1) + rand() % 5;
 
         // Data set
 
-        Tensor<type, 2> data(samples_number, 2 * inputs_number);
+        data.resize(batch_samples_number, 2 * inputs_number);
 
-        for (Index i = 0; i < samples_number; i++)
+        for (Index i = 0; i < batch_samples_number; i++)
         {
             for (Index j = 0; j < 2 * inputs_number; j++)
                 data(i, j) = type(rand() % (inputs_dimension+1));
@@ -127,7 +128,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        batch.set(samples_number, &data_set);
+        batch.set(batch_samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
@@ -140,12 +141,12 @@ void CrossEntropyError3DTest::test_back_propagate()
         ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, inputs_dimension + 1);
         neural_network.add_layer(probabilistic_layer_3d);
 
-        forward_propagation.set(samples_number, &neural_network);
+        forward_propagation.set(batch_samples_number, &neural_network);
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
-        back_propagation.set(samples_number, &cross_entropy_error_3d);
+        back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
         assert_true(back_propagation.gradient.size() == neural_network.get_parameters_number(), LOG);
@@ -157,7 +158,7 @@ void CrossEntropyError3DTest::test_back_propagate()
 
     // Test multi-layer
     {
-        samples_number = type(1) + rand() % 5;
+        batch_samples_number = type(1) + rand() % 5;
         inputs_number = type(1) + rand() % 5;
         inputs_dimension = type(1) + rand() % 5;
         depth = type(1) + rand() % 5;
@@ -166,9 +167,9 @@ void CrossEntropyError3DTest::test_back_propagate()
 
         // Data set
 
-        Tensor<type, 2> data(samples_number, 2 * inputs_number);
+        data.resize(batch_samples_number, 2 * inputs_number);
 
-        for (Index i = 0; i < samples_number; i++)
+        for (Index i = 0; i < batch_samples_number; i++)
         {
             for (Index j = 0; j < 2 * inputs_number; j++)
                 data(i, j) = type(rand() % (inputs_dimension + 1));
@@ -189,7 +190,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        batch.set(samples_number, &data_set);
+        batch.set(batch_samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
@@ -208,12 +209,12 @@ void CrossEntropyError3DTest::test_back_propagate()
         ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, inputs_dimension + 1);
         neural_network.add_layer(probabilistic_layer_3d);
 
-        forward_propagation.set(samples_number, &neural_network);
+        forward_propagation.set(batch_samples_number, &neural_network);
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
-        back_propagation.set(samples_number, &cross_entropy_error_3d);
+        back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
         assert_true(back_propagation.gradient.size() == neural_network.get_parameters_number(), LOG);
@@ -226,55 +227,92 @@ void CrossEntropyError3DTest::test_back_propagate()
 
 
 void CrossEntropyError3DTest::test_calculate_gradient_transformer()
-{/*
-    cout << "Running calculate gradient transformer test case...\n";
+{
+    //cout << "test_calculate_gradient_transformer\n";
+
+    Index context_length;
+    Index context_dimension;
+
+    LanguageDataSet data_set;
+
+    Index perceptron_depth;
+    Index heads_number;
+    Index number_of_layers;
+
+    Tensor<Index, 1> context_variables_indices;
+
+    Transformer transformer;
+
+    cross_entropy_error_3d.set(&transformer, &data_set);
 
     // Test
     {
-        data_set.set();
-        neural_network.set();
+        batch_samples_number = 1;
+
+        inputs_number = 2;
+        context_length = 3;
+        inputs_dimension = 5;
+        context_dimension = 6;
+
+        depth = 4;
+        perceptron_depth = 6;
+        heads_number = 4;
+        number_of_layers = 1;
+
+        bool is_training = true;
+        
+        data.resize(batch_samples_number, context_length + 2 * inputs_number);
+
+        for (Index i = 0; i < batch_samples_number; i++)
+        {
+            for (Index j = 0; j < context_length; j++)
+                data(i, j) = type(rand() % context_dimension);
+
+            for (Index j = 0; j < 2 * inputs_number; j++)
+                data(i, j + context_length) = type(rand() % inputs_dimension);
+        }
+        
+        data_set.set(data);
+
+        data_set.set_training();
+
+        for (Index i = 0; i < context_length; i++)
+            data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
+
+        for (Index i = 0; i < inputs_number; i++)
+            data_set.set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
+
+        for (Index i = 0; i < inputs_number; i++)
+            data_set.set_raw_variable_use(i + context_length + inputs_number, DataSet::VariableUse::Target);
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        context_variables_indices = data_set.get_context_variables_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+        
+        batch.set(batch_samples_number, &data_set);
+
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
+
+        transformer.set({ inputs_number, context_length, inputs_dimension, context_dimension,
+                          depth, perceptron_depth, heads_number, number_of_layers });
+
+        ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
+
+        transformer.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        
+        // Loss index
+
+        back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
+        cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
+        
+        assert_true(back_propagation.gradient.size() == transformer.get_parameters_number(), LOG);
 
         numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient();
-
-        assert_true(numerical_gradient.size() == 0, LOG);
-    }
-
-    // Test
-    {
-        data_set.set();
-        neural_network.set();
-
-        samples_number = 1;
-        inputs_number = 1;
-
-        inputs_dimension = 1;
-        depth = 1;
-
-        Tensor<type, 3> inputs(samples_number, inputs_number, inputs_dimension);
-        inputs.setConstant(2);
-
-        Tensor<type, 3> targets(samples_number, inputs_number, depth);
-        targets.setConstant(1);
         
-        ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, inputs_dimension, depth);
-        neural_network.add_layer(probabilistic_layer_3d);
-        
-        numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient(inputs, targets);
-
-        cout << "Numerical gradient:" << endl << numerical_gradient << endl;
-        
-        forward_propagation.set(samples_number, &neural_network);
-        back_propagation.set(samples_number, &cross_entropy_error_3d);
-
-        cross_entropy_error_3d.calculate_output_delta(get_pair(targets), forward_propagation, back_propagation);
-        
-        cross_entropy_error_3d.back_propagate(get_pair(inputs), get_pair(targets), forward_propagation, back_propagation);
-
-        cout << "Analitical gradient:" << endl << back_propagation.gradient << endl;
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
         
     }
-
-    cout << "End of calculate gradient transformer test case...\n";*/
 }
 
 
@@ -287,13 +325,12 @@ void CrossEntropyError3DTest::run_test_case()
     test_constructor();
     test_destructor();
     
-    // Transformer test
-    
-    test_calculate_gradient_transformer();
-    
     // Back-propagation methods
 
     test_back_propagate();
+
+    // Transformer test (Must be last since we change &neural_network to &transformer)
+    test_calculate_gradient_transformer();
     
     cout << "End of cross-entropy error test case.\n\n";
 }

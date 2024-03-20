@@ -150,7 +150,6 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
             TensorMap<Tensor<type, 2>> C_matrix(C.data() + j * C_rows * C_columns + i * C_rows * C_columns * channels_number,
                 C_rows, C_columns);
-
             C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
         }
     }
@@ -283,6 +282,32 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 }
 
 
+void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
+{
+    const Index columns_number = vector.size();
+
+    for (Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+
+        column.device(*thread_pool_device) = vector * vector(i);
+    }
+}
+
+
+void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
+{
+    const Index columns_number = vector.size();
+
+    for (Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+
+        column.device(*thread_pool_device) = vector*vector(i);
+    }
+}
+
+
 Tensor<type, 2> self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
 {
     const Index columns_number = vector.size();
@@ -297,19 +322,6 @@ Tensor<type, 2> self_kronecker_product(ThreadPoolDevice* thread_pool_device, con
     }
 
     return matrix;
-}
-
-
-void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
-{
-    const Index columns_number = vector.size();
-
-    for (Index i = 0; i < columns_number; i++)
-    {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
-
-        column.device(*thread_pool_device) = vector*vector(i);
-    }
 }
 
 

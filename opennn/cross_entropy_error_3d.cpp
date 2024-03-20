@@ -53,7 +53,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first,
                                              targets_pair.second[0],
                                              targets_pair.second[1]);
-
+    
     // Forward propagation
     
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
@@ -62,11 +62,11 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
                                              outputs_pair.second[0],
                                              outputs_pair.second[1],
                                              outputs_pair.second[2]);
-
+    
     // Back propagation
 
     const Index layers_number = back_propagation.neural_network.layers.size();
-
+    
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(layers_number - 1));
     

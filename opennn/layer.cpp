@@ -278,6 +278,34 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 
     y.device(*thread_pool_device) = y / y_sum;
 }
+
+
+void Layer::softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
+{
+    const Index rows_number = y.dimension(0);
+    const Index raw_variables_number = y.dimension(1);
+    const Index channels_number = y.dimension(2);
+
+    dy_dx.setZero();
+
+    for (Index i = 0; i < channels_number; i++)
+    {
+        for (Index j = 0; j < raw_variables_number; j++)
+        {
+            const TensorMap<Tensor<type, 1>> y_vector((type*)y.data() + j * rows_number + i * rows_number * raw_variables_number,
+                rows_number);
+
+            TensorMap<Tensor<type, 2>> dy_dx_matrix((type*)dy_dx.data() + j * rows_number * rows_number + i * rows_number * rows_number * raw_variables_number,
+                rows_number, rows_number);
+
+            self_kronecker_product(thread_pool_device, y_vector, dy_dx_matrix);
+
+            dy_dx_matrix.device(*thread_pool_device) = -dy_dx_matrix;
+
+            sum_diagonal(dy_dx_matrix, y_vector);
+        }
+    }
+}
 }
 
 // OpenNN: Open Neural Networks Library.
