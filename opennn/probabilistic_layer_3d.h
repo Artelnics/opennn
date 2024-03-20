@@ -33,7 +33,7 @@ struct ProbabilisticLayer3DForwardPropagation;
 struct ProbabilisticLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
 #endif
 
 
@@ -194,7 +194,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
+    //#include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
 #endif
 
 };

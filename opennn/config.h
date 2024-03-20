@@ -25,7 +25,7 @@
 #include <execution>
 
 
-//#define OPENNN_CUDA
+#define OPENNN_CUDA
 #ifdef OPENNN_CUDA
 
 #include "../../CudaOpennn/CudaOpennn/kernel.cuh"

@@ -277,7 +277,7 @@ protected:
    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/loss_index_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/loss_index_cuda.h"
 #endif
 
 };

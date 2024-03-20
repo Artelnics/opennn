@@ -38,10 +38,6 @@ struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
-#endif
-
 
 /// This class represents a layer of perceptrons.
 
@@ -225,6 +221,10 @@ public:
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+        #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+    #endif
+
 protected:
 
    // MEMBERS
@@ -249,9 +249,9 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
-#endif
+    #ifdef OPENNN_CUDA
+        #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
+    #endif
 
 };
 

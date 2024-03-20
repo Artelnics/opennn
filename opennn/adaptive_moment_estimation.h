@@ -155,7 +155,7 @@ private:
 
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/adaptive_moment_estimation_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
 };

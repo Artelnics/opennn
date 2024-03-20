@@ -34,7 +34,7 @@ struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
 #ifdef OPENNN_CUDA
-//    struct ConvolutionalLayerForwardPropagationCuda;
+    struct ConvolutionalLayerForwardPropagationCuda;
 #endif
 
 class ConvolutionalLayer : public Layer
@@ -251,8 +251,8 @@ protected:
    Tensor<type, 1> offsets;
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
-//    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
 #endif
 
 };
