@@ -65,7 +65,7 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
         if(augmentation) perform_augmentation();
     }
 
-    if (context_indices.size() != 0)
+    if (has_context)
     {
         fill_submatrix(data, samples_indices, context_indices, context_data);
     }

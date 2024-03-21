@@ -74,7 +74,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     Tensor<type, 2> cross_entropy_errors(targets.dimension(0), targets.dimension(1));
     Tensor<type, 0> cross_entropy_error;
-    
+
 #pragma omp parallel for
     for (Index i = 0; i < targets.dimension(0); i++)
         for (Index j = 0; j < targets.dimension(1); j++)

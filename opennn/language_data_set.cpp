@@ -49,12 +49,12 @@ Tensor<string, 1> LanguageDataSet::get_completion_vocabulary() const
 
 Index LanguageDataSet::get_context_vocabulary_size() const
 {
-    return context_vocabulary.size();
+    return context_vocabulary.size() + 2;
 }
 
 Index LanguageDataSet::get_completion_vocabulary_size() const
 {
-    return completion_vocabulary.size();
+    return completion_vocabulary.size() + 2;
 }
 
 Index LanguageDataSet::get_context_length() const
@@ -264,6 +264,37 @@ void LanguageDataSet::set_text_separator(const string& new_separator_string)
         throw runtime_error(buffer.str());
     }
 }
+
+
+void LanguageDataSet::set_data_random_language_model(const Index& batch_samples_number,
+                                                     const Index& completion_length,
+                                                     const Index& context_length,
+                                                     const Index& completion_dimension,
+                                                     const Index& context_dimension)
+{
+    data_source_path = "";
+
+    set(batch_samples_number, context_length + 2 * completion_length);
+
+    for (Index i = 0; i < batch_samples_number; i++)
+    {
+        for (Index j = 0; j < context_length; j++)
+            data(i, j) = type(rand() % context_dimension);
+
+        for (Index j = 0; j < 2 * completion_length; j++)
+            data(i, j + context_length) = type(rand() % completion_dimension);
+    }
+
+    for (Index i = 0; i < context_length; i++)
+        set_raw_variable_use(i, DataSet::VariableUse::Context);
+
+    for (Index i = 0; i < completion_length; i++)
+        set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
+
+    for (Index i = 0; i < completion_length; i++)
+        set_raw_variable_use(i + context_length + completion_length, DataSet::VariableUse::Target);
+}
+
 
 void LanguageDataSet::set_default()
 {
@@ -1597,10 +1628,6 @@ void LanguageDataSet::read_csv_3_language_model()
     file.close();
 
     if (display) cout << "Data read succesfully..." << endl;
-
-    // Check Constant
-
-    check_constant_raw_variables();
 }
 
 

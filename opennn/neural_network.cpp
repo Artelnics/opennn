@@ -1766,7 +1766,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
     }
 
     Tensor<pair<type*, dimensions>, 1> layer_inputs;
-
+    
     for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
         if (i == first_layer_index || is_input_layer(layers_inputs_indices(i)))
@@ -1792,8 +1792,8 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
         }
 
         layers(i)->forward_propagate(layer_inputs,
-            forward_propagation.layers(i),
-            is_training);
+                                     forward_propagation.layers(i),
+                                     is_training);
     }
 }
 

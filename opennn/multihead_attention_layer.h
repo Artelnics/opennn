@@ -115,7 +115,7 @@ public:
 
     void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&) const;
 
-    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 3>&) const;
+    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
     // Attention computation
 
@@ -212,6 +212,14 @@ protected:
 
     bool display = true;
 
+    // Operation indices
+
+    const Eigen::array<Index, 1> projection_sum_index = Eigen::array<Index, 1>({ 3 });
+    const Eigen::array<Index, 2> projection_biases_derivatives_sum_indices = Eigen::array<Index, 2>({ 0, 1 });
+
+    const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
+    const Eigen::array<IndexPair<Index>, 1> attention_output_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
+    const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 };
 
     struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
@@ -263,6 +271,7 @@ protected:
         Tensor<type, 4> softmax_attention_scores;
         Tensor<type, 4> attention_outputs;
 
+        Tensor<type, 4> projection_outputs;
         Tensor<type, 3> outputs;
     };
 

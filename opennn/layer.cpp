@@ -264,6 +264,7 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
     const Eigen::array<Index, 4> expand_softmax_dim{ {rows_number, 1, 1, 1} };
 
     // Normalize values to avoid possible NANs
+
     y.device(*thread_pool_device) = x - x.maximum(softmax_dimension)
                                          .reshape(range_4)
                                          .broadcast(expand_softmax_dim);
@@ -283,20 +284,23 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 void Layer::softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
 {
     const Index rows_number = y.dimension(0);
-    const Index raw_variables_number = y.dimension(1);
+    const Index columns_number = y.dimension(1);
     const Index channels_number = y.dimension(2);
+
+    type* y_data = (type*) y.data();
+    type* dy_dx_data = (type*) dy_dx.data();
 
     dy_dx.setZero();
 
     for (Index i = 0; i < channels_number; i++)
     {
-        for (Index j = 0; j < raw_variables_number; j++)
+        for (Index j = 0; j < columns_number; j++)
         {
-            const TensorMap<Tensor<type, 1>> y_vector((type*)y.data() + j * rows_number + i * rows_number * raw_variables_number,
-                rows_number);
+            type* y_vector_data = y_data + j * rows_number + i * rows_number * columns_number;
+            type* dy_dx_matrix_data = dy_dx_data + j * rows_number * rows_number + i * rows_number * rows_number * columns_number;
 
-            TensorMap<Tensor<type, 2>> dy_dx_matrix((type*)dy_dx.data() + j * rows_number * rows_number + i * rows_number * rows_number * raw_variables_number,
-                rows_number, rows_number);
+            const TensorMap<Tensor<type, 1>> y_vector(y_vector_data, rows_number);
+            TensorMap<Tensor<type, 2>> dy_dx_matrix(dy_dx_matrix_data, rows_number, rows_number);
 
             self_kronecker_product(thread_pool_device, y_vector, dy_dx_matrix);
 

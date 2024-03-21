@@ -111,13 +111,59 @@ void multiply_rows(Tensor<type, 3>& tensor, const Tensor<type, 1>& vector)
 }
 
 
-// Assumes A, B & C share dimensions 2 & 3 and A & B share one of their remaining 2 dimensions (the contraction axes)
+// Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
 // By default contraction axes are (1, 0)
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
-    const Tensor<type, 4>& A,
-    const Tensor<type, 4>& B,
-    Tensor<type, 4>& C,
+                                 const TensorMap<Tensor<type, 3>>& A,
+                                 TensorMap<Tensor<type, 3>>& B,
+                                 TensorMap<Tensor<type, 3>>& C,
+                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+{
+    Index A_rows = A.dimension(0);
+    Index A_columns = A.dimension(1);
+    Index B_rows = B.dimension(0);
+    Index B_columns = B.dimension(1);
+
+    Index C_rows = A_rows;
+    Index C_columns = B_columns;
+
+    if (contraction_axes[0].first == 0)     C_rows = A_columns;
+
+    if (contraction_axes[0].second == 1)    C_columns = B_rows;
+
+    Index channels_number = A.dimension(2);
+
+    type* A_data = (type*)A.data();
+    type* B_data = (type*)B.data();
+    type* C_data = C.data();
+
+    type* a_matrix_data = nullptr;
+    type* b_matrix_data = nullptr;
+    type* c_matrix_data = nullptr;
+
+    for (Index i = 0; i < channels_number; i++)
+    {
+        a_matrix_data = A_data + A_rows * A_columns * i;
+        b_matrix_data = B_data + B_rows * B_columns * i;
+        c_matrix_data = C_data + C_rows * C_columns * i;
+
+        const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
+        const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
+        TensorMap<Tensor<type, 2>> C_matrix(c_matrix_data, C_rows, C_columns);
+
+        C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
+    }
+}
+
+
+// Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
+// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
+// By default contraction axes are (1, 0)
+void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
+    TensorMap<Tensor<type, 3>>& A,
+    const TensorMap<Tensor<type, 3>>& B,
+    TensorMap<Tensor<type, 3>>& C,
     const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
     Index A_rows = A.dimension(0);
@@ -128,28 +174,79 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
     Index C_rows = A_rows;
     Index C_columns = B_columns;
 
-    if (contraction_axes[0].first == 0)
-        C_rows = A_columns;
+    if (contraction_axes[0].first == 0)     C_rows = A_columns;
 
-    if (contraction_axes[0].second == 1)
-        C_columns = B_rows;
+    if (contraction_axes[0].second == 1)    C_columns = B_rows;
+
+    Index channels_number = A.dimension(2);
+
+    type* A_data = (type*)A.data();
+    type* B_data = (type*)B.data();
+    type* C_data = C.data();
+
+    type* a_matrix_data = nullptr;
+    type* b_matrix_data = nullptr;
+    type* c_matrix_data = nullptr;
+
+    for (Index i = 0; i < channels_number; i++)
+    {
+        a_matrix_data = A_data + A_rows * A_columns * i;
+        b_matrix_data = B_data + B_rows * B_columns * i;
+        c_matrix_data = C_data + C_rows * C_columns * i;
+
+        const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
+        const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
+        TensorMap<Tensor<type, 2>> C_matrix(c_matrix_data, C_rows, C_columns);
+
+        C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
+    }
+}
+
+
+// Assumes A, B & C share dimensions 2 & 3 and A & B share one of their remaining 2 dimensions (the contraction axes)
+// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
+// By default contraction axes are (1, 0)
+void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
+                                 const Tensor<type, 4>& A,
+                                 const Tensor<type, 4>& B,
+                                 Tensor<type, 4>& C,
+                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+{
+    Index A_rows = A.dimension(0);
+    Index A_columns = A.dimension(1);
+    Index B_rows = B.dimension(0);
+    Index B_columns = B.dimension(1);
+
+    Index C_rows = A_rows;
+    Index C_columns = B_columns;
+
+    if (contraction_axes[0].first == 0)     C_rows = A_columns;
+
+    if (contraction_axes[0].second == 1)    C_columns = B_rows;
 
     Index channels_number = A.dimension(2);
     Index blocks_number = A.dimension(3);
 
-#pragma omp parallel for
+    type* A_data = (type*)A.data();
+    type* B_data = (type*)B.data();
+    type* C_data = C.data();
+
+    type* a_matrix_data = nullptr;
+    type* b_matrix_data = nullptr;
+    type* c_matrix_data = nullptr;
+
     for (Index i = 0; i < blocks_number; i++)
     {
         for (Index j = 0; j < channels_number; j++)
         {
-            const TensorMap<Tensor<type, 2>> A_matrix((type*)A.data() + j * A_rows * A_columns + i * A_rows * A_columns * channels_number,
-                A_rows, A_columns);
+            a_matrix_data = A_data + A_rows * A_columns * (i * channels_number + j);
+            b_matrix_data = B_data + B_rows * B_columns * (i * channels_number + j);
+            c_matrix_data = C_data + C_rows * C_columns * (i * channels_number + j);
 
-            const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + j * B_rows * B_columns + i * B_rows * B_columns * channels_number,
-                B_rows, B_columns);
+            const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
+            const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
+            TensorMap<Tensor<type, 2>> C_matrix(c_matrix_data, C_rows, C_columns);
 
-            TensorMap<Tensor<type, 2>> C_matrix(C.data() + j * C_rows * C_columns + i * C_rows * C_columns * channels_number,
-                C_rows, C_columns);
             C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
         }
     }
@@ -161,10 +258,10 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
 // By default contraction axes are (1, 0)
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
-    const Tensor<type, 4>& A,
-    const Tensor<type, 3>& B,
-    Tensor<type, 4>& C,
-    const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 const Tensor<type, 4>& A,
+                                 const Tensor<type, 3>& B,
+                                 Tensor<type, 4>& C,
+                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
     const Index A_rows = A.dimension(0);
     const Index A_columns = A.dimension(1);
@@ -174,26 +271,30 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
     Index C_rows = A_rows;
     Index C_columns = B_columns;
 
-    if (contraction_axes[0].first == 0)
-        C_rows = A_columns;
+    if (contraction_axes[0].first == 0)     C_rows = A_columns;
 
-    if (contraction_axes[0].second == 1)
-        C_columns = B_rows;
+    if (contraction_axes[0].second == 1)    C_columns = B_rows;
 
     const Index channels_number = A.dimension(2);
     const Index blocks_number = A.dimension(3);
 
-#pragma omp parallel for
+    type* A_data = (type*) A.data();
+    type* B_data = (type*) B.data();
+    type* C_data = C.data();
+
+    type* a_block_data = nullptr;
+    type* b_matrix_data = nullptr;
+    type* c_block_data = nullptr;
+
     for (Index i = 0; i < blocks_number; i++)
     {
-        const TensorMap<Tensor<type, 3>> A_block((type*)A.data() + i * A_rows * A_columns * channels_number,
-            A_rows, A_columns, channels_number);
+        a_block_data = A_data + A_rows * A_columns * channels_number * i;
+        b_matrix_data = B_data + B_rows * B_columns * i;
+        c_block_data = C_data + C_rows * C_columns * channels_number * i;
 
-        const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + i * B_rows * B_columns,
-            B_rows, B_columns);
-
-        TensorMap<Tensor<type, 3>> C_block(C.data() + i * C_rows * C_columns * channels_number,
-            C_rows, C_columns, channels_number);
+        const TensorMap<Tensor<type, 3>> A_block(a_block_data, A_rows, A_columns, channels_number);
+        const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
+        TensorMap<Tensor<type, 3>> C_block(c_block_data, C_rows, C_columns, channels_number);
 
         C_block.device(*thread_pool_device) = A_block.contract(B_matrix, contraction_axes);
     }
@@ -204,10 +305,10 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 // The other dimension of C will be the non-equal dimension of A
 // By default contraction axes are (1, 0)
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
-    const Tensor<type, 4>& A,
-    const Tensor<type, 3>& B,
-    Tensor<type, 3>& C,
-    const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 const Tensor<type, 4>& A,
+                                 const Tensor<type, 3>& B,
+                                 Tensor<type, 3>& C,
+                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
     Index A_rows = A.dimension(0);
     Index A_columns = A.dimension(1);
@@ -215,25 +316,30 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     Index C_rows = A_rows;
 
-    if (contraction_axes[0].first == 0)
-        C_rows = A_columns;
+    if (contraction_axes[0].first == 0)     C_rows = A_columns;
 
     Index channels_number = A.dimension(2);
     Index blocks_number = A.dimension(3);
 
-#pragma omp parallel for
+    type* A_data = (type*) A.data();
+    type* B_data = (type*) B.data();
+    type* C_data = C.data();
+
+    type* a_matrix_data = nullptr;
+    type* b_vector_data = nullptr;
+    type* c_vector_data = nullptr;
+
     for (Index i = 0; i < blocks_number; i++)
     {
         for (Index j = 0; j < channels_number; j++)
         {
-            const TensorMap<Tensor<type, 2>> A_matrix((type*)A.data() + j * A_rows * A_columns + i * A_rows * A_columns * channels_number,
-                A_rows, A_columns);
+            a_matrix_data = A_data + A_rows * A_columns * (i * channels_number + j);
+            b_vector_data = B_data + B_rows * (i * channels_number + j);
+            c_vector_data = C_data + C_rows * (i * channels_number + j);
 
-            const TensorMap<Tensor<type, 1>> B_vector((type*)B.data() + j * B_rows + i * B_rows * channels_number,
-                B_rows);
-
-            TensorMap<Tensor<type, 1>> C_vector(C.data() + j * C_rows + i * C_rows * channels_number,
-                C_rows);
+            const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
+            const TensorMap<Tensor<type, 1>> B_vector(b_vector_data, B_rows);
+            TensorMap<Tensor<type, 1>> C_vector(c_vector_data, C_rows);
 
             C_vector.device(*thread_pool_device) = A_matrix.contract(B_vector, contraction_axes);
         }
@@ -244,37 +350,42 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 // Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes)
 // The other dimension of C will be the non-equal dimension of A
 // By default contraction axes are (1, 0)
-
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 3>& B,
                                  TensorMap<Tensor<type, 3>>& C,
                                  const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
-    const Index A_rows = A.dimension(0);
-    const Index A_columns = A.dimension(1);
-    const Index B_rows = B.dimension(0);
+    Index A_rows = A.dimension(0);
+    Index A_columns = A.dimension(1);
+    Index B_rows = B.dimension(0);
 
     Index C_rows = A_rows;
 
-    if (contraction_axes[0].first == 0)
-        C_rows = A_columns;
+    if (contraction_axes[0].first == 0)     C_rows = A_columns;
 
-    const Index channels_number = A.dimension(2);
-    const Index blocks_number = A.dimension(3);
+    Index channels_number = A.dimension(2);
+    Index blocks_number = A.dimension(3);
+
+    type* A_data = (type*)A.data();
+    type* B_data = (type*)B.data();
+    type* C_data = C.data();
+
+    type* a_matrix_data = nullptr;
+    type* b_vector_data = nullptr;
+    type* c_vector_data = nullptr;
 
     for (Index i = 0; i < blocks_number; i++)
     {
         for (Index j = 0; j < channels_number; j++)
         {
-            const TensorMap<Tensor<type, 2>> A_matrix((type*)A.data() + j * A_rows * A_columns + i * A_rows * A_columns * channels_number,
-                                                      A_rows, A_columns);
+            a_matrix_data = A_data + A_rows * A_columns * (i * channels_number + j);
+            b_vector_data = B_data + B_rows * (i * channels_number + j);
+            c_vector_data = C_data + C_rows * (i * channels_number + j);
 
-            const TensorMap<Tensor<type, 1>> B_vector((type*)B.data() + j * B_rows + i * B_rows * channels_number,
-                                                      B_rows);
-
-            TensorMap<Tensor<type, 1>> C_vector(C.data() + j * C_rows + i * C_rows * channels_number,
-                                                C_rows);
+            const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
+            const TensorMap<Tensor<type, 1>> B_vector(b_vector_data, B_rows);
+            TensorMap<Tensor<type, 1>> C_vector(c_vector_data, C_rows);
 
             C_vector.device(*thread_pool_device) = A_matrix.contract(B_vector, contraction_axes);
         }
