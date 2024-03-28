@@ -3015,6 +3015,46 @@ Tensor<string, 1> DataSet::get_columns_names() const
     return columns_names;
 }
 
+Tensor<Index, 1> DataSet::get_uses_of_columns() const
+{
+    const Index columns_number = get_columns_number();
+
+    Tensor<Index, 1> columns_uses(columns_number);
+
+    Tensor<DataSet::VariableUse, 1> T = get_columns_uses();
+
+    for (int var = 0; var < T.dimension(0); ++var)
+    {
+        if (T(var) ==  VariableUse::Unused)
+        {
+            columns_uses(var) = 0;
+        }
+        else if (T(var) ==  VariableUse::Target)
+        {
+            columns_uses(var) = -1;
+        }
+        else
+        {
+            columns_uses(var) =  1;
+        }
+    }
+
+    return columns_uses;
+}
+
+Tensor<Tensor<string, 1>, 1> DataSet::get_columns_categories_number() const
+{
+    const Index columns_number = get_columns_number();
+
+    Tensor<Tensor<string, 1>, 1> columns_categories(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        columns_categories(i) = columns(i).categories;
+    }
+
+    return columns_categories;
+}
 
 Tensor<string, 1> DataSet::get_time_series_columns_names() const
 {
