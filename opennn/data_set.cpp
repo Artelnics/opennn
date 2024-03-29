@@ -8420,9 +8420,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     if(regex_search(binary_data_file_name, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(binary_data_file_name);
-        file.open(file_name_wide, ios::binary);
+        file.open(string_to_wide_string(binary_data_file_name), ios::binary);
     }
     else
     {
@@ -8488,9 +8486,7 @@ void DataSet::load_data_binary()
 
     if(regex_search(data_source_path, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_source_path);
-        file.open(file_name_wide, ios::binary);
+        file.open(string_to_wide_string(data_source_path), ios::binary);
     }
     else
     {
@@ -9350,9 +9346,7 @@ void DataSet::read_csv_1()
 
     if(std::regex_search(data_source_path, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_source_path);
-        file.open(file_name_wide);
+        file.open(string_to_wide_string(data_source_path));
     }else
     {
         file.open(data_source_path.c_str());
@@ -9601,9 +9595,7 @@ void DataSet::read_csv_2_simple()
 
     if(regex_search(data_source_path, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_source_path);
-        file.open(file_name_wide);
+        file.open(string_to_wide_string(data_source_path));
     }else
     {
         file.open(data_source_path.c_str());
@@ -9708,9 +9700,7 @@ void DataSet::read_csv_3_simple()
 
     if(std::regex_search(data_source_path, accent_regex))
     {
-        wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_source_path);
-        file.open(file_name_wide);
+        file.open(string_to_wide_string(data_source_path));
     }else
     {
         file.open(data_source_path.c_str());
@@ -9842,9 +9832,7 @@ void DataSet::read_csv_2_complete()
 
     if(regex_search(data_source_path, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_source_path);
-        file.open(file_name_wide);
+        file.open(string_to_wide_string(data_source_path));
     }
     else
     {
@@ -10005,9 +9993,7 @@ void DataSet::read_csv_3_complete()
 
     if(regex_search(data_source_path, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_source_path);
-        file.open(file_name_wide);
+        file.open(string_to_wide_string(data_source_path));
     }
     else
     {

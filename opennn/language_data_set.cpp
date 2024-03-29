@@ -1517,9 +1517,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     if (std::regex_search(data_source_path, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_source_path);
-        file.open(file_name_wide);
+        file.open(string_to_wide_string(data_source_path));
     }
     else
     {

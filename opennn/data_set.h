@@ -14,7 +14,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <codecvt>
 #include <cstdlib>
 #include <ctime>
 #include <exception>
@@ -38,6 +37,11 @@
 #include "config.h"
 #include "correlation.h"
 #include "scaling.h"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
 
 using namespace std;
 using namespace Eigen;
@@ -63,6 +67,26 @@ using namespace Eigen;
 
 namespace opennn
 {
+
+#ifdef _WIN32
+    inline std::wstring string_to_wide_string(const std::string& string)
+    {
+        if (string.empty())
+        {
+            return L"";
+        }
+
+        const auto size_needed = MultiByteToWideChar(CP_UTF8, 0, string.data(), (int)string.size(), nullptr, 0);
+        if (size_needed <= 0)
+        {
+            throw std::runtime_error("MultiByteToWideChar() failed: " + std::to_string(size_needed));
+        }
+
+        std::wstring result(size_needed, 0);
+        MultiByteToWideChar(CP_UTF8, 0, string.data(), (int)string.size(), result.data(), size_needed);
+        return result;
+    }
+#endif
 
 /// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
 
