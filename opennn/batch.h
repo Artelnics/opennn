@@ -27,8 +27,6 @@ struct Batch
 
     pair<type*, dimensions> get_targets_pair() const;
 
-    Tensor<pair<type*, dimensions>, 1> get_context_pair() const;
-
     Index get_batch_samples_number() const;
 
     void set(const Index&, DataSet*);
@@ -60,14 +58,13 @@ struct Batch
     Tensor<type, 1> context_tensor;
 
     type* context_data = nullptr;
+
+    bool has_context = false;
 };
 
-
-
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/data_set_batch.h"
+    #include "../../opennn-cuda/opennn-cuda/batch_cuda.h"
 #endif
-
 
 }
 #endif

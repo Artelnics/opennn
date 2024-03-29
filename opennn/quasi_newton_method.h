@@ -112,7 +112,6 @@ public:
 
    void calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData&) const;
 
-   void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
    void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
 
    void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;

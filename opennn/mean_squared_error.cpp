@@ -8,7 +8,7 @@
 
 #include "mean_squared_error.h"
 #include "neural_network_forward_propagation.h"
-#include "loss_index_back_propagation.h"
+#include "back_propagation.h"
 #include "adaptive_moment_estimation.h"
 
 namespace opennn
@@ -132,29 +132,29 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
 void MeanSquaredError::calculate_output_delta_lm(const Batch&,
                                                  ForwardPropagation&,
-                                                 BackPropagationLM& loss_index_back_propagation) const
+                                                 BackPropagationLM& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    // Neural network
 
-    LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const Layer* output_layer = output_layer_back_propagation->layer;
+    // Back propagation
 
-    const Layer::Type output_layer_type = output_layer->get_type();
+    LayerBackPropagationLM* output_layer_back_propagation = back_propagation.neural_network.layers(last_trainable_layer_index);
 
-    copy(/*execution::par,*/
-         loss_index_back_propagation.errors.data(),
-         loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
-         output_layer_back_propagation->deltas.data());
+    const Tensor<type, 2>& errors = back_propagation.errors;
+    const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    divide_columns(thread_pool_device,
-                   output_layer_back_propagation->deltas,
-                   loss_index_back_propagation.squared_errors);
+    Tensor<type, 2>& deltas = output_layer_back_propagation->deltas;
+
+    deltas.device(*thread_pool_device) = errors;
+
+    divide_columns(thread_pool_device, deltas, squared_errors);
 }
 
 
 void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
-                                                   BackPropagationLM& loss_index_back_propagation_lm) const
+                                                   BackPropagationLM& back_propagation_lm) const
 {
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -162,17 +162,17 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     const type coefficient = type(2)/type(batch_samples_number);
 
-    const Tensor<type, 1>& squared_errors = loss_index_back_propagation_lm.squared_errors;
-    const Tensor<type, 2>& squared_errors_jacobian = loss_index_back_propagation_lm.squared_errors_jacobian;
+    const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
+    const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    Tensor<type, 1>& gradient = loss_index_back_propagation_lm.gradient;
+    Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
     gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
 }
 
 
 void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
-                                                  BackPropagationLM& loss_index_back_propagation_lm) const
+                                                  BackPropagationLM& back_propagation_lm) const
 {
      const Index outputs_number = neural_network->get_outputs_number();
 
@@ -180,9 +180,9 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
      const type coefficient = type(2.0)/type(batch_samples_number);
 
-     Tensor<type, 2>& hessian = loss_index_back_propagation_lm.hessian;
+     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
-     const Tensor<type, 2>& squared_errors_jacobian = loss_index_back_propagation_lm.squared_errors_jacobian;
+     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
      hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
 }

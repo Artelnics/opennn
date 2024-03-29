@@ -25,6 +25,8 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 #include "multihead_attention_layer.h"
+#include "perceptron_layer_3d.h"
+#include "probabilistic_layer_3d.h"
 
 namespace opennn
 {
@@ -34,7 +36,7 @@ struct EmbeddingLayerBackPropagation;
 struct EmbeddingLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+    //#include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
 #endif
 
 
@@ -88,6 +90,8 @@ public:
     void set_depth(const Index&);
 
     void set_embedding_weights();
+
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
     void set_parameters_random() final;
     void set_parameters_constant(const type&) final;
 
@@ -104,19 +108,24 @@ public:
     void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&layer,
                            LayerForwardPropagation*,
                            const bool&) final;
-    /*
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                           Tensor<type, 1>&,
-                           LayerForwardPropagation*) final;
-    */
+
     // Delta methods
 
     void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerBackPropagation*) const final;
+                                LayerBackPropagation*,
+                                LayerForwardPropagation*,
+                                LayerBackPropagation*) const final;
 
     void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
                                 MultiheadAttentionLayerBackPropagation*,
+                                EmbeddingLayerBackPropagation*) const;
+
+    void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
+                                PerceptronLayer3DBackPropagation*,
+                                EmbeddingLayerBackPropagation*) const;
+
+    void calculate_hidden_delta(ProbabilisticLayer3DForwardPropagation*,
+                                ProbabilisticLayer3DBackPropagation*,
                                 EmbeddingLayerBackPropagation*) const;
 
     // Gradient methods
@@ -124,6 +133,8 @@ public:
     void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
+
+    void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
     // Expression methods
 
@@ -163,9 +174,9 @@ protected:
 
     bool display = true;
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/embedding_layer_cuda.h"
-//#endif
+#ifdef OPENNN_CUDA
+    //#include "../../opennn-cuda/opennn-cuda/embedding_layer_cuda.h"
+#endif
 
     };
 
@@ -255,7 +266,6 @@ protected:
             //cout << deltas << endl;
 
         }
-
 
         Tensor<type, 3> deltas;
 

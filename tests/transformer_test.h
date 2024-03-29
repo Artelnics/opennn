@@ -42,6 +42,8 @@ public:
 
     void test_forward_propagate();
 
+    bool check_activations_sums(const Tensor<type, 3>&);
+
     // Unit testing methods
 
     void run_test_case();
@@ -50,7 +52,7 @@ private:
 
     Index batch_samples_number = 0;
 
-    Index inputs_length = 0;
+    Index input_length = 0;
     Index context_length = 0;
     Index inputs_dimension = 0;
     Index context_dimension = 0;

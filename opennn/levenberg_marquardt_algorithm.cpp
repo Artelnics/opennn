@@ -614,7 +614,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 /// \param batch
 /// \param forward_propagation
 /// \param back_propagation
-/// \param loss_index_back_propagation_lm
+/// \param back_propagation_lm
 /// \param optimization_data
 
 void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
@@ -630,6 +630,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     Tensor<type, 1>& parameters = back_propagation_lm.parameters;
+
+    type& error = back_propagation_lm.error;
+    type& loss = back_propagation_lm.loss;
 
     const Tensor<type, 1>& gradient = back_propagation_lm.gradient;
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
@@ -650,8 +653,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
         
         neural_network->forward_propagate(inputs_pair,
-                                                  potential_parameters,
-                                                  forward_propagation);
+                                          potential_parameters,
+                                          forward_propagation);
 
         loss_index->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
 
@@ -663,20 +666,20 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         try
         {
-            new_loss = back_propagation_lm.error + regularization_weight*loss_index->calculate_regularization(potential_parameters);
+            new_loss = error + regularization_weight*loss_index->calculate_regularization(potential_parameters);
 
         }catch(exception)
         {
-            new_loss = back_propagation_lm.loss;
+            new_loss = loss;
         }
 
-        if(new_loss < back_propagation_lm.loss) // succesfull step
+        if(new_loss < loss) // succesfull step
         {
             set_damping_parameter(damping_parameter/damping_parameter_factor);
 
             parameters = potential_parameters;
 
-            back_propagation_lm.loss = new_loss;
+            loss = new_loss;
 
             success = true;
 

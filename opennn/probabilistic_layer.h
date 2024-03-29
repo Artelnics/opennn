@@ -38,7 +38,6 @@ struct ProbabilisticLayerBackPropagationLM;
     #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
 #endif
 
-
 /// This class represents a layer of probabilistic neurons.
 
 ///
@@ -157,7 +156,6 @@ public:
    void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
                                                  const Tensor<type, 3>&,
                                                  Tensor<type, 2>&) const;
-
 
    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,

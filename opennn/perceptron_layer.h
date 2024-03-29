@@ -42,7 +42,6 @@ struct ProbabilisticLayerBackPropagationLM;
     #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
 #endif
 
-
 /// This class represents a layer of perceptrons.
 
 /// PerceptronLayer is a single-layer network with a hard-limit transfer function.
@@ -57,9 +56,7 @@ public:
 
     /// Enumeration of the available activation functions for the perceptron neuron model.
 
-    enum class ActivationFunction{Threshold,
-                                  SymmetricThreshold,
-                                  Logistic,
+    enum class ActivationFunction{Logistic,
                                   HyperbolicTangent,
                                   Linear,
                                   RectifiedLinear,
@@ -167,6 +164,7 @@ public:
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
+                               LayerForwardPropagation*,
                                LayerBackPropagation*) const final;
 
    void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
@@ -226,6 +224,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
+
 protected:
 
    // MEMBERS
@@ -250,11 +249,13 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
-#endif
+    #ifdef OPENNN_CUDA
+        #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
+    #endif
 
 };
+
+
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
@@ -320,6 +321,8 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     Tensor<type, 2> error_combinations_derivatives;
 
 };
+
+
 
 }
 

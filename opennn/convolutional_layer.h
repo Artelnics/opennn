@@ -44,9 +44,7 @@ public:
 
     /// Enumeration of the available activation functions for the convolutional layer.
 
-    enum class ActivationFunction{Threshold,
-                                  SymmetricThreshold,
-                                  Logistic,
+    enum class ActivationFunction{Logistic,
                                   HyperbolicTangent,
                                   Linear,
                                   RectifiedLinear,
@@ -95,26 +93,26 @@ public:
 
     Index get_outputs_rows_number() const;
 
-    Index get_outputs_raw_variables_number() const;
+    Index get_outputs_columns_number() const;
 
     ConvolutionType get_convolution_type() const;
     string write_convolution_type() const;
 
-    Index get_raw_variable_stride() const;
+    Index get_column_stride() const;
 
     Index get_row_stride() const;
 
     Index get_kernels_number() const;
     Index get_kernels_channels_number() const;
     Index get_kernels_rows_number() const;
-    Index get_kernels_raw_variables_number() const;
+    Index get_kernels_columns_number() const;
 
     Index get_padding_width() const;
     Index get_padding_height() const;
 
     Index get_inputs_channels_number() const;
     Index get_inputs_rows_number() const;
-    Index get_inputs_raw_variables_number() const;
+    Index get_inputs_columns_number() const;
 
     Index get_inputs_number() const;
     Index get_neurons_number() const;
@@ -144,7 +142,7 @@ public:
 
     void set_row_stride(const Index&);
 
-    void set_raw_variable_stride(const Index&);
+    void set_column_stride(const Index&);
 
     void set_inputs_dimensions(const Tensor<Index,1>&);
 
@@ -189,6 +187,7 @@ public:
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
+                               LayerForwardPropagation*,
                                LayerBackPropagation*) const final;
 
    void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
@@ -258,40 +257,22 @@ protected:
 
 };
 
+
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
    // Default constructor
 
-   explicit ConvolutionalLayerForwardPropagation()
-       : LayerForwardPropagation()
-   {
-   }
+   explicit ConvolutionalLayerForwardPropagation();
 
    // Constructor
 
-   explicit ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-       : LayerForwardPropagation()
-   {
-       set(new_batch_samples_number, new_layer);
-   }
-   
-   
+   explicit ConvolutionalLayerForwardPropagation(const Index&, Layer*);
+      
    pair<type*, dimensions> get_outputs_pair() const final;
 
+   void set(const Index&, Layer*) final;
 
-   void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-
-   void print() const
-   {
-       cout << "Convolutional layer" << endl;
-
-       cout << "Outputs:" << endl;
-       cout << outputs << endl;
-
-       cout << "Activations derivatives:" << endl;
-       cout << activations_derivatives << endl;
-   }
+   void print() const;
 
    Tensor<type, 4> outputs;
 
@@ -307,71 +288,19 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
 
-   explicit ConvolutionalLayerBackPropagation() : LayerBackPropagation()
-   {
-   }
+   explicit ConvolutionalLayerBackPropagation();
+
+   explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
+
+   virtual ~ConvolutionalLayerBackPropagation();
 
 
-   explicit ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-       : LayerBackPropagation()
-   {
-       set(new_batch_samples_number, new_layer);
-   }
+   pair<type*, dimensions> get_deltas_pair() const;
 
+   void set(const Index&, Layer*) final;
 
-   virtual ~ConvolutionalLayerBackPropagation()
-   {
-   }   
+   void print() const;
 
-
-   void set(const Index& new_batch_samples_number, Layer* new_layer) final
-   {
-       batch_samples_number = new_batch_samples_number;
-
-       layer = new_layer;
-
-       const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
-
-       const Index kernesl_rows_number = convolutional_layer->get_kernels_rows_number();
-       const Index kernels_raw_variables_number = convolutional_layer->get_kernels_raw_variables_number();
-       const Index kernels_number = convolutional_layer->get_kernels_number();
-       const Index kernels_channels_number = convolutional_layer->get_kernels_channels_number();
-
-       const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-       const Index outputs_raw_variables_number = convolutional_layer->get_outputs_raw_variables_number();
-
-       deltas.resize(batch_samples_number,
-                     outputs_rows_number,
-                     outputs_raw_variables_number,
-                     kernels_number);
-
-       deltas_data = deltas.data();
-
-       error_combinations_derivatives.resize(batch_samples_number,
-                                                   outputs_rows_number,
-                                                   outputs_raw_variables_number,
-                                                   kernels_number);
-
-       biases_derivatives.resize(kernels_number);
-
-       synaptic_weights_derivatives.resize(kernesl_rows_number,
-                                           kernels_raw_variables_number,
-                                           kernels_channels_number,
-                                           kernels_number);
-   }
-
-
-   void print() const
-   {
-       cout << "Deltas:" << endl;
-       cout << deltas << endl;
-
-       cout << "Biases derivatives:" << endl;
-       cout << biases_derivatives << endl;
-
-       cout << "Synaptic weights derivatives:" << endl;
-       cout << synaptic_weights_derivatives << endl;
-   }
 
    Tensor<type, 4> deltas;
 

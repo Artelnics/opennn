@@ -131,11 +131,8 @@ public:
                                Tensor<type, 3>&) const;
 
    void calculate_activations(const Tensor<type, 3>&,
-                              Tensor<type, 3>&) const;
-
-   void calculate_activations_derivatives(const Tensor<type, 3>&,
-                                          Tensor<type, 3>&,
-                                          Tensor<type, 4>&) const;
+                              Tensor<type, 3>&,
+                              Tensor<type, 2>&) const;
 
    // Outputs
 
@@ -148,6 +145,10 @@ public:
    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
+
+   void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
+                                                 const Tensor<type, 2>&,
+                                                 Tensor<type, 3>&) const;
 
    void insert_gradient(LayerBackPropagation*, 
                         const Index&, 
@@ -193,7 +194,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
+    //#include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
 #endif
 
 };
@@ -231,13 +232,11 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     {
         cout << "Outputs:" << endl;
         cout << outputs << endl;
-
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
     }
 
     Tensor<type, 3> outputs;
-    Tensor<type, 4> activations_derivatives;
+
+    Tensor<type, 2> aux_rows_columns;
 };
 
 
@@ -268,9 +267,6 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;
 
@@ -278,10 +274,7 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
         cout << synaptic_weights_derivatives << endl;
     }
 
-    Tensor<type, 3> deltas;
-
-    Tensor<type, 1> deltas_row;
-    Tensor<type, 2> activations_derivatives_matrix;
+    Tensor<type, 2> targets;
 
     Tensor<type, 3> error_combinations_derivatives;
 

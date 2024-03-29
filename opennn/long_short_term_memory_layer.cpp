@@ -320,8 +320,7 @@ const LongShortTermMemoryLayer::ActivationFunction& LongShortTermMemoryLayer::ge
 
 
 /// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear,
-/// ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string LongShortTermMemoryLayer::write_activation_function() const
 {
@@ -330,10 +329,6 @@ string LongShortTermMemoryLayer::write_activation_function() const
     case ActivationFunction::Logistic: return "Logistic";
 
     case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
-
-    case ActivationFunction::Threshold: return "Threshold";
-
-    case ActivationFunction::SymmetricThreshold: return "SymmetricThreshold";
 
     case ActivationFunction::Linear: return "Linear";
 
@@ -355,7 +350,7 @@ string LongShortTermMemoryLayer::write_activation_function() const
 
 
 /// Returns a string with the name of the layer recurrent activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string LongShortTermMemoryLayer::write_recurrent_activation_function() const
 {
@@ -364,10 +359,6 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function() const
     case ActivationFunction::Logistic: return "Logistic";
 
     case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
-
-    case ActivationFunction::Threshold: return "Threshold";
-
-    case ActivationFunction::SymmetricThreshold: return "SymmetricThreshold";
 
     case ActivationFunction::Linear: return "Linear";
 
@@ -761,7 +752,7 @@ void LongShortTermMemoryLayer::set_activation_function(const LongShortTermMemory
 
 
 /// Sets a new activation(or transfer) function in a single layer.
-/// The argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
+/// The argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
 /// @param new_activation_function Activation function for that layer.
 
 void LongShortTermMemoryLayer::set_activation_function(const string& new_activation_function_name)
@@ -773,14 +764,6 @@ void LongShortTermMemoryLayer::set_activation_function(const string& new_activat
     else if(new_activation_function_name == "HyperbolicTangent")
     {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Threshold")
-    {
-        activation_function = ActivationFunction::Threshold;
-    }
-    else if(new_activation_function_name == "SymmetricThreshold")
-    {
-        activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_activation_function_name == "Linear")
     {
@@ -833,7 +816,7 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const LongShort
 
 
 /// Sets a new recurrent activation(or transfer) function in a single layer.
-/// The argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
+/// The argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
 /// @param new_recurrent_activation_function Recurrent activation function for that layer.
 
 void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& new_recurrent_activation_function_name)
@@ -845,14 +828,6 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
     else if(new_recurrent_activation_function_name == "HyperbolicTangent")
     {
         recurrent_activation_function = ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_recurrent_activation_function_name == "Threshold")
-    {
-        recurrent_activation_function = ActivationFunction::Threshold;
-    }
-    else if(new_recurrent_activation_function_name == "SymmetricThreshold")
-    {
-        recurrent_activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_recurrent_activation_function_name == "Linear")
     {
@@ -1157,10 +1132,6 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& comb
 
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
-    case ActivationFunction::Threshold: threshold(combinations,  activations); return;
-
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, activations); return;
-
     case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
 
     case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
@@ -1188,10 +1159,6 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
     case ActivationFunction::Logistic: logistic(combinations, activations); return;
 
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
-
-    case ActivationFunction::Threshold: threshold(combinations, activations); return;
-
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, activations); return;
 
     case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
 
@@ -1475,8 +1442,9 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-    LayerBackPropagation* next_back_propagation,
-    LayerBackPropagation* back_propagation) const
+                                                      LayerBackPropagation* next_back_propagation,
+                                                      LayerForwardPropagation*,
+                                                      LayerBackPropagation* back_propagation) const
 {
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
         static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
@@ -1803,7 +1771,7 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<pair<type*,
 
         cell_states_weights_derivatives.device(*thread_pool_device) += forget_combinations_weights_derivatives;
 /*
-        copy(/*execution::par,execution::par,
+        copy(/*execution::par,
             cell_states_weights_derivatives.data(),
             cell_states_weights_derivatives.data() + cell_states_weights_derivatives.size(),
             hidden_states_weights_derivatives.data());

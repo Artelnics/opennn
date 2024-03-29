@@ -136,7 +136,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file name
     {
-        file_stream.OpenElement("DataFileName");
+        file_stream.OpenElement("DataSourcePath");
 
         file_stream.PushText(data_source_path.c_str());
 
@@ -536,13 +536,13 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
+    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
 
     if(!data_file_name_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "DataFileName element is nullptr.\n";
+               << "DataSourcePath element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
@@ -1245,15 +1245,6 @@ void TextDataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 /*
-    TextAnalytics text_analytics;
-
-    text_analytics.set_separator(get_text_separator_string());
-    text_analytics.set_short_words_length(short_words_length);
-    text_analytics.set_long_words_length(long_words_length);
-    text_analytics.set_stop_words(stop_words);
-
-    cout << "Loading documents..." << endl;
-
     text_analytics.load_documents(data_source_path);
 
     const Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
@@ -1360,7 +1351,6 @@ void TextDataSet::read_txt()
         set_raw_variable_type(i,RawVariableType::Numeric);
 */
 }
-
 
 }
 

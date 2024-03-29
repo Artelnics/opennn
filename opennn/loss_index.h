@@ -151,6 +151,8 @@ public:
 
    bool has_selection() const;
 
+   Index get_next_layer_index(const Tensor<Tensor<Index, 1>, 1>&, const Index) const;
+
    // Numerical differentiation
 
    type calculate_eta() const;
@@ -275,8 +277,6 @@ protected:
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 
    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
-
-
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/loss_index_cuda.h"

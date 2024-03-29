@@ -65,12 +65,12 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
         if(augmentation) perform_augmentation();
     }
 
-    if (context_indices.size() != 0)
+    if (has_context)
     {
         fill_submatrix(data, samples_indices, context_indices, context_data);
     }
 
-    /// todo dimensions
+    /// @todo dimensions
 
     fill_submatrix(data, samples_indices, targets_indices, targets_data);
 }
@@ -175,7 +175,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     {
         inputs_dimensions = {{batch_size, input_variables_number}};
 
-        inputs_tensor.resize(1);
         inputs_tensor.resize(batch_size*input_variables_number);
     }
     else if(input_variables_dimensions.size() == 2)
@@ -185,7 +184,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         inputs_dimensions = {{batch_size, rows_number, raw_variables_number}};
 
-        inputs_tensor.resize(1);
         inputs_tensor.resize(batch_size*rows_number*raw_variables_number);
     }
     else if(input_variables_dimensions.size() == 3)
@@ -196,7 +194,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         inputs_dimensions = {{batch_size, channels_number, rows_number, raw_variables_number}};
 
-        inputs_tensor.resize(1);
         inputs_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
 
@@ -206,7 +203,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     {
         targets_dimensions = {{batch_size, target_variables_number}};
 
-        targets_tensor.resize(1);
         targets_tensor.resize(batch_size*target_variables_number);
     }
     else if(target_variables_dimensions.size() == 2)
@@ -216,7 +212,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         targets_dimensions = {{batch_size, rows_number, raw_variables_number}};
 
-        targets_tensor.resize(1);
         targets_tensor.resize(batch_size*rows_number*raw_variables_number);
     }
     else if(target_variables_dimensions.size() == 3)
@@ -227,7 +222,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         targets_dimensions = {{batch_size, channels_number, rows_number, raw_variables_number}};
 
-        targets_tensor.resize(1);
         targets_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
 
@@ -237,6 +231,8 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
     if (is_instance_of<LanguageDataSet>(data_set))
     {
+        has_context = true;
+
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
         const Index context_variables_number = language_data_set->get_context_variables_number();
@@ -247,7 +243,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         {
             context_dimensions = { {batch_size, context_variables_number} };
 
-            context_tensor.resize(1);
             context_tensor.resize(batch_size * context_variables_number);
         }
         else if (context_variables_dimensions.size() == 2)
@@ -257,7 +252,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
             context_dimensions = { {batch_size, rows_number, raw_variables_number} };
 
-            context_tensor.resize(1);
             context_tensor.resize(batch_size * rows_number * raw_variables_number);
         }
         else if (context_variables_dimensions.size() == 3)
@@ -268,7 +262,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
             context_dimensions = { {batch_size, channels_number, rows_number, raw_variables_number} };
 
-            context_tensor.resize(1);
             context_tensor.resize(batch_size * channels_number * rows_number * raw_variables_number);
         }
 
@@ -306,12 +299,27 @@ void Batch::print() const
 
 Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
 {
-    pair<type *, dimensions> inputs;
+    Tensor<pair<type*, dimensions>, 1> inputs;
 
-    inputs.first = inputs_data;
-    inputs.second = inputs_dimensions;
+    if (!has_context)
+    {
+        inputs.resize(1);
 
-    return tensor_wrapper(inputs);
+        inputs(0).first = inputs_data;
+        inputs(0).second = inputs_dimensions;
+    }
+    else
+    {
+        inputs.resize(2);
+
+        inputs(0).first = inputs_data;
+        inputs(0).second = inputs_dimensions;
+
+        inputs(1).first = context_data;
+        inputs(1).second = context_dimensions;
+    }
+
+    return inputs;
 }
 
 
@@ -323,17 +331,6 @@ pair<type*, dimensions> Batch::get_targets_pair() const
     targets.second = targets_dimensions;
 
     return targets;
-}
-
-
-Tensor<pair<type*, dimensions>, 1> Batch::get_context_pair() const
-{
-    pair<type*, dimensions> context;
-
-    context.first = context_data;
-    context.second = context_dimensions;
-
-    return tensor_wrapper(context);
 }
 
 }

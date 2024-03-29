@@ -59,13 +59,13 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
 
     // Embedding Layers
-
+    
     EmbeddingLayer* input_embedding_layer = new EmbeddingLayer(inputs_dimension, inputs_length, embedding_depth, true);
 
     input_embedding_layer->set_name("input_embedding");
     add_layer(input_embedding_layer);
     set_layer_inputs_indices("input_embedding", "input");
-
+    
 
     EmbeddingLayer* context_embedding_layer = new EmbeddingLayer(context_dimension, context_length, embedding_depth, true);
 
@@ -155,87 +155,13 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
 
     // Final layer
+    
+    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(inputs_length, embedding_depth, inputs_dimension + 1);
 
-    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(inputs_length, embedding_depth, inputs_dimension);
     final_layer->set_name("probabilistic");
     add_layer(final_layer);
     set_layer_inputs_indices("probabilistic", "decoder_external_perceptron_" + to_string(number_of_layers));
-
-}
-
-
-void Transformer::forward_propagate(const Batch& batch,
-                                    ForwardPropagation& forward_propagation,
-                                    const bool& is_training) const
-{
-    const Index layers_number = get_layers_number();
-
-    const Tensor<Layer*, 1> layers = get_layers();
-
-    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = get_layers_inputs_indices();
-
-    const Index first_trainable_layer_index = get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = get_last_trainable_layer_index();
-
-    Index first_layer_index;
-    Index last_layer_index;
-
-    if (is_training)
-    {
-        first_layer_index = first_trainable_layer_index;
-        last_layer_index = last_trainable_layer_index;
-    }
-    else
-    {
-        first_layer_index = 0;
-        last_layer_index = layers_number - 1;
-    }
-
-    Tensor<pair<type*, dimensions>, 1> layer_inputs_pair;
     
-    for (Index i = first_layer_index; i <= last_layer_index; i++)
-    {
-        if ( i == first_layer_index || is_input_layer(layers_inputs_indices(i)) )
-        {
-            layer_inputs_pair = batch.get_inputs_pair();
-        }
-        else if ( is_context_layer(layers_inputs_indices(i)) )
-        {
-            layer_inputs_pair = batch.get_context_pair();
-        }
-        else
-        {
-            layer_inputs_pair.resize(layers_inputs_indices(i).size());
-
-            for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
-            {
-                //layer_inputs_pair(i) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
-            }
-        }
-        /*
-        cout << "Before forward propagate of layer: " << layers(i)->get_name() << endl;
-        TensorMap<Tensor<type, 2>> layer_inputs(layer_inputs_pair(0).first, layer_inputs_pair(0).second[0], layer_inputs_pair(0).second[1]);
-        cout << "Layer inputs:" << endl << layer_inputs << endl;
-        layers(i)->forward_propagate(layer_inputs_pair,
-                                     forward_propagation.layers(i),
-                                     is_training);*/
-    }
-}
-
-bool Transformer::is_input_layer(const Tensor<Index, 1>& layer_inputs_indices) const
-{
-    for (Index i = 0; i < layer_inputs_indices.size(); i++)
-        if (layer_inputs_indices(i) == -1) return true;
-
-    return false;
-}
-
-bool Transformer::is_context_layer(const Tensor<Index, 1>& layer_inputs_indices) const
-{
-    for (Index i = 0; i < layer_inputs_indices.size(); i++)
-        if (layer_inputs_indices(i) == -2) return true;
-
-    return false;
 }
 
 

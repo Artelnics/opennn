@@ -25,15 +25,16 @@
 #include <execution>
 
 
-//#define OPENNN_CUDA
+#define OPENNN_CUDA
 #ifdef OPENNN_CUDA
 
-#include "../../opennn-cuda/opennn-cuda/kernel.cuh"
+#include "../../CudaOpennn/CudaOpennn/kernel.cuh"
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "cublas_v2.h"
 #include <cublasXt.h>
 #include <curand.h>
+#include <cudnn.h>
 
 #endif
 

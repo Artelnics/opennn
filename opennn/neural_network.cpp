@@ -1669,16 +1669,20 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 }
 
 
-bool NeuralNetwork::is_starting_layer(const Index& layer_index) const
+bool NeuralNetwork::is_input_layer(const Tensor<Index, 1>& layer_inputs_indices) const
 {
-    Tensor<Index, 1> layer_input_indices = layers_inputs_indices(layer_index);
+    for (Index i = 0; i < layer_inputs_indices.size(); i++)
+        if (layer_inputs_indices(i) == -1) return true;
 
-    for(Index i = 0; i < layer_input_indices.size(); i++)
-    {
-        if(layer_input_indices(i) != -1) return false;
-    }
+    return false;
+}
 
-    return true;
+bool NeuralNetwork::is_context_layer(const Tensor<Index, 1>& layer_inputs_indices) const
+{
+    for (Index i = 0; i < layer_inputs_indices.size(); i++)
+        if (layer_inputs_indices(i) == -2) return true;
+
+    return false;
 }
 
 
@@ -1742,6 +1746,8 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 
     const Tensor<Layer*, 1> layers = get_layers();
 
+    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = get_layers_inputs_indices();
+
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
@@ -1756,23 +1762,36 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
     else
     {
         first_layer_index = 0;
-        last_layer_index = layers_number-1;
+        last_layer_index = layers_number - 1;
     }
 
-    Tensor<pair<type*, dimensions>, 1> layer_inputs_pair;
-
-    for(Index i = first_layer_index; i <= last_layer_index; i++)
+    Tensor<pair<type*, dimensions>, 1> layer_inputs;
+    
+    for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
-        if (i == first_layer_index)
+        if (i == first_layer_index || is_input_layer(layers_inputs_indices(i)))
         {
-            layer_inputs_pair = inputs_pair;
+            layer_inputs.resize(1);
+
+            layer_inputs(0) = inputs_pair(0);
+        }
+        else if (is_context_layer(layers_inputs_indices(i)))
+        {
+            layer_inputs.resize(1);
+
+            layer_inputs(0) = inputs_pair(1);
         }
         else
         {
-            layer_inputs_pair = tensor_wrapper(forward_propagation.layers(i - 1)->get_outputs_pair());
+            layer_inputs.resize(layers_inputs_indices(i).size());
+
+            for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
+            {
+                layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
+            }
         }
 
-        layers(i)->forward_propagate(layer_inputs_pair,
+        layers(i)->forward_propagate(layer_inputs,
                                      forward_propagation.layers(i),
                                      is_training);
     }
@@ -2852,8 +2871,6 @@ string NeuralNetwork::write_expression_c() const
 
     bool logistic     = false;
     bool ReLU         = false;
-    bool Threshold    = false;
-    bool SymThreshold = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
     bool HSigmoid     = false;
@@ -2969,8 +2986,6 @@ string NeuralNetwork::write_expression_c() const
 
     string target_string0("Logistic");
     string target_string1("ReLU");
-    string target_string2("Threshold");
-    string target_string3("SymmetricThreshold");
     string target_string4("ExponentialLinear");
     string target_string5("ScaledExponentialLinear");
     string target_string6("HardSigmoid");
@@ -2983,8 +2998,6 @@ string NeuralNetwork::write_expression_c() const
 
         size_t substring_length0 = t.find(target_string0);
         size_t substring_length1 = t.find(target_string1);
-        size_t substring_length2 = t.find(target_string2);
-        size_t substring_length3 = t.find(target_string3);
         size_t substring_length4 = t.find(target_string4);
         size_t substring_length5 = t.find(target_string5);
         size_t substring_length6 = t.find(target_string6);
@@ -2993,8 +3006,6 @@ string NeuralNetwork::write_expression_c() const
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
-        if(substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
-        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
         if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
@@ -3015,34 +3026,6 @@ string NeuralNetwork::write_expression_c() const
     {
         buffer << "float ReLU(float x) {" << endl;
         buffer << "float z = max(0, x);" << endl;
-        buffer << "return z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(Threshold)
-    {
-        buffer << "float Threshold(float x) {" << endl;
-        buffer << "float z;" << endl;
-        buffer << "if(x < 0) {" << endl;
-        buffer << "z = 0;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "z = 1;" << endl;
-        buffer << "}" << endl;
-        buffer << "return z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(SymThreshold)
-    {
-        buffer << "float SymmetricThreshold(float x) {" << endl;
-        buffer << "float z" << endl;
-        buffer << "if(x < 0) {" << endl;
-        buffer << "z = -1;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "z=1;" << endl;
-        buffer << "}" << endl;
         buffer << "return z;" << endl;
         buffer << "}" << endl;
         buffer << "\n" << endl;
@@ -3310,8 +3293,6 @@ string NeuralNetwork::write_expression_api() const
 
     bool logistic     = false;
     bool ReLU         = false;
-    bool Threshold    = false;
-    bool SymThreshold = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
     bool HSigmoid     = false;
@@ -3548,8 +3529,6 @@ string NeuralNetwork::write_expression_api() const
 
     string target_string0("Logistic");
     string target_string1("ReLU");
-    string target_string2("Threshold");
-    string target_string3("SymmetricThreshold");
     string target_string4("ExponentialLinear");
     string target_string5("ScaledExponentialLinear");
     string target_string6("HardSigmoid");
@@ -3577,8 +3556,6 @@ string NeuralNetwork::write_expression_api() const
 
         substring_length0 = t.find(target_string0);
         substring_length1 = t.find(target_string1);
-        substring_length2 = t.find(target_string2);
-        substring_length3 = t.find(target_string3);
         substring_length4 = t.find(target_string4);
         substring_length5 = t.find(target_string5);
         substring_length6 = t.find(target_string6);
@@ -3587,8 +3564,6 @@ string NeuralNetwork::write_expression_api() const
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic     = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU         = true; }
-        if(substring_length2 < t.size() && substring_length2!=0){ Threshold    = true; }
-        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear   = true; }
         if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid     = true; }
@@ -3670,36 +3645,6 @@ string NeuralNetwork::write_expression_api() const
         buffer << "<?php" << endl;
         buffer << "function ReLU(int $x) {" << endl;
         buffer << "$z = max(0, $x);" << endl;
-        buffer << "return $z;" << endl;
-        buffer << "}" << endl;
-        buffer << "?>" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(Threshold)
-    {
-        buffer << "<?php" << endl;
-        buffer << "function Threshold(int $x) {" << endl;
-        buffer << "if($x < 0) {" << endl;
-        buffer << "$z = 0;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "$z=1;" << endl;
-        buffer << "}" << endl;
-        buffer << "return $z;" << endl;
-        buffer << "}" << endl;
-        buffer << "?>" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(SymThreshold)
-    {
-        buffer << "<?php" << endl;
-        buffer << "function SymmetricThreshold(int $x) {" << endl;
-        buffer << "if($x < 0) {" << endl;
-        buffer << "$z = -1;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "$z=1;" << endl;
-        buffer << "}" << endl;
         buffer << "return $z;" << endl;
         buffer << "}" << endl;
         buffer << "?>" << endl;
@@ -3840,8 +3785,6 @@ string NeuralNetwork::write_expression_javascript() const
 
     bool logistic     = false;
     bool ReLU         = false;
-    bool Threshold    = false;
-    bool SymThreshold = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
     bool HSigmoid     = false;
@@ -4208,8 +4151,6 @@ string NeuralNetwork::write_expression_javascript() const
 
     string target_string_0("Logistic");
     string target_string_1("ReLU");
-    string target_string_2("Threshold");
-    string target_string_3("SymmetricThreshold");
     string target_string_4("ExponentialLinear");
     string target_string_5("ScaledExponentialLinear");
     string target_string_6("HardSigmoid");
@@ -4229,8 +4170,6 @@ string NeuralNetwork::write_expression_javascript() const
 
         const size_t substring_length_0 = t.find(target_string_0);
         const size_t substring_length_1 = t.find(target_string_1);
-        const size_t substring_length_2 = t.find(target_string_2);
-        const size_t substring_length_3 = t.find(target_string_3);
         const size_t substring_length_4 = t.find(target_string_4);
         const size_t substring_length_5 = t.find(target_string_5);
         const size_t substring_length_6 = t.find(target_string_6);
@@ -4242,10 +4181,8 @@ string NeuralNetwork::write_expression_javascript() const
         if(substring_length_6 < t.size() && substring_length_6!=0){ HSigmoid = true; }
         if(substring_length_7 < t.size() && substring_length_7!=0){ SoftPlus = true; }
         if(substring_length_8 < t.size() && substring_length_8!=0){ SoftSign = true; }
-        if(substring_length_2 < t.size() && substring_length_2!=0){ Threshold = true; }
         if(substring_length_4 < t.size() && substring_length_4!=0){ ExpLinear = true; }
         if(substring_length_5 < t.size() && substring_length_5!=0){ SExpLinear = true; }
-        if(substring_length_3 < t.size() && substring_length_3!=0){ SymThreshold = true; }
 
         for(int i = 0; i < found_mathematical_expressions.dimension(0); i++)
         {
@@ -4320,32 +4257,6 @@ string NeuralNetwork::write_expression_javascript() const
     {
         buffer << "function ReLU(x) {" << endl;
         buffer << "\tvar z = Math.max(0, x);" << endl;
-        buffer << "\treturn z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(Threshold)
-    {
-        buffer << "function Threshold(x) {" << endl;
-        buffer << "\tif(x < 0) {" << endl;
-        buffer << "\t\tvar z = 0;" << endl;
-        buffer << "\t}else{" << endl;
-        buffer << "\t\tvar z = 1;" << endl;
-        buffer << "\t}" << endl;
-        buffer << "\treturn z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(SymThreshold)
-    {
-        buffer << "function SymmetricThreshold(x) {" << endl;
-        buffer << "\tif(x < 0) {" << endl;
-        buffer << "\t\tvar z = -1;" << endl;
-        buffer << "\t}else{" << endl;
-        buffer << "\t\tvar z=1;" << endl;
-        buffer << "\t}" << endl;
         buffer << "\treturn z;" << endl;
         buffer << "}" << endl;
         buffer << "\n" << endl;
@@ -4457,8 +4368,6 @@ string NeuralNetwork::write_expression_python() const
 
     bool logistic     = false;
     bool ReLU         = false;
-    bool Threshold    = false;
-    bool SymThreshold = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
     bool HSigmoid     = false;
@@ -4522,8 +4431,6 @@ string NeuralNetwork::write_expression_python() const
 
     const string target_string0("Logistic");
     const string target_string1("ReLU");
-    const string target_string2("Threshold");
-    const string target_string3("SymmetricThreshold");
     const string target_string4("ExponentialLinear");
     const string target_string5("SELU");
     const string target_string6("HardSigmoid");
@@ -4537,8 +4444,6 @@ string NeuralNetwork::write_expression_python() const
 
         const size_t substring_length0 = t.find(target_string0);
         const size_t substring_length1 = t.find(target_string1);
-        const size_t substring_length2 = t.find(target_string2);
-        const size_t substring_length3 = t.find(target_string3);
         const size_t substring_length4 = t.find(target_string4);
         const size_t substring_length5 = t.find(target_string5);
         const size_t substring_length6 = t.find(target_string6);
@@ -4547,8 +4452,6 @@ string NeuralNetwork::write_expression_python() const
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
-        if(substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
-        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
         if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
@@ -4667,28 +4570,6 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\n" << endl;
     }
 
-    if(Threshold)
-    {
-        buffer << "\tdef Threshold (x):" << endl;
-        buffer << "\t\t"   << "if(x < 0):" << endl;
-        buffer << "\t\t\t" << "z = 0" << endl;
-        buffer << "\t\t"   << "else:" << endl;
-        buffer << "\t\t\t" << "z = 1" << endl;
-        buffer << "\t\t"   << "return z" << endl;
-        buffer << "\n" << endl;
-    }
-
-    if(SymThreshold)
-    {
-        buffer << "\tdef SymmetricThreshold (x):" << endl;
-        buffer << "\t\t"   << "if(x < 0):" << endl;
-        buffer << "\t\t\t" << "z = -1" << endl;
-        buffer << "\t\t"   << "else:" << endl;
-        buffer << "\t\t\t" << "z = 1" << endl;
-        buffer << "\t\t"   << "return z" << endl;
-        buffer << "\n" << endl;
-    }
-
     if(ExpLinear)
     {
         buffer << "\tdef ExponentialLinear (x):" << endl;
@@ -4770,8 +4651,6 @@ string NeuralNetwork::write_expression_python() const
 
     push_back_string(found_mathematical_expressions, "Logistic");
     push_back_string(found_mathematical_expressions, "ReLU");
-    push_back_string(found_mathematical_expressions, "Threshold");
-    push_back_string(found_mathematical_expressions, "SymmetricThreshold");
     push_back_string(found_mathematical_expressions, "ExponentialLinear");
     push_back_string(found_mathematical_expressions, "SELU");
     push_back_string(found_mathematical_expressions, "HardSigmoid");
@@ -5090,9 +4969,21 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         }
         break;
 
+        case Layer::Type::Perceptron3D:
+        {
+            layers(i) = new PerceptronLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
         case Layer::Type::Probabilistic:
         {
             layers(i) = new ProbabilisticLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Probabilistic3D:
+        {
+            layers(i) = new ProbabilisticLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
 
@@ -5126,6 +5017,18 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         }
         break;
 
+        case Layer::Type::Embedding:
+        {
+            layers(i) = new EmbeddingLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::MultiheadAttention:
+        {
+            layers(i) = new MultiheadAttentionLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
         default: break;
         }
     }
@@ -5144,6 +5047,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
     layers.resize(layers_number);
     layers.setConstant(nullptr);
+
     for (Index i = 0; i < layers_number; i++)
     {
         switch (neural_network_layers(i)->get_type())
@@ -5156,7 +5060,6 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::Perceptron3D:
         {
-            cout << "PercepFP" << endl;
             layers(i) = new PerceptronLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
@@ -5169,7 +5072,6 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::Probabilistic3D:
         {
-            cout << "ProbFP" << endl;
             layers(i) = new ProbabilisticLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
@@ -5230,7 +5132,6 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::Embedding:
         {
-            cout << "EmbeddingFP" << endl;
             layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
 
         }
@@ -5238,7 +5139,6 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::MultiheadAttention:
         {
-            cout << "AttentionFP" << endl;
             layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
 
         }

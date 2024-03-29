@@ -153,7 +153,7 @@ const PerceptronLayer::ActivationFunction& PerceptronLayer::get_activation_funct
 
 
 /// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string PerceptronLayer::write_activation_function() const
 {
@@ -164,12 +164,6 @@ string PerceptronLayer::write_activation_function() const
 
     case ActivationFunction::HyperbolicTangent:
         return "HyperbolicTangent";
-
-    case ActivationFunction::Threshold:
-        return "Threshold";
-
-    case ActivationFunction::SymmetricThreshold:
-        return "SymmetricThreshold";
 
     case ActivationFunction::Linear:
         return "Linear";
@@ -343,7 +337,7 @@ void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationF
 }
 
 /// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
+/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
 /// @param new_activation_function Activation function for that layer.
 
 void PerceptronLayer::set_activation_function(const string& new_activation_function_name)
@@ -355,14 +349,6 @@ void PerceptronLayer::set_activation_function(const string& new_activation_funct
     else if(new_activation_function_name == "HyperbolicTangent")
     {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Threshold")
-    {
-        activation_function = ActivationFunction::Threshold;
-    }
-    else if(new_activation_function_name == "SymmetricThreshold")
-    {
-        activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_activation_function_name == "Linear")
     {
@@ -500,10 +486,6 @@ void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations,
 
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
-    case ActivationFunction::Threshold: threshold(combinations, activations); return;
-
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, activations); return;
-
     case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
 
     case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
@@ -623,7 +605,8 @@ void PerceptronLayer::calculate_error_combinations_derivatives(const Tensor<type
 
 
 void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                             LayerBackPropagation* next_back_propagation,
+                                             LayerBackPropagation* next_back_propagation, 
+                                             LayerForwardPropagation*,
                                              LayerBackPropagation* layer_back_propagation) const
 {
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
@@ -829,9 +812,11 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
 
     Tensor<type, 2>& squared_errors_Jacobian = perceptron_layer_back_propagation_lm->squared_errors_Jacobian;
 
+    /// @todo simplify, in matrix notation?
+
     Index synaptic_weight_index = 0;
 
-    for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+    for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
     {
         const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
 
@@ -848,7 +833,7 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
 
         // bias
 
-        Index bias_index = synaptic_weights_number + neuron_index;
+        const Index bias_index = synaptic_weights_number + neuron_index;
 
         TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias = tensor_map(squared_errors_Jacobian, bias_index);
 
@@ -857,7 +842,7 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
 }
 
 
-void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM * back_propagation ,
+void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
                                                         const Index& index,
                                                         Tensor<type, 2>& squared_errors_Jacobian) const
 {
@@ -1155,12 +1140,6 @@ string PerceptronLayer::write_activation_function_expression() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Threshold:
-        return "threshold";
-
-    case ActivationFunction::SymmetricThreshold:
-        return "symmetric_threshold";
-
     case ActivationFunction::Logistic:
         return "logistic";
 
@@ -1269,7 +1248,7 @@ PerceptronLayerBackPropagation::~PerceptronLayerBackPropagation()
 }
 
 
-std::pair<type *, dimensions> PerceptronLayerBackPropagation::get_deltas_pair() const
+pair<type *, dimensions> PerceptronLayerBackPropagation::get_deltas_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
     

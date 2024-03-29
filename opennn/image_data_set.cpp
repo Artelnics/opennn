@@ -157,10 +157,6 @@ void ImageDataSet::set(const Index& new_images_number,
     split_samples_random();
 }
 
-void ImageDataSet::set_image_data_source_path(const string& new_data_source_path)
-{
-    image_data_source_path = new_data_source_path;
-}
 
 void ImageDataSet::set_channels_number(const int& new_channels_number)
 {
@@ -269,8 +265,8 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file name
 
-    file_stream.OpenElement("DataFileName");
-    file_stream.PushText(image_data_source_path.c_str());
+    file_stream.OpenElement("DataSourcePath");
+    file_stream.PushText(data_source_path.c_str());
     file_stream.CloseElement();
 
     // Rows labels
@@ -537,13 +533,13 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
+    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
 
     if(!data_file_name_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "DataFileName element is nullptr.\n";
+               << "DataSourcePath element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
@@ -1307,11 +1303,9 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-void ImageDataSet::fill_image_data(const string& new_data_source_path, const vector<string>& classes_folder,
-                                   const vector<string>& images_path, const vector<int>& images_per_folder,
-                                   const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
+void ImageDataSet::fill_image_data()
 {
-    if(new_data_source_path.empty())
+    if(data_source_path.empty())
     {
         ostringstream buffer;
 
@@ -1321,18 +1315,14 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
 
         throw runtime_error(buffer.str());
     }
-
+/*
     has_raw_variables_names = true;
     has_rows_labels = true;
-
-    separator = Separator::None;
 
     images_number = images_path.size();
     const int classes_number = classes_folder.size();
 
     const int image_size = width * height * channels;
-
-    Tensor<type, 2> imageDataAux(imageData);
 
     if(classes_number == 2)
     {
@@ -1346,7 +1336,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
 //        imageDataAux.resize(images_number, image_size + classes_number);
     }
 
-    memcpy(data.data(), imageDataAux.data(), images_number * image_size * sizeof(type));
+//    memcpy(data.data(), imageDataAux.data(), images_number * image_size * sizeof(type));
 
     rows_labels.resize(images_number);
 
@@ -1356,7 +1346,6 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
     {
         for(Index j = 0;  j < images_per_folder[i]; j++)
         {
-
             if(classes_number == 2 && i == 0)
             {
                 data(row_index, image_size) = 1;
@@ -1443,6 +1432,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({height, width, channels});
+*/
 }
 
 
