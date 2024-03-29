@@ -369,7 +369,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
-    preprocess_inputs(inputs, outputs);
+    preprocess_inputs(inputs, preprocessed_inputs);
 
     calculate_convolutions(preprocessed_inputs, outputs);
 
