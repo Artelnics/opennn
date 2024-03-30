@@ -1713,6 +1713,8 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
         inputs_rows_number,
         inputs_columns_number,
         inputs_channels_number);
+
+    outputs_data = outputs.data();
 }
 
 

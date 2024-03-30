@@ -1758,33 +1758,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
-        Tensor<type, 4> kernels(kernels_rows_number, kernels_raw_variables_number, kernels_channels_number, kernels_number);
-
-        kernels(0,0,0,0) = type(0.5);
-        kernels(0,1,0,0) = type(0.5);
-        kernels(1,0,0,0) = type(0.5);
-        kernels(1,1,0,0) = type(0.5);
-
-        kernels(0,0,0,1) = type(0.5);
-        kernels(0,1,0,1) = type(0.5);
-        kernels(1,0,0,1) = type(0.5);
-        kernels(1,1,0,1) = type(0.5);
-
-        kernels(0,0,1,0) = type(0.7);
-        kernels(0,1,1,0) = type(0.7);
-        kernels(1,0,1,0) = type(0.7);
-        kernels(1,1,1,0) = type(0.7);
-
-        kernels(0,0,1,1) = type(0.7);
-        kernels(0,1,1,1) = type(0.7);
-        kernels(1,0,1,1) = type(0.7);
-        kernels(1,1,1,1) = type(0.7);
-
-        convolutional_layer->set_synaptic_weights(kernels);
-
-        convolutional_layer->set_biases_constant(0);
-
-//        convolutional_layer->set_parameters_random();
+        convolutional_layer->set_parameters_random();
 
         Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
         flatten_layer_inputs_dimensions(0) = input_rows_number-kernels_rows_number+1;
@@ -1799,36 +1773,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         PerceptronLayer* perceptron_layer = new PerceptronLayer(perceptron_layer_inputs_number, perceptrons_number);
 
-        Tensor<type, 2> synaptic_weights(perceptron_layer_inputs_number,perceptrons_number);
-
-        for(Index i = 0; i < perceptron_layer_inputs_number; i++)
-        {
-            for(Index j = 0; j < perceptrons_number; j++)
-            {
-                synaptic_weights(i,j) = type(1);//type(j+1);
-            }
-        }
-
-//        cout << "Synaptic weights: " << synaptic_weights << endl;
-
-//        perceptron_layer->set_parameters_random();
-
-        synaptic_weights(0,0) = 1;
-        synaptic_weights(1,0) = 1;
-        synaptic_weights(2,0) = 1;
-        synaptic_weights(3,0) = 1;
-
-        synaptic_weights(0,1) = 2;
-        synaptic_weights(1,1) = 2;
-        synaptic_weights(2,1) = 2;
-        synaptic_weights(3,1) = 2;
-
-        perceptron_layer->set_synaptic_weights(synaptic_weights);
-        perceptron_layer->set_biases_constant(0);
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-//        perceptron_layer->set_parameters_random();
-
-//        perceptron_layer->set_parameters_random();
+        perceptron_layer->set_parameters_random();
 
         neural_network.add_layer(convolutional_layer);
         neural_network.add_layer(flatten_layer);
@@ -1839,8 +1785,8 @@ cout << "Before forward propagation" << endl;
 
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 cout << "After forward propagation" << endl;
-   /*     MeanSquaredError mean_squared_error(&neural_network, &data_set);
-
+      MeanSquaredError mean_squared_error(&neural_network, &data_set);
+/*
         BackPropagation back_propagation(images_number, &mean_squared_error);
 
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);

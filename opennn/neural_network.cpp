@@ -1816,8 +1816,6 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
     forward_propagate(inputs_pair, forward_propagation, is_training);
 
     set_parameters(original_parameters);
-
-
 }
 
 
