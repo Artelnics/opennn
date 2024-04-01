@@ -1782,31 +1782,29 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         ForwardPropagation forward_propagation(images_number, &neural_network);
 cout << "Before forward propagation" << endl;
-
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 cout << "After forward propagation" << endl;
       MeanSquaredError mean_squared_error(&neural_network, &data_set);
-/*
-        BackPropagation back_propagation(images_number, &mean_squared_error);
 
-        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+      BackPropagation back_propagation(images_number, &mean_squared_error);
+cout << "Before back propagation" << endl;
+      mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+cout << "After back propagation" << endl;
+      cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
-        cout << "Gradient: " << endl << back_propagation.gradient << endl;
+      const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-        const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+      cout << "Numerical gradient: " << endl << numerical_gradient << endl;
 
-        cout << "Numerical gradient: " << endl << numerical_gradient << endl;
+      cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
 
-        cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
+      for(Index i = 0; i < back_propagation.gradient.size(); i++)
+      {
+          cout << back_propagation.gradient(i) << " ; " << numerical_gradient(i) <<  " ; " <<
+                  abs((back_propagation.gradient(i) - numerical_gradient(i))/numerical_gradient(i)*100)
+               << "%" << endl;
 
-        for(Index i = 0; i < back_propagation.gradient.size(); i++)
-        {
-            cout << back_propagation.gradient(i) << " ; " << numerical_gradient(i) <<  " ; " <<
-                    abs((back_propagation.gradient(i) - numerical_gradient(i))/numerical_gradient(i)*100)
-                 << "%" << endl;
-
-        }
-*/
+      }
     }
 
 }

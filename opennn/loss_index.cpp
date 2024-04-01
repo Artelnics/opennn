@@ -378,11 +378,11 @@ void LossIndex::back_propagate(const Batch& batch,
     // Loss index
     
     calculate_error(batch, forward_propagation, back_propagation);
-    
+
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
-    
+
     assemble_layers_error_gradient(back_propagation);
-    
+
     // Loss
 
     back_propagation.loss = back_propagation.error;
