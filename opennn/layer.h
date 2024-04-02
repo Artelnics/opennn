@@ -263,6 +263,7 @@ protected:
 
 
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void competitive(const Tensor<type, 3>&, Tensor<type, 3>&) const;
 
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
 
@@ -401,6 +402,7 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+    const Eigen::array<Index, 1> softmax_dimension_3 = { {2} };
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"

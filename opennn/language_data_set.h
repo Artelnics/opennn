@@ -75,8 +75,6 @@ public:
     void write_XML(tinyxml2::XMLPrinter&) const;
 
     void load_documents(const string&);
-    Tensor<Tensor<string, 1>, 1> preprocess(const Tensor<string, 1>&) const;
-    const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>&) const;
     void read_csv_3_language_model();
 
     void read_csv_language_model();

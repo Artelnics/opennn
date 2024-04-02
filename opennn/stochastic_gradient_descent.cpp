@@ -462,7 +462,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             optimization_data.iteration++;
-
+            
             // Data set
 
             training_batch_indices = training_batches.chip(iteration, 0);
@@ -479,7 +479,7 @@ TrainingResults StochasticGradientDescent::perform_training()
                                               is_training);
             
             // Loss index
-
+            
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
@@ -488,10 +488,12 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             training_error += training_back_propagation.error;
             //training_loss += training_back_propagation.loss;
-
+            
             // Gradient
-
+            
             update_parameters(training_back_propagation, optimization_data);
+            
+            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
         
         // Loss

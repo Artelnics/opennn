@@ -57,6 +57,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 // Sum
 
 void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
 void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
 void substract_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
