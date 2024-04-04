@@ -256,6 +256,7 @@ protected:
         {
         }
 
+        pair<type*, dimensions> get_deltas_pair() const final;
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

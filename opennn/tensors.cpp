@@ -399,7 +399,7 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
 
     for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
         column.device(*thread_pool_device) = vector * vector(i);
     }
@@ -412,7 +412,7 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
 
     for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
         column.device(*thread_pool_device) = vector*vector(i);
     }

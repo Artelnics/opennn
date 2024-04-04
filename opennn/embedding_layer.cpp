@@ -491,7 +491,7 @@ void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimension
     {
         for (Index j = 0; j < inputs_number; j++)
         {
-            embedding_weights_derivatives.chip(inputs_map(i, j), 0).device(*thread_pool_device) += deltas.chip(i, 0).chip(j, 0);
+            embedding_weights_derivatives.chip(Index(inputs_map(i, j)), 0).device(*thread_pool_device) += deltas.chip(i, 0).chip(j, 0);
         }
     }
 }
@@ -593,6 +593,17 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     }
 
     built_positional_encoding_matrix = true;
+}
+
+
+pair<type*, dimensions> EmbeddingLayerBackPropagation::get_deltas_pair() const
+{
+    EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+
+    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index depth = embedding_layer->get_depth();
+
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, depth });
 }
 
 

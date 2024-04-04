@@ -663,8 +663,7 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
         apply_causal_mask(attention_scores);
     }
 
-    //softmax(attention_scores, softmax_attention_scores);
-    softmax_attention_scores.setRandom();
+    softmax(attention_scores, softmax_attention_scores);
 }
 
 
@@ -918,7 +917,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
     Tensor<type, 3>& error_context_derivatives = multihead_attention_layer_back_propagation->error_context_derivatives;
     error_context_derivatives.setZero();
 
-    Tensor<type, 4> softmax_activations_derivatives(context_size, context_size, input_size, batch_samples_number);
+    Tensor<type, 1>& aux_rows = multihead_attention_layer_back_propagation->aux_rows;
 
     Tensor<type, 2>& query_biases_derivatives = multihead_attention_layer_back_propagation->query_biases_derivatives;
     Tensor<type, 2>& key_biases_derivatives = multihead_attention_layer_back_propagation->key_biases_derivatives;
@@ -1005,16 +1004,24 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
         TensorMap<Tensor<type, 1>> head_query_biases_derivatives(head_query_biases_derivatives_data, weights_depth);
         TensorMap<Tensor<type, 1>> head_key_biases_derivatives(head_key_biases_derivatives_data, weights_depth);
         TensorMap<Tensor<type, 1>> head_value_biases_derivatives(head_value_biases_derivatives_data, weights_depth);
-
+        
         // PROJECTION WEIGHTS DERIVATIVES
 
         head_projection_weights_derivatives.device(*thread_pool_device)
             = head_attention_outputs.contract(deltas, projection_weights_derivatives_contraction_indices);
-
+        
         // ATTENTION OUTPUT DERIVATIVES
         
-        head_attention_output_derivatives.device(*thread_pool_device)
-            = deltas.contract(head_projection_weights, attention_output_derivatives_contraction_indices);
+        for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+        {
+            type* sample_attention_output_derivatives_data = head_attention_output_derivatives_data + sample_index * input_size * weights_depth;
+
+            TensorMap<Tensor<type, 2>> sample_attention_output_derivatives(sample_attention_output_derivatives_data, input_size, weights_depth);
+            const Tensor<type, 2> sample_deltas = deltas.chip(sample_index, 0);
+
+            sample_attention_output_derivatives.device(*thread_pool_device)
+                = sample_deltas.contract(head_projection_weights, A_BT);
+        }
 
         // VALUE DERIVATIVES
 
@@ -1024,16 +1031,14 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
 
         head_value_weights_derivatives.device(*thread_pool_device)
             = context.contract(head_value_derivatives, transformation_weights_derivatives_contraction_indices);
-
+        
         // SOFTMAX ATTENTION SCORES DERIVATIVES
 
         batch_matrix_multiplication(thread_pool_device, head_value, head_attention_output_derivatives, head_softmax_attention_scores_derivatives, A_BT);
 
         // ATTENTION SCORES DERIVATIVES
-
-        softmax_derivatives(head_softmax_attention_scores, softmax_activations_derivatives);
-
-        batch_matrix_multiplication(thread_pool_device, softmax_activations_derivatives, head_softmax_attention_scores_derivatives, head_attention_scores_derivatives, AT_B);
+        
+        softmax_derivatives_times_tensor(head_softmax_attention_scores, head_softmax_attention_scores_derivatives, head_attention_scores_derivatives, aux_rows);
 
         // QUERY DERIVATIVES
 
@@ -1224,6 +1229,17 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_sampl
 }
 
 
+pair<type*, dimensions> MultiheadAttentionLayerBackPropagation::get_deltas_pair() const
+{
+    MultiheadAttentionLayer* multihead_attention_layer= static_cast<MultiheadAttentionLayer*>(layer);
+
+    const Index input_size = multihead_attention_layer->get_input_size();
+    const Index depth = multihead_attention_layer->get_depth();
+
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, input_size, depth });
+}
+
+
 void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -1263,6 +1279,8 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
     key_biases_derivatives.resize(weights_depth, heads_number);
     value_biases_derivatives.resize(weights_depth, heads_number);
     projection_biases_derivatives.resize(depth);
+
+    aux_rows.resize(context_size);
 }
 
 }

@@ -63,8 +63,11 @@ int main()
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
 
-        transformer.set_input_vocabulary(language_data_set.get_completion_vocabulary());
-        transformer.set_context_vocabulary(language_data_set.get_context_vocabulary());
+        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+
+        transformer.set_input_vocabulary(completion_vocabulary);
+        transformer.set_context_vocabulary(context_vocabulary);
 
         //type training_loss_goal = type(0.05);
 
@@ -84,7 +87,7 @@ int main()
         TrainingResults training_results = stochastic_gradient_descent.perform_training();
 
         //transformer.calculate_outputs();
-                
+        
 
         cout << "Bye!" << endl;
 
