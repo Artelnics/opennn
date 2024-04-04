@@ -253,56 +253,29 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
 }
 
 
-void Layer::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 2>&) const
+void Layer::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ { 2 } };
-
-    /*
+    const Eigen::array<Index, 1> softmax_dimension{ { 2 } }; 
+    
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     const Index channels_number = y.dimension(2);
-
-    type* y_data = y.data();
-
-    Tensor<type, 0> x_max;
-
-    x_max.device(*thread_pool_device) = x.maximum();
-
-    y.device(*thread_pool_device) = (x - x.constant(x_max(0))).exp();
-
-    aux_rows_columns.device(*thread_pool_device) = y.sum(softmax_dimension);
-
-    for (Index j = 0; j < channels_number; j++)
-    {
-    type* slice_data = y_data + j * rows_number * columns_number;
-
-    TensorMap<Tensor<type, 2>> slice(slice_data, rows_number, columns_number);
-
-    slice.device(*thread_pool_device) = slice / aux_rows_columns;
-    }
-    */
-
-    const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
-    const Index channels_number = x.dimension(2);
-
+    
     const Eigen::array<Index, 3> range_3{ { rows_number, columns_number, 1 } };
     const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels_number } };
 
-    // Normalize values to avoid possible NANs
-
     y.device(*thread_pool_device) = x - x.maximum(softmax_dimension)
-        .eval()
-        .reshape(range_3)
-        .broadcast(expand_softmax_dim);
+                                         .eval()
+                                         .reshape(range_3)
+                                         .broadcast(expand_softmax_dim);
 
     y.device(*thread_pool_device) = y.exp();
 
     y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
-        .eval()
-        .reshape(range_3)
-        .broadcast(expand_softmax_dim);
-
+                                         .eval()
+                                         .reshape(range_3)
+                                         .broadcast(expand_softmax_dim);
+    
 }
 
 
@@ -317,27 +290,17 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
     const Eigen::array<Index, 4> range_4{ { 1, columns_number, channels_number, blocks_number } };
     const Eigen::array<Index, 4> expand_softmax_dim{ { rows_number, 1, 1, 1 } };
 
-    // Normalize values to avoid possible NANs
-
     y.device(*thread_pool_device) = x - x.maximum(softmax_dimension)
-        .eval()
-        .reshape(range_4)
-        .broadcast(expand_softmax_dim);
+                                         .eval()
+                                         .reshape(range_4)
+                                         .broadcast(expand_softmax_dim);
 
     y.device(*thread_pool_device) = y.exp();
 
-    /*
-    Tensor<type, 0> x_max;
-
-    x_max.device(*thread_pool_device) = x.maximum();
-
-    y.device(*thread_pool_device) = (x - x.constant(x_max(0))).exp();
-    */
-
     y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
-        .eval()
-        .reshape(range_4)
-        .broadcast(expand_softmax_dim);
+                                         .eval()
+                                         .reshape(range_4)
+                                         .broadcast(expand_softmax_dim);
 }
 
 

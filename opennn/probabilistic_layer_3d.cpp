@@ -525,8 +525,7 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 
 
 void ProbabilisticLayer3D::calculate_activations(const Tensor<type, 3>& combinations,
-                                                 Tensor<type, 3>& activations,
-                                                 Tensor<type, 2>& aux_rows_columns) const
+                                                 Tensor<type, 3>& activations) const
 {
     switch(activation_function)
     {
@@ -536,7 +535,7 @@ void ProbabilisticLayer3D::calculate_activations(const Tensor<type, 3>& combinat
 
 //    case ActivationFunction::Competitive: competitive(combinations, activations); return;
 
-    case ActivationFunction::Softmax: softmax(combinations, activations, aux_rows_columns); return;
+    case ActivationFunction::Softmax: softmax(combinations, activations); return;
 
     default: return;
     }
@@ -555,10 +554,8 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
     
     calculate_combinations(inputs, outputs);
-    
-    Tensor<type, 2>& aux_rows_columns = probabilistic_layer_3d_forward_propagation->aux_rows_columns;
 
-    calculate_activations(outputs, outputs, aux_rows_columns);
+    calculate_activations(outputs, outputs);
 }
 
 
@@ -1013,8 +1010,6 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
     
     outputs_data = outputs.data();
-
-    aux_rows_columns.resize(batch_samples_number, inputs_number);
 }
 
 

@@ -267,7 +267,7 @@ protected:
 
 
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
-    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 2>&) const;
+    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;
     void softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const;
 
 
