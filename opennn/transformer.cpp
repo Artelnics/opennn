@@ -165,13 +165,13 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 }
 
 
-void Transformer::set_input_vocabulary(Tensor<string, 1>& new_input_vocabulary)
+void Transformer::set_input_vocabulary(const Tensor<string, 1>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
 }
 
 
-void Transformer::set_context_vocabulary(Tensor<string, 1>& new_context_vocabulary)
+void Transformer::set_context_vocabulary(const Tensor<string, 1>& new_context_vocabulary)
 {
     context_vocabulary = new_context_vocabulary;
 }
