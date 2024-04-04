@@ -369,7 +369,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
-    preprocess_inputs(inputs, outputs);
+    preprocess_inputs(inputs, preprocessed_inputs);
 
     calculate_convolutions(preprocessed_inputs, outputs);
 
@@ -497,19 +497,17 @@ void ConvolutionalLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* 
 }
 
 
-void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation*,
+void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation,
                                                 FlattenLayerBackPropagation* next_flatten_layer_back_propagation,
                                                 ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation) const
 {
-/*
-    const Tensor<type, 4>& next_deltas = next_flatten_layer_back_propagation->deltas;
+    const Index batch_samples_number = convolutional_layer_back_propagation->batch_samples_number;
 
-    Tensor<type, 4>& deltas = convolutional_layer_back_propagation->deltas;
+    const Index next_flatten_layer_neurons_number  = next_flatten_layer_forward_propagation->layer->get_neurons_number();
 
-    //deltas.device(*thread_pool_device) = next_deltas;
-*/
-    // Do a copy, since the dimensions change!
-
+    memcpy(convolutional_layer_back_propagation->deltas_data,
+           next_flatten_layer_back_propagation->deltas_data,
+           static_cast<Index>(batch_samples_number*next_flatten_layer_neurons_number*sizeof(type)));
 }
 
 
@@ -590,13 +588,14 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimen
             offsets = {image_index, 0, 0, kernel_index};
             extents = {1, outputs_rows_number, outputs_columns_number, 1};
 
-            delta_slice.device(*thread_pool_device)
-                = error_combinations_derivatives.slice(offsets, extents);
+            delta_slice/*.device(*thread_pool_device)*/
+                = error_combinations_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
+
 
             offsets = {image_index, 0, 0, 0};
             extents = {1, inputs_rows_number, inputs_columns_number, inputs_channels_number};
 
-            image_slice.device(*thread_pool_device) = inputs.slice(offsets, extents);
+            image_slice/*.device(*thread_pool_device)*/ = inputs.slice(offsets, extents); // device(*thread_pool_device) does not work here
 
             const TensorMap<Tensor<type, 3>> image(image_slice.data(),
                                                    inputs_rows_number,
@@ -620,6 +619,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimen
              kernel_synaptic_weights_derivatives.data(),
              kernel_synaptic_weights_derivatives.data() + kernel_synaptic_weights_number,
              synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
+
     }
 }
 
@@ -1713,6 +1713,8 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
         inputs_rows_number,
         inputs_columns_number,
         inputs_channels_number);
+
+    outputs_data = outputs.data();
 }
 
 

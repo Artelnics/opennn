@@ -460,9 +460,9 @@ void divide_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tens
 
     for (Index j = 0; j < channels_number; j++)
     {
-        TensorMap<Tensor<type, 2>> channel(tensor.data() + j * rows_number*columns_number, rows_number, columns_number);
+        TensorMap<Tensor<type, 2>> slice(tensor.data() + j * rows_number*columns_number, rows_number, columns_number);
 
-        channel.device(*thread_pool_device) = channel / matrix;
+        slice.device(*thread_pool_device) = slice / matrix;
     }
 }
 
@@ -475,6 +475,20 @@ void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& ve
     for(Index i = 0; i < columns_number; i++)
     {
         TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
+
+        column.device(*thread_pool_device) = column + vector(i);
+    }
+}
+
+
+void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    for (Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type, 1>> column(matrix.data() + i * rows_number, rows_number);
 
         column.device(*thread_pool_device) = column + vector(i);
     }

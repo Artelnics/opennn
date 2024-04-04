@@ -93,6 +93,8 @@ namespace opennn
     void replac_substring_within_quotes(string&, const string&, const string&);
     void replace_substring_in_string (Tensor<string, 1>& found_tokens, string& outputs_espresion, const string& keyword);
 
+    void display_progress_bar(int completed, int total);
+
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
 
@@ -138,6 +140,9 @@ namespace opennn
     void delete_emails(Tensor<Tensor<string, 1>, 1>&);
     void delete_blanks(Tensor<string, 1>&);
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
+
+    const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>&);
+    Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>&);
 
 }
 

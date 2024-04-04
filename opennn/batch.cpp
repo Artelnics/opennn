@@ -304,7 +304,6 @@ Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
     if (!has_context)
     {
         inputs.resize(1);
-
         inputs(0).first = inputs_data;
         inputs(0).second = inputs_dimensions;
     }

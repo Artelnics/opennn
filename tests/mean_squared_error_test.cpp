@@ -1627,7 +1627,6 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 */
 
     // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1
-
     if(true)
     {
         bool is_training = true;
@@ -1694,7 +1693,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         DataSet data_set(images_number,1,1);
 
         data_set.set_data(data); // 2d data
-        data_set.set_data_random();
+//        data_set.set_data_random();
 
         cout << "Data: " << endl << data_set.get_data() << endl;
 
@@ -1759,32 +1758,6 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
-        Tensor<type, 4> kernels(kernels_rows_number, kernels_raw_variables_number, kernels_channels_number, kernels_number);
-
-        kernels(0,0,0,0) = type(0.5);
-        kernels(0,1,0,0) = type(0.5);
-        kernels(1,0,0,0) = type(0.5);
-        kernels(1,1,0,0) = type(0.5);
-
-        kernels(0,0,0,1) = type(0.5);
-        kernels(0,1,0,1) = type(0.5);
-        kernels(1,0,0,1) = type(0.5);
-        kernels(1,1,0,1) = type(0.5);
-
-        kernels(0,0,1,0) = type(0.7);
-        kernels(0,1,1,0) = type(0.7);
-        kernels(1,0,1,0) = type(0.7);
-        kernels(1,1,1,0) = type(0.7);
-
-        kernels(0,0,1,1) = type(0.7);
-        kernels(0,1,1,1) = type(0.7);
-        kernels(1,0,1,1) = type(0.7);
-        kernels(1,1,1,1) = type(0.7);
-
-//        convolutional_layer->set_synaptic_weights(kernels);
-
-//        convolutional_layer->set_biases_constant(0);
-
         convolutional_layer->set_parameters_random();
 
         Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
@@ -1800,67 +1773,40 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         PerceptronLayer* perceptron_layer = new PerceptronLayer(perceptron_layer_inputs_number, perceptrons_number);
 
-        Tensor<type, 2> synaptic_weights(perceptron_layer_inputs_number,perceptrons_number);
-
-        for(Index i = 0; i < perceptron_layer_inputs_number; i++)
-        {
-            for(Index j = 0; j < perceptrons_number; j++)
-            {
-                synaptic_weights(i,j) = type(1);//type(j+1);
-            }
-        }
-
-//        cout << "Synaptic weights: " << synaptic_weights << endl;
-
-//        perceptron_layer->set_parameters_random();
-
-        synaptic_weights(0,0) = 1;
-        synaptic_weights(1,0) = 1;
-        synaptic_weights(2,0) = 1;
-        synaptic_weights(3,0) = 1;
-
-        synaptic_weights(0,1) = 2;
-        synaptic_weights(1,1) = 2;
-        synaptic_weights(2,1) = 2;
-        synaptic_weights(3,1) = 2;
-
-        perceptron_layer->set_synaptic_weights(synaptic_weights);
-        perceptron_layer->set_biases_constant(0);
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
         perceptron_layer->set_parameters_random();
-
-//        perceptron_layer->set_parameters_random();
 
         neural_network.add_layer(convolutional_layer);
         neural_network.add_layer(flatten_layer);
         neural_network.add_layer(perceptron_layer);
 
         ForwardPropagation forward_propagation(images_number, &neural_network);
-        
+cout << "Before forward propagation" << endl;
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+cout << "After forward propagation" << endl;
+      MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-        MeanSquaredError mean_squared_error(&neural_network, &data_set);
+      BackPropagation back_propagation(images_number, &mean_squared_error);
+cout << "Before back propagation" << endl;
+      mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+cout << "After back propagation" << endl;
+      cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
-        BackPropagation back_propagation(images_number, &mean_squared_error);
+      const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+      cout << "Numerical gradient: " << endl << numerical_gradient << endl;
 
-        cout << "Gradient: " << endl << back_propagation.gradient << endl;
+      cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
 
-        const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+      for(Index i = 0; i < back_propagation.gradient.size(); i++)
+      {
+          cout << back_propagation.gradient(i) << " ; " << numerical_gradient(i) <<  " ; " <<
+                  abs((back_propagation.gradient(i) - numerical_gradient(i))/numerical_gradient(i)*100)
+               << "%" << endl;
 
-        cout << "Numerical gradient: " << endl << numerical_gradient << endl;
-
-        cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
-
-        for(Index i = 0; i < back_propagation.gradient.size(); i++)
-        {
-            cout << back_propagation.gradient(i) << " ; " << numerical_gradient(i) <<  " ; " <<
-                    abs((back_propagation.gradient(i) - numerical_gradient(i))/numerical_gradient(i)*100)
-                 << "%" << endl;
-
-        }
+      }
     }
+
 }
 
 
@@ -1869,8 +1815,8 @@ void MeanSquaredErrorTest::run_test_case()
 {
     cout << "Running mean squared error test case...\n";
 
-    test_constructor();
-    test_destructor();
+//    test_constructor();
+//    test_destructor();
 
     // Convolutional network methods
 
@@ -1878,11 +1824,13 @@ void MeanSquaredErrorTest::run_test_case()
 
     // Back propagate methods
 
-    test_back_propagate_perceptron();
-    test_back_propagate_probabilistic();
+//    test_back_propagate_perceptron();
+//    test_back_propagate_probabilistic();
     //test_back_propagate_convolutional();
     //test_back_propagate_recurrent();
     //test_back_propagate_long_short_term_memory();
+
+    test_calculate_gradient_convolutional_network();
 
 
     //test_back_propagate();

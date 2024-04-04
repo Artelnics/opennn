@@ -205,9 +205,31 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     for (Index i = 0; i < rows_number; i++)
     {
-        maximum_index = maximal_index(x.chip(i, 1));
+        maximum_index = maximal_index(x.chip(i, 0));
 
         y(i, maximum_index) = type(1);
+    }
+}
+
+
+void Layer::competitive(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+
+    Index maximum_index = 0;
+
+    y.setZero();
+
+    for (Index i = 0; i < rows_number; i++)
+    {
+        for (Index j = 0; j < columns_number; j++)
+        {
+            maximum_index = maximal_index(x.chip(i, 0).chip(j, 0));
+
+            y(i, j, maximum_index) = type(1);
+        }
     }
 }
 
@@ -234,21 +256,28 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
 
 void Layer::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 2>& aux_rows_columns) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ {2} };
+    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    const Index channels_number = y.dimension(2);
+
+    type* y_data = y.data();
+
+    Tensor<type, 0> x_max;
+
+    x_max.device(*thread_pool_device) = x.maximum();
+
+    y.device(*thread_pool_device) = (x - x.constant(x_max(0))).exp();
     
-    // Normalize values to avoid possible NANs
+    aux_rows_columns.device(*thread_pool_device) = y.sum(softmax_dimension_3);
 
-    y.device(*thread_pool_device) = x;
+    for (Index j = 0; j < channels_number; j++)
+    {
+        type* slice_data = y_data + j * rows_number * columns_number;
 
-    aux_rows_columns.device(*thread_pool_device) = x.maximum(softmax_dimension);
+        TensorMap<Tensor<type, 2>> slice(slice_data, rows_number, columns_number);
 
-    substract_matrices(thread_pool_device, aux_rows_columns, y);
-
-    y.device(*thread_pool_device) = y.exp();
-
-    aux_rows_columns.device(*thread_pool_device) = y.sum(softmax_dimension);
-
-    divide_matrices(thread_pool_device, y, aux_rows_columns);
+        slice.device(*thread_pool_device) = slice / aux_rows_columns;
+    }
 }
 
 
