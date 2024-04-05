@@ -26,6 +26,8 @@
 #include "config.h"
 #include "tensors.h"
 
+using namespace std;
+
 namespace opennn
 {
     Index count_tokens(const string&, const char& separator = ' ');

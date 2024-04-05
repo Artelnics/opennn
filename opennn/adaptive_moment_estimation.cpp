@@ -587,9 +587,12 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
     AdaptiveMomentEstimationData& optimization_data) const
 {
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
     Index& iteration = optimization_data.iteration;
     
     const type bias_correction =
+            sqrt(type(1) - pow(beta_2, type(iteration))) /
             sqrt(type(1) - pow(beta_2, type(iteration))) /
             (type(1) - pow(beta_1, type(iteration)));
 
@@ -599,13 +602,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
 
+    Tensor<type, 1>& parameters = back_propagation.parameters;
+
     gradient_exponential_decay.device(*thread_pool_device)
         = gradient * (type(1) - beta_1) + gradient_exponential_decay * beta_1;
 
     square_gradient_exponential_decay.device(*thread_pool_device)
-        = gradient*gradient * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
-
-    Tensor<type, 1>& parameters = back_propagation.parameters;
+        = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
 
     //cout << "Gradient sample: " << gradient(0) << endl;
     //cout << "Gradient first estimate sample: " << gradient_exponential_decay(0) << endl;
@@ -614,13 +617,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     //cout << endl;
     
     parameters.device(*thread_pool_device)
-        -= learning_rate * bias_correction * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
+        -= (learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
     
     optimization_data.iteration++;
 
     // Update parameters
 
-    back_propagation.loss_index->get_neural_network()->set_parameters(parameters);
+    neural_network->set_parameters(parameters);
 }
 
 

@@ -265,11 +265,11 @@ protected:
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void competitive(const Tensor<type, 3>&, Tensor<type, 3>&) const;
 
+
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
-
-    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 2>&) const;
-
+    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;
     void softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const;
+
 
     template <int rank>
     void linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
@@ -397,12 +397,11 @@ protected:
     }
 
 
-    void softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
+    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
-    const Eigen::array<Index, 1> softmax_dimension_3 = { {2} };
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
