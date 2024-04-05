@@ -253,10 +253,11 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 }
 
 
-// Assumes A, B & C share their last dimension. A & C also share their second-to-last dimension
-// A & B share one of their remaining 2 dimensions (the contraction axes)
-// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
-// By default contraction axes are (1, 0)
+// Assumes A, B & C share their last dimension. A & C also share their second-to-last dimension.
+// A & B share one of their remaining 2 dimensions (the contraction axes).
+// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order.
+// By default contraction axes are (1, 0).
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 3>& B,
@@ -304,6 +305,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 // Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes)
 // The other dimension of C will be the non-equal dimension of A
 // By default contraction axes are (1, 0)
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 3>& B,
@@ -347,9 +349,10 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 }
 
 
-// Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes)
-// The other dimension of C will be the non-equal dimension of A
-// By default contraction axes are (1, 0)
+// Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes).
+// The other dimension of C will be the non-equal dimension of A.
+// By default contraction axes are (1, 0).
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 3>& B,
@@ -399,7 +402,7 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
 
     for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
         column.device(*thread_pool_device) = vector * vector(i);
     }
@@ -412,7 +415,7 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
 
     for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
         column.device(*thread_pool_device) = vector*vector(i);
     }
@@ -465,6 +468,8 @@ void divide_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tens
         slice.device(*thread_pool_device) = slice / matrix;
     }
 }
+
+
 
 
 void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
@@ -829,7 +834,6 @@ Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index
 
     return sorted_tokens;
 }
-
 
 
 Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1>&rank)
@@ -1985,6 +1989,8 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>& data)
 }
 
 
+
+
 Tensor<type, 1> mode(Tensor<type, 1>& data)
 {
     Tensor<type, 1> mode_and_frequency(2);
@@ -2015,6 +2021,8 @@ Tensor<type, 1> mode(Tensor<type, 1>& data)
             mode = entry.first;
         }
     }
+
+    /// @todo The following does not make sense.
 
     if(mode == -1) Tensor<type, 1>();
 

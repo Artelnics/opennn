@@ -1192,7 +1192,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     Tensor <Index, 1> optimal_inputs_raw_variables_indexes;
 
-    opennn::time(&beginning_time);
+    std::time(&beginning_time);
 
     inputs_selection_results.optimum_selection_error = numeric_limits<type>::max();
 
@@ -1258,7 +1258,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         data_set->set_input_target_raw_variables(original_input_raw_variables_indices, original_target_raw_variables_indices);
 
-        opennn::time(&current_time);
+        std::time(&current_time);
 
         elapsed_time = type(difftime(current_time, beginning_time));
 

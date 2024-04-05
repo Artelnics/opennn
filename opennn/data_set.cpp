@@ -13,7 +13,7 @@
 #include "codification.h"
 
 using namespace opennn;
-using namespace std;
+//using namespace std;
 
 
 namespace opennn

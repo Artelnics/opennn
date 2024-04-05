@@ -31,8 +31,6 @@ using namespace opennn;
 using namespace std::chrono;
 //using namespace Eigen;
 
-
-
 int main()
 {
    try
@@ -63,8 +61,11 @@ int main()
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
 
-        transformer.set_input_vocabulary(language_data_set.get_completion_vocabulary());
-        transformer.set_context_vocabulary(language_data_set.get_context_vocabulary());
+        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+
+        transformer.set_input_vocabulary(completion_vocabulary);
+        transformer.set_context_vocabulary(context_vocabulary);
 
         //type training_loss_goal = type(0.05);
 
@@ -81,10 +82,17 @@ int main()
         stochastic_gradient_descent.set_maximum_time(86400);
         stochastic_gradient_descent.set_batch_samples_number(32);
 
+        Index parameter_number = 0;
+        for (Index i = 0; i < transformer.get_layers().size(); i++)
+        {
+            cout << transformer.get_layer(i)->get_name() << " from parameter " << parameter_number << " to " << parameter_number + transformer.get_layer(i)->get_parameters_number() - 1 << endl;
+            parameter_number += transformer.get_layer(i)->get_parameters_number();
+        }
+
         TrainingResults training_results = stochastic_gradient_descent.perform_training();
 
         //transformer.calculate_outputs();
-                
+        
 
         cout << "Bye!" << endl;
 

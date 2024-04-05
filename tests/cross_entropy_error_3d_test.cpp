@@ -423,8 +423,7 @@ void CrossEntropyError3DTest::run_test_case()
     // Transformer test (Must be last since we change &neural_network to &transformer)
 
     cout << "test_calculate_gradient_transformer\n";
-    for(Index i = 0; i < 10; i++)
-        test_calculate_gradient_transformer();
+    for(Index i = 0; i < 10; i++)   test_calculate_gradient_transformer();
 
     cout << "End of cross-entropy error test case.\n\n";
 }
