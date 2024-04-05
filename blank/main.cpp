@@ -82,6 +82,13 @@ int main()
         stochastic_gradient_descent.set_maximum_time(86400);
         stochastic_gradient_descent.set_batch_samples_number(32);
 
+        Index parameter_number = 0;
+        for (Index i = 0; i < transformer.get_layers().size(); i++)
+        {
+            cout << transformer.get_layer(i)->get_name() << " from parameter " << parameter_number << " to " << parameter_number + transformer.get_layer(i)->get_parameters_number() - 1 << endl;
+            parameter_number += transformer.get_layer(i)->get_parameters_number();
+        }
+
         TrainingResults training_results = stochastic_gradient_descent.perform_training();
 
         //transformer.calculate_outputs();

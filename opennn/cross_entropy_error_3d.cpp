@@ -82,7 +82,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     cross_entropy_error.device(*thread_pool_device) = -cross_entropy_errors.sum();
 
-    back_propagation.error = cross_entropy_error()/type(batch_samples_number);
+    back_propagation.error = cross_entropy_error(0)/type(batch_samples_number);
 
     if(isnan(back_propagation.error))
     {
