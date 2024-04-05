@@ -2046,9 +2046,9 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 Tensor<string,1> sort_string_tensor(Tensor<string, 1> tensor)
 {
     auto compareStringLength = [](const string& a, const string& b)
-        {
-            return a.length() > b.length();
-        };
+    {
+        return a.length() > b.length();
+    };
 
     vector<string> tensor_as_vector(tensor.data(), tensor.data() + tensor.size());
     
@@ -2105,6 +2105,26 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression,
             }
         }
     }
+}
+
+
+void display_progress_bar(int completed, int total)
+{
+    int width = 100; // width of the progress bar
+    float progress = (float)completed / total;
+    int position = width * progress;
+
+    cout << "[";
+    for (int i = 0; i < width; ++i) {
+        if (i < position)       cout << "=";
+
+        else if (i == position)     cout << ">";
+
+        else cout << " ";
+    }
+    
+    cout << "] " << int(progress * 100.0) << " %\r";
+    cout.flush();
 }
 
 
@@ -2320,6 +2340,282 @@ string output_to_str(const Tensor<type, 2>& flatten_output_data)
     return multiple_one_hot_decode(output_data);
 */
     return string();
+}
+
+
+/// Calculate the total number of tokens in the documents.
+
+Index count(const Tensor<Tensor<string, 1>, 1>& documents)
+{
+    const Index documents_number = documents.dimension(0);
+
+    Index total_size = 0;
+
+    for (Index i = 0; i < documents_number; i++)
+    {
+        for (Index j = 0; j < documents(i).dimension(0); j++)
+        {
+            total_size += count_tokens(documents(i)(j));
+        }
+    }
+
+    return total_size;
+}
+
+
+/// Returns a Tensor with all the words as elements keeping the order.
+
+Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>& documents)
+{
+    const type words_number = type(count(documents));
+
+    Tensor<string, 1> words_list(words_number);
+
+    Index current_tokens = 0;
+
+    for (Index i = 0; i < documents.dimension(0); i++)
+    {
+        for (Index j = 0; j < documents(i).dimension(0); j++)
+        {
+            Tensor<string, 1> tokens = get_tokens(documents(i)(j));
+
+            copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
+
+            current_tokens += tokens.size();
+        }
+    }
+
+    return words_list;
+}
+
+
+/// Transforms all the letters of the documents into lower case.
+
+void to_lower(Tensor<string, 1>& documents)
+{
+    const size_t documents_number = documents.size();
+
+    for (size_t i = 0; i < documents_number; i++)
+    {
+        transform(documents[i].begin(), documents[i].end(), documents[i].begin(), ::tolower);
+    }
+
+}
+
+
+void split_punctuation(Tensor<string, 1>& documents)
+{
+    replace_substring(documents, "�", " � ");
+    replace_substring(documents, "\"", " \" ");
+    replace_substring(documents, ".", " . ");
+    replace_substring(documents, "!", " ! ");
+    replace_substring(documents, "#", " # ");
+    replace_substring(documents, "$", " $ ");
+    replace_substring(documents, "~", " ~ ");
+    replace_substring(documents, "%", " % ");
+    replace_substring(documents, "&", " & ");
+    replace_substring(documents, "/", " / ");
+    replace_substring(documents, "(", " ( ");
+    replace_substring(documents, ")", " ) ");
+    replace_substring(documents, "\\", " \\ ");
+    replace_substring(documents, "=", " = ");
+    replace_substring(documents, "?", " ? ");
+    replace_substring(documents, "}", " } ");
+    replace_substring(documents, "^", " ^ ");
+    replace_substring(documents, "`", " ` ");
+    replace_substring(documents, "[", " [ ");
+    replace_substring(documents, "]", " ] ");
+    replace_substring(documents, "*", " * ");
+    replace_substring(documents, "+", " + ");
+    replace_substring(documents, ",", " , ");
+    replace_substring(documents, ";", " ; ");
+    replace_substring(documents, ":", " : ");
+    replace_substring(documents, "-", " - ");
+    replace_substring(documents, ">", " > ");
+    replace_substring(documents, "<", " < ");
+    replace_substring(documents, "|", " | ");
+    replace_substring(documents, "–", " – ");
+    replace_substring(documents, "Ø", " Ø ");
+    replace_substring(documents, "º", " º ");
+    replace_substring(documents, "°", " ° ");
+    replace_substring(documents, "'", " ' ");
+    replace_substring(documents, "ç", " ç ");
+    replace_substring(documents, "✓", " ✓ ");
+    replace_substring(documents, "|", " | ");
+    replace_substring(documents, "@", " @ ");
+    replace_substring(documents, "#", " # ");
+    replace_substring(documents, "^", " ^ ");
+    replace_substring(documents, "*", " * ");
+    replace_substring(documents, "€", " € ");
+    replace_substring(documents, "¬", " ¬ ");
+    replace_substring(documents, "•", " • ");
+    replace_substring(documents, "·", " · ");
+    replace_substring(documents, "”", " ” ");
+    replace_substring(documents, "“", " “ ");
+    replace_substring(documents, "´", " ´ ");
+    replace_substring(documents, "§", " § ");
+    replace_substring(documents, "_", " _ ");
+    replace_substring(documents, ".", " . ");
+
+    delete_extra_spaces(documents);
+}
+
+
+void delete_non_printable_chars(Tensor<string, 1>& documents)
+{
+    for (Index i = 0; i < documents.size(); i++) remove_non_printable_chars(documents(i));
+}
+
+
+void delete_extra_spaces(Tensor<string, 1>& documents)
+{
+    Tensor<string, 1> new_documents(documents);
+
+    for (Index i = 0; i < documents.size(); i++)
+    {
+        string::iterator new_end = unique(new_documents[i].begin(), new_documents[i].end(),
+            [](char lhs, char rhs) { return(lhs == rhs) && (lhs == ' '); });
+
+        new_documents[i].erase(new_end, new_documents[i].end());
+    }
+
+    documents = new_documents;
+}
+
+
+void aux_remove_non_printable_chars(Tensor<string, 1>& documents)
+{
+    Tensor<string, 1> new_documents(documents);
+
+    for (Index i = 0; i < documents.size(); i++)
+    {
+        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
+    }
+
+    documents = new_documents;
+}
+
+
+Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>& documents)
+{
+    const Index documents_number = documents.size();
+
+    Tensor<Tensor<string, 1>, 1> new_tokenized_documents(documents_number);
+
+#pragma omp parallel for
+    for (Index i = 0; i < documents_number; i++)
+    {
+        new_tokenized_documents(i) = get_tokens(documents(i));
+    }
+
+    return new_tokenized_documents;
+}
+
+
+void delete_emails(Tensor<Tensor<string, 1>, 1>& documents)
+{
+    const Index documents_number = documents.size();
+
+#pragma omp parallel for
+    for (Index i = 0; i < documents_number; i++)
+    {
+        Tensor<string, 1> document = documents(i);
+
+        for (Index j = 0; j < document.size(); j++)
+        {
+            Tensor<string, 1> tokens = get_tokens(document(j));
+
+            string result;
+
+            for (Index k = 0; k < tokens.size(); k++)
+            {
+                if (!is_email(tokens(k)))
+                {
+                    result += tokens(k) + " ";
+                }
+            }
+
+            document(j) = result;
+        }
+
+        documents(i) = document;
+    }
+}
+
+
+void delete_blanks(Tensor<string, 1>& vector)
+{
+    const Index words_number = vector.size();
+
+    const Index empty_number = count_empty(vector);
+
+    Tensor<string, 1> vector_copy(vector);
+
+    vector.resize(words_number - empty_number);
+
+    Index index = 0;
+
+    string empty_string;
+
+    for (Index i = 0; i < words_number; i++)
+    {
+        trim(vector_copy(i));
+
+        if (!vector_copy(i).empty())
+        {
+            vector(index) = vector_copy(i);
+            index++;
+        }
+    }
+}
+
+
+void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
+{
+    const Index documents_size = tokens.size();
+
+    for (Index i = 0; i < documents_size; i++)
+    {
+        delete_blanks(tokens(i));
+    }
+}
+
+
+const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens)
+{
+    const Tensor<string, 1> total = join(tokens);
+
+    const Tensor<Index, 1> count = count_unique(total);
+
+    const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
+
+    const Tensor<string, 1> words = sort_by_rank(get_unique_elements(total), descending_rank);
+
+    return words;
+}
+
+
+Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
+{
+    Tensor<string, 1> documents_copy(documents);
+
+    to_lower(documents_copy);
+
+    split_punctuation(documents_copy);
+
+    delete_non_printable_chars(documents_copy);
+
+    delete_extra_spaces(documents_copy);
+
+    aux_remove_non_printable_chars(documents_copy);
+
+    Tensor<Tensor<string, 1>, 1> tokenized_documents = tokenize(documents_copy);
+
+    delete_emails(tokenized_documents);
+
+    delete_blanks(tokenized_documents);
+
+    return tokenized_documents;
 }
 
 
@@ -2680,20 +2976,6 @@ void TextAnalytics::split_punctuation(Tensor<string, 1>& documents) const
     replace_substring(documents,".", " . ");
 
     delete_extra_spaces(documents);
-}
-
-
-/// Transforms all the letters of the documents into lower case.
-
-void TextAnalytics::to_lower(Tensor<string,1>& documents) const
-{
-    const size_t documents_number = documents.size();
-
-    for(size_t i = 0; i < documents_number; i++)
-    {
-        transform(documents[i].begin(), documents[i].end(), documents[i].begin(), ::tolower);
-    }
-
 }
 
 
@@ -4128,52 +4410,6 @@ string TextAnalytics::get_rv(const string& word, const Tensor<string,1>& vowels)
 }
 
 
-/// Calculate the total number of tokens in the documents.
-
-Index TextAnalytics::count(const Tensor<Tensor<string,1>,1>& documents) const
-{
-    const Index documents_number = documents.dimension(0);
-
-    Index total_size = 0;
-
-    for(Index i = 0; i < documents_number; i++)
-    {
-        for(Index j = 0; j < documents(i).dimension(0); j++)
-        {
-            total_size += count_tokens(documents(i)(j));
-        }
-    }
-
-    return total_size;
-}
-
-
-/// Returns a Tensor with all the words as elements keeping the order.
-
-Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents) const
-{
-    const type words_number = type(count(documents));
-
-    Tensor<string,1> words_list(words_number);
-
-    Index current_tokens = 0;
-
-    for(Index i = 0; i < documents.dimension(0); i++)
-    {
-        for(Index j = 0; j < documents(i).dimension(0); j++)
-        {
-            Tensor<string, 1> tokens = get_tokens(documents(i)(j));
-
-            copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
-
-            current_tokens += tokens.size();
-        }
-    }
-
-    return words_list;
-}
-
-
 /// Returns a string with all the text of a file
 /// @param path Path of the file to be read
 
@@ -4734,11 +4970,12 @@ Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<stri
 
     return(top_words_correlations);
 }
+*/
 
 
-
-void TextAnalytics::load_documents(const string& path)
+void load_documents(const string& path)
 {
+/*
     const Index original_size = documents.size();
 
     if(path.empty())
@@ -4871,7 +5108,7 @@ void TextAnalytics::load_documents(const string& path)
     documents(original_size) = document_copy;
     targets(original_size) = document_target_copy;
 
-    file2.close();
+    file2.close();*/
 }
 
 
@@ -4880,7 +5117,7 @@ void TextAnalytics::load_documents(const string& path)
 /// @param input_string Input string given by the user
 /// @param max_length Maximum length of the returned string
 /// @param one_word Boolean, if true returns just one word, if false returns a phrase
-
+/*
 string TextAnalytics::calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet, const string& input_string, const Index& max_length, const bool& one_word)
 {
     string result = one_word ? generate_word(text_generation_alphabet, input_string, max_length) : generate_phrase(text_generation_alphabet, input_string, max_length);

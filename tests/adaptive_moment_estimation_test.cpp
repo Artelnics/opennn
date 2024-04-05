@@ -56,79 +56,123 @@ void AdaptiveMomentEstimationTest::test_perform_training()
     type error;
 
     // Test
+    {
+        samples_number = 1;
+        inputs_number = 1;
+        outputs_number = 1;
 
-    samples_number = 1;
-    inputs_number = 1;
-    outputs_number = 1;
+        data_set.set(1, 1, 1);
+        data_set.set_data_constant(type(1));
 
-    data_set.set(1,1,1);
-    data_set.set_data_constant(type(1));
+        neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
+        neural_network.set_parameters_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
-    neural_network.set_parameters_constant(type(1));
+        adaptive_moment_estimation.set_maximum_epochs_number(1);
+        adaptive_moment_estimation.set_display(false);
+        training_results = adaptive_moment_estimation.perform_training();
 
-    adaptive_moment_estimation.set_maximum_epochs_number(1);
-    adaptive_moment_estimation.set_display(false);
-    training_results = adaptive_moment_estimation.perform_training();
-
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
-
-    // Test
-
-    data_set.set(samples_number, inputs_number, outputs_number);
-    data_set.set_data_random();
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
-    neural_network.set_parameters_constant(-1);
-
-    adaptive_moment_estimation.set_maximum_epochs_number(1);
-
-    training_results = adaptive_moment_estimation.perform_training();
-    error = training_results.get_training_error();
-
-    assert_true(error < old_error, LOG);
+        assert_true(training_results.get_epochs_number() <= 1, LOG);
+    }
 
     // Test
+    {
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
 
-    old_error = error;
+        neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
+        neural_network.set_parameters_constant(-1);
 
-    adaptive_moment_estimation.set_maximum_epochs_number(50);
-    neural_network.set_parameters_constant(-1);
+        adaptive_moment_estimation.set_maximum_epochs_number(1);
 
-    training_results = adaptive_moment_estimation.perform_training();
-    error = training_results.get_training_error();
+        training_results = adaptive_moment_estimation.perform_training();
+        error = training_results.get_training_error();
 
-    assert_true(error - old_error < type(1e-2), LOG);
+        assert_true(error < old_error, LOG);
+
+        old_error = error;
+
+        adaptive_moment_estimation.set_maximum_epochs_number(50);
+        neural_network.set_parameters_constant(-1);
+
+        training_results = adaptive_moment_estimation.perform_training();
+        error = training_results.get_training_error();
+
+        assert_true(error - old_error < type(1e-2), LOG);
+    }
 
     // Loss goal
+    {
+        samples_number = 1;
+        inputs_number = 1;
+        outputs_number = 1;
 
-    samples_number = 1;
-    inputs_number = 1;
-    outputs_number = 1;
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+        //data_set.set_testing();
 
-    data_set.set(samples_number, inputs_number, outputs_number);
-    data_set.set_data_random();
-    //data_set.set_testing();
+        neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
+        neural_network.set_parameters_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
-    neural_network.set_parameters_random();
+        type training_loss_goal = type(0.05);
 
-    type training_loss_goal = type(0.05);
+        //adaptive_moment_estimation.set_display(true);
+        adaptive_moment_estimation.set_loss_goal(training_loss_goal);
+        adaptive_moment_estimation.set_maximum_epochs_number(10000);
+        adaptive_moment_estimation.set_maximum_time(1000.0);
 
-    //adaptive_moment_estimation.set_display(true);
-    adaptive_moment_estimation.set_loss_goal(training_loss_goal);
-    adaptive_moment_estimation.set_maximum_epochs_number(10000);
-    adaptive_moment_estimation.set_maximum_time(1000.0);
-    
-    //for (Index i = 0; i < 100; i++)
-    //{
-        //data_set.set_data_random();
-        //neural_network.set_parameters_random();
+        //for (Index i = 0; i < 100; i++)
+        //{
+            //data_set.set_data_random();
+            //neural_network.set_parameters_random();
         training_results = adaptive_moment_estimation.perform_training();
         //assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
     //}
-    
-    assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+
+        assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+    }
+
+    // Transformer model
+    {
+        Index batch_samples_number = 1;
+
+        Index input_length = 2;
+        Index context_length = 3;
+        Index inputs_dimension = 5;
+        Index context_dimension = 6;
+
+        Index depth = 4;
+        Index perceptron_depth = 6;
+        Index heads_number = 4;
+        Index number_of_layers = 1;
+
+        bool is_training = true;
+
+        LanguageDataSet language_data_set;
+
+        language_data_set.set_data_random_language_model(batch_samples_number, input_length, context_length, inputs_dimension, context_dimension);
+
+        language_data_set.set_training();
+
+        Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
+                          depth, perceptron_depth, heads_number, number_of_layers });
+
+        type training_loss_goal = type(0.05);
+
+        CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
+
+        adaptive_moment_estimation.set_loss_index(&cross_entropy_error_3d);
+
+        adaptive_moment_estimation.set_display(true);
+        adaptive_moment_estimation.set_display_period(100);
+
+        adaptive_moment_estimation.set_loss_goal(training_loss_goal);
+        adaptive_moment_estimation.set_maximum_epochs_number(1000);
+        adaptive_moment_estimation.set_maximum_time(1000.0);
+
+        training_results = adaptive_moment_estimation.perform_training();
+
+        //assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+    }
 }
 
 

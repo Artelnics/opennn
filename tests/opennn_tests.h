@@ -35,7 +35,7 @@
 #include "long_short_term_memory_layer_test.h"
 #include "recurrent_layer_test.h"
 #include "neural_network_test.h"
-//#include "transformer_test.h"
+#include "transformer_test.h"
 
 #include "sum_squared_error_test.h"
 #include "mean_squared_error_test.h"

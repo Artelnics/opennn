@@ -339,9 +339,9 @@ void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_thres
 void ProbabilisticLayer3D::set_default()
 {
     layer_name = "probabilistic_layer_3d";
-
+    
     layer_type = Layer::Type::Probabilistic3D;
-
+    
     const Index neurons_number = get_neurons_number();
 
     activation_function = ActivationFunction::Softmax;
@@ -525,7 +525,7 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 
 
 void ProbabilisticLayer3D::calculate_activations(const Tensor<type, 3>& combinations,
-                                               Tensor<type, 3>& activations) const
+                                                 Tensor<type, 3>& activations) const
 {
     switch(activation_function)
     {
@@ -542,35 +542,6 @@ void ProbabilisticLayer3D::calculate_activations(const Tensor<type, 3>& combinat
 }
 
 
-void ProbabilisticLayer3D::calculate_activations_derivatives(const Tensor<type, 3>& combinations,
-                                                           Tensor<type, 3>& activations,
-                                                           Tensor<type, 4>& activations_derivatives) const
-{
-
-    switch(activation_function)
-    {
-//    case ActivationFunction::Logistic:
-
-//        logistic_derivatives(combinations,
-//                             activations,
-//                             activations_derivatives);
-
-//        return;
-
-    case ActivationFunction::Softmax:
-
-        softmax_derivatives(combinations,
-                            activations,
-                            activations_derivatives);
-        return;
-
-    default:
-
-        return;
-    }
-}
-
-
 void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                              LayerForwardPropagation* forward_propagation,
                                              const bool& is_training)
@@ -579,24 +550,12 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 
     ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
-
+    
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
     
     calculate_combinations(inputs, outputs);
-    
-    if(is_training)
-    {
-        Tensor<type, 4>& activations_derivatives = probabilistic_layer_3d_forward_propagation->activations_derivatives;
 
-        calculate_activations_derivatives(outputs,
-                                          outputs,
-                                          activations_derivatives);
-    }
-    else
-    {
-        calculate_activations(outputs,
-                              outputs);
-    }
+    calculate_activations(outputs, outputs);
 }
 
 
@@ -608,45 +567,23 @@ void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
 
     const Index batch_samples_number = forward_propagation->batch_samples_number;
 
+    // Forward propagation
+
     ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
             static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
 
-    const Tensor<type, 4>& activations_derivatives = probabilistic_layer_3d_forward_propagation->activations_derivatives;
+    const Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
+
+    // Back propagation
 
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
             static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
-    const Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas; // CrossEntropyError3D::calculate_output_delta
+    const Tensor<type, 2>& targets = probabilistic_layer_3d_back_propagation->targets;
 
     Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
 
-    if(get_neurons_number() == 1)
-    {
-        const Eigen::array<Index, 3> reshape_dimensions = {{batch_samples_number, inputs_number, 1}};
-
-        // Reshape does not copy the data
-
-        error_combinations_derivatives = activations_derivatives.reshape(reshape_dimensions) * deltas;
-    }
-    else
-    {
-        Tensor<type, 1>& deltas_row = probabilistic_layer_3d_back_propagation->deltas_row;
-        Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_3d_back_propagation->activations_derivatives_matrix;
-
-        //batch_matrix_multiplication(*thread_pool_device, activations_derivatives, deltas, error_combinations_derivatives);
-        for(Index i = 0; i < batch_samples_number; i++)
-        {
-            for(Index j = 0; j < inputs_number; j++)
-            {
-                activations_derivatives_matrix = activations_derivatives.chip(i, 0).chip(j, 0);
-
-                deltas_row = deltas.chip(i, 0).chip(j, 0);
-
-                error_combinations_derivatives.chip(i,0).chip(j, 0).device(*thread_pool_device) =
-                        deltas_row.contract(activations_derivatives_matrix, AT_B);
-            }
-        }
-    }
+    calculate_error_combinations_derivatives(outputs, targets, error_combinations_derivatives);
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_3d_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives;
@@ -658,6 +595,21 @@ void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
 
     synaptic_weights_derivatives.device(*thread_pool_device) =
         inputs.contract(error_combinations_derivatives, contraction_indices);
+}
+
+
+void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets, Tensor<type, 3>& error_combinations_derivatives) const
+{
+    Index batch_samples_number = outputs.dimension(0);
+
+    error_combinations_derivatives.device(*thread_pool_device) = outputs;
+    
+#pragma omp parallel for
+    for (Index i = 0; i < targets.dimension(0); i++)
+        for (Index j = 0; j < targets.dimension(1); j++)
+            error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
+    
+    error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number);
 }
 
 
@@ -1039,7 +991,7 @@ pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair
 
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, inputs_number, neurons_number } });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, neurons_number });
 }
 
 
@@ -1054,12 +1006,10 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
 
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
-
+    
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
-
+    
     outputs_data = outputs.data();
-
-    activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number, neurons_number);
 }
 
 
@@ -1070,7 +1020,7 @@ pair<type*, dimensions> ProbabilisticLayer3DBackPropagation::get_deltas_pair() c
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
-    return pair<type*, dimensions>(deltas_data, { { batch_samples_number, inputs_number, neurons_number } });
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, neurons_number });
 }
 
 
@@ -1086,17 +1036,11 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
     const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
 
-    deltas.resize(batch_samples_number, inputs_number, neurons_number);
-
-    deltas_data = deltas.data();
+    targets.resize(batch_samples_number, inputs_number);
 
     biases_derivatives.resize(neurons_number);
 
     synaptic_weights_derivatives.resize(inputs_depth, neurons_number);
-
-    deltas_row.resize(neurons_number);
-
-    activations_derivatives_matrix.resize(neurons_number, neurons_number);
 
     error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 }

@@ -142,12 +142,12 @@ void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
     memcpy(outputs_data,
            inputs_pair(0).first,
            batch_samples_number*neurons_number*sizeof(type));
-
 }
 
 
 void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                           LayerBackPropagation* next_back_propagation,
+                                          LayerForwardPropagation*,
                                           LayerBackPropagation* this_back_propagation) const
 {
     FlattenLayerBackPropagation* flatten_layer_back_propagation =
@@ -357,7 +357,7 @@ pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number } });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
 }
 
 void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
@@ -377,7 +377,7 @@ pair<type*, dimensions> FlattenLayerBackPropagation::get_deltas_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(deltas_data, { { batch_samples_number, neurons_number } });
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, neurons_number });
 }
 
 void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)

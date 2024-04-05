@@ -229,7 +229,7 @@ Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& par
 
 
 /// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string RecurrentLayer::write_activation_function() const
 {
@@ -238,10 +238,6 @@ string RecurrentLayer::write_activation_function() const
     case ActivationFunction::Logistic: return "Logistic";
 
     case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
-
-    case ActivationFunction::Threshold: return "Threshold";
-
-    case ActivationFunction::SymmetricThreshold: return "SymmetricThreshold";
 
     case ActivationFunction::Linear: return "Linear";
 
@@ -434,7 +430,7 @@ void RecurrentLayer::set_activation_function(const RecurrentLayer::ActivationFun
 
 
 /// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
+/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
 /// @param new_activation_function Activation function for that layer.
 
 void RecurrentLayer::set_activation_function(const string& new_activation_function_name)
@@ -446,14 +442,6 @@ void RecurrentLayer::set_activation_function(const string& new_activation_functi
     else if(new_activation_function_name == "HyperbolicTangent")
     {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Threshold")
-    {
-        activation_function = ActivationFunction::Threshold;
-    }
-    else if(new_activation_function_name == "SymmetricThreshold")
-    {
-        activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_activation_function_name == "Linear")
     {
@@ -607,10 +595,6 @@ void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations,
 
         case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
-        case ActivationFunction::Threshold: threshold(combinations, activations); return;
-
-        case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, activations); return;
-
         case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
 
         case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
@@ -735,6 +719,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
 void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                             LayerBackPropagation* next_back_propagation,
+                                            LayerForwardPropagation*,
                                             LayerBackPropagation* current_layer_back_propagation) const
 {
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =

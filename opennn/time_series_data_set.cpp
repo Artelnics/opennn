@@ -497,7 +497,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file name
     {
-        file_stream.OpenElement("DataFileName");
+        file_stream.OpenElement("DataSourcePath");
 
         file_stream.PushText(data_source_path.c_str());
 
@@ -904,13 +904,13 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
+    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
 
     if(!data_file_name_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "DataFileName element is nullptr.\n";
+               << "DataSourcePath element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }

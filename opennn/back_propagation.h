@@ -1,5 +1,5 @@
-#ifndef LOSSINDEXBACKPROPAGATION_H
-#define LOSSINDEXBACKPROPAGATION_H
+#ifndef BACKPROPAGATION_H
+#define BACKPROPAGATION_H
 
 #include <string>
 
@@ -29,13 +29,11 @@ struct BackPropagation
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
 
-
     pair<type*, dimensions> get_output_deltas_pair() const;
-
 
     void print() const
     {
-        cout << "Loss index back-propagation" << endl;
+        cout << "Back-propagation" << endl;
 
         cout << "Errors:" << endl;
         cout << errors << endl;

@@ -124,6 +124,7 @@ public:
 
     virtual void calculate_hidden_delta(LayerForwardPropagation*,
                                         LayerBackPropagation*,
+                                        LayerForwardPropagation*,
                                         LayerBackPropagation*) const {}
 
     virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
@@ -261,27 +262,14 @@ protected:
     }
 
 
-    template <int rank>
-    void symmetric_threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
-    {
-        y.device(*thread_pool_device) = (x > type(0)).select(x.constant(type(1)), x.constant(type(-1)));
-    }
-
-
-    template <int rank>
-    void threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
-    {
-        y.device(*thread_pool_device) = (x >= type(0)).select(x.constant(type(1)), x.constant(type(0)));
-    }
-
-
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void competitive(const Tensor<type, 3>&, Tensor<type, 3>&) const;
+
 
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
-
     void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;
-
     void softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const;
+
 
     template <int rank>
     void linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
@@ -409,14 +397,7 @@ protected:
     }
 
 
-    /// @todo inefficient code
-
-    void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx, Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 2>&) const;
-
-    void softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
-
-    void softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
-    
+    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};

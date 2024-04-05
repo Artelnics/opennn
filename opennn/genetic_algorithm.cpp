@@ -644,7 +644,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
         raw_variables_active = 1 + rand() % raw_variables_number;
 
-        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
+        while(std::count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
             arrow = type(distribution(gen));
 
@@ -915,7 +915,7 @@ void GeneticAlgorithm::perform_selection()
 
     // The next individuals are selected randomly but their probability is set according to their fitness.
 
-    while(count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
+    while(std::count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
     {
         weighted_random(selection_probabilities);
     }
@@ -944,7 +944,7 @@ void GeneticAlgorithm::perform_selection()
 
 Tensor <Index,1> GeneticAlgorithm::get_selected_individuals_indices()
 {
-    Tensor<Index,1> selection_indexes(count(selection.data(), selection.data() + selection.size(), 1));
+    Tensor<Index,1> selection_indexes(std::count(selection.data(), selection.data() + selection.size(), 1));
     Index activated_index_count = 0;
 
     for(Index i = 0; i < selection.size(); i++)
@@ -1192,7 +1192,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     Tensor <Index, 1> optimal_inputs_raw_variables_indexes;
 
-    opennn::time(&beginning_time);
+    std::time(&beginning_time);
 
     inputs_selection_results.optimum_selection_error = numeric_limits<type>::max();
 
@@ -1258,7 +1258,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         data_set->set_input_target_raw_variables(original_input_raw_variables_indices, original_target_raw_variables_indices);
 
-        opennn::time(&current_time);
+        std::time(&current_time);
 
         elapsed_time = type(difftime(current_time, beginning_time));
 

@@ -48,9 +48,15 @@ public:
 
     /// Enumeration of the available activation functions for the recurrent layer.
 
-    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
-                                  Linear, RectifiedLinear, ExponentialLinear,
-                                  ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+    enum class ActivationFunction{Logistic, 
+                                  HyperbolicTangent,
+                                  Linear, 
+                                  RectifiedLinear, 
+                                  ExponentialLinear,
+                                  ScaledExponentialLinear, 
+                                  SoftPlus, 
+                                  SoftSign, 
+                                  HardSigmoid};
 
    // Constructors
 
@@ -167,6 +173,7 @@ public:
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
+                               LayerForwardPropagation*,
                                LayerBackPropagation*) const final;
 
    void calculate_hidden_delta(PerceptronLayerForwardPropagation*,

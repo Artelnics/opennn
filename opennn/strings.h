@@ -26,6 +26,8 @@
 #include "config.h"
 #include "tensors.h"
 
+using namespace std;
+
 namespace opennn
 {
     Index count_tokens(const string&, const char& separator = ' ');
@@ -93,6 +95,8 @@ namespace opennn
     void replac_substring_within_quotes(string&, const string&, const string&);
     void replace_substring_in_string (Tensor<string, 1>& found_tokens, string& outputs_espresion, const string& keyword);
 
+    void display_progress_bar(int completed, int total);
+
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
 
@@ -125,6 +129,22 @@ namespace opennn
 
     string output_to_str(const Tensor<type, 2>&);
 
+    // Preprocess methods
+
+    Index count(const Tensor<Tensor<string, 1>, 1>& documents);
+    Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&);
+    void to_lower(Tensor<string, 1>& documents);
+    void split_punctuation(Tensor<string, 1>&);
+    void delete_non_printable_chars(Tensor<string, 1>&);
+    void delete_extra_spaces(Tensor<string, 1>&);
+    void aux_remove_non_printable_chars(Tensor<string, 1>&);
+    Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>&);
+    void delete_emails(Tensor<Tensor<string, 1>, 1>&);
+    void delete_blanks(Tensor<string, 1>&);
+    void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
+
+    const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>&);
+    Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>&);
 
 }
 

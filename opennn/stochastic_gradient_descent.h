@@ -126,7 +126,7 @@ private:
 
    /// Boolean. Whether to apply Nesterov momentum.
 
-   bool nesterov;
+   bool nesterov = false;
 
    /// Number of samples per training batch.
 

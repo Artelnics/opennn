@@ -54,7 +54,7 @@ SOURCES += \
     stochastic_gradient_descent_test.cpp \
     statistics_test.cpp \
     scaling_test.cpp \
-    #transformer_test.cpp \
+    transformer_test.cpp \
     convolutional_layer_test.cpp \
     pooling_layer_test.cpp \
     response_optimization_test.cpp \
@@ -102,7 +102,7 @@ HEADERS += \
     correlations_test.h \
     statistics_test.h \
     scaling_test.h \
-    #transformer_test.h \
+    transformer_test.h \
     convolutional_layer_test.h \
     pooling_layer_test.h \
     flatten_layer_test.h \

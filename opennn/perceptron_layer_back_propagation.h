@@ -2,7 +2,6 @@
 #define COLUMN_H
 
 #include <string>
-//#include "dynamic_tensor.h"
 
 
 using namespace std;

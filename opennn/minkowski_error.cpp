@@ -8,7 +8,7 @@
 
 #include "minkowski_error.h"
 #include "neural_network_forward_propagation.h"
-#include "loss_index_back_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
@@ -150,6 +150,8 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 
     deltas.device(*thread_pool_device) = (type(1.0/batch_samples_number))*deltas/p_norm_derivative();
 
+
+    /// @todo check if this is neccessary.
     replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, type(0));
 }
 

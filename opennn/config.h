@@ -28,12 +28,13 @@
 //#define OPENNN_CUDA
 #ifdef OPENNN_CUDA
 
-#include "../../opennn-cuda/opennn-cuda/kernel.cuh"
+#include "../../CudaOpennn/CudaOpennn/kernel.cuh"
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "cublas_v2.h"
 #include <cublasXt.h>
 #include <curand.h>
+#include <cudnn.h>
 
 #endif
 
@@ -45,12 +46,12 @@
 
 namespace opennn
 {
-    using namespace std;
+    //using namespace std;
     using namespace Eigen;
 
     using type = float; //Eigen::half;
 
-    using dimensions = vector<Index>;
+    using dimensions = std::vector<Index>;
      
     //using execution_policy = std::execution::par;
 

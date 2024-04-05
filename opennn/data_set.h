@@ -39,7 +39,7 @@
 #include "correlation.h"
 #include "scaling.h"
 
-using namespace std;
+//using namespace std;
 using namespace Eigen;
 
 // Filesystem namespace
@@ -476,6 +476,8 @@ public:
     void set_raw_variable_type(const Index&, const RawVariableType&);
     void set_raw_variable_type(const string&, const RawVariableType&);
 
+    void set_all_raw_variables_type(const RawVariableType& new_type);
+
     void set_raw_variables_names(const Tensor<string, 1>&);
 
     void set_raw_variables_number(const Index&);
@@ -765,8 +767,6 @@ public:
 
     void read_csv_2_simple();
     void read_csv_3_simple();
-
-    void read_csv_3_language_model();
 
     void read_csv_2_complete();
     void read_csv_3_complete();

@@ -8,7 +8,7 @@
 
 #include "learning_rate_algorithm_test.h"
 #include "../opennn/neural_network_forward_propagation.h"
-#include "../opennn/loss_index_back_propagation.h"
+#include "../opennn/back_propagation.h"
 
 LearningRateAlgorithmTest::LearningRateAlgorithmTest() : UnitTesting()
 {

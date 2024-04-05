@@ -68,8 +68,13 @@ public:
     Index get_weights_depth() const;
 
     Tensor<type, 3> get_query_weights() const;
+    Tensor<type, 2> get_query_biases() const;
+
     Tensor<type, 3> get_key_weights() const;
+    Tensor<type, 2> get_key_biases() const;
+
     Tensor<type, 3> get_value_weights() const;
+    Tensor<type, 2> get_value_biases() const;
 
     Tensor<type, 3> get_projection_weights() const;
     Tensor<type, 1> get_projection_biases() const;
@@ -113,9 +118,9 @@ public:
 
     // Linear transformation & projection
 
-    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&) const;
+    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&) const;
 
-    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 3>&) const;
+    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
     // Attention computation
 
@@ -135,6 +140,7 @@ public:
 
     void calculate_hidden_delta(LayerForwardPropagation*,
                                 LayerBackPropagation*,
+                                LayerForwardPropagation*,
                                 LayerBackPropagation*) const final;
 
     void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
@@ -186,13 +192,18 @@ protected:
 
     // Scaling factor used for attention computation in each head
 
-    type scaling_factor;
+    type scaling_factor = 1;
 
-    /// Linear transformation weights
+    /// Linear transformation weights and biases
 
     Tensor<type, 3> query_weights;
+    Tensor<type, 2> query_biases;
+
     Tensor<type, 3> key_weights;
+    Tensor<type, 2> key_biases;
+
     Tensor<type, 3> value_weights;
+    Tensor<type, 2> value_biases;
 
     /// Linear projection weights
 
@@ -211,6 +222,14 @@ protected:
 
     bool display = true;
 
+    // Operation indices
+
+    const Eigen::array<Index, 1> projection_sum_index = Eigen::array<Index, 1>({ 3 });
+    const Eigen::array<Index, 2> biases_derivatives_sum_indices = Eigen::array<Index, 2>({ 0, 2 });
+    const Eigen::array<Index, 2> projection_biases_derivatives_sum_indices = Eigen::array<Index, 2>({ 0, 1 });
+
+    const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
+    const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 };
 
     struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
@@ -262,6 +281,7 @@ protected:
         Tensor<type, 4> softmax_attention_scores;
         Tensor<type, 4> attention_outputs;
 
+        Tensor<type, 4> projection_outputs;
         Tensor<type, 3> outputs;
     };
 
@@ -286,6 +306,9 @@ protected:
         virtual ~MultiheadAttentionLayerBackPropagation()
         {
         }
+
+
+        pair<type*, dimensions> get_deltas_pair() const final;
 
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
@@ -314,7 +337,13 @@ protected:
         Tensor<type, 3> value_weights_derivatives;
 
         Tensor<type, 3> projection_weights_derivatives;
+
+        Tensor<type, 2> query_biases_derivatives;
+        Tensor<type, 2> key_biases_derivatives;
+        Tensor<type, 2> value_biases_derivatives;
         Tensor<type, 1> projection_biases_derivatives;
+
+        Tensor<type, 1> aux_rows;
     };
 
 }
