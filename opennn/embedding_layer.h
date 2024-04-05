@@ -174,6 +174,8 @@ protected:
 
     bool display = true;
 
+    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
+
 #ifdef OPENNN_CUDA
     //#include "../../opennn-cuda/opennn-cuda/embedding_layer_cuda.h"
 #endif

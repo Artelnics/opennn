@@ -46,12 +46,12 @@
 
 namespace opennn
 {
-    using namespace std;
+    //using namespace std;
     using namespace Eigen;
 
     using type = float; //Eigen::half;
 
-    using dimensions = vector<Index>;
+    using dimensions = std::vector<Index>;
      
     //using execution_policy = std::execution::par;
 

@@ -559,7 +559,8 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 {
     constexpr type m_inf = -numeric_limits<type>::infinity(); // superior triangular = m_inf
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index input_index = 0; input_index < input_size ; input_index++)
     {
         for(Index context_index = input_index + 1; context_index < context_size; context_index++)
@@ -833,9 +834,14 @@ void MultiheadAttentionLayer::calculate_hidden_delta(MultiheadAttentionLayerForw
 
     const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
 
+    // Next back propagation
+
+    const Tensor<type, 3>& next_error_input_derivatives = next_back_propagation->error_input_derivatives;
+
     // This back propagation
 
     Tensor<type, 3>& deltas = back_propagation->deltas;
+
 
     // Next back propagation
 
@@ -847,7 +853,7 @@ void MultiheadAttentionLayer::calculate_hidden_delta(MultiheadAttentionLayerForw
     else
     */
 
-    deltas.device(*thread_pool_device) = next_back_propagation->error_input_derivatives;
+    deltas.device(*thread_pool_device) = next_error_input_derivatives;
 }
 
 
@@ -1083,7 +1089,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
 
             error_context_derivatives.chip(sample_index, 0).device(*thread_pool_device) 
                 += sample_key_derivatives.contract(head_key_weights, A_BT)
-                 + sample_value_derivatives.contract(head_value_weights, A_BT);
+                + sample_value_derivatives.contract(head_value_weights, A_BT);
         }
 
         // BIASES DERIVATIVES
