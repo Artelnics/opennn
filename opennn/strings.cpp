@@ -2108,6 +2108,26 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression,
 }
 
 
+void display_progress_bar(int completed, int total)
+{
+    int width = 100; // width of the progress bar
+    float progress = (float)completed / total;
+    int position = width * progress;
+
+    cout << "[";
+    for (int i = 0; i < width; ++i) {
+        if (i < position)       cout << "=";
+
+        else if (i == position)     cout << ">";
+
+        else cout << " ";
+    }
+    
+    cout << "] " << int(progress * 100.0) << " %\r";
+    cout.flush();
+}
+
+
 void create_alphabet()
 {
 /*
@@ -2558,6 +2578,44 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
     {
         delete_blanks(tokens(i));
     }
+}
+
+
+const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens)
+{
+    const Tensor<string, 1> total = join(tokens);
+
+    const Tensor<Index, 1> count = count_unique(total);
+
+    const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
+
+    const Tensor<string, 1> words = sort_by_rank(get_unique_elements(total), descending_rank);
+
+    return words;
+}
+
+
+Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
+{
+    Tensor<string, 1> documents_copy(documents);
+
+    to_lower(documents_copy);
+
+    split_punctuation(documents_copy);
+
+    delete_non_printable_chars(documents_copy);
+
+    delete_extra_spaces(documents_copy);
+
+    aux_remove_non_printable_chars(documents_copy);
+
+    Tensor<Tensor<string, 1>, 1> tokenized_documents = tokenize(documents_copy);
+
+    delete_emails(tokenized_documents);
+
+    delete_blanks(tokenized_documents);
+
+    return tokenized_documents;
 }
 
 

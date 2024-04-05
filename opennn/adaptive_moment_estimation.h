@@ -27,7 +27,6 @@ struct AdaptiveMomentEstimationData;
 
 /// This concrete class represents the adaptive moment estimation(Adam) optimization algorithm.
 /// This algorithm is based on adaptive estimates of lower-order moments.
-
 ///
 /// For more information visit:
 ///

@@ -131,8 +131,7 @@ public:
                                Tensor<type, 3>&) const;
 
    void calculate_activations(const Tensor<type, 3>&,
-                              Tensor<type, 3>&,
-                              Tensor<type, 2>&) const;
+                              Tensor<type, 3>&) const;
 
    // Outputs
 
@@ -235,8 +234,6 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     }
 
     Tensor<type, 3> outputs;
-
-    Tensor<type, 2> aux_rows_columns;
 };
 
 

@@ -43,7 +43,6 @@
 #include <Windows.h>
 #endif
 
-using namespace std;
 using namespace Eigen;
 
 // Filesystem namespace

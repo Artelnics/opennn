@@ -205,16 +205,37 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     for (Index i = 0; i < rows_number; i++)
     {
-        maximum_index = maximal_index(x.chip(i, 1));
+        maximum_index = maximal_index(x.chip(i, 0));
 
         y(i, maximum_index) = type(1);
     }
 }
 
 
+void Layer::competitive(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+    Index maximum_index = 0;
+
+    y.setZero();
+
+    for (Index i = 0; i < rows_number; i++)
+    {
+        for (Index j = 0; j < columns_number; j++)
+        {
+            maximum_index = maximal_index(x.chip(i, 0).chip(j, 0));
+
+            y(i, j, maximum_index) = type(1);
+        }
+    }
+}
+
+
 void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>& aux_rows) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ {1} };
+    const Eigen::array<Index, 1> softmax_dimension{ { 1 } };
 
     // Normalize values to avoid possible NANs
 
@@ -232,23 +253,29 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
 }
 
 
-void Layer::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 2>& aux_rows_columns) const
+void Layer::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ {2} };
+    const Eigen::array<Index, 1> softmax_dimension{ { 2 } }; 
     
-    // Normalize values to avoid possible NANs
+    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    const Index channels_number = y.dimension(2);
+    
+    const Eigen::array<Index, 3> range_3{ { rows_number, columns_number, 1 } };
+    const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels_number } };
 
-    y.device(*thread_pool_device) = x;
-
-    aux_rows_columns.device(*thread_pool_device) = x.maximum(softmax_dimension);
-
-    substract_matrices(thread_pool_device, aux_rows_columns, y);
+    y.device(*thread_pool_device) = x - x.maximum(softmax_dimension)
+                                         .eval()
+                                         .reshape(range_3)
+                                         .broadcast(expand_softmax_dim);
 
     y.device(*thread_pool_device) = y.exp();
 
-    aux_rows_columns.device(*thread_pool_device) = y.sum(softmax_dimension);
-
-    divide_matrices(thread_pool_device, y, aux_rows_columns);
+    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+                                         .eval()
+                                         .reshape(range_3)
+                                         .broadcast(expand_softmax_dim);
+    
 }
 
 
@@ -259,57 +286,62 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
     const Index channels_number = x.dimension(2);
     const Index blocks_number = x.dimension(3);
 
-    const Eigen::array<Index, 1> softmax_dimension{ {0} };
-    const Eigen::array<Index, 4> range_4{ {1, columns_number, channels_number, blocks_number} };
-    const Eigen::array<Index, 4> expand_softmax_dim{ {rows_number, 1, 1, 1} };
-
-    // Normalize values to avoid possible NANs
+    const Eigen::array<Index, 1> softmax_dimension{ { 0 } };
+    const Eigen::array<Index, 4> range_4{ { 1, columns_number, channels_number, blocks_number } };
+    const Eigen::array<Index, 4> expand_softmax_dim{ { rows_number, 1, 1, 1 } };
 
     y.device(*thread_pool_device) = x - x.maximum(softmax_dimension)
+                                         .eval()
                                          .reshape(range_4)
                                          .broadcast(expand_softmax_dim);
 
     y.device(*thread_pool_device) = y.exp();
 
-    Tensor<type, 4> y_sum(rows_number, columns_number, channels_number, blocks_number);
-
-    y_sum.device(*thread_pool_device) = y.sum(softmax_dimension)
-                                        .reshape(range_4)
-                                        .broadcast(expand_softmax_dim);
-
-    y.device(*thread_pool_device) = y / y_sum;
+    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+                                         .eval()
+                                         .reshape(range_4)
+                                         .broadcast(expand_softmax_dim);
 }
 
 
-void Layer::softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
+/// Assumes all rank 3 tensors have same 
+void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax, const Tensor<type, 3>& tensor, TensorMap<Tensor<type, 3>>& result, Tensor<type, 1>& aux_rows) const
 {
-    const Index rows_number = y.dimension(0);
-    const Index columns_number = y.dimension(1);
-    const Index channels_number = y.dimension(2);
+    Index rows_number = softmax.dimension(0);
+    Index columns_number = softmax.dimension(1);
+    Index channels_number = softmax.dimension(2);
 
-    type* y_data = (type*) y.data();
-    type* dy_dx_data = (type*) dy_dx.data();
+    type* softmax_data = (type*)softmax.data();
+    type* tensor_data = (type*)tensor.data();
+    type* result_data = result.data();
 
-    dy_dx.setZero();
+    type* softmax_vector_data = nullptr;
+    type* tensor_vector_data = nullptr;
+    type* result_vector_data = nullptr;
+
+    Tensor<type, 0> sum;
 
     for (Index i = 0; i < channels_number; i++)
     {
         for (Index j = 0; j < columns_number; j++)
         {
-            type* y_vector_data = y_data + j * rows_number + i * rows_number * columns_number;
-            type* dy_dx_matrix_data = dy_dx_data + j * rows_number * rows_number + i * rows_number * rows_number * columns_number;
+            softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
+            tensor_vector_data = tensor_data + rows_number * (i * columns_number + j);
+            result_vector_data = result_data + rows_number * (i * columns_number + j);
 
-            const TensorMap<Tensor<type, 1>> y_vector(y_vector_data, rows_number);
-            TensorMap<Tensor<type, 2>> dy_dx_matrix(dy_dx_matrix_data, rows_number, rows_number);
+            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows_number);
+            const TensorMap<Tensor<type, 1>> tensor_vector(tensor_vector_data, rows_number);
+            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
 
-            self_kronecker_product(thread_pool_device, y_vector, dy_dx_matrix);
+            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
+            sum.device(*thread_pool_device) = aux_rows.sum();
 
-            dy_dx_matrix.device(*thread_pool_device) = -dy_dx_matrix;
-
-            sum_diagonal(dy_dx_matrix, y_vector);
+            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
         }
     }
 }
+
+
 }
 
 // OpenNN: Open Neural Networks Library.
