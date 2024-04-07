@@ -36,7 +36,7 @@ int main()
    try
    {
         cout << "Blank\n";
-        
+        /*
         LanguageDataSet language_data_set;
 
         //language_data_set.set_data_source_path("data/example2.txt");
@@ -92,7 +92,7 @@ int main()
         TrainingResults training_results = stochastic_gradient_descent.perform_training();
 
         //transformer.calculate_outputs();
-        
+        */
 
         cout << "Bye!" << endl;
 
