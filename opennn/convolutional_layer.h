@@ -190,10 +190,6 @@ public:
                                ConvolutionalLayerBackPropagation*,
                                ConvolutionalLayerBackPropagation*) const;
 
-   void calculate_hidden_delta(PoolingLayerForwardPropagation*,
-                               PoolingLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
    void calculate_hidden_delta(FlattenLayerForwardPropagation*,
                                FlattenLayerBackPropagation*,
                                ConvolutionalLayerBackPropagation*) const;

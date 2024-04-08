@@ -599,13 +599,13 @@ void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor
     /// @todo Can we simplify this? For instance put the division in the last line somewhere else. 
 
     error_combinations_derivatives.device(*thread_pool_device) = outputs;
-
-    #pragma omp parallel for
+    
+#pragma omp parallel for
 
     for (Index i = 0; i < targets.dimension(0); i++)
         for (Index j = 0; j < targets.dimension(1); j++)
             error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
-
+    
     error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number);
 }
 
