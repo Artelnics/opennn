@@ -404,6 +404,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training) const
 {
+    cout << "pooling inputs: " << endl << inputs << endl;
+
     const Index outputs_columns_number = get_outputs_columns_number();
     const Index oututs_rows_number = get_outputs_rows_number();
     const Index outputs_channels_number = get_channels_number();
@@ -434,23 +436,38 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                            PADDING_VALID,
                                            type(padding_width));
 
+    cout << "image_patches: " << endl << image_patches << endl;
+
     outputs.device(*thread_pool_device)
             = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
 
+    cout << "outputs: " << endl << outputs << endl;
+
     // Extract maximum indices
 
-    pooling_layer_forward_propagation->inputs_max_indices.resize(inputs.size());
+    pooling_layer_forward_propagation->inputs_max_indices.resize(inputs.dimension(0),
+                                                                 inputs.dimension(1),
+                                                                 inputs.dimension(2),
+                                                                 inputs.dimension(3));
     pooling_layer_forward_propagation->inputs_max_indices.setZero();
     Index outputs_index = 0;
 
+    cout << "Arg max: " << image_patches.argmax() << endl;
+
     for(Index i = 0; i < pooling_layer_forward_propagation->inputs_max_indices.size(); i++)
     {
-        if(inputs(i) - outputs(outputs_index) < 1e-3)
+        cout << "inputs(i): " << inputs(i) << "; outputs_index: " << outputs(outputs_index) << "; " <<inputs(i) - outputs(outputs_index) << endl;
+
+
+
+        if(abs(inputs(i) - outputs(outputs_index)) < 1e-3)
         {
             pooling_layer_forward_propagation->inputs_max_indices(i) = 1;
             outputs_index++;
         }
     }
+
+    cout << "Max indices: " << pooling_layer_forward_propagation->inputs_max_indices << endl;
 }
 
 
