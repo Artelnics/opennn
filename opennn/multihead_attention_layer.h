@@ -222,6 +222,8 @@ protected:
 
     bool display = true;
 
+    const type m_inf = -numeric_limits<type>::infinity(); // superior triangular = m_inf
+
     // Operation indices
 
     const Eigen::array<Index, 1> projection_sum_index = Eigen::array<Index, 1>({ 3 });

@@ -557,8 +557,6 @@ void MultiheadAttentionLayer::set_display(const bool& new_display)
 
 void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
-    constexpr type m_inf = -numeric_limits<type>::infinity(); // superior triangular = m_inf
-
     #pragma omp parallel for
 
     for(Index input_index = 0; input_index < input_size ; input_index++)
@@ -585,6 +583,9 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
     type* biases_data = (type*)biases.data();
     type* transformed_input_data = transformed_input.data();
 
+    /// @todo move to struct or do tensor map? 
+    Tensor<type, 2> sample_input;
+
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         type* head_weights_data = weights_data + head_index * depth * weights_depth;
@@ -596,9 +597,10 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
 
         for (Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
+            sample_input = input.chip(sample_index, 0);
+
             type* sample_transformed_input_data = head_transformed_input_data + sample_index * variables_number * weights_depth;
 
-            const Tensor<type, 2> sample_input = input.chip(sample_index, 0);
             TensorMap<Tensor<type, 2>> sample_transformed_input(sample_transformed_input_data, variables_number, weights_depth);
 
             sample_transformed_input.device(*thread_pool_device)
@@ -627,6 +629,7 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
         type* head_attention_output_data = attention_outputs_data + head_index * input_size * weights_depth * batch_size;
 
         TensorMap<Tensor<type, 3>> head_projection_output(head_projection_output_data, batch_size, input_size, depth);
+
         const TensorMap<Tensor<type, 2>> head_projection_weights(head_projection_weights_data, weights_depth, depth);
 
         for(Index sample_index = 0; sample_index < batch_size; sample_index++)
@@ -1023,6 +1026,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
             type* sample_attention_output_derivatives_data = head_attention_output_derivatives_data + sample_index * input_size * weights_depth;
 
             TensorMap<Tensor<type, 2>> sample_attention_output_derivatives(sample_attention_output_derivatives_data, input_size, weights_depth);
+
             const Tensor<type, 2> sample_deltas = deltas.chip(sample_index, 0);
 
             sample_attention_output_derivatives.device(*thread_pool_device)

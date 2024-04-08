@@ -203,6 +203,8 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     y.setZero();
 
+    /// @todo can we use argmax?
+
     for (Index i = 0; i < rows_number; i++)
     {
         maximum_index = maximal_index(x.chip(i, 0));
@@ -220,6 +222,8 @@ void Layer::competitive(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
     Index maximum_index = 0;
 
     y.setZero();
+
+    /// @todo can we use argmax?
 
     for (Index i = 0; i < rows_number; i++)
     {
@@ -295,6 +299,8 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
                                          .reshape(range_4)
                                          .broadcast(expand_softmax_dim);
 
+    /// @todo put this in the above expression?
+
     y.device(*thread_pool_device) = y.exp();
 
     y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
@@ -305,11 +311,15 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 
 
 /// Assumes all rank 3 tensors have same 
-void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax, const Tensor<type, 3>& tensor, TensorMap<Tensor<type, 3>>& result, Tensor<type, 1>& aux_rows) const
+
+void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax, 
+                                             const Tensor<type, 3>& tensor, 
+                                             TensorMap<Tensor<type, 3>>& result, 
+                                             Tensor<type, 1>& aux_rows) const
 {
-    Index rows_number = softmax.dimension(0);
-    Index columns_number = softmax.dimension(1);
-    Index channels_number = softmax.dimension(2);
+    const Index rows_number = softmax.dimension(0);
+    const Index columns_number = softmax.dimension(1);
+    const Index channels_number = softmax.dimension(2);
 
     type* softmax_data = (type*)softmax.data();
     type* tensor_data = (type*)tensor.data();
@@ -334,13 +344,13 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax, con
             TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
 
             aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
+            
             sum.device(*thread_pool_device) = aux_rows.sum();
 
             result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
         }
     }
 }
-
 
 }
 

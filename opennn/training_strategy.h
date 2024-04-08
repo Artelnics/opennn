@@ -249,7 +249,7 @@ private:
     bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/training_strategy_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/training_strategy_cuda.h"
 #endif
 
 };

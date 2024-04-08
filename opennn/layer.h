@@ -31,7 +31,8 @@ struct LayerBackPropagation;
 struct LayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_layer_cuda.h"
+struct LayerForwardPropagationCuda;
+struct LayerBackPropagationCuda;
 #endif
 
 
@@ -181,8 +182,7 @@ protected:
 
     template <int rank>
     void binary(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
-    {
-        
+    {     
         const Tensor<bool, rank> if_sentence = x < x.constant(type(0.5));
 
         const Tensor<type, rank> f_1 = x.constant(type(false));
@@ -197,7 +197,6 @@ protected:
     template <int rank>
     void exponential_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-
         y.device(*thread_pool_device) = (x > 0).select(x, x.exp() - type(1));
     }
 
@@ -404,10 +403,16 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/layer_cuda.h"
 #endif
 
 };
+
+
+#ifdef OPENNN_CUDA
+#include "../../opennn_cuda/opennn_cuda/struct_layer_cuda.h"
+#endif
+
 
 }
 
