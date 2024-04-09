@@ -35,6 +35,8 @@ public:
 
     void test_perform_training();
 
+    void test_transformer_training();
+
     // Serialization methods
 
     void test_to_XML();

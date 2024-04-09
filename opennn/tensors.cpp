@@ -212,20 +212,22 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  Tensor<type, 4>& C,
                                  const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
-    Index A_rows = A.dimension(0);
-    Index A_columns = A.dimension(1);
-    Index B_rows = B.dimension(0);
-    Index B_columns = B.dimension(1);
+    const Index A_rows = A.dimension(0);
+    const Index A_columns = A.dimension(1);
+    const Index B_rows = B.dimension(0);
+    const Index B_columns = B.dimension(1);
 
     Index C_rows = A_rows;
     Index C_columns = B_columns;
 
-    if (contraction_axes[0].first == 0)     C_rows = A_columns;
+    if (contraction_axes[0].first == 0)     
+        C_rows = A_columns;
 
-    if (contraction_axes[0].second == 1)    C_columns = B_rows;
+    if (contraction_axes[0].second == 1)    
+        C_columns = B_rows;
 
-    Index channels_number = A.dimension(2);
-    Index blocks_number = A.dimension(3);
+    const Index channels_number = A.dimension(2);
+    const Index blocks_number = A.dimension(3);
 
     type* A_data = (type*)A.data();
     type* B_data = (type*)B.data();
@@ -253,10 +255,11 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 }
 
 
-// Assumes A, B & C share their last dimension. A & C also share their second-to-last dimension
-// A & B share one of their remaining 2 dimensions (the contraction axes)
-// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
-// By default contraction axes are (1, 0)
+// Assumes A, B & C share their last dimension. A & C also share their second-to-last dimension.
+// A & B share one of their remaining 2 dimensions (the contraction axes).
+// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order.
+// By default contraction axes are (1, 0).
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 3>& B,
@@ -304,6 +307,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 // Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes)
 // The other dimension of C will be the non-equal dimension of A
 // By default contraction axes are (1, 0)
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 3>& B,
@@ -347,9 +351,10 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 }
 
 
-// Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes)
-// The other dimension of C will be the non-equal dimension of A
-// By default contraction axes are (1, 0)
+// Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes).
+// The other dimension of C will be the non-equal dimension of A.
+// By default contraction axes are (1, 0).
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 3>& B,
@@ -399,7 +404,7 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
 
     for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
         column.device(*thread_pool_device) = vector * vector(i);
     }
@@ -412,7 +417,7 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
 
     for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
         column.device(*thread_pool_device) = vector*vector(i);
     }
@@ -467,6 +472,8 @@ void divide_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tens
 }
 
 
+
+
 void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
@@ -486,9 +493,11 @@ void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& ve
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
+    type* matrix_data = matrix.data();
+
     for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column(matrix.data() + i * rows_number, rows_number);
+        TensorMap<Tensor<type, 1>> column(matrix_data + i * rows_number, rows_number);
 
         column.device(*thread_pool_device) = column + vector(i);
     }
@@ -498,12 +507,14 @@ void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& ve
 void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
     const Index rows_number = tensor.dimension(0);
-    const Index raw_variables_number = tensor.dimension(1);
+    const Index columns_number = tensor.dimension(1);
     const Index channels_number = tensor.dimension(2);
+
+    type* tensor_data = tensor.data();
 
     for(Index i = 0; i < channels_number; i++)
     {
-        TensorMap<Tensor<type,2>> matrix(tensor.data() + i*rows_number*raw_variables_number, rows_number, raw_variables_number);
+        TensorMap<Tensor<type,2>> matrix(tensor_data + i*rows_number* columns_number, rows_number, columns_number);
 
         matrix.device(*thread_pool_device) = matrix + vector(i);
     }
@@ -515,9 +526,11 @@ void substract_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
+    type* matrix_data = matrix.data();
+
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
+        TensorMap<Tensor<type,1>> column(matrix_data + i*rows_number, rows_number);
 
         column.device(*thread_pool_device) = column - vector;
     }
@@ -746,23 +759,24 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     file.precision(20);
 
     const Index data_rows = data.dimension(0);
-    const Index data_raw_variables = data.dimension(1);
+    const Index data_columns = data.dimension(1);
 
     char separator_char = ';';
 
     for(Index i = 0; i < data_rows; i++)
     {
-       for(Index j = 0; j < data_raw_variables; j++)
+       for(Index j = 0; j < data_columns; j++)
        {
            file << data(i,j);
 
-           if(j != data_raw_variables-1)
+           if(j != data_columns -1)
            {
                file << separator_char;
            }
        }
        file << endl;
     }
+
     file.close();
 }
 
@@ -829,7 +843,6 @@ Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index
 
     return sorted_tokens;
 }
-
 
 
 Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1>&rank)
@@ -1101,11 +1114,11 @@ void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&)
 
 void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_index)
 {
-    const Index raw_variables_number = new_row.size();
+    const Index columns_number = new_row.size();
 
     #pragma omp parallel for    
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         matrix(row_index,i) = new_row(i);
     }
@@ -1132,14 +1145,14 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, const Index
     }
 
     const Index rows_number = matrix.dimension(0);
-    const Index raw_variables_number = matrix.dimension(1);
+    const Index columns_number = matrix.dimension(1);
 
     bool check_conditions = false;
 
-    Tensor<type,2> new_matrix(new_rows_number, raw_variables_number);
+    Tensor<type,2> new_matrix(new_rows_number, columns_number);
 
     Index row_index = 0;
-    Tensor<type,1> row(raw_variables_number);
+    Tensor<type,1> row(columns_number);
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -1415,20 +1428,20 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 
 void fill_submatrix(const Tensor<type, 2>& matrix,
                     const Tensor<Index, 1>& rows_indices,
-                    const Tensor<Index, 1>& raw_variables_indices,
+                    const Tensor<Index, 1>& columns_indices,
                     type* submatrix)
 {
     const Index rows_number = rows_indices.size();
-    const Index raw_variables_number = raw_variables_indices.size();
+    const Index columns_number = columns_indices.size();
 
     const type* matrix_data = matrix.data();
 
     #pragma omp parallel for
 
-    for(Index j = 0; j < raw_variables_number; j++)
+    for(Index j = 0; j < columns_number; j++)
     {
-        const type* matrix_raw_variable = matrix_data + matrix.dimension(0)*raw_variables_indices[j];
-        type* submatrix_raw_variable = submatrix + rows_number*j;
+        const type* matrix_column = matrix_data + matrix.dimension(0)*columns_indices[j];
+        type* submatrix_column = submatrix + rows_number*j;
 
         const type* value = nullptr;
 
@@ -1436,10 +1449,10 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
         for(Index i = 0; i < rows_number; i++)
         {
-            value = matrix_raw_variable + *rows_indices_data;
+            value = matrix_column + *rows_indices_data;
             rows_indices_data++;
-            *submatrix_raw_variable = *value;
-            submatrix_raw_variable++;
+            *submatrix_column = *value;
+            submatrix_column++;
         }
     }
 }
@@ -1985,6 +1998,8 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>& data)
 }
 
 
+
+
 Tensor<type, 1> mode(Tensor<type, 1>& data)
 {
     Tensor<type, 1> mode_and_frequency(2);
@@ -2015,6 +2030,8 @@ Tensor<type, 1> mode(Tensor<type, 1>& data)
             mode = entry.first;
         }
     }
+
+    /// @todo The following does not make sense.
 
     if(mode == -1) Tensor<type, 1>();
 

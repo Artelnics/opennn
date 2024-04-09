@@ -222,6 +222,8 @@ protected:
 
     bool display = true;
 
+    const type m_inf = -numeric_limits<type>::infinity(); // superior triangular = m_inf
+
     // Operation indices
 
     const Eigen::array<Index, 1> projection_sum_index = Eigen::array<Index, 1>({ 3 });
@@ -229,7 +231,6 @@ protected:
     const Eigen::array<Index, 2> projection_biases_derivatives_sum_indices = Eigen::array<Index, 2>({ 0, 1 });
 
     const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
-    const Eigen::array<IndexPair<Index>, 1> attention_output_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
     const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 };
 
@@ -309,6 +310,9 @@ protected:
         }
 
 
+        pair<type*, dimensions> get_deltas_pair() const final;
+
+
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
         void print() const
@@ -340,6 +344,8 @@ protected:
         Tensor<type, 2> key_biases_derivatives;
         Tensor<type, 2> value_biases_derivatives;
         Tensor<type, 1> projection_biases_derivatives;
+
+        Tensor<type, 1> aux_rows;
     };
 
 }

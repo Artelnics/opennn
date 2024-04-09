@@ -135,9 +135,10 @@
       <OptimizeForWindowsApplication>true</OptimizeForWindowsApplication>
       <PGOUsePreTrainedModel>true</PGOUsePreTrainedModel>
       <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
-      <UseProcessorExtensions>None</UseProcessorExtensions>
-      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include;C:\Users\davidgonzalez\Documents\opennn-cuda\opennn-cuda</AdditionalIncludeDirectories>
+      <UseProcessorExtensions>AVX2</UseProcessorExtensions>
+      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\include;C:\Users\Roberto Lopez\Documents\opennn_cuda\opennn_cuda;C:\Program Files\NVIDIA\CUDNN\v9.0\include\12.3</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <CCppSupport>Cpp17Support</CCppSupport>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>

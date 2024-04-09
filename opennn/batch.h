@@ -63,7 +63,7 @@ struct Batch
 };
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/batch_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/batch_cuda.h"
 #endif
 
 }
