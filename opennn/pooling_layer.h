@@ -185,7 +185,7 @@ protected:
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
 #endif
 
 };
@@ -211,7 +211,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 5> image_patches;
 
-    Tensor<Index, 1> inputs_max_indices;
+    Tensor<Index, 4> inputs_max_indices;
 };
 
 
@@ -235,7 +235,7 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 };
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
 #endif
 
 }
