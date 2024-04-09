@@ -39,8 +39,10 @@ struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+struct PerceptronLayerForwardPropagationCuda;
+struct PerceptronLayerBackPropagationCuda;
 #endif
+
 
 /// This class represents a layer of perceptrons.
 
@@ -250,11 +252,10 @@ protected:
    bool display = true;
 
     #ifdef OPENNN_CUDA
-        #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
+        //#include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
     #endif
 
 };
-
 
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
@@ -322,6 +323,10 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
 };
 
+
+#ifdef OPENNN_CUDA
+    //#include "../../opennn_cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
+#endif
 
 
 }

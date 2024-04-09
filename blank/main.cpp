@@ -36,12 +36,12 @@ int main()
    try
    {
         cout << "Blank\n";
-        
+        /*
         LanguageDataSet language_data_set;
 
         //language_data_set.set_data_source_path("data/example2.txt");
         //language_data_set.set_data_source_path("data/PTtoEN_dataset.txt");
-        language_data_set.set_data_source_path("data/three_letter_combinations.txt");
+        language_data_set.set_data_source_path("data/three_letter_combinations_with_spaces.txt");
         language_data_set.set_text_separator(DataSet::Separator::Tab);
 
         language_data_set.read_txt_language_model();
@@ -78,7 +78,7 @@ int main()
         stochastic_gradient_descent.set_display_period(1);
 
         //stochastic_gradient_descent.set_loss_goal(training_loss_goal);
-        stochastic_gradient_descent.set_maximum_epochs_number(9);
+        stochastic_gradient_descent.set_maximum_epochs_number(19);
         stochastic_gradient_descent.set_maximum_time(86400);
         stochastic_gradient_descent.set_batch_samples_number(32);
 
@@ -92,7 +92,7 @@ int main()
         TrainingResults training_results = stochastic_gradient_descent.perform_training();
 
         //transformer.calculate_outputs();
-        
+        */
 
         cout << "Bye!" << endl;
 

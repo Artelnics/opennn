@@ -455,7 +455,7 @@ private:
 
 // 	Implements the interface to the "Visitor pattern"(see the Accept() method.)
 // 	If you call the Accept() method, it requires being passed a XMLVisitor
-// 	class to handle callbacks. For nodes that contain other nodes(Document, Element)
+// 	class to cublas_handle callbacks. For nodes that contain other nodes(Document, Element)
 // 	you will get called with a VisitEnter/VisitExit pair. Nodes that are always leafs
 // 	are simply called with Visit().
 //
@@ -1962,7 +1962,7 @@ inline NodeType* XMLDocument::CreateUnlinkedNode(MemPoolT<PoolElementSize>& pool
 //
 // 	It is also safe to copy handles - internally they are nothing more than node pointers.
 // 	@verbatim
-// 	XMLHandle handleCopy = handle;
+// 	XMLHandle handleCopy = cublas_handle;
 // 	@endverbatim
 //
 // 	See also XMLConstHandle, which is the same as XMLHandle, but operates on const objects.
@@ -1970,10 +1970,10 @@ inline NodeType* XMLDocument::CreateUnlinkedNode(MemPoolT<PoolElementSize>& pool
 class TINYXML2_LIB XMLHandle
 {
 public:
-    /// Create a handle from any node(at any depth of the tree.) This can be a null pointer.
+    /// Create a cublas_handle from any node(at any depth of the tree.) This can be a null pointer.
     XMLHandle(XMLNode* node ) : _node(node ) {
     }
-    /// Create a handle from a node.
+    /// Create a cublas_handle from a node.
     XMLHandle(XMLNode& node ) : _node(&node ) {
     }
     /// Copy constructor
@@ -1985,35 +1985,35 @@ public:
         return *this;
     }
 
-    /// Get the first child of this handle.
+    /// Get the first child of this cublas_handle.
     XMLHandle FirstChild() 													{
         return XMLHandle(_node ? _node->FirstChild() : nullptr );
     }
-    /// Get the first child element of this handle.
+    /// Get the first child element of this cublas_handle.
     XMLHandle FirstChildElement(const char* name = nullptr )						{
         return XMLHandle(_node ? _node->FirstChildElement(name ) : nullptr );
     }
-    /// Get the last child of this handle.
+    /// Get the last child of this cublas_handle.
     XMLHandle LastChild()													{
         return XMLHandle(_node ? _node->LastChild() : nullptr );
     }
-    /// Get the last child element of this handle.
+    /// Get the last child element of this cublas_handle.
     XMLHandle LastChildElement(const char* name = nullptr )						{
         return XMLHandle(_node ? _node->LastChildElement(name ) : nullptr );
     }
-    /// Get the previous sibling of this handle.
+    /// Get the previous sibling of this cublas_handle.
     XMLHandle PreviousSibling()												{
         return XMLHandle(_node ? _node->PreviousSibling() : nullptr );
     }
-    /// Get the previous sibling element of this handle.
+    /// Get the previous sibling element of this cublas_handle.
     XMLHandle PreviousSiblingElement(const char* name = nullptr )				{
         return XMLHandle(_node ? _node->PreviousSiblingElement(name ) : nullptr );
     }
-    /// Get the next sibling of this handle.
+    /// Get the next sibling of this cublas_handle.
     XMLHandle NextSibling()													{
         return XMLHandle(_node ? _node->NextSibling() : nullptr );
     }
-    /// Get the next sibling element of this handle.
+    /// Get the next sibling element of this cublas_handle.
     XMLHandle NextSiblingElement(const char* name = nullptr )					{
         return XMLHandle(_node ? _node->NextSiblingElement(name ) : nullptr );
     }

@@ -33,7 +33,7 @@ struct ProbabilisticLayer3DForwardPropagation;
 struct ProbabilisticLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/struct_probabilistic_layer_cuda.h"
 #endif
 
 
@@ -192,8 +192,10 @@ protected:
 
    bool display = true;
 
+   const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
+
 #ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
+    //#include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
 #endif
 
 };
