@@ -404,6 +404,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training) const
 {
+    cout << "pooling inputs: " << endl << inputs << endl;
+
     const Index outputs_columns_number = get_outputs_columns_number();
     const Index oututs_rows_number = get_outputs_rows_number();
     const Index outputs_channels_number = get_channels_number();
@@ -434,23 +436,38 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                            PADDING_VALID,
                                            type(padding_width));
 
+    cout << "image_patches: " << endl << image_patches << endl;
+
     outputs.device(*thread_pool_device)
             = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
 
+    cout << "outputs: " << endl << outputs << endl;
+
     // Extract maximum indices
 
-    pooling_layer_forward_propagation->inputs_max_indices.resize(inputs.size());
+    pooling_layer_forward_propagation->inputs_max_indices.resize(inputs.dimension(0),
+                                                                 inputs.dimension(1),
+                                                                 inputs.dimension(2),
+                                                                 inputs.dimension(3));
     pooling_layer_forward_propagation->inputs_max_indices.setZero();
     Index outputs_index = 0;
 
+    cout << "Arg max: " << image_patches.argmax() << endl;
+
     for(Index i = 0; i < pooling_layer_forward_propagation->inputs_max_indices.size(); i++)
     {
-        if(inputs(i) - outputs(outputs_index) < 1e-3)
+        cout << "inputs(i): " << inputs(i) << "; outputs_index: " << outputs(outputs_index) << "; " <<inputs(i) - outputs(outputs_index) << endl;
+
+
+
+        if(abs(inputs(i) - outputs(outputs_index)) < 1e-3)
         {
             pooling_layer_forward_propagation->inputs_max_indices(i) = 1;
             outputs_index++;
         }
     }
+
+    cout << "Max indices: " << pooling_layer_forward_propagation->inputs_max_indices << endl;
 }
 
 
@@ -464,44 +481,30 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_
 
      switch(next_back_propagation->layer->get_type())
      {
-     case Type::Convolutional: //? -->
-     {
-//         ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
-//                 static_cast<ConvolutionalLayerForwardPropagation*>(next_forward_propagation);
-
-//         ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
-//                 static_cast<ConvolutionalLayerBackPropagation*>(next_back_propagation);
-
-//         calculate_hidden_delta(convolutional_layer_forward_propagation,
-//                                convolutional_layer_back_propagation,
-//                                this_forward_propagation,
-//                                this_pooling_layer_back_propagation);
-
-     };
      case Type::Flatten:
      {
-         FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
+         FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation =
                  static_cast<FlattenLayerForwardPropagation*>(next_forward_propagation);
 
-         FlattenLayerBackPropagation* flatten_layer_back_propagation =
+         FlattenLayerBackPropagation* next_flatten_layer_back_propagation =
                  static_cast<FlattenLayerBackPropagation*>(next_back_propagation);
 
-         calculate_hidden_delta(flatten_layer_forward_propagation,
-                                flatten_layer_back_propagation,
+         calculate_hidden_delta(next_flatten_layer_forward_propagation,
+                                next_flatten_layer_back_propagation,
                                 this_forward_propagation,
                                 this_pooling_layer_back_propagation);
 
      };
      case Type::Pooling:
      {
-         PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
+         PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation =
                  static_cast<PoolingLayerForwardPropagation*>(next_forward_propagation);
 
-         PoolingLayerBackPropagation* pooling_layer_back_propagation =
+         PoolingLayerBackPropagation* next_pooling_layer_back_propagation =
                  static_cast<PoolingLayerBackPropagation*>(next_back_propagation);
 
-         calculate_hidden_delta(pooling_layer_forward_propagation,
-                                pooling_layer_back_propagation,
+         calculate_hidden_delta(next_pooling_layer_forward_propagation,
+                                next_pooling_layer_back_propagation,
                                 this_forward_propagation,
                                 this_pooling_layer_back_propagation);
 
@@ -529,6 +532,22 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_p
                                           PoolingLayerForwardPropagation* this_layer_forward_propagation,
                                           PoolingLayerBackPropagation* this_pooling_layer_back_propagation) const
 {
+
+//    const Index inputs_size = next_pooling_layer_forward_propagation->inputs_max_indices.size();
+
+//    Index delta_index = 0;
+
+//    this_convolutional_layer_back_propagation->deltas.setZero();
+
+//    for(Index i = 0; i < inputs_size; i++)
+//    {
+//        if(next_pooling_layer_forward_propagation->inputs_max_indices(delta_index) == 1)
+//        {
+//            this_convolutional_layer_back_propagation->deltas(i) = next_pooling_layer_back_propagation->deltas(i);
+//            delta_index++;
+//        }
+//    }
+
     return;
 }
 

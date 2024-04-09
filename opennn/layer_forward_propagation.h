@@ -39,4 +39,5 @@ struct LayerForwardPropagation
 
 
 }
+
 #endif

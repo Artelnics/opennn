@@ -498,10 +498,16 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
         TensorMap<Tensor<type, 2>> matrix(outputs_data + neuron_index*batch_samples_number*inputs_number,
                                           batch_samples_number, inputs_number);
 
-        random = calculate_random_uniform((type) 0, (type) 1);
+        random = calculate_random_uniform(type(0), type(1));
 
-        random < dropout_rate ? matrix.setZero()
-                              : matrix = matrix*scaling_factor;
+        if (random < dropout_rate)
+        {
+            matrix.setZero();
+        }
+        else
+        {
+            matrix.device(*thread_pool_device) = matrix * scaling_factor;
+        }                   
     }
 }
 
@@ -608,13 +614,13 @@ void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 
                            synaptic_weights,
                            outputs);
 
-    if(is_training && dropout_rate > type(0))
-    {
-        dropout(outputs);
-    }
-
     if(is_training)
     {
+        if (dropout_rate > type(0))
+        {
+            dropout(outputs);
+        }
+
         Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
 
         calculate_activations_derivatives(outputs,
@@ -626,47 +632,6 @@ void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 
         calculate_activations(outputs,
                               outputs);
     }
-}
-
-
-void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                        Tensor<type, 1>& potential_parameters,
-                                        LayerForwardPropagation* layer_forward_propagation)
-{
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
-
-    PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
-        static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation);
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index inputs_size = get_inputs_size();
-
-    const TensorMap<Tensor<type, 1>> potential_biases(potential_parameters.data(),
-                                                      neurons_number);
-
-    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data() + neurons_number,
-                                                                inputs_size,
-                                                                neurons_number);
-
-    Tensor<type, 3>& outputs = perceptron_layer_3d_forward_propagation->outputs;
-
-    Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
-
-    calculate_combinations(inputs,
-                           potential_biases,
-                           potential_synaptic_weights,
-                           outputs);
-
-    if(dropout_rate > type(0))
-    {
-        dropout(outputs);
-    }
-
-    calculate_activations_derivatives(outputs,
-                                      outputs,
-                                      activations_derivatives);
-
 }
 
 
@@ -812,10 +777,10 @@ void PerceptronLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimens
                                                  LayerForwardPropagation* forward_propagation,
                                                  LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs_map(inputs_pair(0).first,
-                                                inputs_pair(0).second[0],
-                                                inputs_pair(0).second[1],
-                                                inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first,
+                                            inputs_pair(0).second[0],
+                                            inputs_pair(0).second[1],
+                                            inputs_pair(0).second[2]);
 
     // Forward propagation
 
@@ -833,7 +798,10 @@ void PerceptronLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimens
 
     Tensor<type, 3>& error_combinations_derivatives = perceptron_layer_3d_back_propagation->error_combinations_derivatives;
 
-    calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
+//    calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
+
+    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+
 
     perceptron_layer_3d_back_propagation->biases_derivatives.device(*thread_pool_device) =
         error_combinations_derivatives.sum(Eigen::array<Index, 2>({0, 1}));
@@ -841,7 +809,7 @@ void PerceptronLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimens
     const Eigen::array<IndexPair<Index>, 2> contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
 
     perceptron_layer_3d_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-        inputs_map.contract(error_combinations_derivatives, contraction_indices);
+        inputs.contract(error_combinations_derivatives, contraction_indices);
 }
 
 

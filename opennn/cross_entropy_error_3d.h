@@ -65,10 +65,10 @@ protected:
 
    /// Small number to prevent any division by zero
 
-   type epsilon = type(1.e-8);
+//   type epsilon = type(1.e-8);
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/cross_entropy_error_cuda.h"
+//    #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_3d_cuda.h"
 #endif
 
 };

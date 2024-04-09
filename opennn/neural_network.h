@@ -312,7 +312,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/neural_network_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
 #endif
 
 };
