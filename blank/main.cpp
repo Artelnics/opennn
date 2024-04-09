@@ -61,8 +61,8 @@ int main()
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
 
-        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+        const Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        const Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
 
         transformer.set_input_vocabulary(completion_vocabulary);
         transformer.set_context_vocabulary(context_vocabulary);
