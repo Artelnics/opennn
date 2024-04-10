@@ -126,7 +126,7 @@ private:
 
    /// Boolean. Whether to apply Nesterov momentum.
 
-   bool nesterov;
+   bool nesterov = false;
 
    /// Number of samples per training batch.
 
@@ -151,7 +151,7 @@ private:
    type maximum_time = type(3600);
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/stochastic_gradient_descent_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
 #endif
 
 };

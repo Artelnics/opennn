@@ -107,7 +107,7 @@ void TransformerTest::test_calculate_parameters_norm()
         perceptron_depth = 1;
         heads_number = 1;
 
-        inputs_dimension = 0;
+        inputs_dimension = -1;
         context_dimension = 0;
         embedding_depth = 0;
         number_of_layers = 0;
@@ -448,7 +448,7 @@ void TransformerTest::test_forward_propagate()
         assert_true(probabilistic_activations.rank() == 3, LOG);
         assert_true(probabilistic_activations.dimension(0) == batch_samples_number, LOG);
         assert_true(probabilistic_activations.dimension(1) == input_length, LOG);
-        assert_true(probabilistic_activations.dimension(2) == inputs_dimension, LOG);
+        assert_true(probabilistic_activations.dimension(2) == inputs_dimension + 1, LOG);
 
         assert_true(check_activations_sums(probabilistic_activations), LOG);
     }
@@ -518,7 +518,7 @@ void TransformerTest::test_forward_propagate()
         assert_true(probabilistic_activations.rank() == 3, LOG);
         assert_true(probabilistic_activations.dimension(0) == batch_samples_number, LOG);
         assert_true(probabilistic_activations.dimension(1) == input_length, LOG);
-        assert_true(probabilistic_activations.dimension(2) == inputs_dimension, LOG);
+        assert_true(probabilistic_activations.dimension(2) == inputs_dimension + 1, LOG);
 
         assert_true(check_activations_sums(probabilistic_activations), LOG);
     }

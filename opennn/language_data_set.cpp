@@ -1470,44 +1470,6 @@ void LanguageDataSet::load_documents(const string& path)
 }
 
 
-Tensor<Tensor<string, 1>, 1> LanguageDataSet::preprocess(const Tensor<string, 1>& documents) const
-{
-    Tensor<string, 1> documents_copy(documents);
-
-    to_lower(documents_copy);
-
-    split_punctuation(documents_copy);
-
-    delete_non_printable_chars(documents_copy);
-
-    delete_extra_spaces(documents_copy);
-
-    aux_remove_non_printable_chars(documents_copy);
-
-    Tensor<Tensor<string, 1>, 1> tokenized_documents = tokenize(documents_copy);
-
-    delete_emails(tokenized_documents);
-
-    delete_blanks(tokenized_documents);
-
-    return tokenized_documents;
-}
-
-
-const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens) const
-{
-    const Tensor<string, 1> total = join(tokens);
-
-    const Tensor<Index, 1> count = count_unique(total);
-
-    const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
-
-    const Tensor<string, 1> words = sort_by_rank(get_unique_elements(total), descending_rank);
-
-    return words;
-}
-
-
 void LanguageDataSet::read_csv_3_language_model()
 {
     std::regex accent_regex("[\\xC0-\\xFF]");
@@ -1694,8 +1656,8 @@ void LanguageDataSet::read_txt_language_model()
 
     cout << "Processing documents..." << endl;
     
-    const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess(context);
-    const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess(completion);
+    const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(context);
+    const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess_language_documents(completion);
 
     cout << "Calculating vocabularies..." << endl;
     
@@ -1703,7 +1665,7 @@ void LanguageDataSet::read_txt_language_model()
 
     completion_vocabulary = calculate_vocabulary(completion_tokens);
     
-    Index LIMIT = 50;
+    Index LIMIT = 128;
 
     Index max_context_tokens = context_tokens(0).size();
 
@@ -1731,6 +1693,8 @@ void LanguageDataSet::read_txt_language_model()
 
     std::ofstream file;
     file.open(transformed_data_path);
+
+    // @todo context does NOT need start and end tokens
 
     for(Index i  = type(0); i < max_context_length + 2; i++) /// there is start (=1) and end (=2) indicators
         file << "context_token_position_" << i << ";";

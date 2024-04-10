@@ -33,10 +33,6 @@ namespace opennn
 struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
-#ifdef OPENNN_CUDA
-    struct ConvolutionalLayerForwardPropagationCuda;
-#endif
-
 class ConvolutionalLayer : public Layer
 {
 
@@ -194,10 +190,6 @@ public:
                                ConvolutionalLayerBackPropagation*,
                                ConvolutionalLayerBackPropagation*) const;
 
-   void calculate_hidden_delta(PoolingLayerForwardPropagation*,
-                               PoolingLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
    void calculate_hidden_delta(FlattenLayerForwardPropagation*,
                                FlattenLayerBackPropagation*,
                                ConvolutionalLayerBackPropagation*) const;
@@ -251,8 +243,8 @@ protected:
    Tensor<type, 1> offsets;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
-    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
 #endif
 
 };
@@ -309,6 +301,11 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    Tensor<type, 1> biases_derivatives;
    Tensor<type, 4> synaptic_weights_derivatives;
 };
+
+
+#ifdef OPENNN_CUDA
+    //#include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+#endif
 
 
 }

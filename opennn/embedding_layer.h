@@ -36,7 +36,7 @@ struct EmbeddingLayerBackPropagation;
 struct EmbeddingLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+    //#include "../../opennn_cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
 #endif
 
 
@@ -174,8 +174,10 @@ protected:
 
     bool display = true;
 
+    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
+
 #ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/embedding_layer_cuda.h"
+    //#include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
 #endif
 
     };
@@ -256,6 +258,7 @@ protected:
         {
         }
 
+        pair<type*, dimensions> get_deltas_pair() const final;
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

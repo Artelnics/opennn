@@ -515,9 +515,7 @@ void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, 
 
 void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                   Tensor<type, 3>& combinations) const
-{
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = {IndexPair<Index>(2, 0)};
-    
+{   
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
     sum_matrices(thread_pool_device, biases, combinations);
@@ -525,18 +523,11 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 
 
 void ProbabilisticLayer3D::calculate_activations(const Tensor<type, 3>& combinations,
-                                                 Tensor<type, 3>& activations,
-                                                 Tensor<type, 2>& aux_rows_columns) const
+                                                 Tensor<type, 3>& activations) const
 {
     switch(activation_function)
     {
-//    case ActivationFunction::Binary: binary(combinations, activations); return;
-
-//    case ActivationFunction::Logistic: logistic(combinations, activations); return;
-
-//    case ActivationFunction::Competitive: competitive(combinations, activations); return;
-
-    case ActivationFunction::Softmax: softmax(combinations, activations, aux_rows_columns); return;
+    case ActivationFunction::Softmax: softmax(combinations, activations); return;
 
     default: return;
     }
@@ -555,10 +546,8 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
     
     calculate_combinations(inputs, outputs);
-    
-    Tensor<type, 2>& aux_rows_columns = probabilistic_layer_3d_forward_propagation->aux_rows_columns;
 
-    calculate_activations(outputs, outputs, aux_rows_columns);
+    calculate_activations(outputs, outputs);
 }
 
 
@@ -601,17 +590,22 @@ void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
 }
 
 
-void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets, Tensor<type, 3>& error_combinations_derivatives) const
+void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, 
+                                                                    const Tensor<type, 2>& targets,  
+                                                                    Tensor<type, 3>& error_combinations_derivatives) const
 {
-    Index batch_samples_number = outputs.dimension(0);
+    const Index batch_samples_number = outputs.dimension(0);
+
+    /// @todo Can we simplify this? For instance put the division in the last line somewhere else. 
 
     error_combinations_derivatives.device(*thread_pool_device) = outputs;
-
+    
 #pragma omp parallel for
+
     for (Index i = 0; i < targets.dimension(0); i++)
         for (Index j = 0; j < targets.dimension(1); j++)
             error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
-
+    
     error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number);
 }
 
@@ -1013,8 +1007,6 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
     
     outputs_data = outputs.data();
-
-    aux_rows_columns.resize(batch_samples_number, inputs_number);
 }
 
 

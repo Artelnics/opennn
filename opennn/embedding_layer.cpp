@@ -432,8 +432,6 @@ void EmbeddingLayer::calculate_hidden_delta(PerceptronLayer3DForwardPropagation*
 
     Tensor<type, 3>& deltas = back_propagation->deltas;
 
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
-
     deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, contraction_indices);
 }
 
@@ -458,20 +456,18 @@ void EmbeddingLayer::calculate_hidden_delta(ProbabilisticLayer3DForwardPropagati
 
     Tensor<type, 3>& deltas = back_propagation->deltas;
 
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
-
     deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, contraction_indices);
 }
 
 
-void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs,
+void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
-    Index batch_samples_number = inputs(0).second[0];
-    Index inputs_number = inputs(0).second[1];
+    const Index batch_samples_number = inputs_pair(0).second[0];
+    const Index inputs_number = inputs_pair(0).second[1];
 
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs(0).first, batch_samples_number, inputs_number);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, batch_samples_number, inputs_number);
 
     // Forward propagation
 
@@ -486,12 +482,16 @@ void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimension
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
 
     embedding_weights_derivatives.setZero();
-    
+
+    /// @todo improve, 
+    /// Dor instance, can we move deltas.chip(i, 0) to the outer loop?
+    /// Maybe doing everything elementwhise???
+
     for (Index i = 0; i < batch_samples_number; i++)
     {
         for (Index j = 0; j < inputs_number; j++)
         {
-            embedding_weights_derivatives.chip(inputs_map(i, j), 0).device(*thread_pool_device) += deltas.chip(i, 0).chip(j, 0);
+            embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device) += deltas.chip(i, 0).chip(j, 0);
         }
     }
 }
@@ -508,10 +508,12 @@ void EmbeddingLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     const type* embedding_weights_derivatives_data = embedding_layer_back_propagation->embedding_weights_derivatives.data();
 
+    type* gradient_data = gradient.data();
+
     copy(/*execution::par,*/
         embedding_weights_derivatives_data,
         embedding_weights_derivatives_data + embedding_weights_number,
-        gradient.data() + index);
+        gradient_data + index);
 }
 
 
@@ -545,6 +547,7 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     outputs_data = outputs.data();
 }
+
 
 void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 {
@@ -593,6 +596,17 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     }
 
     built_positional_encoding_matrix = true;
+}
+
+
+pair<type*, dimensions> EmbeddingLayerBackPropagation::get_deltas_pair() const
+{
+    EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+
+    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index depth = embedding_layer->get_depth();
+
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, depth });
 }
 
 

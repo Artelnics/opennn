@@ -31,7 +31,8 @@ struct LayerBackPropagation;
 struct LayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_layer_cuda.h"
+struct LayerForwardPropagationCuda;
+struct LayerBackPropagationCuda;
 #endif
 
 
@@ -181,8 +182,7 @@ protected:
 
     template <int rank>
     void binary(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
-    {
-        
+    {     
         const Tensor<bool, rank> if_sentence = x < x.constant(type(0.5));
 
         const Tensor<type, rank> f_1 = x.constant(type(false));
@@ -197,7 +197,6 @@ protected:
     template <int rank>
     void exponential_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-
         y.device(*thread_pool_device) = (x > 0).select(x, x.exp() - type(1));
     }
 
@@ -263,12 +262,13 @@ protected:
 
 
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void competitive(const Tensor<type, 3>&, Tensor<type, 3>&) const;
+
 
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
-
-    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 2>&) const;
-
+    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;
     void softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const;
+
 
     template <int rank>
     void linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
@@ -396,17 +396,24 @@ protected:
     }
 
 
-    void softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
+    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/layer_cuda.h"
 #endif
 
 };
+
+
+#ifdef OPENNN_CUDA
+#include "../../opennn_cuda/opennn_cuda/layer_forward_propagation_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/layer_back_propagation_cuda.h"
+#endif
+
 
 }
 

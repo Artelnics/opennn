@@ -165,6 +165,78 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 }
 
 
+void Transformer::set_input_vocabulary(Tensor<string, 1>& new_input_vocabulary)
+{
+    input_vocabulary = new_input_vocabulary;
+}
+
+
+void Transformer::set_context_vocabulary(Tensor<string, 1>& new_context_vocabulary)
+{
+    context_vocabulary = new_context_vocabulary;
+}
+
+/*
+string Transformer::calculate_outputs(const string& context_string)
+{
+    const Index context_vocabulary_size = context_vocabulary.size();
+
+    const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
+
+    Tensor<type, 2> context(1, context_length);
+    context.setZero();
+    context(0) = 1;
+
+    bool line_ended = false;
+
+    for (Index j = 1; j < context_length; j++)
+    {
+        if (j <= context_tokens.size() && contains(context_vocabulary, context_tokens(j - 1)))
+        {
+            auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(j - 1));
+
+            const Index word_index = it - context_vocabulary.data();
+
+            context(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
+        }
+        else
+        {
+            if (j == context_tokens.size() + 1 || (j == context_length - 1 && !line_ended))
+            {
+                context(j) = 2; /// end indicator
+                line_ended = true;
+            }
+            else
+            {
+                context(j) = type(0);
+            }
+        }
+    }
+
+    /*
+    const Index batch_samples_number = inputs.dimension(0);
+    const Index inputs_number = inputs.dimension(1);
+    const Index outputs_number = get_outputs_number();
+
+    ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
+
+    const pair<type*, dimensions> inputs_pair((type*)inputs.data(), { {batch_samples_number, inputs_number} });
+
+    forward_propagate(tensor_wrapper(inputs_pair), neural_network_forward_propagation);
+
+    const Index layers_number = get_layers_number();
+
+    if (layers_number == 0) return Tensor<type, 2>();
+
+    const pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+
+    return outputs;
+    
+}
+*/
+
 TransformerForwardPropagation::~TransformerForwardPropagation()
 {
     const Index layers_number = layers.size();

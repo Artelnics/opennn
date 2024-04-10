@@ -290,22 +290,28 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
         numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient();
 
-        const bool equal_gradients = are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1));
+        const bool equal_gradients = are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2));
         
         assert_true(equal_gradients, LOG);
 
-        if (!equal_gradients)
-            cout << "Teste failed with max difference: " << (back_propagation.gradient - numerical_gradient).abs().maximum() << endl;
+        // debugging
         /*
+        if (!equal_gradients)
+        {
+            Tensor<Index, 0> max_difference_index = (back_propagation.gradient - numerical_gradient).abs().argmax();
+            cout << "Test failed with max difference: " << (back_propagation.gradient - numerical_gradient).abs().maximum() << " at index: " << max_difference_index(0) << endl;
+            cout << "Gradient = " << back_propagation.gradient(max_difference_index(0)) << endl;
+            cout << "Numerical gradient = " << numerical_gradient(max_difference_index(0)) << endl;            
+
+            cout << endl;
+        }
+        
         Tensor<type, 0> average_difference = (back_propagation.gradient - numerical_gradient).abs().mean();
         
         assert_true(average_difference(0) < type(1.0e-2), LOG);
 
         Tensor<type, 0> max_difference = (back_propagation.gradient - numerical_gradient).abs().maximum();
-        cout << "Max difference: " << max_difference(0) << endl;
-        */
-        // debugging
-        /*
+        cout << "Max difference: " << max_difference(0) << endl;        
         
         cout << "Numerical gradient:" << endl << numerical_gradient << endl;
         cout << "Gradient:" << endl << back_propagation.gradient << endl;
@@ -417,8 +423,7 @@ void CrossEntropyError3DTest::run_test_case()
     // Transformer test (Must be last since we change &neural_network to &transformer)
 
     cout << "test_calculate_gradient_transformer\n";
-    for(Index i = 0; i < 10; i++)
-        test_calculate_gradient_transformer();
+    for(Index i = 0; i < 10; i++)   test_calculate_gradient_transformer();
 
     cout << "End of cross-entropy error test case.\n\n";
 }
