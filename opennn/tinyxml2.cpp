@@ -1169,8 +1169,8 @@ char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
                 return p;
             }
 
-            // Handle an end tag returned to this level.
-            // And handle a bunch of annoying errors.
+            // cublas_handle an end tag returned to this level.
+            // And cublas_handle a bunch of annoying errors.
             bool mismatch = false;
             if(endTag.Empty())
             {
@@ -2418,7 +2418,7 @@ XMLError XMLDocument::LoadFile(FILE* fp )
 
     if(!LongFitsIntoSizeTMinusOne<>::Fits(filelength ))
     {
-        // Cannot handle files which won't fit in buffer together with null terminator
+        // Cannot cublas_handle files which won't fit in buffer together with null terminator
         SetError(XML_ERROR_FILE_READ_ERROR, 0, 0 );
         return _errorID;
     }

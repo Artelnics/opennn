@@ -122,8 +122,6 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 1> parameters;
 
-    Tensor<type, 2> aux_rows_columns;
-
     Tensor<type, 3> inputs;
     Tensor<type, 3> combinations;
     Tensor<type, 3> activations;
@@ -158,9 +156,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        aux_rows_columns.resize(samples_number, inputs_number);
-
-        probabilistic_layer_3d.calculate_activations(combinations, activations, aux_rows_columns);
+        probabilistic_layer_3d.calculate_activations(combinations, activations);
 
         assert_true(
             activations.rank() == 3 &&
@@ -201,9 +197,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        aux_rows_columns.resize(samples_number, inputs_number);
-
-        probabilistic_layer_3d.calculate_activations(combinations, activations, aux_rows_columns);
+        probabilistic_layer_3d.calculate_activations(combinations, activations);
 
         assert_true(
             activations.rank() == 3 &&
@@ -244,9 +238,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        aux_rows_columns.resize(samples_number, inputs_number);
-
-        probabilistic_layer_3d.calculate_activations(combinations, activations, aux_rows_columns);
+        probabilistic_layer_3d.calculate_activations(combinations, activations);
 
         assert_true(
             activations.rank() == 3 &&

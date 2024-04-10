@@ -609,22 +609,18 @@ void StatisticsTest::test_median()
 
     assert_true(abs(median(matrix)(0) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(median(matrix)(1) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
-    cout << "Mediana 1: " << median(matrix)(0) << endl;
-    cout << "Mediana 2: " << median(matrix)(1) << endl;
 
     // Test
 
     matrix.resize(3,2);
     matrix.setValues({
-                         {type(1),type(1)},
+                         {type(1),type(NAN)},
                          {type(NAN),type(NAN)},
-                         {type(3),type(3)}
+                         {type(3),type(3.5)}
                      });
 
-    assert_true(isnan(median(matrix)(0)), LOG);
-    assert_true(isnan(median(matrix)(1)), LOG);
-    cout << "Mediana 1: " << median(matrix)(0) << endl;
-    cout << "Mediana 2: " << median(matrix)(1) << endl;
+    assert_true(abs(median(matrix)(0) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(median(matrix)(1) - type(3.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -1015,7 +1011,7 @@ void StatisticsTest::test_total_frequencies()   //<--- Check
 
     assert_true(histograms(0).frequencies(0) == 1 , LOG);
     assert_true(histograms(1).frequencies(0) == 1, LOG);
-    //assert_true(histograms(2).frequencies(0) == 0, LOG);
+    assert_true(histograms(2).frequencies(0) == 1, LOG);
 }
 
 

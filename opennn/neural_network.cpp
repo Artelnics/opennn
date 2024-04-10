@@ -138,7 +138,7 @@ void NeuralNetwork::add_layer(Layer* layer)
     if(check_layer_type(layer_type))
     {
         const Index old_layers_number = get_layers_number();
-
+ 
         // Layers pointers
         
         Tensor<Layer*, 1> old_layers = get_layers();
@@ -174,7 +174,7 @@ void NeuralNetwork::add_layer(Layer* layer)
 
         throw runtime_error(buffer.str());
     }
-    
+
 }
 
 
@@ -1767,7 +1767,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
     }
 
     Tensor<pair<type*, dimensions>, 1> layer_inputs;
-
+    
     for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
         if (i == first_layer_index || is_input_layer(layers_inputs_indices(i)))
@@ -1793,8 +1793,8 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
         }
 
         layers(i)->forward_propagate(layer_inputs,
-            forward_propagation.layers(i),
-            is_training);
+                                     forward_propagation.layers(i),
+                                     is_training);
     }
 }
 
@@ -5165,25 +5165,25 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
 
     neural_network = new_neural_network;
 
-    const Tensor<Layer*, 1> trainable_layerss = neural_network->get_trainable_layers();
+    const Tensor<Layer*, 1> trainable_layers = neural_network->get_trainable_layers();
 
-    const Index trainable_layers_number = trainable_layerss.size();
+    const Index trainable_layers_number = trainable_layers.size();
 
     layers.resize(trainable_layers_number);
 
     for (Index i = 0; i < trainable_layers_number; i++)
     {
-        switch (trainable_layerss(i)->get_type())
+        switch (trainable_layers(i)->get_type())
         {
         case Layer::Type::Perceptron:
 
-            layers(i) = new PerceptronLayerBackPropagationLM(batch_samples_number, trainable_layerss(i));
+            layers(i) = new PerceptronLayerBackPropagationLM(batch_samples_number, trainable_layers(i));
 
             break;
 
         case Layer::Type::Probabilistic:
 
-            layers(i) = new ProbabilisticLayerBackPropagationLM(batch_samples_number, trainable_layerss(i));
+            layers(i) = new ProbabilisticLayerBackPropagationLM(batch_samples_number, trainable_layers(i));
 
             break;
 

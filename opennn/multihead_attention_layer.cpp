@@ -77,27 +77,48 @@ Index MultiheadAttentionLayer::get_heads_number() const
     return heads_number;
 }
 
+
 Index MultiheadAttentionLayer::get_weights_depth() const
 {
     return weights_depth;
 }
 
 
-/// Returns linear transformation weights
+/// Return linear transformation weights and biases
 
 Tensor<type, 3> MultiheadAttentionLayer::get_query_weights() const
 {
     return query_weights;
 }
 
+
+Tensor<type, 2> MultiheadAttentionLayer::get_query_biases() const
+{
+    return query_biases;
+}
+
+
 Tensor<type, 3> MultiheadAttentionLayer::get_key_weights() const
 {
     return key_weights;
 }
 
+
+Tensor<type, 2> MultiheadAttentionLayer::get_key_biases() const
+{
+    return key_biases;
+}
+
+
 Tensor<type, 3> MultiheadAttentionLayer::get_value_weights() const
 {
     return value_weights;
+}
+
+
+Tensor<type, 2> MultiheadAttentionLayer::get_value_biases() const
+{
+    return value_biases;
 }
 
 
@@ -118,7 +139,11 @@ Tensor<type, 1> MultiheadAttentionLayer::get_projection_biases() const
 
 Index MultiheadAttentionLayer::get_parameters_number() const
 {
-    return query_weights.size() + key_weights.size() + value_weights.size() + projection_weights.size() + projection_biases.size();
+    return
+        query_weights.size() + query_biases.size()
+        + key_weights.size() + key_biases.size()
+        + value_weights.size() + value_biases.size()
+        + projection_weights.size() + projection_biases.size();
 }
 
 
@@ -136,6 +161,14 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
     parameters_index += query_weights.size();
 
     copy(/*execution::par,*/
+        query_biases.data(),
+        query_biases.data() + query_biases.size(),
+        parameters.data() + parameters_index);
+
+    parameters_index += query_biases.size();
+
+
+    copy(/*execution::par,*/
         key_weights.data(),
         key_weights.data() + key_weights.size(),
         parameters.data() + parameters_index);
@@ -143,11 +176,26 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
     parameters_index += key_weights.size();
 
     copy(/*execution::par,*/
+        key_biases.data(),
+        key_biases.data() + key_biases.size(),
+        parameters.data() + parameters_index);
+
+    parameters_index += key_biases.size();
+
+
+    copy(/*execution::par,*/
         value_weights.data(),
         value_weights.data() + value_weights.size(),
         parameters.data() + parameters_index);
 
     parameters_index += value_weights.size();
+
+    copy(/*execution::par,*/
+        value_biases.data(),
+        value_biases.data() + value_biases.size(),
+        parameters.data() + parameters_index);
+
+    parameters_index += value_biases.size();
 
     copy(/*execution::par,*/
         projection_weights.data(),
@@ -186,8 +234,13 @@ void MultiheadAttentionLayer::set()
     heads_number = 0;
 
     query_weights.resize(0, 0, 0);
+    query_biases.resize(0, 0);
+
     key_weights.resize(0, 0, 0);
+    key_biases.resize(0, 0);
+
     value_weights.resize(0, 0, 0);
+    value_biases.resize(0, 0);
 
     projection_weights.resize(0, 0, 0);
     projection_biases.resize(0);
@@ -212,7 +265,7 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
     heads_number = new_heads_number;
 
-    weights_depth = Index(depth / heads_number);
+    weights_depth = depth; //Index(depth / heads_number);
 
     scaling_factor = type(1) / type(sqrt(weights_depth));
 
@@ -247,8 +300,14 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
     type* new_parameters_data = (type*) new_parameters.data();
 
     type* query_weights_data = (type*)query_weights.data();
+    type* query_biases_data = (type*)query_biases.data();
+
     type* key_weights_data = (type*)key_weights.data();
+    type* key_biases_data = (type*)key_biases.data();
+
     type* value_weights_data = (type*)value_weights.data();
+    type* value_biases_data = (type*)value_biases.data();
+
     type* projection_weights_data = (type*)projection_weights.data();
     type* projection_biases_data = (type*)projection_biases.data();
 
@@ -260,6 +319,14 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
         query_weights_data);
 
     parameters_index += query_weights.size();
+
+    copy(/*execution::par,*/
+        new_parameters_data + parameters_index,
+        new_parameters_data + parameters_index + query_biases.size(),
+        query_biases_data);
+
+    parameters_index += query_biases.size();
+
     
     copy(/*execution::par,*/
         new_parameters_data + parameters_index,
@@ -267,6 +334,14 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
         key_weights_data);
 
     parameters_index += key_weights.size();
+
+    copy(/*execution::par,*/
+        new_parameters_data + parameters_index,
+        new_parameters_data + parameters_index + key_biases.size(),
+        key_biases_data);
+
+    parameters_index += key_biases.size();
+
     
     copy(/*execution::par,*/
         new_parameters_data + parameters_index,
@@ -274,6 +349,14 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
         value_weights_data);
 
     parameters_index += value_weights.size();
+
+    copy(/*execution::par,*/
+        new_parameters_data + parameters_index,
+        new_parameters_data + parameters_index + value_biases.size(),
+        value_biases_data);
+
+    parameters_index += value_biases.size();
+
     
     copy(/*execution::par,*/
         new_parameters_data + parameters_index,
@@ -287,6 +370,7 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
         new_parameters_data + parameters_index + projection_biases.size(),
         projection_biases_data);
 }
+
 
 void MultiheadAttentionLayer::set_input_size(const Index& new_input_size)
 {
@@ -327,8 +411,13 @@ void MultiheadAttentionLayer::set_heads_number(const Index& new_heads_number)
 void MultiheadAttentionLayer::set_weights()
 {
     query_weights.resize(depth, weights_depth, heads_number);
+    query_biases.resize(weights_depth, heads_number);
+
     key_weights.resize(depth, weights_depth, heads_number);
+    key_biases.resize(weights_depth, heads_number);
+
     value_weights.resize(depth, weights_depth, heads_number);
+    value_biases.resize(weights_depth, heads_number);
 
     projection_weights.resize(weights_depth, depth, heads_number);
     projection_biases.resize(depth);
@@ -354,6 +443,16 @@ void MultiheadAttentionLayer::set_parameters_random()
     }
 
 #pragma omp parallel for
+    for (Index i = 0; i < query_biases.size(); i++)
+    {
+        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+
+        query_biases(i) = minimum + (maximum - minimum) * random;
+    }
+
+
+
+#pragma omp parallel for
     for(Index i = 0; i < key_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
@@ -362,12 +461,30 @@ void MultiheadAttentionLayer::set_parameters_random()
     }
 
 #pragma omp parallel for
+    for (Index i = 0; i < key_biases.size(); i++)
+    {
+        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+
+        key_biases(i) = minimum + (maximum - minimum) * random;
+    }
+
+
+#pragma omp parallel for
     for(Index i = 0; i < value_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
         value_weights(i) = minimum + (maximum - minimum)*random;
     }
+
+#pragma omp parallel for
+    for (Index i = 0; i < value_biases.size(); i++)
+    {
+        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+
+        value_biases(i) = minimum + (maximum - minimum) * random;
+    }
+
 
 #pragma omp parallel for
     for(Index i = 0; i < projection_weights.size(); i++)
@@ -389,8 +506,13 @@ void MultiheadAttentionLayer::set_parameters_random()
 void MultiheadAttentionLayer::set_parameters_constant(const type& value)
 {
     query_weights.setConstant(value);
+    query_biases.setConstant(value);
+
     key_weights.setConstant(value);
+    key_biases.setConstant(value);
+
     value_weights.setConstant(value);
+    value_biases.setConstant(value);
 
     projection_weights.setConstant(value);
     projection_biases.setConstant(value);
@@ -431,66 +553,97 @@ void MultiheadAttentionLayer::set_display(const bool& new_display)
 }
 
 
+/// @todo check 
+
 void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
-    constexpr type m_inf = -numeric_limits<type>::infinity(); // superior triangular = m_inf
+    #pragma omp parallel for
 
     for(Index input_index = 0; input_index < input_size ; input_index++)
     {
         for(Index context_index = input_index + 1; context_index < context_size; context_index++)
         {
-            attention_scores.chip(context_index, 1).chip(input_index, 0).setConstant(m_inf);
+            attention_scores.chip(input_index, 1).chip(context_index, 0).setConstant(m_inf);
         }
     }
 }
 
 
-/// @todo explain
+/// @todo Check if we can do this with transposed matrices in contract. 
 
-void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& data,
-                                                       Tensor<type, 4>& transformed_data,
-                                                       const Tensor<type, 3>& weights) const
+void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& input,
+                                                       Tensor<type, 4>& transformed_input,
+                                                       const Tensor<type, 3>& weights,
+                                                       const Tensor<type, 2>& biases) const
 {
-    const Index batch_size = data.dimension(0);
+    const Index batch_size = input.dimension(0);
+    const Index variables_number = input.dimension(1);
 
-    // This is NOT batch matrix multiplication
+    type* weights_data = (type*)weights.data();
+    type* biases_data = (type*)biases.data();
+    type* transformed_input_data = transformed_input.data();
 
-    for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+    /// @todo move to struct or do tensor map? 
+    Tensor<type, 2> sample_input;
+
+    for (Index head_index = 0; head_index < heads_number; head_index++)
     {
-        transformed_data.chip(sample_index, 2).device(*thread_pool_device)
-            = data.chip(sample_index, 0).contract(weights, A_B);
+        type* head_weights_data = weights_data + head_index * depth * weights_depth;
+        type* head_biases_data = biases_data + head_index * weights_depth;
+        type* head_transformed_input_data = transformed_input_data + head_index * batch_size * variables_number * weights_depth;
+
+        const TensorMap<Tensor<type, 2>> head_weights(head_weights_data, depth, weights_depth);
+        const TensorMap<Tensor<type, 1>> head_biases(head_biases_data, weights_depth);
+
+        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
+        {
+            sample_input = input.chip(sample_index, 0);
+
+            type* sample_transformed_input_data = head_transformed_input_data + sample_index * variables_number * weights_depth;
+
+            TensorMap<Tensor<type, 2>> sample_transformed_input(sample_transformed_input_data, variables_number, weights_depth);
+
+            sample_transformed_input.device(*thread_pool_device)
+                = sample_input.contract(head_weights, A_B);
+
+            sum_columns(thread_pool_device, head_biases, sample_transformed_input);
+        }
     }
 }
 
 
 void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>& attention_outputs,
+                                                          Tensor<type, 4>& projection_outputs,
                                                           Tensor<type, 3>& outputs) const 
 {
     const Index batch_size = outputs.dimension(0);
 
-    Tensor<type, 4> projection_outputs(batch_size, input_size, depth, heads_number);
-
-    // This is NOT batch matrix multiplication
+    type* attention_outputs_data = (type*)attention_outputs.data();
+    type* projection_outputs_data = projection_outputs.data();
+    type* projection_weights_data = (type*)projection_weights.data();
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
-        TensorMap<Tensor<type, 3>> head_projection_output(projection_outputs.data() + head_index * batch_size*input_size*depth,
-            batch_size, input_size, depth);
+        type* head_projection_output_data = projection_outputs_data + head_index * batch_size * input_size * depth;
+        type* head_projection_weights_data = projection_weights_data + head_index * weights_depth * depth;
+        type* head_attention_output_data = attention_outputs_data + head_index * input_size * weights_depth * batch_size;
 
-        const TensorMap<Tensor<type, 2>> head_projection_weights((type*) projection_weights.data() + head_index * weights_depth*depth,
-            weights_depth, depth);
+        TensorMap<Tensor<type, 3>> head_projection_output(head_projection_output_data, batch_size, input_size, depth);
+
+        const TensorMap<Tensor<type, 2>> head_projection_weights(head_projection_weights_data, weights_depth, depth);
 
         for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
-            const TensorMap<Tensor<type, 2>> sample_attention_output((type*) attention_outputs.data() + sample_index * input_size*weights_depth + head_index * input_size*weights_depth*batch_size,
-                input_size, weights_depth);
+            type* sample_attention_output_data = head_attention_output_data + sample_index * input_size * weights_depth;
 
-            head_projection_output.chip(sample_index, 0).device(*thread_pool_device) =
-                sample_attention_output.contract(head_projection_weights, A_B);
+            const TensorMap<Tensor<type, 2>> sample_attention_output(sample_attention_output_data, input_size, weights_depth);
+
+            head_projection_output.chip(sample_index, 0).device(*thread_pool_device)
+                = sample_attention_output.contract(head_projection_weights, A_B);
         }
     }
 
-    outputs = projection_outputs.sum(Eigen::array<Index, 1>({ 3 }));
+    outputs.device(*thread_pool_device) = projection_outputs.sum(projection_sum_index);
 
     sum_matrices(thread_pool_device, projection_biases, outputs);
 }
@@ -505,11 +658,9 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
                                                        Tensor<type, 4>& attention_scores,
                                                        Tensor<type, 4>& softmax_attention_scores) const
 {
-    const Index batch_size = query.dimension(0);
-
     batch_matrix_multiplication(thread_pool_device, key, query, attention_scores, A_BT);
 
-    attention_scores = attention_scores * scaling_factor;
+    attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
     if (causal_mask)
     {
@@ -524,10 +675,9 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& t
                                                        const Tensor<type, 4>& softmax_attention_scores,
                                                        Tensor<type, 4>& attention_outputs) const 
 {    
-    const Index batch_size = transformed_value.dimension(0);
-
     batch_matrix_multiplication(thread_pool_device, softmax_attention_scores, transformed_value, attention_outputs, AT_B);
 }
+
 
 // @todo
 void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
@@ -576,36 +726,35 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
     Tensor<type, 4>& query = multihead_attention_layer_forward_propagation->query;
     Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
     Tensor<type, 4>& value = multihead_attention_layer_forward_propagation->value;
-    
-    calculate_transformation(input, query, query_weights);
-
-    calculate_transformation(context, key, key_weights);
-
-    calculate_transformation(context, value, value_weights);
 
     Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
     Tensor<type, 4>& softmax_attention_scores = multihead_attention_layer_forward_propagation->softmax_attention_scores;
+
+    Tensor<type, 4>& attention_outputs = multihead_attention_layer_forward_propagation->attention_outputs;
+
+    Tensor<type, 4>& projection_outputs = multihead_attention_layer_forward_propagation->projection_outputs;
+    Tensor<type, 3>& outputs = multihead_attention_layer_forward_propagation->outputs;
+
+    calculate_transformation(input, query, query_weights, query_biases);
+
+    calculate_transformation(context, key, key_weights, key_biases);
+
+    calculate_transformation(context, value, value_weights, value_biases);
     
     compute_attention_scores(query,
                              key,
                              attention_scores,
                              softmax_attention_scores);
 
-    if (dropout_rate > type(0))
-    {
+    if (is_training && dropout_rate > type(0)) 
         dropout(softmax_attention_scores);
-    }
-
-    Tensor<type, 4>& attention_outputs = multihead_attention_layer_forward_propagation->attention_outputs;
     
     compute_attention_outputs(value,
                              softmax_attention_scores,
                              attention_outputs);
 
-
-    Tensor<type, 3>& outputs = multihead_attention_layer_forward_propagation->outputs;
-    
     calculate_output_projection(attention_outputs,
+                                projection_outputs,
                                 outputs);
 }
 
@@ -688,9 +837,14 @@ void MultiheadAttentionLayer::calculate_hidden_delta(MultiheadAttentionLayerForw
 
     const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
 
+    // Next back propagation
+
+    const Tensor<type, 3>& next_error_input_derivatives = next_back_propagation->error_input_derivatives;
+
     // This back propagation
 
     Tensor<type, 3>& deltas = back_propagation->deltas;
+
 
     // Next back propagation
 
@@ -702,7 +856,7 @@ void MultiheadAttentionLayer::calculate_hidden_delta(MultiheadAttentionLayerForw
     else
     */
 
-    deltas.device(*thread_pool_device) = next_back_propagation->error_input_derivatives;
+    deltas.device(*thread_pool_device) = next_error_input_derivatives;
 }
 
 
@@ -722,18 +876,29 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
 
     Index batch_samples_number = inputs(0).second[0];
 
+    type* query_weights_data = (type*)query_weights.data();
+    type* key_weights_data = (type*)key_weights.data();
+    type* value_weights_data = (type*)value_weights.data();
+    type* projection_weights_data = (type*)projection_weights.data();
+
     // Forward propagation
 
     const MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation =
         static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation);
 
-    const Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
     const Tensor<type, 4>& softmax_attention_scores = multihead_attention_layer_forward_propagation->softmax_attention_scores;
     const Tensor<type, 4>& attention_outputs = multihead_attention_layer_forward_propagation->attention_outputs;
 
     const Tensor<type, 4>& query = multihead_attention_layer_forward_propagation-> query;
     const Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
     const Tensor<type, 4>& value = multihead_attention_layer_forward_propagation->value;
+    
+    type* softmax_attention_scores_data = (type*)softmax_attention_scores.data();
+    type* attention_outputs_data = (type*)attention_outputs.data();
+
+    type* query_data = (type*)query.data();
+    type* key_data = (type*)key.data();
+    type* value_data = (type*)value.data();
 
     // Back propagation
 
@@ -741,6 +906,8 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
         static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation);
 
     const Tensor<type, 3>& deltas = multihead_attention_layer_back_propagation->deltas;
+
+    Tensor<type, 3>& projection_weights_derivatives = multihead_attention_layer_back_propagation->projection_weights_derivatives;
 
     Tensor<type, 4>& error_attention_scores_derivatives = multihead_attention_layer_back_propagation->error_attention_scores_derivatives;
     Tensor<type, 4>& error_softmax_attention_scores_derivatives = multihead_attention_layer_back_propagation->error_softmax_attention_scores_derivatives;
@@ -750,200 +917,193 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
     Tensor<type, 4>& error_key_derivatives = multihead_attention_layer_back_propagation->error_key_derivatives;
     Tensor<type, 4>& error_value_derivatives = multihead_attention_layer_back_propagation->error_value_derivatives;
 
-    Tensor<type, 3>& error_input_derivatives = multihead_attention_layer_back_propagation->error_input_derivatives;
-    Tensor<type, 3>& error_context_derivatives = multihead_attention_layer_back_propagation->error_context_derivatives;
-
     Tensor<type, 3>& query_weights_derivatives = multihead_attention_layer_back_propagation->query_weights_derivatives;
     Tensor<type, 3>& key_weights_derivatives = multihead_attention_layer_back_propagation->key_weights_derivatives;
     Tensor<type, 3>& value_weights_derivatives = multihead_attention_layer_back_propagation->value_weights_derivatives;
 
-    Tensor<type, 3>& projection_weights_derivatives = multihead_attention_layer_back_propagation->projection_weights_derivatives;
-    Tensor<type, 1>& projection_biases_derivatives = multihead_attention_layer_back_propagation->projection_biases_derivatives;
-
-    
-    // PROJECTION DERIVATIVES
-
-    //calculate_error_projection_weights_derivatives() // using attention_outputs and deltas
-
-    const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
-    
-    // This is NOT batch matrix multiplication. 
-    for(Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 3>> head_attention_outputs((type*)attention_outputs.data() + head_index * input_size*weights_depth*batch_samples_number,
-            input_size, weights_depth, batch_samples_number);
-
-        TensorMap<Tensor<type, 2>> head_projection_weights_derivatives((type*)projection_weights_derivatives.data() + head_index * weights_depth*depth,
-            weights_depth, depth);
-
-        head_projection_weights_derivatives.device(*thread_pool_device) =
-            head_attention_outputs.contract(deltas, projection_weights_derivatives_contraction_indices);
-    }
-
-    
-    //calculate_error_projection_biases_derivatives() // using deltas
-
-    projection_biases_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 2>({ 0, 1 }));
-
-    
-    // VALUE DERIVATIVES
-
-    //calculate_error_value_derivatives() // using softmax_attention_scores, deltas, projection_weights and value_weights
-
-    const Eigen::array<IndexPair<Index>, 1> attention_output_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
-
-    // This is NOT batch matrix multiplication. 
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 2>> head_projection_weights((type*)projection_weights.data() + head_index * weights_depth*depth,
-            weights_depth, depth);
-
-        TensorMap<Tensor<type, 3>> head_attention_output_derivatives((type*)error_attention_output_derivatives.data() + head_index * input_size*weights_depth*batch_samples_number,
-            input_size, weights_depth, batch_samples_number);
-
-        head_attention_output_derivatives.device(*thread_pool_device) =
-            deltas.contract(head_projection_weights, attention_output_derivatives_contraction_indices);
-    }
-
-    const Eigen::array<IndexPair<Index>, 1> value_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
-
-    batch_matrix_multiplication(thread_pool_device, softmax_attention_scores, error_attention_output_derivatives, error_value_derivatives, A_B);
-    
-
-    //calculate_value_weights_derivatives() // using context and error_value_derivatives
-
-    const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
-    
-    // This is NOT batch matrix multiplication. 
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 3>> head_value_derivatives((type*)error_value_derivatives.data() + head_index * context_size*weights_depth*batch_samples_number,
-            context_size, weights_depth, batch_samples_number);
-
-        TensorMap<Tensor<type, 2>> head_value_weights_derivatives((type*)value_weights_derivatives.data() + head_index * depth*weights_depth,
-            depth, weights_depth);
-        
-        head_value_weights_derivatives.device(*thread_pool_device) =
-            context.contract(head_value_derivatives, transformation_weights_derivatives_contraction_indices);
-    }
-
-    
-    // QUERY AND KEY DERIVATIVES
-    
-    //calculate_error_attention_scores_derivatives(); // using deltas, projection_weights, value and softmax_derivatives(attention_scores)
-    
-    batch_matrix_multiplication(thread_pool_device, value, error_attention_output_derivatives, error_softmax_attention_scores_derivatives, A_BT);
-
-    Tensor<type, 4> softmax_activations_derivatives(context_size, context_size, input_size, batch_samples_number);
-
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 3>> head_softmax_attention_scores((type*) softmax_attention_scores.data() + head_index * context_size*input_size*batch_samples_number,
-            context_size, input_size, batch_samples_number);
-
-        softmax_derivatives(head_softmax_attention_scores, softmax_activations_derivatives);
-
-        const TensorMap<Tensor<type, 3>> head_softmax_attention_scores_derivatives((type*)error_softmax_attention_scores_derivatives.data() + head_index * context_size*input_size*batch_samples_number,
-            context_size, input_size, batch_samples_number);
-
-        TensorMap<Tensor<type, 3>> head_attention_scores_derivatives((type*) error_attention_scores_derivatives.data() + head_index * context_size*input_size*batch_samples_number,
-            context_size, input_size, batch_samples_number);
-
-        batch_matrix_multiplication(thread_pool_device, softmax_activations_derivatives, head_softmax_attention_scores_derivatives, head_attention_scores_derivatives, AT_B);
-    }
-    
-    
-    //calculate_error_query_derivatives() // using error_attention_scores_derivatives, key and query_weights
-
-    batch_matrix_multiplication(thread_pool_device, error_attention_scores_derivatives, key, error_query_derivatives, AT_B);
-    error_query_derivatives.device(*thread_pool_device) = error_query_derivatives * scaling_factor;
-    
-
-    //calculate_error_key_derivatives() // using error_attention_scores_derivatives, query and key_weights
-    
-    batch_matrix_multiplication(thread_pool_device, error_attention_scores_derivatives, query, error_key_derivatives, A_B);
-    error_key_derivatives.device(*thread_pool_device) = error_key_derivatives * scaling_factor;
-    
-    
-    //calculate_error_input_derivatives() // using error_query_derivatives and query_weights (sum)
-    
+    Tensor<type, 3>& error_input_derivatives = multihead_attention_layer_back_propagation->error_input_derivatives;
     error_input_derivatives.setZero();
-    
-    // This is NOT batch matrix multiplication
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 3>> head_query_derivatives(error_query_derivatives.data() + head_index * input_size*weights_depth*batch_samples_number,
-            input_size, weights_depth, batch_samples_number);
-
-        TensorMap<Tensor<type, 2>> head_query_weights((type*) query_weights.data() + head_index * depth*weights_depth,
-            depth, weights_depth);
-
-        for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
-        {
-            error_input_derivatives.chip(sample_index, 0).device(*thread_pool_device) += head_query_derivatives.chip(sample_index, 2)
-                                                                                         .contract(head_query_weights, A_BT);
-        }
-    }
-    
-
-    //calculate_error_context_derivatives() // using error_key_derivatives, key_weights, error_value_derivatives and value_weights (sum)
-
+    Tensor<type, 3>& error_context_derivatives = multihead_attention_layer_back_propagation->error_context_derivatives;
     error_context_derivatives.setZero();
 
-    // This is NOT batch matrix multiplication
+    Tensor<type, 1>& aux_rows = multihead_attention_layer_back_propagation->aux_rows;
+
+    Tensor<type, 2>& query_biases_derivatives = multihead_attention_layer_back_propagation->query_biases_derivatives;
+    Tensor<type, 2>& key_biases_derivatives = multihead_attention_layer_back_propagation->key_biases_derivatives;
+    Tensor<type, 2>& value_biases_derivatives = multihead_attention_layer_back_propagation->value_biases_derivatives;
+    Tensor<type, 1>& projection_biases_derivatives = multihead_attention_layer_back_propagation->projection_biases_derivatives;
+
+    type* projection_weights_derivatives_data = projection_weights_derivatives.data();
+
+    type* error_attention_scores_derivatives_data = error_attention_scores_derivatives.data();
+    type* error_softmax_attention_scores_derivatives_data = error_softmax_attention_scores_derivatives.data();
+    type* error_attention_output_derivatives_data = error_attention_output_derivatives.data();
+
+    type* error_query_derivatives_data = error_query_derivatives.data();
+    type* error_key_derivatives_data = error_key_derivatives.data();
+    type* error_value_derivatives_data = error_value_derivatives.data();
+
+    type* query_weights_derivatives_data = query_weights_derivatives.data();
+    type* key_weights_derivatives_data = key_weights_derivatives.data();
+    type* value_weights_derivatives_data = value_weights_derivatives.data();
+
+    type* query_biases_derivatives_data = query_biases_derivatives.data();
+    type* key_biases_derivatives_data = key_biases_derivatives.data();
+    type* value_biases_derivatives_data = value_biases_derivatives.data();
+    
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
-        const TensorMap<Tensor<type, 3>> head_key_derivatives(error_key_derivatives.data() + head_index * context_size*weights_depth*batch_samples_number,
-            context_size, weights_depth, batch_samples_number);
+        type* head_query_weights_data = query_weights_data + head_index * depth * weights_depth;
+        type* head_key_weights_data = key_weights_data + head_index * depth * weights_depth;
+        type* head_value_weights_data = value_weights_data + head_index * depth * weights_depth;
 
-        TensorMap<Tensor<type, 2>> head_key_weights((type*)key_weights.data() + head_index * depth*weights_depth,
-            depth, weights_depth);
+        type* head_query_data = query_data + head_index * input_size * weights_depth * batch_samples_number;
+        type* head_key_data = key_data + head_index * context_size * weights_depth * batch_samples_number;
+        type* head_value_data = value_data + head_index * context_size * weights_depth * batch_samples_number;
 
-        const TensorMap<Tensor<type, 3>> head_value_derivatives(error_value_derivatives.data() + head_index * context_size*weights_depth*batch_samples_number,
-            context_size, weights_depth, batch_samples_number);
+        type* head_projection_weights_data = projection_weights_data + head_index * weights_depth * depth;
+        type* head_softmax_attention_scores_data = softmax_attention_scores_data + head_index * context_size * input_size * batch_samples_number;
+        type* head_attention_outputs_data = attention_outputs_data + head_index * input_size * weights_depth * batch_samples_number;
 
-        TensorMap<Tensor<type, 2>> head_value_weights((type*)value_weights.data() + head_index * depth * weights_depth,
-            depth, weights_depth);
+        type* head_projection_weights_derivatives_data = projection_weights_derivatives_data + head_index * weights_depth * depth;
+
+        type* head_attention_scores_derivatives_data = error_attention_scores_derivatives_data + head_index * context_size * input_size * batch_samples_number;
+        type* head_softmax_attention_scores_derivatives_data = error_softmax_attention_scores_derivatives_data + head_index * context_size * input_size * batch_samples_number;
+        type* head_attention_output_derivatives_data = error_attention_output_derivatives_data + head_index * input_size * weights_depth * batch_samples_number;
+
+        type* head_query_derivatives_data = error_query_derivatives_data + head_index * input_size * weights_depth * batch_samples_number;
+        type* head_key_derivatives_data = error_key_derivatives_data + head_index * context_size * weights_depth * batch_samples_number;
+        type* head_value_derivatives_data = error_value_derivatives_data + head_index * context_size * weights_depth * batch_samples_number;
+
+        type* head_query_weights_derivatives_data = query_weights_derivatives_data + head_index * depth * weights_depth;
+        type* head_key_weights_derivatives_data = key_weights_derivatives_data + head_index * depth * weights_depth;
+        type* head_value_weights_derivatives_data = value_weights_derivatives_data + head_index * depth * weights_depth;
+        
+        type* head_query_biases_derivatives_data = query_biases_derivatives_data + head_index * weights_depth;
+        type* head_key_biases_derivatives_data = key_biases_derivatives_data + head_index * weights_depth;
+        type* head_value_biases_derivatives_data = value_biases_derivatives_data + head_index * weights_depth;
+
+        const TensorMap<Tensor<type, 2>> head_query_weights(head_query_weights_data, depth, weights_depth);
+        const TensorMap<Tensor<type, 2>> head_key_weights(head_key_weights_data, depth, weights_depth);
+        const TensorMap<Tensor<type, 2>> head_value_weights(head_value_weights_data, depth, weights_depth);
+
+        const TensorMap<Tensor<type, 3>> head_query(head_query_data, input_size, weights_depth, batch_samples_number);
+        const TensorMap<Tensor<type, 3>> head_key(head_key_data, context_size, weights_depth, batch_samples_number);
+        const TensorMap<Tensor<type, 3>> head_value(head_value_data, context_size, weights_depth, batch_samples_number);
+
+        const TensorMap<Tensor<type, 2>> head_projection_weights(head_projection_weights_data, weights_depth, depth);
+
+        const TensorMap<Tensor<type, 3>> head_softmax_attention_scores(head_softmax_attention_scores_data, context_size, input_size, batch_samples_number);
+        const TensorMap<Tensor<type, 3>> head_attention_outputs(head_attention_outputs_data, input_size, weights_depth, batch_samples_number);
+
+        TensorMap<Tensor<type, 2>> head_projection_weights_derivatives(head_projection_weights_derivatives_data, weights_depth, depth);
+
+        TensorMap<Tensor<type, 3>> head_attention_scores_derivatives(head_attention_scores_derivatives_data, context_size, input_size, batch_samples_number);
+        TensorMap<Tensor<type, 3>> head_softmax_attention_scores_derivatives(head_softmax_attention_scores_derivatives_data, context_size, input_size, batch_samples_number);
+        TensorMap<Tensor<type, 3>> head_attention_output_derivatives(head_attention_output_derivatives_data, input_size, weights_depth, batch_samples_number);
+
+        TensorMap<Tensor<type, 3>> head_query_derivatives(head_query_derivatives_data, input_size, weights_depth, batch_samples_number);
+        TensorMap<Tensor<type, 3>> head_key_derivatives(head_key_derivatives_data, context_size, weights_depth, batch_samples_number);
+        TensorMap<Tensor<type, 3>> head_value_derivatives(head_value_derivatives_data, context_size, weights_depth, batch_samples_number);
+
+        TensorMap<Tensor<type, 2>> head_query_weights_derivatives(head_query_weights_derivatives_data, depth, weights_depth);
+        TensorMap<Tensor<type, 2>> head_key_weights_derivatives(head_key_weights_derivatives_data, depth, weights_depth);
+        TensorMap<Tensor<type, 2>> head_value_weights_derivatives(head_value_weights_derivatives_data, depth, weights_depth);
+
+        TensorMap<Tensor<type, 1>> head_query_biases_derivatives(head_query_biases_derivatives_data, weights_depth);
+        TensorMap<Tensor<type, 1>> head_key_biases_derivatives(head_key_biases_derivatives_data, weights_depth);
+        TensorMap<Tensor<type, 1>> head_value_biases_derivatives(head_value_biases_derivatives_data, weights_depth);
+        
+        // PROJECTION WEIGHTS DERIVATIVES
+
+        head_projection_weights_derivatives.device(*thread_pool_device)
+            = head_attention_outputs.contract(deltas, projection_weights_derivatives_contraction_indices);
+        
+        // ATTENTION OUTPUT DERIVATIVES
+        
+        for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+        {
+            type* sample_attention_output_derivatives_data = head_attention_output_derivatives_data + sample_index * input_size * weights_depth;
+
+            TensorMap<Tensor<type, 2>> sample_attention_output_derivatives(sample_attention_output_derivatives_data, input_size, weights_depth);
+
+            const Tensor<type, 2> sample_deltas = deltas.chip(sample_index, 0);
+
+            sample_attention_output_derivatives.device(*thread_pool_device)
+                = sample_deltas.contract(head_projection_weights, A_BT);
+        }
+
+        // VALUE DERIVATIVES
+
+        batch_matrix_multiplication(thread_pool_device, head_softmax_attention_scores, head_attention_output_derivatives, head_value_derivatives, A_B);
+
+        // VALUE WEIGHTS DERIVATIVES
+
+        head_value_weights_derivatives.device(*thread_pool_device)
+            = context.contract(head_value_derivatives, transformation_weights_derivatives_contraction_indices);
+        
+        // SOFTMAX ATTENTION SCORES DERIVATIVES
+
+        batch_matrix_multiplication(thread_pool_device, head_value, head_attention_output_derivatives, head_softmax_attention_scores_derivatives, A_BT);
+
+        // ATTENTION SCORES DERIVATIVES
+        
+        softmax_derivatives_times_tensor(head_softmax_attention_scores, head_softmax_attention_scores_derivatives, head_attention_scores_derivatives, aux_rows);
+
+        // QUERY DERIVATIVES
+
+        batch_matrix_multiplication(thread_pool_device, head_attention_scores_derivatives, head_key, head_query_derivatives, AT_B);
+
+        head_query_derivatives.device(*thread_pool_device) = head_query_derivatives * scaling_factor;
+    
+        // KEY DERIVATIVES
+
+        batch_matrix_multiplication(thread_pool_device, head_attention_scores_derivatives, head_query, head_key_derivatives, A_B);
+    
+        head_key_derivatives.device(*thread_pool_device) = head_key_derivatives * scaling_factor;
+
+        // QUERY WEIGHTS DERIVATIVES
+
+        head_query_weights_derivatives.device(*thread_pool_device)
+            = input.contract(head_query_derivatives, transformation_weights_derivatives_contraction_indices);
+
+        // KEY WEIGHTS DERIVATIVES
+
+        head_key_weights_derivatives.device(*thread_pool_device)
+            = context.contract(head_key_derivatives, transformation_weights_derivatives_contraction_indices);
+
+        /// @todo try to simplify
 
         for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
-            error_context_derivatives.chip(sample_index, 0).device(*thread_pool_device) +=
-                head_key_derivatives.chip(sample_index, 2).contract(head_key_weights, A_BT) +
-                head_value_derivatives.chip(sample_index, 2).contract(head_value_weights, A_BT);
+            type* sample_query_derivatives_data = head_query_derivatives_data + sample_index * input_size * weights_depth;
+            type* sample_key_derivatives_data = head_key_derivatives_data + sample_index * context_size * weights_depth;
+            type* sample_value_derivatives_data = head_value_derivatives_data + sample_index * context_size * weights_depth;
+
+            const TensorMap<Tensor<type, 2>> sample_query_derivatives(sample_query_derivatives_data, input_size, weights_depth);
+            const TensorMap<Tensor<type, 2>> sample_key_derivatives(sample_key_derivatives_data, context_size, weights_depth);
+            const TensorMap<Tensor<type, 2>> sample_value_derivatives(sample_value_derivatives_data, context_size, weights_depth);
+
+            // INPUT DERIVATIVES
+
+            error_input_derivatives.chip(sample_index, 0).device(*thread_pool_device)
+                += sample_query_derivatives.contract(head_query_weights, A_BT);
+
+            // CONTEXT DERIVATIVES
+
+            error_context_derivatives.chip(sample_index, 0).device(*thread_pool_device) 
+                += sample_key_derivatives.contract(head_key_weights, A_BT)
+                + sample_value_derivatives.contract(head_value_weights, A_BT);
         }
+
+        // BIASES DERIVATIVES
+
+        head_query_biases_derivatives.device(*thread_pool_device) = head_query_derivatives.sum(biases_derivatives_sum_indices);
+        head_key_biases_derivatives.device(*thread_pool_device) = head_key_derivatives.sum(biases_derivatives_sum_indices);
+        head_value_biases_derivatives.device(*thread_pool_device) = head_value_derivatives.sum(biases_derivatives_sum_indices);
     }
-    
 
-    //calculate_query_weights_derivatives() // using input and error_query_derivatives
-    
-    // This is NOT batch matrix multiplication. 
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 3>> head_query_derivatives((type*)error_query_derivatives.data() + head_index * input_size*weights_depth*batch_samples_number,
-            input_size, weights_depth, batch_samples_number);
-
-        TensorMap<Tensor<type, 2>> head_query_weights_derivatives((type*)query_weights_derivatives.data() + head_index * depth*weights_depth,
-            depth, weights_depth);
-
-        head_query_weights_derivatives.device(*thread_pool_device) =
-            input.contract(head_query_derivatives, transformation_weights_derivatives_contraction_indices);
-    }
-    
-
-    //calculate_key_weights_derivatives() // using context and error_key_derivatives
-
-    // This is NOT batch matrix multiplication. 
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 3>> head_key_derivatives((type*)error_key_derivatives.data() + head_index * batch_samples_number*context_size*weights_depth,
-            context_size, weights_depth, batch_samples_number);
-
-        TensorMap<Tensor<type, 2>> head_key_weights_derivatives((type*)key_weights_derivatives.data() + head_index * depth*weights_depth,
-            depth, weights_depth);
-        
-        head_key_weights_derivatives.device(*thread_pool_device) =
-            context.contract(head_key_derivatives, transformation_weights_derivatives_contraction_indices);
-    }
+    projection_biases_derivatives.device(*thread_pool_device) = deltas.sum(projection_biases_derivatives_sum_indices);
 }
 
 
@@ -955,13 +1115,15 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
         static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation);
 
     const Tensor<type, 3>& query_weights_derivatives = multihead_attention_layer_back_propagation->query_weights_derivatives;
+    const Tensor<type, 2>& query_biases_derivatives = multihead_attention_layer_back_propagation->query_biases_derivatives;
 
     const Tensor<type, 3>& key_weights_derivatives = multihead_attention_layer_back_propagation->key_weights_derivatives;
+    const Tensor<type, 2>& key_biases_derivatives = multihead_attention_layer_back_propagation->key_biases_derivatives;
 
     const Tensor<type, 3>& value_weights_derivatives = multihead_attention_layer_back_propagation->value_weights_derivatives;
+    const Tensor<type, 2>& value_biases_derivatives = multihead_attention_layer_back_propagation->value_biases_derivatives;
 
     const Tensor<type, 3>& projection_weights_derivatives = multihead_attention_layer_back_propagation->projection_weights_derivatives;
-
     const Tensor<type, 1>& projection_biases_derivatives = multihead_attention_layer_back_propagation->projection_biases_derivatives;
 
     type* gradient_data = gradient.data();
@@ -976,6 +1138,14 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
     gradient_index += query_weights_derivatives.size();
 
     copy(/*execution::par,*/
+        query_biases_derivatives.data(),
+        query_biases_derivatives.data() + query_biases_derivatives.size(),
+        gradient_data + gradient_index);
+
+    gradient_index += query_biases_derivatives.size();
+
+
+    copy(/*execution::par,*/
         key_weights_derivatives.data(),
         key_weights_derivatives.data() + key_weights_derivatives.size(),
         gradient_data + gradient_index);
@@ -983,11 +1153,27 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
     gradient_index += key_weights_derivatives.size();
 
     copy(/*execution::par,*/
+        key_biases_derivatives.data(),
+        key_biases_derivatives.data() + key_biases_derivatives.size(),
+        gradient_data + gradient_index);
+
+    gradient_index += key_biases_derivatives.size();
+
+
+    copy(/*execution::par,*/
         value_weights_derivatives.data(),
         value_weights_derivatives.data() + value_weights_derivatives.size(),
         gradient_data + gradient_index);
 
     gradient_index += value_weights_derivatives.size();
+
+    copy(/*execution::par,*/
+        value_biases_derivatives.data(),
+        value_biases_derivatives.data() + value_biases_derivatives.size(),
+        gradient_data + gradient_index);
+
+    gradient_index += value_biases_derivatives.size();
+
 
     copy(/*execution::par,*/
         projection_weights_derivatives.data(),
@@ -1002,6 +1188,7 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
         gradient_data + gradient_index);
 }
 
+
 pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_pair() const
 {
     MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
@@ -1012,6 +1199,7 @@ pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_p
 
     return pair<type*, dimensions>(outputs_data, { { batch_samples_number, input_size, depth } });
 }
+
 
 void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -1039,14 +1227,28 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_sampl
 
     // Rest of quantities
 
-    query.resize(input_size, weights_depth, new_batch_samples_number, heads_number);
-    key.resize(context_size, weights_depth, new_batch_samples_number, heads_number);
-    value.resize(context_size, weights_depth, new_batch_samples_number, heads_number);
+    query.resize(input_size, weights_depth, batch_samples_number, heads_number);
+    key.resize(context_size, weights_depth, batch_samples_number, heads_number);
+    value.resize(context_size, weights_depth, batch_samples_number, heads_number);
 
-    attention_scores.resize(context_size, input_size, new_batch_samples_number, heads_number);
-    softmax_attention_scores.resize(context_size, input_size, new_batch_samples_number, heads_number);
-    attention_outputs.resize(input_size, weights_depth, new_batch_samples_number, heads_number);
+    attention_scores.resize(context_size, input_size, batch_samples_number, heads_number);
+    softmax_attention_scores.resize(context_size, input_size, batch_samples_number, heads_number);
+    attention_outputs.resize(input_size, weights_depth, batch_samples_number, heads_number);
+
+    projection_outputs.resize(batch_samples_number, input_size, depth, heads_number);
 }
+
+
+pair<type*, dimensions> MultiheadAttentionLayerBackPropagation::get_deltas_pair() const
+{
+    MultiheadAttentionLayer* multihead_attention_layer= static_cast<MultiheadAttentionLayer*>(layer);
+
+    const Index input_size = multihead_attention_layer->get_input_size();
+    const Index depth = multihead_attention_layer->get_depth();
+
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, input_size, depth });
+}
+
 
 void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -1082,7 +1284,13 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
     value_weights_derivatives.resize(depth, weights_depth, heads_number);
 
     projection_weights_derivatives.resize(weights_depth, depth, heads_number);
+
+    query_biases_derivatives.resize(weights_depth, heads_number);
+    key_biases_derivatives.resize(weights_depth, heads_number);
+    value_biases_derivatives.resize(weights_depth, heads_number);
     projection_biases_derivatives.resize(depth);
+
+    aux_rows.resize(context_size);
 }
 
 }

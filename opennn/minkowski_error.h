@@ -80,7 +80,7 @@ private:
    type minkowski_parameter;
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/minkowski_error_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/minkowski_error_cuda.h"
 #endif
 
 };

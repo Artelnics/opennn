@@ -2458,11 +2458,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
     const Index raw_variables_number = matrix.dimension(1);
-
-    cout << "Rows: " << rows_number << endl;
-    cout << matrix << endl;
 
 #ifdef OPENNN_DEBUG
 
@@ -2485,17 +2481,31 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 
     for(Index j = 0; j < raw_variables_number; j++)
     {
-        Tensor<type, 1> sorted_column(matrix.chip(j,1));
+        Tensor<type, 1> column(matrix.chip(j,1));
+        Tensor<type, 1> sorted_column;
+        Index median_index;
+        Index rows_number = 0;
+
+        for(Index i = 0; i < column.size(); i++)
+        {
+            if(!isnan(column(i)))
+            {
+                push_back_type(sorted_column, column(i));
+                rows_number++;
+            }
+        }
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
+        median_index = Index(rows_number/2);
+
         if(rows_number % 2 == 0)
         {
-            median(j) = (sorted_column[rows_number*1/2 - 1] + sorted_column[rows_number*1/2])/ type(2);
+            median(j) = (sorted_column[median_index - 1] + sorted_column[median_index])/ type(2);
         }
         else
         {
-            median(j) = sorted_column[(rows_number+1)*1/2 - 1];
+            median(j) = sorted_column[median_index - 1/2];
         }
     }
 

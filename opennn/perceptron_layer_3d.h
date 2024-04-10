@@ -30,7 +30,7 @@ struct PerceptronLayer3DForwardPropagation;
 struct PerceptronLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+    //#include "../../opennn_cuda/opennn_cuda/struct_perceptron_layer_3d_cuda.h"
 #endif
 
 
@@ -155,10 +155,6 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                          Tensor<type, 1>&,
-                          LayerForwardPropagation*);
-
    // Delta methods
 
    void calculate_hidden_delta(LayerForwardPropagation*,
@@ -229,7 +225,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
+//    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
 #endif
 
 };

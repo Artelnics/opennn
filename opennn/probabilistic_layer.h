@@ -35,15 +35,13 @@ struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
+struct ProbabilisticLayerForwardPropagationCuda;
+struct ProbabilisticLayerBackPropagationCuda;
 #endif
 
-/// This class represents a layer of probabilistic neurons.
 
-///
-/// The neural network defined in OpenNN includes a probabilistic layer for those problems
-/// when the outptus are to be interpreted as probabilities.
-/// It does not has Synaptic weights or Biases
+/// This class represents a layer of probabilistic neurons.
+/// The neural network defined in OpenNN includes a probabilistic layer for those problems when the outptus are to be interpreted as probabilities.
 
 class ProbabilisticLayer : public Layer
 {
@@ -104,9 +102,6 @@ public:
 
    const Tensor<type, 1>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
-
-//   Tensor<type, 1> get_biases(Tensor<type, 1>&) const;
-//   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;   
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
@@ -214,11 +209,14 @@ protected:
 
    bool display = true;
 
+
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
 #endif
 
+
 };
+
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
@@ -312,6 +310,12 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 
     Tensor<type, 2> targets;
 };
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_back_propagation_cuda.h"
+#endif
 
 }
 

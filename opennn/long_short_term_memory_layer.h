@@ -272,7 +272,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/long_short_term_memory_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/long_short_term_memory_layer_cuda.h"
 #endif
 
 };

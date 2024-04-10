@@ -254,36 +254,16 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         inputs_dimension = 5;
         context_dimension = 6;
 
-        depth = 4;
-        perceptron_depth = 6;
+        depth = 4; 
+        perceptron_depth = 6; 
         heads_number = 4;
         number_of_layers = 1;
 
         bool is_training = true;
         
-        data.resize(batch_samples_number, context_length + 2 * inputs_number);
-
-        for (Index i = 0; i < batch_samples_number; i++)
-        {
-            for (Index j = 0; j < context_length; j++)
-                data(i, j) = type(rand() % context_dimension);
-
-            for (Index j = 0; j < 2 * inputs_number; j++)
-                data(i, j + context_length) = type(rand() % inputs_dimension);
-        }
-        
-        data_set.set(data);
+        data_set.set_data_random_language_model(batch_samples_number, inputs_number, context_length, inputs_dimension, context_dimension);
 
         data_set.set_training();
-
-        for (Index i = 0; i < context_length; i++)
-            data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
-
-        for (Index i = 0; i < inputs_number; i++)
-            data_set.set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
-
-        for (Index i = 0; i < inputs_number; i++)
-            data_set.set_raw_variable_use(i + context_length + inputs_number, DataSet::VariableUse::Target);
 
         training_samples_indices = data_set.get_training_samples_indices();
         context_variables_indices = data_set.get_context_variables_indices();
@@ -293,12 +273,12 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         batch.set(batch_samples_number, &data_set);
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
-
+        
         transformer.set({ inputs_number, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
-
+        
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
-
+        
         transformer.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
         
         // Loss index
@@ -309,9 +289,120 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         assert_true(back_propagation.gradient.size() == transformer.get_parameters_number(), LOG);
 
         numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient();
+
+        const bool equal_gradients = are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2));
         
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        assert_true(equal_gradients, LOG);
+
+        // debugging
+        /*
+        if (!equal_gradients)
+        {
+            Tensor<Index, 0> max_difference_index = (back_propagation.gradient - numerical_gradient).abs().argmax();
+            cout << "Test failed with max difference: " << (back_propagation.gradient - numerical_gradient).abs().maximum() << " at index: " << max_difference_index(0) << endl;
+            cout << "Gradient = " << back_propagation.gradient(max_difference_index(0)) << endl;
+            cout << "Numerical gradient = " << numerical_gradient(max_difference_index(0)) << endl;            
+
+            cout << endl;
+        }
         
+        Tensor<type, 0> average_difference = (back_propagation.gradient - numerical_gradient).abs().mean();
+        
+        assert_true(average_difference(0) < type(1.0e-2), LOG);
+
+        Tensor<type, 0> max_difference = (back_propagation.gradient - numerical_gradient).abs().maximum();
+        cout << "Max difference: " << max_difference(0) << endl;        
+        
+        cout << "Numerical gradient:" << endl << numerical_gradient << endl;
+        cout << "Gradient:" << endl << back_propagation.gradient << endl;
+        
+        Index count = 0;
+
+        Tensor<Index, 1> zeroes_indices(0);
+        zeroes_indices.setZero();
+        Tensor<Index, 1> aux(0);
+
+        Index embedding_parameters_number = transformer.get_layer(0)->get_parameters_number() + transformer.get_layer(1)->get_parameters_number();
+
+        for (Index i = embedding_parameters_number; i < numerical_gradient.size(); i++)
+        {
+            if (numerical_gradient(i) == 0)
+            {
+                aux = zeroes_indices;
+
+                zeroes_indices.resize(count + 1);
+
+                for (Index j = 0; j < count; j++)    zeroes_indices(j) = aux(j);
+
+                zeroes_indices(count) = i;
+
+                count++;
+            }
+        }
+
+        if (count > 0)
+        {
+            cout << "Elements of numerical gradient (non-embedding) that are 0: [ ";
+            for (Index i = 0; i < count - 1; i++)   cout << zeroes_indices(i) << "\t";
+            cout << zeroes_indices(count - 1) << " ]" << endl;
+        }
+
+        /*
+        Index embedding_parameters_number = transformer.get_layer(0)->get_parameters_number() + transformer.get_layer(1)->get_parameters_number();
+        
+        Index count = 0;
+        for (Index i = embedding_parameters_number; i < numerical_gradient.size(); i++)
+        {
+            if (numerical_gradient(i) == 0) count++;
+        }
+
+        cout << "Number of 0s in numerical gradient (non-embedding): " << count << " of " << numerical_gradient.size() - embedding_parameters_number << endl;
+        
+
+        /*
+        Tensor<type, 1> abs_difference = (back_propagation.gradient - numerical_gradient).abs();
+
+        Index count = 0;
+
+        Tensor<Index, 1> diff_indices(0);
+        diff_indices.setZero();
+        Tensor<Index, 1> aux(0);
+
+        for (Index i = 0; i < abs_difference.size(); i++)
+        {
+            if (abs_difference(i) > type(1.0e-2))
+            {
+                aux = diff_indices;
+
+                diff_indices.resize(count + 1);
+
+                for (Index j = 0; j < count; j++)    diff_indices(j) = aux(j);
+
+                diff_indices(count) = i;
+
+                count++;
+            }
+        }
+        
+        if (count > 0)
+        {
+            cout << "Elements with differences greater than 1.0e-2: [ ";
+            for (Index i = 0; i < count - 1; i++)   cout << diff_indices(i) << "\t";
+            cout << diff_indices(count - 1) << " ]" << endl;
+
+            cout << "Gradient: [ ";
+            for (Index i = 0; i < count - 1; i++)   cout << back_propagation.gradient(diff_indices(i)) << "\t";
+            cout << back_propagation.gradient(diff_indices(count - 1)) << " ]" << endl;
+
+            cout << "Numerical gradient: [ ";
+            for (Index i = 0; i < count - 1; i++)   cout << numerical_gradient(i) << "\t";
+            cout << numerical_gradient(diff_indices(count - 1)) << " ]" << endl;
+
+            cout << endl;
+        }
+        //else
+            //cout << "No elements with differences greater than 1.0e-2" << endl;
+        */
     }
 }
 
@@ -330,8 +421,10 @@ void CrossEntropyError3DTest::run_test_case()
     test_back_propagate();
 
     // Transformer test (Must be last since we change &neural_network to &transformer)
-    test_calculate_gradient_transformer();
-    
+
+    cout << "test_calculate_gradient_transformer\n";
+    for(Index i = 0; i < 10; i++)   test_calculate_gradient_transformer();
+
     cout << "End of cross-entropy error test case.\n\n";
 }
 

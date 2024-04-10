@@ -161,7 +161,7 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/optimization_algorithm_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/optimization_algorithm_cuda.h"
 #endif
 
 };

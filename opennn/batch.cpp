@@ -65,7 +65,7 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
         if(augmentation) perform_augmentation();
     }
 
-    if (context_indices.size() != 0)
+    if (has_context)
     {
         fill_submatrix(data, samples_indices, context_indices, context_data);
     }
@@ -304,7 +304,6 @@ Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
     if (!has_context)
     {
         inputs.resize(1);
-
         inputs(0).first = inputs_data;
         inputs(0).second = inputs_dimensions;
     }

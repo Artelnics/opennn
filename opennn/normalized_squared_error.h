@@ -114,7 +114,7 @@ private:
    type selection_normalization_coefficient = type(NAN);
 
 #ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/normalized_squared_error_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/normalized_squared_error_cuda.h"
 #endif
 
 };
