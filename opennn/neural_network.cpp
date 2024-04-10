@@ -1486,6 +1486,7 @@ Index NeuralNetwork::get_trainable_layers_number() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers(i)->get_type() != Layer::Type::Scaling2D
+        && layers(i)->get_type() != Layer::Type::Scaling4D
         && layers(i)->get_type() != Layer::Type::Unscaling
         && layers(i)->get_type() != Layer::Type::Bounding)
         {

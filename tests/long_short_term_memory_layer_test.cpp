@@ -64,6 +64,7 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     Index samples_number;
     Index inputs_number;
+    Index neurons_number;
 
     pair<type*, dimensions> inputs_pair;
 
@@ -77,10 +78,12 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     samples_number = 1;
     inputs_number = 1;
+    neurons_number = 4;
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
+    long_short_term_memory_layer.set(inputs_number, neurons_number);
     long_short_term_memory_layer.set_parameters_constant(type(1));
 
     long_short_term_layer_forward_propagation.set(1, &long_short_term_memory_layer);

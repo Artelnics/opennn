@@ -2461,6 +2461,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
     const Index rows_number = matrix.dimension(0);
     const Index raw_variables_number = matrix.dimension(1);
 
+    cout << "Rows: " << rows_number << endl;
+    cout << matrix << endl;
+
 #ifdef OPENNN_DEBUG
 
     if(rows_number == 0)
@@ -2488,11 +2491,11 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 
         if(rows_number % 2 == 0)
         {
-            median(j) = (sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/ type(2);
+            median(j) = (sorted_column[rows_number*1/2 - 1] + sorted_column[rows_number*1/2])/ type(2);
         }
         else
         {
-            median(j) = sorted_column[rows_number*2/4];
+            median(j) = sorted_column[(rows_number+1)*1/2 - 1];
         }
     }
 

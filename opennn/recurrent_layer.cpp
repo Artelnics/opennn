@@ -673,11 +673,12 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
                                        const bool& is_training)
 {
     const Index samples_number = inputs_pair(0).second[0];
+    const Index inputs_number = inputs_pair(0).second[1];
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
         = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_number);
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -693,10 +694,10 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     {
         if(i%timesteps == 0) hidden_states.setZero();
 
-        current_inputs.device(*thread_pool_device) = inputs.chip(i, 0);
+        /*current_inputs.device(*thread_pool_device) = inputs.chip(i, 0);
 
         calculate_combinations(current_inputs,
-                               current_combinations);
+                               current_combinations);*/
 
         if(is_training)
         {
@@ -708,11 +709,11 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
         }
         else
         {
-            calculate_activations(current_combinations,
-                                  hidden_states);
+            /*calculate_activations(current_combinations,
+                                  hidden_states);*/
         }
 
-        outputs.chip(i, 0).device(*thread_pool_device) = hidden_states;
+        //outputs.chip(i, 0).device(*thread_pool_device) = hidden_states;
     }
 }
 

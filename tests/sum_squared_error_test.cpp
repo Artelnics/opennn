@@ -99,8 +99,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(is_zero(back_propagation.gradient) , LOG);
     }
-/*
-*/
+
     // Test approximation all random
     {
         samples_number = type(1) + rand() % 5;
@@ -479,7 +478,6 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
 
     }
-
 }
 
 

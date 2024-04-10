@@ -31,7 +31,8 @@ win32:{
 #QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 #LIBS += -fopenmp -pthread #-lgomp
 }
-else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
+else:!macx{
+QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
 QMAKE_LFLAGS += -fopenmp -lgomp
 LIBS += -fopenmp -pthread -lgomp
 }

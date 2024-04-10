@@ -65,14 +65,16 @@ void BoundingLayerTest::test_forward_propagate()
     bounding_layer.set_upper_bound(0, type(1));
     bounding_layer.set_bounding_method("Bounding");
 
-    inputs.resize(1, 1);
+    inputs.resize(samples_number, inputs_number);
     inputs(0) = type(-2.0);
+
+    inputs_pair.first = inputs.data();
+    inputs_pair.second = { samples_number, inputs_number };
 
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
     bounding_layer.forward_propagate(tensor_wrapper(inputs_pair), &bounding_layer_forward_propagation, is_training);
 
     outputs = bounding_layer_forward_propagation.outputs;
-
 
     assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 

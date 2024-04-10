@@ -22,5 +22,8 @@ SUBDIRS += blank
 
 CONFIG += ordered
 
+QMAKE_CXXFLAGS_RELEASE -= -O2
+QMAKE_CXXFLAGS_RELEASE += -O3
+
 # OpenMP library
 include(../opennn/opennmp.pri)

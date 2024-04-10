@@ -1109,12 +1109,12 @@ void GeneticAlgorithm::perform_mutation()
             }
         }
 
-        new_individual_variables = get_individual_variables(individual_raw_variables);
+        //new_individual_variables = get_individual_variables(individual_raw_variables);
 
         if(is_false(new_individual_variables))
         {
 
-            Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(new_individual_variables);
+            //Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(new_individual_variables);
 
             Tensor<DataSet::RawVariable, 1> raw_variables = training_strategy->get_data_set()->get_raw_variables();
 
@@ -1122,11 +1122,11 @@ void GeneticAlgorithm::perform_mutation()
             {
                 if(original_input_raw_variables(j))
                 {
-                    individual_raw_variables_false(j) = true;
+                    //individual_raw_variables_false(j) = true;
                 }
             }
 
-            new_individual_variables = get_individual_variables(individual_raw_variables_false);
+            //new_individual_variables = get_individual_variables(individual_raw_variables_false);
         }
 
         if(is_false(new_individual_variables))

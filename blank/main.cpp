@@ -39,6 +39,30 @@ int main()
    {
         cout << "Blank\n";
 
+        const Index rows =  8*1000000;
+        const Index columns = 1000;
+        type mean = 0.0;
+
+        Tensor<float, 2> matrix(rows, columns);
+
+        for(Index i = 0; i < rows; i++)
+        {
+            for(Index j = 0; j < columns; j++)
+            {
+                matrix(i,j) = arc4random();
+            }
+        }
+        for(Index i = 0; i < rows; i++)
+        {
+            for(Index j = 0; j < columns; j++)
+            {
+                mean = mean + matrix(i,j);
+            }
+        }
+        mean = mean / (rows*columns);
+
+        cout << "Matrix mean: " << mean << endl;
+
         cout << "Bye!" << endl;
 
         return 0;
