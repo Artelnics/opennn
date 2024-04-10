@@ -36,11 +36,7 @@ struct EmbeddingLayerBackPropagation;
 struct EmbeddingLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-<<<<<<< HEAD
-    //#include "../../opennn_cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
-=======
     //#include "../../opennn_cuda/opennn_cuda/struct_embedding_layer_cuda.h"
->>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 #endif
 
 

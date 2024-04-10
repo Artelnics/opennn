@@ -410,12 +410,8 @@ protected:
 
 
 #ifdef OPENNN_CUDA
-<<<<<<< HEAD
 #include "../../opennn_cuda/opennn_cuda/layer_forward_propagation_cuda.h"
 #include "../../opennn_cuda/opennn_cuda/layer_back_propagation_cuda.h"
-=======
-    #include "../../opennn_cuda/opennn_cuda/struct_layer_cuda.h"
->>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 #endif
 
 

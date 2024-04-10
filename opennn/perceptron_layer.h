@@ -325,15 +325,10 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
 
 #ifdef OPENNN_CUDA
-<<<<<<< HEAD
     #include "../../opennn_cuda/opennn_cuda/perceptron_layer_forward_propagation_cuda.h"
     #include "../../opennn_cuda/opennn_cuda/perceptron_layer_back_propagation_cuda.h"
 #endif
-=======
-    #include "../../opennn_cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
-#endif
 
->>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 
 }
 

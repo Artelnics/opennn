@@ -77,15 +77,9 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
-<<<<<<< HEAD
 //#ifdef OPENNN_CUDA
     //#include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
 //#endif
-=======
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
-#endif
->>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 
 };
 
