@@ -211,7 +211,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 5> image_patches;
 
-    Tensor<Index, 1> inputs_max_indices;
+    Tensor<Index, 4> inputs_max_indices;
 };
 
 

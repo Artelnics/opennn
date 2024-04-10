@@ -1874,7 +1874,7 @@ cout << "After back propagation" << endl;
         DataSet data_set(images_number,1,1);
 
         data_set.set_data(data); // 2d data
-//        data_set.set_data_random();
+        data_set.set_data_random();
 
         cout << "Data: " << endl << data_set.get_data() << endl;
 
@@ -1947,6 +1947,7 @@ cout << "After back propagation" << endl;
         pooling_layer_pools_dimensions[1] = 2;
 
         PoolingLayer* pooling_layer = new PoolingLayer(pooling_layer_inputs_dimensions, pooling_layer_pools_dimensions);
+        pooling_layer->set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
 
         Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
         flatten_layer_inputs_dimensions(0) = input_rows_number-kernels_rows_number+1;
@@ -1973,7 +1974,6 @@ cout << "After back propagation" << endl;
 cout << "Before forward propagation" << endl;
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
-        forward_propagation.print();
 cout << "After forward propagation" << endl;
 
 /*
