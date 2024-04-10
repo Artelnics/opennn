@@ -410,7 +410,7 @@ protected:
 
 
 #ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/struct_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/struct_layer_cuda.h"
 #endif
 
 
