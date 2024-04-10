@@ -118,7 +118,11 @@ private:
    type normalization_coefficient;
 
 #ifdef OPENNN_CUDA
+<<<<<<< HEAD
     //#include "../../opennn_cuda/opennn_cuda/weighted_squared_error_cuda.h"
+=======
+    #include "../../opennn_cuda/opennn_cuda/weighted_squared_error_cuda.h"
+>>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 #endif
 
 };

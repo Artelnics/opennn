@@ -68,7 +68,11 @@ protected:
 //   type epsilon = type(1.e-8);
 
 #ifdef OPENNN_CUDA
+<<<<<<< HEAD
    //#include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
+=======
+//    #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_3d_cuda.h"
+>>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 #endif
 
 };

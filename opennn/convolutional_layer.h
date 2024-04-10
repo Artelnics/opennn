@@ -243,8 +243,13 @@ protected:
    Tensor<type, 1> offsets;
 
 #ifdef OPENNN_CUDA
+<<<<<<< HEAD
     #include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
     #include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+=======
+    //#include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
+    //p#include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+>>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 #endif
 
 };
@@ -304,7 +309,11 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
 
 #ifdef OPENNN_CUDA
+<<<<<<< HEAD
     //#include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+=======
+//#include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+>>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 #endif
 
 

@@ -311,12 +311,21 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
     Tensor<type, 2> targets;
 };
 
+<<<<<<< HEAD
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_forward_propagation_cuda.h"
     #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_back_propagation_cuda.h"
 #endif
 
+=======
+#ifdef OPENNN_CUDA
+#include "../../opennn_cuda/opennn_cuda/struct_probabilistic_layer_cuda.h"
+#endif
+
+
+
+>>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 }
 
 #endif

@@ -32,9 +32,12 @@ using namespace std::chrono;
 //using namespace Eigen;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> 93f1de3fc586058fac06a75a6282c50519d90235
+=======
+>>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 int main()
 {
    try
@@ -97,6 +100,7 @@ int main()
 
         //transformer.calculate_outputs();
         */
+<<<<<<< HEAD
 
         const Index samples_number = 1000000;
         const Index inputs_number = 1000;
@@ -111,6 +115,8 @@ int main()
 
 
 
+=======
+>>>>>>> 9aaea002d10155013a639c82f43f18234f5caf7a
 
         cout << "Bye!" << endl;
 
