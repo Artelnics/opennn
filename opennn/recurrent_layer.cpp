@@ -886,14 +886,14 @@ void RecurrentLayer::calculate_error_gradient(const Tensor<pair<type*, dimension
 
             // Combinations weights derivatives
 
-            multiply_rows(combinations_input_weights_derivatives, current_activations_derivatives);
+            multiply_matrices(thread_pool_device, combinations_input_weights_derivatives, current_activations_derivatives);
 
             combinations_input_weights_derivatives.device(*thread_pool_device) =
                 combinations_input_weights_derivatives.contract(recurrent_weights, combinations_weights_indices);
 
             // Combinations recurrent weights derivatives
 
-            multiply_rows(combinations_recurrent_weights_derivatives, current_activations_derivatives);
+            multiply_matrices(thread_pool_device, combinations_recurrent_weights_derivatives, current_activations_derivatives);
 
             combinations_recurrent_weights_derivatives.device(*thread_pool_device) =
                 combinations_recurrent_weights_derivatives.contract(recurrent_weights, combinations_weights_indices);
