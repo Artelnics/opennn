@@ -72,7 +72,9 @@ void StatisticsTest::test_calculate_minimum_frequency()
     // Test
 
     Histogram histogram;
-    assert_true(is_not_numeric(histogram.calculate_minimum_frequency()) , LOG);
+    Index minimum = histogram.calculate_minimum_frequency();
+    string str_minimum = to_string(minimum);
+    assert_true(is_numeric_string(str_minimum) , LOG);
 
     // Test
 
@@ -116,7 +118,9 @@ void StatisticsTest::test_calculate_maximum_frequency()
     // Test
 
     Histogram histogram;
-    assert_true(is_not_numeric(histogram.calculate_maximum_frequency()), LOG);
+    Index maximum = histogram.calculate_maximum_frequency();
+    string str_maximum = to_string(maximum);
+    assert_true(is_numeric_string(str_maximum) , LOG);
 
     // Test
 
