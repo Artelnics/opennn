@@ -1,5 +1,5 @@
-#ifndef COLUMN_H
-#define COLUMN_H
+#ifndef STOCHASTICGRADIENTDESCENT_H
+#define STOCHASTICGRADIENTDESCENT_H
 
 #include <string>
 

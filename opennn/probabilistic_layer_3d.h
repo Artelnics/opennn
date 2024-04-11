@@ -33,8 +33,8 @@ struct ProbabilisticLayer3DForwardPropagation;
 struct ProbabilisticLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
-//struct ProbabilisticLayer3DForwardPropagationCuda;
-//struct ProbabilisticLayer3DBackPropagationCuda;
+struct ProbabilisticLayer3DForwardPropagationCuda;
+struct ProbabilisticLayer3DBackPropagationCuda;
 #endif
 
 
@@ -169,6 +169,9 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+       #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_cuda.h"
+    #endif
 
 protected:
 
@@ -194,10 +197,6 @@ protected:
    bool display = true;
 
    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
-
-#ifdef OPENNN_CUDA
-    //#include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
-#endif
 
 };
 
@@ -284,7 +283,8 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 };
 
 #ifdef OPENNN_CUDA
-//#include "../../opennn_cuda/opennn_cuda/struct_probabilistic_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_back_propagation_cuda.h"
 #endif
 
 }

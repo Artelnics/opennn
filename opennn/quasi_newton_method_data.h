@@ -1,5 +1,5 @@
-#ifndef COLUMN_H
-#define COLUMN_H
+#ifndef QUASINEWTONMETHODDATA_H
+#define QUASINEWTONMETHODDATA_H
 
 #include <string>
 

@@ -1,5 +1,5 @@
-#ifndef COLUMN_H
-#define COLUMN_H
+#ifndef RECURRENTLAYERBACKPROPAGATION_H
+#define RECURRENTLAYERBACKPROPAGATION_H
 
 #include <string>
 

@@ -32,7 +32,8 @@ namespace opennn
     struct NormalizationLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/struct_addition_layer_3d_cuda.h"
+    struct AdditionLayer3DForwardPropagationCuda;
+    struct AdditionLayer3DBackPropagationCuda;
 #endif
 
     // @todo explain
@@ -118,6 +119,10 @@ namespace opennn
         void from_XML(const tinyxml2::XMLDocument&) final;
         void write_XML(tinyxml2::XMLPrinter&) const final;
 
+        #ifdef OPENNN_CUDA
+            #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_cuda.h"
+        #endif
+
     protected:
 
         // MEMBERS
@@ -134,11 +139,8 @@ namespace opennn
 
         bool display = true;
 
-#ifdef OPENNN_CUDA
-        //    #include "../../opennn-cuda/opennn-cuda/addition_layer_3d_cuda.h"
-#endif
-
     };
+
 
     struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
     {
@@ -213,6 +215,13 @@ namespace opennn
 
         Tensor<type, 3> deltas;
     };
+
+
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_forward_propagation_cuda.h"
+        #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_back_propagation_cuda.h"
+    #endif
+
 
 }
 
