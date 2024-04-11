@@ -770,7 +770,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             }
         }
         
-        //layer->calculate_error_gradient(layer_inputs, layer_forward_propagation, layer_back_propagation);
+        layer->calculate_error_gradient(layer_inputs, layer_forward_propagation, layer_back_propagation);
     }
 }
 

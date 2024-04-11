@@ -8839,12 +8839,11 @@ void DataSet::generate_sequential_data(const Index& samples_number, const Index&
 
 void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index& variables_number)
 {
-    cout << "Generating Rosenbrock Data..." << endl;
     const Index inputs_number = variables_number-1;
 
     set(samples_number, variables_number);
 
-    //data.setZero();
+    data.setRandom();
 
 #pragma omp parallel for
 
@@ -8854,8 +8853,6 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
-            data(i,j) = arc4random_uniform(2);
-
             const type value = data(i,j);
             const type next_value = data(i,j+1);
 
@@ -8865,7 +8862,6 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
         data(i, inputs_number) = rosenbrock;
     }
 
-    cout << "Done." << endl;
     set_default_raw_variables_uses();
 
 }
@@ -8881,6 +8877,10 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
 
     set(samples_number, variables_number + classes_number);
 
+    data.setRandom();
+    /*
+    data.setConstant(0.0);
+
 #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
@@ -8889,15 +8889,16 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
         {
             data(i, j) = arc4random();
         }
-        for(Index j = variables_number; j< classes_number; j++)
-        {
-            data(i, j) = 0;
-        }
+    }
 
+#pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
         const Index random_class = arc4random() % classes_number;
         data(i, variables_number + random_class) = 1;
     }
-
+*/
     cout << "Done." << endl;
 }
 

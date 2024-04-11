@@ -37,7 +37,7 @@ int main()
         const Index hidden_neurons_number = 1000;
         
         DataSet data_set;// ("C:/R_100000_samples_11_variables.csv", ',', true);
-
+        /*
         data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
 
         data_set.set_training();
@@ -62,13 +62,13 @@ int main()
         //training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         //training_strategy.get_loss_index()->set_regularization_weight(0.01);
 
-        training_strategy.set_maximum_epochs_number(10);
+        training_strategy.set_maximum_epochs_number(10000);
         training_strategy.set_display_period(1);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
         training_strategy.set_maximum_time(86400);
 
         training_strategy.perform_training();
-
+        */
         cout << "End Rosenbrock" << endl;
 
         return 0;

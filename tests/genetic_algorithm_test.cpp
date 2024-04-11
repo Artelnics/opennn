@@ -314,7 +314,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     genetic_algorithm.perform_selection();
 
-    //genetic_algorithm.perform_crossover();
+    genetic_algorithm.perform_crossover();
 
     crossover_population = genetic_algorithm.get_population();
 
@@ -354,7 +354,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     genetic_algorithm.set_mutation_rate(type(0));
 
-    //genetic_algorithm.perform_mutation();
+    genetic_algorithm.perform_mutation();
 
     mutated_population = genetic_algorithm.get_population();
 
@@ -372,7 +372,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
     genetic_algorithm.set_mutation_rate(type(0.5));
 
 
-    //genetic_algorithm.perform_mutation();
+    genetic_algorithm.perform_mutation();
 
     mutated_population = genetic_algorithm.get_population();
 
@@ -424,10 +424,10 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     genetic_algorithm.set_selection_error_goal(1);
 
-    /*inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
     assert_true(inputs_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal, LOG);
-    assert_true(inputs_selection_results.selection_error_history(0) <= 1, LOG);*/
+    assert_true(inputs_selection_results.selection_error_history(0) <= 1, LOG);
 
 
     // Test 2
@@ -485,9 +485,9 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     genetic_algorithm.set_selection_error_goal(type(0.01));
     genetic_algorithm.set_maximum_epochs_number(10);
 
-    /*inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    assert_true(inputs_selection_results.get_epochs_number() <= 100, LOG);*/
+    assert_true(inputs_selection_results.get_epochs_number() <= 100, LOG);
 
 }
 
