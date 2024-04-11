@@ -673,11 +673,12 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
                                        const bool& is_training)
 {
     const Index samples_number = inputs_pair(0).second[0];
+    const Index inputs_number = inputs_pair(0).second[1];
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
         = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_number);
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -686,6 +687,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
 
     Tensor<type, 2, RowMajor>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
+
     Tensor<type, 1>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
 
 
