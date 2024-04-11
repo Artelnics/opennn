@@ -8854,7 +8854,7 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
-            data(i,j) = arc4random_uniform(2);
+            data(i,j) = rand();
 
             const type value = data(i,j);
             const type next_value = data(i,j+1);
@@ -8887,14 +8887,14 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
     {
         for(Index j = 0; j < variables_number; j++)
         {
-            data(i, j) = arc4random();
+            data(i, j) = rand();
         }
         for(Index j = variables_number; j< classes_number; j++)
         {
             data(i, j) = 0;
         }
 
-        const Index random_class = arc4random() % classes_number;
+        const Index random_class = rand() % classes_number;
         data(i, variables_number + random_class) = 1;
     }
 
