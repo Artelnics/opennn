@@ -49,6 +49,8 @@ public:
 
     enum class Type{Scaling2D,
                     Scaling4D,
+                    Addition3D,
+                    Normalization3D,
                     Convolutional,
                     Perceptron,
                     Perceptron3D,

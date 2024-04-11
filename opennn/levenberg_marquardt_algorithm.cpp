@@ -433,10 +433,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     }
 
     Batch training_batch(training_samples_number, data_set);
-    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, 0);
+    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     Batch selection_batch(selection_samples_number, data_set);
-    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices, 0);
+    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);

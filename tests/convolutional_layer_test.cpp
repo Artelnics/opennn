@@ -921,14 +921,14 @@ void ConvolutionalLayerTest::test_insert_padding()
     convolutional_layer.set_convolution_type(opennn::ConvolutionalLayer::ConvolutionType::Same);
     convolutional_layer.set(inputs_dimensions, kernels_dimensions);
 
-    /*//convolutional_layer.insert_padding(inputs, padded);
+    convolutional_layer.insert_padding(inputs, padded);
 
     assert_true(padded.dimension(0) == 6 &&
                 padded.dimension(1) == 6,LOG);
 
     assert_true((padded(0, 0, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
                 (padded(0, 1, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
-                (padded(0, 2, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);*/
+                (padded(0, 2, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1024,7 +1024,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
     input.chip(2,2).setConstant(3.);
 
     kernel.setConstant(type(1./12.));
-    //kernel.chip(1,3).setConstant(type(1./6.));
+    kernel.chip(1,3).setConstant(type(1./6.));
 
     time_t beginning_time;
     time_t current_time = 0;

@@ -90,23 +90,17 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
-void multiply_rows(Tensor<type, 3>& tensor, const Tensor<type, 1>& vector)
+void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 1>& vector)
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
     const Index channels_number = tensor.dimension(2);
 
-#pragma omp parallel for
-
-    for (Index i = 0; i < rows_number; i++)
+    for (Index i = 0; i < channels_number; i++)
     {
-        for (Index j = 0; j < columns_number; j++)
-        {
-            for (Index k = 0; k < channels_number; k++)
-            {
-                tensor(i, j, k) *= vector(k);
-            }
-        }
+        TensorMap<Tensor<type, 2>> matrix(tensor.data() + i * rows_number * columns_number, rows_number, columns_number);
+
+        matrix.device(*thread_pool_device) = matrix * vector(i);
     }
 }
 
@@ -517,6 +511,36 @@ void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& v
         TensorMap<Tensor<type,2>> matrix(tensor_data + i*rows_number* columns_number, rows_number, columns_number);
 
         matrix.device(*thread_pool_device) = matrix + vector(i);
+    }
+}
+
+
+void sum_matrices(ThreadPoolDevice* thread_pool_device, const TensorMap<Tensor<type, 1>>& vector, Tensor<type, 3>& tensor)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index raw_variables_number = tensor.dimension(1);
+    const Index channels_number = tensor.dimension(2);
+
+    for(Index i = 0; i < channels_number; i++)
+    {
+        TensorMap<Tensor<type,2>> matrix(tensor.data() + i*rows_number*raw_variables_number, rows_number, raw_variables_number);
+
+        matrix.device(*thread_pool_device) = matrix + vector(i);
+    }
+}
+
+
+void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index raw_variables_number = tensor.dimension(1);
+    const Index channels_number = tensor.dimension(2);
+
+    for(Index i = 0; i < channels_number; i++)
+    {
+        TensorMap<Tensor<type,2>> submatrix(tensor.data() + i*rows_number*raw_variables_number, rows_number, raw_variables_number);
+
+        submatrix.device(*thread_pool_device) += matrix;
     }
 }
 

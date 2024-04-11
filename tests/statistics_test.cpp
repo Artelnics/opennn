@@ -72,11 +72,7 @@ void StatisticsTest::test_calculate_minimum_frequency()
     // Test
 
     Histogram histogram;
-
-    Index minimum_frequency = histogram.calculate_minimum_frequency();
-    string str_minimum_frequency = to_string(minimum_frequency);
-
-    assert_true(is_numeric_string(str_minimum_frequency), LOG);
+    assert_true(is_not_numeric(histogram.calculate_minimum_frequency()) , LOG);
 
     // Test
 
@@ -120,11 +116,7 @@ void StatisticsTest::test_calculate_maximum_frequency()
     // Test
 
     Histogram histogram;
-
-    Index maximum_frequency = histogram.calculate_maximum_frequency();
-    string str_maximum_frequency = to_string(maximum_frequency);
-
-    assert_true(is_numeric_string(str_maximum_frequency), LOG);
+    assert_true(is_not_numeric(histogram.calculate_maximum_frequency()), LOG);
 
     // Test
 
@@ -568,7 +560,7 @@ void StatisticsTest::test_median()
     vector.resize(2);
     vector.setZero();
 
-    //assert_true(median(vector) == 0, LOG);
+    assert_true(median(vector) == 0, LOG);
 
     // Test
 
@@ -693,6 +685,7 @@ void StatisticsTest::test_asymmetry()
     vector.resize(3);
     vector.setZero();
 
+    cout << asymmetry(vector) << endl;
     assert_true(asymmetry(vector) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test

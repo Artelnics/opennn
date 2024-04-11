@@ -93,12 +93,12 @@ void RecurrentLayerTest::test_forward_propagate()
     pair<type*, dimensions> inputs_pair;
 
     recurrent_layer.set(inputs_number, neurons_number);
-    recurrent_layer.set_parameters_constant(type(1));
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 
     Tensor<type, 2> inputs(samples_number, inputs_number);
 
+    recurrent_layer.set_parameters_constant(type(1));
     inputs.setConstant(type(1));
 
     recurrent_layer_forward_propagation.set(samples_number, &recurrent_layer);

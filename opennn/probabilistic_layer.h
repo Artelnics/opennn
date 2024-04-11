@@ -144,6 +144,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
     #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_back_propagation_cuda.h"
 #endif
 
+
 class ProbabilisticLayer : public Layer
 {
 
@@ -317,6 +318,7 @@ protected:
 
 
 };
+
 
 }
 
