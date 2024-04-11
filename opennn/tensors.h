@@ -1,6 +1,6 @@
 
-#ifndef TENSORUTILITIES_H
-#define TENSORUTILITIES_H
+#ifndef TENSORS_H
+#define TENSORS_H
 
 // System includes
 

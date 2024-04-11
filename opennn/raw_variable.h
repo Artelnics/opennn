@@ -1,5 +1,5 @@
-#ifndef COLUMN_H
-#define COLUMN_H
+#ifndef RAWVARIABLE_H
+#define RAWVARIABLE_H
 
 #include <string>
 //#include "dynamic_tensor.h"

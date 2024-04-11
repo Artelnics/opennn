@@ -33,7 +33,7 @@ NormalizationLayer3D::NormalizationLayer3D() : Layer()
 /// @param new_neurons_number Number of perceptrons in the layer.
 
 NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
-                                            const Index& new_inputs_size) : Layer()
+                                           const Index& new_inputs_size) : Layer()
 {
     set(new_inputs_number, new_inputs_size);
 
