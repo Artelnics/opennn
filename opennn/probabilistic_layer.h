@@ -289,6 +289,10 @@ public:
 
     void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
+    #endif
+
 
 protected:
 
@@ -310,11 +314,6 @@ protected:
     /// Display messages to screen.
 
     bool display = true;
-
-
-#ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
-#endif
 
 
 };
