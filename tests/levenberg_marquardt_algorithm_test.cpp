@@ -88,7 +88,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
     levenberg_marquardt_algorithm.set_display(false);
-    //training_results = levenberg_marquardt_algorithm.perform_training();
+    training_results = levenberg_marquardt_algorithm.perform_training();
 
     assert_true(training_results.get_epochs_number() <= 1, LOG);
 
