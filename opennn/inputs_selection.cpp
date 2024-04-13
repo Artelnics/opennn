@@ -473,8 +473,8 @@ string InputsSelection::write_time(const type& time) const
     }
 #endif
 
-    int hours = static_cast<int>(time) / 3600;
-    int seconds = static_cast<int>(time) % 3600;
+    int hours = int(time) / 3600;
+    int seconds = int(time) % 3600;
     int minutes = seconds / 60;
     seconds = seconds % 60;
 

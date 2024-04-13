@@ -23,6 +23,7 @@
 #include "probabilistic_layer_3d.h"
 #include "multihead_attention_layer.h"
 
+
 namespace opennn
 {
 
@@ -30,7 +31,8 @@ struct PerceptronLayer3DForwardPropagation;
 struct PerceptronLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn_cuda/opennn_cuda/struct_perceptron_layer_3d_cuda.h"
+struct PerceptronLayer3DForwardPropagationCuda;
+struct PerceptronLayer3DBackPropagationCuda;
 #endif
 
 
@@ -40,6 +42,7 @@ struct PerceptronLayer3DBackPropagation;
 /// This network is often trained with the perceptron learning rule.
 ///
 /// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
+
 
 class PerceptronLayer3D : public Layer
 {
@@ -199,6 +202,10 @@ public:
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_cuda.h"
+    #endif
+
 protected:
 
    // MEMBERS
@@ -224,11 +231,9 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA
-//    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
-#endif
 
 };
+
 
 struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 {
@@ -319,6 +324,13 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
     Tensor<type, 3> error_combinations_derivatives;
 };
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_back_propagation_cuda.h"
+#endif
+
 
 }
 

@@ -49,6 +49,8 @@ public:
 
     enum class Type{Scaling2D,
                     Scaling4D,
+                    Addition3D,
+                    Normalization3D,
                     Convolutional,
                     Perceptron,
                     Perceptron3D,
@@ -410,7 +412,8 @@ protected:
 
 
 #ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/struct_layer_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/layer_forward_propagation_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/layer_back_propagation_cuda.h"
 #endif
 
 
