@@ -221,8 +221,6 @@ namespace opennn
         #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_forward_propagation_cuda.h"
         #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_back_propagation_cuda.h"
     #endif
-
-
 }
 
 #endif

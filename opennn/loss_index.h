@@ -250,6 +250,7 @@ public:
    void check() const;
 
     #ifdef OPENNN_CUDA
+        #include "../opennn_cuda/neural_network_cuda.h"
         #include "../../opennn_cuda/opennn_cuda/loss_index_cuda.h"
     #endif
 

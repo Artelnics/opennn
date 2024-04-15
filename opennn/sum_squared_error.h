@@ -28,11 +28,9 @@
 namespace opennn
 {
 
-/// This class represents the sum squared peformance term functional. 
-
+/// This class represents the sum squared error functional. 
 ///
-/// This is used as the error term in data modeling problems, such as function regression, 
-/// classification or time series prediction.
+/// This is used as the error term in data modeling problems, such as function regression, classification or time series prediction.
 
 class SumSquaredError : public LossIndex
 {

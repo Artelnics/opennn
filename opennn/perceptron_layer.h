@@ -26,13 +26,11 @@
 #include "layer_back_propagation_lm.h"
 #include "probabilistic_layer.h"
 
-
 namespace opennn
 {
 
 struct LayerForwardPropagation;
 struct LayerBackPropagation;
-
 
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
@@ -41,7 +39,6 @@ struct PerceptronLayerBackPropagationLM;
 struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
-
 
 #ifdef OPENNN_CUDA
    struct PerceptronLayerForwardPropagationCuda;

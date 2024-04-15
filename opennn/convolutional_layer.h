@@ -211,10 +211,6 @@ public:
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
-    #endif
-
 protected:
 
    /// This tensor containing conection strengths from a layer's inputs to its neurons.
@@ -252,7 +248,9 @@ protected:
    Tensor<type, 1> scales;
    Tensor<type, 1> offsets;
 
-
+#ifdef OPENNN_CUDA
+#include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
+#endif
 
 };
 

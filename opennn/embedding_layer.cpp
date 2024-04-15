@@ -333,6 +333,7 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     }
 }
 
+
 void EmbeddingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                             LayerBackPropagation* next_back_propagation, 
                                             LayerForwardPropagation*,
