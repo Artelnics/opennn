@@ -578,11 +578,11 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     {
         if (neurons_number == 1)
         {
-            Tensor<type, 2>& activations_derivatives_2d = probabilistic_layer_forward_propagation->activations_derivatives_2d;
+            Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
             calculate_activations_derivatives(outputs,
                                               outputs,
-                                              activations_derivatives_2d);
+                                              activations_derivatives);
         }
         else
         {
@@ -634,9 +634,9 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<pair<type*, dimen
 
     if (neurons_number == 1)
     {
-        const Tensor<type, 2>& activations_derivatives_2d = probabilistic_layer_forward_propagation->activations_derivatives_2d;
+        const Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
-        calculate_error_combinations_derivatives(deltas, activations_derivatives_2d, error_combinations_derivatives);
+        calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
     }
     else
     {
@@ -680,10 +680,10 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
 
 void ProbabilisticLayer::calculate_error_combinations_derivatives(const Tensor<type, 2>& deltas,
-                                                                  const Tensor<type, 2>& activations_derivatives_2d,
+                                                                  const Tensor<type, 2>& activations_derivatives,
                                                                   Tensor<type, 2>& error_combinations_derivatives) const
 {
-    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives_2d;
+    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
 }
 
 
@@ -705,7 +705,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
-    const Tensor<type, 2>& activations_derivatives_2d = probabilistic_layer_forward_propagation->activations_derivatives_2d;
+    const Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
@@ -722,7 +722,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     if (neurons_number == 1)
     {
-        calculate_error_combinations_derivatives(deltas, activations_derivatives_2d, error_combinations_derivatives);
+        calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
     }
     else
     {
@@ -1208,11 +1208,11 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
 
     outputs_data = outputs.data();
 
-    activations_derivatives_2d.resize(0, 0);
+    activations_derivatives.resize(0, 0);
 
     if (neurons_number == 1)
     {
-        activations_derivatives_2d.resize(batch_samples_number, neurons_number);
+        activations_derivatives.resize(batch_samples_number, neurons_number);
     }
     else
     {
@@ -1233,7 +1233,7 @@ void ProbabilisticLayerForwardPropagation::print() const
     if (neurons_number == 1)
     {
         cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives_2d << endl;
+        cout << activations_derivatives << endl;
     }
 }
 
