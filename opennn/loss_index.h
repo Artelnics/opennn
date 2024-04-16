@@ -299,7 +299,7 @@ protected:
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/struct_loss_index_back_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/loss_index_back_propagation_cuda.h"
 #endif
 
 struct BackPropagationLM
