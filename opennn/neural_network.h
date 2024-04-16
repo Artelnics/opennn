@@ -28,6 +28,8 @@
 #include "perceptron_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
+#include "addition_layer_3d.h"
+#include "normalization_layer_3d.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"

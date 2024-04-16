@@ -5056,6 +5056,18 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         }
         break;
 
+        case Layer::Type::Addition3D:
+        {
+            layers(i) = new AdditionLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Normalization3D:
+        {
+            layers(i) = new NormalizationLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
         default: break;
         }
     }
@@ -5167,6 +5179,20 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
         case Layer::Type::MultiheadAttention:
         {
             layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
+
+        }
+        break;
+
+        case Layer::Type::Addition3D:
+        {
+            layers(i) = new AdditionLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
+
+        }
+        break;
+
+        case Layer::Type::Normalization3D:
+        {
+            layers(i) = new NormalizationLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
 
         }
         break;

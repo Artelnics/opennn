@@ -167,6 +167,8 @@ void NormalizationLayer3D::set_default()
     display = true;
 
     layer_type = Type::Normalization3D;
+
+    set_parameters_random();
 }
 
 
@@ -283,10 +285,10 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
     const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 } };
     const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth } };
     
-    means.device(*thread_pool_device) = inputs.mean(normalization_axis).eval()
+    means.device(*thread_pool_device) = inputs.mean(normalization_axis)
                                        .reshape(range_3).broadcast(expand_normalization_axis);
 
-    variances.device(*thread_pool_device) = (inputs - means).pow(2).mean(normalization_axis).eval()
+    variances.device(*thread_pool_device) = (inputs - means).pow(2).mean(normalization_axis)
                                            .reshape(range_3).broadcast(expand_normalization_axis);
 
     normalized_inputs.device(*thread_pool_device) = (inputs - means) / (variances + epsilon).sqrt();
@@ -299,59 +301,13 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 }
 
 
-void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                             Tensor<type, 1>& potential_parameters,
-                                             LayerForwardPropagation* layer_forward_propagation)
-{
-    Index samples_number = inputs_pair(0).second[0];
-    Index inputs_number = inputs_pair(0).second[1];
-    Index inputs_depth = inputs_pair(0).second[2];
-
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, samples_number, inputs_number, inputs_depth);
-
-    const TensorMap<Tensor<type, 1>> potential_gammas(potential_parameters.data(), inputs_depth);
-
-    const TensorMap<Tensor<type, 1>> potential_betas(potential_parameters.data() + inputs_depth, inputs_depth);
-
-    NormalizationLayer3DForwardPropagation* normalization_layer_3d_forward_propagation =
-        static_cast<NormalizationLayer3DForwardPropagation*>(layer_forward_propagation);
-
-    Tensor<type, 3>& normalized_inputs = normalization_layer_3d_forward_propagation->normalized_inputs;
-    Tensor<type, 3>& outputs = normalization_layer_3d_forward_propagation->outputs;
-
-    Tensor<type, 3>& means = normalization_layer_3d_forward_propagation->means;
-    Tensor<type, 3>& variances = normalization_layer_3d_forward_propagation->variances;
-    type& epsilon = normalization_layer_3d_forward_propagation->epsilon;
-
-    const Eigen::array<Index, 1> normalization_axis{ { 2 } };
-    const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 } };
-    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth } };
-
-    means.device(*thread_pool_device) = inputs.mean(normalization_axis).eval()
-                                       .reshape(range_3).broadcast(expand_normalization_axis);
-
-    variances.device(*thread_pool_device) = (inputs - means).pow(2).mean(normalization_axis).eval()
-                                           .reshape(range_3).broadcast(expand_normalization_axis);
-
-    normalized_inputs.device(*thread_pool_device) = (inputs - means) / (variances + epsilon).sqrt();
-
-    outputs.device(*thread_pool_device) = normalized_inputs;
-
-    multiply_matrices(thread_pool_device, outputs, potential_gammas);
-
-    sum_matrices(thread_pool_device, potential_betas, outputs);
-}
-
-
 void NormalizationLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                     const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                     LayerForwardPropagation* forward_propagation,
                                                     LayerBackPropagation* back_propagation) const
 {
-    Index batch_samples_number = inputs_pair(0).second[0];
-
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first,
-                                            batch_samples_number,
+                                            inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2]);
 
@@ -359,9 +315,11 @@ void NormalizationLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
         add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
-                                            batch_samples_number,
+                                            deltas_pair(0).second[0],
                                             deltas_pair(0).second[1],
                                             deltas_pair(0).second[2]);
+
+    cout << "Deltas: " << endl << deltas << endl;
 
     // Forward propagation
 
@@ -388,21 +346,21 @@ void NormalizationLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
     Tensor<type, 2>& normalization_derivatives = normalization_layer_3d_back_propagation->normalization_derivatives;
 
     Tensor<type, 3>& input_derivatives = normalization_layer_3d_back_propagation->input_derivatives;
-
+    /*
     gammas_derivatives.device(*thread_pool_device) = (normalized_inputs * deltas).sum(Eigen::array<Index, 2>({ 0, 1 }));
-
+    
     betas_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 2>({ 0, 1 }));
-
+    
     scaled_deltas.device(*thread_pool_device) = deltas;
 
     multiply_matrices(thread_pool_device, scaled_deltas, gammas);
-
+    
     input_derivatives.device(*thread_pool_device) = scaled_deltas * ( (variances + epsilon).sqrt().inverse() + (inputs - means).pow(2) / (variances + epsilon).pow(3/2) );
 
     normalization_derivatives.device(*thread_pool_device) = 1 / type(inputs_depth)
                                                           * (scaled_deltas * (inputs - means) / (variances + epsilon).pow(3/2)).sum(Eigen::array<Index, 1>({ 2 }));
 
-    sum_matrices(thread_pool_device, normalization_derivatives, input_derivatives);
+    sum_matrices(thread_pool_device, normalization_derivatives, input_derivatives);*/
 }
 
 
