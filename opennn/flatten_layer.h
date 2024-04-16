@@ -146,7 +146,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    pair<type*, dimensions> get_outputs_pair() const final;
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+   void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
    void print() const

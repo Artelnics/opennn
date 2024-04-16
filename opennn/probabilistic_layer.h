@@ -35,6 +35,10 @@ struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
+struct PerceptronLayerForwardPropagation;
+struct PerceptronLayerBackPropagation;
+struct PerceptronLayerBackPropagationLM;
+
 #ifdef OPENNN_CUDA
     struct ProbabilisticLayerForwardPropagationCuda;
     struct ProbabilisticLayerBackPropagationCuda;
@@ -62,7 +66,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     void print() const;
 
     Tensor<type, 2> outputs;
-    Tensor<type, 2> activations_derivatives_2d;
+    Tensor<type, 2> activations_derivatives;
 
     Tensor<type, 1> aux_rows;
 };

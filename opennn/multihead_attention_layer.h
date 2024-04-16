@@ -35,6 +35,11 @@ struct MultiheadAttentionLayerBackPropagationLM;
 struct PerceptronLayer3DForwardPropagation;
 struct PerceptronLayer3DBackPropagation;
 
+#ifdef OPENNN_CUDA
+    struct MultiheadAttentionLayerForwardPropagationCuda;
+    struct MultiheadAttentionLayerBackPropagationCuda;
+#endif
+
 
 /// This class represents a layer of Multihead Attention.
 
@@ -165,6 +170,10 @@ public:
 
     //void from_XML(const tinyxml2::XMLDocument&) final;
     //void write_XML(tinyxml2::XMLPrinter&) const final;
+
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
+    #endif
 
 protected:
 
@@ -347,6 +356,11 @@ protected:
 
         Tensor<type, 1> aux_rows;
     };
+
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_forward_propagation_cuda.h"
+        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_back_propagation_cuda.h"
+    #endif
 
 }
 

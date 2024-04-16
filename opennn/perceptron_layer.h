@@ -26,13 +26,11 @@
 #include "layer_back_propagation_lm.h"
 #include "probabilistic_layer.h"
 
-
 namespace opennn
 {
 
 struct LayerForwardPropagation;
 struct LayerBackPropagation;
-
 
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
@@ -41,7 +39,6 @@ struct PerceptronLayerBackPropagationLM;
 struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
-
 
 #ifdef OPENNN_CUDA
    struct PerceptronLayerForwardPropagationCuda;
@@ -55,6 +52,7 @@ struct ProbabilisticLayerBackPropagationLM;
 /// This network is often trained with the perceptron learning rule.
 ///
 /// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
+
 
 class PerceptronLayer : public Layer
 {

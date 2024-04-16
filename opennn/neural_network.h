@@ -41,6 +41,7 @@
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 
+
 namespace opennn
 {
 
@@ -144,8 +145,6 @@ public:
    Layer* get_last_trainable_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
 
-   Index get_batch_samples_number() const;
-
    const bool& get_display() const;
 
    // Set methods
@@ -178,9 +177,6 @@ public:
    virtual void set_default();
 
    void set_threads_number(const int&);
-
-   void set_scaling_layer_2d(ScalingLayer2D&);
-   void set_scaling_layer_4d(ScalingLayer4D&);
 
    void set_display(const bool&);
 
@@ -289,10 +285,9 @@ public:
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
-    #endif
-
+#ifdef OPENNN_CUDA
+#include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
+#endif
 
 protected:
 
@@ -314,14 +309,12 @@ protected:
 
    Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
 
-
    ThreadPool* thread_pool;
    ThreadPoolDevice* thread_pool_device;
 
    /// Display messages to screen.
 
    bool display = true;
-
 
 };
 
