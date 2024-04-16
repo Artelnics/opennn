@@ -258,8 +258,10 @@ void PerceptronLayer3D::set()
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of perceptron neurons.
 
-void PerceptronLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number,
-                          const PerceptronLayer3D::ActivationFunction& new_activation_function)
+void PerceptronLayer3D::set(const Index& new_inputs_number, 
+                            const Index& new_inputs_depth, 
+                            const Index& new_neurons_number,
+                            const PerceptronLayer3D::ActivationFunction& new_activation_function)
 {
     inputs_number = new_inputs_number;
 
@@ -273,6 +275,7 @@ void PerceptronLayer3D::set(const Index& new_inputs_number, const Index& new_inp
 
     set_default();
 }
+
 
 /// Sets those members not related to the vector of perceptrons to their default value.
 /// <ul>
@@ -521,7 +524,7 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
 
 
 void PerceptronLayer3D::calculate_activations(const Tensor<type, 3>& combinations,
-                                            Tensor<type, 3>& activations) const
+                                              Tensor<type, 3>& activations) const
 {
     switch(activation_function)
     {

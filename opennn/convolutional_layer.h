@@ -33,6 +33,12 @@ namespace opennn
 struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+struct ConvolutionalLayerForwardPropagationCuda;
+struct ConvolutionalLayerBackPropagationCuda;
+#endif
+
+
 class ConvolutionalLayer : public Layer
 {
 
@@ -233,8 +239,7 @@ protected:
    Tensor<type, 1> offsets;
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
-    //#include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
 #endif
 
 };
@@ -290,11 +295,13 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/convolutional_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/convolutional_layer_back_propagation_cuda.h"
 #endif
 
 
 }
+
 #endif
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

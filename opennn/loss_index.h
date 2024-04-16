@@ -34,6 +34,10 @@ namespace opennn
 struct BackPropagation;
 struct BackPropagationLM;
 
+#ifdef OPENNN_CUDA
+struct BackPropagationCuda;
+#endif
+
 /// This abstract class represents the concept of loss index composed of an error term and a regularization term.
 
 ///
@@ -245,6 +249,11 @@ public:
 
    void check() const;
 
+    #ifdef OPENNN_CUDA
+        #include "../opennn_cuda/neural_network_cuda.h"
+        #include "../../opennn_cuda/opennn_cuda/loss_index_cuda.h"
+    #endif
+
 protected:
 
    ThreadPool* thread_pool = nullptr;
@@ -278,10 +287,6 @@ protected:
 
    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/loss_index_cuda.h"
-#endif
-
 };
 
 
@@ -291,6 +296,11 @@ protected:
 /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss,
 /// gradient and <i>Hessian</i> methods separately.
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/struct_loss_index_back_propagation_cuda.h"
+#endif
 
 struct BackPropagationLM
 {

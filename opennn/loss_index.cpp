@@ -958,6 +958,7 @@ BackPropagation::~BackPropagation()
 {
 }
 
+
 void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;

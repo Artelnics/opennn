@@ -45,6 +45,8 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
     set_default();
 }
+
+
 /// Returns the number of neurons the layer applies to an image.
 
 Index PoolingLayer::get_neurons_number() const

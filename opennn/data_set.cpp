@@ -8887,9 +8887,12 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
     {
         for(Index j = 0; j < variables_number; j++)
         {
+
             data(i, j) = rand(); // arc4random();
+
         }
     }
+
 
 #pragma omp parallel for
 

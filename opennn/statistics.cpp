@@ -2518,7 +2518,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 
 type median(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
-    const Index rows_number = matrix.dimension(0);
+    //const Index rows_number = matrix.dimension(0);
 
 #ifdef OPENNN_DEBUG
 
@@ -2551,28 +2551,31 @@ type median(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
     // median
 
     type median = type(0);
-
     Tensor<type, 1> sorted_column;
-
     const Tensor<type, 1> column = matrix.chip(raw_variable_index,1);
+    Index median_index;
+    Index rows_number = 0;
 
     for(Index i = 0; i < column.size(); i++)
     {
         if(!isnan(column(i)))
         {
             push_back_type(sorted_column, column(i));
+            rows_number++;
         }
     }
 
     sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
+    median_index = Index(rows_number/2);
+
     if(rows_number % 2 == 0)
     {
-        median = (sorted_column[sorted_column.size()*2/4] + sorted_column[sorted_column.size()*2/4+1])/ type(2);
+        median = (sorted_column[median_index - 1] + sorted_column[median_index])/ type(2);
     }
     else
     {
-        median = sorted_column[sorted_column.size()*2/4];
+        median = sorted_column[median_index - 1/2];
     }
 
     return median;

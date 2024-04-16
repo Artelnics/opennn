@@ -287,7 +287,6 @@
     <ClCompile Include="loss_index.cpp" />
     <ClInclude Include="back_propagation.h" />
     <ClInclude Include="back_propagation_lm.h" />
-    <ClInclude Include="loss_index_forward_propagation.h" />
     <ClInclude Include="mean_squared_error.h" />
     <ClCompile Include="mean_squared_error.cpp" />
     <ClInclude Include="minkowski_error.h" />

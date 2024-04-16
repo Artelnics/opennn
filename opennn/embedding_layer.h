@@ -36,7 +36,8 @@ struct EmbeddingLayerBackPropagation;
 struct EmbeddingLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn_cuda/opennn_cuda/struct_embedding_layer_cuda.h"
+struct EmbeddingLayerForwardPropagationCuda;
+struct EmbeddingLayerBackPropagationCuda;
 #endif
 
 
@@ -133,6 +134,10 @@ public:
     //    void from_XML(const tinyxml2::XMLDocument&) final;
     //    void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
+    #endif
+
 protected:
 
     // MEMBERS
@@ -163,13 +168,10 @@ protected:
 
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
 
-#ifdef OPENNN_CUDA
-    //#include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
-#endif
-
     };
 
-    struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
+
+struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
     {
         // Default constructor
 
@@ -224,7 +226,7 @@ protected:
     };
 
 
-    struct EmbeddingLayerBackPropagation : LayerBackPropagation
+struct EmbeddingLayerBackPropagation : LayerBackPropagation
     {
         // Default constructor
 
@@ -254,6 +256,13 @@ protected:
 
         Tensor<type, 2> embedding_weights_derivatives;
     };
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/embedding_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/embedding_layer_back_propagation_cuda.h"
+#endif
+
 
 }
 

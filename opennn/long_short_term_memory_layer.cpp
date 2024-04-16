@@ -1285,13 +1285,12 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
                                                  const bool& is_training)
 {
     const Index samples_number = inputs_pair(0).second[0];
-
-    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = inputs_pair(0).second[1];
 
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, neurons_number);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_number);
     Tensor<type, 1>& current_inputs = long_short_term_memory_layer_forward_propagation->current_inputs;
 
     Tensor<type, 2, RowMajor>& forget_activations = long_short_term_memory_layer_forward_propagation->forget_activations;

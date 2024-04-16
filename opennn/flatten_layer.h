@@ -30,6 +30,11 @@ namespace opennn
 struct FlattenLayerForwardPropagation;
 struct FlattenLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+struct FlattenLayerForwardPropagationCuda;
+struct FlattenLayerBackPropagationCuda;
+#endif
+
 /// This class represents a flatten layer.
 
 /// Flatten layers are included in the definition of a neural network.
@@ -103,6 +108,10 @@ public:
 
     void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
+    #endif
+
 protected:
 
     Tensor<Index, 1> inputs_dimensions;
@@ -133,7 +142,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    pair<type*, dimensions> get_outputs_pair() const final;
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+   void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
    void print() const
@@ -178,6 +187,13 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 4> input_derivatives;
 };
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/flatten_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/flatten_layer_back_propagation_cuda.h"
+#endif
+
 
 }
 
