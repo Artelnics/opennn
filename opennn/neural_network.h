@@ -142,6 +142,7 @@ public:
    RecurrentLayer* get_recurrent_layer() const;
 
    Layer* get_last_trainable_layer() const;
+   Layer* get_last_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
 
    Index get_batch_samples_number() const;
@@ -208,6 +209,7 @@ public:
 
    Index get_inputs_number() const;
    Index get_outputs_number() const;
+   dimensions get_outputs_dimensions() const;
 
    Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
    Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;

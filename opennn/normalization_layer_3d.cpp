@@ -33,9 +33,9 @@ NormalizationLayer3D::NormalizationLayer3D() : Layer()
 /// @param new_neurons_number Number of perceptrons in the layer.
 
 NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
-                                            const Index& new_inputs_size) : Layer()
+                                            const Index& new_inputs_depth) : Layer()
 {
-    set(new_inputs_number, new_inputs_size);
+    set(new_inputs_number, new_inputs_depth);
 
     layer_type = Type::Normalization3D;
 
@@ -51,9 +51,15 @@ Index NormalizationLayer3D::get_inputs_number() const
 }
 
 
-Index NormalizationLayer3D::get_inputs_size() const
+Index NormalizationLayer3D::get_inputs_depth() const
 {
-    return inputs_size;
+    return inputs_depth;
+}
+
+
+dimensions NormalizationLayer3D::get_output_dimensions() const
+{
+    return { inputs_number, inputs_depth };
 }
 
 
@@ -134,14 +140,14 @@ void NormalizationLayer3D::set()
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of perceptron neurons.
 
-void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_size)
+void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
     inputs_number = new_inputs_number;
 
-    inputs_size = new_inputs_size;
+    inputs_depth = new_inputs_depth;
 
-    gammas.resize(inputs_size);
-    betas.resize(inputs_size);
+    gammas.resize(inputs_depth);
+    betas.resize(inputs_depth);
 
     set_default();
 }
@@ -179,12 +185,12 @@ void NormalizationLayer3D::set_inputs_number(const Index& new_inputs_number)
 }
 
 
-void NormalizationLayer3D::set_inputs_size(const Index& new_inputs_size)
+void NormalizationLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
-    inputs_size = new_inputs_size;
+    inputs_depth = new_inputs_depth;
 
-    gammas.resize(inputs_size);
-    betas.resize(inputs_size);
+    gammas.resize(inputs_depth);
+    betas.resize(inputs_depth);
 }
 
 
@@ -259,9 +265,9 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 {
     Index samples_number = inputs_pair(0).second[0];
     Index inputs_number = inputs_pair(0).second[1];
-    Index inputs_size = inputs_pair(0).second[2];
+    Index inputs_depth = inputs_pair(0).second[2];
 
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, samples_number, inputs_number, inputs_size);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, samples_number, inputs_number, inputs_depth);
 
     NormalizationLayer3DForwardPropagation* normalization_layer_3d_forward_propagation =
         static_cast<NormalizationLayer3DForwardPropagation*>(layer_forward_propagation);
@@ -275,7 +281,7 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 
     const Eigen::array<Index, 1> normalization_axis{ { 2 } };
     const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 } };
-    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_size } };
+    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth } };
     
     means.device(*thread_pool_device) = inputs.mean(normalization_axis).eval()
                                        .reshape(range_3).broadcast(expand_normalization_axis);
@@ -299,13 +305,13 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 {
     Index samples_number = inputs_pair(0).second[0];
     Index inputs_number = inputs_pair(0).second[1];
-    Index inputs_size = inputs_pair(0).second[2];
+    Index inputs_depth = inputs_pair(0).second[2];
 
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, samples_number, inputs_number, inputs_size);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, samples_number, inputs_number, inputs_depth);
 
-    const TensorMap<Tensor<type, 1>> potential_gammas(potential_parameters.data(), inputs_size);
+    const TensorMap<Tensor<type, 1>> potential_gammas(potential_parameters.data(), inputs_depth);
 
-    const TensorMap<Tensor<type, 1>> potential_betas(potential_parameters.data() + inputs_size, inputs_size);
+    const TensorMap<Tensor<type, 1>> potential_betas(potential_parameters.data() + inputs_depth, inputs_depth);
 
     NormalizationLayer3DForwardPropagation* normalization_layer_3d_forward_propagation =
         static_cast<NormalizationLayer3DForwardPropagation*>(layer_forward_propagation);
@@ -319,7 +325,7 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 
     const Eigen::array<Index, 1> normalization_axis{ { 2 } };
     const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 } };
-    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_size } };
+    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth } };
 
     means.device(*thread_pool_device) = inputs.mean(normalization_axis).eval()
                                        .reshape(range_3).broadcast(expand_normalization_axis);
@@ -337,150 +343,25 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 }
 
 
-void NormalizationLayer3D::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                                  LayerBackPropagation* next_back_propagation,
-                                                  LayerForwardPropagation*,
-                                                  LayerBackPropagation* back_propagation) const
-{
-    NormalizationLayer3DBackPropagation* normalization_layer_3d_back_propagation =
-        static_cast<NormalizationLayer3DBackPropagation*>(back_propagation);
-
-    const Layer::Type layer_type = next_back_propagation->layer->get_type();
-
-    switch (layer_type)
-    {
-
-    case Type::Perceptron3D:
-    {
-        PerceptronLayer3DForwardPropagation* next_perceptron_layer_3d_forward_propagation =
-            reinterpret_cast<PerceptronLayer3DForwardPropagation*>(next_forward_propagation);
-
-        PerceptronLayer3DBackPropagation* next_perceptron_layer_3d_back_propagation =
-            reinterpret_cast<PerceptronLayer3DBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_perceptron_layer_3d_forward_propagation,
-                               next_perceptron_layer_3d_back_propagation,
-                               normalization_layer_3d_back_propagation);
-    }
-    return;
-
-    case Type::Probabilistic3D:
-    {
-        ProbabilisticLayer3DForwardPropagation* next_probabilistic_layer_3d_forward_propagation =
-            reinterpret_cast<ProbabilisticLayer3DForwardPropagation*>(next_forward_propagation);
-
-        ProbabilisticLayer3DBackPropagation* next_probabilistic_layer_3d_back_propagation =
-            reinterpret_cast<ProbabilisticLayer3DBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_probabilistic_layer_3d_forward_propagation,
-                               next_probabilistic_layer_3d_back_propagation,
-                               normalization_layer_3d_back_propagation);
-    }
-    return;
-
-    case Type::MultiheadAttention:
-    {
-        MultiheadAttentionLayerForwardPropagation* next_multihead_attention_layer_forward_propagation =
-            reinterpret_cast<MultiheadAttentionLayerForwardPropagation*>(next_forward_propagation);
-
-        MultiheadAttentionLayerBackPropagation* next_multihead_attention_layer_back_propagation =
-            reinterpret_cast<MultiheadAttentionLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_multihead_attention_layer_forward_propagation,
-                               next_multihead_attention_layer_back_propagation,
-                               normalization_layer_3d_back_propagation);
-    }
-    return;
-
-    default:
-
-        return;
-    }
-}
-
-
-void NormalizationLayer3D::calculate_hidden_delta(PerceptronLayer3DForwardPropagation* next_forward_propagation,
-                                                  PerceptronLayer3DBackPropagation* next_back_propagation,
-                                                  NormalizationLayer3DBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const PerceptronLayer3D* next_perceptron_layer = static_cast<PerceptronLayer3D*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    // Next back-propagation
-
-    Tensor<type, 3>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, contraction_indices);
-}
-
-
-void NormalizationLayer3D::calculate_hidden_delta(ProbabilisticLayer3DForwardPropagation* next_forward_propagation,
-                                                  ProbabilisticLayer3DBackPropagation* next_back_propagation,
-                                                  NormalizationLayer3DBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(next_back_propagation->layer);
-
-    const Index next_neurons_number = probabilistic_layer_3d->get_neurons_number();
-
-    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_3d->get_synaptic_weights();
-
-    // Next back propagation
-
-    Tensor<type, 3>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, contraction_indices);
-}
-
-
-void NormalizationLayer3D::calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation* next_forward_propagation,
-                                                  MultiheadAttentionLayerBackPropagation* next_back_propagation,
-                                                  NormalizationLayer3DBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-    // Next back propagation
-    /*
-    if (back_propagation->next_layer_input_index == 0)
-        deltas.device(*thread_pool_device) = next_back_propagation->error_input_derivatives;
-    else
-        deltas.device(*thread_pool_device) = next_back_propagation->error_context_derivatives;
-    */
-}
-
-
 void NormalizationLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                                    const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                     LayerForwardPropagation* forward_propagation,
                                                     LayerBackPropagation* back_propagation) const
 {
-    Index samples_number = inputs_pair(0).second[0];
+    Index batch_samples_number = inputs_pair(0).second[0];
 
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first,
-                                            samples_number,
+                                            batch_samples_number,
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2]);
+
+    if (deltas_pair.size() > 1)
+        add_deltas(deltas_pair);
+
+    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
+                                            batch_samples_number,
+                                            deltas_pair(0).second[1],
+                                            deltas_pair(0).second[2]);
 
     // Forward propagation
 
@@ -499,14 +380,13 @@ void NormalizationLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
     NormalizationLayer3DBackPropagation* normalization_layer_3d_back_propagation =
         static_cast<NormalizationLayer3DBackPropagation*>(back_propagation);
 
-    const Tensor<type, 3>& deltas = normalization_layer_3d_back_propagation->deltas;
-
-    Tensor<type, 3> scaled_deltas(samples_number, inputs_number, inputs_size);
+    Tensor<type, 3>& scaled_deltas = normalization_layer_3d_back_propagation->scaled_deltas;
     
     Tensor<type, 1>& gammas_derivatives = normalization_layer_3d_back_propagation->gammas_derivatives;
     Tensor<type, 1>& betas_derivatives = normalization_layer_3d_back_propagation->betas_derivatives;
 
     Tensor<type, 2>& normalization_derivatives = normalization_layer_3d_back_propagation->normalization_derivatives;
+
     Tensor<type, 3>& input_derivatives = normalization_layer_3d_back_propagation->input_derivatives;
 
     gammas_derivatives.device(*thread_pool_device) = (normalized_inputs * deltas).sum(Eigen::array<Index, 2>({ 0, 1 }));
@@ -519,10 +399,29 @@ void NormalizationLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
 
     input_derivatives.device(*thread_pool_device) = scaled_deltas * ( (variances + epsilon).sqrt().inverse() + (inputs - means).pow(2) / (variances + epsilon).pow(3/2) );
 
-    normalization_derivatives.device(*thread_pool_device) = 1 / type(inputs_size)
-                                                          * (scaled_deltas * (inputs - means) / (variances + epsilon).pow(3 / 2)).sum(Eigen::array<Index, 1>({ 2 }));
+    normalization_derivatives.device(*thread_pool_device) = 1 / type(inputs_depth)
+                                                          * (scaled_deltas * (inputs - means) / (variances + epsilon).pow(3/2)).sum(Eigen::array<Index, 1>({ 2 }));
 
     sum_matrices(thread_pool_device, normalization_derivatives, input_derivatives);
+}
+
+
+void NormalizationLayer3D::add_deltas(const Tensor<pair<type*, dimensions>, 1>& deltas_pair) const
+{
+    TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
+                                      deltas_pair(0).second[0],
+                                      deltas_pair(0).second[1],
+                                      deltas_pair(0).second[2]);
+
+    for (Index i = 1; i < deltas_pair.size(); i++)
+    {
+        const TensorMap<Tensor<type, 3>> other_deltas(deltas_pair(i).first,
+                                                      deltas_pair(i).second[0],
+                                                      deltas_pair(i).second[1],
+                                                      deltas_pair(i).second[2]);
+
+        deltas.device(*thread_pool_device) += other_deltas;
+    }
 }
 
 
@@ -754,9 +653,9 @@ pair<type*, dimensions> NormalizationLayer3DForwardPropagation::get_outputs_pair
     NormalizationLayer3D* normalization_layer_3d = static_cast<NormalizationLayer3D*>(layer);
 
     const Index inputs_number = normalization_layer_3d->get_inputs_number();
-    const Index inputs_size = normalization_layer_3d->get_inputs_size();
+    const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, inputs_size });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, inputs_depth });
 }
 
 void NormalizationLayer3DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
@@ -768,27 +667,18 @@ void NormalizationLayer3DForwardPropagation::set(const Index& new_batch_samples_
     batch_samples_number = new_batch_samples_number;
 
     const Index inputs_number = normalization_layer_3d->get_inputs_number();
-    const Index inputs_size = normalization_layer_3d->get_inputs_size();
+    const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
-    outputs.resize(batch_samples_number, inputs_number, inputs_size);
+    outputs.resize(batch_samples_number, inputs_number, inputs_depth);
 
     outputs_data = outputs.data();
 
-    normalized_inputs.resize(batch_samples_number, inputs_number, inputs_size);
+    normalized_inputs.resize(batch_samples_number, inputs_number, inputs_depth);
 
-    means.resize(batch_samples_number, inputs_number, inputs_size);
-    variances.resize(batch_samples_number, inputs_number, inputs_size);
+    means.resize(batch_samples_number, inputs_number, inputs_depth);
+    variances.resize(batch_samples_number, inputs_number, inputs_depth);
 }
 
-pair<type*, dimensions> NormalizationLayer3DBackPropagation::get_deltas_pair() const
-{
-    NormalizationLayer3D* normalization_layer_3d = static_cast<NormalizationLayer3D*>(layer);
-
-    const Index inputs_number = normalization_layer_3d->get_inputs_number();
-    const Index inputs_size = normalization_layer_3d->get_inputs_size();
-
-    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, inputs_size });
-}
 
 void NormalizationLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -799,17 +689,20 @@ void NormalizationLayer3DBackPropagation::set(const Index& new_batch_samples_num
     batch_samples_number = new_batch_samples_number;
 
     const Index inputs_number = normalization_layer_3d->get_inputs_number();
-    const Index inputs_size = normalization_layer_3d->get_inputs_size();
+    const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
-    deltas.resize(batch_samples_number, inputs_number, inputs_size);
+    gammas_derivatives.resize(inputs_depth);
+    betas_derivatives.resize(inputs_depth);
 
-    deltas_data = deltas.data();
-
-    gammas_derivatives.resize(inputs_size);
-    betas_derivatives.resize(inputs_size);
+    scaled_deltas.resize(batch_samples_number, inputs_number, inputs_depth);
 
     normalization_derivatives.resize(batch_samples_number, inputs_number);
-    input_derivatives.resize(batch_samples_number, inputs_number, inputs_size);
+
+    input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
 }
 
 }

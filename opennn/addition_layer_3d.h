@@ -50,7 +50,9 @@ namespace opennn
         // Get methods
 
         Index get_inputs_number() const final;
-        Index get_inputs_size() const;
+        Index get_inputs_depth() const;
+
+        dimensions get_output_dimensions() const final;
 
         // Parameters
         Index get_parameters_number() const final;
@@ -68,7 +70,7 @@ namespace opennn
         void set_default();
         void set_name(const string&);
 
-        void set_inputs_size(const Index&);
+        void set_inputs_depth(const Index&);
 
         // Parameters
 
@@ -88,26 +90,16 @@ namespace opennn
             Tensor<type, 1>&,
             LayerForwardPropagation*);
 
-        // Delta methods
-
-        void calculate_hidden_delta(LayerForwardPropagation*,
-            LayerBackPropagation*,
-            LayerForwardPropagation*,
-            LayerBackPropagation*) const final;
-
-        void calculate_hidden_delta(NormalizationLayer3DForwardPropagation*,
-            NormalizationLayer3DBackPropagation*,
-            AdditionLayer3DBackPropagation*) const;
-
         // Gradient methods
 
         void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
-            LayerForwardPropagation*,
-            LayerBackPropagation*) const final;
+                                      const Tensor<pair<type*, dimensions>, 1>&,
+                                      LayerForwardPropagation*,
+                                      LayerBackPropagation*) const final;
 
         void insert_gradient(LayerBackPropagation*,
-            const Index&,
-            Tensor<type, 1>&) const final;
+                             const Index&,
+                             Tensor<type, 1>&) const final;
 
         // Expression methods
 
@@ -128,7 +120,7 @@ namespace opennn
 
         /// Inputs size
 
-        Index inputs_size = 0;
+        Index inputs_depth = 0;
 
         /// Display messages to screen.
 
@@ -198,20 +190,15 @@ namespace opennn
         {
         }
 
-
-        pair<type*, dimensions> get_deltas_pair() const final;
-
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
         void print() const
         {
-            cout << "Deltas:" << endl;
-            cout << deltas << endl;
         }
 
-        Tensor<type, 3> deltas;
+        Tensor<type, 3> input_1_derivatives;
+        Tensor<type, 3> input_2_derivatives;
     };
 
 }

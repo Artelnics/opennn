@@ -1232,6 +1232,19 @@ Index NeuralNetwork::get_outputs_number() const
 }
 
 
+dimensions NeuralNetwork::get_outputs_dimensions() const
+{
+    if (layers.size() > 0)
+    {
+        const Layer* last_layer = layers[layers.size() - 1];
+
+        return last_layer->get_output_dimensions();
+    }
+
+    return {};
+}
+
+
 Tensor<Index, 1> NeuralNetwork::get_trainable_layers_neurons_numbers() const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
@@ -4945,6 +4958,20 @@ Layer* NeuralNetwork::get_last_trainable_layer() const
 
     return trainable_layers(trainable_layers_number-1);
 }
+
+
+Layer* NeuralNetwork::get_last_layer() const
+{
+    if (layers.size() > 0)
+    {
+        Layer* last_layer = layers[layers.size() - 1];
+
+        return last_layer;
+    }
+
+    return nullptr;
+}
+
 
 void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {

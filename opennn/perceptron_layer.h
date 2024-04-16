@@ -92,6 +92,8 @@ public:
    Index get_parameters_number() const final;
    type get_dropout_rate() const;
 
+   dimensions get_output_dimensions() const final;
+
    // Activation functions
 
    const PerceptronLayer::ActivationFunction& get_activation_function() const;
@@ -162,21 +164,6 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   // Delta methods
-
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerForwardPropagation*,
-                               LayerBackPropagation*) const final;
-
-   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
-                               PerceptronLayerBackPropagation*,
-                               PerceptronLayerBackPropagation*) const;
-
-   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
-                               ProbabilisticLayerBackPropagation*,
-                               PerceptronLayerBackPropagation*) const;
-
    // Delta LM
 
    void calculate_hidden_delta_lm(LayerForwardPropagation*,
@@ -203,11 +190,8 @@ public:
 
    // Gradient methods
 
-   void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
-                                                 const Tensor<type, 2>&,
-                                                 Tensor<type, 2>&) const;
-
    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -288,18 +272,17 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     virtual ~PerceptronLayerBackPropagation();
 
-    pair<type *, dimensions> get_deltas_pair() const final;
-
     void set(const Index&, Layer*) final;
 
     void print() const;
 
-    Tensor<type, 2> deltas;
+    //Tensor<type, 2> deltas;
+
+    Tensor<type, 2> error_combinations_derivatives;
+    Tensor<type, 2> input_derivatives;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
-
-    Tensor<type, 2> error_combinations_derivatives;
 };
 
 

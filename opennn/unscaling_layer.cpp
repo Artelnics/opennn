@@ -52,6 +52,14 @@ Index UnscalingLayer::get_neurons_number() const
 }
 
 
+dimensions UnscalingLayer::get_output_dimensions() const
+{
+    Index neurons_number = get_neurons_number();
+
+    return { neurons_number };
+}
+
+
 /// Returns all the available descriptives of the inputs and output variables.
 /// The format is a vector of pointers to vectors of size ten:
 /// <ul>

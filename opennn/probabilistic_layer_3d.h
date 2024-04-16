@@ -68,6 +68,8 @@ public:
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
 
+   dimensions get_output_dimensions() const final;
+
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
 
@@ -143,6 +145,7 @@ public:
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -258,10 +261,6 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     {
         set(new_batch_samples_number, new_layer);
     }
-    
-    
-    pair<type*, dimensions> get_deltas_pair() const final;
-
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
@@ -278,6 +277,7 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     Tensor<type, 2> targets;
 
     Tensor<type, 3> error_combinations_derivatives;
+    Tensor<type, 3> input_derivatives;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;

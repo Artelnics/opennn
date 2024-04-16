@@ -63,6 +63,8 @@ public:
     Tensor<Index, 1> get_inputs_dimensions() const;
     Tensor<Index, 1> get_outputs_dimensions() const;
 
+    dimensions get_output_dimensions() const final;
+
     Index get_inputs_number() const;
 
     Index get_channels_number() const;
@@ -138,27 +140,12 @@ public:
                            LayerForwardPropagation*,
                            const bool&) const;
 
-    // Delta methods
+    // Back-propagation
 
-    void calculate_hidden_delta(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const final;
-
-    void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
-                                ConvolutionalLayerBackPropagation*,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const;
-
-    void calculate_hidden_delta(PoolingLayerForwardPropagation*,
-                                PoolingLayerBackPropagation*,
-                                PoolingLayerForwardPropagation*,
-                                PoolingLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(FlattenLayerForwardPropagation*,
-                                FlattenLayerBackPropagation*,
-                                PoolingLayerForwardPropagation*,
-                                PoolingLayerBackPropagation*) const;
+    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                  const Tensor<pair<type*, dimensions>, 1>&,
+                                  LayerForwardPropagation*,
+                                  LayerBackPropagation*) const final;
 
     // Serialization methods
 
@@ -222,15 +209,13 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
     explicit PoolingLayerBackPropagation(const Index&, Layer*);
 
-    virtual ~PoolingLayerBackPropagation();    
-    
-    pair<type*, dimensions> get_deltas_pair() const final;
+    virtual ~PoolingLayerBackPropagation();
 
     void set(const Index&, Layer*) final;
 
     void print() const;
 
-    Tensor<type, 4> deltas;
+    Tensor<type, 4> input_derivatives;
 
 };
 

@@ -67,6 +67,8 @@ public:
     Index get_heads_number() const;
     Index get_weights_depth() const;
 
+    dimensions get_output_dimensions() const final;
+
     Tensor<type, 3> get_query_weights() const;
     Tensor<type, 2> get_query_biases() const;
 
@@ -136,24 +138,10 @@ public:
                            LayerForwardPropagation*,
                            const bool&) final;
 
-    // Delta methods
-
-    void calculate_hidden_delta(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const final;
-
-    void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
-                                PerceptronLayer3DBackPropagation*,
-                                MultiheadAttentionLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
-                                MultiheadAttentionLayerBackPropagation*,
-                                MultiheadAttentionLayerBackPropagation*) const;
-
     // Gradient methods
 
     void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                  const Tensor<pair<type*, dimensions>, 1>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
 
@@ -309,19 +297,11 @@ protected:
         {
         }
 
-
-        pair<type*, dimensions> get_deltas_pair() const final;
-
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
         void print() const
         {
-            cout << "Deltas:" << endl;
-            //cout << deltas << endl;
         }
-
-        Tensor<type, 3> deltas;
 
         Tensor<type, 4> error_attention_scores_derivatives;
         Tensor<type, 4> error_softmax_attention_scores_derivatives;
@@ -330,9 +310,6 @@ protected:
         Tensor<type, 4> error_query_derivatives;
         Tensor<type, 4> error_key_derivatives;
         Tensor<type, 4> error_value_derivatives;
-
-        Tensor<type, 3> error_input_derivatives;
-        Tensor<type, 3> error_context_derivatives;
 
         Tensor<type, 3> query_weights_derivatives;
         Tensor<type, 3> key_weights_derivatives;
@@ -346,6 +323,9 @@ protected:
         Tensor<type, 1> projection_biases_derivatives;
 
         Tensor<type, 1> aux_rows;
+
+        Tensor<type, 3> input_derivatives;
+        Tensor<type, 3> context_derivatives;
     };
 
 }

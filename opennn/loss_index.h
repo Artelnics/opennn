@@ -151,7 +151,7 @@ public:
 
    bool has_selection() const;
 
-   Index get_next_layer_index(const Tensor<Tensor<Index, 1>, 1>&, const Index) const;
+   Index find_input_index(const Tensor<Index, 1>&, const Index) const;
 
    // Numerical differentiation
 

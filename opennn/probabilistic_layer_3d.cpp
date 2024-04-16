@@ -50,6 +50,14 @@ Index ProbabilisticLayer3D::get_neurons_number() const
 }
 
 
+dimensions ProbabilisticLayer3D::get_output_dimensions() const
+{
+    Index neurons_number = get_neurons_number();
+
+    return { inputs_number, neurons_number };
+}
+
+
 Index ProbabilisticLayer3D::get_biases_number() const
 {
     return biases.size();
@@ -552,10 +560,12 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 
 
 void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                                    const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                     LayerForwardPropagation* forward_propagation,
                                                     LayerBackPropagation* back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
+    //const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1], deltas_pair(0).second[2]);
 
     const Index batch_samples_number = forward_propagation->batch_samples_number;
 
@@ -575,18 +585,26 @@ void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
 
     Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
 
-    calculate_error_combinations_derivatives(outputs, targets, error_combinations_derivatives);
-
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_3d_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives;
+
+    Tensor<type, 3>& input_derivatives = probabilistic_layer_3d_back_propagation->input_derivatives;
+
+    calculate_error_combinations_derivatives(outputs, targets, error_combinations_derivatives);
 
     biases_derivatives.device(*thread_pool_device) =
         error_combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
 
-    const Eigen::array<IndexPair<Index>, 2> contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
 
     synaptic_weights_derivatives.device(*thread_pool_device) =
-        inputs.contract(error_combinations_derivatives, contraction_indices);
+        inputs.contract(error_combinations_derivatives, double_contraction_indices);
+
+    const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
+
+    input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
+
+    //cout << "Input derivatives: " << endl << input_derivatives << endl;
 }
 
 
@@ -1010,17 +1028,6 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
 }
 
 
-pair<type*, dimensions> ProbabilisticLayer3DBackPropagation::get_deltas_pair() const
-{
-    ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
-
-    const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
-    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
-
-    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, neurons_number });
-}
-
-
 void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -1040,6 +1047,12 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     synaptic_weights_derivatives.resize(inputs_depth, neurons_number);
 
     error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+
+    input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
 }
 
 }

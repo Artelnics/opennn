@@ -81,6 +81,8 @@ public:
     Tensor<Index, 1> get_inputs_dimensions() const;
     Tensor<Index, 1> get_outputs_dimensions() const;
 
+    dimensions get_output_dimensions() const final;
+
     pair<Index, Index> get_padding() const;
 
     Eigen::array<pair<Index, Index>, 4> get_paddings() const;
@@ -181,20 +183,8 @@ public:
 
    // Back propagation
 
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerForwardPropagation*,
-                               LayerBackPropagation*) const final;
-
-   void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
-                               ConvolutionalLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
-   void calculate_hidden_delta(FlattenLayerForwardPropagation*,
-                               FlattenLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final; //change
 
@@ -286,20 +276,16 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    virtual ~ConvolutionalLayerBackPropagation();
 
-
-   pair<type*, dimensions> get_deltas_pair() const;
-
    void set(const Index&, Layer*) final;
 
    void print() const;
-
-
-   Tensor<type, 4> deltas;
 
    Tensor<type, 4> error_combinations_derivatives;
 
    Tensor<type, 1> biases_derivatives;
    Tensor<type, 4> synaptic_weights_derivatives;
+
+   Tensor<type, 4> input_derivatives;
 };
 
 

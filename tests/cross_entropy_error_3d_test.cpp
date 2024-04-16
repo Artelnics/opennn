@@ -296,6 +296,17 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
         // debugging
         /*
+        
+        cout << "Gradient min = " << back_propagation.gradient.minimum() << " at index: " << back_propagation.gradient.argmin()
+            << " and max = " << back_propagation.gradient.maximum() << " at index: " << back_propagation.gradient.argmax() << endl;
+
+        Index parameter_index = 0;
+        for (Index i = 0; i < transformer.get_layers().size(); i++)
+        {
+            cout << transformer.get_layer(i)->get_name() << " from parameter " << parameter_index << " to " << parameter_index + transformer.get_layer(i)->get_parameters_number() - 1 << endl;
+            parameter_index += transformer.get_layer(i)->get_parameters_number();
+        }
+
         if (!equal_gradients)
         {
             Tensor<Index, 0> max_difference_index = (back_propagation.gradient - numerical_gradient).abs().argmax();
@@ -412,19 +423,19 @@ void CrossEntropyError3DTest::run_test_case()
     cout << "Running cross-entropy error test case...\n";
     
     // Test constructor
-
+    
     test_constructor();
     test_destructor();
     
     // Back-propagation methods
-
+    
     test_back_propagate();
-
+    
     // Transformer test (Must be last since we change &neural_network to &transformer)
 
     cout << "test_calculate_gradient_transformer\n";
     for(Index i = 0; i < 10; i++)   test_calculate_gradient_transformer();
-
+    
     cout << "End of cross-entropy error test case.\n\n";
 }
 
