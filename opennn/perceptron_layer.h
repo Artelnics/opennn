@@ -53,6 +53,7 @@ struct ProbabilisticLayerBackPropagationLM;
 ///
 /// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
 
+
 class PerceptronLayer : public Layer
 {
 

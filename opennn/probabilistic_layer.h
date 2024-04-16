@@ -35,6 +35,10 @@ struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
+struct PerceptronLayerForwardPropagation;
+struct PerceptronLayerBackPropagation;
+struct PerceptronLayerBackPropagationLM;
+
 #ifdef OPENNN_CUDA
     struct ProbabilisticLayerForwardPropagationCuda;
     struct ProbabilisticLayerBackPropagationCuda;
