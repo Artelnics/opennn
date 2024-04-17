@@ -57,8 +57,8 @@ namespace opennn
         if (channels_number == 3)
         {
 /*
-            const int rows_number = static_cast<int>(get_image_height());
-            const int columns_number = static_cast<int>(get_image_width());
+            const int rows_number = int(get_image_height());
+            const int columns_number = int(get_image_width());
 
             Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
 
@@ -155,8 +155,8 @@ void read_bmp_image(const string& filename, Tensor<type, 3>& image)
 
     if(channels_number == 3)
     {
-        const int rows_number = static_cast<int>(image_height);
-        const int columns_number = static_cast<int>(image_width);
+        const int rows_number = int(image_height);
+        const int columns_number = int(image_width);
 
         const Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
 
@@ -205,7 +205,7 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 
     aux_row = (unsigned char*)malloc(size_t(columns_number*sizeof(unsigned char)));
 
-    const int rows_number = static_cast<int>(original.size()/ columns_number);
+    const int rows_number = int(original.size()/ columns_number);
 
     for(int i = 0; i <rows_number; i++)
     {
@@ -288,8 +288,8 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& i
             {
                 for(Index channel = 0; channel < channels; channel++)
                 {
-                    output(x, y, channel) = input(static_cast<int>(transformed_coordinates[0]),
-                                                  static_cast<int>(transformed_coordinates[1]),
+                    output(x, y, channel) = input(int(transformed_coordinates[0]),
+                                                  int(transformed_coordinates[1]),
                                                   channel);
                 }
             }

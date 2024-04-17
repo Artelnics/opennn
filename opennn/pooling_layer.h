@@ -38,6 +38,12 @@ struct PoolingLayerBackPropagation;
 struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+struct PoolingLayerForwardPropagationCuda;
+struct PoolingLayerBackPropagationCuda;
+#endif
+
+
 /// This class represents the Pooling Layer in Convolutional Neural Network(CNN).
 /// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
 
@@ -165,6 +171,10 @@ public:
     void from_XML(const tinyxml2::XMLDocument&) final;
     void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
+    #endif
+
 protected:
 
     Tensor<Index, 1> inputs_dimensions;
@@ -183,10 +193,6 @@ protected:
 
     const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3}; // For average pooling
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
-#endif
 
 };
 
@@ -234,9 +240,12 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
 };
 
+
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/pooling_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/pooling_layer_back_propagation_cuda.h"
 #endif
+
 
 }
 

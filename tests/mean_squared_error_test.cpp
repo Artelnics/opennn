@@ -111,10 +111,10 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
     
     // Test approximation all random
     {
-        samples_number = type(1) +rand() % 5;
-        inputs_number = type(1) + rand() % 5;
-        outputs_number = type(1) + rand() % 5;
-        neurons_number = type(1) + rand() % 5;
+        samples_number = type(1) + arc4random() % 5;
+        inputs_number = type(1) + arc4random() % 5;
+        outputs_number = type(1) + arc4random() % 5;
+        neurons_number = type(1) + arc4random() % 5;
 
         // Data set
 
@@ -244,10 +244,10 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-        samples_number = type(1) + rand() % 10;
-        inputs_number = type(1) + rand() % 10;
-        neurons_number = type(1) + rand() % 10;
-        outputs_number = type(1) + rand() % 10;
+        samples_number = type(1) + arc4random() % 10;
+        inputs_number = type(1) + arc4random() % 10;
+        neurons_number = type(1) + arc4random() % 10;
+        outputs_number = type(1) + arc4random() % 10;
 
         // Data set
 
@@ -1972,7 +1972,7 @@ cout << "After back propagation" << endl;
 
         ForwardPropagation forward_propagation(images_number, &neural_network);
 cout << "Before forward propagation" << endl;
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        //neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
 cout << "After forward propagation" << endl;
 

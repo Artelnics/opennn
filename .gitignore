@@ -268,3 +268,4 @@ tests/data/*.xml
 \.ipynb_checkpoints
 
 # Created by .ignore support plugin (hsz.mobi)
+/opennn/loss_index_forward_propagation.h

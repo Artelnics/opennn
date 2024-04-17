@@ -48,6 +48,12 @@ struct ForwardPropagation;
 struct NeuralNetworkBackPropagation;
 struct NeuralNetworkBackPropagationLM;
 
+#ifdef OPENNN_CUDA
+struct PerceptronLayerForwardPropagationCuda;
+struct ForwardPropagationCuda;
+struct NeuralNetworkBackPropagationCuda;
+#endif
+
 /// This class represents the concept of neural network in the OpenNN library.
 ///
 /// This neural network spans a function space for the problem at hand.
@@ -283,6 +289,11 @@ public:
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
 
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
+    #endif
+
+
 protected:
 
    string name = "neural_network";
@@ -311,11 +322,13 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
-#endif
 
 };
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
+#endif
 
 }
 
