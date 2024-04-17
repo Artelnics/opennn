@@ -1,8 +1,7 @@
-#ifndef COLUMN_H
-#define COLUMN_H
+#ifndef PERCEPTRONLAYERFORWARDPROPAGATION_H
+#define PERCEPTRONLAYERFORWARDPROPAGATION_H
 
 #include <string>
-//#include "dynamic_tensor.h"
 
 
 using namespace std;

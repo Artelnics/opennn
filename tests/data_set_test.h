@@ -99,7 +99,7 @@ public:
 
    void test_transform_time_series();
 
-   // Principal components mehtod
+   // Principal components methods
 
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();

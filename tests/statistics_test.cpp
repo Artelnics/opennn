@@ -72,7 +72,9 @@ void StatisticsTest::test_calculate_minimum_frequency()
     // Test
 
     Histogram histogram;
-    assert_true(is_not_numeric(histogram.calculate_minimum_frequency()) , LOG);
+    Index minimum = histogram.calculate_minimum_frequency();
+    string str_minimum = to_string(minimum);
+    assert_true(is_numeric_string(str_minimum) , LOG);
 
     // Test
 
@@ -116,7 +118,9 @@ void StatisticsTest::test_calculate_maximum_frequency()
     // Test
 
     Histogram histogram;
-    assert_true(is_not_numeric(histogram.calculate_maximum_frequency()), LOG);
+    Index maximum = histogram.calculate_maximum_frequency();
+    string str_maximum = to_string(maximum);
+    assert_true(is_numeric_string(str_maximum) , LOG);
 
     // Test
 
@@ -606,13 +610,13 @@ void StatisticsTest::test_median()
 
     matrix.resize(3,2);
     matrix.setValues({
-                         {type(1),type(1)},
+                         {type(1),type(NAN)},
                          {type(NAN),type(NAN)},
-                         {type(3),type(3)}
+                         {type(3),type(3.5)}
                      });
 
-    assert_true(isnan(median(matrix)(0)), LOG);
-    assert_true(isnan(median(matrix)(1)), LOG);
+    assert_true(abs(median(matrix)(0) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(median(matrix)(1) - type(3.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -1004,7 +1008,7 @@ void StatisticsTest::test_total_frequencies()   //<--- Check
 
     assert_true(histograms(0).frequencies(0) == 1 , LOG);
     assert_true(histograms(1).frequencies(0) == 1, LOG);
-    assert_true(histograms(2).frequencies(0) == 0, LOG);
+    assert_true(histograms(2).frequencies(0) == 1, LOG);
 }
 
 

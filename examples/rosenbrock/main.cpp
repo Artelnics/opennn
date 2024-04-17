@@ -31,7 +31,7 @@ int main()
      
         // Data Set
 
-        const Index samples_number = 100000;
+        const Index samples_number = 1000000;
         const Index inputs_number = 1000;
         const Index outputs_number = 1;
         const Index hidden_neurons_number = 1000;

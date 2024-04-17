@@ -49,6 +49,8 @@ public:
 
     enum class Type{Scaling2D,
                     Scaling4D,
+                    Addition3D,
+                    Normalization3D,
                     Convolutional,
                     Perceptron,
                     Perceptron3D,
@@ -110,6 +112,7 @@ public:
 
     virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
+    virtual dimensions get_output_dimensions() const;
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -133,6 +136,7 @@ public:
                                            LayerBackPropagationLM*) const {}
 
     virtual void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                          const Tensor<pair<type*, dimensions>, 1>&,
                                           LayerForwardPropagation*,
                                           LayerBackPropagation*) const {}
 
@@ -395,7 +399,6 @@ protected:
         dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
     }
 
-
     void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
@@ -410,7 +413,8 @@ protected:
 
 
 #ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/struct_layer_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/layer_forward_propagation_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/layer_back_propagation_cuda.h"
 #endif
 
 

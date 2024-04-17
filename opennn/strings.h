@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   O P E N N N  S T R I N G S
+//   S T R I N G S
 //
 //   Artificial Intelligence Techniques, SL
 //   artelnics artelnics.com
 
-#ifndef OPENNNSTRINGS_H
-#define OPENNNSTRINGS_H
+#ifndef STRINGS_H
+#define STRINGS_H
 
 // System includes
 

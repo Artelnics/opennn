@@ -93,13 +93,13 @@ void SumSquaredError::calculate_output_delta(const Batch&,
 
      const Tensor<type, 2>& errors = back_propagation.errors;
 
-     const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
+     pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-     TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
+     TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 
      const type coefficient = type(2.0);
 
-     deltas.device(*thread_pool_device) = coefficient*errors;
+     output_deltas.device(*thread_pool_device) = coefficient*errors;
 }
 
 

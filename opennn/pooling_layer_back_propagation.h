@@ -1,9 +1,7 @@
-#ifndef COLUMN_H
-#define COLUMN_H
+#ifndef POOLINGLAYERBACKPROPAGATION_H
+#define POOLINGLAYERBACKPROPAGATION_H
 
 #include <string>
-//#include "dynamic_tensor.h"
-
 
 using namespace std;
 //using namespace Eigen;

@@ -175,9 +175,11 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     // Back propagation
 
-    Tensor<type, 2>& deltas = probabilistic_layer_back_propagation->deltas;
+    pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    deltas.device(*thread_pool_device)
+    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
+
+    output_deltas.device(*thread_pool_device)
             = (-targets/outputs + (type(1) - targets)/(type(1) - outputs))/type(batch_samples_number);
 }
 
@@ -201,11 +203,13 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
-    Tensor<type, 2>& deltas = probabilistic_layer_back_propagation->deltas;
+    pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
+
+    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 
     const type coefficient = -type(1) / type(batch_samples_number);
 
-    deltas.device(*thread_pool_device) = (targets/outputs)*coefficient;
+    output_deltas.device(*thread_pool_device) = (targets/outputs)*coefficient;
 }
 
 

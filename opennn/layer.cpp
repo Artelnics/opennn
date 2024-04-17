@@ -133,6 +133,12 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
+dimensions Layer::get_output_dimensions() const
+{
+    return dimensions();
+}
+
+
 void Layer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&)
 {
     ostringstream buffer;

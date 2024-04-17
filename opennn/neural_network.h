@@ -28,6 +28,8 @@
 #include "perceptron_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
+#include "addition_layer_3d.h"
+#include "normalization_layer_3d.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
@@ -41,12 +43,19 @@
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 
+
 namespace opennn
 {
 
 struct ForwardPropagation;
 struct NeuralNetworkBackPropagation;
 struct NeuralNetworkBackPropagationLM;
+
+#ifdef OPENNN_CUDA
+struct PerceptronLayerForwardPropagationCuda;
+struct ForwardPropagationCuda;
+struct NeuralNetworkBackPropagationCuda;
+#endif
 
 /// This class represents the concept of neural network in the OpenNN library.
 ///
@@ -136,9 +145,8 @@ public:
    RecurrentLayer* get_recurrent_layer() const;
 
    Layer* get_last_trainable_layer() const;
+   Layer* get_last_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
-
-   Index get_batch_samples_number() const;
 
    const bool& get_display() const;
 
@@ -173,9 +181,6 @@ public:
 
    void set_threads_number(const int&);
 
-   void set_scaling_layer_2d(ScalingLayer2D&);
-   void set_scaling_layer_4d(ScalingLayer4D&);
-
    void set_display(const bool&);
 
    // Layers
@@ -202,6 +207,7 @@ public:
 
    Index get_inputs_number() const;
    Index get_outputs_number() const;
+   dimensions get_outputs_dimensions() const;
 
    Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
    Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
@@ -283,6 +289,10 @@ public:
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
 
+#ifdef OPENNN_CUDA
+#include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
+#endif
+
 protected:
 
    string name = "neural_network";
@@ -303,7 +313,6 @@ protected:
 
    Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
 
-
    ThreadPool* thread_pool;
    ThreadPoolDevice* thread_pool_device;
 
@@ -311,11 +320,12 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
-#endif
-
 };
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
+#endif
 
 }
 

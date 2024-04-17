@@ -64,10 +64,9 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     Index samples_number;
     Index inputs_number;
+    Index neurons_number;
 
     pair<type*, dimensions> inputs_pair;
-
-    long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
@@ -77,13 +76,16 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     samples_number = 1;
     inputs_number = 1;
+    neurons_number = 1;
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
+    long_short_term_memory_layer.set(inputs_number, neurons_number);
+    long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
     long_short_term_memory_layer.set_parameters_constant(type(1));
 
-    long_short_term_layer_forward_propagation.set(1, &long_short_term_memory_layer);
+    long_short_term_layer_forward_propagation.set(samples_number, &long_short_term_memory_layer);
 
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
