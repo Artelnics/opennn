@@ -69,8 +69,10 @@ public:
    bool is_empty() const;
 
    Index get_inputs_number() const final;
-   Index get_inputs_size() const;
+   Index get_inputs_depth() const;
    Index get_neurons_number() const final;
+
+   dimensions get_output_dimensions() const final;
 
    // Parameters
 
@@ -109,7 +111,7 @@ public:
 
    // Architecture
 
-   void set_inputs_size(const Index&);
+   void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;
 
    // Parameters
@@ -158,30 +160,14 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   // Delta methods
-
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerForwardPropagation*,
-                               LayerBackPropagation*) const final;
-
-   void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
-                               PerceptronLayer3DBackPropagation*,
-                               PerceptronLayer3DBackPropagation*) const;
-
-   void calculate_hidden_delta(ProbabilisticLayer3DForwardPropagation*,
-                               ProbabilisticLayer3DBackPropagation*,
-                               PerceptronLayer3DBackPropagation*) const;
-
-   void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
-                               MultiheadAttentionLayerBackPropagation*,
-                               PerceptronLayer3DBackPropagation*) const;
-
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
+
+   void add_deltas(const Tensor<pair<type*, dimensions>, 1>&) const;
 
    void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
                                                  const Tensor<type, 3>&,
@@ -297,9 +283,6 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     virtual ~PerceptronLayer3DBackPropagation()
     {
     }
-    
-    
-    pair<type*, dimensions> get_deltas_pair() const final;
 
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
@@ -307,9 +290,6 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;
 
@@ -317,12 +297,11 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
         cout << synaptic_weights_derivatives << endl;
     }
 
-    Tensor<type, 3> deltas;
-
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
     Tensor<type, 3> error_combinations_derivatives;
+    Tensor<type, 3> input_derivatives;
 };
 
 

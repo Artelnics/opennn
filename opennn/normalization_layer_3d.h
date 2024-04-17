@@ -54,7 +54,9 @@ namespace opennn
         // Get methods
 
         Index get_inputs_number() const final;
-        Index get_inputs_size() const;
+        Index get_inputs_depth() const;
+
+        dimensions get_output_dimensions() const final;
 
         // Parameters
 
@@ -81,7 +83,7 @@ namespace opennn
         // Architecture
 
         void set_inputs_number(const Index&);
-        void set_inputs_size(const Index&);
+        void set_inputs_depth(const Index&);
 
         // Parameters
 
@@ -113,30 +115,14 @@ namespace opennn
                                Tensor<type, 1>&,
                                LayerForwardPropagation*);
 
-        // Delta methods
-
-        void calculate_hidden_delta(LayerForwardPropagation*,
-                                    LayerBackPropagation*,
-                                    LayerForwardPropagation*,
-                                    LayerBackPropagation*) const final;
-
-        void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
-                                    PerceptronLayer3DBackPropagation*,
-                                    NormalizationLayer3DBackPropagation*) const;
-
-        void calculate_hidden_delta(ProbabilisticLayer3DForwardPropagation*,
-                                    ProbabilisticLayer3DBackPropagation*,
-                                    NormalizationLayer3DBackPropagation*) const;
-
-        void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
-                                    MultiheadAttentionLayerBackPropagation*,
-                                    NormalizationLayer3DBackPropagation*) const;
-
         // Gradient methods
 
         void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                      const Tensor<pair<type*, dimensions>, 1>&,
                                       LayerForwardPropagation*,
                                       LayerBackPropagation*) const final;
+
+        void add_deltas(const Tensor<pair<type*, dimensions>, 1>& deltas_pair) const;
 
         void insert_gradient(LayerBackPropagation*,
                              const Index&,
@@ -162,7 +148,7 @@ namespace opennn
 
         Index inputs_number;
 
-        Index inputs_size;
+        Index inputs_depth;
         
         Index neurons_number;
 
@@ -241,18 +227,11 @@ namespace opennn
         {
         }
 
-
-        pair<type*, dimensions> get_deltas_pair() const final;
-
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
         void print() const
         {
-            cout << "Deltas:" << endl;
-            cout << deltas << endl;
-
             cout << "Gammas derivatives:" << endl;
             cout << gammas_derivatives << endl;
 
@@ -260,12 +239,12 @@ namespace opennn
             cout << betas_derivatives << endl;
         }
 
-        Tensor<type, 3> deltas;
-
         Tensor<type, 1> gammas_derivatives;
         Tensor<type, 1> betas_derivatives;
 
+        Tensor<type, 3> scaled_deltas;
         Tensor<type, 2> normalization_derivatives;
+        
         Tensor<type, 3> input_derivatives;
     };
 

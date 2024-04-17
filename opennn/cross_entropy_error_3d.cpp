@@ -72,17 +72,21 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     probabilistic_layer_3d_back_propagation->targets = targets;
 
-    Tensor<type, 2> cross_entropy_errors(targets.dimension(0), targets.dimension(1));
+    /// @todo Can we remove this?
 
+    Tensor<type, 2> errors(batch_samples_number, targets.dimension(1));
+ 
     Tensor<type, 0> cross_entropy_error;   
+
+    /// @todo Can we do this in matrix form?
 
     #pragma omp parallel for
 
     for (Index i = 0; i < targets.dimension(0); i++)
         for (Index j = 0; j < targets.dimension(1); j++)
-            cross_entropy_errors(i, j) = -log( outputs(i, j, Index(targets(i, j))) );
+            errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
-    cross_entropy_error.device(*thread_pool_device) = cross_entropy_errors.sum();
+    cross_entropy_error.device(*thread_pool_device) = errors.sum();
 
     back_propagation.error = cross_entropy_error(0)/type(batch_samples_number);
 
@@ -95,7 +99,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
                << "NAN values found in back propagation error.";
 
         throw runtime_error(buffer.str());
-    }
+    }  
 }
 
 

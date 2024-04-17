@@ -33,9 +33,9 @@ AdditionLayer3D::AdditionLayer3D() : Layer()
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of perceptrons in the layer.
 
-AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& new_inputs_size) : Layer()
+AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth) : Layer()
 {
-    set(new_inputs_number, new_inputs_size);
+    set(new_inputs_number, new_inputs_depth);
 
     layer_type = Type::Addition3D;
 
@@ -51,9 +51,15 @@ Index AdditionLayer3D::get_inputs_number() const
 }
 
 
-Index AdditionLayer3D::get_inputs_size() const
+Index AdditionLayer3D::get_inputs_depth() const
 {
-    return inputs_size;
+    return inputs_depth;
+}
+
+
+dimensions AdditionLayer3D::get_output_dimensions() const
+{
+    return { inputs_number, inputs_depth };
 }
 
 
@@ -100,11 +106,11 @@ void AdditionLayer3D::set()
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of perceptron neurons.
 
-void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_size)
+void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
     inputs_number = new_inputs_number;
 
-    inputs_size = new_inputs_size;
+    inputs_depth = new_inputs_depth;
 
     set_default();
 }
@@ -137,9 +143,9 @@ void AdditionLayer3D::set_name(const string& new_layer_name)
 /// It also initializes the new synaptic weights at random.
 /// @param new_inputs_number Number of layer inputs.
 
-void AdditionLayer3D::set_inputs_size(const Index& new_inputs_size)
+void AdditionLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
-    inputs_size = new_inputs_size;
+    inputs_depth = new_inputs_depth;
 }
 
 
@@ -195,60 +201,27 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 }
 
 
-void AdditionLayer3D::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                             LayerBackPropagation* next_back_propagation,
-                                             LayerForwardPropagation*,
-                                             LayerBackPropagation* back_propagation) const
-{
-    AdditionLayer3DBackPropagation* addition_layer_3d_back_propagation =
-        static_cast<AdditionLayer3DBackPropagation*>(back_propagation);
-
-    const Layer::Type layer_type = next_back_propagation->layer->get_type();
-
-    switch (layer_type)
-    {
-
-    case Type::Addition3D:
-    {
-        NormalizationLayer3DForwardPropagation* next_layer_forward_propagation =
-            reinterpret_cast<NormalizationLayer3DForwardPropagation*>(next_forward_propagation);
-
-        NormalizationLayer3DBackPropagation* next_layer_back_propagation =
-            reinterpret_cast<NormalizationLayer3DBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_layer_forward_propagation,
-                               next_layer_back_propagation,
-                               addition_layer_3d_back_propagation);
-    }
-    return;
-
-    default:
-
-        return;
-    }
-}
-
-
-void AdditionLayer3D::calculate_hidden_delta(NormalizationLayer3DForwardPropagation* next_forward_propagation,
-                                             NormalizationLayer3DBackPropagation* next_back_propagation,
-                                             AdditionLayer3DBackPropagation* back_propagation) const
-{
-    // Next back-propagation
-
-    const Tensor<type, 3>& input_derivatives = next_back_propagation->input_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = input_derivatives;
-}
-
-
 void AdditionLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                               const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
+    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
+                                            deltas_pair(0).second[0],
+                                            deltas_pair(0).second[1],
+                                            deltas_pair(0).second[2]);
+
+    // Back propagation
+
+    AdditionLayer3DBackPropagation* addition_layer_3d_back_propagation =
+        static_cast<AdditionLayer3DBackPropagation*>(back_propagation);
+
+    Tensor<type, 3>& input_1_derivatives = addition_layer_3d_back_propagation->input_1_derivatives;
+
+    Tensor<type, 3>& input_2_derivatives = addition_layer_3d_back_propagation->input_2_derivatives;
+
+    input_1_derivatives.device(*thread_pool_device) = deltas;
+    input_2_derivatives.device(*thread_pool_device) = deltas;
 }
 
 
@@ -461,9 +434,9 @@ pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() co
     AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
 
     const Index inputs_number = addition_layer_3d->get_inputs_number();
-    const Index inputs_size = addition_layer_3d->get_inputs_size();
+    const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, inputs_size });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, inputs_depth });
 }
 
 void AdditionLayer3DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
@@ -475,22 +448,13 @@ void AdditionLayer3DForwardPropagation::set(const Index& new_batch_samples_numbe
     batch_samples_number = new_batch_samples_number;
 
     const Index inputs_number = addition_layer_3d->get_inputs_number();
-    const Index inputs_size = addition_layer_3d->get_inputs_size();
+    const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
-    outputs.resize(batch_samples_number, inputs_number, inputs_size);
+    outputs.resize(batch_samples_number, inputs_number, inputs_depth);
 
     outputs_data = outputs.data();
 }
 
-pair<type*, dimensions> AdditionLayer3DBackPropagation::get_deltas_pair() const
-{
-    AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
-
-    const Index inputs_number = addition_layer_3d->get_inputs_number();
-    const Index inputs_size = addition_layer_3d->get_inputs_size();
-
-    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, inputs_size });
-}
 
 void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -501,11 +465,17 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
     batch_samples_number = new_batch_samples_number;
 
     const Index inputs_number = addition_layer_3d->get_inputs_number();
-    const Index inputs_size = addition_layer_3d->get_inputs_size();
+    const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
-    deltas.resize(batch_samples_number, inputs_number, inputs_size);
+    input_1_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+    input_2_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 
-    deltas_data = deltas.data();
+    inputs_derivatives.resize(2);
+    inputs_derivatives(0).first = input_1_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
+
+    inputs_derivatives(1).first = input_2_derivatives.data();
+    inputs_derivatives(1).second = { batch_samples_number, inputs_number, inputs_depth };
 }
 
 }

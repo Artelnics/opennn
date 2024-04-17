@@ -45,6 +45,8 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
     set_default();
 }
+
+
 /// Returns the number of neurons the layer applies to an image.
 
 Index PoolingLayer::get_neurons_number() const
@@ -64,6 +66,16 @@ Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
     outputs_dimensions[2] = inputs_dimensions[2];
 
     return outputs_dimensions;
+}
+
+
+dimensions PoolingLayer::get_output_dimensions() const
+{
+    Index rows_number = get_outputs_rows_number();
+    Index columns_number = get_outputs_columns_number();
+    Index depth = inputs_dimensions[2];
+
+    return { rows_number, columns_number, depth };
 }
 
 
@@ -470,63 +482,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     cout << "Max indices: " << pooling_layer_forward_propagation->inputs_max_indices << endl;
 }
 
-
-void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                          LayerBackPropagation* next_back_propagation,
-                                          LayerForwardPropagation* this_forward_propagation,
-                                          LayerBackPropagation* this_back_propagation) const
-{
-    PoolingLayerBackPropagation* this_pooling_layer_back_propagation =
-             static_cast<PoolingLayerBackPropagation*>(this_back_propagation);
-
-     switch(next_back_propagation->layer->get_type())
-     {
-     case Type::Flatten:
-     {
-         FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation =
-                 static_cast<FlattenLayerForwardPropagation*>(next_forward_propagation);
-
-         FlattenLayerBackPropagation* next_flatten_layer_back_propagation =
-                 static_cast<FlattenLayerBackPropagation*>(next_back_propagation);
-
-         calculate_hidden_delta(next_flatten_layer_forward_propagation,
-                                next_flatten_layer_back_propagation,
-                                this_forward_propagation,
-                                this_pooling_layer_back_propagation);
-
-     };
-     case Type::Pooling:
-     {
-         PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation =
-                 static_cast<PoolingLayerForwardPropagation*>(next_forward_propagation);
-
-         PoolingLayerBackPropagation* next_pooling_layer_back_propagation =
-                 static_cast<PoolingLayerBackPropagation*>(next_back_propagation);
-
-         calculate_hidden_delta(next_pooling_layer_forward_propagation,
-                                next_pooling_layer_back_propagation,
-                                this_forward_propagation,
-                                this_pooling_layer_back_propagation);
-
-     };
-     default:
-     {
-         cout << "Neural network structure not implemented: " << next_back_propagation->layer->get_type_string() << endl;
-         return;
-     }
-     }
-}
-
-
-void PoolingLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
-                            ConvolutionalLayerBackPropagation*,
-                            LayerForwardPropagation*,
-                            LayerBackPropagation*) const
-{
-    return;
-}
-
-
+/* Do this at the end of calculate_error_gradient(), with input_derivatives instead of deltas
 void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation,
                                           PoolingLayerBackPropagation* next_pooling_layer_back_propagation,
                                           PoolingLayerForwardPropagation* this_layer_forward_propagation,
@@ -550,25 +506,29 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_p
 
     return;
 }
+*/
 
-void PoolingLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation,
-                                          FlattenLayerBackPropagation* next_flatten_layer_back_propagation,
-                                          PoolingLayerForwardPropagation* this_pooling_layer_forward_propagation,
-                                          PoolingLayerBackPropagation* this_pooling_layer_back_propagation) const
+
+void PoolingLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                            const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+                                            LayerForwardPropagation* forward_propagation,
+                                            LayerBackPropagation* back_propagation) const
 {
-    FlattenLayer* next_flatten_layer = static_cast<FlattenLayer*>(next_flatten_layer_forward_propagation->layer);
+    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
 
-    const Index batch_samples_number = this_pooling_layer_back_propagation->batch_samples_number;
+    // Forward propagation
 
-    const Index next_flatten_layer_neurons_number = next_flatten_layer->get_neurons_number();
+    const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
+        static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
 
-    copy(/*execution::par,*/
-         next_flatten_layer_back_propagation->deltas.data(),
-         next_flatten_layer_back_propagation->deltas.data() +
-         batch_samples_number * next_flatten_layer_neurons_number,
-         this_pooling_layer_back_propagation->deltas.data());
+    // Back propagation
 
-    return;
+    PoolingLayerBackPropagation* pooling_layer_back_propagation =
+        static_cast<PoolingLayerBackPropagation*>(back_propagation);
+
+    Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
+
+    // @todo calculate input derivatives (= deltas for previous layer)
 }
 
 
@@ -944,25 +904,6 @@ PoolingLayerBackPropagation::~PoolingLayerBackPropagation()
 {
 }
 
-pair<type*, dimensions> PoolingLayerBackPropagation::get_deltas_pair() const
-{
-    const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
-
-    const Index channels_number = pooling_layer->get_channels_number();
-
-    const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
-
-    const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
-
-    /// @todo opposite than before!!!
-
-    return pair<type*, dimensions>(deltas_data, 
-                                  {batch_samples_number,
-                                   channels_number,
-                                   outputs_rows_number,
-                                   outputs_columns_number});
-}
-
 
 void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -972,24 +913,18 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
-    const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
-    const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
+    const Tensor<Index, 1>& inputs_dimensions = pooling_layer->get_inputs_dimensions();
 
-    const Index kernels_number = 0;
+    input_derivatives.resize(batch_samples_number, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2));
 
-    deltas.resize(batch_samples_number,
-        kernels_number,
-        outputs_rows_number,
-        outputs_columns_number);
-
-    deltas_data = deltas.data();
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2) };
 }
 
 
 void PoolingLayerBackPropagation::print() const
 {
-    cout << "Deltas:" << endl;
-    cout << deltas << endl;
 }
 }
 
