@@ -290,7 +290,7 @@ bool LossIndex::has_selection() const
 
 Index LossIndex::find_input_index(const Tensor<Index, 1>& layer_inputs_indices, const Index layer_index) const
 {
-    for (Index i = 0; i < layer_inputs_indices.size(); i++)
+    for (Index i = 0; i < static_cast<Index>(layer_inputs_indices.size()); i++)
     {
         if (layer_inputs_indices(i) == layer_index)  return i;
     }
@@ -734,7 +734,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
         {
             layer_deltas.resize(layers_outputs_indices(i).size());
 
-            for (Index j = 0; j < layers_outputs_indices(i).size(); j++)
+            for (Index j = 0; j < static_cast<Index>(layers_outputs_indices(i).size()); j++)
             {
                 input_index = find_input_index(layers_inputs_indices(layers_outputs_indices(i)(j)), i);
                 layer_deltas(j) = back_propagation.neural_network.layers(layers_outputs_indices(i)(j))->get_inputs_derivatives_pair()(input_index);
@@ -757,7 +757,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
         {
             layer_inputs.resize(layers_inputs_indices(i).size());
 
-            for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
+            for (Index j = 0; j < static_cast<Index>(layers_inputs_indices(i).size()); j++)
             {
                 layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
@@ -997,7 +997,7 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
     output_deltas_dimensions[0] = batch_samples_number;
 
     Index size = batch_samples_number;
-    for (Index i = 0; i < output_dimensions.size(); i++)
+    for (Index i = 0; i < static_cast<Index>(output_dimensions.size()); i++)
     {
         output_deltas_dimensions[i + 1] = output_dimensions[i];
         size *= output_dimensions[i];
@@ -1019,7 +1019,7 @@ void BackPropagation::set_layers_outputs_indices(Tensor<Tensor<Index, 1>, 1>& la
     {
         for (Index j = 0; j < layers_number; j++)
         {
-            for (Index k = 0; k < layer_inputs_indices(j).size(); k++)    if (layer_inputs_indices(j)(k) == i)    layer_count++;
+            for (Index k = 0; k < static_cast<Index>(layer_inputs_indices(j).size()); k++)    if (layer_inputs_indices(j)(k) == i)    layer_count++;
         }
 
         layers_outputs_indices(i).resize(layer_count);
@@ -1027,7 +1027,7 @@ void BackPropagation::set_layers_outputs_indices(Tensor<Tensor<Index, 1>, 1>& la
 
         for (Index j = 0; j < layers_number; j++)
         {
-            for (Index k = 0; k < layer_inputs_indices(j).size(); k++)
+            for (Index k = 0; k < static_cast<Index>(layer_inputs_indices(j).size()); k++)
             {
                 if (layer_inputs_indices(j)(k) == i)
                 {
@@ -1081,7 +1081,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
-        h = 0.01; // calculate_h(parameters(i));
+        h = static_cast<type>(0.01); // calculate_h(parameters(i));
 
        parameters_forward(i) += h;
        
