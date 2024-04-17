@@ -294,9 +294,9 @@ Index LossIndex::get_next_layer_index(const Tensor<Tensor<Index, 1>, 1>& layers_
     Index next_layer_index = layer_index + 1;
     bool found = false;
 
-    for (Index i = layer_index + 1; i < layers_inputs_indices.size(); i++)
+    for (Index i = layer_index + 1; i < static_cast<Index>(layers_inputs_indices.size()); i++)
     {
-        for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
+        for (Index j = 0; j < static_cast<Index>(layers_inputs_indices(i).size()); j++)
         {
             if (layers_inputs_indices(i)(j) == layer_index)
             {
@@ -764,7 +764,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
         {
             layer_inputs.resize(layers_inputs_indices(i).size());
 
-            for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
+            for (Index j = 0; j < static_cast<Index>(layers_inputs_indices(i).size()); j++)
             {
                 layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
