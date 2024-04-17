@@ -1,8 +1,7 @@
-#ifndef COLUMN_H
-#define COLUMN_H
+#ifndef QUASINEWTONMETHODDATA_H
+#define QUASINEWTONMETHODDATA_H
 
 #include <string>
-//#include "dynamic_tensor.h"
 
 
 using namespace std;

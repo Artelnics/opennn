@@ -38,6 +38,12 @@ struct PoolingLayerBackPropagation;
 struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+struct PoolingLayerForwardPropagationCuda;
+struct PoolingLayerBackPropagationCuda;
+#endif
+
+
 /// This class represents the Pooling Layer in Convolutional Neural Network(CNN).
 /// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
 
@@ -62,6 +68,8 @@ public:
 
     Tensor<Index, 1> get_inputs_dimensions() const;
     Tensor<Index, 1> get_outputs_dimensions() const;
+
+    dimensions get_output_dimensions() const final;
 
     Index get_inputs_number() const;
 
@@ -138,32 +146,21 @@ public:
                            LayerForwardPropagation*,
                            const bool&) const;
 
-    // Delta methods
+    // Back-propagation
 
-    void calculate_hidden_delta(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const final;
-
-    void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
-                                ConvolutionalLayerBackPropagation*,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const;
-
-    void calculate_hidden_delta(PoolingLayerForwardPropagation*,
-                                PoolingLayerBackPropagation*,
-                                PoolingLayerForwardPropagation*,
-                                PoolingLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(FlattenLayerForwardPropagation*,
-                                FlattenLayerBackPropagation*,
-                                PoolingLayerForwardPropagation*,
-                                PoolingLayerBackPropagation*) const;
+    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+                                  const Tensor<pair<type*, dimensions>, 1>&,
+                                  LayerForwardPropagation*,
+                                  LayerBackPropagation*) const final;
 
     // Serialization methods
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void write_XML(tinyxml2::XMLPrinter&) const final;
+
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
+    #endif
 
 protected:
 
@@ -183,10 +180,6 @@ protected:
 
     const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3}; // For average pooling
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
-#endif
 
 };
 
@@ -222,21 +215,22 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
     explicit PoolingLayerBackPropagation(const Index&, Layer*);
 
-    virtual ~PoolingLayerBackPropagation();    
-    
-    pair<type*, dimensions> get_deltas_pair() const final;
+    virtual ~PoolingLayerBackPropagation();
 
     void set(const Index&, Layer*) final;
 
     void print() const;
 
-    Tensor<type, 4> deltas;
+    Tensor<type, 4> input_derivatives;
 
 };
 
+
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/struct_convolutional_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/pooling_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/pooling_layer_back_propagation_cuda.h"
 #endif
+
 
 }
 

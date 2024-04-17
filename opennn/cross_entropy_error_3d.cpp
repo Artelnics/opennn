@@ -70,21 +70,21 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(layers_number - 1));
     
-    probabilistic_layer_3d_back_propagation->targets = targets; 
+    probabilistic_layer_3d_back_propagation->targets = targets;
 
-    /// @todo move to struct? I think that there is something already (called errors?)
+    /// @todo Can we remove this?
 
-    //Tensor<type, 2> cross_entropy_errors(targets.dimension(0), targets.dimension(1));
-
-    Tensor<type, 2>& errors = back_propagation.errors;
-
+    Tensor<type, 2> errors(batch_samples_number, targets.dimension(1));
+ 
     Tensor<type, 0> cross_entropy_error;   
+
+    /// @todo Can we do this in matrix form?
 
     #pragma omp parallel for
 
     for (Index i = 0; i < targets.dimension(0); i++)
         for (Index j = 0; j < targets.dimension(1); j++)
-            errors(i, j) = -log( outputs(i, j, Index(targets(i, j))) );
+            errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
     cross_entropy_error.device(*thread_pool_device) = errors.sum();
 
@@ -99,7 +99,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
                << "NAN values found in back propagation error.";
 
         throw runtime_error(buffer.str());
-    }
+    }  
 }
 
 

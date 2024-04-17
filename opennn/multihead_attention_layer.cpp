@@ -84,6 +84,14 @@ Index MultiheadAttentionLayer::get_weights_depth() const
 }
 
 
+dimensions MultiheadAttentionLayer::get_output_dimensions() const
+{
+    Index neurons_number = get_neurons_number();
+
+    return { input_size, depth };
+}
+
+
 /// Return linear transformation weights and biases
 
 Tensor<type, 3> MultiheadAttentionLayer::get_query_weights() const
@@ -759,122 +767,27 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
 }
 
 
-void MultiheadAttentionLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                                     LayerBackPropagation* next_back_propagation,
-                                                     LayerForwardPropagation*,
-                                                     LayerBackPropagation* back_propagation) const
-{
-    MultiheadAttentionLayerBackPropagation* multihead_layer_back_propagation =
-        static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation);
-
-    switch (next_back_propagation->layer->get_type())
-    {
-
-    case Type::Perceptron3D:
-    {
-        PerceptronLayer3DForwardPropagation* next_perceptron_layer_forward_propagation =
-            reinterpret_cast<PerceptronLayer3DForwardPropagation*>(next_forward_propagation);
-
-        PerceptronLayer3DBackPropagation* next_perceptron_layer_back_propagation =
-            reinterpret_cast<PerceptronLayer3DBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_perceptron_layer_forward_propagation,
-                               next_perceptron_layer_back_propagation,
-                               multihead_layer_back_propagation);
-    }
-    return;
-
-    case Type::MultiheadAttention:
-    {
-        MultiheadAttentionLayerForwardPropagation* next_multihead_attention_layer_forward_propagation =
-            reinterpret_cast<MultiheadAttentionLayerForwardPropagation*>(next_forward_propagation);
-
-        MultiheadAttentionLayerBackPropagation* next_multihead_attention_layer_back_propagation =
-            reinterpret_cast<MultiheadAttentionLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_multihead_attention_layer_forward_propagation,
-                               next_multihead_attention_layer_back_propagation,
-                               multihead_layer_back_propagation);
-    }
-    return;
-
-    default:
-
-        return;
-    }
-}
-
-
-void MultiheadAttentionLayer::calculate_hidden_delta(PerceptronLayer3DForwardPropagation* next_forward_propagation,
-                                                     PerceptronLayer3DBackPropagation* next_back_propagation,
-                                                     MultiheadAttentionLayerBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const PerceptronLayer3D* next_perceptron_layer = static_cast<PerceptronLayer3D*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    // Next back propagation
-
-    const Tensor<type, 3>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, contraction_indices);
-}
-
-
-void MultiheadAttentionLayer::calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation* next_forward_propagation,
-                                                     MultiheadAttentionLayerBackPropagation* next_back_propagation,
-                                                     MultiheadAttentionLayerBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
-
-    // Next back propagation
-
-    const Tensor<type, 3>& next_error_input_derivatives = next_back_propagation->error_input_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-
-    // Next back propagation
-
-    /* Transformer's cross-attention layer takes MHA as input and Perceptron3D as context
-    bool is_context; // @todo
-
-    if(is_context)
-        deltas.device(*thread_pool_device) = next_back_propagation->error_context_derivatives;
-    else
-    */
-
-    deltas.device(*thread_pool_device) = next_error_input_derivatives;
-}
-
-
-void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs,
+void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                                       const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                        LayerForwardPropagation* forward_propagation,
                                                        LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> input(inputs(0).first,
-                                           inputs(0).second[0],
-                                           inputs(0).second[1],
-                                           inputs(0).second[2]);
+    const TensorMap<Tensor<type, 3>> input(inputs_pair(0).first,
+                                           inputs_pair(0).second[0],
+                                           inputs_pair(0).second[1],
+                                           inputs_pair(0).second[2]);
 
-    const TensorMap<Tensor<type, 3>> context(inputs(1).first,
-                                             inputs(1).second[0],
-                                             inputs(1).second[1],
-                                             inputs(1).second[2]);
+    const TensorMap<Tensor<type, 3>> context(inputs_pair(1).first,
+                                             inputs_pair(1).second[0],
+                                             inputs_pair(1).second[1],
+                                             inputs_pair(1).second[2]);
 
-    Index batch_samples_number = inputs(0).second[0];
+    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
+                                            deltas_pair(0).second[0],
+                                            deltas_pair(0).second[1],
+                                            deltas_pair(0).second[2]);
+
+    Index batch_samples_number = inputs_pair(0).second[0];
 
     type* query_weights_data = (type*)query_weights.data();
     type* key_weights_data = (type*)key_weights.data();
@@ -905,8 +818,6 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
     MultiheadAttentionLayerBackPropagation* multihead_attention_layer_back_propagation =
         static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation);
 
-    const Tensor<type, 3>& deltas = multihead_attention_layer_back_propagation->deltas;
-
     Tensor<type, 3>& projection_weights_derivatives = multihead_attention_layer_back_propagation->projection_weights_derivatives;
 
     Tensor<type, 4>& error_attention_scores_derivatives = multihead_attention_layer_back_propagation->error_attention_scores_derivatives;
@@ -921,10 +832,10 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
     Tensor<type, 3>& key_weights_derivatives = multihead_attention_layer_back_propagation->key_weights_derivatives;
     Tensor<type, 3>& value_weights_derivatives = multihead_attention_layer_back_propagation->value_weights_derivatives;
 
-    Tensor<type, 3>& error_input_derivatives = multihead_attention_layer_back_propagation->error_input_derivatives;
-    error_input_derivatives.setZero();
-    Tensor<type, 3>& error_context_derivatives = multihead_attention_layer_back_propagation->error_context_derivatives;
-    error_context_derivatives.setZero();
+    Tensor<type, 3>& input_derivatives = multihead_attention_layer_back_propagation->input_derivatives;
+    input_derivatives.setZero();
+    Tensor<type, 3>& context_derivatives = multihead_attention_layer_back_propagation->context_derivatives;
+    context_derivatives.setZero();
 
     Tensor<type, 1>& aux_rows = multihead_attention_layer_back_propagation->aux_rows;
 
@@ -1086,12 +997,12 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
 
             // INPUT DERIVATIVES
 
-            error_input_derivatives.chip(sample_index, 0).device(*thread_pool_device)
+            input_derivatives.chip(sample_index, 0).device(*thread_pool_device)
                 += sample_query_derivatives.contract(head_query_weights, A_BT);
 
             // CONTEXT DERIVATIVES
 
-            error_context_derivatives.chip(sample_index, 0).device(*thread_pool_device) 
+            context_derivatives.chip(sample_index, 0).device(*thread_pool_device) 
                 += sample_key_derivatives.contract(head_key_weights, A_BT)
                 + sample_value_derivatives.contract(head_value_weights, A_BT);
         }
@@ -1239,17 +1150,6 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_sampl
 }
 
 
-pair<type*, dimensions> MultiheadAttentionLayerBackPropagation::get_deltas_pair() const
-{
-    MultiheadAttentionLayer* multihead_attention_layer= static_cast<MultiheadAttentionLayer*>(layer);
-
-    const Index input_size = multihead_attention_layer->get_input_size();
-    const Index depth = multihead_attention_layer->get_depth();
-
-    return pair<type*, dimensions>(deltas_data, { batch_samples_number, input_size, depth });
-}
-
-
 void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -1264,10 +1164,6 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
     const Index heads_number = multihead_attention_layer->get_heads_number();
     const Index weights_depth = multihead_attention_layer->get_weights_depth();
 
-    deltas.resize(batch_samples_number, input_size, depth);
-
-    deltas_data = deltas.data();
-
     error_attention_scores_derivatives.resize(context_size, input_size, batch_samples_number, heads_number);
     error_softmax_attention_scores_derivatives.resize(context_size, input_size, batch_samples_number, heads_number);
     error_attention_output_derivatives.resize(input_size, weights_depth, batch_samples_number, heads_number);
@@ -1275,9 +1171,6 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
     error_query_derivatives.resize(input_size, weights_depth, batch_samples_number, heads_number);
     error_key_derivatives.resize(context_size, weights_depth, batch_samples_number, heads_number);
     error_value_derivatives.resize(context_size, weights_depth, batch_samples_number, heads_number);
-
-    error_input_derivatives.resize(batch_samples_number, input_size, depth);
-    error_context_derivatives.resize(batch_samples_number, context_size, depth);
 
     query_weights_derivatives.resize(depth, weights_depth, heads_number);
     key_weights_derivatives.resize(depth, weights_depth, heads_number);
@@ -1291,6 +1184,15 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
     projection_biases_derivatives.resize(depth);
 
     aux_rows.resize(context_size);
+
+    input_derivatives.resize(batch_samples_number, input_size, depth);
+    context_derivatives.resize(batch_samples_number, context_size, depth);
+
+    inputs_derivatives.resize(2);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, input_size, depth };
+    inputs_derivatives(1).first = context_derivatives.data();
+    inputs_derivatives(1).second = { batch_samples_number, context_size, depth };
 }
 
 }

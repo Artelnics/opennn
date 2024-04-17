@@ -67,6 +67,13 @@ Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
     return outputs_dimensions;
 }
 
+
+dimensions FlattenLayer::get_output_dimensions() const
+{
+    return { inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2) };
+}
+
+
 /// @todo
 Index FlattenLayer::get_inputs_number() const
 {
@@ -145,84 +152,26 @@ void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 }
 
 
-void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                          LayerBackPropagation* next_back_propagation,
-                                          LayerForwardPropagation*,
-                                          LayerBackPropagation* this_back_propagation) const
+void FlattenLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                            const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+                                            LayerForwardPropagation* forward_propagation,
+                                            LayerBackPropagation* back_propagation) const
 {
+    Index batch_samples_number = inputs_pair(0).second[0];
+    Index neurons_number = get_neurons_number();
+
+    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+
+    // Back propagation
+
     FlattenLayerBackPropagation* flatten_layer_back_propagation =
-            static_cast<FlattenLayerBackPropagation*>(this_back_propagation);
+        static_cast<FlattenLayerBackPropagation*>(back_propagation);
 
-    Layer::Type next_type = next_back_propagation->layer->get_type();
+    Tensor<type, 4>& input_derivatives = flatten_layer_back_propagation->input_derivatives;
 
-    switch(next_type)
-    {
-    case Type::Perceptron:
-    {
-        PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
-                static_cast<PerceptronLayerForwardPropagation*>(next_forward_propagation);
-
-        PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
-                static_cast<PerceptronLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_perceptron_layer_forward_propagation,
-                               next_perceptron_layer_back_propagation,
-                               flatten_layer_back_propagation);
-    }
-        return;
-
-    case Type::Probabilistic:
-    {
-        ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
-                static_cast<ProbabilisticLayerForwardPropagation*>(next_forward_propagation);
-
-        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-                static_cast<ProbabilisticLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_probabilistic_layer_forward_propagation,
-                               next_probabilistic_layer_back_propagation,
-                               flatten_layer_back_propagation);
-    }
-        return;
-
-    default:
-
-        return;
-    }
-}
-
-
-void FlattenLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation,
-                                          PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation,
-                                          FlattenLayerBackPropagation* flatten_layer_back_propagation) const
-{
-    const PerceptronLayer* next_perceptron_layer
-        = static_cast<PerceptronLayer*>(next_perceptron_layer_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    const Tensor<type, 2>& next_error_combinations_derivatives = next_perceptron_layer_back_propagation->error_combinations_derivatives;
-
-    Tensor<type, 2>& deltas = flatten_layer_back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = (next_error_combinations_derivatives).contract(next_synaptic_weights, A_BT);
-}
-
-
-void FlattenLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation,
-                                          ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation,
-                                          FlattenLayerBackPropagation* flatten_layer_back_propagation) const
-{
-    const ProbabilisticLayer* next_probabilistic_layer
-        = static_cast<ProbabilisticLayer*>(next_probabilistic_layer_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
-
-    const Tensor<type, 2>& next_error_combinations_derivatives = next_probabilistic_layer_back_propagation->error_combinations_derivatives;
-
-    Tensor<type, 2>& deltas = flatten_layer_back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = (next_error_combinations_derivatives).contract(next_synaptic_weights, A_BT);
+    memcpy(input_derivatives.data(),
+           deltas_pair(0).first,
+           static_cast<Index>(batch_samples_number * neurons_number * sizeof(type)));
 }
 
 
@@ -373,12 +322,6 @@ void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, 
     outputs_data = outputs.data();
 }
 
-pair<type*, dimensions> FlattenLayerBackPropagation::get_deltas_pair() const
-{
-    const Index neurons_number = layer->get_neurons_number();
-
-    return pair<type*, dimensions>(deltas_data, { batch_samples_number, neurons_number });
-}
 
 void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -386,11 +329,15 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index neurons_number = new_layer->get_neurons_number();
+    FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
 
-    deltas.resize(batch_samples_number, neurons_number);
+    Tensor<Index, 1> inputs_dimensions = flatten_layer->get_inputs_dimensions();
 
-    deltas_data = deltas.data();
+    input_derivatives.resize(batch_samples_number, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2));
+
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2) };
 }
 
 }
