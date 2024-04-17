@@ -1232,6 +1232,19 @@ Index NeuralNetwork::get_outputs_number() const
 }
 
 
+dimensions NeuralNetwork::get_outputs_dimensions() const
+{
+    if (layers.size() > 0)
+    {
+        const Layer* last_layer = layers[layers.size() - 1];
+
+        return last_layer->get_output_dimensions();
+    }
+
+    return {};
+}
+
+
 Tensor<Index, 1> NeuralNetwork::get_trainable_layers_neurons_numbers() const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
@@ -4946,6 +4959,20 @@ Layer* NeuralNetwork::get_last_trainable_layer() const
     return trainable_layers(trainable_layers_number-1);
 }
 
+
+Layer* NeuralNetwork::get_last_layer() const
+{
+    if (layers.size() > 0)
+    {
+        Layer* last_layer = layers[layers.size() - 1];
+
+        return last_layer;
+    }
+
+    return nullptr;
+}
+
+
 void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
     batch_samples_number = new_batch_samples_number;
@@ -5026,6 +5053,18 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         case Layer::Type::MultiheadAttention:
         {
             layers(i) = new MultiheadAttentionLayerBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Addition3D:
+        {
+            layers(i) = new AdditionLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Normalization3D:
+        {
+            layers(i) = new NormalizationLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
 
@@ -5140,6 +5179,20 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
         case Layer::Type::MultiheadAttention:
         {
             layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
+
+        }
+        break;
+
+        case Layer::Type::Addition3D:
+        {
+            layers(i) = new AdditionLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
+
+        }
+        break;
+
+        case Layer::Type::Normalization3D:
+        {
+            layers(i) = new NormalizationLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
 
         }
         break;

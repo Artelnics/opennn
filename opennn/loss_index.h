@@ -155,7 +155,7 @@ public:
 
    bool has_selection() const;
 
-   Index get_next_layer_index(const Tensor<Tensor<Index, 1>, 1>&, const Index) const;
+   Index find_input_index(const Tensor<Index, 1>&, const Index) const;
 
    // Numerical differentiation
 
@@ -250,6 +250,7 @@ public:
    void check() const;
 
     #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
         #include "../../opennn_cuda/opennn_cuda/loss_index_cuda.h"
     #endif
 
@@ -298,7 +299,7 @@ protected:
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/struct_loss_index_back_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/loss_index_back_propagation_cuda.h"
 #endif
 
 struct BackPropagationLM

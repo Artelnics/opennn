@@ -92,6 +92,15 @@ type PerceptronLayer::get_dropout_rate() const
     return dropout_rate;
 }
 
+
+dimensions PerceptronLayer::get_output_dimensions() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    return { neurons_number };
+}
+
+
 /// Returns the biases from all the perceptrons in the layer.
 /// The format is a vector of real values.
 /// The size of this vector is the number of neurons in the layer.
@@ -596,142 +605,44 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 }
 
 
-void PerceptronLayer::calculate_error_combinations_derivatives(const Tensor<type, 2>& deltas,
-                                                               const Tensor<type, 2>& activations_derivatives,
-                                                               Tensor<type, 2>& error_combinations_derivatives) const
-{
-    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
-}
-
-
-void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                             LayerBackPropagation* next_back_propagation, 
-                                             LayerForwardPropagation*,
-                                             LayerBackPropagation* layer_back_propagation) const
-{
-    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
-            static_cast<PerceptronLayerBackPropagation*>(layer_back_propagation);
-
-    switch(next_back_propagation->layer->get_type())
-    {
-
-    case Type::Perceptron:
-    {
-        PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
-                reinterpret_cast<PerceptronLayerForwardPropagation*>(next_forward_propagation);
-
-        PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
-                reinterpret_cast<PerceptronLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_perceptron_layer_forward_propagation,
-                               next_perceptron_layer_back_propagation,
-                               perceptron_layer_back_propagation);
-    }
-        return;
-
-    case Type::Probabilistic:
-    {
-        ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
-                reinterpret_cast<ProbabilisticLayerForwardPropagation*>(next_forward_propagation);
-
-        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-                reinterpret_cast<ProbabilisticLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_probabilistic_layer_forward_propagation,
-                               next_probabilistic_layer_back_propagation,
-                               perceptron_layer_back_propagation);
-    }
-        return;
-
-    default:
-
-        return;
-    }
-}
-
-
-void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* next_forward_propagation,
-                                             PerceptronLayerBackPropagation* next_back_propagation,
-                                             PerceptronLayerBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const PerceptronLayer* next_perceptron_layer = static_cast<PerceptronLayer*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    // Next back-propagation
-
-    const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 2>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-}
-
-
-void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation* next_forward_propagation,
-                                             ProbabilisticLayerBackPropagation* next_back_propagation,
-                                             PerceptronLayerBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer->get_synaptic_weights();
-
-    // Next back propagation
-
-    const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 2>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-}
-
-
 void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_forward_propagation,
-                                                LayerBackPropagationLM* next_back_propagation,
-                                                LayerBackPropagationLM* layer_back_propagation) const
+    LayerBackPropagationLM* next_back_propagation,
+    LayerBackPropagationLM* layer_back_propagation) const
 {
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation =
-            static_cast<PerceptronLayerBackPropagationLM*>(layer_back_propagation);
+        static_cast<PerceptronLayerBackPropagationLM*>(layer_back_propagation);
 
     const Layer::Type next_type = next_back_propagation->layer->get_type();
 
-    switch(next_type)
+    switch (next_type)
     {
     case Type::Perceptron:
     {
         PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
-                static_cast<PerceptronLayerForwardPropagation*>(next_forward_propagation);
+            static_cast<PerceptronLayerForwardPropagation*>(next_forward_propagation);
 
         PerceptronLayerBackPropagationLM* next_perceptron_layer_back_propagation =
-                static_cast<PerceptronLayerBackPropagationLM*>(next_back_propagation);
+            static_cast<PerceptronLayerBackPropagationLM*>(next_back_propagation);
 
         calculate_hidden_delta_lm(next_perceptron_layer_forward_propagation,
-                                  next_perceptron_layer_back_propagation,
-                                  perceptron_layer_back_propagation);
+            next_perceptron_layer_back_propagation,
+            perceptron_layer_back_propagation);
     }
-        return;
+    return;
 
     case Type::Probabilistic:
     {
         ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
-                static_cast<ProbabilisticLayerForwardPropagation*>(next_forward_propagation);
+            static_cast<ProbabilisticLayerForwardPropagation*>(next_forward_propagation);
 
         ProbabilisticLayerBackPropagationLM* next_probabilistic_layer_back_propagation =
-                static_cast<ProbabilisticLayerBackPropagationLM*>(next_back_propagation);
+            static_cast<ProbabilisticLayerBackPropagationLM*>(next_back_propagation);
 
         calculate_hidden_delta_lm(next_probabilistic_layer_forward_propagation,
-                                  next_probabilistic_layer_back_propagation,
-                                  perceptron_layer_back_propagation);
+            next_probabilistic_layer_back_propagation,
+            perceptron_layer_back_propagation);
     }
-        return;
+    return;
 
     default:
 
@@ -863,10 +774,12 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 
 
 void PerceptronLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                               const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
 
     // Forward propagation
 
@@ -879,20 +792,22 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<pair<type*, dimensio
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
-
-    const Tensor<type, 2>& deltas = perceptron_layer_back_propagation->deltas;
-
+    
     Tensor<type, 2>& error_combinations_derivatives = perceptron_layer_back_propagation->error_combinations_derivatives;
-
-    calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
 
     Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_back_propagation->synaptic_weights_derivatives;
 
     Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
 
+    Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation->input_derivatives;
+    
+    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+    
     biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
 
     synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(error_combinations_derivatives, AT_B);
+
+    input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, A_BT);
 }
 
 
@@ -1248,14 +1163,6 @@ PerceptronLayerBackPropagation::~PerceptronLayerBackPropagation()
 }
 
 
-pair<type *, dimensions> PerceptronLayerBackPropagation::get_deltas_pair() const
-{
-    const Index neurons_number = layer->get_neurons_number();
-    
-    return pair<type *, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
-}
-
-
 void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
                                          Layer *new_layer)
 {
@@ -1265,11 +1172,6 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
     
     const Index neurons_number = layer->get_neurons_number();
     const Index inputs_number = layer->get_inputs_number();
-    
-    deltas.resize(batch_samples_number, neurons_number);
-    deltas.setZero();
-
-    deltas_data = deltas.data();
 
     error_combinations_derivatives.resize(batch_samples_number, neurons_number);
     biases_derivatives.setZero();
@@ -1279,14 +1181,17 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
 
     synaptic_weights_derivatives.resize(inputs_number, neurons_number);
     synaptic_weights_derivatives.setZero();
+
+    input_derivatives.resize(batch_samples_number, inputs_number);
+
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
 }
 
 
 void PerceptronLayerBackPropagation::print() const
 {
-    cout << "Deltas:" << endl;
-    cout << deltas << endl;
-
     cout << "Error combinations derivatives:" << endl;
     cout << error_combinations_derivatives << endl;
 

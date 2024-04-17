@@ -35,14 +35,14 @@ struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
+struct PerceptronLayerForwardPropagation;
+struct PerceptronLayerBackPropagation;
+struct PerceptronLayerBackPropagationLM;
+
 #ifdef OPENNN_CUDA
     struct ProbabilisticLayerForwardPropagationCuda;
     struct ProbabilisticLayerBackPropagationCuda;
 #endif
-
-
-/// This class represents a layer of probabilistic neurons.
-/// The neural network defined in OpenNN includes a probabilistic layer for those problems when the outptus are to be interpreted as probabilities.
 
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
@@ -62,7 +62,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     void print() const;
 
     Tensor<type, 2> outputs;
-    Tensor<type, 2> activations_derivatives_2d;
+    Tensor<type, 2> activations_derivatives;
 
     Tensor<type, 1> aux_rows;
 };
@@ -76,13 +76,9 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     explicit ProbabilisticLayerBackPropagation(const Index&, Layer*);
 
-    pair<type *, dimensions> get_deltas_pair() const final;
-
     void set(const Index&, Layer*) final;
 
     void print() const;
-
-    Tensor<type, 2> deltas;
 
     Tensor<type, 2> targets;
 
@@ -93,6 +89,8 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
+
+    Tensor<type, 2> input_derivatives;
 };
 
 
@@ -145,6 +143,9 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 #endif
 
 
+/// This class represents a layer of probabilistic neurons.
+/// The neural network defined in OpenNN includes a probabilistic layer for those problems when the outptus are to be interpreted as probabilities.
+
 class ProbabilisticLayer : public Layer
 {
 
@@ -166,6 +167,8 @@ public:
 
     Index get_inputs_number() const final;
     Index get_neurons_number() const final;
+
+    dimensions get_output_dimensions() const final;
 
     Index get_biases_number() const;
     Index get_synaptic_weights_number() const;
@@ -255,6 +258,7 @@ public:
         Tensor<type, 2>&) const;
 
     void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+        const Tensor<pair<type*, dimensions>, 1>&,
         LayerForwardPropagation*,
         LayerBackPropagation*) const final;
 
@@ -289,10 +293,6 @@ public:
 
     void write_XML(tinyxml2::XMLPrinter&) const final;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
-    #endif
-
 
 protected:
 
@@ -316,8 +316,12 @@ protected:
     bool display = true;
 
 
-};
+#ifdef OPENNN_CUDA
+#include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
+#endif
 
+
+};
 
 }
 

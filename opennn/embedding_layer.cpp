@@ -65,6 +65,13 @@ Index EmbeddingLayer::get_depth() const
     return depth;
 }
 
+
+dimensions EmbeddingLayer::get_output_dimensions() const
+{
+    return { inputs_number, depth };
+}
+
+
 Tensor<type, 2> EmbeddingLayer::get_embedding_weights() const
 {
     return embedding_weights;
@@ -333,134 +340,9 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     }
 }
 
-void EmbeddingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                            LayerBackPropagation* next_back_propagation, 
-                                            LayerForwardPropagation*,
-                                            LayerBackPropagation* back_propagation) const
-{
-
-    EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
-        static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
-
-    switch (next_back_propagation->layer->get_type())
-    {
-    case Type::MultiheadAttention:
-    {
-        MultiheadAttentionLayerForwardPropagation* next_multihead_attention_layer_forward_propagation =
-            reinterpret_cast<MultiheadAttentionLayerForwardPropagation*>(next_forward_propagation);
-
-        MultiheadAttentionLayerBackPropagation* next_multihead_attention_layer_back_propagation =
-            reinterpret_cast<MultiheadAttentionLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_multihead_attention_layer_forward_propagation,
-                               next_multihead_attention_layer_back_propagation,
-                               embedding_layer_back_propagation);
-    }
-    return;
-
-    case Type::Perceptron3D:
-    {
-        PerceptronLayer3DForwardPropagation* next_perceptron_layer_3d_forward_propagation =
-            reinterpret_cast<PerceptronLayer3DForwardPropagation*>(next_forward_propagation);
-
-        PerceptronLayer3DBackPropagation* next_perceptron_layer_3d_back_propagation =
-            reinterpret_cast<PerceptronLayer3DBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_perceptron_layer_3d_forward_propagation,
-                               next_perceptron_layer_3d_back_propagation,
-                               embedding_layer_back_propagation);
-    }
-    return;
-
-    case Type::Probabilistic3D:
-    {
-        ProbabilisticLayer3DForwardPropagation* next_probabilistic_layer_3d_forward_propagation =
-            reinterpret_cast<ProbabilisticLayer3DForwardPropagation*>(next_forward_propagation);
-
-        ProbabilisticLayer3DBackPropagation* next_probabilistic_layer_3d_back_propagation =
-            reinterpret_cast<ProbabilisticLayer3DBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_probabilistic_layer_3d_forward_propagation,
-                               next_probabilistic_layer_3d_back_propagation,
-                               embedding_layer_back_propagation);
-    }
-    return;
-
-    default:
-
-        return;
-    }
-}
-
-
-void EmbeddingLayer::calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation* next_forward_propagation,
-                                            MultiheadAttentionLayerBackPropagation* next_back_propagation,
-                                            EmbeddingLayerBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
-
-    // Next back propagation
-
-    const Tensor<type, 3>& next_error_input_derivatives = next_back_propagation->error_input_derivatives;
-    const Tensor<type, 3>& next_error_context_derivatives = next_back_propagation->error_context_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_input_derivatives + next_error_context_derivatives;
-}
-
-
-void EmbeddingLayer::calculate_hidden_delta(PerceptronLayer3DForwardPropagation* next_forward_propagation,
-                                            PerceptronLayer3DBackPropagation* next_back_propagation,
-                                            EmbeddingLayerBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const PerceptronLayer3D* next_perceptron_layer = static_cast<PerceptronLayer3D*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    // Next back-propagation
-
-    Tensor<type, 3>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, contraction_indices);
-}
-
-
-void EmbeddingLayer::calculate_hidden_delta(ProbabilisticLayer3DForwardPropagation* next_forward_propagation,
-                                            ProbabilisticLayer3DBackPropagation* next_back_propagation,
-                                            EmbeddingLayerBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(next_back_propagation->layer);
-
-    const Index next_neurons_number = probabilistic_layer_3d->get_neurons_number();
-
-    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_3d->get_synaptic_weights();
-
-    // Next back propagation
-
-    Tensor<type, 3>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 3>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, contraction_indices);
-}
-
 
 void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                              const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
@@ -469,6 +351,11 @@ void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimension
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, batch_samples_number, inputs_number);
 
+    if (deltas_pair.size() > 1)
+        add_deltas(deltas_pair);
+
+    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first, batch_samples_number, inputs_number, deltas_pair(0).second[2]);
+
     // Forward propagation
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation = static_cast<EmbeddingLayerForwardPropagation*>(forward_propagation);
@@ -476,8 +363,6 @@ void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimension
     // Back propagation
 
     EmbeddingLayerBackPropagation* embedding_layer_back_propagation = static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
-
-    const Tensor<type, 3>& deltas = embedding_layer_back_propagation->deltas;
 
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
 
@@ -493,6 +378,25 @@ void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimension
         {
             embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device) += deltas.chip(i, 0).chip(j, 0);
         }
+    }
+}
+
+
+void EmbeddingLayer::add_deltas(const Tensor<pair<type*, dimensions>, 1>& deltas_pair) const
+{
+    TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
+                                      deltas_pair(0).second[0],
+                                      deltas_pair(0).second[1],
+                                      deltas_pair(0).second[2]);
+     
+    for (Index i = 1; i < deltas_pair.size(); i++)
+    {
+        const TensorMap<Tensor<type, 3>> other_deltas(deltas_pair(i).first,
+                                                      deltas_pair(i).second[0],
+                                                      deltas_pair(i).second[1],
+                                                      deltas_pair(i).second[2]);
+
+        deltas.device(*thread_pool_device) += other_deltas;
     }
 }
 
@@ -599,17 +503,6 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 }
 
 
-pair<type*, dimensions> EmbeddingLayerBackPropagation::get_deltas_pair() const
-{
-    EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
-
-    const Index inputs_number = embedding_layer->get_inputs_number();
-    const Index depth = embedding_layer->get_depth();
-
-    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, depth });
-}
-
-
 void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -622,15 +515,11 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     const Index depth = embedding_layer->get_depth();
 
-    // Deltas
-
-    deltas.resize(batch_samples_number, inputs_number, depth);
-
-    deltas_data = deltas.data();
-
     const Index input_dimension = embedding_layer->get_input_dimension();
 
     embedding_weights_derivatives.resize(input_dimension + 1, depth);
+
+    inputs_derivatives.resize(0); // Always input layer
 }
 
 }
