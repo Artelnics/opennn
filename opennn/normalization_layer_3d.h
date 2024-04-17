@@ -216,7 +216,7 @@ namespace opennn
         Tensor<type, 3> means;
         Tensor<type, 3> variances;
 
-        type epsilon = 0.001;
+        type epsilon = static_cast<type>(0.001);
     };
 
 
