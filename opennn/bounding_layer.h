@@ -57,6 +57,8 @@ public:
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
 
+   dimensions get_output_dimensions() const final;
+
    const BoundingMethod& get_bounding_method() const;
 
    string write_bounding_method() const;

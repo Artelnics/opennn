@@ -475,7 +475,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch.get_inputs_pair(),
+        /*neural_network->forward_propagate(training_batch.get_inputs_pair(),
                                                   training_forward_propagation,
                                                   is_training);
 
@@ -483,7 +483,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         loss_index->back_propagate_lm(training_batch,
                                               training_forward_propagation,
-                                              training_back_propagation_lm);
+                                              training_back_propagation_lm);*/
 
         results.training_error_history(epoch) = training_back_propagation_lm.error;
 

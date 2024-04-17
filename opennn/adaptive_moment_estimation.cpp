@@ -381,7 +381,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               is_training);
 
             // Loss index
-
+            
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
@@ -392,7 +392,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 //            training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
-
+            
+            if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
         
         // Loss

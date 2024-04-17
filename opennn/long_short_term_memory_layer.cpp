@@ -57,6 +57,14 @@ Index LongShortTermMemoryLayer::get_neurons_number() const
 }
 
 
+dimensions LongShortTermMemoryLayer::get_output_dimensions() const
+{
+    Index neurons_number = get_neurons_number();
+
+    return { neurons_number };
+}
+
+
 /// Returns the number of parameters (biases, weights, recurrent weights) of the layer.
 
 Index LongShortTermMemoryLayer::get_parameters_number() const
@@ -1277,13 +1285,12 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
                                                  const bool& is_training)
 {
     const Index samples_number = inputs_pair(0).second[0];
-
-    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = inputs_pair(0).second[1];
 
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, neurons_number);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_number);
     Tensor<type, 1>& current_inputs = long_short_term_memory_layer_forward_propagation->current_inputs;
 
     Tensor<type, 2, RowMajor>& forget_activations = long_short_term_memory_layer_forward_propagation->forget_activations;
@@ -1441,97 +1448,8 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
 }
 
 
-void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                                      LayerBackPropagation* next_back_propagation,
-                                                      LayerForwardPropagation*,
-                                                      LayerBackPropagation* back_propagation) const
-{
-    LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
-        static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
-
-    const Layer::Type layer_type = next_back_propagation->layer->get_type();
-
-    switch (layer_type)
-    {
-    case Type::Perceptron:
-    {
-        PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
-            static_cast<PerceptronLayerForwardPropagation*>(next_forward_propagation);
-
-        PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
-            static_cast<PerceptronLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_perceptron_layer_forward_propagation,
-            next_perceptron_layer_back_propagation,
-            long_short_term_memory_layer_back_propagation);
-    }
-    return;
-
-    case Type::Probabilistic:
-    {
-        ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
-            static_cast<ProbabilisticLayerForwardPropagation*>(next_forward_propagation);
-
-        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-            static_cast<ProbabilisticLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_probabilistic_layer_forward_propagation,
-            next_probabilistic_layer_back_propagation,
-            long_short_term_memory_layer_back_propagation);
-    }
-    return;
-
-    default:
-
-        return;
-    }
-}
-
-
-void LongShortTermMemoryLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* next_forward_propagation,
-    PerceptronLayerBackPropagation* next_back_propagation,
-    LongShortTermMemoryLayerBackPropagation* back_propagation) const
-{
-    const PerceptronLayer* next_perceptron_layer = static_cast<PerceptronLayer*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    // Next back propagation
-
-    const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // Back propagation
-
-    Tensor<type, 2>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-}
-
-
-void LongShortTermMemoryLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation* next_forward_propagation,
-    ProbabilisticLayerBackPropagation* next_back_propagation,
-    LongShortTermMemoryLayerBackPropagation* back_propagation) const
-{
-    // Next layer
-
-    const ProbabilisticLayer* next_probabilistic_layer
-        = static_cast<ProbabilisticLayer*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
-
-    // Next back propagation
-
-    const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // This back propagation
-
-    Tensor<type, 2>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-}
-
-
 void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                                        const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                         LayerForwardPropagation* forward_propagation,
                                                         LayerBackPropagation* back_propagation) const
 {
@@ -1541,6 +1459,8 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<pair<type*,
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
     const Index samples_number = inputs.dimension(0);
+
+    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
 
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
             static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
@@ -1588,7 +1508,6 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<pair<type*,
 
     // Back propagation
 
-    const Tensor<type, 2>& deltas = long_short_term_memory_layer_back_propagation->deltas;
     Tensor<type, 1>& current_deltas = long_short_term_memory_layer_back_propagation->current_deltas;
 
     Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_weights_derivatives;
@@ -2329,8 +2248,6 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
     const Index neurons_number = layer->get_neurons_number();
     const Index inputs_number = layer->get_inputs_number();
 
-    deltas.resize(batch_samples_number, neurons_number);
-
     current_deltas.resize(neurons_number);
 
     forget_weights_derivatives.resize(inputs_number * neurons_number);
@@ -2371,6 +2288,12 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
 
     hidden_states_recurrent_weights_derivatives.resize(neurons_number * neurons_number, neurons_number);
     cell_states_recurrent_weights_derivatives.resize(neurons_number * neurons_number, neurons_number);
+
+    input_derivatives.resize(batch_samples_number, inputs_number);
+
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
 }
 }
 
