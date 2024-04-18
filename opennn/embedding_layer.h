@@ -115,7 +115,7 @@ public:
 
     // Gradient methods
 
-    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                                   const Tensor<pair<type*, dimensions>, 1>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
@@ -254,6 +254,7 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
         {
         }
 
+        Tensor<type, 2> sample_deltas;
         Tensor<type, 2> embedding_weights_derivatives;
     };
 

@@ -105,6 +105,21 @@ void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& te
 }
 
 
+void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+    const Index channels_number = tensor.dimension(2);
+
+    for (Index i = 0; i < channels_number; i++)
+    {
+        TensorMap<Tensor<type, 2>> slice(tensor.data() + i * rows_number * columns_number, rows_number, columns_number);
+
+        slice.device(*thread_pool_device) = slice * matrix;
+    }
+}
+
+
 // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
 // By default contraction axes are (1, 0)

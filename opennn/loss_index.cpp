@@ -376,6 +376,7 @@ void LossIndex::back_propagate(const Batch& batch,
     // Regularization
 
     add_regularization(back_propagation);
+    
 }
 
 
@@ -763,7 +764,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             }
         }
 
-        layer->calculate_error_gradient(layer_inputs, layer_deltas, layer_forward_propagation, layer_back_propagation);
+        layer->back_propagate(layer_inputs, layer_deltas, layer_forward_propagation, layer_back_propagation);
     }
 }
 

@@ -248,17 +248,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
     // Test
     {
         batch_samples_number = 1;
-
-        inputs_number = 2;
-        context_length = 2;
-        inputs_dimension = 2;
-        context_dimension = 2;
-
-        depth = 3;
-        perceptron_depth = 2;
-        heads_number = 2;
-        number_of_layers = 2;
-        /*
+        
         inputs_number = 2;
         context_length = 3;
         inputs_dimension = 5;
@@ -268,7 +258,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         perceptron_depth = 6; 
         heads_number = 4;
         number_of_layers = 1;
-        */
+        
         bool is_training = true;
         
         data_set.set_data_random_language_model(batch_samples_number, inputs_number, context_length, inputs_dimension, context_dimension);
@@ -297,18 +287,37 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
         
         assert_true(back_propagation.gradient.size() == transformer.get_parameters_number(), LOG);
-        /*
+        
         numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient();
 
-        const bool equal_gradients = are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2));
+        const bool equal_gradients = are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1));
         
         assert_true(equal_gradients, LOG);
-        */
-        // debugging
-        /*
         
+        // debugging
+
+        /*
+        *    input_embedding from parameter 0 to 23
+        *    context_embedding from parameter 24 to 51
+        *    context_self_attention_1 from parameter 52 to 359
+        *    context_self_attention_normalization_1 from parameter 360 to 367
+        *    encoder_internal_perceptron_1 from parameter 368 to 397
+        *    encoder_external_perceptron_1 from parameter 398 to 425
+        *    encoder_perceptron_normalization_1 from parameter 426 to 433
+        *    input_self_attention_1 from parameter 434 to 741
+        *    input_self_attention_normalization_1 from parameter 742 to 749
+        *    cross_attention_1 from parameter 750 to 1057
+        *    cross_attention_normalization_1 from parameter 1058 to 1065
+        *    decoder_internal_perceptron_1 from parameter 1066 to 1095
+        *    decoder_external_perceptron_1 from parameter 1096 to 1123
+        *    decoder_perceptron_normalization_1 from parameter 1124 to 1131
+        *    probabilistic from parameter 1132 to 1161
+        */
+
+        /*
         cout << "Gradient min = " << back_propagation.gradient.minimum() << " at index: " << back_propagation.gradient.argmin()
             << " and max = " << back_propagation.gradient.maximum() << " at index: " << back_propagation.gradient.argmax() << endl;
+
 
         Index parameter_index = 0;
         for (Index i = 0; i < transformer.get_layers().size(); i++)
@@ -316,16 +325,27 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
             cout << transformer.get_layer(i)->get_name() << " from parameter " << parameter_index << " to " << parameter_index + transformer.get_layer(i)->get_parameters_number() - 1 << endl;
             parameter_index += transformer.get_layer(i)->get_parameters_number();
         }
-
+        */
+        
         if (!equal_gradients)
         {
+            cout << endl;
+
             Tensor<Index, 0> max_difference_index = (back_propagation.gradient - numerical_gradient).abs().argmax();
             cout << "Test failed with max difference: " << (back_propagation.gradient - numerical_gradient).abs().maximum() << " at index: " << max_difference_index(0) << endl;
             cout << "Gradient = " << back_propagation.gradient(max_difference_index(0)) << endl;
-            cout << "Numerical gradient = " << numerical_gradient(max_difference_index(0)) << endl;            
-
-            cout << endl;
+            cout << "Numerical gradient = " << numerical_gradient(max_difference_index(0)) << endl;    
         }
+        
+        for (Index i = numerical_gradient.size() - 1; i >= 0 ; i--)
+        {
+            if (abs(numerical_gradient(i) - back_propagation.gradient(i)) > type(1e-1))
+            {
+                cout << "First difference greater than 0.1 at index: " << i << endl;
+                break;
+            }
+        }
+        /*
         
         Tensor<type, 0> average_difference = (back_propagation.gradient - numerical_gradient).abs().mean();
         
@@ -444,7 +464,7 @@ void CrossEntropyError3DTest::run_test_case()
     // Transformer test (Must be last since we change &neural_network to &transformer)
 
     cout << "test_calculate_gradient_transformer\n";
-    for(Index i = 0; i < 1; i++)   test_calculate_gradient_transformer();
+    for(Index i = 0; i < 10; i++)   test_calculate_gradient_transformer();
     
     cout << "End of cross-entropy error test case.\n\n";
 }

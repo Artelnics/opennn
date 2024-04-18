@@ -341,7 +341,7 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                               const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
@@ -364,19 +364,18 @@ void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimension
 
     EmbeddingLayerBackPropagation* embedding_layer_back_propagation = static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
 
+    Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
 
     embedding_weights_derivatives.setZero();
 
-    /// @todo improve, 
-    /// Dor instance, can we move deltas.chip(i, 0) to the outer loop?
-    /// Maybe doing everything elementwhise???
-
     for (Index i = 0; i < batch_samples_number; i++)
     {
+        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
+
         for (Index j = 0; j < inputs_number; j++)
         {
-            embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device) += deltas.chip(i, 0).chip(j, 0);
+            embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device) += sample_deltas.chip(j, 0);
         }
     }
 }
@@ -512,11 +511,10 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
     batch_samples_number = new_batch_samples_number;
 
     const Index inputs_number = embedding_layer->get_inputs_number();
-
     const Index depth = embedding_layer->get_depth();
-
     const Index input_dimension = embedding_layer->get_input_dimension();
 
+    sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension + 1, depth);
 
     inputs_derivatives.resize(0); // Always input layer
