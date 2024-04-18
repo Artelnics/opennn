@@ -315,10 +315,6 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         */
 
         /*
-        cout << "Gradient min = " << back_propagation.gradient.minimum() << " at index: " << back_propagation.gradient.argmin()
-            << " and max = " << back_propagation.gradient.maximum() << " at index: " << back_propagation.gradient.argmax() << endl;
-
-
         Index parameter_index = 0;
         for (Index i = 0; i < transformer.get_layers().size(); i++)
         {

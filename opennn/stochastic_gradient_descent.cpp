@@ -510,7 +510,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
-            
+
             results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;

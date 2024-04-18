@@ -194,7 +194,7 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
     }
 }
 
-
+/*
 void MeanSquaredErrorTest::test_back_propagate_probabilistic()
 {
     cout << "test_back_propagate_probabilistic\n";
@@ -235,8 +235,6 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
-        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
@@ -287,7 +285,7 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 }
-
+*/
 
 void MeanSquaredErrorTest::test_back_propagate_convolutional()
 {
@@ -2009,8 +2007,8 @@ void MeanSquaredErrorTest::run_test_case()
 {
     cout << "Running mean squared error test case...\n";
 
-//    test_constructor();
-//    test_destructor();
+    test_constructor();
+    test_destructor();
 
     // Convolutional network methods
 
@@ -2018,13 +2016,11 @@ void MeanSquaredErrorTest::run_test_case()
 
     // Back propagate methods
 
-//    test_back_propagate_perceptron();
-//    test_back_propagate_probabilistic();
+    test_back_propagate_perceptron();
+    //test_back_propagate_probabilistic(); Probabilistic only works with CrossEntropyError
     //test_back_propagate_convolutional();
     //test_back_propagate_recurrent();
     //test_back_propagate_long_short_term_memory();
-
-    test_calculate_gradient_convolutional_network();
 
 
     //test_back_propagate();

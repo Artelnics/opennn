@@ -393,7 +393,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             update_parameters(training_back_propagation, optimization_data);
             
-            if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
+            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
         
         // Loss

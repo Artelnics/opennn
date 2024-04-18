@@ -742,7 +742,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             }
         }
 
-        if(neural_network->is_input_layer(layers_inputs_indices(i)))
+        if(i == first_trainable_layer_index || neural_network->is_input_layer(layers_inputs_indices(i)))
         {
             layer_inputs.resize(1);
 

@@ -1174,7 +1174,7 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
     const Index inputs_number = layer->get_inputs_number();
 
     error_combinations_derivatives.resize(batch_samples_number, neurons_number);
-    biases_derivatives.setZero();
+    error_combinations_derivatives.setZero();
 
     biases_derivatives.resize(neurons_number);
     biases_derivatives.setZero();
