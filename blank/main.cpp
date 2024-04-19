@@ -78,7 +78,7 @@ int main()
         stochastic_gradient_descent.set_display_period(1);
 
         //stochastic_gradient_descent.set_loss_goal(training_loss_goal);
-        stochastic_gradient_descent.set_maximum_epochs_number(19);
+        stochastic_gradient_descent.set_maximum_epochs_number(1000);
         stochastic_gradient_descent.set_maximum_time(86400);
         stochastic_gradient_descent.set_batch_samples_number(32);
 

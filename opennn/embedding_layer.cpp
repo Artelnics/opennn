@@ -351,8 +351,7 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, batch_samples_number, inputs_number);
 
-    if (deltas_pair.size() > 1)
-        add_deltas(deltas_pair);
+    if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first, batch_samples_number, inputs_number, deltas_pair(0).second[2]);
 
