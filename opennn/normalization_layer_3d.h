@@ -117,7 +117,7 @@ namespace opennn
 
         // Gradient methods
 
-        void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+        void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                                       const Tensor<pair<type*, dimensions>, 1>&,
                                       LayerForwardPropagation*,
                                       LayerBackPropagation*) const final;
@@ -200,7 +200,7 @@ namespace opennn
         Tensor<type, 3> normalized_inputs;
 
         Tensor<type, 3> means;
-        Tensor<type, 3> variances;
+        Tensor<type, 3> standard_deviations;
 
         type epsilon = 0.001;
     };
@@ -243,7 +243,8 @@ namespace opennn
         Tensor<type, 1> betas_derivatives;
 
         Tensor<type, 3> scaled_deltas;
-        Tensor<type, 2> normalization_derivatives;
+        Tensor<type, 3> standard_deviation_derivatives;
+        Tensor<type, 2> aux_2d;
         
         Tensor<type, 3> input_derivatives;
     };

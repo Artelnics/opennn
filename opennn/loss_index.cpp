@@ -374,8 +374,9 @@ void LossIndex::back_propagate(const Batch& batch,
     back_propagation.loss = back_propagation.error;
 
     // Regularization
-
+    
     add_regularization(back_propagation);
+    
 }
 
 
@@ -390,7 +391,7 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
         type& loss = back_propagation.loss;
 
         const Tensor<type, 1>& parameters = back_propagation.parameters;
-        Tensor<type, 1>& regularization_gradient = back_propagation.parameters;
+        Tensor<type, 1>& regularization_gradient = back_propagation.regularization_gradient;
         Tensor<type, 1>& gradient = back_propagation.gradient;
 
         regularization = calculate_regularization(parameters);
@@ -741,7 +742,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             }
         }
 
-        if(neural_network->is_input_layer(layers_inputs_indices(i)))
+        if(i == first_trainable_layer_index || neural_network->is_input_layer(layers_inputs_indices(i)))
         {
             layer_inputs.resize(1);
 
@@ -763,7 +764,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             }
         }
 
-        layer->calculate_error_gradient(layer_inputs, layer_deltas, layer_forward_propagation, layer_back_propagation);
+        layer->back_propagate(layer_inputs, layer_deltas, layer_forward_propagation, layer_back_propagation);
     }
 }
 

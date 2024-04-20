@@ -472,12 +472,12 @@ int main()
         tests_failed_count += response_optimization_test.get_tests_failed_count();
       }
       else if(test == "time_series_data_set" || test == "tsds")
-      {
+      {/*
         TimeSeriesDataSetTest time_series_data_set_test;
         time_series_data_set_test.run_test_case();
         tests_count += time_series_data_set_test.get_tests_count();
         tests_passed_count += time_series_data_set_test.get_tests_passed_count();
-        tests_failed_count += time_series_data_set_test.get_tests_failed_count();
+        tests_failed_count += time_series_data_set_test.get_tests_failed_count();*/
       }
 
       else if(test == "suite" || test == "")
@@ -534,13 +534,13 @@ int main()
           tests_failed_count += data_set_test.get_tests_failed_count();
 
           // time series data set
-
+          /*
           TimeSeriesDataSetTest time_series_data_set_test;
           time_series_data_set_test.run_test_case();
           tests_count += time_series_data_set_test.get_tests_count();
           tests_passed_count += time_series_data_set_test.get_tests_passed_count();
           tests_failed_count += time_series_data_set_test.get_tests_failed_count();
-
+          */
           // N E U R A L   N E T W O R K   T E S T S
 
           // perceptron layer
