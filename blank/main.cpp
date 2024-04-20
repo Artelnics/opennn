@@ -36,7 +36,7 @@ int main()
    try
    {
         cout << "Blank\n";
-        /*
+        
         LanguageDataSet language_data_set;
 
         //language_data_set.set_data_source_path("data/example2.txt");
@@ -78,7 +78,7 @@ int main()
         stochastic_gradient_descent.set_display_period(1);
 
         //stochastic_gradient_descent.set_loss_goal(training_loss_goal);
-        stochastic_gradient_descent.set_maximum_epochs_number(19);
+        stochastic_gradient_descent.set_maximum_epochs_number(1000);
         stochastic_gradient_descent.set_maximum_time(86400);
         stochastic_gradient_descent.set_batch_samples_number(32);
 
@@ -92,19 +92,7 @@ int main()
         TrainingResults training_results = stochastic_gradient_descent.perform_training();
 
         //transformer.calculate_outputs();
-        */
-
-
-        const Index samples_number = 1000000;
-        const Index inputs_number = 1000;
-        const Index outputs_number = 1;
-        const Index hidden_neurons_number = 1000;
-
-        DataSet data_set;// ("C:/R_100000_samples_11_variables.csv", ',', true);
-
-        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
-
-        data_set.set_training();
+        
 
         cout << "Bye!" << endl;
 

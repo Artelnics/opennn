@@ -8884,7 +8884,7 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
         for(Index j = 0; j < variables_number; j++)
         {
 
-            data(i, j) = rand(); // arc4random();
+            data(i, j) = rand(); // rand();
 
         }
     }
@@ -8894,7 +8894,7 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
 
     for(Index i = 0; i < samples_number; i++)
     {
-        const Index random_class = arc4random() % classes_number;
+        const Index random_class = rand() % classes_number;
         data(i, variables_number + random_class) = 1;
     }
 */
