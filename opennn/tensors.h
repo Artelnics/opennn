@@ -78,6 +78,7 @@ void substract_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 void multiply_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
+void multiply_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
 void batch_matrix_multiplication(ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 void batch_matrix_multiplication(ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);

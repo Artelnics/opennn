@@ -482,7 +482,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     cout << "Max indices: " << pooling_layer_forward_propagation->inputs_max_indices << endl;
 }
 
-/* Do this at the end of calculate_error_gradient(), with input_derivatives instead of deltas
+/* Do this at the end of back_propagate(), with input_derivatives instead of deltas
 void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation,
                                           PoolingLayerBackPropagation* next_pooling_layer_back_propagation,
                                           PoolingLayerForwardPropagation* this_layer_forward_propagation,
@@ -509,7 +509,7 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_p
 */
 
 
-void PoolingLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                             const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                             LayerForwardPropagation* forward_propagation,
                                             LayerBackPropagation* back_propagation) const

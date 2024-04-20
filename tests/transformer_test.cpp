@@ -48,14 +48,14 @@ void TransformerTest::test_constructor()
 
     Transformer transformer_1(architecture);
 
-    assert_true(transformer_1.get_layers_number() == 2 + 7 * number_of_layers + 4 * number_of_layers + 1, LOG);
+    assert_true(transformer_1.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
 
     // List constructor test
 
     Transformer transformer_2({ input_length, context_length, inputs_dimension, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
-    assert_true(transformer_2.get_layers_number() == 2 + 7 * number_of_layers + 4 * number_of_layers + 1, LOG);
+    assert_true(transformer_2.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
 
     // Test 3
 
@@ -71,7 +71,7 @@ void TransformerTest::test_constructor()
     Transformer transformer_3({ input_length, context_length, inputs_dimension, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
-    assert_true(transformer_3.get_layers_number() == 2 + 7 * number_of_layers + 4 * number_of_layers + 1, LOG);
+    assert_true(transformer_3.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
 
     // Test 4
 
@@ -80,7 +80,7 @@ void TransformerTest::test_constructor()
     Transformer transformer_4({ input_length, context_length, inputs_dimension, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
-    assert_true(transformer_4.get_layers_number() == 2 + 7 * number_of_layers + 4 * number_of_layers + 1, LOG);
+    assert_true(transformer_4.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
 }
 
 

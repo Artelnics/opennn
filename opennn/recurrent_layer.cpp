@@ -727,7 +727,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-void RecurrentLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                               const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
