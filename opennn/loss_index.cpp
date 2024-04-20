@@ -1008,7 +1008,7 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 }
 
 
-void BackPropagation::set_layers_outputs_indices(Tensor<Tensor<Index, 1>, 1>& layer_inputs_indices)
+void BackPropagation::set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>& layer_inputs_indices)
 {
     Index layers_number = layer_inputs_indices.size();
 
