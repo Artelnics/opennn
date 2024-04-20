@@ -106,10 +106,10 @@ void MinkowskiErrorTest::test_back_propagate()
 
     // Test approximation all random
     {
-        samples_number = 1 + arc4random()%5;
-        inputs_number = 1 + arc4random()%5;
-        outputs_number = 1 + arc4random()%5;
-        neurons_number = 1 + arc4random()%5;
+        samples_number = 1 + rand()%5;
+        inputs_number = 1 + rand()%5;
+        outputs_number = 1 + rand()%5;
+        neurons_number = 1 + rand()%5;
         bool is_training = true;
 
         // Data set
@@ -200,10 +200,10 @@ void MinkowskiErrorTest::test_back_propagate()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + arc4random()%10;
-        inputs_number = 1 + arc4random()%10;
-        outputs_number = 1 + arc4random()%10;
-        neurons_number = 1 + arc4random()%10;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
         bool is_training = true;
 
         // Data set
@@ -283,10 +283,10 @@ void MinkowskiErrorTest::test_back_propagate()
 
     // Test forecasting random samples, inputs, outputs, neurons
     /*{
-        samples_number = 1 + arc4random()%10;
-        inputs_number = 1 + arc4random()%10;
-        outputs_number = 1 + arc4random()%10;
-        neurons_number = 1 + arc4random()%10;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
         bool is_training = true;
 
         // Data set

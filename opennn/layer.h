@@ -135,7 +135,7 @@ public:
                                            LayerBackPropagationLM*,
                                            LayerBackPropagationLM*) const {}
 
-    virtual void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+    virtual void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                                           const Tensor<pair<type*, dimensions>, 1>&,
                                           LayerForwardPropagation*,
                                           LayerBackPropagation*) const {}
