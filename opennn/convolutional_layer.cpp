@@ -394,7 +394,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     }
 }
 
-/* Do this at the end of calculate_error_gradient(), with input_derivatives instead of deltas
+/* Do this at the end of back_propagate(), with input_derivatives instead of deltas
 void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation,
                                                 ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation,
                                                 ConvolutionalLayerBackPropagation* this_convolutional_layer_back_propagation) const
@@ -415,7 +415,7 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
 */
 
 
-void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                   const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const

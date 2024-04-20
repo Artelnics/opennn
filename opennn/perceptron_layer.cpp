@@ -773,7 +773,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 }
 
 
-void PerceptronLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
@@ -1174,7 +1174,7 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
     const Index inputs_number = layer->get_inputs_number();
 
     error_combinations_derivatives.resize(batch_samples_number, neurons_number);
-    biases_derivatives.setZero();
+    error_combinations_derivatives.setZero();
 
     biases_derivatives.resize(neurons_number);
     biases_derivatives.setZero();
