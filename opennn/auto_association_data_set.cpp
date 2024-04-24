@@ -18,7 +18,6 @@ AutoAssociationDataSet::AutoAssociationDataSet() : DataSet()
 }
 
 
-
 void AutoAssociationDataSet::transform_associative_data()
 {
     cout << "Transforming associative data..." << endl;

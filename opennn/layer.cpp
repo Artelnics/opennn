@@ -27,6 +27,11 @@ Layer::~Layer()
     delete thread_pool_device;
 }
 
+string Layer::get_name() const
+{
+    return layer_name;
+}
+
 
 /// Default constructor.
 /// It creates a layer object with zero parameters.
@@ -111,13 +116,6 @@ void Layer::set_parameters_random()
 
 void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "set_parameters(const Tensor<type, 1>&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw runtime_error(buffer.str());
 }
 
 
@@ -133,7 +131,7 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-dimensions Layer::get_output_dimensions() const
+dimensions Layer::get_outputs_dimensions() const
 {
     return dimensions();
 }

@@ -52,7 +52,6 @@ struct NeuralNetworkBackPropagation;
 struct NeuralNetworkBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-struct PerceptronLayerForwardPropagationCuda;
 struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif

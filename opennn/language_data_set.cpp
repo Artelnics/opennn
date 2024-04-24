@@ -1610,10 +1610,12 @@ void LanguageDataSet::read_txt_language_model()
     load_documents(data_source_path);
     
     Index entry_number = documents(0).size();
+
     for(Index i = 1; i < documents.size(); i++)
         entry_number += documents(i).size();
 
     Index completion_entry_number = targets(0).size();
+    
     for(Index i = 1; i < targets.size(); i++)
         completion_entry_number += targets(i).size();
 
@@ -1665,12 +1667,13 @@ void LanguageDataSet::read_txt_language_model()
 
     completion_vocabulary = calculate_vocabulary(completion_tokens);
     
-    Index LIMIT = 128;
+    const Index LIMIT = 128;
 
     Index max_context_tokens = context_tokens(0).size();
 
     for(Index i = 0; i < entry_number; i++){
-        if(context_tokens(i).size() > max_context_tokens) max_context_tokens = context_tokens(i).size();
+        if(context_tokens(i).size() > max_context_tokens) 
+            max_context_tokens = context_tokens(i).size();
     }
 
     max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
@@ -1678,7 +1681,8 @@ void LanguageDataSet::read_txt_language_model()
     Index max_completion_tokens = completion_tokens(0).size();
 
     for(Index i = 0; i < entry_number; i++){
-        if(completion_tokens(i).size() > max_completion_tokens) max_completion_tokens = completion_tokens(i).size();
+        if(completion_tokens(i).size() > max_completion_tokens) 
+            max_completion_tokens = completion_tokens(i).size();
     }
 
     max_completion_length = max_completion_tokens > LIMIT ? LIMIT : max_completion_tokens;

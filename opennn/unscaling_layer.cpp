@@ -52,7 +52,7 @@ Index UnscalingLayer::get_neurons_number() const
 }
 
 
-dimensions UnscalingLayer::get_output_dimensions() const
+dimensions UnscalingLayer::get_outputs_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 
@@ -721,7 +721,6 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     const TensorMap<Tensor<type,2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     Tensor<type,2>& outputs = unscaling_layer_forward_propagation->outputs;
-
 
     Scaler scaler;
 

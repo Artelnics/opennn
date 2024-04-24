@@ -36,9 +36,9 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     heads_number = architecture(6);
 
-    number_of_layers = architecture(7);
+    layers_number = architecture(7);
 
-    set(inputs_length, context_length, inputs_dimension, context_dimension, embedding_depth, perceptron_depth, heads_number, number_of_layers);
+    set(inputs_length, context_length, inputs_dimension, context_dimension, embedding_depth, perceptron_depth, heads_number, layers_number);
 }
 
 void Transformer::set(const initializer_list<Index>& architecture_list)
@@ -51,7 +51,7 @@ void Transformer::set(const initializer_list<Index>& architecture_list)
 
 
 void Transformer::set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
-                      const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& number_of_layers)
+                      const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number)
 {
     delete_layers();
 
@@ -76,69 +76,99 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
     // Encoder
 
-    for(Index i = 0; i < number_of_layers; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
+        // Multi head attention
+
         MultiheadAttentionLayer* context_self_attention_layer =
                 new MultiheadAttentionLayer(context_length, context_length, embedding_depth, heads_number);
 
         context_self_attention_layer->set_name("context_self_attention_" + to_string(i+1));
+
         add_layer(context_self_attention_layer);
+
         if(i == 0)
             set_layer_inputs_indices("context_self_attention_1", {"context_embedding", "context_embedding"});
         else
             set_layer_inputs_indices("context_self_attention_" + to_string(i+1), { "encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
 
+        // Addition
 
         AdditionLayer3D* context_self_attention_addition_layer = new AdditionLayer3D(context_length, embedding_depth);
+
         context_self_attention_addition_layer->set_name("context_self_attention_addition_" + to_string(i + 1));
+
         add_layer(context_self_attention_addition_layer);
+
         if(i == 0)
             set_layer_inputs_indices("context_self_attention_addition_" + to_string(i + 1), { "context_embedding", "context_self_attention_" + to_string(i + 1) });
         else
             set_layer_inputs_indices("context_self_attention_addition_" + to_string(i + 1), { "encoder_perceptron_normalization_" + to_string(i), "context_self_attention_" + to_string(i + 1) });
 
+        // Normalization
 
         NormalizationLayer3D* context_self_attention_normalization_layer = new NormalizationLayer3D(context_length, embedding_depth);
+
         context_self_attention_normalization_layer->set_name("context_self_attention_normalization_" + to_string(i + 1));
+        
         add_layer(context_self_attention_normalization_layer);
+        
         set_layer_inputs_indices("context_self_attention_normalization_" + to_string(i + 1), "context_self_attention_addition_" + to_string(i + 1));
+
+        // Perceptron
 
         PerceptronLayer3D* encoder_internal_perceptron_layer =
                 new PerceptronLayer3D(context_length, embedding_depth, perceptron_depth, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
 
         encoder_internal_perceptron_layer->set_name("encoder_internal_perceptron_" + to_string(i+1));
+        
         add_layer(encoder_internal_perceptron_layer);
+        
         set_layer_inputs_indices("encoder_internal_perceptron_" + to_string(i+1), "context_self_attention_normalization_" + to_string(i + 1));
 
+        // Perceptron
 
         PerceptronLayer3D* encoder_external_perceptron_layer =
             new PerceptronLayer3D(context_length, perceptron_depth, embedding_depth, PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
         encoder_external_perceptron_layer->set_name("encoder_external_perceptron_" + to_string(i+1));
+        
         add_layer(encoder_external_perceptron_layer);
+        
         set_layer_inputs_indices("encoder_external_perceptron_" + to_string(i+1), "encoder_internal_perceptron_" + to_string(i+1));
 
+        // Addition
+
         AdditionLayer3D* encoder_perceptron_addition_layer = new AdditionLayer3D(context_length, embedding_depth);
+        
         encoder_perceptron_addition_layer->set_name("encoder_perceptron_addition_" + to_string(i + 1));
+        
         add_layer(encoder_perceptron_addition_layer);
+        
         set_layer_inputs_indices("encoder_perceptron_addition_" + to_string(i + 1), { "context_self_attention_normalization_" + to_string(i + 1), "encoder_external_perceptron_" + to_string(i + 1) });
 
+        // Normalization
+
         NormalizationLayer3D* encoder_perceptron_normalization_layer = new NormalizationLayer3D(context_length, embedding_depth);
+        
         encoder_perceptron_normalization_layer->set_name("encoder_perceptron_normalization_" + to_string(i + 1));
+        
         add_layer(encoder_perceptron_normalization_layer);
+        
         set_layer_inputs_indices("encoder_perceptron_normalization_" + to_string(i + 1), "encoder_perceptron_addition_" + to_string(i + 1));
     }
 
 
     // Decoder
 
-    for(Index i = 0; i < number_of_layers; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         MultiheadAttentionLayer* input_self_attention_layer =
                 new MultiheadAttentionLayer(inputs_length, inputs_length, embedding_depth, heads_number, true);
 
         input_self_attention_layer->set_name("input_self_attention_" + to_string(i+1));
         add_layer(input_self_attention_layer);
+
         if(i == 0)
         {
             set_layer_inputs_indices("input_self_attention_1", {"input_embedding", "input_embedding"});
@@ -169,7 +199,7 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
         cross_attention_layer->set_name("cross_attention_" + to_string(i+1));
         add_layer(cross_attention_layer);
-        set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(number_of_layers)});
+        set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(layers_number)});
 
 
         AdditionLayer3D* cross_attention_addition_layer = new AdditionLayer3D(inputs_length, embedding_depth);
@@ -212,14 +242,13 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
         set_layer_inputs_indices("decoder_perceptron_normalization_" + to_string(i + 1), "decoder_perceptron_addition_" + to_string(i + 1));
     }
 
-
-    // Final layer
+    // Output layer
     
     ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(inputs_length, embedding_depth, inputs_dimension + 1);
 
     final_layer->set_name("probabilistic");
     add_layer(final_layer);
-    set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(number_of_layers));
+    set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(layers_number));
     
 }
 

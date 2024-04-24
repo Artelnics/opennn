@@ -93,7 +93,7 @@ type PerceptronLayer::get_dropout_rate() const
 }
 
 
-dimensions PerceptronLayer::get_output_dimensions() const
+dimensions PerceptronLayer::get_outputs_dimensions() const
 {
     const Index neurons_number = get_neurons_number();
 

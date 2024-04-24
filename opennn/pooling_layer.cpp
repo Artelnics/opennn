@@ -57,19 +57,7 @@ Index PoolingLayer::get_neurons_number() const
 
 /// Returns the layer's outputs dimensions.
 
-Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
-{
-    Tensor<Index, 1> outputs_dimensions(3);
-
-    outputs_dimensions[0] = get_outputs_rows_number();
-    outputs_dimensions[1] = get_outputs_columns_number();
-    outputs_dimensions[2] = inputs_dimensions[2];
-
-    return outputs_dimensions;
-}
-
-
-dimensions PoolingLayer::get_output_dimensions() const
+dimensions PoolingLayer::get_outputs_dimensions() const
 {
     Index rows_number = get_outputs_rows_number();
     Index columns_number = get_outputs_columns_number();
@@ -176,22 +164,6 @@ Index PoolingLayer::get_pool_columns_number() const
 }
 
 
-/// Returns the number of parameters of the layer.
-
-Index PoolingLayer::get_parameters_number() const
-{
-    return 0;
-}
-
-
-/// Returns the layer's parameters.
-
-Tensor<type, 1> PoolingLayer::get_parameters() const
-{
-    return Tensor<type, 1>();
-}
-
-
 /// Returns the pooling method.
 
 PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
@@ -202,9 +174,9 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 
 /// Returns the input_variables_dimensions.
 
-Tensor<Index, 1> PoolingLayer::get_inputs_dimensions() const
+dimensions PoolingLayer::get_inputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) ,inputs_dimensions(1) , inputs_dimensions(2)};
 }
 
 
@@ -461,6 +433,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                                  inputs.dimension(1),
                                                                  inputs.dimension(2),
                                                                  inputs.dimension(3));
+
     pooling_layer_forward_propagation->inputs_max_indices.setZero();
     Index outputs_index = 0;
 
@@ -469,8 +442,6 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     for(Index i = 0; i < pooling_layer_forward_propagation->inputs_max_indices.size(); i++)
     {
         cout << "inputs(i): " << inputs(i) << "; outputs_index: " << outputs(outputs_index) << "; " <<inputs(i) - outputs(outputs_index) << endl;
-
-
 
         if(abs(inputs(i) - outputs(outputs_index)) < 1e-3)
         {
@@ -528,7 +499,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
-    // @todo calculate input derivatives (= deltas for previous layer)
+    /// @todo calculate input derivatives (= deltas for previous layer)
 }
 
 
@@ -613,7 +584,7 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("InputDimensions");
 
     buffer.str("");
-    buffer << get_inputs_dimensions();
+    buffer << get_inputs_dimensions()[0] << get_inputs_dimensions()[1] << get_inputs_dimensions()[2];
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -913,13 +884,13 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
-    const Tensor<Index, 1>& inputs_dimensions = pooling_layer->get_inputs_dimensions();
+    const dimensions& inputs_dimensions = pooling_layer->get_inputs_dimensions();
 
-    input_derivatives.resize(batch_samples_number, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2));
+    input_derivatives.resize(batch_samples_number, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2]);
 
     inputs_derivatives.resize(1);
     inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2) };
+    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2] };
 }
 
 

@@ -57,7 +57,7 @@ Index LongShortTermMemoryLayer::get_neurons_number() const
 }
 
 
-dimensions LongShortTermMemoryLayer::get_output_dimensions() const
+dimensions LongShortTermMemoryLayer::get_outputs_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 

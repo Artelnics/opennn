@@ -57,7 +57,7 @@ Index NormalizationLayer3D::get_inputs_depth() const
 }
 
 
-dimensions NormalizationLayer3D::get_output_dimensions() const
+dimensions NormalizationLayer3D::get_outputs_dimensions() const
 {
     return { inputs_number, inputs_depth };
 }
@@ -265,9 +265,9 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
                                              LayerForwardPropagation* layer_forward_propagation,
                                              const bool& is_training)
 {
-    Index samples_number = inputs_pair(0).second[0];
-    Index inputs_number = inputs_pair(0).second[1];
-    Index inputs_depth = inputs_pair(0).second[2];
+    const Index samples_number = inputs_pair(0).second[0];
+    const Index inputs_number = inputs_pair(0).second[1];
+    const Index inputs_depth = inputs_pair(0).second[2];
 
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, samples_number, inputs_number, inputs_depth);
 
@@ -279,7 +279,7 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 
     Tensor<type, 3>& means = normalization_layer_3d_forward_propagation->means;
     Tensor<type, 3>& standard_deviations = normalization_layer_3d_forward_propagation->standard_deviations;
-    type& epsilon = normalization_layer_3d_forward_propagation->epsilon;
+    const type& epsilon = normalization_layer_3d_forward_propagation->epsilon;
 
     const Eigen::array<Index, 1> normalization_axis{ { 2 } };
     const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 } };
@@ -418,35 +418,6 @@ void NormalizationLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
         betas_derivatives_data,
         betas_derivatives_data + betas_number,
         gradient_data + index + gammas_number);
-}
-
-
-/// Returns a string with the expression of the inputs-outputs relationship of the layer.
-/// @param inputs_names vector of strings with the name of the layer inputs.
-/// @param outputs_names vector of strings with the name of the layer outputs.
-
-string NormalizationLayer3D::write_expression(const Tensor<string, 1>& inputs_names,
-    const Tensor<string, 1>& outputs_names) const
-{/*
-    ostringstream buffer;
-
-    for (Index j = 0; j < outputs_names.size(); j++)
-    {
-        const Tensor<type, 1> synaptic_weights_column = synaptic_weights.chip(j, 1);
-
-        buffer << outputs_names[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
-
-        for (Index i = 0; i < inputs_names.size() - 1; i++)
-        {
-            buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ") +";
-        }
-
-        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") );\n";
-    }
-
-    return buffer.str();
-    */
-    return "";
 }
 
 

@@ -51,7 +51,7 @@ public:
     void set(const initializer_list<Index>&);
 
     void set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
-             const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& number_of_layers);
+             const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number);
 
     void set_input_vocabulary(Tensor<string, 1>&);
     void set_context_vocabulary(Tensor<string, 1>&);
@@ -92,7 +92,7 @@ protected:
 
     /// Number of encoder and decoder layers
 
-    Index number_of_layers;
+    Index layers_number;
 
     /// Vocabularies
 

@@ -70,6 +70,8 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(layers_number - 1));
     
+    /// @todo What is this? It should be already calculated. 
+        
     probabilistic_layer_3d_back_propagation->targets = targets;
 
     /// @todo Can we remove this?
@@ -78,7 +80,8 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
  
     Tensor<type, 0> cross_entropy_error;   
 
-    /// @todo Can we do this in matrix form?
+    /// @todo Can we do this in matrix form? 
+    /// @todo put targets.dimension(0) explictly
 
     #pragma omp parallel for
 
@@ -90,16 +93,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     back_propagation.error = cross_entropy_error(0)/type(batch_samples_number);
 
-    if(isnan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: cross_entropy_error_3d class.\n"
-               << "void calculate_error(const Batch&, const NeuralNetworkForwardPropagation&, BackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw runtime_error(buffer.str());
-    }  
+    if(isnan(back_propagation.error)) throw runtime_error("Error is NAN");
 }
 
 

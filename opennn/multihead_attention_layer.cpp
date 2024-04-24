@@ -84,7 +84,7 @@ Index MultiheadAttentionLayer::get_weights_depth() const
 }
 
 
-dimensions MultiheadAttentionLayer::get_output_dimensions() const
+dimensions MultiheadAttentionLayer::get_outputs_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 
@@ -441,6 +441,7 @@ void MultiheadAttentionLayer::set_parameters_random()
 
 
     /// @todo in Tensor form
+    /// @todo can we reduce the number of loops for things with the same size?
 
 #pragma omp parallel for
     for(Index i = 0; i < query_weights.size(); i++)
@@ -458,8 +459,6 @@ void MultiheadAttentionLayer::set_parameters_random()
         query_biases(i) = minimum + (maximum - minimum) * random;
     }
 
-
-
 #pragma omp parallel for
     for(Index i = 0; i < key_weights.size(); i++)
     {
@@ -475,7 +474,6 @@ void MultiheadAttentionLayer::set_parameters_random()
 
         key_biases(i) = minimum + (maximum - minimum) * random;
     }
-
 
 #pragma omp parallel for
     for(Index i = 0; i < value_weights.size(); i++)
@@ -493,7 +491,6 @@ void MultiheadAttentionLayer::set_parameters_random()
         value_biases(i) = minimum + (maximum - minimum) * random;
     }
 
-
 #pragma omp parallel for
     for(Index i = 0; i < projection_weights.size(); i++)
     {
@@ -510,6 +507,7 @@ void MultiheadAttentionLayer::set_parameters_random()
         projection_biases(i) = minimum + (maximum - minimum) * random;
     }
 }
+
 
 void MultiheadAttentionLayer::set_parameters_constant(const type& value)
 {
@@ -592,6 +590,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
     type* transformed_input_data = transformed_input.data();
 
     /// @todo move to struct or do tensor map? 
+
     Tensor<type, 2> sample_input;
 
     for (Index head_index = 0; head_index < heads_number; head_index++)
@@ -690,15 +689,16 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& t
 // @todo
 void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 {
-   /*
+   
     const Index batch_samples_number = attention_scores.dimension(0);
 
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
-    type random;
+    type random = 0;
 
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
+/*
         for(Index )
         {
             TensorMap<Tensor<type, 2>> matrix(attention_scores.data() + neuron_index * batch_samples_number * inputs_number,
@@ -709,8 +709,8 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
             random < dropout_rate ? matrix.setZero()
                 : matrix = matrix * scaling_factor;
         }
-    }
 */
+    }
 }
 
 
@@ -758,8 +758,8 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
         dropout(softmax_attention_scores);
     
     compute_attention_outputs(value,
-                             softmax_attention_scores,
-                             attention_outputs);
+                              softmax_attention_scores,
+                              attention_outputs);
 
     calculate_output_projection(attention_outputs,
                                 projection_outputs,
@@ -938,6 +938,8 @@ void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions
 
             TensorMap<Tensor<type, 2>> sample_attention_output_derivatives(sample_attention_output_derivatives_data, input_size, weights_depth);
 
+            /// @todo allocate memory in back propagation struct
+
             const Tensor<type, 2> sample_deltas = deltas.chip(sample_index, 0);
 
             sample_attention_output_derivatives.device(*thread_pool_device)
@@ -962,6 +964,8 @@ void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions
         softmax_derivatives_times_tensor(head_softmax_attention_scores, head_softmax_attention_scores_derivatives, head_attention_scores_derivatives, aux_rows);
 
         // QUERY DERIVATIVES
+
+        /// @todo create method batch matrix multiplication times scaling factor 
 
         batch_matrix_multiplication(thread_pool_device, head_attention_scores_derivatives, head_key, head_query_derivatives, AT_B);
 
@@ -1010,7 +1014,9 @@ void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions
         // BIASES DERIVATIVES
 
         head_query_biases_derivatives.device(*thread_pool_device) = head_query_derivatives.sum(biases_derivatives_sum_indices);
+
         head_key_biases_derivatives.device(*thread_pool_device) = head_key_derivatives.sum(biases_derivatives_sum_indices);
+        
         head_value_biases_derivatives.device(*thread_pool_device) = head_value_derivatives.sum(biases_derivatives_sum_indices);
     }
 
