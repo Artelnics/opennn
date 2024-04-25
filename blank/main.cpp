@@ -47,6 +47,7 @@ int main()
         language_data_set.read_txt_language_model();
         
         language_data_set.set_training();
+        language_data_set.set_raw_variables_scalers(Scaler::NoScaling);
 
         Index input_length = language_data_set.get_completion_length();
         Index context_length = language_data_set.get_context_length();
@@ -58,7 +59,7 @@ int main()
         Index perceptron_depth = 12;
         Index heads_number = 2;
 
-        Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
+        Transformer transformer({ input_length, context_length, inputs_dimension + 1, context_dimension + 1,
                           depth, perceptron_depth, heads_number, number_of_layers });
 
         Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
@@ -70,30 +71,46 @@ int main()
         //type training_loss_goal = type(0.05);
 
         CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
+        cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        StochasticGradientDescent stochastic_gradient_descent;
-        stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
+        AdaptiveMomentEstimation optimization_algorithm;
+        optimization_algorithm.set_loss_index(&cross_entropy_error_3d);
 
-        stochastic_gradient_descent.set_display(true);
-        stochastic_gradient_descent.set_display_period(1);
+        optimization_algorithm.set_display(true);
+        optimization_algorithm.set_display_period(1);
 
-        //stochastic_gradient_descent.set_loss_goal(training_loss_goal);
-        stochastic_gradient_descent.set_maximum_epochs_number(1000);
-        stochastic_gradient_descent.set_maximum_time(86400);
-        stochastic_gradient_descent.set_batch_samples_number(32);
+        //optimization_algorithm.set_loss_goal(training_loss_goal);
+        optimization_algorithm.set_maximum_epochs_number(19);
+        optimization_algorithm.set_maximum_time(86400);
+        optimization_algorithm.set_batch_samples_number(32);
 
-        Index parameter_number = 0;
-        for (Index i = 0; i < transformer.get_layers().size(); i++)
-        {
-            cout << transformer.get_layer(i)->get_name() << " from parameter " << parameter_number << " to " << parameter_number + transformer.get_layer(i)->get_parameters_number() - 1 << endl;
-            parameter_number += transformer.get_layer(i)->get_parameters_number();
-        }
-
-        TrainingResults training_results = stochastic_gradient_descent.perform_training();
-
-        //transformer.calculate_outputs();
+        TrainingResults training_results = optimization_algorithm.perform_training();
         
+        cout << endl << "DEPLOYMENT:" << endl;
+        string input;
+        string output;
 
+        input = "a a a";
+        output = transformer.calculate_outputs(input);
+        
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+
+        input = "a l e";
+        output = transformer.calculate_outputs(input);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+
+        input = "f g v";
+        output = transformer.calculate_outputs(input);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+        
         cout << "Bye!" << endl;
 
         return 0;

@@ -198,6 +198,19 @@ const Tensor<Tensor<string, 1>, 1> LanguageDataSet::get_targets() const
     return targets;
 }
 
+
+Tensor<type, 2> LanguageDataSet::get_context_data() const
+{
+    const Index samples_number = get_samples_number();
+
+    Tensor<Index, 1> indices;
+    initialize_sequential(indices, 0, 1, samples_number - 1);
+
+    const Tensor<Index, 1> context_variables_indices = get_context_variables_indices();
+
+    return get_subtensor_data(indices, context_variables_indices);
+}
+
 void LanguageDataSet::set_default_raw_variables_uses()
 {
     DataSet::set_default_raw_variables_uses();

@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "language_data_set.h"
+#include "cross_entropy_error_3d.h"
 #include "neural_network_forward_propagation.h"
 #include "adaptive_moment_estimation.h"
 #include "back_propagation.h"
@@ -248,6 +250,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    Tensor<Index, 1> context_variables_indices;
+    if (is_instance_of<LanguageDataSet>(data_set))
+    {
+        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+        context_variables_indices = language_data_set->get_context_variables_indices();
+    }
 
     const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
@@ -322,6 +330,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
 //    type training_loss = type(0);
     type training_error = type(0);
+    type accuracy = type(0);
 
     type selection_error = type(0);
 
@@ -360,6 +369,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         
 //        training_loss = type(0);
         training_error = type(0);
+        accuracy = type(0);
         
         //optimization_data.iteration = 1;
         
@@ -370,7 +380,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             training_batch.fill(training_batches.chip(iteration, 0),
                                 input_variables_indices,
-                                target_variables_indices);
+                                target_variables_indices,
+                                context_variables_indices);
             
             // Neural network
             
@@ -379,16 +390,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             neural_network->forward_propagate(inputs_pair,
                                               training_forward_propagation,
                                               is_training);
-
+            
             // Loss index
             
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
             
-            results.training_error_history(epoch) = training_back_propagation.error;
-            
             training_error += training_back_propagation.error;
+            accuracy += training_back_propagation.accuracy;
 //            training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
@@ -399,6 +409,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         // Loss
 
         training_error /= type(batches_number);
+        accuracy /= type(batches_number);
 
         results.training_error_history(epoch) = training_error;
         
@@ -450,9 +461,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
+            if (is_instance_of<CrossEntropyError3D>(loss_index)) cout << "Accuracy: " << accuracy << endl;
             if(has_selection) cout << "Selection error: " << selection_error << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
-            //cout << "Gradient: " << endl << training_back_propagation.gradient << endl;
         }
 
         // Training history
@@ -612,7 +623,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     
     parameters.device(*thread_pool_device)
         -= (learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
-    
+
     optimization_data.iteration++;
 
     // Update parameters

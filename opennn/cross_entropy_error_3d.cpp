@@ -93,7 +93,25 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     back_propagation.error = cross_entropy_error(0)/type(batch_samples_number);
 
-    if(isnan(back_propagation.error)) throw runtime_error("Error is NAN");
+    // Masked accuracy
+
+    Index inputs_number = targets_pair.second[1];
+
+    Tensor<type, 2> predictions(batch_samples_number, inputs_number);
+    
+    predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
+
+    Tensor<bool, 2> matches(batch_samples_number, inputs_number);
+
+    matches.device(*thread_pool_device) = predictions == targets;
+
+    Tensor<type, 0> total_matches;
+
+    total_matches.device(*thread_pool_device) = matches.cast<type>().sum();
+
+    back_propagation.accuracy = total_matches(0) / type(batch_samples_number * inputs_number);
+
+    if (isnan(back_propagation.error)) throw runtime_error("Error is NAN");
 }
 
 

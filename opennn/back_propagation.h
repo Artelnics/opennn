@@ -76,6 +76,8 @@ struct BackPropagation
 
     Tensor<type, 1> gradient;
     Tensor<type, 1> regularization_gradient;
+
+    type accuracy = type(0);
 };
 
 }
