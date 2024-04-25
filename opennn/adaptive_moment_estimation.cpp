@@ -522,7 +522,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     if(display) results.print();
     
     return results;
-
 }
 
 
@@ -586,7 +585,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 /// @param optimization_data New moment estimation data.
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
-    AdaptiveMomentEstimationData& optimization_data) const
+                                                 AdaptiveMomentEstimationData& optimization_data) const
 {
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -610,12 +609,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
-
-    //cout << "Gradient sample: " << gradient(0) << endl;
-    //cout << "Gradient first estimate sample: " << gradient_exponential_decay(0) << endl;
-    //cout << "Gradient second estimate sample: " << sqrt(square_gradient_exponential_decay(0)) << endl;
-    //cout << "Gradient approximation sample: " << bias_correction * (gradient_exponential_decay(0) / sqrt(square_gradient_exponential_decay(0)) + epsilon) << endl;
-    //cout << endl;
     
     parameters.device(*thread_pool_device)
         -= (learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);

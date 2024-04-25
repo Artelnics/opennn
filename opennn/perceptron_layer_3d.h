@@ -72,7 +72,7 @@ public:
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
 
-   dimensions get_output_dimensions() const final;
+   dimensions get_outputs_dimensions() const final;
 
    // Parameters
 
@@ -169,19 +169,9 @@ public:
 
    void add_deltas(const Tensor<pair<type*, dimensions>, 1>&) const;
 
-   void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
-                                                 const Tensor<type, 3>&,
-                                                 Tensor<type, 3>&) const;
-
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
                         Tensor<type, 1>&) const final;
-
-   // Expression methods
-
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-   string write_activation_function_expression() const;
 
    // Serialization methods
 

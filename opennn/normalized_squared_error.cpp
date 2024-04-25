@@ -133,7 +133,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
     type normalization_coefficient = type(0);
 
-    // @todo add pragma 
+    /// @todo add pragma 
 
     for(Index i = 0; i < target_samples_number; i++)
     {
@@ -260,6 +260,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
     // Back propagation
 
     Tensor<type, 2>& errors = back_propagation.errors;
+
     type& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = outputs - targets;
@@ -327,7 +328,7 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
 
-    const type coefficient = (type(2)*type(total_samples_number)) / (type(batch_samples_number)*normalization_coefficient);
+    const type coefficient = type(2*total_samples_number) / (type(batch_samples_number)*normalization_coefficient);
 
     deltas.device(*thread_pool_device) = coefficient*errors;
 }

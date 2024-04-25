@@ -942,7 +942,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
     ScalingLayer4D* scaling_layer = new ScalingLayer4D(input_variables_dimensions);
     add_layer(scaling_layer);
 
-    Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
+    dimensions outputs_dimensions = scaling_layer->get_outputs_dimensions();  
 
 //    for(Index i = 0; i < blocks_number; i++)
 //    {
@@ -968,9 +968,9 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     outputs_dimensions = flatten_layer->get_outputs_dimensions();
 
-    const Tensor<Index, 0> outputs_dimensions_prod = outputs_dimensions.prod();
+    const Index product = outputs_dimensions[0] * outputs_dimensions[1] * outputs_dimensions[2] * outputs_dimensions[3];
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_prod(0), 3);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(product, 3);
     perceptron_layer->set_name("perceptron_layer_1");
     add_layer(perceptron_layer);
 
@@ -1238,7 +1238,7 @@ dimensions NeuralNetwork::get_outputs_dimensions() const
     {
         const Layer* last_layer = layers[layers.size() - 1];
 
-        return last_layer->get_output_dimensions();
+        return last_layer->get_outputs_dimensions();
     }
 
     return {};
@@ -1379,13 +1379,13 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
 
-    /// @todo optimize this loop
-
     Index position = 0;
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
         const Tensor<type, 1> layer_parameters = trainable_layers(i)->get_parameters();
+
+        /// @todo use memcpy
 
         for(Index j = 0; j < layer_parameters.size(); j++)
         {
@@ -1446,10 +1446,6 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-        if(trainable_layers(i)->get_type() == Layer::Type::Flatten) continue;
-
-        if(trainable_layers(i)->get_type() == Layer::Type::Pooling) continue;
-
         trainable_layers(i)->set_parameters(new_parameters, index);
 
         index += trainable_layers_parameters_numbers(i);

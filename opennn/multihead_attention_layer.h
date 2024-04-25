@@ -72,7 +72,7 @@ public:
     Index get_heads_number() const;
     Index get_weights_depth() const;
 
-    dimensions get_output_dimensions() const final;
+    dimensions get_outputs_dimensions() const final;
 
     Tensor<type, 3> get_query_weights() const;
     Tensor<type, 2> get_query_biases() const;

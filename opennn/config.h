@@ -25,7 +25,7 @@
 #include <execution>
 
 
-//#define OPENNN_CUDA
+#define OPENNN_CUDA
 #ifdef OPENNN_CUDA
 
 #include "../../opennn_cuda/CudaOpennn/kernel.cuh"
@@ -49,7 +49,7 @@ namespace opennn
     //using namespace std;
     using namespace Eigen;
 
-    using type = float; //Eigen::half;
+    using type = float; 
 
     using dimensions = std::vector<Index>;
      
