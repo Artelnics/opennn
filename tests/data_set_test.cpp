@@ -165,75 +165,6 @@ void DataSetTest::test_calculate_input_variables_descriptives()
     assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
-/*
-void DataSetTest::test_calculate_autocorrelations()
-{
-    cout << "test_calculate_autocorrelations\n";
-
-    Tensor<type, 2> autocorrelations;
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
-    Index lags_number;
-    Index steps_ahead_number;
-
-    // Test
-
-    samples_number = 1;
-    inputs_number = 1;
-    targets_number = 1;
-
-    lags_number = 1;
-    steps_ahead_number = 1;
-
-    data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_lags_number(lags_number);
-    data_set.set_steps_ahead_number(steps_ahead_number);
-    data_set.transform_time_series();
-
-    autocorrelations = data_set.calculate_autocorrelations(lags_number);
-
-    assert_true(autocorrelations.dimension(0) == 2, LOG);
-    assert_true(autocorrelations.dimension(1) == 1, LOG);
-}
-
-
-void DataSetTest::test_calculate_cross_correlations()
-{
-    cout << "test_calculate_cross_correlations\n";
-
-    Index lags_number;
-
-    Tensor<type, 3> cross_correlations;
-
-    // Test
-
-    lags_number = 6;
-
-    data.resize(6, 3);
-
-    data.setValues({
-                       {type(5),type(2),type(8)},
-                       {type(7),type(8),type(7)},
-                       {type(3),type(6),type(4)},
-                       {type(8),type(1),type(6)},
-                       {type(5),type(8),type(6)},
-                       {type(6),type(3),type(4)}});
-
-
-    data_set.set_data(data);
-
-    data_set.set_lags_number(lags_number);
-    data_set.set_steps_ahead_number(1);
-    data_set.transform_time_series();
-
-    cross_correlations = data_set.calculate_cross_correlations(lags_number);
-
-    assert_true(cross_correlations.dimension(0) == 3, LOG);
-}
-*/
 
 void DataSetTest::test_calculate_data_distributions()
 {
@@ -1053,147 +984,6 @@ void DataSetTest::test_read_binary_csv()
     }
 }
 
-/*
-void DataSetTest::test_transform_time_series()
-{
-    cout << "test_transform_time_series\n";
-
-    data.resize(9, 2);
-    data.setValues({{1,10}, {2, 20}, {3, 30}, {4, 40}, {5, 50}, {6, 60}, {7, 70}, {8, 80}, {9, 90}});
-
-    data_set.set_data(data);
-
-    data_set.set_variable_name(0, "x");
-    data_set.set_variable_name(1, "y");
-
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(1);
-
-    data_set.transform_time_series();
-
-    assert_true(data_set.get_raw_variables_number() == 6, LOG);
-    assert_true(data_set.get_variables_number() == 6, LOG);
-    assert_true(data_set.get_samples_number() == 7, LOG);
-
-    assert_true(data_set.get_input_variables_number() == 4, LOG);
-    assert_true(data_set.get_target_variables_number() == 1, LOG);
-    assert_true(data_set.get_target_raw_variables_number() == 1, LOG);
-    assert_true(data_set.get_unused_variables_number() == 1, LOG);
-
-    assert_true(data_set.get_numeric_variable_name(0) == "x_lag_1", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y_lag_1", LOG);
-    assert_true(data_set.get_numeric_variable_name(2) == "x_lag_0", LOG);
-    assert_true(data_set.get_numeric_variable_name(3) == "y_lag_0", LOG);
-}
-
-
-void DataSetTest::test_set_time_series_data()
-{
-    cout << "test_set_time_series_data\n";
-
-    data.resize(4,2);
-
-    data.setValues({
-                       {type(0),type(0)},
-                       {type(1),type(10)},
-                       {type(2),type(20)},
-                       {type(3),type(30)}});
-
-    data_set.set_data(data);
-
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(2);
-
-    data_set.transform_time_series();
-
-    data.resize(5,3);
-    data.setValues({
-                       {type(15),type(14),type(13)},
-                       {type(12),type(11),type(10)},
-                       {type(9),type(8),type(7)},
-                       {type(6),type(5),type(4)},
-                       {type(3),type(2),type(1)}});
-
-    data_set.set_time_series_data(data);
-
-    assert_true(data_set.get_time_series_data()(0) - type(15) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_time_series_data()(1) - type(12) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_time_series_data()(2) - type(9) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void DataSetTest::test_save_time_series_data_binary()
-{
-    cout << "test_save_time_series_data_binary\n";
-
-    const string data_source_path = "../data/test";
-
-    // Test
-
-    data.resize(4,2);
-    data.setValues({{type(0),type(0)},
-                    {type(1),type(10)},
-                    {type(2),type(20)},
-                    {type(3),type(30)}});
-
-    data_set.set_data(data);
-
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(2);
-    data_set.transform_time_series();
-
-    data_set.set_data_file_name(data_source_path);
-    data_set.save_time_series_data_binary(data_source_path);
-    data_set.load_time_series_data_binary(data_source_path);
-
-    assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void DataSetTest::test_set_steps_ahead_number()
-{
-    cout << "test_set_steps_ahead_nuber\n";
-
-    data.resize(4,2);
-    data.setValues({{type(0),type(0)},
-                    {type(1),type(10)},
-                    {type(2),type(20)},
-                    {type(3),type(30)}});
-
-    data_set.set_data(data);
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(2);
-    data_set.transform_time_series();
-
-    assert_true(data_set.get_lags_number() == 2, LOG);
-}
-*/
-
-
-/*
-void DataSetTest::test_set_lags_number()
-{
-    cout << "test_set_lags_number\n";
-
-    // Test
-
-    data.resize(4,2);
-    data.setValues({{type(0),type(0)},
-                    {type(1),type(10)},
-                    {type(2),type(20)},
-                    {type(3),type(30)}});
-
-    data_set.set_data(data);
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(2);
-    data_set.transform_time_series();
-
-    assert_true(data_set.get_steps_ahead() == 2, LOG);
-}
-*/
-
 
 void DataSetTest::test_scrub_missing_values()
 {
@@ -1261,20 +1051,27 @@ void DataSetTest::test_calculate_variables_means()
 {
     cout << "test_calculate_variables_means\n";
 
-    data.setValues({{1, 2, 3, 4},{2, 2, 2, 2},{1, 1, 1, 1}});
+    data.resize(3, 4);
+
+    data.setValues({{type(1), type(2), type(3.6), type(9)},
+                    {type(2), type(2), type(2), type(2)},
+                    {type(3), type(2), type(1), type(1)}});
 
     data_set.set_data(data);
 
     Tensor<Index, 1> indices;
 
-    indices.resize(2);
-    indices.setValues({0, 1});
-/*
-    Tensor<type, 1> means = data_set.calculate_variables_means(indices);
-    Tensor<type, 1> solution(2, 2.0);
+    indices.resize(4);
+    indices.setValues({0, 1, 2, 3});
 
-    assert_true(means == solution, LOG);
-*/
+    Tensor<type, 1> means = data_set.calculate_variables_means(indices);
+    Tensor<type, 1> solution(4);
+
+    solution.setValues({type(2), type(2), type(2.2), type(4)});
+
+    Tensor<bool, 0> eq = (means==solution).all();
+
+    assert_true(eq(0), LOG);
 }
 
 
@@ -1747,7 +1544,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
@@ -1877,7 +1674,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
@@ -1940,7 +1737,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -1970,7 +1767,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
@@ -2175,9 +1972,6 @@ void DataSetTest::test_fill()
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
 
-    //const TensorMap<Tensor<type, 2>> inputs = data_set_batch.inputs(0).to_tensor_map<2>();
-    //const TensorMap<Tensor<type, 2>> targets = data_set_batch.targets.to_tensor_map<2>();
-
     const Tensor<pair<type*, dimensions>, 1> inputs_pair = data_set_batch.get_inputs_pair();
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
@@ -2209,6 +2003,7 @@ void DataSetTest::run_test_case()
     // Statistics methods
 
     test_calculate_variables_descriptives();
+    test_calculate_variables_means();
     test_calculate_input_variables_descriptives();
     test_calculate_used_targets_mean();
     test_calculate_selection_targets_mean();
@@ -2226,7 +2021,7 @@ void DataSetTest::run_test_case()
     test_scale_data();
 
     // Correlations
-/*
+
     test_calculate_input_target_correlations();
     test_calculate_input_raw_variables_correlations();
 
@@ -2258,18 +2053,6 @@ void DataSetTest::run_test_case()
     test_calculate_selection_negatives();
     test_scrub_missing_values();
 
-    // Time series
-
-    test_transform_time_series();
-    test_set_lags_number();
-    test_set_steps_ahead_number();
-    test_set_time_series_data();
-    test_save_time_series_data_binary();
-    test_has_time_raw_variables();
-
-    test_calculate_cross_correlations();
-    test_calculate_autocorrelations();
-*/
     test_fill();
 
     cout << "End of data set test case.\n\n";

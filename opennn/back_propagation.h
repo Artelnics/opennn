@@ -29,7 +29,7 @@ struct BackPropagation
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
 
-    void set_layers_outputs_indices(Tensor<Tensor<Index, 1>, 1>&);
+    void set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
 
     pair<type*, dimensions> get_output_deltas_pair() const;
 
