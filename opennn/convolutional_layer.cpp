@@ -649,12 +649,12 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
 /// Returns the dimension of the input variables
 
-Tensor<Index, 1> ConvolutionalLayer::get_inputs_dimensions() const
+dimensions ConvolutionalLayer::get_inputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2)};
 }
 
-
+/*
 /// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
 
 Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
@@ -667,9 +667,9 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 
     return outputs_dimensions;
 }
+*/
 
-
-dimensions ConvolutionalLayer::get_output_dimensions() const
+dimensions ConvolutionalLayer::get_outputs_dimensions() const
 {
     Index rows_number = get_outputs_rows_number();
     Index columns_number = get_outputs_columns_number();
@@ -1312,7 +1312,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(Index i = 0; i < inputs_dimensions.size(); i++)
     {
-        buffer << get_outputs_dimensions()(i);
+        buffer << get_outputs_dimensions()[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
     }
 

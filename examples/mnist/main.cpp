@@ -95,11 +95,7 @@ int main()
         convolutional_layer_kernels_dimensions(2) = kernels_number;
         convolutional_layer_kernels_dimensions(3) = kernels_channels_number;
 
-        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
-        flatten_layer_inputs_dimensions(0) = inputs_rows_number-kernels_rows_number+1;
-        flatten_layer_inputs_dimensions(1) = inputs_raw_variables_number-kernels_raw_variables_number+1;
-        flatten_layer_inputs_dimensions(2) = kernels_number;
-        flatten_layer_inputs_dimensions(3) = samples_number;
+        dimensions flatten_layer_inputs_dimensions({inputs_rows_number-kernels_rows_number+1, inputs_raw_variables_number-kernels_raw_variables_number+1, kernels_number, samples_number });
 
         // Neural network
 

@@ -49,7 +49,7 @@ namespace opennn
     //using namespace std;
     using namespace Eigen;
 
-    using type = float; //Eigen::half;
+    using type = float; 
 
     using dimensions = std::vector<Index>;
      
