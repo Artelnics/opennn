@@ -54,7 +54,7 @@ Index RecurrentLayer::get_neurons_number() const
 }
 
 
-dimensions RecurrentLayer::get_output_dimensions() const
+dimensions RecurrentLayer::get_outputs_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 

@@ -52,7 +52,6 @@ struct NeuralNetworkBackPropagation;
 struct NeuralNetworkBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-struct PerceptronLayerForwardPropagationCuda;
 struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
@@ -131,7 +130,7 @@ public:
 
    Index get_layer_index(const string&) const;
 
-   Tensor<Tensor<Index, 1>, 1> get_layers_inputs_indices() const;
+   const Tensor<Tensor<Index, 1>, 1>& get_layers_inputs_indices() const;
 
    ScalingLayer2D* get_scaling_layer_2d() const;
    ScalingLayer4D* get_scaling_layer_4d() const;

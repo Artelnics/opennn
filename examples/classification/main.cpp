@@ -33,9 +33,9 @@ int main()
 
         DataSet data_set; //("../data/1000_classification_problem.csv", ',', false);
 
-        const Index samples_number = 1000000;
-        const Index variables_number = 1000;
-        const Index classes_number = 1000;
+        const Index samples_number = 100000;
+        const Index variables_number = 100;
+        const Index classes_number = 100;
         const Index hidden_neurons_number = 1000;
 
         data_set.generate_classification_data(samples_number, variables_number, classes_number);

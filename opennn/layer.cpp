@@ -27,6 +27,11 @@ Layer::~Layer()
     delete thread_pool_device;
 }
 
+string Layer::get_name() const
+{
+    return layer_name;
+}
+
 
 /// Default constructor.
 /// It creates a layer object with zero parameters.
@@ -111,13 +116,6 @@ void Layer::set_parameters_random()
 
 void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "set_parameters(const Tensor<type, 1>&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw runtime_error(buffer.str());
 }
 
 
@@ -133,7 +131,7 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-dimensions Layer::get_output_dimensions() const
+dimensions Layer::get_outputs_dimensions() const
 {
     return dimensions();
 }
@@ -205,17 +203,17 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
     const Index rows_number = x.dimension(0);
 
-    Index maximum_index = 0;
+    const Index competition_dimension = 1;
+
+    Tensor<Index, 1> maximum_indices;
+
+    maximum_indices.device(*thread_pool_device) = x.argmax(competition_dimension);
 
     y.setZero();
 
-    /// @todo can we use argmax?
-
     for (Index i = 0; i < rows_number; i++)
     {
-        maximum_index = maximal_index(x.chip(i, 0));
-
-        y(i, maximum_index) = type(1);
+        y(i, Index(maximum_indices(i))) = type(1);
     }
 }
 
@@ -225,19 +223,19 @@ void Layer::competitive(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
     const Index rows_number = x.dimension(0);
     const Index columns_number = x.dimension(1);
 
-    Index maximum_index = 0;
+    const Index competition_dimension = 2;
+
+    Tensor<Index, 2> maximum_indices;
+    
+    maximum_indices.device(*thread_pool_device) = x.argmax(competition_dimension);
 
     y.setZero();
-
-    /// @todo can we use argmax?
 
     for (Index i = 0; i < rows_number; i++)
     {
         for (Index j = 0; j < columns_number; j++)
         {
-            maximum_index = maximal_index(x.chip(i, 0).chip(j, 0));
-
-            y(i, j, maximum_index) = type(1);
+            y(i, j, Index(maximum_indices(i, j))) = type(1);
         }
     }
 }

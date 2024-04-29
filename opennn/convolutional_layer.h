@@ -84,10 +84,8 @@ public:
 
     string write_activation_function() const;
 
-    Tensor<Index, 1> get_inputs_dimensions() const;
-    Tensor<Index, 1> get_outputs_dimensions() const;
-
-    dimensions get_output_dimensions() const final;
+    dimensions get_inputs_dimensions() const;
+    dimensions get_outputs_dimensions() const;
 
     pair<Index, Index> get_padding() const;
 

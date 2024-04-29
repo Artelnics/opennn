@@ -97,6 +97,8 @@ public:
 
     void fill_image_data();
 
+    Tensor<type, 2> read_bmp(const string&);
+
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;
 
