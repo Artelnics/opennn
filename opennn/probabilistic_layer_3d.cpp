@@ -555,7 +555,9 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
     
     calculate_combinations(inputs, outputs);
 
-    calculate_activations(outputs, outputs);
+    if (is_training)
+        calculate_activations(outputs, outputs);
+    //else competitive(outputs, outputs);
 }
 
 

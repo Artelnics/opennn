@@ -364,9 +364,9 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
-
+    
     embedding_weights_derivatives.setZero();
-
+    
     for (Index i = 0; i < batch_samples_number; i++)
     {
         sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);

@@ -539,7 +539,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
 }
 
 
-Tensor<Tensor<Index, 1>, 1> NeuralNetwork::get_layers_inputs_indices() const
+const Tensor<Tensor<Index, 1>, 1>& NeuralNetwork::get_layers_inputs_indices() const
 {
     return layers_inputs_indices;
 }

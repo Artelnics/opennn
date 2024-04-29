@@ -1,4 +1,14 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   T R A N S F O R M E R   C L A S S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+
 #include "transformer.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -22,7 +32,7 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
 
 void Transformer::set(const Tensor<Index, 1>& architecture)
 {
-    inputs_length = architecture(0);
+    input_length = architecture(0);
 
     context_length = architecture(1);
 
@@ -38,7 +48,7 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     layers_number = architecture(7);
 
-    set(inputs_length, context_length, inputs_dimension, context_dimension, embedding_depth, perceptron_depth, heads_number, layers_number);
+    set(input_length, context_length, inputs_dimension, context_dimension, embedding_depth, perceptron_depth, heads_number, layers_number);
 }
 
 void Transformer::set(const initializer_list<Index>& architecture_list)
@@ -50,17 +60,17 @@ void Transformer::set(const initializer_list<Index>& architecture_list)
 }
 
 
-void Transformer::set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
+void Transformer::set(const Index& input_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
                       const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number)
 {
     delete_layers();
 
-    inputs_names.resize(inputs_length + context_length);
+    inputs_names.resize(input_length + context_length);
 
 
     // Embedding Layers
     
-    EmbeddingLayer* input_embedding_layer = new EmbeddingLayer(inputs_dimension, inputs_length, embedding_depth, true);
+    EmbeddingLayer* input_embedding_layer = new EmbeddingLayer(inputs_dimension, input_length, embedding_depth, true);
 
     input_embedding_layer->set_name("input_embedding");
     add_layer(input_embedding_layer);
@@ -164,7 +174,7 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
     for(Index i = 0; i < layers_number; i++)
     {
         MultiheadAttentionLayer* input_self_attention_layer =
-                new MultiheadAttentionLayer(inputs_length, inputs_length, embedding_depth, heads_number, true);
+                new MultiheadAttentionLayer(input_length, input_length, embedding_depth, heads_number, true);
 
         input_self_attention_layer->set_name("input_self_attention_" + to_string(i+1));
         add_layer(input_self_attention_layer);
@@ -179,7 +189,7 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
         }
 
 
-        AdditionLayer3D* input_self_attention_addition_layer = new AdditionLayer3D(inputs_length, embedding_depth);
+        AdditionLayer3D* input_self_attention_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         input_self_attention_addition_layer->set_name("input_self_attention_addition_" + to_string(i + 1));
         add_layer(input_self_attention_addition_layer);
         if (i == 0)
@@ -188,34 +198,34 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
             set_layer_inputs_indices("input_self_attention_addition_" + to_string(i + 1), { "decoder_perceptron_normalization_" + to_string(i), "input_self_attention_" + to_string(i + 1) });
 
 
-        NormalizationLayer3D* input_self_attention_normalization_layer = new NormalizationLayer3D(inputs_length, embedding_depth);
+        NormalizationLayer3D* input_self_attention_normalization_layer = new NormalizationLayer3D(input_length, embedding_depth);
         input_self_attention_normalization_layer->set_name("input_self_attention_normalization_" + to_string(i + 1));
         add_layer(input_self_attention_normalization_layer);
         set_layer_inputs_indices("input_self_attention_normalization_" + to_string(i + 1), "input_self_attention_addition_" + to_string(i + 1));
 
 
         MultiheadAttentionLayer* cross_attention_layer =
-                new MultiheadAttentionLayer(inputs_length, context_length, embedding_depth, heads_number);
+                new MultiheadAttentionLayer(input_length, context_length, embedding_depth, heads_number);
 
         cross_attention_layer->set_name("cross_attention_" + to_string(i+1));
         add_layer(cross_attention_layer);
         set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(layers_number)});
 
 
-        AdditionLayer3D* cross_attention_addition_layer = new AdditionLayer3D(inputs_length, embedding_depth);
+        AdditionLayer3D* cross_attention_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         cross_attention_addition_layer->set_name("cross_attention_addition_" + to_string(i + 1));
         add_layer(cross_attention_addition_layer);
         set_layer_inputs_indices("cross_attention_addition_" + to_string(i + 1), { "input_self_attention_normalization_" + to_string(i + 1), "cross_attention_" + to_string(i + 1) });
         
 
-        NormalizationLayer3D* cross_attention_normalization_layer = new NormalizationLayer3D(inputs_length, embedding_depth);
+        NormalizationLayer3D* cross_attention_normalization_layer = new NormalizationLayer3D(input_length, embedding_depth);
         cross_attention_normalization_layer->set_name("cross_attention_normalization_" + to_string(i + 1));
         add_layer(cross_attention_normalization_layer);
         set_layer_inputs_indices("cross_attention_normalization_" + to_string(i + 1), "cross_attention_addition_" + to_string(i + 1));
 
 
         PerceptronLayer3D* decoder_internal_perceptron_layer =
-                new PerceptronLayer3D(inputs_length, embedding_depth, perceptron_depth, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
+                new PerceptronLayer3D(input_length, embedding_depth, perceptron_depth, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
 
         decoder_internal_perceptron_layer->set_name("decoder_internal_perceptron_" + to_string(i+1));
         add_layer(decoder_internal_perceptron_layer);
@@ -223,20 +233,20 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
 
         PerceptronLayer3D* decoder_external_perceptron_layer =
-                new PerceptronLayer3D(inputs_length, perceptron_depth, embedding_depth, PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
+                new PerceptronLayer3D(input_length, perceptron_depth, embedding_depth, PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
         decoder_external_perceptron_layer->set_name("decoder_external_perceptron_" + to_string(i+1));
         add_layer(decoder_external_perceptron_layer);
         set_layer_inputs_indices("decoder_external_perceptron_" + to_string(i+1), "decoder_internal_perceptron_" + to_string(i+1));
 
 
-        AdditionLayer3D* decoder_perceptron_addition_layer = new AdditionLayer3D(inputs_length, embedding_depth);
+        AdditionLayer3D* decoder_perceptron_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         decoder_perceptron_addition_layer->set_name("decoder_perceptron_addition_" + to_string(i + 1));
         add_layer(decoder_perceptron_addition_layer);
         set_layer_inputs_indices("decoder_perceptron_addition_" + to_string(i + 1), { "cross_attention_normalization_" + to_string(i + 1), "decoder_external_perceptron_" + to_string(i + 1) });
 
 
-        NormalizationLayer3D* decoder_perceptron_normalization_layer = new NormalizationLayer3D(inputs_length, embedding_depth);
+        NormalizationLayer3D* decoder_perceptron_normalization_layer = new NormalizationLayer3D(input_length, embedding_depth);
         decoder_perceptron_normalization_layer->set_name("decoder_perceptron_normalization_" + to_string(i + 1));
         add_layer(decoder_perceptron_normalization_layer);
         set_layer_inputs_indices("decoder_perceptron_normalization_" + to_string(i + 1), "decoder_perceptron_addition_" + to_string(i + 1));
@@ -244,7 +254,7 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
     // Output layer
     
-    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(inputs_length, embedding_depth, inputs_dimension + 1);
+    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(input_length, embedding_depth, inputs_dimension + 1);
 
     final_layer->set_name("probabilistic");
     add_layer(final_layer);
@@ -264,7 +274,7 @@ void Transformer::set_context_vocabulary(Tensor<string, 1>& new_context_vocabula
     context_vocabulary = new_context_vocabulary;
 }
 
-/*
+
 string Transformer::calculate_outputs(const string& context_string)
 {
     const Index context_vocabulary_size = context_vocabulary.size();
@@ -279,9 +289,9 @@ string Transformer::calculate_outputs(const string& context_string)
 
     for (Index j = 1; j < context_length; j++)
     {
-        if (j <= context_tokens.size() && contains(context_vocabulary, context_tokens(j - 1)))
+        if (j <= context_tokens(0).size() && contains(context_vocabulary, context_tokens(0)(j - 1)))
         {
-            auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(j - 1));
+            auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(0)(j - 1));
 
             const Index word_index = it - context_vocabulary.data();
 
@@ -289,41 +299,70 @@ string Transformer::calculate_outputs(const string& context_string)
         }
         else
         {
-            if (j == context_tokens.size() + 1 || (j == context_length - 1 && !line_ended))
+            if (j == context_tokens(0).size() + 1 || (j == context_length - 1 && !line_ended))
             {
                 context(j) = 2; /// end indicator
                 line_ended = true;
             }
             else
             {
-                context(j) = type(0);
+                break;
             }
         }
     }
+    
+    Tensor<type, 2> input(1, input_length);
+    input.setZero();
+    input(0) = 1;
 
-    /*
-    const Index batch_samples_number = inputs.dimension(0);
-    const Index inputs_number = inputs.dimension(1);
+    const Index batch_samples_number = 1;
     const Index outputs_number = get_outputs_number();
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
-    const pair<type*, dimensions> inputs_pair((type*)inputs.data(), { {batch_samples_number, inputs_number} });
+    pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
+    pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
 
-    forward_propagate(tensor_wrapper(inputs_pair), neural_network_forward_propagation);
+    Tensor<pair<type*, dimensions>, 1> inputs_pairs(2);
+
+    inputs_pairs(0) = input_pair;
+    inputs_pairs(1) = context_pair;
 
     const Index layers_number = get_layers_number();
 
-    if (layers_number == 0) return Tensor<type, 2>();
+    pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
-    const pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+    TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[1], outputs_pair.second[2]);
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    Tensor<type, 1> current_outputs(outputs_pair.second[2]);
+    Tensor<Index, 0> prediction;
+    
+    for(Index i = 1; i < input_length; i++)
+    {
+        forward_propagate(inputs_pairs, neural_network_forward_propagation);
 
-    return outputs;
+        current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
+
+        prediction.device(*thread_pool_device) = current_outputs.argmax();
+
+        input(i) = type(prediction(0));
+
+        if (prediction(0) == 2) break;
+    }
+    
+    ostringstream output_string;
+
+    for (Index i = 1; i < input_length; i++)
+    {
+        if (input(i) == 2)   break;
+
+        output_string << input_vocabulary(Index(input(i) - 3)) << " ";
+    }
+
+    return output_string.str();
     
 }
-*/
+
 
 TransformerForwardPropagation::~TransformerForwardPropagation()
 {
@@ -404,3 +443,22 @@ void TransformerForwardPropagation::print() const
 }
 
 };
+
+
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
