@@ -198,6 +198,19 @@ const Tensor<Tensor<string, 1>, 1> LanguageDataSet::get_targets() const
     return targets;
 }
 
+
+Tensor<type, 2> LanguageDataSet::get_context_data() const
+{
+    const Index samples_number = get_samples_number();
+
+    Tensor<Index, 1> indices;
+    initialize_sequential(indices, 0, 1, samples_number - 1);
+
+    const Tensor<Index, 1> context_variables_indices = get_context_variables_indices();
+
+    return get_subtensor_data(indices, context_variables_indices);
+}
+
 void LanguageDataSet::set_default_raw_variables_uses()
 {
     DataSet::set_default_raw_variables_uses();
@@ -1610,10 +1623,12 @@ void LanguageDataSet::read_txt_language_model()
     load_documents(data_source_path);
     
     Index entry_number = documents(0).size();
+
     for(Index i = 1; i < documents.size(); i++)
         entry_number += documents(i).size();
 
     Index completion_entry_number = targets(0).size();
+    
     for(Index i = 1; i < targets.size(); i++)
         completion_entry_number += targets(i).size();
 
@@ -1665,12 +1680,13 @@ void LanguageDataSet::read_txt_language_model()
 
     completion_vocabulary = calculate_vocabulary(completion_tokens);
     
-    Index LIMIT = 128;
+    const Index LIMIT = 128;
 
     Index max_context_tokens = context_tokens(0).size();
 
     for(Index i = 0; i < entry_number; i++){
-        if(context_tokens(i).size() > max_context_tokens) max_context_tokens = context_tokens(i).size();
+        if(context_tokens(i).size() > max_context_tokens) 
+            max_context_tokens = context_tokens(i).size();
     }
 
     max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
@@ -1678,7 +1694,8 @@ void LanguageDataSet::read_txt_language_model()
     Index max_completion_tokens = completion_tokens(0).size();
 
     for(Index i = 0; i < entry_number; i++){
-        if(completion_tokens(i).size() > max_completion_tokens) max_completion_tokens = completion_tokens(i).size();
+        if(completion_tokens(i).size() > max_completion_tokens) 
+            max_completion_tokens = completion_tokens(i).size();
     }
 
     max_completion_length = max_completion_tokens > LIMIT ? LIMIT : max_completion_tokens;

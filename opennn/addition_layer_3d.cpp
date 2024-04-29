@@ -57,29 +57,9 @@ Index AdditionLayer3D::get_inputs_depth() const
 }
 
 
-dimensions AdditionLayer3D::get_output_dimensions() const
+dimensions AdditionLayer3D::get_outputs_dimensions() const
 {
     return { inputs_number, inputs_depth };
-}
-
-
-/// Returns the number of parameters of the layer.
-
-Index AdditionLayer3D::get_parameters_number() const
-{
-    return 0;
-}
-
-
-/// Returns a single vector with all the layer parameters.
-/// The format is a vector of real values.
-/// The size is the number of parameters in the layer.
-
-Tensor<type, 1> AdditionLayer3D::get_parameters() const
-{
-    Tensor<type, 1> parameters(0);
-
-    return parameters;
 }
 
 
@@ -149,14 +129,6 @@ void AdditionLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 }
 
 
-/// Sets the parameters of this layer.
-
-void AdditionLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
-{
-
-}
-
-
 /// Sets a new display value.
 /// If it is set to true messages from this class are displayed on the screen;
 /// if it is set to false messages from this class are not displayed on the screen.
@@ -185,22 +157,6 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 }
 
 
-void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                        Tensor<type, 1>& potential_parameters,
-                                        LayerForwardPropagation* layer_forward_propagation)
-{
-    const TensorMap<Tensor<type, 3>> input_1(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
-    const TensorMap<Tensor<type, 3>> input_2(inputs_pair(1).first, inputs_pair(1).second[0], inputs_pair(1).second[1], inputs_pair(1).second[2]);
-
-    AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
-        static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation);
-
-    Tensor<type, 3>& outputs = addition_layer_3d_forward_propagation->outputs;
-
-    outputs.device(*thread_pool_device) = input_1 + input_2;
-}
-
-
 void AdditionLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                LayerForwardPropagation* forward_propagation,
@@ -222,42 +178,6 @@ void AdditionLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
     input_1_derivatives.device(*thread_pool_device) = deltas;
     input_2_derivatives.device(*thread_pool_device) = deltas;
-}
-
-
-void AdditionLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
-                                     const Index& index,
-                                     Tensor<type, 1>& gradient) const
-{
-}
-
-
-/// Returns a string with the expression of the inputs-outputs relationship of the layer.
-/// @param inputs_names vector of strings with the name of the layer inputs.
-/// @param outputs_names vector of strings with the name of the layer outputs.
-
-string AdditionLayer3D::write_expression(const Tensor<string, 1>& inputs_names,
-                                         const Tensor<string, 1>& outputs_names) const
-{/*
-    ostringstream buffer;
-
-    for (Index j = 0; j < outputs_names.size(); j++)
-    {
-        const Tensor<type, 1> synaptic_weights_column = synaptic_weights.chip(j, 1);
-
-        buffer << outputs_names[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
-
-        for (Index i = 0; i < inputs_names.size() - 1; i++)
-        {
-            buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ") +";
-        }
-
-        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") );\n";
-    }
-
-    return buffer.str();
-    */
-    return "";
 }
 
 
@@ -361,8 +281,9 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     if (parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
-
+        /*
         set_parameters(to_type_vector(parameters_string, ' '));
+        */
     }
 }
 

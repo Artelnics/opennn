@@ -18,9 +18,9 @@
 
 // OpenNN includes
 
+
 #include "config.h"
 #include "tensors.h"
-
 
 namespace opennn {
 
@@ -83,10 +83,7 @@ public:
 
     virtual ~Layer();
 
-    string get_name() const
-    {
-        return layer_name;
-    }
+    string get_name() const;
 
     // Get neurons number
 
@@ -112,7 +109,7 @@ public:
 
     virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
-    virtual dimensions get_output_dimensions() const;
+    virtual dimensions get_outputs_dimensions() const;
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -126,19 +123,17 @@ public:
 
     // Back propagation
 
-    virtual void calculate_hidden_delta(LayerForwardPropagation*,
-                                        LayerBackPropagation*,
-                                        LayerForwardPropagation*,
-                                        LayerBackPropagation*) const {}
+    virtual void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                                const Tensor<pair<type*, dimensions>, 1>&,
+                                LayerForwardPropagation*,
+                                LayerBackPropagation*) const {}
+
+    /// @todo refactor to back_propagate 
 
     virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
-                                           LayerBackPropagationLM*,
-                                           LayerBackPropagationLM*) const {}
+        LayerBackPropagationLM*,
+        LayerBackPropagationLM*) const {}
 
-    virtual void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                          const Tensor<pair<type*, dimensions>, 1>&,
-                                          LayerForwardPropagation*,
-                                          LayerBackPropagation*) const {}
 
     virtual void insert_gradient(LayerBackPropagation*,
                                  const Index&,
@@ -160,7 +155,10 @@ public:
 
     // Expression methods
 
-    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const {return string();}
+    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const 
+    {
+        return string();
+    }
 
 protected:
 

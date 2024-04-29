@@ -15,7 +15,6 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
-
 EmbeddingLayer::EmbeddingLayer() : Layer()
 {
     set();
@@ -66,7 +65,7 @@ Index EmbeddingLayer::get_depth() const
 }
 
 
-dimensions EmbeddingLayer::get_output_dimensions() const
+dimensions EmbeddingLayer::get_outputs_dimensions() const
 {
     return { inputs_number, depth };
 }
@@ -229,7 +228,7 @@ void EmbeddingLayer::set_parameters_random()
 
 //    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
 
-    // first row must be 0s because input value 0 is padding
+    // First row must be 0s because input value 0 is padding
     
     embedding_weights.chip(0, 0).setConstant(0);
     
@@ -365,9 +364,9 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
-
+    
     embedding_weights_derivatives.setZero();
-
+    
     for (Index i = 0; i < batch_samples_number; i++)
     {
         sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
@@ -464,8 +463,6 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 
     const type half_depth = type(depth) / type(2);
 
-    /// @todo (because h file?) Try to use matrix form
-
     #pragma omp parallel for
 
     for (Index i = 0; i < inputs_number; i++)
@@ -484,6 +481,7 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
         for (Index i = 0; i < inputs_number; i++)
         {
             positional_encoding(i, depth - 2) = type(sin((i + 1) / 10000));
+
             positional_encoding(i, depth - 1) = type(cos((i + 1) / 10000));
         }
     }

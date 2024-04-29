@@ -132,7 +132,7 @@ private:
 
    /// Small number to prevent any division by zero
 
-   type epsilon =type(1.e-8);
+   type epsilon = type(1.e-6);
 
     // Stopping criteria
 

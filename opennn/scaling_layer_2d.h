@@ -47,10 +47,10 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_outputs_dimensions() const;
+   dimensions get_outputs_dimensions() const;
 
    Index get_inputs_number() const final;
-   Tensor<Index, 1> get_inputs_dimensions() const;
+   dimensions get_inputs_dimensions() const;
    Index get_neurons_number() const final;
 
    // Inputs descriptives

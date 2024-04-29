@@ -820,7 +820,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
-    /*const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.dimensions()[0]); // REVISAR
+    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.dimensions()[0]);
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
 
@@ -834,7 +834,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     correlation.b = coefficients(1);
     // no r correlation here
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);*/
+    if(correlation.b < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }

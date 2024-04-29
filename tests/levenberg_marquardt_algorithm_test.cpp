@@ -102,8 +102,8 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
 
-    //training_results = levenberg_marquardt_algorithm.perform_training();
-    //error = training_results.get_training_error();
+    training_results = levenberg_marquardt_algorithm.perform_training();
+    error = training_results.get_training_error();
 
     assert_true(error < old_error, LOG);
 
@@ -114,8 +114,8 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
     levenberg_marquardt_algorithm.set_maximum_epochs_number(2);
     neural_network.set_parameters_constant(-1);
 
-    //training_results = levenberg_marquardt_algorithm.perform_training();
-    //error = training_results.get_training_error();
+    training_results = levenberg_marquardt_algorithm.perform_training();
+    error = training_results.get_training_error();
 
     assert_true(error <= old_error, LOG);
 
@@ -130,9 +130,9 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1000);
     levenberg_marquardt_algorithm.set_maximum_time(1000.0);
 
-    //training_results = levenberg_marquardt_algorithm.perform_training();
+    training_results = levenberg_marquardt_algorithm.perform_training();
 
-    //assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+    assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
 
     // Minimum loss decrease
 
@@ -145,9 +145,9 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1000);
     levenberg_marquardt_algorithm.set_maximum_time(1000.0);
 
-    //training_results = levenberg_marquardt_algorithm.perform_training();
+    training_results = levenberg_marquardt_algorithm.perform_training();
 
-    //assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
+    assert_true(levenberg_marquardt_algorithm.get_minimum_loss_decrease() <= minimum_loss_decrease, LOG);
 }
 
 
