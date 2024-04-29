@@ -53,11 +53,7 @@ namespace opennn
         Index get_inputs_number() const final;
         Index get_inputs_depth() const;
 
-        dimensions get_output_dimensions() const final;
-
-        // Parameters
-        Index get_parameters_number() const final;
-        Tensor<type, 1> get_parameters() const final;
+        dimensions get_outputs_dimensions() const final;
 
         // Display messages
 
@@ -73,10 +69,6 @@ namespace opennn
 
         void set_inputs_depth(const Index&);
 
-        // Parameters
-
-        void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
-
         // Display messages
 
         void set_display(const bool&);
@@ -84,27 +76,15 @@ namespace opennn
         // Forward propagation
 
         void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-            LayerForwardPropagation*,
-            const bool&) final;
-
-        void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-            Tensor<type, 1>&,
-            LayerForwardPropagation*);
+                               LayerForwardPropagation*,
+                               const bool&) final;
 
         // Gradient methods
 
         void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                      const Tensor<pair<type*, dimensions>, 1>&,
-                                      LayerForwardPropagation*,
-                                      LayerBackPropagation*) const final;
-
-        void insert_gradient(LayerBackPropagation*,
-                             const Index&,
-                             Tensor<type, 1>&) const final;
-
-        // Expression methods
-
-        string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+                            const Tensor<pair<type*, dimensions>, 1>&,
+                            LayerForwardPropagation*,
+                            LayerBackPropagation*) const final;
 
         // Serialization methods
 

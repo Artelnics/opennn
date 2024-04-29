@@ -50,15 +50,14 @@ public:
 
     explicit FlattenLayer();
 
-    explicit FlattenLayer(const Tensor<Index, 1>&);
+    explicit FlattenLayer(const dimensions&);
 
     // Get methods
 
-    Tensor<Index, 1> get_inputs_dimensions() const;
+    dimensions get_inputs_dimensions() const;
     Index get_outputs_number() const;
-    Tensor<Index, 1> get_outputs_dimensions() const;
-
-    dimensions get_output_dimensions() const final;
+    
+    dimensions get_outputs_dimensions() const final;
 
     Index get_inputs_number() const;
     Index get_inputs_channels_number() const;
@@ -66,28 +65,24 @@ public:
     Index get_inputs_raw_variables_number() const;
     Index get_neurons_number() const;
 
-    Tensor<type, 1> get_parameters() const final;
-    Index get_parameters_number() const final;
-
     // Set methods
 
     void set();
     void set(const Index&);
-    void set(const Tensor<Index, 1>&);
+    void set(const dimensions&);
     void set(const tinyxml2::XMLDocument&);
 
     void set_default();
-    void set_name(const string&);
 
-    void set_parameters(const Tensor<type, 1>&, const Index&) final;
+    void set_name(const string&);
 
     // Display messages
 
-    void set_display(const bool&);
+//    void set_display(const bool&);
 
     // Check methods
 
-    bool is_empty() const;
+//    bool is_empty() const;
 
     // Forward propagation
 
@@ -98,9 +93,9 @@ public:
     // Back-propagation
 
     void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                  const Tensor<pair<type*, dimensions>, 1>&,
-                                  LayerForwardPropagation*,
-                                  LayerBackPropagation*) const final;
+                        const Tensor<pair<type*, dimensions>, 1>&,
+                        LayerForwardPropagation*,
+                        LayerBackPropagation*) const final;
 
     // Serialization methods
 
@@ -114,7 +109,7 @@ public:
 
 protected:
 
-    Tensor<Index, 1> inputs_dimensions;
+    dimensions inputs_dimensions;
 
     /// Display warning messages to screen.
 

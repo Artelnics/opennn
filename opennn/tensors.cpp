@@ -214,7 +214,8 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
 // Assumes A, B & C share dimensions 2 & 3 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
-// By default contraction axes are (1, 0)
+// By default contraction axes are (1, 0).
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 4>& B,
@@ -2035,8 +2036,6 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>& data)
 
     return difference_data;
 }
-
-
 
 
 Tensor<type, 1> mode(Tensor<type, 1>& data)

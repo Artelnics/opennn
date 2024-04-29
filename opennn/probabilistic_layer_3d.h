@@ -68,7 +68,7 @@ public:
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
 
-   dimensions get_output_dimensions() const final;
+   dimensions get_outputs_dimensions() const final;
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
@@ -156,15 +156,6 @@ public:
    void insert_gradient(LayerBackPropagation*, 
                         const Index&, 
                         Tensor<type, 1>&) const final;
-
-   // Expression methods
-
-   string write_competitive_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-   string write_combinations(const Tensor<string, 1>&) const;
-   string write_activations(const Tensor<string, 1>&) const;
 
    // Serialization methods
 

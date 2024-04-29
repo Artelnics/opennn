@@ -120,7 +120,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
      const Tensor<type, 2>& errors = back_propagation.errors;       
 
-     pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
+     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
      TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
      
