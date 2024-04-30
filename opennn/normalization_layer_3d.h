@@ -97,8 +97,8 @@ namespace opennn
         void set_gammas_constant(const type&);
         void set_betas_constant(const type&);
 
+        void set_parameters_default();
         void set_parameters_constant(const type&) final;
-
         void set_parameters_random() final;
 
         // Forward propagation
