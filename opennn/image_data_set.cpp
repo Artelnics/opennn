@@ -1480,7 +1480,7 @@ Tensor<type, 2> ImageDataSet::read_bmp(const string& path)
         image_number[i+1] = samples_number;
     }
 
-    ImageData imgdata = read_bmp_image_gpt(imagePath[0]);
+    ImageData imgdata;// = read_bmp_image_gpt(imagePath[0]);
     Index pixels_number = imgdata.channels * imgdata.width * imgdata.height;
     Tensor<type, 2> data(samples_number, pixels_number + 1);
 
@@ -1493,7 +1493,7 @@ Tensor<type, 2> ImageDataSet::read_bmp(const string& path)
 
     for (Index i = 0; i < samples_number; i++)
     {
-        ImageData imgdata = read_bmp_image_gpt(imagePath[i]);
+        ImageData imgdata;// = read_bmp_image_gpt(imagePath[i]);
 
         if(pixels_number != imgdata.channels * imgdata.width * imgdata.height)
         {
