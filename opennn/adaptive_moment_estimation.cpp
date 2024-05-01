@@ -248,10 +248,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool has_selection = data_set->has_selection();
 
+    bool is_language_model = false;
+    if (is_instance_of<LanguageDataSet>(data_set))  is_language_model = true;
+
+    bool is_classification_model = false;
+    if (is_instance_of<CrossEntropyError3D>(loss_index))  is_classification_model = true;
+
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
     Tensor<Index, 1> context_variables_indices;
-    if (is_instance_of<LanguageDataSet>(data_set))
+    if (is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
         context_variables_indices = language_data_set->get_context_variables_indices();
@@ -330,9 +336,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
 //    type training_loss = type(0);
     type training_error = type(0);
-    type accuracy = type(0);
+    type training_accuracy = type(0);
 
     type selection_error = type(0);
+    type selection_accuracy = type(0);
 
     Index selection_failures = 0;
 
@@ -369,7 +376,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         
 //        training_loss = type(0);
         training_error = type(0);
-        accuracy = type(0);
+        if(is_classification_model)    training_accuracy = type(0);
         
         //optimization_data.iteration = 1;
         
@@ -398,7 +405,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_back_propagation);
             
             training_error += training_back_propagation.error;
-            accuracy += training_back_propagation.accuracy;
+            if(is_classification_model)   training_accuracy += training_back_propagation.accuracy;
 //            training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
@@ -409,7 +416,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         // Loss
 
         training_error /= type(batches_number);
-        accuracy /= type(batches_number);
+        if(is_classification_model)   training_accuracy /= type(batches_number);
 
         results.training_error_history(epoch) = training_error;
         
@@ -418,6 +425,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
             
             selection_error = type(0);
+            if(is_classification_model)    selection_accuracy = type(0);
             
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
@@ -425,27 +433,30 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 selection_batch.fill(selection_batches.chip(iteration,0),
                                      input_variables_indices,
-                                     target_variables_indices);
+                                     target_variables_indices,
+                                     context_variables_indices);
 
                 // Neural network
                 
-                inputs_pair = training_batch.get_inputs_pair();
+                inputs_pair = selection_batch.get_inputs_pair();
 
                 neural_network->forward_propagate(inputs_pair,
-                                                          selection_forward_propagation,
-                                                          is_training);
+                                                  selection_forward_propagation,
+                                                  is_training);
                 
                 // Loss
 
                 loss_index->calculate_error(selection_batch,
-                                                    selection_forward_propagation,
-                                                    selection_back_propagation);
+                                            selection_forward_propagation,
+                                            selection_back_propagation);
                 
                 selection_error += selection_back_propagation.error;
+                if(is_classification_model)    selection_accuracy += selection_back_propagation.accuracy;
 
             }
 
             selection_error /= type(selection_batches_number);
+            if(is_classification_model)    selection_accuracy /= type(selection_batches_number);
 
             results.selection_error_history(epoch) = selection_error;
 
@@ -461,8 +472,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
-            if (is_instance_of<CrossEntropyError3D>(loss_index)) cout << "Accuracy: " << accuracy << endl;
+            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
             if(has_selection) cout << "Selection error: " << selection_error << endl;
+            if (has_selection && is_classification_model) cout << "Selection accuracy: " << selection_accuracy << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 

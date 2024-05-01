@@ -479,6 +479,28 @@ void PerceptronLayer3D::set_parameters_random()
 }
 
 
+/// Initializes the biases to zeroes and the synaptic weights with the Glorot Uniform initializer
+
+void PerceptronLayer3D::set_parameters_default()
+{
+    biases.setZero();
+
+    const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
+
+    const type minimum = -limit;
+    const type maximum = limit;
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < synaptic_weights.size() + 1; i++)
+    {
+        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+
+        synaptic_weights(i) = minimum + (maximum - minimum) * random;
+    }
+}
+
+
 void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                              const Tensor<type, 1>& biases,
                                              const Tensor<type, 2>& synaptic_weights,

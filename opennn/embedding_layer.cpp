@@ -325,6 +325,10 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
     if(positional_encoding)
     {
+        /// @todo 
+
+        Tensor<type, 2> current_output(outputs.dimension(1), outputs.dimension(2));
+
         if(!embedding_layer_forward_propagation->built_positional_encoding_matrix)
         {
             embedding_layer_forward_propagation->build_positional_encoding_matrix();
@@ -334,7 +338,8 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
         for(Index batch_element = 0; batch_element < outputs.dimension(0); batch_element++)
         {
-            outputs.chip(batch_element, 0).device(*thread_pool_device) += positional_encoding;
+            current_output = outputs.chip(batch_element, 0);
+            outputs.chip(batch_element, 0).device(*thread_pool_device) = current_output * current_output.constant(sqrt(depth)) + positional_encoding;
         }
     }
 }
@@ -461,39 +466,20 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 
     positional_encoding.setZero();
 
-    const type half_depth = type(depth) / type(2);
+    const type half_depth = type(depth) / 2;
 
     #pragma omp parallel for
-
     for (Index i = 0; i < inputs_number; i++)
     {
-        for (Index j = 0; j < Index(half_depth - 1); j++)
+        for (Index j = 0; j < Index(depth); j++)
         {
-            positional_encoding(i, 2 * j) = type(sin((i + 1) / pow(10000, (j + 1) / half_depth)));
-            positional_encoding(i, 2 * j + 1) = type(cos((i + 1) / pow(10000, (j + 1) / half_depth)));
+            if (j < Index(half_depth))
+                positional_encoding(i, j) = sin((i) / pow(10000, (j) / half_depth));
+            else
+                positional_encoding(i, j) = cos((i) / pow(10000, (j - Index(half_depth)) / half_depth));
         }
     }
 
-    if (depth % 2 == 0)
-    {
-        #pragma omp parallel for
-
-        for (Index i = 0; i < inputs_number; i++)
-        {
-            positional_encoding(i, depth - 2) = type(sin((i + 1) / 10000));
-
-            positional_encoding(i, depth - 1) = type(cos((i + 1) / 10000));
-        }
-    }
-    else
-    {
-        #pragma omp parallel for
-
-        for (Index i = 0; i < inputs_number; i++)
-        {
-            positional_encoding(i, depth - 1) = type(sin((i + 1) / 10000));
-        }
-    }
 
     built_positional_encoding_matrix = true;
 }
