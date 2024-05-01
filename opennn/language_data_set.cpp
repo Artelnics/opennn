@@ -49,12 +49,12 @@ Tensor<string, 1> LanguageDataSet::get_completion_vocabulary() const
 
 Index LanguageDataSet::get_context_vocabulary_size() const
 {
-    return context_vocabulary.size() + 2;
+    return context_vocabulary.size() + 3;
 }
 
 Index LanguageDataSet::get_completion_vocabulary_size() const
 {
-    return completion_vocabulary.size() + 2;
+    return completion_vocabulary.size() + 3;
 }
 
 Index LanguageDataSet::get_context_length() const

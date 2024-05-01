@@ -247,6 +247,13 @@ void NormalizationLayer3D::set_betas_constant(const type& value)
 }
 
 
+void NormalizationLayer3D::set_parameters_default()
+{
+    gammas.setConstant(1);
+    betas.setZero();
+}
+
+
 void NormalizationLayer3D::set_parameters_constant(const type& value)
 {
     gammas.setConstant(value);
