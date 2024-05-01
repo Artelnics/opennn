@@ -36,7 +36,7 @@ int main()
    try
    {
         cout << "Blank\n";
-
+/*
         LanguageDataSet language_data_set;
 
         //language_data_set.set_data_source_path("data/example2.txt");
@@ -113,7 +113,7 @@ int main()
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
-        
+*/
         cout << "Bye!" << endl;
 
         return 0;
