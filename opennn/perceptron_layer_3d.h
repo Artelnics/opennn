@@ -137,8 +137,8 @@ public:
    void set_synaptic_weights_constant(const type&);
 
    void set_parameters_constant(const type&) final;
-
    void set_parameters_random() final;
+   void set_parameters_default();
 
    // Forward propagation
 

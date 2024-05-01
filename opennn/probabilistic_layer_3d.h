@@ -123,8 +123,8 @@ public:
    void set_synaptic_weights_constant_Glorot();
 
    void set_parameters_constant(const type&) final;
-
    void set_parameters_random() final;
+   void set_parameters_default();
 
    void insert_parameters(const Tensor<type, 1>&, const Index&);
 
