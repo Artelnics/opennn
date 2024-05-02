@@ -273,11 +273,11 @@ void SumSquaredErrorTest::test_back_propagate()
 
     // Test forecasting random samples, inputs, outputs, neurons
     {
-//        samples_number = 1 + arc4random()%10;
-//        inputs_number = 1 + arc4random()%10;
-//        outputs_number = 1 + arc4random()%10;
-//        neurons_number = 1 + arc4random()%10;
-//        bool is_training = true;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+        bool is_training = true;
 
         // Data set
 
@@ -324,11 +324,11 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
     // Test approximation random samples, inputs, outputs, neurons
     {
-//        samples_number = 1 + arc4random()%10;
-//        inputs_number = 1 + arc4random()%10;
-//        outputs_number = 1 + arc4random()%10;
-//        neurons_number = 1 + arc4random()%10;
-//        bool is_training = true;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+        bool is_training = true;
 
         // Data set
 
@@ -376,11 +376,11 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-//        samples_number = type(1) + arc4random()%10;
-//        inputs_number = type(1) + arc4random()%10;
-//        outputs_number = type(1) + arc4random()%10;
-//        neurons_number = type(1) + arc4random()%10;
-//        bool is_training = true;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
+        bool is_training = true;
 
         // Data set
 
@@ -428,11 +428,11 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
     // Test multiple classification random samples, inputs, outputs, neurons
     {
-//        samples_number = type(1) + arc4random()%10;
-//        inputs_number = type(1) + arc4random()%10;
-//        outputs_number = type(1) + arc4random()%10;
-//        neurons_number = type(1) + arc4random()%10;
-//        bool is_training = true;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
+        bool is_training = true;
 
         // Data set
 
