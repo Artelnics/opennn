@@ -62,7 +62,7 @@ public:
 
     explicit PoolingLayer(const Tensor<Index, 1>&);
 
-    explicit PoolingLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    explicit PoolingLayer(const dimensions&, const dimensions&);
 
     // Get methods
 
@@ -100,13 +100,13 @@ public:
 
     // Set methods
 
-    void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set(const dimensions&, const dimensions&);
 
     void set_inputs_number(const Index&) {}
     void set_neurons_number(const Index&) {}
     void set_name(const string&);
 
-    void set_inputs_dimensions(const Tensor<Index, 1>&);
+    void set_inputs_dimensions(const dimensions&);
 
     void set_padding_width(const Index&);
 
@@ -159,7 +159,7 @@ public:
 
 protected:
 
-    Tensor<Index, 1> inputs_dimensions;
+    dimensions inputs_dimensions;
 
     Index pool_rows_number = 2;
 

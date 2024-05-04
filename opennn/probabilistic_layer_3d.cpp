@@ -506,18 +506,18 @@ void ProbabilisticLayer3D::set_parameters_random()
 
 /// Initializes the biases to zeroes and the synaptic weights with the Glorot Uniform initializer
 
-void ProbabilisticLayer3D::set_parameters_default()
+void ProbabilisticLayer3D::set_parameters_glorot()
 {
     biases.setZero();
-
+    
     const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
 
     const type minimum = -limit;
     const type maximum = limit;
-
+    
 #pragma omp parallel for
 
-    for (Index i = 0; i < synaptic_weights.size() + 1; i++)
+    for (Index i = 0; i < synaptic_weights.size(); i++)
     {
         const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
 
@@ -637,20 +637,19 @@ void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor
                                                                     Tensor<type, 3>& error_combinations_derivatives) const
 {
     const Index batch_samples_number = outputs.dimension(0);
+    const Index outputs_number = outputs.dimension(1);
 
     /// @todo Can we simplify this? For instance put the division in the last line somewhere else. 
 
     error_combinations_derivatives.device(*thread_pool_device) = outputs;
 
-    /// @todo write targets.dimension(0) explictly 
-
 #pragma omp parallel for
 
-    for (Index i = 0; i < targets.dimension(0); i++)
-        for (Index j = 0; j < targets.dimension(1); j++)
+    for (Index i = 0; i < batch_samples_number; i++)
+        for (Index j = 0; j < outputs_number; j++)
             error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
     
-    error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number);
+    error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number * outputs_number);
 }
 
 

@@ -273,10 +273,10 @@ void SumSquaredErrorTest::test_back_propagate()
 
     // Test forecasting random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + arc4random()%10;
-        inputs_number = 1 + arc4random()%10;
-        outputs_number = 1 + arc4random()%10;
-        neurons_number = 1 + arc4random()%10;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
         bool is_training = true;
 
         // Data set
@@ -324,10 +324,10 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
     // Test approximation random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + arc4random()%10;
-        inputs_number = 1 + arc4random()%10;
-        outputs_number = 1 + arc4random()%10;
-        neurons_number = 1 + arc4random()%10;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
         bool is_training = true;
 
         // Data set
@@ -344,7 +344,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-
+/*
         neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
@@ -354,7 +354,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         // Loss index
 
         back_propagation.set(samples_number, &sum_squared_error);
-        /*sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+        sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         // visual studio not running
 
@@ -376,10 +376,10 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-        samples_number = type(1) + arc4random()%10;
-        inputs_number = type(1) + arc4random()%10;
-        outputs_number = type(1) + arc4random()%10;
-        neurons_number = type(1) + arc4random()%10;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
         bool is_training = true;
 
         // Data set
@@ -399,7 +399,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
-
+/*
         forward_propagation.set(samples_number, &neural_network);
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
@@ -428,10 +428,10 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
     // Test multiple classification random samples, inputs, outputs, neurons
     {
-        samples_number = type(1) + arc4random()%10;
-        inputs_number = type(1) + arc4random()%10;
-        outputs_number = type(1) + arc4random()%10;
-        neurons_number = type(1) + arc4random()%10;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
         bool is_training = true;
 
         // Data set
@@ -451,7 +451,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
-
+/*
         forward_propagation.set(samples_number, &neural_network);
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 

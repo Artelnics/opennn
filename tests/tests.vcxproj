@@ -299,6 +299,8 @@
     <ClCompile Include="growing_inputs_test.cpp" />
     <ClInclude Include="growing_neurons_test.h" />
     <ClCompile Include="growing_neurons_test.cpp" />
+    <ClInclude Include="image_data_set_test.h" />
+    <ClCompile Include="image_data_set_test.cpp" />
     <ClInclude Include="inputs_selection_test.h" />
     <ClCompile Include="inputs_selection_test.cpp" />
     <ClInclude Include="learning_rate_algorithm_test.h" />
@@ -350,6 +352,8 @@
     <ClCompile Include="tensor_utilities_test.cpp" />
     <ClInclude Include="testing_analysis_test.h" />
     <ClCompile Include="testing_analysis_test.cpp" />
+    <ClInclude Include="time_series_data_set_test.h" />
+    <ClCompile Include="time_series_data_set_test.cpp" />
     <ClInclude Include="training_strategy_test.h" />
     <ClCompile Include="training_strategy_test.cpp" />
     <ClInclude Include="transformer_test.h" />
