@@ -36,7 +36,7 @@ int main()
    try
    {
         cout << "Blank\n";
-
+        
         LanguageDataSet language_data_set;
 
         //language_data_set.set_data_source_path("data/example2.txt");
@@ -83,7 +83,7 @@ int main()
         //type training_loss_goal = type(0.1);
 
         //optimization_algorithm.set_loss_goal(training_loss_goal);
-        optimization_algorithm.set_maximum_epochs_number(19);
+        optimization_algorithm.set_maximum_epochs_number(49);
         optimization_algorithm.set_maximum_time(86400);
         optimization_algorithm.set_batch_samples_number(32);
 
@@ -113,7 +113,7 @@ int main()
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
-        
+
         cout << "Bye!" << endl;
 
         return 0;

@@ -356,7 +356,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network->has_long_short_term_memory_layer()
     || neural_network->has_recurrent_layer())

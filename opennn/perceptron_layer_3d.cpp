@@ -481,7 +481,7 @@ void PerceptronLayer3D::set_parameters_random()
 
 /// Initializes the biases to zeroes and the synaptic weights with the Glorot Uniform initializer
 
-void PerceptronLayer3D::set_parameters_default()
+void PerceptronLayer3D::set_parameters_glorot()
 {
     biases.setZero();
 
@@ -492,7 +492,7 @@ void PerceptronLayer3D::set_parameters_default()
 
 #pragma omp parallel for
 
-    for (Index i = 0; i < synaptic_weights.size() + 1; i++)
+    for (Index i = 0; i < synaptic_weights.size(); i++)
     {
         const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
 
@@ -678,12 +678,7 @@ void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>&
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2]);
 
-    /// @todo What is this??? 
-
-    if (deltas_pair.size() > 1)
-    {
-        add_deltas(deltas_pair);
-    }
+    if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
                                             deltas_pair(0).second[0],

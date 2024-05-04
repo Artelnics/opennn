@@ -325,21 +325,18 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
     if(positional_encoding)
     {
-        /// @todo 
-
-        Tensor<type, 2> current_output(outputs.dimension(1), outputs.dimension(2));
-
         if(!embedding_layer_forward_propagation->built_positional_encoding_matrix)
         {
             embedding_layer_forward_propagation->build_positional_encoding_matrix();
         }
 
-        const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
+        outputs.device(*thread_pool_device) = outputs * outputs.constant(sqrt(depth));
 
+        const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
+        
         for(Index batch_element = 0; batch_element < outputs.dimension(0); batch_element++)
         {
-            current_output = outputs.chip(batch_element, 0);
-            outputs.chip(batch_element, 0).device(*thread_pool_device) = current_output * current_output.constant(sqrt(depth)) + positional_encoding;
+            outputs.chip(batch_element, 0).device(*thread_pool_device) += positional_encoding;
         }
     }
 }
@@ -374,7 +371,10 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
     
     for (Index i = 0; i < batch_samples_number; i++)
     {
-        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
+        if(positional_encoding)
+            sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
+        else
+            sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
         for (Index j = 0; j < inputs_number; j++)
         {
