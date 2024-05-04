@@ -353,7 +353,7 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
 void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
-{    
+{
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],

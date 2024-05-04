@@ -34,8 +34,9 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 /// @param new_input_variables_dimensions A vector containing the desired number of rows and columns for the input.
 /// @param pool_dimensions A vector containing the desired number of rows and columns for the pool.
 
-PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& pool_dimensions) : Layer()
-{ 
+
+PoolingLayer::PoolingLayer(const dimensions& new_input_variables_dimensions, const dimensions& pool_dimensions) : Layer()
+{
     set(new_input_variables_dimensions, pool_dimensions);
 
     inputs_dimensions = new_input_variables_dimensions;
@@ -176,7 +177,8 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 
 dimensions PoolingLayer::get_inputs_dimensions() const
 {
-    return { inputs_dimensions(0) ,inputs_dimensions(1) , inputs_dimensions(2)};
+    return inputs_dimensions;
+//    return { inputs_dimensions(0) ,inputs_dimensions(1) , inputs_dimensions(2)};
 }
 
 
@@ -201,7 +203,7 @@ string PoolingLayer::write_pooling_method() const
 }
 
 
-void PoolingLayer::set(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& new_pool_dimensions)
+void PoolingLayer::set(const dimensions& new_input_variables_dimensions, const dimensions& new_pool_dimensions)
 {
     inputs_dimensions = new_input_variables_dimensions;
 
@@ -219,7 +221,7 @@ void PoolingLayer::set_name(const string& new_layer_name)
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
-void PoolingLayer::set_inputs_dimensions(const Tensor<Index, 1>& new_inputs_dimensions)
+void PoolingLayer::set_inputs_dimensions(const dimensions& new_inputs_dimensions)
 {
     inputs_dimensions = new_inputs_dimensions;
 }
