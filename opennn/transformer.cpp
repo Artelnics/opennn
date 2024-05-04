@@ -64,7 +64,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
                       const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number)
 {
     delete_layers();
-
+    
     inputs_names.resize(input_length + context_length);
 
 
@@ -83,7 +83,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     add_layer(context_embedding_layer);
     set_layer_inputs_indices("context_embedding", "context");
 
-
+    
     // Encoder
 
     for(Index i = 0; i < layers_number; i++)
@@ -167,7 +167,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         
         set_layer_inputs_indices("encoder_perceptron_normalization_" + to_string(i + 1), "encoder_perceptron_addition_" + to_string(i + 1));
     }
-
+    
 
     // Decoder
 
@@ -251,11 +251,11 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         add_layer(decoder_perceptron_normalization_layer);
         set_layer_inputs_indices("decoder_perceptron_normalization_" + to_string(i + 1), "decoder_perceptron_addition_" + to_string(i + 1));
     }
-
+    
     // Output layer
     
     ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(input_length, embedding_depth, inputs_dimension + 1);
-
+    
     final_layer->set_name("probabilistic");
     add_layer(final_layer);
     set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(layers_number));
