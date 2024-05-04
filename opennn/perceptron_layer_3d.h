@@ -138,7 +138,7 @@ public:
 
    void set_parameters_constant(const type&) final;
    void set_parameters_random() final;
-   void set_parameters_default();
+   void set_parameters_glorot();
 
    // Forward propagation
 

@@ -111,10 +111,10 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
     
     // Test approximation all random
     {
-        samples_number = type(1) + arc4random() % 5;
-        inputs_number = type(1) + arc4random() % 5;
-        outputs_number = type(1) + arc4random() % 5;
-        neurons_number = type(1) + arc4random() % 5;
+        samples_number = type(1) + rand() % 5;
+        inputs_number = type(1) + rand() % 5;
+        outputs_number = type(1) + rand() % 5;
+        neurons_number = type(1) + rand() % 5;
 
         // Data set
 
@@ -242,10 +242,10 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-        samples_number = type(1) + arc4random() % 10;
-        inputs_number = type(1) + arc4random() % 10;
-        neurons_number = type(1) + arc4random() % 10;
-        outputs_number = type(1) + arc4random() % 10;
+        samples_number = type(1) + rand() % 10;
+        inputs_number = type(1) + rand() % 10;
+        neurons_number = type(1) + rand() % 10;
+        outputs_number = type(1) + rand() % 10;
 
         // Data set
 
@@ -344,10 +344,10 @@ void MeanSquaredErrorTest::test_back_propagate_long_short_term_memory()
 
     // Test forecasting random samples, inputs, outputs, neurons
     {
-        samples_number = type(1) + arc4random() % 10;
-        inputs_number = type(1) + arc4random() % 10;
-        outputs_number = type(1) + arc4random() % 10;
-        neurons_number = type(1) + arc4random() % 10;
+        samples_number = type(1) + rand() % 10;
+        inputs_number = type(1) + rand() % 10;
+        outputs_number = type(1) + rand() % 10;
+        neurons_number = type(1) + rand() % 10;
 
         // Data set
 
@@ -403,10 +403,10 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
     // Test approximation random samples, inputs, outputs, neurons
     {
-        samples_number = type(1) + arc4random()%10;
-        inputs_number = type(1) + arc4random()%10;
-        outputs_number = type(1) + arc4random()%10;
-        neurons_number = type(1) + arc4random()%10;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
 
         // Data set
 
@@ -455,10 +455,10 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
     // Test binary classification random samples, inputs, outputs, neurons
     /*{
-        samples_number = 1 + arc4random()%10;
-        inputs_number = 1 + arc4random()%10;
-        outputs_number = 1 + arc4random()%10;
-        neurons_number = 1 + arc4random()%10;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
 
         // Data set
 
@@ -507,10 +507,10 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
     // Test multiple classification random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + arc4random()%10;
-        inputs_number = 1 + arc4random()%10;
-        outputs_number = 1 + arc4random()%10;
-        neurons_number = 1 + arc4random()%10;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
 
         // Data set
 
@@ -613,10 +613,10 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
     // Test approximation all random
     {
-        samples_number = 1 + arc4random()%5;
-        inputs_number = 1 + arc4random()%5;
-        outputs_number = 1 + arc4random()%5;
-        neurons_number = 1 + arc4random()%5;
+        samples_number = 1 + rand()%5;
+        inputs_number = 1 + rand()%5;
+        outputs_number = 1 + rand()%5;
+        neurons_number = 1 + rand()%5;
         bool is_training = true;
 
         // Data set
@@ -700,10 +700,10 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + arc4random()%10;
-        inputs_number = 1 + arc4random()%10;
-        outputs_number = 1 + arc4random()%10;
-        neurons_number = 1 + arc4random()%10;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
 
         // Data set
 
@@ -784,10 +784,10 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
     // Test forecasting random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + arc4random()%10;
-        inputs_number = 1 + arc4random()%10;
-        outputs_number = 1 + arc4random()%10;
-        neurons_number = 1 + arc4random()%10;
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
 
         // Data set
 
@@ -1753,16 +1753,22 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         convolutional_layer->set_parameters_random();
 
-        dimensions flatten_layer_inputs_dimensions({input_rows_number-kernels_rows_number+1, input_raw_variables_number-kernels_raw_variables_number+1, kernels_number, images_number});
+        dimensions flatten_layer_inputs_dimensions({input_rows_number-kernels_rows_number+1,
+                                                    input_raw_variables_number-kernels_raw_variables_number+1,
+                                                    kernels_number, images_number});
         FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
 
-        const Index perceptron_layer_inputs_number = input_rows_number-kernels_rows_number+1*input_raw_variables_number-kernels_raw_variables_number+1*kernels_number;
+        const Index perceptron_layer_inputs_number = (input_rows_number-kernels_rows_number+1)
+                                                    *(input_raw_variables_number-kernels_raw_variables_number+1)
+                                                    *kernels_number;
         const Index perceptrons_number = 1;
 
         PerceptronLayer* perceptron_layer = new PerceptronLayer(perceptron_layer_inputs_number, perceptrons_number);
 
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
         perceptron_layer->set_parameters_random();
+
+        cout << "Perceptron parameters: " << perceptron_layer->get_parameters() << endl;
 
         neural_network.add_layer(convolutional_layer);
         neural_network.add_layer(flatten_layer);
@@ -1771,9 +1777,11 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         ForwardPropagation forward_propagation(images_number, &neural_network);
 cout << "Before forward propagation" << endl;
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+
+        forward_propagation.print();
 cout << "After forward propagation" << endl;
       MeanSquaredError mean_squared_error(&neural_network, &data_set);
-
+system("pause");
       BackPropagation back_propagation(images_number, &mean_squared_error);
 cout << "Before back propagation" << endl;
       mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -1783,6 +1791,7 @@ cout << "After back propagation" << endl;
       const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
       cout << "Numerical gradient: " << endl << numerical_gradient << endl;
+      system("pause");
 
       cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
 
@@ -1929,23 +1938,29 @@ cout << "After back propagation" << endl;
 
         convolutional_layer->set_parameters_random();
 
-        //Tensor<Index, 1> pooling_layer_inputs_dimensions = convolutional_layer->get_outputs_dimensions();
-        Tensor<Index, 1> pooling_layer_pools_dimensions(2);
+        dimensions pooling_layer_inputs_dimensions = convolutional_layer->get_outputs_dimensions();
+        dimensions pooling_layer_pools_dimensions(2);
         pooling_layer_pools_dimensions[0] = 2;
         pooling_layer_pools_dimensions[1] = 2;
 
-        //PoolingLayer* pooling_layer = new PoolingLayer(pooling_layer_inputs_dimensions, pooling_layer_pools_dimensions);
-        //pooling_layer->set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
+        PoolingLayer* pooling_layer = new PoolingLayer(pooling_layer_inputs_dimensions, pooling_layer_pools_dimensions);
+        pooling_layer->set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
 
-        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
-        flatten_layer_inputs_dimensions(0) = input_rows_number-kernels_rows_number+1;
-        flatten_layer_inputs_dimensions(1) = input_raw_variables_number-kernels_raw_variables_number+1;
-        flatten_layer_inputs_dimensions(2) = kernels_number;
-        flatten_layer_inputs_dimensions(3) = images_number;
+//        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
+//        flatten_layer_inputs_dimensions(0) = input_rows_number-kernels_rows_number+1;
+//        flatten_layer_inputs_dimensions(1) = input_raw_variables_number-kernels_raw_variables_number+1;
+//        flatten_layer_inputs_dimensions(2) = kernels_number;
+//        flatten_layer_inputs_dimensions(3) = images_number;
 
-        //FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+        dimensions flatten_layer_inputs_dimensions({input_rows_number-kernels_rows_number+1,
+                                                    input_raw_variables_number-kernels_raw_variables_number+1,
+                                                    kernels_number,
+                                                    images_number});
+        FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
 
-        const Index perceptron_layer_inputs_number = flatten_layer_inputs_dimensions(0)*flatten_layer_inputs_dimensions(1)*flatten_layer_inputs_dimensions(2);
+        const Index perceptron_layer_inputs_number = (input_rows_number-kernels_rows_number+1)
+                                                    *(input_raw_variables_number-kernels_raw_variables_number+1)
+                                                    *kernels_number;
         const Index perceptrons_number = 1;
 
         PerceptronLayer* perceptron_layer = new PerceptronLayer(perceptron_layer_inputs_number, perceptrons_number);
@@ -1954,13 +1969,13 @@ cout << "After back propagation" << endl;
         perceptron_layer->set_parameters_random();
 
         neural_network.add_layer(convolutional_layer);
-        //neural_network.add_layer(pooling_layer);
-        //neural_network.add_layer(flatten_layer);
+        neural_network.add_layer(pooling_layer);
+        neural_network.add_layer(flatten_layer);
         neural_network.add_layer(perceptron_layer);
 
         ForwardPropagation forward_propagation(images_number, &neural_network);
 cout << "Before forward propagation" << endl;
-        //neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
 cout << "After forward propagation" << endl;
 
@@ -1997,16 +2012,16 @@ void MeanSquaredErrorTest::run_test_case()
 {
     cout << "Running mean squared error test case...\n";
 
-    test_constructor();
-    test_destructor();
+//    test_constructor();
+//    test_destructor();
 
     // Convolutional network methods
 
-    //test_calculate_gradient_convolutional_network();
+    test_calculate_gradient_convolutional_network();
 
     // Back propagate methods
 
-    test_back_propagate_perceptron();
+//    test_back_propagate_perceptron();
     //test_back_propagate_probabilistic(); Probabilistic only works with CrossEntropyError
     //test_back_propagate_convolutional();
     //test_back_propagate_recurrent();
@@ -2015,7 +2030,7 @@ void MeanSquaredErrorTest::run_test_case()
 
     //test_back_propagate();
     
-    test_back_propagate_lm();
+//    test_back_propagate_lm();
 
     cout << "End of mean squared error test case.\n\n";
 }
