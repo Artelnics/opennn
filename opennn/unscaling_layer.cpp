@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "unscaling_layer.h"
-#include "strings.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -185,34 +185,48 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 
 Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 {
+    cout << "in write_unscaling_methods" << endl;
+
+    cout << "get_neurons_number" << endl;
+
     const Index neurons_number = get_neurons_number();
+
+    cout << "for :: " << neurons_number << " || " << "scalers.dim() = " << scalers.dimension(0) << endl;
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
     {
+        cout << i << endl;
+
         if(scalers[i] == Scaler::NoScaling)
         {
+            cout << i << " :: " << "NoScaling" << endl;
             scaling_methods_strings[i] = "NoScaling";
         }
         else if(scalers[i] == Scaler::MinimumMaximum)
         {
+            cout << i << " :: " << "MinimumMaximum" << endl;
             scaling_methods_strings[i] = "MinimumMaximum";
         }
         else if(scalers[i] == Scaler::MeanStandardDeviation)
         {
+            cout << i << " :: " << "MeanStandardDeviation" << endl;
             scaling_methods_strings[i] = "MeanStandardDeviation";
         }
         else if(scalers[i] == Scaler::StandardDeviation)
         {
+            cout << i << " :: " << "StandardDeviation" << endl;
             scaling_methods_strings[i] = "StandardDeviation";
         }
         else if(scalers[i] == Scaler::Logarithm)
         {
+            cout << i << " :: " << "Logarithm" << endl;
             scaling_methods_strings[i] = "Logarithm";
         }
         else
         {
+            cout << "else?" << endl;
             ostringstream buffer;
 
             buffer << "OpenNN Exception: UnscalingLayer class.\n"
@@ -222,6 +236,8 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
             throw runtime_error(buffer.str());
         }
     }
+
+    cout << "out write_unscaling_methods" << endl;
 
     return scaling_methods_strings;
 }
@@ -786,15 +802,21 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
 void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
+    cout << "in?" << endl;
+
     ostringstream buffer;
 
     const Index neurons_number = get_neurons_number();
 
     // Unscaling layer
 
+    cout << "Unscaling layer" << endl;
+
     file_stream.OpenElement("UnscalingLayer");
 
     // Unscaling neurons number
+
+    cout << "Unscaling neurons number" << endl;
 
     file_stream.OpenElement("UnscalingNeuronsNumber");
 
@@ -807,10 +829,16 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Descriptives
 
+    cout << "Descriptives" << endl;
+
     const Tensor<string, 1> scalers = write_unscaling_methods();
+
+    cout << "neurons_number :: " << neurons_number << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
+        cout << i << endl;
+
         file_stream.OpenElement("Descriptives");
 
         file_stream.PushAttribute("Index", int(i+1));
@@ -877,6 +905,8 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Unscaling layer (end tag)
 
+    cout << "Unscaling layer (end tag)" << endl;
+
     file_stream.CloseElement();
 }
 
@@ -921,6 +951,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     unsigned index = 0; // Index does not work
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
+
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -1033,6 +1064,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         }
 
         const string new_method = unscaling_method_element->GetText();
+
 
         if(new_method == "NoScaling")
         {

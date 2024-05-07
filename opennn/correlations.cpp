@@ -493,7 +493,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(is_constant(x) && !is_constant(y))
     {
-        cout << "Warning: Column X is constant." << endl;
+        cout << "Warning: raw_variable X is constant." << endl;
         linear_correlation.a = type(NAN);
         linear_correlation.b = type(NAN);
         linear_correlation.r = type(NAN);
@@ -505,7 +505,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else if(!is_constant(x) && is_constant(y))
     {
-        cout << "Warning: Column Y is constant." << endl;
+        cout << "Warning: raw_variable Y is constant." << endl;
 
         linear_correlation.a = y(0);
         linear_correlation.b = type(0);
@@ -519,7 +519,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else if(is_constant(x) && is_constant(y))
     {
-        cout << "Warning: Column X and column Y are constant." << endl;
+        cout << "Warning: raw_variable X and raw_variable Y are constant." << endl;
 
         linear_correlation.a = type(NAN);
         linear_correlation.b = type(NAN);
@@ -540,7 +540,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(x_filter.size() == 0)
     {
-        cout << "Warning: Column X and Y hasn't common rows." << endl;
+        cout << "Warning: raw_variable X and Y hasn't common rows." << endl;
 
         linear_correlation.a = type(NAN);
         linear_correlation.b = type(NAN);

@@ -782,7 +782,7 @@ string ConvolutionalLayer::write_convolution_type() const
 }
 
 
-/// Returns the column stride.
+/// Returns the raw_variable stride.
 
 Index ConvolutionalLayer::get_column_stride() const
 {
@@ -1135,8 +1135,8 @@ void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 }
 
 
-/// Sets the kernels' column stride.
-/// @param new_stride_row The desired column stride.
+/// Sets the kernels' raw_variable stride.
+/// @param new_stride_row The desired raw_variable stride.
 
 void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 {

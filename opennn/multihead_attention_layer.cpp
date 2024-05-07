@@ -1076,7 +1076,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, 
 
             // CONTEXT DERIVATIVES
 
-            error_context_derivatives.chip(sample_index, 0).device(*thread_pool_device) 
+            error_context_derivatives.chip(sample_index, 0).device(*thread_pool_device)
                 += sample_key_derivatives.contract(head_key_weights, A_BT)
                  + sample_value_derivatives.contract(head_value_weights, A_BT);
         }

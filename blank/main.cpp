@@ -38,53 +38,55 @@ int main()
    try
    {
         cout << "Blank\n";
-        
-        LanguageDataSet language_data_set;
 
-        //language_data_set.set_data_source_path("data/example2.txt");
-        //language_data_set.set_data_source_path("data/PTtoEN_dataset.txt");
-        language_data_set.set_data_source_path("data/three_letter_combinations.txt");
-        language_data_set.set_text_separator(DataSet::Separator::Tab);
+        //LanguageDataSet language_data_set;
 
-        language_data_set.read_txt_language_model();
-        
-        language_data_set.set_training();
+        ////language_data_set.set_data_source_path("data/example2.txt");
+        ////language_data_set.set_data_source_path("data/PTtoEN_dataset.txt");
+        //language_data_set.set_data_source_path("/home/artelnics/Descargas/three_letter_combinations.txt");
+        //language_data_set.set_text_separator(DataSet::Separator::Tab);
 
-        Index input_length = language_data_set.get_completion_length();
-        Index context_length = language_data_set.get_context_length();
-        Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
-        Index context_dimension = language_data_set.get_context_vocabulary_size();
-        
-        Index number_of_layers = 1;
-        Index depth = 4;
-        Index perceptron_depth = 12;
-        Index heads_number = 2;
+        //language_data_set.read_txt_language_model();
 
-        Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
-                          depth, perceptron_depth, heads_number, number_of_layers });
+        //language_data_set.set_training();
 
-        transformer.set_input_vocabulary(language_data_set.get_completion_vocabulary());
-        transformer.set_context_vocabulary(language_data_set.get_context_vocabulary());
+        //Index input_length = language_data_set.get_completion_length();
+        //Index context_length = language_data_set.get_context_length();
+        //Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
+        //Index context_dimension = language_data_set.get_context_vocabulary_size();
 
-        //type training_loss_goal = type(0.05);
+        //Index number_of_layers = 1;
+        //Index depth = 4;
+        //Index perceptron_depth = 12;
+        //Index heads_number = 2;
 
-        CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
+        //Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
+        //                  depth, perceptron_depth, heads_number, number_of_layers });
 
-        StochasticGradientDescent stochastic_gradient_descent;
-        stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
+        //Tensor<string, 1> completion_vocabulary = language_data_set.get_completion_vocabulary();
+        //Tensor<string, 1> context_vocabulary = language_data_set.get_context_vocabulary();
 
-        stochastic_gradient_descent.set_display(true);
-        stochastic_gradient_descent.set_display_period(1);
+        //transformer.set_input_vocabulary(completion_vocabulary);
+        //transformer.set_context_vocabulary(context_vocabulary);
 
-        //stochastic_gradient_descent.set_loss_goal(training_loss_goal);
-        stochastic_gradient_descent.set_maximum_epochs_number(9);
-        stochastic_gradient_descent.set_maximum_time(86400);
-        stochastic_gradient_descent.set_batch_samples_number(32);
+        ////type training_loss_goal = type(0.05);
 
-        TrainingResults training_results = stochastic_gradient_descent.perform_training();
+        //CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
 
-        //transformer.calculate_outputs();
-                
+        //StochasticGradientDescent stochastic_gradient_descent;
+        //stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
+
+        //stochastic_gradient_descent.set_display(true);
+        //stochastic_gradient_descent.set_display_period(1);
+
+        ////stochastic_gradient_descent.set_loss_goal(training_loss_goal);
+        //stochastic_gradient_descent.set_maximum_epochs_number(9);
+        //stochastic_gradient_descent.set_maximum_time(86400);
+        //stochastic_gradient_descent.set_batch_samples_number(32);
+
+        //TrainingResults training_results = stochastic_gradient_descent.perform_training();
+
+        ////transformer.calculate_outputs();
 
         cout << "Bye!" << endl;
 

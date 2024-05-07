@@ -17,7 +17,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "strings.h"
+#include "strings_utilities.h"
 #include "statistics.h"
 
 #include "../eigen/unsupported/Eigen/KroneckerProduct"

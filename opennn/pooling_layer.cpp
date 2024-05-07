@@ -140,7 +140,7 @@ Index PoolingLayer::get_row_stride() const
 }
 
 
-/// Returns the pooling filter's column stride.
+/// Returns the pooling filter's raw_variable stride.
 
 Index PoolingLayer::get_column_stride() const
 {
@@ -259,8 +259,8 @@ void PoolingLayer::set_row_stride(const Index& new_row_stride)
 }
 
 
-/// Sets the pooling filter's column stride.
-/// @param new_raw_variable_stride The desired column stride.
+/// Sets the pooling filter's raw_variable stride.
+/// @param new_raw_variable_stride The desired raw_variable stride.
 
 void PoolingLayer::set_column_stride(const Index& new_column_stride)
 {
@@ -640,7 +640,7 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Column stride
+    // raw_variable stride
 
     file_stream.OpenElement("ColumnStride");
 
@@ -753,7 +753,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //    set_input_variables_dimenisons(input_variables_dimensions_string);
 
-    // Column stride
+    // raw_variable stride
 
     const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
 
@@ -761,7 +761,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: PoolingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pooling column stride element is nullptr.\n";
+               << "Pooling raw_variable stride element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }

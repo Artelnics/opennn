@@ -325,13 +325,13 @@ void translate_image(Tensor<type, 3>& input,
     for(Index i = 0; i < limit_column * channels; i++)
     {
         const Index channel = i % channels;
-        const Index column = i / channels;
+        const Index raw_variable = i / channels;
 
-        const TensorMap<const Tensor<type, 2>> input_column_map(input.data() + column*height + channel*input_size,
+        const TensorMap<const Tensor<type, 2>> input_column_map(input.data() + raw_variable*height + channel*input_size,
                                                            height,
                                                           1);
 
-        TensorMap<Tensor<type, 2>> output_column_map(output.data() + (column + shift)*height + channel*input_size,
+        TensorMap<Tensor<type, 2>> output_column_map(output.data() + (raw_variable + shift)*height + channel*input_size,
                                                      height,
                                                      1);
 

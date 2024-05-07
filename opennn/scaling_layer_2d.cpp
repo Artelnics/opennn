@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "scaling_layer_2d.h"
-#include "strings.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -919,7 +919,10 @@ string ScalingLayer2D::write_expression(const Tensor<string, 1>& inputs_names, c
         }
         else if(scalers(i) == Scaler::MinimumMaximum)
         {
-            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
+            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "*(" << max_range << "-" << min_range << ")/("
+                                                            << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*("
+                                                            << max_range << "-" << min_range << ")/("
+                                                            << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
         }
         else if(scalers(i) == Scaler::MeanStandardDeviation)
         {

@@ -22,7 +22,7 @@
 
 #include "config.h"
 #include "data_set.h"
-#include "strings.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {

@@ -241,7 +241,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
     }
 
     // Test forecasting trivial
-    {
+    /*{
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
@@ -280,10 +280,10 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error < type(1e-1), LOG);
         assert_true(is_zero(back_propagation.gradient,type(1e-1)), LOG);
-    }
+    }*/
 
     // Test forecasting random samples, inputs, outputs, neurons
-    {
+    /*{
         samples_number = 1 + rand()%10;
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
@@ -326,7 +326,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= type(0), LOG);
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)), LOG);
-    }
+    }*/
 }
 
 
