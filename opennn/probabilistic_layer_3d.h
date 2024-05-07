@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   P R O B A B I L I S T I C   L A Y E R   C L A S S   H E A D E R
+//   P R O B A B I L I S T I C   L A Y E R   3 D   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -33,7 +33,8 @@ struct ProbabilisticLayer3DForwardPropagation;
 struct ProbabilisticLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
+struct ProbabilisticLayer3DForwardPropagationCuda;
+struct ProbabilisticLayer3DBackPropagationCuda;
 #endif
 
 
@@ -66,6 +67,8 @@ public:
    Index get_inputs_number() const final;
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
+
+   dimensions get_outputs_dimensions() const final;
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
@@ -120,8 +123,8 @@ public:
    void set_synaptic_weights_constant_Glorot();
 
    void set_parameters_constant(const type&) final;
-
    void set_parameters_random() final;
+   void set_parameters_glorot();
 
    void insert_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -131,8 +134,7 @@ public:
                                Tensor<type, 3>&) const;
 
    void calculate_activations(const Tensor<type, 3>&,
-                              Tensor<type, 3>&,
-                              Tensor<type, 2>&) const;
+                              Tensor<type, 3>&) const;
 
    // Outputs
 
@@ -142,7 +144,8 @@ public:
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -154,21 +157,15 @@ public:
                         const Index&, 
                         Tensor<type, 1>&) const final;
 
-   // Expression methods
-
-   string write_competitive_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-   string write_combinations(const Tensor<string, 1>&) const;
-   string write_activations(const Tensor<string, 1>&) const;
-
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&) final;
 
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+       #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_cuda.h"
+    #endif
 
 protected:
 
@@ -193,11 +190,10 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
-#endif
+   const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
 
 };
+
 
 struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 {
@@ -235,8 +231,6 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     }
 
     Tensor<type, 3> outputs;
-
-    Tensor<type, 2> aux_rows_columns;
 };
 
 
@@ -257,10 +251,6 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     {
         set(new_batch_samples_number, new_layer);
     }
-    
-    
-    pair<type*, dimensions> get_deltas_pair() const final;
-
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
@@ -277,10 +267,16 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     Tensor<type, 2> targets;
 
     Tensor<type, 3> error_combinations_derivatives;
+    Tensor<type, 3> input_derivatives;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 };
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_back_propagation_cuda.h"
+#endif
 
 }
 

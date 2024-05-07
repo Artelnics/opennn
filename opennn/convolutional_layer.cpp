@@ -353,7 +353,7 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
 void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
-{    
+{
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],
@@ -394,69 +394,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     }
 }
 
-
-void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                                LayerBackPropagation* next_back_propagation,
-                                                LayerForwardPropagation*,
-                                                LayerBackPropagation* this_back_propagation) const
-{
-    ConvolutionalLayerBackPropagation* this_convolutional_layer_back_propagation =
-            static_cast<ConvolutionalLayerBackPropagation*>(this_back_propagation);
-
-    switch(next_back_propagation->layer->get_type())
-    {
-    case Type::Convolutional:
-    {
-       ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation =
-               static_cast<ConvolutionalLayerForwardPropagation*>(next_forward_propagation);
-
-       ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation =
-               static_cast<ConvolutionalLayerBackPropagation*>(next_back_propagation);
-
-       calculate_hidden_delta(next_convolutional_layer_forward_propagation,
-                              next_convolutional_layer_back_propagation,
-                              this_convolutional_layer_back_propagation);
-    }
-        return;
-
-    case Type::Flatten:
-    {
-        FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation =
-                static_cast<FlattenLayerForwardPropagation*>(next_forward_propagation);
-
-        FlattenLayerBackPropagation* next_flatten_layer_back_propagation =
-                static_cast<FlattenLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_flatten_layer_forward_propagation,
-                               next_flatten_layer_back_propagation,
-                               this_convolutional_layer_back_propagation);
-    }
-        return;
-
-    case Type::Pooling: //? Move to pooling
-    {
-        PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation =
-                static_cast<PoolingLayerForwardPropagation*>(next_forward_propagation);
-
-        PoolingLayerBackPropagation* next_pooling_layer_back_propagation =
-                static_cast<PoolingLayerBackPropagation*>(next_back_propagation);
-
-        calculate_hidden_delta(next_pooling_layer_forward_propagation,
-                               next_pooling_layer_back_propagation,
-                               this_convolutional_layer_back_propagation);
-    }
-
-    default:
-    {
-        cout << "Neural network structure not implemented: "
-             << next_back_propagation->layer->get_type_string() << endl;
-
-        return;
-    }
-    }
-}
-
-
+/* Do this at the end of back_propagate(), with input_derivatives instead of deltas
 void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation,
                                                 ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation,
                                                 ConvolutionalLayerBackPropagation* this_convolutional_layer_back_propagation) const
@@ -474,44 +412,11 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
 
     next_deltas * next_convolutional_layer_forward_propagation->activations_derivatives;
 }
+*/
 
 
-void ConvolutionalLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation,
-                                                PoolingLayerBackPropagation* next_pooling_layer_back_propagation,
-                                                ConvolutionalLayerBackPropagation* this_convolutional_layer_back_propagation) const
-{
-    const Index inputs_size = next_pooling_layer_forward_propagation->inputs_max_indices.size();
-
-    Index delta_index = 0;
-
-    this_convolutional_layer_back_propagation->deltas.setZero();
-
-    for(Index i = 0; i < inputs_size; i++)
-    {
-        if(next_pooling_layer_forward_propagation->inputs_max_indices(delta_index) == 1)
-        {
-            this_convolutional_layer_back_propagation->deltas(i) = next_pooling_layer_back_propagation->deltas(i);
-            delta_index++;
-        }
-    }
-}
-
-
-void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation,
-                                                FlattenLayerBackPropagation* next_flatten_layer_back_propagation,
-                                                ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation) const
-{
-    const Index batch_samples_number = convolutional_layer_back_propagation->batch_samples_number;
-
-    const Index next_flatten_layer_neurons_number  = next_flatten_layer_forward_propagation->layer->get_neurons_number();
-
-    memcpy(convolutional_layer_back_propagation->deltas_data,
-           next_flatten_layer_back_propagation->deltas_data,
-           static_cast<Index>(batch_samples_number*next_flatten_layer_neurons_number*sizeof(type)));
-}
-
-
-void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                                  const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
@@ -520,6 +425,12 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimen
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2],
                                             inputs_pair(0).second[3]);
+
+    const TensorMap<Tensor<type, 4>> deltas(deltas_pair(0).first,
+                                            deltas_pair(0).second[0],
+                                            deltas_pair(0).second[1],
+                                            inputs_pair(0).second[2],
+                                            deltas_pair(0).second[3]);
 
     // Convolutional layer
 
@@ -545,8 +456,6 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimen
 
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
-
-    const Tensor<type, 4>& deltas = convolutional_layer_back_propagation->deltas;
 
     Tensor<type, 4>& error_combinations_derivatives =
         convolutional_layer_back_propagation->error_combinations_derivatives;
@@ -621,6 +530,10 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimen
              synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
 
     }
+
+    Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
+
+    /// @todo calculate input derivatives (= deltas for previous layer)
 }
 
 
@@ -736,12 +649,12 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
 /// Returns the dimension of the input variables
 
-Tensor<Index, 1> ConvolutionalLayer::get_inputs_dimensions() const
+dimensions ConvolutionalLayer::get_inputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2)};
 }
 
-
+/*
 /// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
 
 Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
@@ -753,6 +666,16 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
     outputs_dimensions(2) = get_kernels_number();
 
     return outputs_dimensions;
+}
+*/
+
+dimensions ConvolutionalLayer::get_outputs_dimensions() const
+{
+    Index rows_number = get_outputs_rows_number();
+    Index columns_number = get_outputs_columns_number();
+    Index kernels_number = get_kernels_number();
+
+    return { rows_number, columns_number, kernels_number };
 }
 
 
@@ -1389,7 +1312,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(Index i = 0; i < inputs_dimensions.size(); i++)
     {
-        buffer << get_outputs_dimensions()(i);
+        buffer << get_outputs_dimensions()[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
     }
 
@@ -1747,18 +1670,6 @@ ConvolutionalLayerBackPropagation::~ConvolutionalLayerBackPropagation()
 }
 
 
-pair<type*, dimensions> ConvolutionalLayerBackPropagation::get_deltas_pair() const
-{
-    const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
-
-    const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-    const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
-    const Index kernels_number = convolutional_layer->get_kernels_number();
-
-    return pair<type*, dimensions>(deltas_data, { batch_samples_number, outputs_rows_number, outputs_columns_number, kernels_number });
-}
-
-
 void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     batch_samples_number = new_batch_samples_number;
@@ -1767,6 +1678,10 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
 
     const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
 
+    const Index inputs_rows_number = convolutional_layer->get_inputs_rows_number();
+    const Index inputs_columns_number = convolutional_layer->get_inputs_columns_number();
+    const Index inputs_channels_number = convolutional_layer->get_inputs_channels_number();
+
     const Index kernesl_rows_number = convolutional_layer->get_kernels_rows_number();
     const Index kernels_columns_number = convolutional_layer->get_kernels_columns_number();
     const Index kernels_number = convolutional_layer->get_kernels_number();
@@ -1774,13 +1689,6 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
 
     const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
     const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
-
-    deltas.resize(batch_samples_number,
-        outputs_rows_number,
-        outputs_columns_number,
-        kernels_number);
-
-    deltas_data = deltas.data();
 
     error_combinations_derivatives.resize(batch_samples_number,
         outputs_rows_number,
@@ -1793,13 +1701,19 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
         kernels_columns_number,
         kernels_channels_number,
         kernels_number);
+
+    input_derivatives.resize(batch_samples_number,
+        inputs_rows_number,
+        inputs_columns_number,
+        inputs_channels_number);
+
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_rows_number, inputs_columns_number, inputs_channels_number };
 }
 
 void ConvolutionalLayerBackPropagation::print() const
 {
-    cout << "Deltas:" << endl;
-    cout << deltas << endl;
-
     cout << "Biases derivatives:" << endl;
     cout << biases_derivatives << endl;
 

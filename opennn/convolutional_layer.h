@@ -34,8 +34,10 @@ struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
 #ifdef OPENNN_CUDA
-    struct ConvolutionalLayerForwardPropagationCuda;
+struct ConvolutionalLayerForwardPropagationCuda;
+struct ConvolutionalLayerBackPropagationCuda;
 #endif
+
 
 class ConvolutionalLayer : public Layer
 {
@@ -82,8 +84,8 @@ public:
 
     string write_activation_function() const;
 
-    Tensor<Index, 1> get_inputs_dimensions() const;
-    Tensor<Index, 1> get_outputs_dimensions() const;
+    dimensions get_inputs_dimensions() const;
+    dimensions get_outputs_dimensions() const;
 
     pair<Index, Index> get_padding() const;
 
@@ -185,24 +187,8 @@ public:
 
    // Back propagation
 
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerForwardPropagation*,
-                               LayerBackPropagation*) const final;
-
-   void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
-                               ConvolutionalLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
-   void calculate_hidden_delta(PoolingLayerForwardPropagation*,
-                               PoolingLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
-   void calculate_hidden_delta(FlattenLayerForwardPropagation*,
-                               FlattenLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
-   void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final; //change
 
@@ -251,8 +237,7 @@ protected:
    Tensor<type, 1> offsets;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
-    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
 #endif
 
 };
@@ -294,24 +279,27 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    virtual ~ConvolutionalLayerBackPropagation();
 
-
-   pair<type*, dimensions> get_deltas_pair() const;
-
    void set(const Index&, Layer*) final;
 
    void print() const;
-
-
-   Tensor<type, 4> deltas;
 
    Tensor<type, 4> error_combinations_derivatives;
 
    Tensor<type, 1> biases_derivatives;
    Tensor<type, 4> synaptic_weights_derivatives;
+
+   Tensor<type, 4> input_derivatives;
 };
 
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/convolutional_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/convolutional_layer_back_propagation_cuda.h"
+#endif
+
+
 }
+
 #endif
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

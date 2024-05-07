@@ -1,6 +1,6 @@
 
-#ifndef TENSORUTILITIES_H
-#define TENSORUTILITIES_H
+#ifndef TENSORS_H
+#define TENSORS_H
 
 // System includes
 
@@ -59,6 +59,8 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
 void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
+void sum_matrices(ThreadPoolDevice*, const TensorMap<Tensor<type, 1>>&, Tensor<type, 3>&);
+void sum_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
 void substract_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void substract_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
@@ -75,7 +77,8 @@ void substract_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 // Multiplication
 
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
-void multiply_rows(Tensor<type, 3>&, const Tensor<type, 1>&);
+void multiply_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
+void multiply_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
 void batch_matrix_multiplication(ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 void batch_matrix_multiplication(ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);

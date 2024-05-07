@@ -19,9 +19,9 @@ struct LayerBackPropagation
 
     virtual ~LayerBackPropagation() {}
     
-    virtual pair<type*, dimensions> get_deltas_pair() const
+    Tensor<pair<type*, dimensions>, 1>& get_inputs_derivatives_pair()
     {
-        return pair<type*, dimensions>();
+        return inputs_derivatives;
     }
 
     virtual void set(const Index&, Layer*) {}
@@ -32,7 +32,7 @@ struct LayerBackPropagation
 
     Layer* layer = nullptr;
 
-    type* deltas_data = nullptr;
+    Tensor<pair<type*, dimensions>, 1> inputs_derivatives;
 };
 
 }

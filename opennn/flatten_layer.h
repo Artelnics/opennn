@@ -30,6 +30,11 @@ namespace opennn
 struct FlattenLayerForwardPropagation;
 struct FlattenLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+struct FlattenLayerForwardPropagationCuda;
+struct FlattenLayerBackPropagationCuda;
+#endif
+
 /// This class represents a flatten layer.
 
 /// Flatten layers are included in the definition of a neural network.
@@ -45,13 +50,14 @@ public:
 
     explicit FlattenLayer();
 
-    explicit FlattenLayer(const Tensor<Index, 1>&);
+    explicit FlattenLayer(const dimensions&);
 
     // Get methods
 
-    Tensor<Index, 1> get_inputs_dimensions() const;
+    dimensions get_inputs_dimensions() const;
     Index get_outputs_number() const;
-    Tensor<Index, 1> get_outputs_dimensions() const;
+    
+    dimensions get_outputs_dimensions() const final;
 
     Index get_inputs_number() const;
     Index get_inputs_channels_number() const;
@@ -59,47 +65,37 @@ public:
     Index get_inputs_raw_variables_number() const;
     Index get_neurons_number() const;
 
-    Tensor<type, 1> get_parameters() const final;
-    Index get_parameters_number() const final;
-
     // Set methods
 
     void set();
     void set(const Index&);
-    void set(const Tensor<Index, 1>&);
+    void set(const dimensions&);
     void set(const tinyxml2::XMLDocument&);
 
     void set_default();
-    void set_name(const string&);
 
-    void set_parameters(const Tensor<type, 1>&, const Index&) final;
+    void set_name(const string&);
 
     // Display messages
 
-    void set_display(const bool&);
+//    void set_display(const bool&);
 
     // Check methods
 
-    bool is_empty() const;
+//    bool is_empty() const;
 
-    // Outputs
+    // Forward propagation
 
     void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
                            LayerForwardPropagation*, 
                            const bool&) final;
 
-    void calculate_hidden_delta(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const final;
+    // Back-propagation
 
-    void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
-                                PerceptronLayerBackPropagation*,
-                                FlattenLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
-                                ProbabilisticLayerBackPropagation*,
-                                FlattenLayerBackPropagation*) const;
+    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                        const Tensor<pair<type*, dimensions>, 1>&,
+                        LayerForwardPropagation*,
+                        LayerBackPropagation*) const final;
 
     // Serialization methods
 
@@ -107,9 +103,13 @@ public:
 
     void write_XML(tinyxml2::XMLPrinter&) const final;
 
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
+    #endif
+
 protected:
 
-    Tensor<Index, 1> inputs_dimensions;
+    dimensions inputs_dimensions;
 
     /// Display warning messages to screen.
 
@@ -137,7 +137,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    pair<type*, dimensions> get_outputs_pair() const final;
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+   void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
    void print() const
@@ -172,23 +172,23 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     virtual ~FlattenLayerBackPropagation()
     {
     }
-    
-    
-    pair<type*, dimensions> get_deltas_pair() const final;
-
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
     void print() const
     {
-        cout << "Deltas: " << endl;
-        cout << deltas << endl;
     }
 
-
-    Tensor<type, 2> deltas;
+    Tensor<type, 4> input_derivatives;
 };
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/flatten_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/flatten_layer_back_propagation_cuda.h"
+#endif
+
 
 }
 

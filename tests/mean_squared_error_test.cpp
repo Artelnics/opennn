@@ -111,7 +111,7 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
     
     // Test approximation all random
     {
-        samples_number = type(1) +rand() % 5;
+        samples_number = type(1) + rand() % 5;
         inputs_number = type(1) + rand() % 5;
         outputs_number = type(1) + rand() % 5;
         neurons_number = type(1) + rand() % 5;
@@ -235,8 +235,6 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
-        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
@@ -402,7 +400,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 void MeanSquaredErrorTest::test_back_propagate_lm()
 {
     cout << "test_back_propagate_lm\n";
-/*
+
     // Test approximation random samples, inputs, outputs, neurons
     {
         samples_number = type(1) + rand()%10;
@@ -438,7 +436,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         // not running in  visual studio
 
-        back_propagation_lm.set(samples_number, &mean_squared_error);
+        /*back_propagation_lm.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
         numerical_gradient = mean_squared_error.calculate_numerical_gradient();
@@ -452,20 +450,15 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)), LOG);
 
-        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)), LOG);*/
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
-    {
-        // samples_number = 1 + rand()%10;
-        // inputs_number = 1 + rand()%10;
-        // outputs_number = 1 + rand()%10;
-        // neurons_number = 1 + rand()%10;
-
-        samples_number = 1;
-        inputs_number = 1;
-        outputs_number = 1;
-        neurons_number = 1;
+    /*{
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
 
         // Data set
 
@@ -511,7 +504,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
 
     }
-/*
+
     // Test multiple classification random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
@@ -562,7 +555,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
 
-    }
+    }*/
 
     // Test convolutional
     {
@@ -751,7 +744,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
     }
 
     // Test forecasting trivial
-    {
+    /*{
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
@@ -832,7 +825,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(back_propagation.error >= type(0), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)), LOG);
-    }
+    }*/
 
     // Test convolutional
    if(false)
@@ -924,7 +917,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //       // create Dataset object to load data.
 //       numerical_gradient = mean_squared_error.calculate_numerical_gradient();
    }
-*/
+
 }
 
 
@@ -1627,7 +1620,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 */
 
     // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1
-    if(true)
+    if(false)
     {
         bool is_training = true;
 
@@ -1760,21 +1753,22 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         convolutional_layer->set_parameters_random();
 
-        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
-        flatten_layer_inputs_dimensions(0) = input_rows_number-kernels_rows_number+1;
-        flatten_layer_inputs_dimensions(1) = input_raw_variables_number-kernels_raw_variables_number+1;
-        flatten_layer_inputs_dimensions(2) = kernels_number;
-        flatten_layer_inputs_dimensions(3) = images_number;
-
+        dimensions flatten_layer_inputs_dimensions({input_rows_number-kernels_rows_number+1,
+                                                    input_raw_variables_number-kernels_raw_variables_number+1,
+                                                    kernels_number, images_number});
         FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
 
-        const Index perceptron_layer_inputs_number = flatten_layer_inputs_dimensions(0)*flatten_layer_inputs_dimensions(1)*flatten_layer_inputs_dimensions(2);
+        const Index perceptron_layer_inputs_number = (input_rows_number-kernels_rows_number+1)
+                                                    *(input_raw_variables_number-kernels_raw_variables_number+1)
+                                                    *kernels_number;
         const Index perceptrons_number = 1;
 
         PerceptronLayer* perceptron_layer = new PerceptronLayer(perceptron_layer_inputs_number, perceptrons_number);
 
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
         perceptron_layer->set_parameters_random();
+
+        cout << "Perceptron parameters: " << perceptron_layer->get_parameters() << endl;
 
         neural_network.add_layer(convolutional_layer);
         neural_network.add_layer(flatten_layer);
@@ -1783,7 +1777,209 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         ForwardPropagation forward_propagation(images_number, &neural_network);
 cout << "Before forward propagation" << endl;
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+
+        forward_propagation.print();
 cout << "After forward propagation" << endl;
+      MeanSquaredError mean_squared_error(&neural_network, &data_set);
+system("pause");
+      BackPropagation back_propagation(images_number, &mean_squared_error);
+cout << "Before back propagation" << endl;
+      mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+cout << "After back propagation" << endl;
+      cout << "Gradient: " << endl << back_propagation.gradient << endl;
+
+      const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+
+      cout << "Numerical gradient: " << endl << numerical_gradient << endl;
+      system("pause");
+
+      cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
+
+      for(Index i = 0; i < back_propagation.gradient.size(); i++)
+      {
+          cout << back_propagation.gradient(i) << " ; " << numerical_gradient(i) <<  " ; " <<
+                  abs((back_propagation.gradient(i) - numerical_gradient(i))/numerical_gradient(i)*100)
+               << "%" << endl;
+
+      }
+    }
+
+    // Pooling layer
+    if(true)
+    {
+        bool is_training = true;
+
+        const Index input_channels_number = 2;
+        const Index input_rows_number = 3;
+        const Index input_raw_variables_number = 3;
+
+        const Index images_number = 2;
+
+        Tensor<Index, 1> inputs_dimensions(3);
+        inputs_dimensions(0) = input_channels_number; // Channels number
+        inputs_dimensions(1) = input_rows_number; // rows number
+        inputs_dimensions(2) = input_raw_variables_number; // columns number
+
+        Tensor<type, 2> data(images_number,19);
+
+        // Image 1
+
+        data(0,0) = 1;//17;
+        data(0,1) = 1;//16;
+        data(0,2) = 1;//11;
+        data(0,3) = 1;//10;
+        data(0,4) = 1;//5;
+        data(0,5) = 1;//4;
+        data(0,6) = 1;//15;
+        data(0,7) = 1;//14;
+        data(0,8) = 1;//9;
+        data(0,9) = 1;//8;
+        data(0,10) = 1;//3;
+        data(0,11) = 1;//2;
+        data(0,12) = 1;//13;
+        data(0,13) = 1;//12;
+        data(0,14) = 1;//7;
+        data(0,15) = 1;//6;
+        data(0,16) = 1;//1;
+        data(0,17) = 1;//0;
+
+        data(0,18) = 1; // Target
+
+        // Image 2
+
+        data(1,0) = 2;//36;
+        data(1,1) = 2;//35;
+        data(1,2) = 2;//30;
+        data(1,3) = 2;//29;
+        data(1,4) = 2;//24;
+        data(1,5) = 2;//23;
+        data(1,6) = 2;//34;
+        data(1,7) = 2;//33;
+        data(1,8) = 2;//28;
+        data(1,9) = 2;//27;
+        data(1,10) = 2;//22;
+        data(1,11) = 2;//21;
+        data(1,12) = 2;//32;
+        data(1,13) = 2;//31;
+        data(1,14) = 2;//26;
+        data(1,15) = 2;//25;
+        data(1,16) = 2;//20;
+        data(1,17) = 2;//19;
+
+        data(1,18) = 0; // Target
+
+        DataSet data_set(images_number,1,1);
+
+        data_set.set_data(data); // 2d data
+        data_set.set_data_random();
+
+        cout << "Data: " << endl << data_set.get_data() << endl;
+
+        system("pause");
+
+        data_set.set_input_variables_dimensions(inputs_dimensions);
+
+        data_set.set_training();
+
+        const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
+//        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+//        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+
+        Tensor<Index, 1> input_variables_indices(18);
+        input_variables_indices(0) = 0;
+        input_variables_indices(1) = 1;
+        input_variables_indices(2) = 2;
+        input_variables_indices(3) = 3;
+        input_variables_indices(4) = 4;
+        input_variables_indices(5) = 5;
+        input_variables_indices(6) = 6;
+        input_variables_indices(7) = 7;
+        input_variables_indices(8) = 8;
+        input_variables_indices(9) = 9;
+        input_variables_indices(10) = 10;
+        input_variables_indices(11) = 11;
+        input_variables_indices(12) = 12;
+        input_variables_indices(13) = 13;
+        input_variables_indices(14) = 14;
+        input_variables_indices(15) = 15;
+        input_variables_indices(16) = 16;
+        input_variables_indices(17) = 17;
+
+        Tensor<Index, 1> target_variables_indices(1);
+        target_variables_indices(0) = 18;
+
+        Batch batch(images_number, &data_set);
+
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+//        batch.print();
+//        system("pause");
+
+        Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
+        convolutional_layer_inputs_dimensions(0) = input_rows_number;
+        convolutional_layer_inputs_dimensions(1) = input_raw_variables_number;
+        convolutional_layer_inputs_dimensions(2) = input_channels_number;
+        convolutional_layer_inputs_dimensions(3) = images_number;
+
+        NeuralNetwork neural_network;
+
+        const Index kernels_rows_number = 2;
+        const Index kernels_raw_variables_number = 2;
+        const Index kernels_channels_number = input_channels_number;
+        const Index kernels_number = 2;
+
+        Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
+        convolutional_layer_kernels_dimensions(0) = kernels_rows_number;
+        convolutional_layer_kernels_dimensions(1) = kernels_raw_variables_number;
+        convolutional_layer_kernels_dimensions(2) = kernels_channels_number;
+        convolutional_layer_kernels_dimensions(3) = kernels_number;
+
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
+
+        convolutional_layer->set_parameters_random();
+
+        dimensions pooling_layer_inputs_dimensions = convolutional_layer->get_outputs_dimensions();
+        dimensions pooling_layer_pools_dimensions(2);
+        pooling_layer_pools_dimensions[0] = 2;
+        pooling_layer_pools_dimensions[1] = 2;
+
+        PoolingLayer* pooling_layer = new PoolingLayer(pooling_layer_inputs_dimensions, pooling_layer_pools_dimensions);
+        pooling_layer->set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
+
+//        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
+//        flatten_layer_inputs_dimensions(0) = input_rows_number-kernels_rows_number+1;
+//        flatten_layer_inputs_dimensions(1) = input_raw_variables_number-kernels_raw_variables_number+1;
+//        flatten_layer_inputs_dimensions(2) = kernels_number;
+//        flatten_layer_inputs_dimensions(3) = images_number;
+
+        dimensions flatten_layer_inputs_dimensions({input_rows_number-kernels_rows_number+1,
+                                                    input_raw_variables_number-kernels_raw_variables_number+1,
+                                                    kernels_number,
+                                                    images_number});
+        FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+
+        const Index perceptron_layer_inputs_number = (input_rows_number-kernels_rows_number+1)
+                                                    *(input_raw_variables_number-kernels_raw_variables_number+1)
+                                                    *kernels_number;
+        const Index perceptrons_number = 1;
+
+        PerceptronLayer* perceptron_layer = new PerceptronLayer(perceptron_layer_inputs_number, perceptrons_number);
+
+        perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+        perceptron_layer->set_parameters_random();
+
+        neural_network.add_layer(convolutional_layer);
+        neural_network.add_layer(pooling_layer);
+        neural_network.add_layer(flatten_layer);
+        neural_network.add_layer(perceptron_layer);
+
+        ForwardPropagation forward_propagation(images_number, &neural_network);
+cout << "Before forward propagation" << endl;
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+
+cout << "After forward propagation" << endl;
+
+/*
       MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
       BackPropagation back_propagation(images_number, &mean_squared_error);
@@ -1805,6 +2001,7 @@ cout << "After back propagation" << endl;
                << "%" << endl;
 
       }
+*/
     }
 
 }
@@ -1820,22 +2017,20 @@ void MeanSquaredErrorTest::run_test_case()
 
     // Convolutional network methods
 
-    //test_calculate_gradient_convolutional_network();
+    test_calculate_gradient_convolutional_network();
 
     // Back propagate methods
 
 //    test_back_propagate_perceptron();
-//    test_back_propagate_probabilistic();
+    //test_back_propagate_probabilistic(); Probabilistic only works with CrossEntropyError
     //test_back_propagate_convolutional();
     //test_back_propagate_recurrent();
     //test_back_propagate_long_short_term_memory();
 
-    test_calculate_gradient_convolutional_network();
-
 
     //test_back_propagate();
     
-    //test_back_propagate_lm();
+//    test_back_propagate_lm();
 
     cout << "End of mean squared error test case.\n\n";
 }

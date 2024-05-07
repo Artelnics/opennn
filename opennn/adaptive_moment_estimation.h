@@ -25,9 +25,12 @@ namespace opennn
 
 struct AdaptiveMomentEstimationData;
 
+#ifdef OPENNN_CUDA
+struct ADAMOptimizationDataCuda;
+#endif
+
 /// This concrete class represents the adaptive moment estimation(Adam) optimization algorithm.
 /// This algorithm is based on adaptive estimates of lower-order moments.
-
 ///
 /// For more information visit:
 ///
@@ -129,7 +132,7 @@ private:
 
    /// Small number to prevent any division by zero
 
-   type epsilon =type(1.e-8);
+   type epsilon = type(1.e-6);
 
     // Stopping criteria
 
@@ -155,7 +158,7 @@ private:
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/adaptive_moment_estimation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
 };
@@ -182,6 +185,10 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     Index learning_rate_iteration = 0;
 };
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/struct_adaptive_moment_estimation_cuda.h"
+#endif
 
 }
 

@@ -47,10 +47,10 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_outputs_dimensions() const;
+   dimensions get_outputs_dimensions() const;
 
    Index get_inputs_number() const final;
-   Tensor<Index, 1> get_inputs_dimensions() const;
+   dimensions get_inputs_dimensions() const;
    Index get_neurons_number() const final;
 
    // Inputs descriptives
@@ -120,18 +120,6 @@ public:
    void check_range(const Tensor<type, 1>&) const;
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
-
-   // Expression methods
-
-   string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    // Serialization methods
 

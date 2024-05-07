@@ -288,27 +288,13 @@ bool LossIndex::has_selection() const
     }
 }
 
-
-Index LossIndex::get_next_layer_index(const Tensor<Tensor<Index, 1>, 1>& layers_inputs_indices, const Index layer_index) const
+Index LossIndex::find_input_index(const Tensor<Index, 1>& layer_inputs_indices, const Index layer_index) const
 {
-    Index next_layer_index = layer_index + 1;
-    bool found = false;
-
-    for (Index i = layer_index + 1; i < layers_inputs_indices.size(); i++)
+    for (Index i = 0; i < layer_inputs_indices.size(); i++)
     {
-        for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
-        {
-            if (layers_inputs_indices(i)(j) == layer_index)
-            {
-                next_layer_index = i;
-                found = true;
-                break;
-            }
-        }
-        if (found)  break;
+        if (layer_inputs_indices(i) == layer_index)  return i;
     }
-
-    return next_layer_index;
+    return -1;
 }
 
 
@@ -378,9 +364,9 @@ void LossIndex::back_propagate(const Batch& batch,
     // Loss index
     
     calculate_error(batch, forward_propagation, back_propagation);
-
+    
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
-
+    
     assemble_layers_error_gradient(back_propagation);
 
     // Loss
@@ -388,8 +374,9 @@ void LossIndex::back_propagate(const Batch& batch,
     back_propagation.loss = back_propagation.error;
 
     // Regularization
-
+    
     add_regularization(back_propagation);
+    
 }
 
 
@@ -404,7 +391,7 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
         type& loss = back_propagation.loss;
 
         const Tensor<type, 1>& parameters = back_propagation.parameters;
-        Tensor<type, 1>& regularization_gradient = back_propagation.parameters;
+        Tensor<type, 1>& regularization_gradient = back_propagation.regularization_gradient;
         Tensor<type, 1>& gradient = back_propagation.gradient;
 
         regularization = calculate_regularization(parameters);
@@ -707,12 +694,13 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     const Index layers_number = layers.size();
 
+    if (layers_number == 0) return;
+
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = neural_network->get_layers_inputs_indices();
-
-    if(layers_number == 0) return;
+    const Tensor<Tensor<Index, 1>, 1>& layers_inputs_indices = neural_network->get_layers_inputs_indices();
+    const Tensor<Tensor<Index, 1>, 1>& layers_outputs_indices = back_propagation.layers_outputs_indices;
 
     Layer* layer = nullptr;
 
@@ -723,31 +711,37 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     LayerBackPropagation* next_layer_back_propagation = nullptr;
 
     Tensor<pair<type*, dimensions>, 1> layer_inputs;
-    Index next_layer_index;
+    Tensor<pair<type*, dimensions>, 1> layer_deltas;
+    Index input_index;
 
     // Hidden layers
-    
+
+    calculate_output_delta(batch, forward_propagation, back_propagation);
+
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
         layer = layers(i);
 
         layer_forward_propagation = forward_propagation.layers(i);
         layer_back_propagation = back_propagation.neural_network.layers(i);
-        
+
         if(i == last_trainable_layer_index)
         {
-            calculate_output_delta(batch, forward_propagation, back_propagation);
+            layer_deltas.resize(1);
+
+            layer_deltas(0) = back_propagation.get_output_deltas_pair();
         }
         else
         {
-            next_layer_index = get_next_layer_index(layers_inputs_indices, i);
+            layer_deltas.resize(layers_outputs_indices(i).size());
 
-            next_layer_forward_propagation = forward_propagation.layers(next_layer_index);
-            next_layer_back_propagation = back_propagation.neural_network.layers(next_layer_index);
-
-            layer->calculate_hidden_delta(next_layer_forward_propagation, next_layer_back_propagation, layer_forward_propagation, layer_back_propagation);
+            for (Index j = 0; j < layers_outputs_indices(i).size(); j++)
+            {
+                input_index = find_input_index(layers_inputs_indices(layers_outputs_indices(i)(j)), i);
+                layer_deltas(j) = back_propagation.neural_network.layers(layers_outputs_indices(i)(j))->get_inputs_derivatives_pair()(input_index);
+            }
         }
-        
+
         if(i == first_trainable_layer_index || neural_network->is_input_layer(layers_inputs_indices(i)))
         {
             layer_inputs.resize(1);
@@ -769,8 +763,8 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                 layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
         }
-        
-        layer->calculate_error_gradient(layer_inputs, layer_forward_propagation, layer_back_propagation);
+
+        layer->back_propagate(layer_inputs, layer_deltas, layer_forward_propagation, layer_back_propagation);
     }
 }
 
@@ -965,6 +959,7 @@ BackPropagation::~BackPropagation()
 {
 }
 
+
 void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
@@ -978,6 +973,10 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
     const Index parameters_number = neural_network_p->get_parameters_number();
 
     const Index outputs_number = neural_network_p->get_outputs_number();
+
+    const dimensions output_dimensions = neural_network_p->get_outputs_dimensions();
+
+    set_layers_outputs_indices(neural_network_p->get_layers_inputs_indices());
 
     // First order loss
 
@@ -994,15 +993,59 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
     gradient.resize(parameters_number);
 
     regularization_gradient.resize(parameters_number);
+
+    output_deltas_dimensions.resize(output_dimensions.size() + 1);
+    output_deltas_dimensions[0] = batch_samples_number;
+
+    Index size = batch_samples_number;
+    for (Index i = 0; i < output_dimensions.size(); i++)
+    {
+        output_deltas_dimensions[i + 1] = output_dimensions[i];
+        size *= output_dimensions[i];
+    }
+
+    output_deltas.resize(size);
 }
+
+
+void BackPropagation::set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>& layer_inputs_indices)
+{
+    Index layers_number = layer_inputs_indices.size();
+
+    layers_outputs_indices.resize(layers_number);
+
+    Index layer_count = 0;
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        for (Index j = 0; j < layers_number; j++)
+        {
+            for (Index k = 0; k < layer_inputs_indices(j).size(); k++)    if (layer_inputs_indices(j)(k) == i)    layer_count++;
+        }
+
+        layers_outputs_indices(i).resize(layer_count);
+        layer_count = 0;
+
+        for (Index j = 0; j < layers_number; j++)
+        {
+            for (Index k = 0; k < layer_inputs_indices(j).size(); k++)
+            {
+                if (layer_inputs_indices(j)(k) == i)
+                {
+                    layers_outputs_indices(i)(layer_count) = j;
+                    layer_count++;
+                }
+            }
+        }
+
+        layer_count = 0;
+    }
+}
+
 
 pair<type*, dimensions> BackPropagation::get_output_deltas_pair() const
 {
-    const NeuralNetwork* neural_network_p = loss_index->get_neural_network();
-
-    const Index last_trainable_layer_index = neural_network_p->get_last_trainable_layer_index();
-
-    return neural_network.layers(last_trainable_layer_index)->get_deltas_pair();
+    return pair<type*, dimensions>((type*)output_deltas.data(), output_deltas_dimensions);
 }
 
 
@@ -1039,7 +1082,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
-        h = 0.01; // calculate_h(parameters(i));
+        h = /*0.01; //*/ calculate_h(parameters(i));
 
        parameters_forward(i) += h;
        

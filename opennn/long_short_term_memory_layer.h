@@ -66,6 +66,8 @@ public:
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
 
+   dimensions get_outputs_dimensions() const final;
+
    // Parameters
 
    Tensor<type, 1> get_input_biases() const;
@@ -205,24 +207,12 @@ public:
 
    // Back propagation
 
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerForwardPropagation*,
-                               LayerBackPropagation*) const final;
-
-   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
-                               PerceptronLayerBackPropagation*,
-                               LongShortTermMemoryLayerBackPropagation*) const;
-
-   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
-                               ProbabilisticLayerBackPropagation*,
-                               LongShortTermMemoryLayerBackPropagation*) const;
-
    void insert_gradient(LayerBackPropagation*,
                         const Index& ,
                         Tensor<type, 1>&) const final;
 
-   void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -272,7 +262,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/long_short_term_memory_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/long_short_term_memory_layer_cuda.h"
 #endif
 
 };
@@ -378,8 +368,6 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     {
     }
 
-    Tensor<type, 2> deltas;
-
     Tensor<type, 1> current_deltas;
 
     Tensor<type, 1> forget_weights_derivatives;
@@ -420,6 +408,8 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
     Tensor<type, 2> cell_states_recurrent_weights_derivatives;
+
+    Tensor<type, 2> input_derivatives;
 };
 
 

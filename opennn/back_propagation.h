@@ -29,6 +29,8 @@ struct BackPropagation
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
 
+    void set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
+
     pair<type*, dimensions> get_output_deltas_pair() const;
 
     void print() const
@@ -53,6 +55,8 @@ struct BackPropagation
         neural_network.print();
     }
 
+    Tensor<Tensor<Index, 1>, 1> layers_outputs_indices;
+
     Index batch_samples_number = 0;
 
     LossIndex* loss_index = nullptr;
@@ -65,10 +69,15 @@ struct BackPropagation
 
     Tensor<type, 2> errors;
 
+    Tensor<type, 1> output_deltas;
+    dimensions output_deltas_dimensions;
+
     Tensor<type, 1> parameters;
 
     Tensor<type, 1> gradient;
     Tensor<type, 1> regularization_gradient;
+
+    type accuracy = type(0);
 };
 
 }

@@ -21,7 +21,7 @@ TransformerTest::~TransformerTest()
 void TransformerTest::test_constructor()
 {
     cout << "test_constructor\n";
-
+    
     Tensor<Layer*, 1> layers;
 
     // Default constructor
@@ -30,7 +30,7 @@ void TransformerTest::test_constructor()
 
     assert_true(transformer_0.is_empty(), LOG);
     assert_true(transformer_0.get_layers_number() == 0, LOG);
-
+    
     // Tensor constructor test
 
     input_length = 1;
@@ -45,17 +45,17 @@ void TransformerTest::test_constructor()
     Tensor<Index, 1> architecture(8);
     architecture.setValues({ input_length, context_length, inputs_dimension, context_dimension,
                              embedding_depth, perceptron_depth, heads_number, number_of_layers });
-
+    
     Transformer transformer_1(architecture);
-
-    assert_true(transformer_1.get_layers_number() == 2 + 3 * number_of_layers + 4 * number_of_layers + 1, LOG);
-
+    
+    assert_true(transformer_1.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
+    
     // List constructor test
 
     Transformer transformer_2({ input_length, context_length, inputs_dimension, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
-    assert_true(transformer_2.get_layers_number() == 2 + 3 * number_of_layers + 4 * number_of_layers + 1, LOG);
+    assert_true(transformer_2.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
 
     // Test 3
 
@@ -71,7 +71,7 @@ void TransformerTest::test_constructor()
     Transformer transformer_3({ input_length, context_length, inputs_dimension, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
-    assert_true(transformer_3.get_layers_number() == 2 + 3 * number_of_layers + 4 * number_of_layers + 1, LOG);
+    assert_true(transformer_3.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
 
     // Test 4
 
@@ -80,7 +80,7 @@ void TransformerTest::test_constructor()
     Transformer transformer_4({ input_length, context_length, inputs_dimension, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
-    assert_true(transformer_4.get_layers_number() == 2 + 3 * number_of_layers + 4 * number_of_layers + 1, LOG);
+    assert_true(transformer_4.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
 }
 
 
@@ -99,7 +99,7 @@ void TransformerTest::test_calculate_parameters_norm()
     cout << "test_calculate_parameters_norm\n";
 
     type parameters_norm = type(0);
-
+    
     // Test
     {
         input_length = 1;
@@ -138,6 +138,7 @@ void TransformerTest::test_calculate_parameters_norm()
 
         assert_true(abs(parameters_norm - sqrt(type(parameters_number))) < type(NUMERIC_LIMITS_MIN), LOG);
     }
+    
 }
 
 
@@ -388,7 +389,7 @@ void TransformerTest::test_forward_propagate()
 
         batch_samples_number = 1;
 
-        input_length = 2;
+        input_length = 4;
         context_length = 3;
         inputs_dimension = 5;
         context_dimension = 6;
@@ -398,7 +399,7 @@ void TransformerTest::test_forward_propagate()
         heads_number = 4;
         number_of_layers = 1;
 
-        bool is_training = false;
+        bool is_training = true;
 
         data.resize(batch_samples_number, context_length + 2 * input_length);
 
@@ -468,7 +469,7 @@ void TransformerTest::test_forward_propagate()
         heads_number = 4;
         number_of_layers = 3;
 
-        bool is_training = false;
+        bool is_training = true;
 
         data.resize(batch_samples_number, context_length + 2 * input_length);
 
@@ -538,7 +539,6 @@ void TransformerTest::run_test_case()
     cout << "Running transformer test case...\n";
 
     // Constructor and destructor methods
-
     test_constructor();
 
     test_destructor();

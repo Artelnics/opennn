@@ -50,6 +50,14 @@ Index ProbabilisticLayer3D::get_neurons_number() const
 }
 
 
+dimensions ProbabilisticLayer3D::get_outputs_dimensions() const
+{
+    Index neurons_number = get_neurons_number();
+
+    return { inputs_number, neurons_number };
+}
+
+
 Index ProbabilisticLayer3D::get_biases_number() const
 {
     return biases.size();
@@ -496,6 +504,28 @@ void ProbabilisticLayer3D::set_parameters_random()
 }
 
 
+/// Initializes the biases to zeroes and the synaptic weights with the Glorot Uniform initializer
+
+void ProbabilisticLayer3D::set_parameters_glorot()
+{
+    biases.setZero();
+    
+    const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
+
+    const type minimum = -limit;
+    const type maximum = limit;
+    
+#pragma omp parallel for
+
+    for (Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+
+        synaptic_weights(i) = minimum + (maximum - minimum) * random;
+    }
+}
+
+
 void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
 {
     const Index biases_number = get_biases_number();
@@ -516,8 +546,6 @@ void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, 
 void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                   Tensor<type, 3>& combinations) const
 {
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = {IndexPair<Index>(2, 0)};
-    
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
     sum_matrices(thread_pool_device, biases, combinations);
@@ -525,18 +553,11 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 
 
 void ProbabilisticLayer3D::calculate_activations(const Tensor<type, 3>& combinations,
-                                                 Tensor<type, 3>& activations,
-                                                 Tensor<type, 2>& aux_rows_columns) const
+                                                 Tensor<type, 3>& activations) const
 {
     switch(activation_function)
     {
-//    case ActivationFunction::Binary: binary(combinations, activations); return;
-
-//    case ActivationFunction::Logistic: logistic(combinations, activations); return;
-
-//    case ActivationFunction::Competitive: competitive(combinations, activations); return;
-
-    case ActivationFunction::Softmax: softmax(combinations, activations, aux_rows_columns); return;
+    case ActivationFunction::Softmax: softmax(combinations, activations); return;
 
     default: return;
     }
@@ -555,22 +576,26 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
     
     calculate_combinations(inputs, outputs);
-    
-    Tensor<type, 2>& aux_rows_columns = probabilistic_layer_3d_forward_propagation->aux_rows_columns;
 
-    calculate_activations(outputs, outputs, aux_rows_columns);
+    if (is_training)
+        calculate_activations(outputs, outputs);
+    //else competitive(outputs, outputs);
 }
 
 
-void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                                    LayerForwardPropagation* forward_propagation,
-                                                    LayerBackPropagation* back_propagation) const
+void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                          const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+                                          LayerForwardPropagation* forward_propagation,
+                                          LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
-
-    const Index batch_samples_number = forward_propagation->batch_samples_number;
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, 
+                                            inputs_pair(0).second[0], 
+                                            inputs_pair(0).second[1], 
+                                            inputs_pair(0).second[2]);
 
     // Forward propagation
+
+    const Index batch_samples_number = forward_propagation->batch_samples_number;
 
     ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
             static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
@@ -586,33 +611,45 @@ void ProbabilisticLayer3D::calculate_error_gradient(const Tensor<pair<type*, dim
 
     Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
 
-    calculate_error_combinations_derivatives(outputs, targets, error_combinations_derivatives);
-
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_3d_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives;
 
-    biases_derivatives.device(*thread_pool_device) =
-        error_combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
+    Tensor<type, 3>& input_derivatives = probabilistic_layer_3d_back_propagation->input_derivatives;
 
-    const Eigen::array<IndexPair<Index>, 2> contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+    const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    synaptic_weights_derivatives.device(*thread_pool_device) =
-        inputs.contract(error_combinations_derivatives, contraction_indices);
+    calculate_error_combinations_derivatives(outputs, targets, error_combinations_derivatives);
+
+    biases_derivatives.device(*thread_pool_device) 
+        = error_combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
+
+    synaptic_weights_derivatives.device(*thread_pool_device) 
+        = inputs.contract(error_combinations_derivatives, double_contraction_indices);
+
+    input_derivatives.device(*thread_pool_device) 
+        = error_combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
 }
 
 
-void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets, Tensor<type, 3>& error_combinations_derivatives) const
+void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, 
+                                                                    const Tensor<type, 2>& targets,  
+                                                                    Tensor<type, 3>& error_combinations_derivatives) const
 {
-    Index batch_samples_number = outputs.dimension(0);
+    const Index batch_samples_number = outputs.dimension(0);
+    const Index outputs_number = outputs.dimension(1);
+
+    /// @todo Can we simplify this? For instance put the division in the last line somewhere else. 
 
     error_combinations_derivatives.device(*thread_pool_device) = outputs;
 
 #pragma omp parallel for
-    for (Index i = 0; i < targets.dimension(0); i++)
-        for (Index j = 0; j < targets.dimension(1); j++)
-            error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
 
-    error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number);
+    for (Index i = 0; i < batch_samples_number; i++)
+        for (Index j = 0; j < outputs_number; j++)
+            error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
+    
+    error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number * outputs_number);
 }
 
 
@@ -857,135 +894,6 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Returns a string with the expression of the competitive probabilistic outputs function.
-/// @param inputs_names Names of inputs to the probabilistic layer.
-/// @param outputs_names Names of outputs to the probabilistic layer.
-
-string ProbabilisticLayer3D::write_competitive_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    for(Index j = 0; j < outputs_names.size(); j++)
-    {
-        buffer << outputs_names(j) << " = competitive(" << inputs_names(j) << ");\n";
-    }
-    return buffer.str();
-}
-
-
-/// Returns a string with the expression of the softmax probabilistic outputs function.
-/// @param inputs_names Names of inputs to the probabilistic layer.
-/// @param outputs_names Names of outputs to the probabilistic layer.
-
-string ProbabilisticLayer3D::write_softmax_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    for(Index j = 0; j < outputs_names.size(); j++)
-    {
-        buffer << outputs_names(j) << " = softmax(" << inputs_names(j) << ");\n";
-    }
-
-    return buffer.str();
-}
-
-
-
-string ProbabilisticLayer3D::write_combinations(const Tensor<string, 1>& inputs_names) const
-{
-    ostringstream buffer;
-
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "probabilistic_layer_combinations_" << to_string(i) << " = " << biases(i);
-
-        for(Index j = 0; j < inputs_number; j++)
-        {
-            buffer << " +" << synaptic_weights(j, i) << "*" << inputs_names(j) << "";
-        }
-
-        buffer << " " << endl;
-    }
-
-    buffer << "\t" << endl;
-
-    return buffer.str();
-}
-
-
-string ProbabilisticLayer3D::write_activations(const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    const Index neurons_number = get_neurons_number();
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        switch(activation_function)
-        {
-        case ActivationFunction::Competitive:
-            if(i == 0)
-            {
-                buffer << "\tfor each probabilistic_layer_combinations_i:"<<endl;
-
-                buffer <<"\t\tif probabilistic_layer_combinations_i is equal to max(probabilistic_layer_combinations_i):"<<endl;
-
-                buffer <<"\t\t\tactivations[i] = 1"<<endl;
-
-                buffer <<"\t\telse:"<<endl;
-
-                buffer <<"\t\t\tactivations[i] = 0"<<endl;
-            }
-
-            break;
-
-        case ActivationFunction::Softmax:
-
-            if(i == 0)
-            {
-                buffer << "sum = ";
-
-                for(Index i = 0; i < neurons_number; i++)
-                {
-                    buffer << "exp(probabilistic_layer_combinations_" << to_string(i) << ")";
-
-                    if(i != neurons_number-1) buffer << " + ";
-                }
-
-                buffer << ";\n" << endl;
-
-                for(Index i = 0; i < neurons_number; i++)
-                {
-                    buffer << outputs_names(i) << " = exp(probabilistic_layer_combinations_" << to_string(i) <<")/sum;\n";
-                }
-
-            }
-            break;
-        default:
-            break;
-        }
-    }
-
-    return buffer.str();
-}
-
-
-string ProbabilisticLayer3D::write_expression(const Tensor<string, 1>& inputs_names,
-                                            const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    buffer << write_combinations(inputs_names);
-
-    buffer << write_activations(outputs_names);
-
-    return buffer.str();
-}
-
-
 pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair() const
 {
     ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
@@ -1013,19 +921,6 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
     
     outputs_data = outputs.data();
-
-    aux_rows_columns.resize(batch_samples_number, inputs_number);
-}
-
-
-pair<type*, dimensions> ProbabilisticLayer3DBackPropagation::get_deltas_pair() const
-{
-    ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
-
-    const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
-    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
-
-    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, neurons_number });
 }
 
 
@@ -1048,6 +943,12 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     synaptic_weights_derivatives.resize(inputs_depth, neurons_number);
 
     error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+
+    input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
 }
 
 }

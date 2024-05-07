@@ -153,7 +153,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 /// Set the initial value for the decay.
 /// @param new_initial_learning_rate initial value for the decay.
 
-void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
+void StochasticGradientDescent::set_initial_decay(const type& new_decay)
 {
 #ifdef OPENNN_DEBUG
 
@@ -172,7 +172,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 
     // Set  initial decay
 
-    initial_decay = new_dacay;
+    initial_decay = new_decay;
 }
 
 
@@ -277,17 +277,44 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data) const
 {
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     Tensor<type, 1>& parameters = back_propagation.parameters;
     const Tensor<type, 1>& gradient = back_propagation.gradient;
-    
+
     Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment;
     Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment;
-
     
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
+    
+    if (momentum <= type(0))
+    {
+        parameters_increment.device(*thread_pool_device) 
+            = gradient * (-learning_rate);
 
-    parameters_increment.device(*thread_pool_device) = gradient*(-learning_rate);
+        parameters.device(*thread_pool_device) += parameters_increment;
+    }    
+    else if (momentum > type(0) && !nesterov)
+    {
+        parameters_increment.device(*thread_pool_device) =
+            gradient * (-learning_rate) + momentum * last_parameters_increment;
+
+        last_parameters_increment.device(*thread_pool_device) = parameters_increment;
+
+        parameters.device(*thread_pool_device) += parameters_increment;
+
+    }
+    else if (momentum > type(0) && nesterov)
+    {
+        parameters_increment.device(*thread_pool_device)
+            = gradient * (-learning_rate) + momentum * last_parameters_increment;
+
+        last_parameters_increment.device(*thread_pool_device) = parameters_increment;
+
+        parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
+    }
+/*
+    parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
 
     if(momentum > type(0))
     {
@@ -308,12 +335,12 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     {
         parameters.device(*thread_pool_device) += parameters_increment;
     }
-
+*/
     optimization_data.iteration++;
 
     // Update parameters
 
-    back_propagation.loss_index->get_neural_network()->set_parameters(parameters);
+    neural_network->set_parameters(parameters);
 }
 
 
@@ -471,7 +498,7 @@ TrainingResults StochasticGradientDescent::perform_training()
                                 input_variables_indices,
                                 target_variables_indices,
                                 context_variables_indices);
-            
+
             // Neural network
             
             neural_network->forward_propagate(training_inputs,
@@ -483,7 +510,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
-            
+
             results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;

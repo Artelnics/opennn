@@ -35,7 +35,7 @@ struct RecurrentLayerBackPropagation;
 
 
 #ifdef OPENNN_CUDA
-        #include "../../opennn-cuda/opennn-cuda/struct_recurrent_layer_cuda.h"
+        #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
 
 /// This class represents a layer of neurons.
@@ -70,6 +70,8 @@ public:
 
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
+
+   dimensions get_outputs_dimensions() const final;
 
    const Tensor<type, 1>& get_hidden_states() const;
 
@@ -171,27 +173,15 @@ public:
 
    // Back propagation
 
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerForwardPropagation*,
-                               LayerBackPropagation*) const final;
-
-   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
-                               PerceptronLayerBackPropagation*,
-                               RecurrentLayerBackPropagation*) const;
-
-   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
-                               ProbabilisticLayerBackPropagation*,
-                               RecurrentLayerBackPropagation*) const;
-
    void insert_gradient(LayerBackPropagation*,
                         const Index& ,
                         Tensor<type, 1>&) const final;
 
-   void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
-
+   /*
    void calculate_biases_error_gradient(const Tensor<type, 2>&,
                                         RecurrentLayerForwardPropagation*,
                                         RecurrentLayerBackPropagation*) const;
@@ -203,7 +193,7 @@ public:
    void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                    RecurrentLayerForwardPropagation*,
                                                    RecurrentLayerBackPropagation*) const;
-
+    */
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
@@ -242,7 +232,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/recurrent_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
 #endif
 
 };
@@ -297,43 +287,13 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final
-    {
-        layer = new_layer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer->get_neurons_number();
-        const Index inputs_number = layer->get_inputs_number();
-
-        deltas.resize(batch_samples_number, neurons_number);
-
-        current_deltas.resize(neurons_number);
-
-        combinations_biases_derivatives.resize(neurons_number, neurons_number);
-
-        combinations_input_weights_derivatives.resize(inputs_number, neurons_number, neurons_number);
-
-        combinations_recurrent_weights_derivatives.resize(neurons_number, neurons_number, neurons_number);
-
-        error_current_combinations_derivatives.resize(neurons_number);
-
-
-        biases_derivatives.resize(neurons_number);
-
-        input_weights_derivatives.resize(inputs_number, neurons_number);
-
-        recurrent_weights_derivatives.resize(neurons_number, neurons_number);
-
-    }
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
     void print() const
     {
 
     }
-
-    Tensor<type, 2> deltas;
 
     Tensor<type, 1> current_deltas;
 
@@ -343,15 +303,13 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> error_current_combinations_derivatives;
 
-
-
     Tensor<type, 1> biases_derivatives;
 
     Tensor<type, 2> input_weights_derivatives;
 
     Tensor<type, 2> recurrent_weights_derivatives;
 
-
+    Tensor<type, 2> input_derivatives;
 };
 
 }

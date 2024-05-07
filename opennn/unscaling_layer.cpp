@@ -52,6 +52,14 @@ Index UnscalingLayer::get_neurons_number() const
 }
 
 
+dimensions UnscalingLayer::get_outputs_dimensions() const
+{
+    Index neurons_number = get_neurons_number();
+
+    return { neurons_number };
+}
+
+
 /// Returns all the available descriptives of the inputs and output variables.
 /// The format is a vector of pointers to vectors of size ten:
 /// <ul>
@@ -729,7 +737,6 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     const TensorMap<Tensor<type,2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     Tensor<type,2>& outputs = unscaling_layer_forward_propagation->outputs;
-
 
     Scaler scaler;
 

@@ -48,8 +48,6 @@ public:
    // Correlation methods
 
    void test_calculate_linear_correlations();
-   void test_calculate_autocorrelations();
-   void test_calculate_cross_correlations();
    void test_calculate_input_target_correlations();
    void test_calculate_input_raw_variables_correlations();
 
@@ -95,11 +93,7 @@ public:
    void test_read_wine_csv();
    void test_read_binary_csv();
 
-   // Trasform methods
-
-   void test_transform_time_series();
-
-   // Principal components mehtod
+   // Principal components methods
 
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();

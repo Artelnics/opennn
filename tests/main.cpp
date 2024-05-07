@@ -34,13 +34,13 @@ int main()
    "cross_entropy_error | cee\n"
    "cross_entropy_error_3d | cee3d\n"
    "convulational_layer | cl\n"
-   "descriptives | dsc\n"
    "data_set | ds\n"
    "flatten_layer | fl\n"
    "genetic_algorithm | ga\n"
    "gradient_descent | gd\n"
    "growing_inputs | gi\n"
    "growing_neurons | gn\n"
+   "image_data_set | ids\n"
    "inputs_selection | is\n"
    "learning_rate_algorithm | lra\n"
    "levenberg_marquardt_algorithm | lma\n"
@@ -66,6 +66,7 @@ int main()
    "sum_squared_error | sse\n"
    "tensor_utilities | tu\n"
    "testing_analysis | ta\n"
+   "time_series_data_set | tsds\n"
    "training_strategy | ts\n"
    "transformer | tf\n"
    "unscaling_layer | ul\n"
@@ -112,15 +113,6 @@ int main()
          tests_count += correlations_test.get_tests_count();
          tests_passed_count += correlations_test.get_tests_passed_count();
          tests_failed_count += correlations_test.get_tests_failed_count();
-      }
-
-      else if(test == "statistics" || test == "st")
-      {
-         StatisticsTest statistics_test;
-         statistics_test.run_test_case();
-         tests_count += statistics_test.get_tests_count();
-         tests_passed_count += statistics_test.get_tests_passed_count();
-         tests_failed_count += statistics_test.get_tests_failed_count();
       }
 
       else if(test == "data_set" || test == "ds")
@@ -322,7 +314,7 @@ int main()
           tests_failed_count += cross_entropy_error_3d_test.get_tests_failed_count();
       }
 
-      else if(test == "descriptives" || test == "dsc")
+      else if(test == "statistics" || test == "st")
       {
         StatisticsTest statistics_test;
         statistics_test.run_test_case();
@@ -465,11 +457,11 @@ int main()
 
       else if (test == "transformer" || test == "tf")
       {
-          TransformerTest transformer_test;
-          transformer_test.run_test_case();
-          tests_count += transformer_test.get_tests_count();
-          tests_passed_count += transformer_test.get_tests_passed_count();
-          tests_failed_count += transformer_test.get_tests_failed_count();
+        TransformerTest transformer_test;
+        transformer_test.run_test_case();
+        tests_count += transformer_test.get_tests_count();
+        tests_passed_count += transformer_test.get_tests_passed_count();
+        tests_failed_count += transformer_test.get_tests_failed_count();
           }
 
       else if(test == "response_optimization" || test == "ro")
@@ -479,6 +471,22 @@ int main()
         tests_count += response_optimization_test.get_tests_count();
         tests_passed_count += response_optimization_test.get_tests_passed_count();
         tests_failed_count += response_optimization_test.get_tests_failed_count();
+      }
+      else if(test == "time_series_data_set" || test == "tsds")
+      {
+        TimeSeriesDataSetTest time_series_data_set_test;
+        time_series_data_set_test.run_test_case();
+        tests_count += time_series_data_set_test.get_tests_count();
+        tests_passed_count += time_series_data_set_test.get_tests_passed_count();
+        tests_failed_count += time_series_data_set_test.get_tests_failed_count();
+      }
+      else if(test == "image_data_set" || test == "ids")
+      {
+          ImageDataSetTest image_data_set_test;
+          image_data_set_test.run_test_case();
+          tests_count += image_data_set_test.get_tests_count();
+          tests_passed_count += image_data_set_test.get_tests_passed_count();
+          tests_failed_count += image_data_set_test.get_tests_failed_count();
       }
 
       else if(test == "suite" || test == "")
@@ -533,6 +541,23 @@ int main()
           tests_count += data_set_test.get_tests_count();
           tests_passed_count += data_set_test.get_tests_passed_count();
           tests_failed_count += data_set_test.get_tests_failed_count();
+
+          // time series data set
+
+          TimeSeriesDataSetTest time_series_data_set_test;
+          time_series_data_set_test.run_test_case();
+          tests_count += time_series_data_set_test.get_tests_count();
+          tests_passed_count += time_series_data_set_test.get_tests_passed_count();
+          tests_failed_count += time_series_data_set_test.get_tests_failed_count();
+
+          // image data set
+
+          ImageDataSetTest image_data_set_test;
+          image_data_set_test.run_test_case();
+          tests_count += image_data_set_test.get_tests_count();
+          tests_passed_count += image_data_set_test.get_tests_passed_count();
+          tests_failed_count += image_data_set_test.get_tests_failed_count();
+
 
           // N E U R A L   N E T W O R K   T E S T S
 

@@ -36,7 +36,8 @@ struct EmbeddingLayerBackPropagation;
 struct EmbeddingLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+struct EmbeddingLayerForwardPropagationCuda;
+struct EmbeddingLayerBackPropagationCuda;
 #endif
 
 
@@ -48,7 +49,7 @@ struct EmbeddingLayerBackPropagationLM;
 
 class EmbeddingLayer : public Layer
 {
-/// @todo get_parameters() and set_parameters()
+
 public:
 
     // Constructors
@@ -65,6 +66,9 @@ public:
     Index get_input_dimension() const;
     Index get_inputs_number() const;
     Index get_depth() const;
+
+    dimensions get_outputs_dimensions() const final;
+
     Tensor<type, 2> get_embedding_weights() const;
 
     Index get_parameters_number() const final;
@@ -109,48 +113,35 @@ public:
                            LayerForwardPropagation*,
                            const bool&) final;
 
-    // Delta methods
-
-    void calculate_hidden_delta(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const final;
-
-    void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
-                                MultiheadAttentionLayerBackPropagation*,
-                                EmbeddingLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
-                                PerceptronLayer3DBackPropagation*,
-                                EmbeddingLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(ProbabilisticLayer3DForwardPropagation*,
-                                ProbabilisticLayer3DBackPropagation*,
-                                EmbeddingLayerBackPropagation*) const;
-
     // Gradient methods
 
-    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                                  const Tensor<pair<type*, dimensions>, 1>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
 
+    void add_deltas(const Tensor<pair<type*, dimensions>, 1>&) const;
+
     void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
-    // Expression methods
-
-    //    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
     // Serialization methods
+
     /// @todo
 
     //    void from_XML(const tinyxml2::XMLDocument&) final;
     //    void write_XML(tinyxml2::XMLPrinter&) const final;
+
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
+    #endif
 
 protected:
 
     // MEMBERS
 
     /// Input dimension (i.e. number of values input can take or vocabulary size)
+    /// @todo change this to something that is not confusing?
 
     Index inputs_dimension;
 
@@ -174,13 +165,11 @@ protected:
 
     bool display = true;
 
-#ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/embedding_layer_cuda.h"
-#endif
-
+    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
     };
 
-    struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
+
+struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
     {
         // Default constructor
 
@@ -235,7 +224,7 @@ protected:
     };
 
 
-    struct EmbeddingLayerBackPropagation : LayerBackPropagation
+struct EmbeddingLayerBackPropagation : LayerBackPropagation
     {
         // Default constructor
 
@@ -256,21 +245,23 @@ protected:
         {
         }
 
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
         void print() const
         {
-            cout << "Deltas:" << endl;
-            //cout << deltas << endl;
-
         }
 
-        Tensor<type, 3> deltas;
-
+        Tensor<type, 2> sample_deltas;
         Tensor<type, 2> embedding_weights_derivatives;
     };
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/embedding_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/embedding_layer_back_propagation_cuda.h"
+#endif
+
 
 }
 

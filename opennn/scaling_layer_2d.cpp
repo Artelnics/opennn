@@ -49,9 +49,9 @@ ScalingLayer2D::ScalingLayer2D(const Tensor<Descriptives, 1>& new_descriptives) 
 }
 
 
-Tensor<Index, 1> ScalingLayer2D::get_outputs_dimensions() const
+dimensions ScalingLayer2D::get_outputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) };
 }
 
 
@@ -61,9 +61,9 @@ Index ScalingLayer2D::get_inputs_number() const
 }
 
 
-Tensor<Index, 1> ScalingLayer2D::get_inputs_dimensions() const
+dimensions ScalingLayer2D::get_inputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) };
 }
 
 

@@ -13,7 +13,7 @@
 #include "codification.h"
 
 using namespace opennn;
-using namespace std;
+//using namespace std;
 
 
 namespace opennn
@@ -3630,11 +3630,11 @@ void DataSet::set_binary_simple_raw_variables()
                 if((abs(values(0)-type(0))<NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1))<NUMERIC_LIMITS_MIN))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(static_cast<int>(values(0)));
+                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(0)));
                     else
                         raw_variables(raw_variable_index).categories(1) = to_string(values(0));
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(static_cast<int>(values(1)));
+                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(1)));
                     else
                         raw_variables(raw_variable_index).categories(0) = to_string(values(1));
 
@@ -3642,33 +3642,33 @@ void DataSet::set_binary_simple_raw_variables()
                 else if(abs(values(0) - type(1))<NUMERIC_LIMITS_MIN && abs(values(1) - type(0))<NUMERIC_LIMITS_MIN)
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(static_cast<int>(values(0)));
+                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(0)));
                     else
                         raw_variables(raw_variable_index).categories(0) = to_string(values(0));
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(static_cast<int>(values(1)));
+                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(1)));
                     else
                         raw_variables(raw_variable_index).categories(1) = to_string(values(1));
                 }
                 else if(values(0) > values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(static_cast<int>(values(0)));
+                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(0)));
                     else
                         raw_variables(raw_variable_index).categories(0) = to_string(values(0));
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(static_cast<int>(values(1)));
+                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(1)));
                     else
                         raw_variables(raw_variable_index).categories(1) = to_string(values(1));
                 }
                 else if(values(0) < values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(static_cast<int>(values(0)));
+                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(0)));
                     else
                         raw_variables(raw_variable_index).categories(1) = to_string(values(0));
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(static_cast<int>(values(1)));
+                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(1)));
                     else
                         raw_variables(raw_variable_index).categories(0) = to_string(values(1));
                 }
@@ -9006,15 +9006,18 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
     {
         for(Index j = 0; j < variables_number; j++)
         {
-            data(i, j) = arc4random();
+
+            data(i, j) = rand(); // rand();
+
         }
     }
+
 
 #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
-        const Index random_class = arc4random() % classes_number;
+        const Index random_class = rand() % classes_number;
         data(i, variables_number + random_class) = 1;
     }
 */

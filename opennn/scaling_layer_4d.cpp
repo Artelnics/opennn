@@ -49,15 +49,15 @@ ScalingLayer4D::ScalingLayer4D(const Tensor<Descriptives, 1>& new_descriptives) 
 }
 
 
-Tensor<Index, 1> ScalingLayer4D::get_inputs_dimensions() const
+dimensions ScalingLayer4D::get_inputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) , inputs_dimensions(3) };
 }
 
 
-Tensor<Index, 1> ScalingLayer4D::get_outputs_dimensions() const
+dimensions ScalingLayer4D::get_outputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) , inputs_dimensions(3) };
 }
 
 
@@ -752,144 +752,6 @@ void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-/// Returns a string with the expression of the scaling process when the none method is used.
-/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-
-string ScalingLayer4D::write_no_scaling_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    const Index inputs_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        buffer << outputs_names(i) << " = " << inputs_names(i) << ";\n";
-    }
-
-    return buffer.str();
-}
-
-
-/// Returns a string with the expression of the scaling process with the minimum and maximum method.
-/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-
-string ScalingLayer4D::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    const Index inputs_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        buffer << outputs_names(i) << " = 2*(" << inputs_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
-    }
-
-    return buffer.str();
-}
-
-
-/// Returns a string with the expression of the scaling process with the mean and standard deviation method.
-/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-
-string ScalingLayer4D::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    const Index inputs_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        buffer << outputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
-    }
-
-    return buffer.str();
-}
-
-
-/// Returns a string with the expression of the scaling process with the standard deviation method.
-/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-
-string ScalingLayer4D::write_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    const Index inputs_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        buffer << outputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
-    }
-
-    return buffer.str();
-}
-
-
-/// Returns a string with the expression of the inputs scaling process.
-
-string ScalingLayer4D::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>&) const
-{
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        if(scalers(i) == Scaler::NoScaling)
-        {
-            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << ";\n";
-        }
-        else if(scalers(i) == Scaler::MinimumMaximum)
-        {
-            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
-        }
-        else if(scalers(i) == Scaler::MeanStandardDeviation)
-        {
-            buffer << "scaled_" << inputs_names(i) << " = (" << inputs_names(i) << "-" << descriptives(i).mean << ")/" << descriptives(i).standard_deviation << ";\n";
-        }
-        else if(scalers(i) == Scaler::StandardDeviation)
-        {
-            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
-        }
-        else if(scalers(i) == Scaler::Logarithm)
-        {
-            buffer << "scaled_" << inputs_names(i) << " = log(" << inputs_names(i) << ");\n";
-        }
-        else
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "string write_expression() const method.\n"
-                   << "Unknown inputs scaling method.\n";
-
-            throw runtime_error(buffer.str());
-        }
-    }
-
-    string expression = buffer.str();
-
-    replace(expression, "+-", "-");
-    replace(expression, "--", "+");
-
-    return expression;
-
-}
-
-
 void ScalingLayer4D::print() const
 {
     cout << "Scaling layer" << endl;
@@ -907,7 +769,6 @@ void ScalingLayer4D::print() const
         descriptives(i).print();
     }
 }
-
 
 
 /// Serializes the scaling layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.

@@ -56,6 +56,8 @@ public:
     const Tensor<Tensor<string, 1>, 1> get_documents() const;
     const Tensor<Tensor<string, 1>, 1> get_targets() const;
 
+    Tensor<type, 2> get_context_data() const;
+
     void set_default_raw_variables_uses();
     void set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses);
     void set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses);

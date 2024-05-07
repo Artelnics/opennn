@@ -35,6 +35,11 @@ struct MultiheadAttentionLayerBackPropagationLM;
 struct PerceptronLayer3DForwardPropagation;
 struct PerceptronLayer3DBackPropagation;
 
+#ifdef OPENNN_CUDA
+    struct MultiheadAttentionLayerForwardPropagationCuda;
+    struct MultiheadAttentionLayerBackPropagationCuda;
+#endif
+
 
 /// This class represents a layer of Multihead Attention.
 
@@ -66,6 +71,8 @@ public:
     Index get_depth() const;
     Index get_heads_number() const;
     Index get_weights_depth() const;
+
+    dimensions get_outputs_dimensions() const final;
 
     Tensor<type, 3> get_query_weights() const;
     Tensor<type, 2> get_query_biases() const;
@@ -105,6 +112,7 @@ public:
 
     void set_weights();
     void set_parameters_random() final;
+    void set_parameters_glorot();
     void set_parameters_constant(const type&) final;
 
     void set_dropout_rate(const type&);
@@ -114,11 +122,12 @@ public:
 
     void set_display(const bool&);
 
+    void build_causal_mask();
     void apply_causal_mask(Tensor<type, 4>&) const;
 
     // Linear transformation & projection
 
-    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&) const;
+    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
@@ -136,24 +145,10 @@ public:
                            LayerForwardPropagation*,
                            const bool&) final;
 
-    // Delta methods
-
-    void calculate_hidden_delta(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const final;
-
-    void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
-                                PerceptronLayer3DBackPropagation*,
-                                MultiheadAttentionLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
-                                MultiheadAttentionLayerBackPropagation*,
-                                MultiheadAttentionLayerBackPropagation*) const;
-
     // Gradient methods
 
-    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                                  const Tensor<pair<type*, dimensions>, 1>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
 
@@ -165,6 +160,10 @@ public:
 
     //void from_XML(const tinyxml2::XMLDocument&) final;
     //void write_XML(tinyxml2::XMLPrinter&) const final;
+
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
+    #endif
 
 protected:
 
@@ -210,13 +209,18 @@ protected:
     Tensor<type, 3> projection_weights;
     Tensor<type, 1> projection_biases;
 
+    /// Use causal mask or not
+
+    bool use_causal_mask = false;
+
+    // Causal mask matrix
+
+    Tensor<type, 2> causal_mask;
+    bool built_causal_mask = false;
+
     /// Dropout rate
 
     type dropout_rate = type(0);
-
-    /// Apply causal mask or not
-
-    bool causal_mask = false;
 
     /// Display messages to screen.
 
@@ -229,7 +233,6 @@ protected:
     const Eigen::array<Index, 2> projection_biases_derivatives_sum_indices = Eigen::array<Index, 2>({ 0, 1 });
 
     const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
-    const Eigen::array<IndexPair<Index>, 1> attention_output_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
     const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 };
 
@@ -277,6 +280,8 @@ protected:
         Tensor<type, 4> query;
         Tensor<type, 4> key;
         Tensor<type, 4> value;
+        
+        Tensor<type, 2> sample_matrix;
 
         Tensor<type, 4> attention_scores;
         Tensor<type, 4> softmax_attention_scores;
@@ -308,27 +313,21 @@ protected:
         {
         }
 
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
         void print() const
         {
-            cout << "Deltas:" << endl;
-            //cout << deltas << endl;
         }
-
-        Tensor<type, 3> deltas;
 
         Tensor<type, 4> error_attention_scores_derivatives;
         Tensor<type, 4> error_softmax_attention_scores_derivatives;
         Tensor<type, 4> error_attention_output_derivatives;
 
+        Tensor<type, 2> sample_deltas;
+
         Tensor<type, 4> error_query_derivatives;
         Tensor<type, 4> error_key_derivatives;
         Tensor<type, 4> error_value_derivatives;
-
-        Tensor<type, 3> error_input_derivatives;
-        Tensor<type, 3> error_context_derivatives;
 
         Tensor<type, 3> query_weights_derivatives;
         Tensor<type, 3> key_weights_derivatives;
@@ -340,7 +339,17 @@ protected:
         Tensor<type, 2> key_biases_derivatives;
         Tensor<type, 2> value_biases_derivatives;
         Tensor<type, 1> projection_biases_derivatives;
+
+        Tensor<type, 1> aux_rows;
+
+        Tensor<type, 3> input_derivatives;
+        Tensor<type, 3> context_derivatives;
     };
+
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_forward_propagation_cuda.h"
+        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_back_propagation_cuda.h"
+    #endif
 
 }
 

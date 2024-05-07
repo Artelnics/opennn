@@ -29,9 +29,7 @@
 using namespace std;
 using namespace opennn;
 using namespace std::chrono;
-//using namespace Eigen;
-
-
+using namespace Eigen;
 
 int main()
 {
@@ -39,17 +37,31 @@ int main()
    {
         cout << "Blank\n";
 
+<<<<<<< HEAD
         //LanguageDataSet language_data_set;
 
         ////language_data_set.set_data_source_path("data/example2.txt");
         ////language_data_set.set_data_source_path("data/PTtoEN_dataset.txt");
         //language_data_set.set_data_source_path("/home/artelnics/Descargas/three_letter_combinations.txt");
         //language_data_set.set_text_separator(DataSet::Separator::Tab);
+=======
+        //language_data_set.set_data_source_path("data/example2.txt");
+        //language_data_set.set_data_source_path("data/PTtoEN_dataset.txt");
+        language_data_set.set_data_source_path("data/three_letter_combinations_with_spaces.txt");
+        //language_data_set.set_data_source_path("data/modified_three_letter_combinations_with_spaces_one_third.txt");
+        language_data_set.set_text_separator(DataSet::Separator::Tab);
+
+        language_data_set.read_txt_language_model();
+        
+        //language_data_set.set_training();
+        language_data_set.set_raw_variables_scalers(Scaler::NoScaling);
+>>>>>>> a8f36262f1eb664aa81868063f3c397b7d31bb32
 
         //language_data_set.read_txt_language_model();
 
         //language_data_set.set_training();
 
+<<<<<<< HEAD
         //Index input_length = language_data_set.get_completion_length();
         //Index context_length = language_data_set.get_context_length();
         //Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
@@ -87,6 +99,58 @@ int main()
         //TrainingResults training_results = stochastic_gradient_descent.perform_training();
 
         ////transformer.calculate_outputs();
+=======
+        //transformer.set_parameters_constant(1);
+        
+        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+
+        transformer.set_input_vocabulary(completion_vocabulary);
+        transformer.set_context_vocabulary(context_vocabulary);
+
+        CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
+        cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+        AdaptiveMomentEstimation optimization_algorithm;
+        optimization_algorithm.set_loss_index(&cross_entropy_error_3d);
+
+        optimization_algorithm.set_display(true);
+        optimization_algorithm.set_display_period(1);
+
+        //type training_loss_goal = type(0.1);
+
+        //optimization_algorithm.set_loss_goal(training_loss_goal);
+        optimization_algorithm.set_maximum_epochs_number(49);
+        optimization_algorithm.set_maximum_time(86400);
+        optimization_algorithm.set_batch_samples_number(32);
+
+        TrainingResults training_results = optimization_algorithm.perform_training();
+        
+        cout << endl << "DEPLOYMENT:" << endl;
+        string input;
+        string output;
+
+        input = "a a b";
+        output = transformer.calculate_outputs(input);
+        
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+
+        input = "a l e";
+        output = transformer.calculate_outputs(input);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+
+        input = "o d v";
+        output = transformer.calculate_outputs(input);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+>>>>>>> a8f36262f1eb664aa81868063f3c397b7d31bb32
 
         cout << "Bye!" << endl;
 

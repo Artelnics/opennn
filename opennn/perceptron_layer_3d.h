@@ -23,6 +23,7 @@
 #include "probabilistic_layer_3d.h"
 #include "multihead_attention_layer.h"
 
+
 namespace opennn
 {
 
@@ -30,7 +31,8 @@ struct PerceptronLayer3DForwardPropagation;
 struct PerceptronLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
-    //#include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+struct PerceptronLayer3DForwardPropagationCuda;
+struct PerceptronLayer3DBackPropagationCuda;
 #endif
 
 
@@ -40,6 +42,7 @@ struct PerceptronLayer3DBackPropagation;
 /// This network is often trained with the perceptron learning rule.
 ///
 /// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
+
 
 class PerceptronLayer3D : public Layer
 {
@@ -66,8 +69,10 @@ public:
    bool is_empty() const;
 
    Index get_inputs_number() const final;
-   Index get_inputs_size() const;
+   Index get_inputs_depth() const;
    Index get_neurons_number() const final;
+
+   dimensions get_outputs_dimensions() const final;
 
    // Parameters
 
@@ -106,7 +111,7 @@ public:
 
    // Architecture
 
-   void set_inputs_size(const Index&);
+   void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;
 
    // Parameters
@@ -132,8 +137,8 @@ public:
    void set_synaptic_weights_constant(const type&);
 
    void set_parameters_constant(const type&) final;
-
    void set_parameters_random() final;
+   void set_parameters_glorot();
 
    // Forward propagation
 
@@ -155,53 +160,27 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                          Tensor<type, 1>&,
-                          LayerForwardPropagation*);
-
-   // Delta methods
-
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerForwardPropagation*,
-                               LayerBackPropagation*) const final;
-
-   void calculate_hidden_delta(PerceptronLayer3DForwardPropagation*,
-                               PerceptronLayer3DBackPropagation*,
-                               PerceptronLayer3DBackPropagation*) const;
-
-   void calculate_hidden_delta(ProbabilisticLayer3DForwardPropagation*,
-                               ProbabilisticLayer3DBackPropagation*,
-                               PerceptronLayer3DBackPropagation*) const;
-
-   void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
-                               MultiheadAttentionLayerBackPropagation*,
-                               PerceptronLayer3DBackPropagation*) const;
-
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+                                 const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
-   void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
-                                                 const Tensor<type, 3>&,
-                                                 Tensor<type, 3>&) const;
+   void add_deltas(const Tensor<pair<type*, dimensions>, 1>&) const;
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
                         Tensor<type, 1>&) const final;
 
-   // Expression methods
-
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-   string write_activation_function_expression() const;
-
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
+
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_cuda.h"
+    #endif
 
 protected:
 
@@ -228,11 +207,9 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
-#endif
 
 };
+
 
 struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 {
@@ -296,9 +273,6 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     virtual ~PerceptronLayer3DBackPropagation()
     {
     }
-    
-    
-    pair<type*, dimensions> get_deltas_pair() const final;
 
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
@@ -306,9 +280,6 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;
 
@@ -316,13 +287,19 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
         cout << synaptic_weights_derivatives << endl;
     }
 
-    Tensor<type, 3> deltas;
-
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
     Tensor<type, 3> error_combinations_derivatives;
+    Tensor<type, 3> input_derivatives;
 };
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_back_propagation_cuda.h"
+#endif
+
 
 }
 

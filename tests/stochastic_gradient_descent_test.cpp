@@ -98,7 +98,7 @@ void StochasticGradientDescentTest::test_perform_training()
     neural_network.set_parameters_constant(-1);
 
     stochastic_gradient_descent.set_display(true);
-    stochastic_gradient_descent.set_display_period(100);
+    stochastic_gradient_descent.set_display_period(1000);
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
 
@@ -119,8 +119,91 @@ void StochasticGradientDescentTest::test_perform_training()
 
     training_results = stochastic_gradient_descent.perform_training();
 
-    //assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+    assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+}
 
+
+void StochasticGradientDescentTest::test_transformer_training()
+{
+    cout << "\ntest_transformer_training\n";
+
+    type old_error = numeric_limits<float>::max();
+
+    type error;
+
+    Index context_length;
+    Index context_dimension;
+    Index inputs_dimension;
+
+    LanguageDataSet data_set;
+
+    Index depth;
+    Index perceptron_depth;
+    Index heads_number;
+    Index number_of_layers;
+
+    Transformer transformer;
+
+    CrossEntropyError3D cross_entropy_error_3d;
+
+    cross_entropy_error_3d.set(&transformer, &data_set);
+
+    stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
+    
+    samples_number = 1;
+
+    inputs_number = 2;
+    context_length = 3;
+    inputs_dimension = 5;
+    context_dimension = 6;
+
+    depth = 4;
+    perceptron_depth = 6;
+    heads_number = 4;
+    number_of_layers = 1;
+
+    data_set.set_data_random_language_model(samples_number, inputs_number, context_length, inputs_dimension, context_dimension);
+
+    transformer.set({ inputs_number, context_length, inputs_dimension, context_dimension,
+                        depth, perceptron_depth, heads_number, number_of_layers });
+
+    stochastic_gradient_descent.set_loss_goal(NUMERIC_LIMITS_MIN);
+
+    // Test
+
+    stochastic_gradient_descent.set_maximum_epochs_number(1);
+    stochastic_gradient_descent.set_display(false);
+    training_results = stochastic_gradient_descent.perform_training();
+
+    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    
+    // Test
+
+    transformer.set_parameters_constant(-1);
+
+    stochastic_gradient_descent.set_maximum_epochs_number(1);
+
+    training_results = stochastic_gradient_descent.perform_training();
+    error = training_results.get_training_error();
+
+    assert_true(error < old_error, LOG);
+
+    // Test
+
+    old_error = error;
+
+    stochastic_gradient_descent.set_maximum_epochs_number(10000);
+    transformer.set_parameters_constant(-1);
+    
+    stochastic_gradient_descent.set_display(true);
+    stochastic_gradient_descent.set_display_period(1000);
+    training_results = stochastic_gradient_descent.perform_training();
+    error = training_results.get_training_error();
+
+    assert_true(error <= old_error, LOG);
+
+    cout << "old_error: " << endl << old_error << endl;
+    cout << "error: " << endl << error << endl;
 }
 
 
@@ -147,6 +230,8 @@ void StochasticGradientDescentTest::run_test_case()
     // Training methods
 
     test_perform_training();
+
+    test_transformer_training();
 
     // Serialization methods
 
