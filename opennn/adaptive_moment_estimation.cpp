@@ -165,6 +165,16 @@ void AdaptiveMomentEstimation::set_loss_goal(const type& new_loss_goal)
 }
 
 
+/// Sets a new goal value for the accuracy.
+/// This is a stopping criterion when training a neural network.
+/// @param new_accuracy_goal Goal value for the accuracy.
+
+void AdaptiveMomentEstimation::set_accuracy_goal(const type& new_accuracy_goal)
+{
+    training_accuracy_goal = new_accuracy_goal;
+}
+
+
 /// Sets a pointer to a loss index object to be associated with the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index Pointer to a loss index object.
@@ -509,6 +519,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
         }
 
+        if(training_accuracy >= training_accuracy_goal)
+        {
+            stop_training = true;
+
+            results.stopping_condition  = StoppingCondition::LossGoal;
+
+            if(display) cout << "Epoch " << epoch << endl << "Accuracy goal reached: " << training_accuracy << endl;
+        }
+
         if(selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
@@ -633,6 +652,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
     
+    /// @todo adaptive learning rate
+
     parameters.device(*thread_pool_device)
         -= (learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
 

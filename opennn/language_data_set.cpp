@@ -1345,141 +1345,141 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 void LanguageDataSet::load_documents(const string& path)
 {
-        const Index original_size = documents.size();
+    const Index original_size = documents.size();
 
-        if(path.empty())
+    if(path.empty())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+                << "void load_documents() method.\n"
+                << "Data file name is empty.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    ifstream file(path.c_str());
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+                << "void load_documents() method.\n"
+                << "Cannot open data file: " << path << "\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    Tensor<Tensor<string,1>, 1> documents_copy(documents);
+
+    documents.resize(original_size + 1);
+
+    Tensor<Tensor<string,1>, 1> targets_copy(targets);
+
+    targets.resize(original_size + 1);
+
+    for(Index i = 0; i < original_size; i++)
+    {
+        documents(i) = documents_copy(i);
+        targets(i) = targets_copy(i);
+    }
+
+    Index lines_count = 0;
+    Index lines_number = 0;
+
+    string line;
+
+    while(file.good())
+    {
+        getline(file, line);
+        trim(line);
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        lines_number++;
+
+        if(file.peek() == EOF) break;
+    }
+
+    file.close();
+
+    Tensor<string, 1> document(lines_number);
+    Tensor<string, 1> document_target(lines_number);
+
+    ifstream file2(path.c_str());
+
+    Index tokens_number = 0;
+
+    string delimiter = "";
+    char separator = get_separator_char();
+
+    while(file2.good())
+    {
+        getline(file2, line);
+
+        if(line.empty()) continue;
+
+        if(line[0]=='"')
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: TextAnalytics class.\n"
-                   << "void load_documents() method.\n"
-                   << "Data file name is empty.\n";
-
-            throw runtime_error(buffer.str());
+            replace(line,"\"\"", "\"");
+            line = "\""+line;
+            delimiter = "\"\"";
         }
 
-        ifstream file(path.c_str());
+        if( line.find("\"" + separator) != string::npos) replace(line,"\"" + separator, "\"\"" + separator);
 
-        if(!file.is_open())
+        //tokens_number = count_tokens(line,delimiter + separator);
+        Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
+        tokens_number = tokens.size();
+
+        if(tokens_number == 1)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: TextAnalytics class.\n"
-                   << "void load_documents() method.\n"
-                   << "Cannot open data file: " << path << "\n";
-
-            throw runtime_error(buffer.str());
+            if(tokens(0).find(delimiter,0) == 0) document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
+            else document(lines_count) += " " + tokens(0);
         }
-
-        Tensor<Tensor<string,1>, 1> documents_copy(documents);
-
-        documents.resize(original_size + 1);
-
-        Tensor<Tensor<string,1>, 1> targets_copy(targets);
-
-        targets.resize(original_size + 1);
-
-        for(Index i = 0; i < original_size; i++)
+        else
         {
-            documents(i) = documents_copy(i);
-            targets(i) = targets_copy(i);
-        }
-
-        Index lines_count = 0;
-        Index lines_number = 0;
-
-        string line;
-
-        while(file.good())
-        {
-            getline(file, line);
-            trim(line);
-            erase(line, '"');
-
-            if(line.empty()) continue;
-
-            lines_number++;
-
-            if(file.peek() == EOF) break;
-        }
-
-        file.close();
-
-        Tensor<string, 1> document(lines_number);
-        Tensor<string, 1> document_target(lines_number);
-
-        ifstream file2(path.c_str());
-
-        Index tokens_number = 0;
-
-        string delimiter = "";
-        char separator = get_separator_char();
-
-        while(file2.good())
-        {
-            getline(file2, line);
-
-            if(line.empty()) continue;
-
-            if(line[0]=='"')
+            if(tokens_number > 2)
             {
-                replace(line,"\"\"", "\"");
-                line = "\""+line;
-                delimiter = "\"\"";
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: TextAnalytics class.\n"
+                        << "void load_documents() method.\n"
+                        << "Found more than one separator in line: " << line << "\n";
+
+                throw runtime_error(buffer.str());
             }
+            if(tokens(0).empty() && tokens(1).empty())  continue;
 
-            if( line.find("\"" + separator) != string::npos) replace(line,"\"" + separator, "\"\"" + separator);
+            document(lines_count) += " " + tokens(0);
+            document_target(lines_count) += tokens(1);
+            delimiter = "";
+            lines_count++;
 
-            //tokens_number = count_tokens(line,delimiter + separator);
-            Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
-            tokens_number = tokens.size();
-
-            if(tokens_number == 1)
-            {
-                if(tokens(0).find(delimiter,0) == 0) document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
-                else document(lines_count) += " " + tokens(0);
-            }
-            else
-            {
-                if(tokens_number > 2)
-                {
-                    ostringstream buffer;
-
-                    buffer << "OpenNN Exception: TextAnalytics class.\n"
-                           << "void load_documents() method.\n"
-                           << "Found more than one separator in line: " << line << "\n";
-
-                    throw runtime_error(buffer.str());
-                }
-                if(tokens(0).empty() && tokens(1).empty())  continue;
-
-                document(lines_count) += " " + tokens(0);
-                document_target(lines_count) += tokens(1);
-                delimiter = "";
-                lines_count++;
-
-            }
-
-            if(file2.peek() == EOF) break;
         }
 
-        Tensor<string,1> document_copy(lines_count);
-        Tensor<string,1> document_target_copy(lines_count);
+        if(file2.peek() == EOF) break;
+    }
 
-        copy(/*execution::par,*/
-            document.data(),
-            document.data() + lines_count,
-            document_copy.data());
+    Tensor<string,1> document_copy(lines_count);
+    Tensor<string,1> document_target_copy(lines_count);
 
-        copy(/*execution::par,*/
-            document_target.data(),
-            document_target.data() + lines_count,
-            document_target_copy.data());
+    copy(/*execution::par,*/
+        document.data(),
+        document.data() + lines_count,
+        document_copy.data());
 
-        documents(original_size) = document_copy;
-        targets(original_size) = document_target_copy;
+    copy(/*execution::par,*/
+        document_target.data(),
+        document_target.data() + lines_count,
+        document_target_copy.data());
 
-        file2.close();
+    documents(original_size) = document_copy;
+    targets(original_size) = document_target_copy;
+
+    file2.close();
 }
 
 
@@ -1621,7 +1621,7 @@ void LanguageDataSet::read_txt_language_model()
     cout << "Reading .txt file..." << endl;
 
     load_documents(data_source_path);
-    
+
     Index entry_number = documents(0).size();
 
     for(Index i = 1; i < documents.size(); i++)
@@ -1680,7 +1680,7 @@ void LanguageDataSet::read_txt_language_model()
 
     completion_vocabulary = calculate_vocabulary(completion_tokens);
     
-    const Index LIMIT = 128;
+    const Index LIMIT = 126;
 
     Index max_context_tokens = context_tokens(0).size();
 
@@ -1711,7 +1711,7 @@ void LanguageDataSet::read_txt_language_model()
     std::ofstream file;
     file.open(transformed_data_path);
 
-    // @todo context does NOT need start and end tokens
+    // @todo maybe context does NOT need start and end tokens
 
     for(Index i  = type(0); i < max_context_length + 2; i++) /// there is start (=1) and end (=2) indicators
         file << "context_token_position_" << i << ";";
@@ -1760,7 +1760,7 @@ void LanguageDataSet::read_txt_language_model()
         
         for(Index j = 1; j < max_context_length + 2; j++)
         {
-            if( j <= line_tokens.size() && contains(context_vocabulary, line_tokens(j - 1)) )
+            if( j <= line_tokens.size() /* && contains(context_vocabulary, line_tokens(j - 1))*/ )
             {
                 auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j - 1));
 
@@ -1796,7 +1796,7 @@ void LanguageDataSet::read_txt_language_model()
 
         for(Index j = 1; j < max_completion_length + 2; j++)
         {
-            if( j <= line_tokens.size() && contains(completion_vocabulary, line_tokens(j - 1)) )
+            if( j <= line_tokens.size() /*&& contains(completion_vocabulary, line_tokens(j - 1))*/ )
             {
                 auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j - 1));
 
@@ -1826,7 +1826,7 @@ void LanguageDataSet::read_txt_language_model()
         file << completion_row(max_completion_length + 1) << "\n";
         
     }
-    
+
     file.close();
 
     data_source_path = transformed_data_path;

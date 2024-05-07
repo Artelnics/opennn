@@ -2359,15 +2359,34 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
 
 const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens)
 {
-    const Tensor<string, 1> total = join(tokens);
+    Tensor<string, 1> total = join(tokens);
 
-    const Tensor<Index, 1> count = count_unique(total);
+    Index total_size = total.size();
+    string* total_start = total.data();
+    string* total_end = total.data() + total_size;
 
-    const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
+    unordered_map<string, int> count;
 
-    const Tensor<string, 1> words = sort_by_rank(get_unique_elements(total), descending_rank);
+    for (Index i = 0; i < total_size; ++i)      count[total(i)]++;
 
-    return words;
+    sort(total_start, total_end, [&count](const string& a, const string& b)
+                                 {
+                                     if(count[a] != count[b])    return count[a] > count[b];
+                                     else    return a < b;
+                                 }
+    );
+
+    string* vocabulary_end = unique(total_start, total_end);
+
+    Index vocabulary_size = static_cast<Index>(vocabulary_end - total_start);
+    Tensor<string, 1> vocabulary(vocabulary_size);
+
+    copy(/*execution::par,*/
+         total_start,
+         vocabulary_end,
+         vocabulary.data());
+
+    return vocabulary;
 }
 
 
@@ -2379,17 +2398,17 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     split_punctuation(documents_copy);
 
-    delete_non_printable_chars(documents_copy);
+    //delete_non_printable_chars(documents_copy);
 
     delete_extra_spaces(documents_copy);
 
-    aux_remove_non_printable_chars(documents_copy);
+    //aux_remove_non_printable_chars(documents_copy);
 
     Tensor<Tensor<string, 1>, 1> tokenized_documents = tokenize(documents_copy);
 
-    delete_emails(tokenized_documents);
+    //delete_emails(tokenized_documents);
 
-    delete_blanks(tokenized_documents);
+    //delete_blanks(tokenized_documents);
 
     return tokenized_documents;
 }

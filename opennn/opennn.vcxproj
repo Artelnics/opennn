@@ -309,8 +309,8 @@
     <ClInclude Include="opennn.h" />
     <ClInclude Include="images.h" />
     <ClCompile Include="images.cpp" />
-    <ClInclude Include="strings.h" />
-    <ClCompile Include="strings.cpp" />
+    <ClInclude Include="strings_utilities.h" />
+    <ClCompile Include="strings_utilities.cpp" />
     <ClInclude Include="optimization_algorithm.h" />
     <ClCompile Include="optimization_algorithm.cpp" />
     <ClInclude Include="perceptron_layer.h" />

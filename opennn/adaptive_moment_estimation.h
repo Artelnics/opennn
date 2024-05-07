@@ -90,6 +90,7 @@ public:
    // Stopping criteria
 
    void set_loss_goal(const type&);
+   void set_accuracy_goal(const type&);
    void set_maximum_time(const type&);
 
    // Training methods
@@ -139,6 +140,10 @@ private:
    /// Goal value for the loss. It a stopping criterion.
 
    type training_loss_goal = type(0);
+   
+   /// Goal value for the accuracy. It a stopping criterion.
+
+   type training_accuracy_goal = type(1);
 
    /// Maximum epochs number.
 
