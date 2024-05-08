@@ -155,6 +155,16 @@ void AdaptiveMomentEstimation::set_learning_rate(const type& new_learning_rate)
 }
 
 
+/// Sets a new custom learning rate.
+
+void AdaptiveMomentEstimation::set_custom_learning_rate(const type& parameter)
+{
+    use_custom_learning_rate = true;
+
+    learning_rate = pow(parameter, -0.5);
+}
+
+
 /// Sets a new goal value for the loss.
 /// This is a stopping criterion when training a neural network.
 /// @param new_loss_goal Goal value for the loss.
@@ -651,11 +661,24 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
-    
-    /// @todo adaptive learning rate
 
-    parameters.device(*thread_pool_device)
-        -= (learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
+    if (!use_custom_learning_rate)
+    {
+        parameters.device(*thread_pool_device)
+            -= (learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
+    }
+    else
+    {
+        const type warmup_steps = 4000;
+        type& step = optimization_data.step;
+
+        const type custom_learning_rate = learning_rate * min(pow(step, -0.5), step * pow(warmup_steps, -1.5));
+
+        parameters.device(*thread_pool_device)
+            -= (custom_learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
+
+        step++;
+    }
 
     optimization_data.iteration++;
 

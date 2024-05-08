@@ -223,8 +223,8 @@ void EmbeddingLayer::set_parameters_random()
 {
     /// @todo Avoid loops
 
-    const type minimum = type(-0.2);
-    const type maximum = type(0.2);
+    const type minimum = type(-0.05);
+    const type maximum = type(0.05);
 
 //    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
 

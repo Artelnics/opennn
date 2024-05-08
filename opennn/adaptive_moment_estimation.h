@@ -79,6 +79,7 @@ public:
    // Training operators
 
    void set_learning_rate(const type&);
+   void set_custom_learning_rate(const type&);
    void set_beta_1(const type&);
    void set_beta_2(const type&);
    void set_epsilon(const type&);
@@ -118,6 +119,10 @@ private:
    /// Initial learning rate
 
    type learning_rate = type(0.001);
+
+   /// Custom learning rate
+
+   bool use_custom_learning_rate = false;
 
    /// Learning rate decay over each update.
 
@@ -187,6 +192,8 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     Tensor<type, 1> square_gradient_exponential_decay;
 
     Index iteration = 0;
+
+    type step = 0;
 
     Index learning_rate_iteration = 0;
 };

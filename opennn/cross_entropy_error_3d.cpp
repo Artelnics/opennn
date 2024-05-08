@@ -80,8 +80,17 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     Tensor<type, 2>& predictions = back_propagation.predictions;
     Tensor<bool, 2>& matches = back_propagation.matches;
     Tensor<bool, 2>& mask = back_propagation.mask;
+    bool& built_mask = back_propagation.built_mask;
     
     Tensor<type, 0> cross_entropy_error;
+
+    if (!built_mask)
+    {
+        mask.device(*thread_pool_device) = targets != targets.constant(0);
+        built_mask = true;
+    }
+
+    const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
 
     #pragma omp parallel for
 
@@ -89,9 +98,11 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
         for (Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
+    errors.device(*thread_pool_device) = errors * mask.cast<type>();
+
     cross_entropy_error.device(*thread_pool_device) = errors.sum();
 
-    back_propagation.error = cross_entropy_error(0)/type(batch_samples_number * outputs_number);
+    back_propagation.error = cross_entropy_error(0) / mask_sum(0);
 
     // Masked accuracy
     
@@ -99,13 +110,11 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     matches.device(*thread_pool_device) = predictions == targets;
     
-    mask.device(*thread_pool_device) = targets != targets.constant(0);
-    
     matches.device(*thread_pool_device) = matches && mask;
 
     Tensor<type, 0> total_matches;
 
-    total_matches.device(*thread_pool_device) = matches.cast<type>().sum() / mask.cast<type>().sum();
+    total_matches.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
 
     back_propagation.accuracy = total_matches(0);
     

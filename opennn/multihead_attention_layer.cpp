@@ -430,7 +430,7 @@ void MultiheadAttentionLayer::set_weights()
     projection_weights.resize(weights_depth, depth, heads_number);
     projection_biases.resize(depth);
 
-    set_parameters_random();
+    set_parameters_glorot();
 }
 
 

@@ -151,6 +151,7 @@ public:
 
    void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
                                                  const Tensor<type, 2>&,
+                                                 const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
 
    void insert_gradient(LayerBackPropagation*, 
@@ -265,6 +266,8 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     }
 
     Tensor<type, 2> targets;
+    Tensor<type, 2> mask;
+    bool built_mask = false;
 
     Tensor<type, 3> error_combinations_derivatives;
     Tensor<type, 3> input_derivatives;

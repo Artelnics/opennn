@@ -83,12 +83,13 @@ int main()
 
         AdaptiveMomentEstimation optimization_algorithm;
         optimization_algorithm.set_loss_index(&cross_entropy_error_3d);
+        optimization_algorithm.set_custom_learning_rate(depth);
 
         optimization_algorithm.set_display(true);
         optimization_algorithm.set_display_period(1);
 
         //type training_loss_goal = type(0.1);
-        type training_accuracy_goal = type(0.97);
+        type training_accuracy_goal = type(0.99);
 
         //optimization_algorithm.set_loss_goal(training_loss_goal);
         optimization_algorithm.set_accuracy_goal(training_accuracy_goal);

@@ -81,6 +81,7 @@ struct BackPropagation
     Tensor<type, 2> predictions;
     Tensor<bool, 2> matches;
     Tensor<bool, 2> mask;
+    bool built_mask = false;
 };
 
 }
