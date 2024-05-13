@@ -24,6 +24,7 @@
 #include "../opennn/opennn.h"
 #include <iostream>
 
+
 // OneDNN
 
 using namespace std;
@@ -31,12 +32,113 @@ using namespace opennn;
 using namespace std::chrono;
 //using namespace Eigen;
 
+// Kernel functions
+type* vector_to_device(const Tensor<type, 1>& vector)
+{
+    type* pointer = nullptr;
+
+    const size_t this_size = vector.size();
+
+    if (this_size == 0) cout << "Empty vector" << endl;
+
+    if (cudaMalloc(&pointer, this_size * sizeof(type)) != cudaSuccess) cout << "Cuda vector malloc error" << endl;
+
+    cudaMemcpy(pointer, vector.data(), this_size * sizeof(type), cudaMemcpyHostToDevice);
+
+    return pointer;
+}
+Tensor<type, 1> vector_from_device(const type* pointer, const size_t& new_size)
+{
+    if (new_size == 0) cout << "Empty vector" << endl;
+
+    Tensor<type, 1> vector(new_size);
+
+    if (cudaMemcpy(vector.data(), pointer, new_size * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Cuda vector memcpy error" << endl;
+
+    return vector;
+}
+type* matrix_to_device(const Tensor<type, 2>& matrix)
+{
+    const size_t this_size = matrix.size();
+
+    if (this_size == 0) cout << "Empty matrix" << endl;
+
+    type* pointer = nullptr;
+
+    if (cudaMalloc(&pointer, this_size * sizeof(type)) != cudaSuccess) cout << "Cuda matrix malloc error" << endl;
+
+    cudaMemcpy(pointer, matrix.data(), this_size * sizeof(type), cudaMemcpyHostToDevice);
+
+    return pointer;
+}
+Tensor<type, 2> matrix_from_device(const type* pointer, const size_t& new_rows_number, const size_t& new_raw_variables_number)
+{
+    Tensor<type, 2> matrix(new_rows_number, new_raw_variables_number);
+
+    matrix.setZero();
+
+    if (matrix.size() == 0) cout << "Empty matrix" << endl;
+
+    if (cudaMemcpy(matrix.data(), pointer, new_rows_number * new_raw_variables_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Cuda matrix memcpy error" << endl;
+
+    return matrix;
+}
+
+
 int main()
 {
    try
    {
         cout << "Blank\n";
-        
+
+        cout << "OpenNN. Rosenbrock Example." << endl;
+
+        // Data Set
+
+        const Index samples_number = 1000000;
+        const Index inputs_number = 1000;
+        const Index outputs_number = 1;
+        const Index hidden_neurons_number = 1000;
+
+        DataSet data_set;
+
+        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
+
+        data_set.set_training();
+
+        // Neural network
+
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number, hidden_neurons_number, outputs_number });
+
+        neural_network.get_first_perceptron_layer()->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
+
+        PerceptronLayer* pl = static_cast<PerceptronLayer*>(neural_network.get_layers()(2));
+
+        pl->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+
+        // Training strategy
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        //training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+        //training_strategy.get_loss_index()->set_regularization_weight(0.01);
+
+        training_strategy.set_maximum_epochs_number(10000);
+        training_strategy.set_display_period(1);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
+        training_strategy.set_maximum_time(86400);
+
+        training_strategy.perform_training_cuda();
+
+        cout << "End Rosenbrock" << endl;
+
+
+        /*
         LanguageDataSet language_data_set;
 
         //language_data_set.set_data_source_path("data/example2.txt");
@@ -93,7 +195,7 @@ int main()
 
         //transformer.calculate_outputs();
         
-
+        */
         cout << "Bye!" << endl;
 
         return 0;

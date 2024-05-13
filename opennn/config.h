@@ -35,6 +35,11 @@
 #include <cublasXt.h>
 #include <curand.h>
 #include <cudnn.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/device_ptr.h>
+#include <thrust/transform.h>
+#include <thrust/functional.h>
 
 #endif
 
@@ -64,4 +69,3 @@ namespace opennn
 
 
 #endif
-
