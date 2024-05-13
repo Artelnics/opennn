@@ -28,8 +28,8 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 /// @param new_inputs_dimensions A vector containing the new inputs' dimensions.
 /// @param kernels_dimensions A vector containing the kernel rows, columns channels and number.
 
-ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimensions,
-                                       const Tensor<Index, 1>& new_kernels_dimensions) : Layer()
+ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_inputs_dimensions,
+                                       const dimensions& new_kernels_dimensions) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
     set(new_inputs_dimensions, new_kernels_dimensions);
@@ -500,7 +500,6 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
             delta_slice/*.device(*thread_pool_device)*/
                 = error_combinations_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
 
-
             offsets = {image_index, 0, 0, 0};
             extents = {1, inputs_rows_number, inputs_columns_number, inputs_channels_number};
 
@@ -532,6 +531,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     }
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
+
+    input_derivatives = error_combinations_derivatives;
 
     /// @todo calculate input derivatives (= deltas for previous layer)
 }
@@ -651,7 +652,7 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
 dimensions ConvolutionalLayer::get_inputs_dimensions() const
 {
-    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2)};
+    return inputs_dimensions;
 }
 
 /*
@@ -850,8 +851,8 @@ Index ConvolutionalLayer::get_parameters_number() const
 /// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images, number of channels, rows number, columns number).
 /// @param new_kernels_dimensions A vector containing the desired kernels' dimensions (number of kernels, number of channels, rows number, columns number).
 
-void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions,
-                             const Tensor<Index, 1>& new_kernels_dimensions)
+void ConvolutionalLayer::set(const dimensions& new_inputs_dimensions,
+                             const dimensions& new_kernels_dimensions)
 {
     const Index kernels_rows_number = new_kernels_dimensions[0];
     const Index kernels_columns_number = new_kernels_dimensions[1];
@@ -1071,7 +1072,7 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
     column_stride = new_stride_column;
 }
 
-void ConvolutionalLayer::set_inputs_dimensions(const Tensor<Index,1>& new_inputs_dimensions)
+void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_inputs_dimensions)
 {
     inputs_dimensions = new_inputs_dimensions;
 }
@@ -1293,7 +1294,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(Index i = 0; i < inputs_dimensions.size(); i++)
     {
-        buffer << inputs_dimensions(i);
+        buffer << inputs_dimensions[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
 //        if(i != inputs_dimensions.size() - 1) buffer << " ";
     }

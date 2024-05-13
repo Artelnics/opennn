@@ -71,7 +71,7 @@ int main()
                           depth, perceptron_depth, heads_number, number_of_layers });
          
         //transformer.set_parameters_constant(1);
-        
+     /*
         Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
         Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
 
@@ -126,7 +126,7 @@ int main()
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
-
+*/
         cout << "Bye!" << endl;
 
         return 0;
