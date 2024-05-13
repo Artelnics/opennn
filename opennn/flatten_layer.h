@@ -62,7 +62,7 @@ public:
     Index get_inputs_number() const;
     Index get_inputs_channels_number() const;
     Index get_inputs_rows_number() const;
-    Index get_inputs_raw_variables_number() const;
+    Index get_inputs_collums_number() const;
     Index get_neurons_number() const;
 
     // Set methods
