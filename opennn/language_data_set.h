@@ -67,6 +67,9 @@ public:
     void set_text_separator(const Separator&);
     void set_text_separator(const string&);
 
+    void set_context_vocabulary_path(const string&);
+    void set_completion_vocabulary_path(const string&);
+
     void set_data_random_language_model(const Index&, const Index&, const Index&, const Index&, const Index&);
 
     void set_default();
@@ -76,12 +79,16 @@ public:
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;
 
+    void import_vocabulary(const string&, Tensor<string, 1>&);
+
     void load_documents(const string&);
     void read_csv_3_language_model();
 
     void read_csv_language_model();
 
     void read_txt_language_model();
+    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
+    void write_data_file_wordpiece(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
 
 private:
 
@@ -93,7 +100,11 @@ private:
 
     Tensor<string, 1> context_vocabulary;
 
+    string context_vocabulary_path = "";
+
     Tensor<string, 1> completion_vocabulary;
+
+    string completion_vocabulary_path = "";
 
     Tensor<Index, 1> context_variables_dimensions = Tensor<Index, 1>(1);
 

@@ -402,7 +402,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
-
             // Data set
 
             training_batch.fill(training_batches.chip(iteration, 0),
@@ -419,7 +418,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               is_training);
             
             // Loss index
-            
+
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);

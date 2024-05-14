@@ -49,12 +49,12 @@ Tensor<string, 1> LanguageDataSet::get_completion_vocabulary() const
 
 Index LanguageDataSet::get_context_vocabulary_size() const
 {
-    return context_vocabulary.size() + 3;
+    return context_vocabulary.size();
 }
 
 Index LanguageDataSet::get_completion_vocabulary_size() const
 {
-    return completion_vocabulary.size() + 3;
+    return completion_vocabulary.size();
 }
 
 Index LanguageDataSet::get_context_length() const
@@ -276,6 +276,18 @@ void LanguageDataSet::set_text_separator(const string& new_separator_string)
 
         throw runtime_error(buffer.str());
     }
+}
+
+
+void LanguageDataSet::set_context_vocabulary_path(const string& new_context_vocabulary_path)
+{
+    context_vocabulary_path = new_context_vocabulary_path;
+}
+
+
+void LanguageDataSet::set_completion_vocabulary_path(const string& new_completion_vocabulary_path)
+{
+    completion_vocabulary_path = new_completion_vocabulary_path;
 }
 
 
@@ -1343,6 +1355,57 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
+void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& vocabulary)
+{
+    ifstream file(path.c_str());
+
+    if (!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+            << "void import_vocabulary() method.\n"
+            << "Cannot open data file: " << path << "\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    Index vocabulary_size = 0;
+
+    string line;
+
+    while (file.good())
+    {
+        getline(file, line);
+
+        if (line.empty()) continue;
+
+        vocabulary_size++;
+
+        if (file.peek() == EOF) break;
+    }
+
+    file.clear();
+    file.seekg(0, ios::beg);
+
+    vocabulary.resize(vocabulary_size);
+
+    Index counter = 0;
+
+    while (file.good())
+    {
+        getline(file, line);
+
+        if (line.empty()) continue;
+
+        vocabulary(counter) = line;
+        counter++;
+
+        if (file.peek() == EOF) break;
+    }
+}
+
+
 void LanguageDataSet::load_documents(const string& path)
 {
     const Index original_size = documents.size();
@@ -1632,13 +1695,13 @@ void LanguageDataSet::read_txt_language_model()
     for(Index i = 1; i < targets.size(); i++)
         completion_entry_number += targets(i).size();
 
-    if(entry_number != completion_entry_number)
+    if (entry_number != completion_entry_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_txt_language_model() method.\n"
-               << "Context number of entries (" << entry_number << ") not equal to completion number of entries (" << completion_entry_number << ").\n";
+            << "void read_txt_language_model() method.\n"
+            << "Context number of entries (" << entry_number << ") not equal to completion number of entries (" << completion_entry_number << ").\n";
 
         throw runtime_error(buffer.str());
     }
@@ -1647,9 +1710,9 @@ void LanguageDataSet::read_txt_language_model()
 
     Index entry_index = 0;
 
-    for(Index i = 0; i < documents.size(); i++)
+    for (Index i = 0; i < documents.size(); i++)
     {
-        for(Index j = 0; j < documents(i).size(); j++)
+        for (Index j = 0; j < documents(i).size(); j++)
         {
             context(entry_index) = documents(i)(j);
             entry_index++;
@@ -1660,9 +1723,9 @@ void LanguageDataSet::read_txt_language_model()
 
     entry_index = 0;
 
-    for(Index i = 0; i < targets.size(); i++)
+    for (Index i = 0; i < targets.size(); i++)
     {
-        for(Index j = 0; j < targets(i).size(); j++)
+        for (Index j = 0; j < targets(i).size(); j++)
         {
             completion(entry_index) = targets(i)(j);
             entry_index++;
@@ -1670,16 +1733,26 @@ void LanguageDataSet::read_txt_language_model()
     }
 
     cout << "Processing documents..." << endl;
-    
+
     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(context);
     const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess_language_documents(completion);
 
     cout << "Calculating vocabularies..." << endl;
-    
-    context_vocabulary = calculate_vocabulary(context_tokens);
 
-    completion_vocabulary = calculate_vocabulary(completion_tokens);
-    
+    bool imported_vocabulary = false;
+
+    if (context_vocabulary_path.empty() || completion_vocabulary_path.empty())
+    {
+        context_vocabulary = calculate_vocabulary(context_tokens);
+        completion_vocabulary = calculate_vocabulary(completion_tokens);
+    }
+    else
+    {
+        imported_vocabulary = true;
+        import_vocabulary(context_vocabulary_path, context_vocabulary);
+        import_vocabulary(completion_vocabulary_path, completion_vocabulary);
+    }
+
     const Index LIMIT = 126;
 
     Index max_context_tokens = context_tokens(0).size();
@@ -1698,7 +1771,7 @@ void LanguageDataSet::read_txt_language_model()
             max_completion_tokens = completion_tokens(i).size();
     }
 
-    max_completion_length = max_completion_tokens > LIMIT ? LIMIT : max_completion_tokens;
+    max_completion_length = max_completion_tokens > LIMIT + 1 ? LIMIT + 1 : max_completion_tokens;
 
     // Output
 
@@ -1738,94 +1811,8 @@ void LanguageDataSet::read_txt_language_model()
     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
 
-    Index context_vocabulary_size = context_vocabulary.size();
-    Index completion_vocabulary_size = completion_vocabulary.size();
-
-    Tensor<type, 1> context_row(max_context_length + 2);
-    Tensor<type, 1> completion_row(max_completion_length + 2);
-
-    Tensor<string, 1> line_tokens;
-    bool line_ended;
-
-    for(Index i = 0; i < entry_number; i++)
-    {
-        // Context
-
-        context_row.setZero();
-        context_row(0) = 1; /// start indicator
-        
-        line_ended = false;
-        
-        line_tokens = context_tokens(i);
-        
-        for(Index j = 1; j < max_context_length + 2; j++)
-        {
-            if( j <= line_tokens.size() /* && contains(context_vocabulary, line_tokens(j - 1))*/ )
-            {
-                auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j - 1));
-
-                const Index word_index = it - context_vocabulary.data();
-
-                context_row(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
-            }
-            else
-            {
-                if( j == line_tokens.size() + 1 || (j == max_context_length + 1 && !line_ended) )
-                {
-                    context_row(j) = 2; /// end indicator
-                    line_ended = true;
-                }
-                else
-                {
-                    context_row(j) = type(0);
-                }
-            }
-        }
-
-        for(Index j = 0; j < max_context_length + 2; j++)
-            file << context_row(j) << ";";
-
-        // Completion
-
-        completion_row.setZero();
-        completion_row(0) = 1;
-
-        line_ended = false;
-
-        line_tokens = completion_tokens(i);
-
-        for(Index j = 1; j < max_completion_length + 2; j++)
-        {
-            if( j <= line_tokens.size() /*&& contains(completion_vocabulary, line_tokens(j - 1))*/ )
-            {
-                auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j - 1));
-
-                const Index word_index = it - completion_vocabulary.data();
-
-                completion_row(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
-            }
-            else
-            {
-                if( j == line_tokens.size() + 1 || (j == max_completion_length + 1 && !line_ended) )
-                {
-                    completion_row(j) = 2;
-                    line_ended = true;
-                }
-                else
-                {
-                    completion_row(j) = type(0);
-                }
-            }
-        }
-
-        for(Index j = 0; j < max_completion_length + 1; j++)
-            file << completion_row(j) << ";";
-
-        for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
-            file << completion_row(j) << ";";
-        file << completion_row(max_completion_length + 1) << "\n";
-        
-    }
+    if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
+    else    write_data_file_wordpiece(file, context_tokens, completion_tokens);
 
     file.close();
 
@@ -1846,6 +1833,310 @@ void LanguageDataSet::read_txt_language_model()
     for (Index i = 0; i < max_completion_length + 1; i++)
         set_raw_variable_use(i + max_context_length + max_completion_length + 3, VariableUse::Target);
     
+}
+
+
+void LanguageDataSet::write_data_file_whitespace(ofstream& file,
+                                                 const Tensor<Tensor<string, 1>, 1>& context_tokens,
+                                                 const Tensor<Tensor<string, 1>, 1>& completion_tokens)
+{
+    const Index entry_number = context_tokens.dimension(0);
+
+    const Index context_vocabulary_size = context_vocabulary.size();
+    const Index completion_vocabulary_size = completion_vocabulary.size();
+
+    Tensor<type, 1> context_row(max_context_length + 2);
+    Tensor<type, 1> completion_row(max_completion_length + 2);
+
+    Tensor<string, 1> line_tokens;
+    bool line_ended;
+
+    for (Index i = 0; i < entry_number; i++)
+    {
+        // Context
+
+        context_row.setZero();
+        context_row(0) = 1; // start indicator
+
+        line_ended = false;
+
+        line_tokens = context_tokens(i);
+
+        for (Index j = 0; j < max_context_length + 1; j++)
+        {
+            if (j < line_tokens.size())
+            {
+                auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j));
+
+                const Index word_index = it - context_vocabulary.data();
+
+                context_row(j + 1) = type(word_index);
+            }
+            else
+            {
+                if (j == line_tokens.size() || (j == max_context_length && !line_ended))
+                {
+                    context_row(j + 1) = 2; // end indicator
+                    line_ended = true;
+                }
+                else
+                {
+                    context_row(j + 1) = 0; // pad indicator
+                }
+            }
+        }
+
+        for (Index j = 0; j < max_context_length + 2; j++)
+            file << context_row(j) << ";";
+
+        // Completion
+
+        completion_row.setZero();
+        completion_row(0) = 1;
+
+        line_ended = false;
+
+        line_tokens = completion_tokens(i);
+
+        for (Index j = 0; j < max_completion_length + 1; j++)
+        {
+            if (j < line_tokens.size())
+            {
+                auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j));
+
+                const Index word_index = it - completion_vocabulary.data();
+
+                completion_row(j + 1) = type(word_index);
+            }
+            else
+            {
+                if (j == line_tokens.size() || (j == max_completion_length && !line_ended))
+                {
+                    completion_row(j + 1) = 2;
+                    line_ended = true;
+                }
+                else
+                {
+                    completion_row(j + 1) = 0;
+                }
+            }
+        }
+
+        for (Index j = 0; j < max_completion_length + 1; j++)
+            file << completion_row(j) << ";";
+
+        for (Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
+            file << completion_row(j) << ";";
+        file << completion_row(max_completion_length + 1) << "\n";
+
+    }
+}
+
+
+void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
+                                                const Tensor<Tensor<string, 1>, 1>& context_tokens,
+                                                const Tensor<Tensor<string, 1>, 1>& completion_tokens)
+{
+    const Index entry_number = context_tokens.dimension(0);
+
+    unordered_map<std::string, type> context_vocabulary_map;
+    for (Index i = 0; i < context_vocabulary.size(); i++)    context_vocabulary_map[context_vocabulary(i)] = type(i);
+
+    unordered_map<std::string, type> completion_vocabulary_map;
+    for (Index i = 0; i < completion_vocabulary.size(); i++)    completion_vocabulary_map[completion_vocabulary(i)] = type(i);
+
+    const Index context_vocabulary_size = context_vocabulary.size();
+    const Index completion_vocabulary_size = completion_vocabulary.size();
+
+    Tensor<type, 1> context_row(max_context_length + 2);
+    Tensor<type, 1> completion_row(max_completion_length + 2);
+
+    Tensor<string, 1> line_tokens;
+    Index token_counter;
+    bool line_ended;
+
+    string word;
+    string wordpiece;
+    string rest;
+
+    auto wordpiece_entry = context_vocabulary_map.find("");
+    bool tokenized;
+    
+    for (Index i = 0; i < entry_number; i++)
+    {
+        
+        // Context
+
+        context_row.setZero();
+        context_row(0) = 2; // start indicator
+
+        token_counter = 1;
+
+        line_ended = false;
+
+        line_tokens = context_tokens(i);
+        
+        for (Index j = 0; j < max_context_length + 1; j++)
+        {
+            if (j < line_tokens.size() && token_counter < max_context_length + 1)
+            {
+                word = line_tokens(j);
+
+                wordpiece_entry = context_vocabulary_map.find(word);
+                
+                if (wordpiece_entry != context_vocabulary_map.end())
+                {
+                    context_row(token_counter) = wordpiece_entry->second;
+                    token_counter++;
+                    continue;
+                }
+                
+                tokenized = false;
+
+                for (Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
+                {
+                    if (token_counter == max_context_length + 1)
+                    {
+                        tokenized = true;
+                        break;
+                    }
+                    
+                    wordpiece = word.substr(0, wordpiece_length);
+                    wordpiece_entry = context_vocabulary_map.find(wordpiece);
+
+                    if (wordpiece_entry != context_vocabulary_map.end())
+                    {
+                        context_row(token_counter) = wordpiece_entry->second;
+                        token_counter++;
+                        
+                        rest = word.substr(wordpiece_length);
+
+                        if (rest.empty())
+                        {
+                            tokenized = true;
+                            break;
+                        }
+
+                        word = "##" + rest;
+                        wordpiece_length = word.length() + 1;
+                    }
+                }
+
+                if (!tokenized)
+                {
+                    context_row(token_counter) = 1; // unknown indicator
+                    token_counter++;
+                }
+            }
+            else
+            {
+                if (j == line_tokens.size() || (token_counter == max_context_length + 1 && !line_ended))
+                {
+                    context_row(token_counter) = 3; // end indicator
+                    token_counter++;
+                    line_ended = true;
+                }
+                else
+                {
+                    if (token_counter > max_context_length + 1)    break;
+                    context_row(token_counter) = type(0); // padding
+                    token_counter++;
+                }
+            }
+        }
+        
+        for (Index j = 0; j < max_context_length + 2; j++)
+            file << context_row(j) << ";";
+        
+        
+        // Completion
+
+        completion_row.setZero();
+        completion_row(0) = 2; // start indicator
+
+        token_counter = 1;
+
+        line_ended = false;
+
+        line_tokens = completion_tokens(i);
+
+        for (Index j = 0; j < max_completion_length + 1; j++)
+        {
+            if (j < line_tokens.size() && token_counter < max_completion_length + 1)
+            {
+                word = line_tokens(j);
+
+                wordpiece_entry = completion_vocabulary_map.find(word);
+
+                if (wordpiece_entry != completion_vocabulary_map.end())
+                {
+                    completion_row(token_counter) = wordpiece_entry->second;
+                    token_counter++;
+                    continue;
+                }
+
+                tokenized = false;
+
+                for (Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
+                {
+                    if (token_counter == max_completion_length + 1)
+                    {
+                        tokenized = true;
+                        break;
+                    }
+
+                    wordpiece = word.substr(0, wordpiece_length);
+                    wordpiece_entry = completion_vocabulary_map.find(wordpiece);
+
+                    if (wordpiece_entry != context_vocabulary_map.end())
+                    {
+                        completion_row(token_counter) = wordpiece_entry->second;
+                        token_counter++;
+
+                        rest = word.substr(wordpiece_length);
+
+                        if (rest.empty())
+                        {
+                            tokenized = true;
+                            break;
+                        }
+
+                        word = "##" + rest;
+                        wordpiece_length = word.length() + 1;
+                    }
+                }
+
+                if (!tokenized)
+                {
+                    completion_row(token_counter) = 1; // unknown indicator
+                    token_counter++;
+                }
+            }
+            else
+            {
+                if (j == line_tokens.size() || (token_counter == max_completion_length + 1 && !line_ended))
+                {
+                    completion_row(token_counter) = 3; // end indicator
+                    token_counter++;
+                    line_ended = true;
+                }
+                else
+                {
+                    if (token_counter > max_context_length + 1)    break;
+                    completion_row(token_counter) = 0; // padding
+                    token_counter++;
+                }
+            }
+        }
+
+        for (Index j = 0; j < max_completion_length + 1; j++)
+            file << completion_row(j) << ";";
+
+        for (Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
+            file << completion_row(j) << ";";
+        file << completion_row(max_completion_length + 1) << "\n";
+        
+    }
 }
 
 }

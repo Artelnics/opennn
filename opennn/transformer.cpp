@@ -275,33 +275,48 @@ void Transformer::set_context_vocabulary(Tensor<string, 1>& new_context_vocabula
 }
 
 
-string Transformer::calculate_outputs(const string& context_string)
+string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
 {
     const Index context_vocabulary_size = context_vocabulary.size();
 
-    const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
+    type unknown_indicator = -1;
+    type padding_indicator = 0;
+    type start_indicator = 1;
+    type end_indicator = 2;
 
-    Tensor<type, 2> context(1, context_length);
+    if (imported_vocabulary)
+    {
+        unknown_indicator = 1;
+        start_indicator = 2;
+        end_indicator = 3;
+
+    }
+
+    const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
+    
+    const Index batch_samples_number = 1;
+
+    Tensor<type, 2> context(batch_samples_number, context_length);
     context.setZero();
-    context(0) = 1;
+    context(0) = start_indicator;
 
     bool line_ended = false;
 
-    for (Index j = 1; j < context_length; j++)
+    for (Index j = 0; j < context_length - 1; j++)
     {
-        if (j <= context_tokens(0).size() && contains(context_vocabulary, context_tokens(0)(j - 1)))
+        if (j < context_tokens(0).size())
         {
-            auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(0)(j - 1));
+            auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(0)(j));
 
             const Index word_index = it - context_vocabulary.data();
 
-            context(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
+            context(j + 1) = type(word_index);
         }
         else
         {
-            if (j == context_tokens(0).size() + 1 || (j == context_length - 1 && !line_ended))
+            if (j == context_tokens(0).size() || (j == context_length - 2 && !line_ended))
             {
-                context(j) = 2; /// end indicator
+                context(j + 1) = end_indicator; /// end indicator
                 line_ended = true;
             }
             else
@@ -311,12 +326,9 @@ string Transformer::calculate_outputs(const string& context_string)
         }
     }
     
-    Tensor<type, 2> input(1, input_length);
+    Tensor<type, 2> input(batch_samples_number, input_length);
     input.setZero();
-    input(0) = 1;
-
-    const Index batch_samples_number = 1;
-    const Index outputs_number = get_outputs_number();
+    input(0) = start_indicator;
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
@@ -347,16 +359,16 @@ string Transformer::calculate_outputs(const string& context_string)
 
         input(i) = type(prediction(0));
 
-        if (prediction(0) == 2) break;
+        if (prediction(0) == end_indicator) break;
     }
     
     ostringstream output_string;
 
     for (Index i = 1; i < input_length; i++)
     {
-        if (input(i) == 2)   break;
+        if (input(i) == end_indicator)   break;
 
-        output_string << input_vocabulary(Index(input(i) - 3)) << " ";
+        output_string << input_vocabulary(Index(input(i))) << " ";
     }
 
     return output_string.str();

@@ -56,7 +56,7 @@ public:
     void set_input_vocabulary(Tensor<string, 1>&);
     void set_context_vocabulary(Tensor<string, 1>&);
 
-    string calculate_outputs(const string&);
+    string calculate_outputs(const string&, const bool&);
 
 protected:
 

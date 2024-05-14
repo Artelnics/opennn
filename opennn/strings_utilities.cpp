@@ -2378,13 +2378,19 @@ const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>&
 
     string* vocabulary_end = unique(total_start, total_end);
 
-    Index vocabulary_size = static_cast<Index>(vocabulary_end - total_start);
+    const Index reserved_tokens_number = 3;
+    Tensor<string, 1> reserved_tokens(reserved_tokens_number);
+    reserved_tokens.setValues({"[PAD]", "[START]", "[END]"});
+
+    const Index vocabulary_size = static_cast<Index>(vocabulary_end - total_start) + reserved_tokens_number;
     Tensor<string, 1> vocabulary(vocabulary_size);
+
+    for (Index i = 0; i < reserved_tokens_number; i++)    vocabulary(i) = reserved_tokens(i);
 
     copy(/*execution::par,*/
          total_start,
          vocabulary_end,
-         vocabulary.data());
+         vocabulary.data() + reserved_tokens_number);
 
     return vocabulary;
 }
@@ -2398,11 +2404,11 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     split_punctuation(documents_copy);
 
-    //delete_non_printable_chars(documents_copy);
+    delete_non_printable_chars(documents_copy);
 
     delete_extra_spaces(documents_copy);
 
-    //aux_remove_non_printable_chars(documents_copy);
+    aux_remove_non_printable_chars(documents_copy);
 
     Tensor<Tensor<string, 1>, 1> tokenized_documents = tokenize(documents_copy);
 
