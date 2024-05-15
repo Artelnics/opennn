@@ -82,7 +82,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
     Tensor<type, 0> cross_entropy_error;
 
     cross_entropy_error.device(*thread_pool_device) 
-        = -((targets * outputs.log() + (type(1) - targets) * ((type(1) - outputs).log())).sum()) / type(batch_samples_number);
+        = ((targets * outputs.log() + (type(1) - targets) * ((type(1) - outputs).log())).sum()) / type(-batch_samples_number);
 
     error = cross_entropy_error();
 
@@ -121,9 +121,9 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0> cross_entropy_error;
     
-    cross_entropy_error.device(*thread_pool_device) = -(targets*outputs.log()).sum();
+    cross_entropy_error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-batch_samples_number);
 
-    error = cross_entropy_error()/type(batch_samples_number);
+    error = cross_entropy_error();
 
     if (isnan(error)) throw runtime_error("Error is NAN.");
 }
@@ -170,12 +170,11 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(last_trainable_layer_index));
 
-
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     // Back propagation
 
-    pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
+    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 
@@ -203,7 +202,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
-    pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
+    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 

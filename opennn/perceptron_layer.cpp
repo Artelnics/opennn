@@ -93,7 +93,7 @@ type PerceptronLayer::get_dropout_rate() const
 }
 
 
-dimensions PerceptronLayer::get_output_dimensions() const
+dimensions PerceptronLayer::get_outputs_dimensions() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -474,12 +474,12 @@ void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
 
     for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(outputs, neuron_index);
+        TensorMap<Tensor<type, 1>> raw_variable = tensor_map(outputs, neuron_index);
 
         random = calculate_random_uniform(type(0), type(1));
 
-        random < dropout_rate ? column.setZero()
-                              : column = column*scaling_factor;
+        random < dropout_rate ? raw_variable.setZero()
+                              : raw_variable = raw_variable*scaling_factor;
     }
 }
 

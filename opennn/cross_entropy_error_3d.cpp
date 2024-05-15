@@ -50,18 +50,22 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
+    const Index outputs_number = targets_pair.second[1];
+
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first,
-                                             targets_pair.second[0],
-                                             targets_pair.second[1]);
+                                             batch_samples_number,
+                                             outputs_number);
     
     // Forward propagation
     
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+
+    const Index outputs_depth = outputs_pair.second[2];
     
     const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
-                                             outputs_pair.second[0],
-                                             outputs_pair.second[1],
-                                             outputs_pair.second[2]);
+                                             batch_samples_number,
+                                             outputs_number,
+                                             outputs_depth);
     
     // Back propagation
 
@@ -69,37 +73,52 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(layers_number - 1));
-    
+        
     probabilistic_layer_3d_back_propagation->targets = targets;
+    
+    Tensor<type, 2>& errors = back_propagation.errors;
+    Tensor<type, 2>& predictions = back_propagation.predictions;
+    Tensor<bool, 2>& matches = back_propagation.matches;
+    Tensor<bool, 2>& mask = back_propagation.mask;
+    bool& built_mask = back_propagation.built_mask;
+    
+    Tensor<type, 0> cross_entropy_error;
 
-    /// @todo Can we remove this?
+    if (!built_mask)
+    {
+        mask.device(*thread_pool_device) = targets != targets.constant(0);
+        built_mask = true;
+    }
 
-    Tensor<type, 2> errors(batch_samples_number, targets.dimension(1));
- 
-    Tensor<type, 0> cross_entropy_error;   
-
-    /// @todo Can we do this in matrix form?
+    const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
 
     #pragma omp parallel for
 
-    for (Index i = 0; i < targets.dimension(0); i++)
-        for (Index j = 0; j < targets.dimension(1); j++)
+    for (Index i = 0; i < batch_samples_number; i++)
+        for (Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
+
+    errors.device(*thread_pool_device) = errors * mask.cast<type>();
 
     cross_entropy_error.device(*thread_pool_device) = errors.sum();
 
-    back_propagation.error = cross_entropy_error(0)/type(batch_samples_number);
+    back_propagation.error = cross_entropy_error(0) / mask_sum(0);
 
-    if(isnan(back_propagation.error))
-    {
-        ostringstream buffer;
+    // Masked accuracy
+    
+    predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
 
-        buffer << "OpenNN Exception: cross_entropy_error_3d class.\n"
-               << "void calculate_error(const Batch&, const NeuralNetworkForwardPropagation&, BackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
+    matches.device(*thread_pool_device) = predictions == targets;
+    
+    matches.device(*thread_pool_device) = matches && mask;
 
-        throw runtime_error(buffer.str());
-    }  
+    Tensor<type, 0> total_matches;
+
+    total_matches.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
+
+    back_propagation.accuracy = total_matches(0);
+    
+    if (isnan(back_propagation.error)) throw runtime_error("Error is NAN");
 }
 
 

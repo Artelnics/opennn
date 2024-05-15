@@ -21,7 +21,7 @@ FlattenLayer::FlattenLayer() : Layer()
 }
 
 
-FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
+FlattenLayer::FlattenLayer(const dimensions& new_inputs_dimensions) : Layer()
 {
     inputs_dimensions = new_inputs_dimensions;
 
@@ -31,13 +31,7 @@ FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Laye
 }
 
 
-void FlattenLayer::set_parameters(const Tensor<type, 1>&, const Index&)
-{
-    return;
-}
-
-
-Tensor<Index, 1> FlattenLayer::get_inputs_dimensions() const
+dimensions FlattenLayer::get_inputs_dimensions() const
 {
     return inputs_dimensions;
 }
@@ -49,53 +43,41 @@ void FlattenLayer::set_name(const string& new_layer_name)
 }
 
 
-/// @todo
-/// Returns a vector containing the number of channels, rows and raw_variables of the result of applying the layer's kernels to an image.
+/// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
 
 Index FlattenLayer::get_outputs_number() const
 {
-    return inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
+    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2];
 }
 
 
-Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
+dimensions FlattenLayer::get_outputs_dimensions() const
 {
-    Tensor<Index, 1> outputs_dimensions(1);
-
-    outputs_dimensions[0] = inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
-
-    return outputs_dimensions;
+    return { inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2] };
 }
 
 
-dimensions FlattenLayer::get_output_dimensions() const
-{
-    return { inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2) };
-}
-
-
-/// @todo
 Index FlattenLayer::get_inputs_number() const
 {
-    return inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2) * inputs_dimensions(3);
+    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2] * inputs_dimensions[3];
 }
 
 
 Index FlattenLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions(0);
+    return inputs_dimensions[0];
 }
 
 
 Index FlattenLayer::get_inputs_raw_variables_number() const
 {
-    return inputs_dimensions(1);
+    return inputs_dimensions[1];
 }
 
 
 Index FlattenLayer::get_inputs_channels_number() const
 {
-    return inputs_dimensions(2);
+    return inputs_dimensions[2];
 }
 
 
@@ -103,29 +85,14 @@ Index FlattenLayer::get_inputs_channels_number() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
-}
-
-
-Tensor<type, 1> FlattenLayer::get_parameters() const
-{
-    return Tensor<type,1>();
-}
-
-
-/// Returns the number of parameters of the layer.
-
-Index FlattenLayer::get_parameters_number() const
-{
-    return 0;
+    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2];
 }
 
 
 /// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
-
 /// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images (batch), number of channels, width, height).
 
-void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
+void FlattenLayer::set(const dimensions& new_inputs_dimensions)
 {
     layer_name = "flatten_layer";
 
@@ -149,6 +116,8 @@ void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
     memcpy(outputs_data,
            inputs_pair(0).first,
            batch_samples_number*neurons_number*sizeof(type));
+
+    const TensorMap<Tensor<type, 2>> outputs(inputs_pair(0).first, batch_samples_number, neurons_number);
 }
 
 
@@ -157,8 +126,8 @@ void FlattenLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                                             LayerForwardPropagation* forward_propagation,
                                             LayerBackPropagation* back_propagation) const
 {
-    Index batch_samples_number = inputs_pair(0).second[0];
-    Index neurons_number = get_neurons_number();
+    const Index batch_samples_number = inputs_pair(0).second[0];
+    const Index neurons_number = get_neurons_number();
 
     const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
 
@@ -295,11 +264,14 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //    set(inputsDimensionTensor);
 
+    // @todo Change to dimensions
+    /*
     Tensor<Index, 1> inputs_dimension_tensor(3);
 
     inputs_dimension_tensor.setValues({input_height, input_width, input_channels_number});
 
     set(inputs_dimension_tensor);
+    */
 }
 
 pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
@@ -331,13 +303,13 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
 
-    Tensor<Index, 1> inputs_dimensions = flatten_layer->get_inputs_dimensions();
+    dimensions inputs_dimensions = flatten_layer->get_inputs_dimensions();
 
-    input_derivatives.resize(batch_samples_number, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2));
+    input_derivatives.resize(batch_samples_number, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2]);
 
     inputs_derivatives.resize(1);
     inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2) };
+    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2] };
 }
 
 }

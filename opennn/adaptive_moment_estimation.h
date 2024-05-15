@@ -79,6 +79,7 @@ public:
    // Training operators
 
    void set_learning_rate(const type&);
+   void set_custom_learning_rate(const type&);
    void set_beta_1(const type&);
    void set_beta_2(const type&);
    void set_epsilon(const type&);
@@ -90,6 +91,7 @@ public:
    // Stopping criteria
 
    void set_loss_goal(const type&);
+   void set_accuracy_goal(const type&);
    void set_maximum_time(const type&);
 
    // Training methods
@@ -118,6 +120,10 @@ private:
 
    type learning_rate = type(0.001);
 
+   /// Custom learning rate
+
+   bool use_custom_learning_rate = false;
+
    /// Learning rate decay over each update.
 
    type initial_decay = type(0);
@@ -132,13 +138,17 @@ private:
 
    /// Small number to prevent any division by zero
 
-   type epsilon =type(1.e-8);
+   type epsilon = type(1.e-6);
 
     // Stopping criteria
 
    /// Goal value for the loss. It a stopping criterion.
 
    type training_loss_goal = type(0);
+   
+   /// Goal value for the accuracy. It a stopping criterion.
+
+   type training_accuracy_goal = type(1);
 
    /// Maximum epochs number.
 
@@ -182,6 +192,8 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     Tensor<type, 1> square_gradient_exponential_decay;
 
     Index iteration = 0;
+
+    type step = 0;
 
     Index learning_rate_iteration = 0;
 };

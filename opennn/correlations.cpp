@@ -493,7 +493,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(is_constant(x) && !is_constant(y))
     {
-        cout << "Warning: Column X is constant." << endl;
+        cout << "Warning: raw_variable X is constant." << endl;
         linear_correlation.a = type(NAN);
         linear_correlation.b = type(NAN);
         linear_correlation.r = type(NAN);
@@ -505,7 +505,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else if(!is_constant(x) && is_constant(y))
     {
-        cout << "Warning: Column Y is constant." << endl;
+        cout << "Warning: raw_variable Y is constant." << endl;
 
         linear_correlation.a = y(0);
         linear_correlation.b = type(0);
@@ -519,7 +519,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else if(is_constant(x) && is_constant(y))
     {
-        cout << "Warning: Column X and column Y are constant." << endl;
+        cout << "Warning: raw_variable X and raw_variable Y are constant." << endl;
 
         linear_correlation.a = type(NAN);
         linear_correlation.b = type(NAN);
@@ -540,7 +540,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(x_filter.size() == 0)
     {
-        cout << "Warning: Column X and Y hasn't common rows." << endl;
+        cout << "Warning: raw_variable X and Y hasn't common rows." << endl;
 
         linear_correlation.a = type(NAN);
         linear_correlation.b = type(NAN);
@@ -820,7 +820,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
-    /*const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.dimensions()[0]); // REVISAR
+    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.dimensions()[0]);
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
 
@@ -834,7 +834,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     correlation.b = coefficients(1);
     // no r correlation here
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);*/
+    if(correlation.b < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }

@@ -68,7 +68,7 @@ public:
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
 
-   dimensions get_output_dimensions() const final;
+   dimensions get_outputs_dimensions() const final;
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
@@ -123,8 +123,8 @@ public:
    void set_synaptic_weights_constant_Glorot();
 
    void set_parameters_constant(const type&) final;
-
    void set_parameters_random() final;
+   void set_parameters_glorot();
 
    void insert_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -151,20 +151,12 @@ public:
 
    void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
                                                  const Tensor<type, 2>&,
+                                                 const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
 
    void insert_gradient(LayerBackPropagation*, 
                         const Index&, 
                         Tensor<type, 1>&) const final;
-
-   // Expression methods
-
-   string write_competitive_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-   string write_combinations(const Tensor<string, 1>&) const;
-   string write_activations(const Tensor<string, 1>&) const;
 
    // Serialization methods
 
@@ -274,6 +266,8 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     }
 
     Tensor<type, 2> targets;
+    Tensor<type, 2> mask;
+    bool built_mask = false;
 
     Tensor<type, 3> error_combinations_derivatives;
     Tensor<type, 3> input_derivatives;

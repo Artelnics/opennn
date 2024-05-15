@@ -247,12 +247,12 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
     // Test
     {
-        batch_samples_number = 1;
+        batch_samples_number = 2;
         
-        inputs_number = 2;
-        context_length = 3;
-        inputs_dimension = 5;
-        context_dimension = 6;
+        inputs_number = 4;
+        context_length = 6;
+        inputs_dimension = 11;
+        context_dimension = 10;
 
         depth = 4; 
         perceptron_depth = 6; 
@@ -284,6 +284,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         // Loss index
 
         back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
+        cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
         
         assert_true(back_propagation.gradient.size() == transformer.get_parameters_number(), LOG);
@@ -327,10 +328,11 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         {
             cout << endl;
 
-            Tensor<Index, 0> max_difference_index = (back_propagation.gradient - numerical_gradient).abs().argmax();
-            cout << "Test failed with max difference: " << (back_propagation.gradient - numerical_gradient).abs().maximum() << " at index: " << max_difference_index(0) << endl;
+            Tensor<type, 1> difference = back_propagation.gradient - numerical_gradient;
+            Tensor<Index, 0> max_difference_index = difference.abs().argmax();
+            cout << "Test failed with max difference: " << difference(max_difference_index(0)) << " at index: " << max_difference_index(0) << endl;
             cout << "Gradient = " << back_propagation.gradient(max_difference_index(0)) << endl;
-            cout << "Numerical gradient = " << numerical_gradient(max_difference_index(0)) << endl;    
+            cout << "Numerical gradient = " << numerical_gradient(max_difference_index(0)) << endl;
         }
         
         for (Index i = numerical_gradient.size() - 1; i >= 0 ; i--)

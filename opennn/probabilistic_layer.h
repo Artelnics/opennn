@@ -168,7 +168,7 @@ public:
     Index get_inputs_number() const final;
     Index get_neurons_number() const final;
 
-    dimensions get_output_dimensions() const final;
+    dimensions get_outputs_dimensions() const final;
 
     Index get_biases_number() const;
     Index get_synaptic_weights_number() const;
@@ -248,14 +248,6 @@ public:
         const bool&) final;
 
     // Gradient methods
-
-    void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
-        const Tensor<type, 2>&,
-        Tensor<type, 2>&) const;
-
-    void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
-        const Tensor<type, 3>&,
-        Tensor<type, 2>&) const;
 
     void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
         const Tensor<pair<type*, dimensions>, 1>&,

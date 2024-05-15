@@ -194,7 +194,7 @@ void StochasticGradientDescentTest::test_transformer_training()
 
     stochastic_gradient_descent.set_maximum_epochs_number(10000);
     transformer.set_parameters_constant(-1);
-
+    
     stochastic_gradient_descent.set_display(true);
     stochastic_gradient_descent.set_display_period(1000);
     training_results = stochastic_gradient_descent.perform_training();

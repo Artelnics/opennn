@@ -28,7 +28,6 @@
 
 namespace opennn
 {
-
     struct NormalizationLayer3DForwardPropagation;
     struct NormalizationLayer3DBackPropagation;
 
@@ -36,9 +35,6 @@ namespace opennn
     struct NormalizationLayer3DForwardPropagationCuda;
     struct NormalizationLayer3DBackPropagationCuda;
 #endif
-
-    /// @todo explain
-
 
     class NormalizationLayer3D : public Layer
     {
@@ -56,7 +52,7 @@ namespace opennn
         Index get_inputs_number() const final;
         Index get_inputs_depth() const;
 
-        dimensions get_output_dimensions() const final;
+        dimensions get_outputs_dimensions() const final;
 
         // Parameters
 
@@ -101,8 +97,8 @@ namespace opennn
         void set_gammas_constant(const type&);
         void set_betas_constant(const type&);
 
+        void set_parameters_default();
         void set_parameters_constant(const type&) final;
-
         void set_parameters_random() final;
 
         // Forward propagation
@@ -110,10 +106,6 @@ namespace opennn
         void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                                LayerForwardPropagation*,
                                const bool&) final;
-
-        void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                               Tensor<type, 1>&,
-                               LayerForwardPropagation*);
 
         // Gradient methods
 
@@ -127,10 +119,6 @@ namespace opennn
         void insert_gradient(LayerBackPropagation*,
                              const Index&,
                              Tensor<type, 1>&) const final;
-
-        // Expression methods
-
-        string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
         // Serialization methods
 

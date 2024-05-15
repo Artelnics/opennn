@@ -49,7 +49,7 @@ struct EmbeddingLayerBackPropagationCuda;
 
 class EmbeddingLayer : public Layer
 {
-/// @todo get_parameters() and set_parameters()
+
 public:
 
     // Constructors
@@ -67,7 +67,7 @@ public:
     Index get_inputs_number() const;
     Index get_depth() const;
 
-    dimensions get_output_dimensions() const final;
+    dimensions get_outputs_dimensions() const final;
 
     Tensor<type, 2> get_embedding_weights() const;
 
@@ -124,11 +124,9 @@ public:
 
     void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
-    // Expression methods
-
-    //    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
     // Serialization methods
+
     /// @todo
 
     //    void from_XML(const tinyxml2::XMLDocument&) final;
@@ -142,7 +140,8 @@ protected:
 
     // MEMBERS
 
-    /// Input dimension (i.e. number of values input can take or vocabulary size)
+    /// Input dimension (i.e. number of values input can take, or vocabulary size)
+    /// @todo change this to something that is not confusing?
 
     Index inputs_dimension;
 
@@ -167,7 +166,6 @@ protected:
     bool display = true;
 
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
-
     };
 
 

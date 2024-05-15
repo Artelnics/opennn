@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "scaling_layer_2d.h"
-#include "strings.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -49,9 +49,9 @@ ScalingLayer2D::ScalingLayer2D(const Tensor<Descriptives, 1>& new_descriptives) 
 }
 
 
-Tensor<Index, 1> ScalingLayer2D::get_outputs_dimensions() const
+dimensions ScalingLayer2D::get_outputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) };
 }
 
 
@@ -61,9 +61,9 @@ Index ScalingLayer2D::get_inputs_number() const
 }
 
 
-Tensor<Index, 1> ScalingLayer2D::get_inputs_dimensions() const
+dimensions ScalingLayer2D::get_inputs_dimensions() const
 {
-    return inputs_dimensions;
+    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) };
 }
 
 
@@ -919,7 +919,10 @@ string ScalingLayer2D::write_expression(const Tensor<string, 1>& inputs_names, c
         }
         else if(scalers(i) == Scaler::MinimumMaximum)
         {
-            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
+            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "*(" << max_range << "-" << min_range << ")/("
+                                                            << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*("
+                                                            << max_range << "-" << min_range << ")/("
+                                                            << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
         }
         else if(scalers(i) == Scaler::MeanStandardDeviation)
         {

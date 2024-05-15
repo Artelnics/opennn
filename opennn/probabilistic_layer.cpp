@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "strings.h"
+#include "strings_utilities.h"
 #include "probabilistic_layer.h"
 
 namespace opennn
@@ -55,7 +55,7 @@ Index ProbabilisticLayer::get_neurons_number() const
 }
 
 
-dimensions ProbabilisticLayer::get_output_dimensions() const
+dimensions ProbabilisticLayer::get_outputs_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 
@@ -645,7 +645,7 @@ void ProbabilisticLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     {
         const Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
-        calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
+        error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
     }
     else
     {
@@ -690,19 +690,10 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
-void ProbabilisticLayer::calculate_error_combinations_derivatives(const Tensor<type, 2>& deltas,
-                                                                  const Tensor<type, 2>& activations_derivatives,
-                                                                  Tensor<type, 2>& error_combinations_derivatives) const
-{
-    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
-}
-
-
 void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
                                                               LayerForwardPropagation* forward_propagation,
                                                               LayerBackPropagationLM* back_propagation)
 {
-
     const Index samples_number = inputs.dimension(0);
 
     const Index inputs_number = get_inputs_number();
@@ -733,7 +724,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     if (neurons_number == 1)
     {
-        calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
+        error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
     }
     else
     {
@@ -761,7 +752,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
         // bias
 
-        Index bias_index = synaptic_weights_number + neuron_index;
+        const Index bias_index = synaptic_weights_number + neuron_index;
 
         TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias = tensor_map(squared_errors_Jacobian, bias_index);
 

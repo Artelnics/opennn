@@ -274,10 +274,9 @@ void WeightedSquaredError::calculate_error_lm(const Batch& batch,
 
 
 void WeightedSquaredError::calculate_output_delta(const Batch& batch,
-                                                  ForwardPropagation& ,
+                                                  ForwardPropagation&,
                                                   BackPropagation& back_propagation) const
-{
-    /*
+{    
     // Data set
 
     const Index total_samples_number = data_set->get_samples_number();
@@ -304,10 +303,9 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
 
-    const type coefficient = (type(2.0)* type(total_samples_number)) /(type(batch_samples_number)*normalization_coefficient);
+    const type coefficient = type(2*total_samples_number)/(type(batch_samples_number)*normalization_coefficient);
 
     deltas.device(*thread_pool_device) = coefficient * errors;
-*/
 }
 
 

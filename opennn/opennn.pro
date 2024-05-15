@@ -60,7 +60,7 @@ HEADERS += \
     kmeans.h \
     numerical_differentiation.h \
     config.h \
-    strings.h \
+    strings_utilities.h \
     images.h \
     statistics.h \
     descriptives.h \
@@ -136,6 +136,8 @@ HEADERS += \
     bounding_box.h \
     unscaling_layer_forward_propagation.h \
     word_bag.h \
+    addition_layer_3d.h \
+    normalization_layer_3d.h \
     opennn.h
 
 SOURCES += \
@@ -144,7 +146,7 @@ SOURCES += \
     multihead_attention_layer.cpp \
     kmeans.cpp \
     numerical_differentiation.cpp \
-    strings.cpp \
+    strings_utilities.cpp \
     images.cpp \
     tensors.cpp \
     statistics.cpp \
@@ -202,4 +204,6 @@ SOURCES += \
     testing_analysis.cpp \
     response_optimization.cpp \
     flatten_layer.cpp \
+    addition_layer_3d.cpp \
+    normalization_layer_3d.cpp \
     unit_testing.cpp

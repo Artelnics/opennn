@@ -48,11 +48,11 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
 
             for(Index row = 0; row < rows_number; row++)
             {
-                for(Index column = 0; column < raw_variables_number; column++)
+                for(Index raw_variable = 0; raw_variable < raw_variables_number; raw_variable++)
                 {
                     for(Index channel = 0; channel < channels_number ; channel++)
                     {
-                        inputs(image, row, column, channel) = data(image, index);
+                        inputs(image, row, raw_variable, channel) = data(image, index);
 
                         index++;
                     }

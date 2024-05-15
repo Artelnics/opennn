@@ -8,8 +8,10 @@
 
 #include "image_data_set.h"
 #include "images.h"
-#include "strings.h"
+#include "strings_utilities.h"
+#include "filesystem"
 
+namespace fs = std::filesystem;
 namespace opennn
 {
 
@@ -124,10 +126,13 @@ void ImageDataSet::set(const Index& new_images_number,
                   const Index& new_targets_number)
 {
 
+    set_image_height(new_height);
+    set_image_width(new_width);
+    set_channels_number(new_channels_number);
+
     data_source_path = "";
 
     const Index new_inputs_number = new_channels_number * new_width * new_height;
-
     const Index new_variables_number = new_channels_number * new_width * new_height + new_targets_number;
 
     data.resize(new_images_number, new_variables_number);
@@ -373,11 +378,11 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // raw_variables
 
-    file_stream.OpenElement("raw_variables");
+    file_stream.OpenElement("RawVariables");
 
     // raw_variables number
     {
-        file_stream.OpenElement("raw_variablesNumber");
+        file_stream.OpenElement("RawVariablesNumber");
 
         buffer.str("");
         buffer << get_raw_variables_number();
@@ -394,7 +399,7 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         for(Index i = 0; i < raw_variables_number; i++)
         {
-            file_stream.OpenElement("Column");
+            file_stream.OpenElement("RawVariable");
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
@@ -747,7 +752,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // raw_variables
 
-    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("raw_variables");
+    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
     {
@@ -760,7 +765,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // raw_variables number
 
-    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("raw_variablesNumber");
+    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     if(!raw_variables_number_element)
     {
@@ -788,14 +793,14 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         for(Index i = 0; i < new_raw_variables_number; i++)
         {
-            const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
+            const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("RawVariable");
             start_element = column_element;
 
             if(column_element->Attribute("Item") != to_string(i+1))
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
+                       << "raw_variable item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
                 throw runtime_error(buffer.str());
             }
@@ -807,7 +812,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(!name_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Name element is nullptr.\n";
 
                 throw runtime_error(buffer.str());
@@ -840,15 +845,15 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 raw_variables(i).set_scaler(new_scaler);
             }
 
-            // Column use
+            // raw_variable use
 
-            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("ColumnUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("RawVariableUse");
 
             if(!raw_variable_use_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Column use element is nullptr.\n";
+                       << "raw_variable use element is nullptr.\n";
 
                 throw runtime_error(buffer.str());
             }
@@ -867,7 +872,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(!type_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Type element is nullptr.\n";
 
                 throw runtime_error(buffer.str());
@@ -888,7 +893,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 if(!categories_element)
                 {
                     buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories element is nullptr.\n";
 
                     throw runtime_error(buffer.str());
@@ -908,7 +913,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 if(!categories_uses_element)
                 {
                     buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories uses element is nullptr.\n";
 
                     throw runtime_error(buffer.str());
@@ -971,7 +976,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
 //                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series column item number (" << i+1 << ") does not match (" << time_series_raw_variable_element->Attribute("Item") << ").\n";
+//                           << "Time series raw_variable item number (" << i+1 << ") does not match (" << time_series_raw_variable_element->Attribute("Item") << ").\n";
 
 //                    throw runtime_error(buffer.str());
 //                }
@@ -983,7 +988,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                if(!time_series_name_element)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series name element is nullptr.\n";
 
 //                    throw runtime_error(buffer.str());
@@ -1016,15 +1021,15 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    time_series_raw_variables(i).set_scaler(time_series_new_scaler);
 //                }
 
-//                // Column use
+//                // raw_variable use
 
-//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("ColumnUse");
+//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("RawVariableUse");
 
 //                if(!time_series_raw_variable_use_element)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series column use element is nullptr.\n";
+//                           << "Time series raw_variable use element is nullptr.\n";
 
 //                    throw runtime_error(buffer.str());
 //                }
@@ -1043,7 +1048,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                if(!time_series_type_element)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series type element is nullptr.\n";
 
 //                    throw runtime_error(buffer.str());
@@ -1064,7 +1069,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    if(!time_series_categories_element)
 //                    {
 //                        buffer << "OpenNN Exception: DataSet class.\n"
-//                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories element is nullptr.\n";
 
 //                        throw runtime_error(buffer.str());
@@ -1084,7 +1089,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    if(!time_series_categories_uses_element)
 //                    {
 //                        buffer << "OpenNN Exception: DataSet class.\n"
-//                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories uses element is nullptr.\n";
 
 //                        throw runtime_error(buffer.str());
@@ -1303,7 +1308,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-void ImageDataSet::fill_image_data()
+void ImageDataSet::fill_image_data(const int& width, const int& height, const int& channels, Tensor<type, 2>* imageData)
 {
     if(data_source_path.empty())
     {
@@ -1315,7 +1320,7 @@ void ImageDataSet::fill_image_data()
 
         throw runtime_error(buffer.str());
     }
-/*
+    /*
     has_raw_variables_names = true;
     has_rows_labels = true;
 
@@ -1441,7 +1446,97 @@ void ImageDataSet::set_categories_number(const Index& new_categories_number)
     categories_number = new_categories_number;
 }
 
+
+Tensor<type, 2> ImageDataSet::read_bmp(const string& path)
+{
+    vector<fs::path> folderPath;
+    vector<fs::path> imagePath;
+
+    for (const auto &entry : fs::directory_iterator(path))
+    {
+        if (fs::is_directory(entry))
+        {
+          folderPath.emplace_back(entry.path().string());
+        }
+    }
+
+    Index classes_number = folderPath.size();
+    Tensor<Index, 1> image_number(classes_number+1);
+    Index samples_number = 0;
+
+    image_number.setZero();
+
+    for (Index i = 0; i < classes_number; i++)
+    {
+        for (const auto &entry : fs::directory_iterator(folderPath[i]))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == ".bmp")
+            {
+                imagePath.emplace_back(entry.path().string());
+                samples_number++;
+            }
+        }
+
+        image_number[i+1] = samples_number;
+    }
+
+    ImageData imgdata;// = read_bmp_image_gpt(imagePath[0]);
+    Index pixels_number = imgdata.channels * imgdata.width * imgdata.height;
+    Tensor<type, 2> data(samples_number, pixels_number + 1);
+
+    if (classes_number > 2)
+    {
+        data.resize(samples_number, pixels_number + classes_number);
+    }
+
+    data.setZero();
+
+    for (Index i = 0; i < samples_number; i++)
+    {
+        ImageData imgdata;// = read_bmp_image_gpt(imagePath[i]);
+
+        if(pixels_number != imgdata.channels * imgdata.width * imgdata.height)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Tensor<type, 2> read_bmp() method.\n"
+                   << "Some images of the dataset have different channel number, width and/or height.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        for (Index j = 0; j < pixels_number; j++)
+        {
+            data(i,j) = imgdata.data[j];
+        }
+
+        if (classes_number == 2)
+        {
+            if (i >= image_number[0] && i < image_number[1])
+            {
+                data(i,pixels_number) = 1;
+            }
+        }
+        else
+        {
+            for (Index k = 0; k < classes_number; k++)
+            {
+                if (i >= image_number[k] && i < image_number[k+1])
+                {
+                    data(i,k+pixels_number) = 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    return data;
 }
+
+
+} // opennn namespace
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

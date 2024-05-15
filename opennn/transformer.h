@@ -50,13 +50,13 @@ public:
 
     void set(const initializer_list<Index>&);
 
-    void set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
-             const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& number_of_layers);
+    void set(const Index& input_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
+             const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number);
 
     void set_input_vocabulary(Tensor<string, 1>&);
     void set_context_vocabulary(Tensor<string, 1>&);
 
-    string calculate_outputs(const string&);
+    string calculate_outputs(const string&, const bool&);
 
 protected:
 
@@ -64,7 +64,7 @@ protected:
 
     /// Length of input entries
 
-    Index inputs_length;
+    Index input_length;
 
     /// Length of context entries
 
@@ -92,7 +92,7 @@ protected:
 
     /// Number of encoder and decoder layers
 
-    Index number_of_layers;
+    Index layers_number;
 
     /// Vocabularies
 

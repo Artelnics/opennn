@@ -539,7 +539,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
 }
 
 
-Tensor<Tensor<Index, 1>, 1> NeuralNetwork::get_layers_inputs_indices() const
+const Tensor<Tensor<Index, 1>, 1>& NeuralNetwork::get_layers_inputs_indices() const
 {
     return layers_inputs_indices;
 }
@@ -857,10 +857,10 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     }
     else if(model_type == ModelType::Forecasting)
     {
-        //                LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-        RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
+        LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        // RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
 
-        add_layer(recurrent_layer);
+        add_layer(long_short_term_memory_layer);
 
         for(Index i = 1 ; i < size-1 ; i++)
         {
@@ -942,7 +942,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
     ScalingLayer4D* scaling_layer = new ScalingLayer4D(input_variables_dimensions);
     add_layer(scaling_layer);
 
-    Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
+    dimensions outputs_dimensions = scaling_layer->get_outputs_dimensions();  
 
 //    for(Index i = 0; i < blocks_number; i++)
 //    {
@@ -968,9 +968,9 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     outputs_dimensions = flatten_layer->get_outputs_dimensions();
 
-    const Tensor<Index, 0> outputs_dimensions_prod = outputs_dimensions.prod();
+    const Index product = outputs_dimensions[0] * outputs_dimensions[1] * outputs_dimensions[2] * outputs_dimensions[3];
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_prod(0), 3);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(product, 3);
     perceptron_layer->set_name("perceptron_layer_1");
     add_layer(perceptron_layer);
 
@@ -1238,7 +1238,7 @@ dimensions NeuralNetwork::get_outputs_dimensions() const
     {
         const Layer* last_layer = layers[layers.size() - 1];
 
-        return last_layer->get_output_dimensions();
+        return last_layer->get_outputs_dimensions();
     }
 
     return {};
@@ -1379,13 +1379,13 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
 
-    /// @todo optimize this loop
-
     Index position = 0;
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
         const Tensor<type, 1> layer_parameters = trainable_layers(i)->get_parameters();
+
+        /// @todo use memcpy
 
         for(Index j = 0; j < layer_parameters.size(); j++)
         {
@@ -1446,10 +1446,6 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-        if(trainable_layers(i)->get_type() == Layer::Type::Flatten) continue;
-
-        if(trainable_layers(i)->get_type() == Layer::Type::Pooling) continue;
-
         trainable_layers(i)->set_parameters(new_parameters, index);
 
         index += trainable_layers_parameters_numbers(i);
@@ -2054,13 +2050,19 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
+    cout << "NN" << endl;
+
     file_stream.OpenElement("NeuralNetwork");
 
     // Inputs
 
+    cout << "Inputs" << endl;
+
     file_stream.OpenElement("Inputs");
 
     // Inputs number
+
+    cout << "Inputs number" << endl;
 
     file_stream.OpenElement("InputsNumber");
 
@@ -2073,6 +2075,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Inputs names
+
+    cout << "Inputs names" << endl;
 
     for(Index i = 0; i < inputs_names.size(); i++)
     {
@@ -2087,13 +2091,19 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Inputs (end tag)
 
+    cout << "Inputs (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Layers
 
+    cout << "Layers" << endl;
+
     file_stream.OpenElement("Layers");
 
     // Layers number
+
+    cout << "Layers number" << endl;
 
     file_stream.OpenElement("LayersTypes");
 
@@ -2111,20 +2121,29 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers information
 
+    cout << "Layers information\n" << endl;
+
     for(Index i = 0; i < layers.size(); i++)
     {
+        cout << i << " :: " << layers(i)->get_name() << endl;
         layers[i]->write_XML(file_stream);
     }
 
     // Layers (end tag)
 
+    cout << "Layers (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Ouputs
 
+    cout << "Outputs" << endl;
+
     file_stream.OpenElement("Outputs");
 
     // Outputs number
+
+    cout << "Outputs number" << endl;
 
     const Index outputs_number = outputs_names.size();
 
@@ -2139,6 +2158,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs names
 
+    cout << "Outputs names" << endl;
+
     for(Index i = 0; i < outputs_number; i++)
     {
         file_stream.OpenElement("Output");
@@ -2152,9 +2173,13 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     //Outputs (end tag)
 
+    cout << "Outputs (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Neural network (end tag)
+
+    cout << "Neural Network (end tag)" << endl;
 
     file_stream.CloseElement();
 }

@@ -71,7 +71,7 @@ Index PerceptronLayer3D::get_neurons_number() const
 }
 
 
-dimensions PerceptronLayer3D::get_output_dimensions() const
+dimensions PerceptronLayer3D::get_outputs_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 
@@ -269,7 +269,7 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     synaptic_weights.resize(new_inputs_depth, new_neurons_number);
 
-    set_parameters_random();
+    set_parameters_glorot();
 
     activation_function = new_activation_function;
 
@@ -479,6 +479,28 @@ void PerceptronLayer3D::set_parameters_random()
 }
 
 
+/// Initializes the biases to zeroes and the synaptic weights with the Glorot Uniform initializer
+
+void PerceptronLayer3D::set_parameters_glorot()
+{
+    biases.setZero();
+
+    const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
+
+    const type minimum = -limit;
+    const type maximum = limit;
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+
+        synaptic_weights(i) = minimum + (maximum - minimum) * random;
+    }
+}
+
+
 void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                              const Tensor<type, 1>& biases,
                                              const Tensor<type, 2>& synaptic_weights,
@@ -647,19 +669,16 @@ void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 
 
 
 void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                                 const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
-                                                 LayerForwardPropagation* forward_propagation,
-                                                 LayerBackPropagation* back_propagation) const
+                                       const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+                                       LayerForwardPropagation* forward_propagation,
+                                       LayerBackPropagation* back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2]);
 
-    if (deltas_pair.size() > 1)
-    {
-        add_deltas(deltas_pair);
-    }
+    if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
                                             deltas_pair(0).second[0],
@@ -682,19 +701,24 @@ void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
     Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
 
-    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
-
-    perceptron_layer_3d_back_propagation->biases_derivatives.device(*thread_pool_device)
-        = error_combinations_derivatives.sum(Eigen::array<Index, 2>({0, 1}));
-
+    Tensor<type, 1>& biases_derivatives = perceptron_layer_3d_back_propagation->biases_derivatives;
+    Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_3d_back_propagation->synaptic_weights_derivatives;
+   
     const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
-
-    perceptron_layer_3d_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device)
-        = inputs.contract(error_combinations_derivatives, double_contraction_indices);
 
     const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
+    error_combinations_derivatives.device(*thread_pool_device) 
+        = deltas * activations_derivatives;
+
+    biases_derivatives.device(*thread_pool_device)
+        = error_combinations_derivatives.sum(Eigen::array<Index, 2>({0, 1}));
+
+    synaptic_weights_derivatives.device(*thread_pool_device)
+        = inputs.contract(error_combinations_derivatives, double_contraction_indices);
+
+    input_derivatives.device(*thread_pool_device) 
+        = error_combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
 }
 
 
@@ -716,13 +740,6 @@ void PerceptronLayer3D::add_deltas(const Tensor<pair<type*, dimensions>, 1>& del
     }
 }
 
-
-void PerceptronLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& deltas,
-                                                                 const Tensor<type, 3>& activations_derivatives,
-                                                                 Tensor<type, 3>& error_combinations_derivatives) const
-{
-    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
-}
 
 
 void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
@@ -748,33 +765,6 @@ void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
         biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);
-}
-
-
-/// Returns a string with the expression of the inputs-outputs relationship of the layer.
-/// @param inputs_names vector of strings with the name of the layer inputs.
-/// @param outputs_names vector of strings with the name of the layer outputs.
-
-string PerceptronLayer3D::write_expression(const Tensor<string, 1>& inputs_names,
-                                         const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    for(Index j = 0; j < outputs_names.size(); j++)
-    {
-        const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
-
-        buffer << outputs_names[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
-
-        for(Index i = 0; i < inputs_names.size() - 1; i++)
-        {
-            buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ") +";
-        }
-
-        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") );\n";
-    }
-
-    return buffer.str();
 }
 
 
@@ -958,45 +948,6 @@ void PerceptronLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-string PerceptronLayer3D::write_activation_function_expression() const
-{
-    switch(activation_function)
-    {
-    /*
-    
-    case ActivationFunction::Logistic:
-        return "logistic";
-        */
-
-    case ActivationFunction::HyperbolicTangent:
-        return "tanh";
-
-    case ActivationFunction::Linear:
-        return string();
-
-    case ActivationFunction::RectifiedLinear:
-        return "ReLU";
-
-    /*case ActivationFunction::ExponentialLinear:
-        return "ELU";
-
-    case ActivationFunction::ScaledExponentialLinear:
-        return "SELU";
-
-    case ActivationFunction::SoftPlus:
-        return "soft_plus";
-
-    case ActivationFunction::SoftSign:
-        return "soft_sign";
-
-    case ActivationFunction::HardSigmoid:
-        return "hard_sigmoid";*/
-
-    default:
-        return string();
-    }
-}
 
 pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() const
 {

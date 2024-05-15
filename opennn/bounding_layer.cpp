@@ -92,7 +92,7 @@ Index BoundingLayer::get_neurons_number() const
 }
 
 
-dimensions BoundingLayer::get_output_dimensions() const
+dimensions BoundingLayer::get_outputs_dimensions() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -494,6 +494,8 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 
 void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
+    cout << "in?" << endl;
+
     ostringstream buffer;
 
     file_stream.OpenElement("BoundingLayer");

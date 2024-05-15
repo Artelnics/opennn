@@ -95,7 +95,9 @@ public:
 
     void set_categories_number(const Index&);
 
-    void fill_image_data();
+    void fill_image_data(const int&, const int&, const int&, Tensor<type, 2>*);
+
+    Tensor<type, 2> read_bmp(const string&);
 
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;

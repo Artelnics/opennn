@@ -15,7 +15,6 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
-
 EmbeddingLayer::EmbeddingLayer() : Layer()
 {
     set();
@@ -66,7 +65,7 @@ Index EmbeddingLayer::get_depth() const
 }
 
 
-dimensions EmbeddingLayer::get_output_dimensions() const
+dimensions EmbeddingLayer::get_outputs_dimensions() const
 {
     return { inputs_number, depth };
 }
@@ -224,20 +223,20 @@ void EmbeddingLayer::set_parameters_random()
 {
     /// @todo Avoid loops
 
-    const type minimum = type(-0.2);
-    const type maximum = type(0.2);
+    const type minimum = type(-0.05);
+    const type maximum = type(0.05);
 
 //    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
 
-    // first row must be 0s because input value 0 is padding
+    // First row must be 0s because input value 0 is padding
     
     embedding_weights.chip(0, 0).setConstant(0);
     
     #pragma omp parallel for
 
-    for(Index i = 1; i < inputs_dimension + 1; i++)
+    for(Index i = 1; i < embedding_weights.dimension(0); i++)
     {
-        for(Index j = 0; j < depth; j++)
+        for(Index j = 0; j < embedding_weights.dimension(1); j++)
         {
             const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
@@ -292,9 +291,6 @@ Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_
 */
 
 
-/// Looks up embedding of an input row, by passing its one-hot encoding through a perceptron layer (that corresponds to the lookup table)
-/// Saves the embedding matrix of the row in outputs_data of the given perceptron layer forward propagation structure
-
 void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index batch_size = inputs.dimension(0);
@@ -331,8 +327,10 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
             embedding_layer_forward_propagation->build_positional_encoding_matrix();
         }
 
-        const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
+        outputs.device(*thread_pool_device) = outputs * outputs.constant(sqrt(depth));
 
+        const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
+        
         for(Index batch_element = 0; batch_element < outputs.dimension(0); batch_element++)
         {
             outputs.chip(batch_element, 0).device(*thread_pool_device) += positional_encoding;
@@ -351,8 +349,7 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, batch_samples_number, inputs_number);
 
-    if (deltas_pair.size() > 1)
-        add_deltas(deltas_pair);
+    if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first, batch_samples_number, inputs_number, deltas_pair(0).second[2]);
 
@@ -366,12 +363,15 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
-
+    
     embedding_weights_derivatives.setZero();
-
+    
     for (Index i = 0; i < batch_samples_number; i++)
     {
-        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
+        if(positional_encoding)
+            sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
+        else
+            sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
         for (Index j = 0; j < inputs_number; j++)
         {
@@ -463,40 +463,20 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 
     positional_encoding.setZero();
 
-    const type half_depth = type(depth) / type(2);
-
-    /// @todo (because h file?) Try to use matrix form
+    const type half_depth = type(depth) / 2;
 
     #pragma omp parallel for
-
     for (Index i = 0; i < inputs_number; i++)
     {
-        for (Index j = 0; j < Index(half_depth - 1); j++)
+        for (Index j = 0; j < Index(depth); j++)
         {
-            positional_encoding(i, 2 * j) = type(sin((i + 1) / pow(10000, (j + 1) / half_depth)));
-            positional_encoding(i, 2 * j + 1) = type(cos((i + 1) / pow(10000, (j + 1) / half_depth)));
+            if (j < Index(half_depth))
+                positional_encoding(i, j) = sin((i) / pow(10000, (j) / half_depth));
+            else
+                positional_encoding(i, j) = cos((i) / pow(10000, (j - Index(half_depth)) / half_depth));
         }
     }
 
-    if (depth % 2 == 0)
-    {
-        #pragma omp parallel for
-
-        for (Index i = 0; i < inputs_number; i++)
-        {
-            positional_encoding(i, depth - 2) = type(sin((i + 1) / 10000));
-            positional_encoding(i, depth - 1) = type(cos((i + 1) / 10000));
-        }
-    }
-    else
-    {
-        #pragma omp parallel for
-
-        for (Index i = 0; i < inputs_number; i++)
-        {
-            positional_encoding(i, depth - 1) = type(sin((i + 1) / 10000));
-        }
-    }
 
     built_positional_encoding_matrix = true;
 }

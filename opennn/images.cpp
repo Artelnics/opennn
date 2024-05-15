@@ -1,118 +1,30 @@
 #include "images.h"
 #include "tensors.h"
+#include <fstream>
+#include <vector>
+#include <stdexcept>
+#include <iostream>
 
 namespace opennn
 {
 
-    Tensor<unsigned char, 1> read_bmp_image(const string& filename)
-    {
-        Index image_height = 0;
-        Index image_width = 0;
-        Index channels_number = 0;
-        Index padding = 0;
-
-        FILE* file = fopen(filename.data(), "rb");
-
-        if (!file)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                << "void read_bmp_image() method.\n"
-                << "Couldn't open the file.\n";
-
-            throw runtime_error(buffer.str());
-        }
-
-        unsigned char info[54];
-        fread(info, sizeof(unsigned char), 54, file);
-
-        const Index width_no_padding = *(int*)&info[18];
-        image_height = *(int*)&info[22];
-        const Index bits_per_pixel = *(int*)&info[28];
-        int channels;
-
-        bits_per_pixel == 24 ? channels = 3 : channels = 1;
-
-        channels_number = channels;
-
-        padding = 0;
-
-        image_width = width_no_padding;
-
-        while ((channels * image_width + padding) % 4 != 0)
-            padding++;
-
-        const size_t size = image_height * (channels_number * image_width + padding);
-
-        Tensor<unsigned char, 1> image(size);
-        image.setZero();
-
-        int data_offset = *(int*)(&info[0x0A]);
-        fseek(file, (long int)(data_offset - 54), SEEK_CUR);
-
-        fread(image.data(), sizeof(unsigned char), size, file);
-        fclose(file);
-
-        if (channels_number == 3)
-        {
-/*
-            const int rows_number = int(get_image_height());
-            const int columns_number = int(get_image_width());
-
-            Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
-
-            const Eigen::array<Eigen::Index, 3> dims_3D = { channels, rows_number, columns_number };
-            const Eigen::array<Eigen::Index, 1> dims_1D = { rows_number * columns_number };
-
-            Tensor<unsigned char, 1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2, 0).reshape(dims_1D); // row_major
-            Tensor<unsigned char, 1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1, 0).reshape(dims_1D); // row_major
-            Tensor<unsigned char, 1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0, 0).reshape(dims_1D); // row_major
-
-            Tensor<unsigned char, 1> red_channel_flatted_sorted(red_channel_flatted.size());
-            Tensor<unsigned char, 1> green_channel_flatted_sorted(green_channel_flatted.size());
-            Tensor<unsigned char, 1> blue_channel_flatted_sorted(blue_channel_flatted.size());
-
-            red_channel_flatted_sorted.setZero();
-            green_channel_flatted_sorted.setZero();
-            blue_channel_flatted_sorted.setZero();
-
-            sort_channel(red_channel_flatted, red_channel_flatted_sorted, columns_number);
-            sort_channel(green_channel_flatted, green_channel_flatted_sorted, columns_number);
-            sort_channel(blue_channel_flatted, blue_channel_flatted_sorted, columns_number);
-
-            Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
-            red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted, 0); // To allow a double concatenation
-
-            image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
-*/
-        }
-
-        return image;
-    }
-
-
-
 /// @todo ChatGPT gives something easier
 
-void read_bmp_image(const string& filename, Tensor<type, 3>& image)
+void read_bmp_image(const string& filename)
 {
-//    Tensor<Tensor<type, 1>, 1> image;
-
     FILE* file = fopen(filename.data(), "rb");
 
     if(!file)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet class.\n"
+        buffer << "OpenNN Exception: ImageDataSet class.\n"
                << "void read_bmp_image() method.\n"
                << "Couldn't open the file.\n";
 
         throw runtime_error(buffer.str());
     }
 
-    /*
     unsigned char info[54];
 
     fread(info, sizeof(unsigned char), 54, file);
@@ -151,9 +63,10 @@ void read_bmp_image(const string& filename, Tensor<type, 3>& image)
     fseek(file, (long int)(data_offset - 54), SEEK_CUR);
 
     fread(image.data(), sizeof(unsigned char), size, file);
+
     fclose(file);
 
-    if(channels_number == 3)
+    if(channels_number == 3) // Reshaping and sorting of the pixel data from the BMP image
     {
         const int rows_number = int(image_height);
         const int columns_number = int(image_width);
@@ -161,7 +74,7 @@ void read_bmp_image(const string& filename, Tensor<type, 3>& image)
         const Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
 
         const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number* columns_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
 
         Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
@@ -193,7 +106,74 @@ void read_bmp_image(const string& filename, Tensor<type, 3>& image)
 
         image_data(0) = image_type;
     }
-    */
+
+}
+
+
+/// @todo The image data is not sorted (the rgb pixels are stored backward in the bmp format: bgr)
+
+ImageData read_bmp_image_gpt(const std::string& filename)
+{
+    ifstream file(filename, ios::binary);
+
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Couldn't open the file.");
+    }
+
+    char header[54];
+    file.read(header, 54);
+
+    int width = *(int*)&header[18];
+    int height = *(int*)&header[22];
+    int channels = header[28] == 24 ? 3 : 1;
+    int padding = 0;
+
+    while ((channels * width + padding) % 4 != 0)
+    {
+        padding++;
+    }
+
+    size_t size = height * (channels * width + padding);
+    Tensor<unsigned char, 1> image_data(size);
+
+    file.seekg(54, ios::beg);
+    file.read(reinterpret_cast<char*>(image_data.data()), size);
+    file.close();
+
+    if(channels == 3) // Reshaping and sorting of the pixel data from the BMP image
+    {
+        const int rows_number = height;
+        const int columns_number = width;
+
+        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image_data, rows_number, columns_number, padding);
+
+        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
+
+        Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D);
+        Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D);
+        Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D);
+
+        Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
+        Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
+        Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
+
+        red_channel_flatted_sorted.setZero();
+        green_channel_flatted_sorted.setZero();
+        blue_channel_flatted_sorted.setZero();
+
+        sort_channel(red_channel_flatted, red_channel_flatted_sorted, columns_number);
+        sort_channel(green_channel_flatted, green_channel_flatted_sorted, columns_number);
+        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted, columns_number);
+
+        Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
+
+        red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0);
+        image_data = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
+    }
+
+    return {image_data, width, height, channels};
 }
 
 
@@ -325,13 +305,13 @@ void translate_image(Tensor<type, 3>& input,
     for(Index i = 0; i < limit_column * channels; i++)
     {
         const Index channel = i % channels;
-        const Index column = i / channels;
+        const Index raw_variable = i / channels;
 
-        const TensorMap<const Tensor<type, 2>> input_column_map(input.data() + column*height + channel*input_size,
+        const TensorMap<const Tensor<type, 2>> input_column_map(input.data() + raw_variable*height + channel*input_size,
                                                            height,
                                                           1);
 
-        TensorMap<Tensor<type, 2>> output_column_map(output.data() + (column + shift)*height + channel*input_size,
+        TensorMap<Tensor<type, 2>> output_column_map(output.data() + (raw_variable + shift)*height + channel*input_size,
                                                      height,
                                                      1);
 
@@ -579,4 +559,4 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     return Tensor<unsigned char, 1>();
 }
 
-}
+} // namespace opennn
