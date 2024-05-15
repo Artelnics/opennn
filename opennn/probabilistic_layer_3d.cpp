@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "strings.h"
+#include "strings_utilities.h"
 #include "probabilistic_layer_3d.h"
 
 namespace opennn
@@ -223,7 +223,7 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_
 
     synaptic_weights.resize(new_inputs_depth, new_neurons_number);
 
-    set_parameters_random();
+    set_parameters_glorot();
 
     set_default();
 }
@@ -608,6 +608,8 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
             static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
     const Tensor<type, 2>& targets = probabilistic_layer_3d_back_propagation->targets;
+    Tensor<type, 2>& mask = probabilistic_layer_3d_back_propagation->mask;
+    bool& built_mask = probabilistic_layer_3d_back_propagation->built_mask;
 
     Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
 
@@ -619,7 +621,15 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
     const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
     const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    calculate_error_combinations_derivatives(outputs, targets, error_combinations_derivatives);
+    if (!built_mask)
+    {
+        mask.device(*thread_pool_device) = (targets != targets.constant(0)).cast<type>();
+        const Tensor<type, 0> mask_sum = mask.sum();
+        mask.device(*thread_pool_device) = mask / mask_sum(0);
+        built_mask = true;
+    }
+
+    calculate_error_combinations_derivatives(outputs, targets, mask, error_combinations_derivatives);
 
     biases_derivatives.device(*thread_pool_device) 
         = error_combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
@@ -633,7 +643,8 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
 
 
 void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, 
-                                                                    const Tensor<type, 2>& targets,  
+                                                                    const Tensor<type, 2>& targets,
+                                                                    const Tensor<type, 2>& mask,
                                                                     Tensor<type, 3>& error_combinations_derivatives) const
 {
     const Index batch_samples_number = outputs.dimension(0);
@@ -648,8 +659,8 @@ void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor
     for (Index i = 0; i < batch_samples_number; i++)
         for (Index j = 0; j < outputs_number; j++)
             error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
-    
-    error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number * outputs_number);
+
+    multiply_matrices(thread_pool_device, error_combinations_derivatives, mask);
 }
 
 
@@ -937,6 +948,7 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
 
     targets.resize(batch_samples_number, inputs_number);
+    mask.resize(batch_samples_number, inputs_number);
 
     biases_derivatives.resize(neurons_number);
 

@@ -115,8 +115,6 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
         static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(layers_number - 1));
 
-    /// @todo What is this???
-
     probabilistic_layer_back_propagation->targets = targets;
 
     type& error = back_propagation.error;

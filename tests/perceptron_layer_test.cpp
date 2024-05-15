@@ -115,7 +115,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);
-    assert_true(abs(combinations(0,0) - type(7)) < type(1e-5) , LOG);
+    assert_true(abs(combinations(0,0) - type(7)) < type(1e-5), LOG);
 
     // Test
 

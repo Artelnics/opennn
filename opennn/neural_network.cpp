@@ -857,10 +857,10 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     }
     else if(model_type == ModelType::Forecasting)
     {
-        //                LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-        RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
+        LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        // RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
 
-        add_layer(recurrent_layer);
+        add_layer(long_short_term_memory_layer);
 
         for(Index i = 1 ; i < size-1 ; i++)
         {
@@ -2050,13 +2050,19 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
+    cout << "NN" << endl;
+
     file_stream.OpenElement("NeuralNetwork");
 
     // Inputs
 
+    cout << "Inputs" << endl;
+
     file_stream.OpenElement("Inputs");
 
     // Inputs number
+
+    cout << "Inputs number" << endl;
 
     file_stream.OpenElement("InputsNumber");
 
@@ -2069,6 +2075,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Inputs names
+
+    cout << "Inputs names" << endl;
 
     for(Index i = 0; i < inputs_names.size(); i++)
     {
@@ -2083,13 +2091,19 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Inputs (end tag)
 
+    cout << "Inputs (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Layers
 
+    cout << "Layers" << endl;
+
     file_stream.OpenElement("Layers");
 
     // Layers number
+
+    cout << "Layers number" << endl;
 
     file_stream.OpenElement("LayersTypes");
 
@@ -2107,20 +2121,29 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers information
 
+    cout << "Layers information\n" << endl;
+
     for(Index i = 0; i < layers.size(); i++)
     {
+        cout << i << " :: " << layers(i)->get_name() << endl;
         layers[i]->write_XML(file_stream);
     }
 
     // Layers (end tag)
 
+    cout << "Layers (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Ouputs
 
+    cout << "Outputs" << endl;
+
     file_stream.OpenElement("Outputs");
 
     // Outputs number
+
+    cout << "Outputs number" << endl;
 
     const Index outputs_number = outputs_names.size();
 
@@ -2135,6 +2158,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs names
 
+    cout << "Outputs names" << endl;
+
     for(Index i = 0; i < outputs_number; i++)
     {
         file_stream.OpenElement("Output");
@@ -2148,9 +2173,13 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     //Outputs (end tag)
 
+    cout << "Outputs (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Neural network (end tag)
+
+    cout << "Neural Network (end tag)" << endl;
 
     file_stream.CloseElement();
 }
