@@ -37,16 +37,26 @@ int main()
    {
         cout << "Blank\n";
         
+        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+        
         LanguageDataSet language_data_set;
 
         //language_data_set.set_data_source_path("data/example2.txt");
         //language_data_set.set_data_source_path("data/PTtoEN_dataset.txt");
-        language_data_set.set_data_source_path("data/three_letter_combinations_with_spaces.txt");
+        //language_data_set.set_data_source_path("data/PTtoEN_1000samples.txt");
+        language_data_set.set_data_source_path("data/ENtoES.txt");
+        //language_data_set.set_data_source_path("data/three_letter_combinations_with_spaces.txt");
         //language_data_set.set_data_source_path("data/modified_three_letter_combinations_with_spaces_one_third.txt");
+
         language_data_set.set_text_separator(DataSet::Separator::Tab);
 
+        language_data_set.set_context_vocabulary_path("data/en_simple_vocab.txt");
+        language_data_set.set_completion_vocabulary_path("data/es_simple_vocab.txt");
+        const bool imported_vocabulary = true;
+
         language_data_set.read_txt_language_model();
-        
+
         //language_data_set.set_training();
         language_data_set.set_raw_variables_scalers(Scaler::NoScaling);
 
@@ -55,16 +65,38 @@ int main()
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         Index context_dimension = language_data_set.get_context_vocabulary_size();
         
+        
+        Index number_of_layers = 2;
+        Index depth = 32;
+        Index perceptron_depth = 64;
+        Index heads_number = 4;
+
+        /*
+        Index number_of_layers = 4;
+        Index depth = 128;
+        Index perceptron_depth = 512;
+        Index heads_number = 8;
+        
         Index number_of_layers = 1;
         Index depth = 4;
         Index perceptron_depth = 12;
         Index heads_number = 2;
+        */
 
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
 
+        /*
+        cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
+
+        for (Index i = 0; i < transformer.get_layers_number(); i++)
+        {
+            cout << "\t" << transformer.get_layers()(i)->get_name() << " parameters number: " << transformer.get_layers()(i)->get_parameters_number() << endl;
+        }
+        */
+
         //transformer.set_parameters_constant(1);
-        
+     
         Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
         Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
 
@@ -76,15 +108,18 @@ int main()
 
         AdaptiveMomentEstimation optimization_algorithm;
         optimization_algorithm.set_loss_index(&cross_entropy_error_3d);
+        optimization_algorithm.set_custom_learning_rate(depth);
 
         optimization_algorithm.set_display(true);
         optimization_algorithm.set_display_period(1);
 
         //type training_loss_goal = type(0.1);
+        type training_accuracy_goal = type(0.99);
 
         //optimization_algorithm.set_loss_goal(training_loss_goal);
-        optimization_algorithm.set_maximum_epochs_number(49);
-        optimization_algorithm.set_maximum_time(86400);
+        optimization_algorithm.set_accuracy_goal(training_accuracy_goal);
+        optimization_algorithm.set_maximum_epochs_number(10000);
+        optimization_algorithm.set_maximum_time(3 * 86400);
         optimization_algorithm.set_batch_samples_number(32);
 
         TrainingResults training_results = optimization_algorithm.perform_training();
@@ -93,27 +128,47 @@ int main()
         string input;
         string output;
 
-        input = "a a b";
-        output = transformer.calculate_outputs(input);
+        input = "He is sleeping.";
+        //input = "Era preto ou branco.";
+        //input = "a a b";
+        output = transformer.calculate_outputs(input, imported_vocabulary);
         
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
-
-        input = "a l e";
-        output = transformer.calculate_outputs(input);
-
-        cout << "Input: " << input << endl;
-        cout << "Output: " << output << endl;
-        cout << endl;
-
-        input = "o d v";
-        output = transformer.calculate_outputs(input);
+        
+        input = "She is studying hard.";
+        //input = "E posso dizer-vos, a nossa agenda esta lotada.";
+        //input = "a l e";
+        output = transformer.calculate_outputs(input, imported_vocabulary);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
 
+        input = "The dog is barking.";
+        //input = "E posso dizer-vos, era preto ou branco.";
+        //input = "o d v";
+        output = transformer.calculate_outputs(input, imported_vocabulary);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+        /*
+        input = "Ola Mundo! Eu sou um grande modelo de linguagem.";
+        output = transformer.calculate_outputs(input, imported_vocabulary);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+
+        input = "Vou entao muito rapidamente partilhar convosco algumas historias de algumas coisas magicas que aconteceram.";
+        output = transformer.calculate_outputs(input, imported_vocabulary);
+        
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+        */
         cout << "Bye!" << endl;
 
         return 0;

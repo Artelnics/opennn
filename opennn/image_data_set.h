@@ -95,7 +95,7 @@ public:
 
     void set_categories_number(const Index&);
 
-    void fill_image_data();
+    void fill_image_data(const int&, const int&, const int&, Tensor<type, 2>*);
 
     Tensor<type, 2> read_bmp(const string&);
 

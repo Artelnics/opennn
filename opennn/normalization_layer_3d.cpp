@@ -168,7 +168,7 @@ void NormalizationLayer3D::set_default()
 
     layer_type = Type::Normalization3D;
 
-    set_parameters_random();
+    set_parameters_default();
 }
 
 

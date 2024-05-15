@@ -1,0 +1,1000 @@
+The sun is shining.	El sol esta brillando.
+I love to read books.	Me encanta leer libros.
+She is my best friend.	Ella es mi mejor amiga.
+We are going to the park.	Vamos al parque.
+He works at a hospital.	El trabaja en un hospital.
+They live in a big house.	Viven en una casa grande.
+The cat is sleeping.	El gato esta durmiendo.
+It is raining outside.	Esta lloviendo afuera.
+I have two brothers.	Tengo dos hermanos.
+You are very kind.	Eres muy amable.
+The movie was great.	La pelicula fue genial.
+We will travel tomorrow.	Viajaremos manana.
+She likes to dance.	A ella le gusta bailar.
+He can play the guitar.	El puede tocar la guitarra.
+They are studying hard.	Estan estudiando mucho.
+The cake tastes delicious.	El pastel sabe delicioso.
+My car is red.	Mi coche es rojo.
+We need to buy groceries.	Necesitamos comprar comestibles.
+He is a good teacher.	El es un buen maestro.
+The children are playing.	Los ninos estan jugando.
+It is a beautiful day.	Es un dia hermoso.
+I lost my keys.	Perdi mis llaves.
+She enjoys painting.	Ella disfruta pintar.
+We had a great time.	Tuvimos un gran tiempo.
+The dog is barking.	El perro esta ladrando.
+I need a new phone.	Necesito un telefono nuevo.
+She speaks three languages.	Ella habla tres idiomas.
+We are very happy.	Somos muy felices.
+He runs every morning.	El corre todas las mananas.
+The food is ready.	La comida esta lista.
+I bought a new dress.	Compre un vestido nuevo.
+They are learning English.	Estan aprendiendo ingles.
+The sky is blue.	El cielo es azul.
+She has a beautiful smile.	Ella tiene una hermosa sonrisa.
+We found the answer.	Encontramos la respuesta.
+He is watching TV.	El esta viendo television.
+The flowers are blooming.	Las flores estan floreciendo.
+I will call you later.	Te llamare mas tarde.
+She is very talented.	Ella es muy talentosa.
+We need more water.	Necesitamos mas agua.
+He likes to travel.	A el le gusta viajar.
+They are very friendly.	Son muy amigables.
+The party was fun.	La fiesta fue divertida.
+I enjoy cooking.	Disfruto cocinar.
+She is reading a book.	Ella esta leyendo un libro.
+We are ready to go.	Estamos listos para irnos.
+He is fixing the car.	El esta arreglando el coche.
+The baby is crying.	El bebe esta llorando.
+I have a headache.	Tengo dolor de cabeza.
+She is wearing a hat.	Ella esta usando un sombrero.
+He is always late.	El siempre llega tarde.
+The soup is hot.	La sopa esta caliente.
+I am feeling tired.	Me siento cansado.
+She is writing a letter.	Ella esta escribiendo una carta.
+We saw a movie.	Vimos una pelicula.
+He is reading the newspaper.	El esta leyendo el periodico.
+The store is closed.	La tienda esta cerrada.
+I have a meeting at 10.	Tengo una reunion a las 10.
+She loves chocolate.	A ella le encanta el chocolate.
+We need to hurry.	Necesitamos darnos prisa.
+He is a great singer.	El es un gran cantante.
+The car is expensive.	El coche es caro.
+I forgot my wallet.	Olvide mi cartera.
+She is very smart.	Ella es muy inteligente.
+We are having dinner.	Estamos cenando.
+He is making a cake.	El esta haciendo un pastel.
+The phone is ringing.	El telefono esta sonando.
+I am learning Spanish.	Estoy aprendiendo espanol.
+She is very creative.	Ella es muy creativa.
+We are out of milk.	Nos quedamos sin leche.
+He is a fast runner.	El es un corredor rapido.
+The weather is cold.	El clima esta frio.
+I need to rest.	Necesito descansar.
+She likes to sing.	A ella le gusta cantar.
+We went to the beach.	Fuimos a la playa.
+He is drawing a picture.	El esta dibujando un cuadro.
+The water is clear.	El agua esta clara.
+I found my keys.	Encontre mis llaves.
+She is a nurse.	Ella es enfermera.
+We are moving to a new house.	Nos mudamos a una nueva casa.
+He is a good cook.	El es un buen cocinero.
+The sky is cloudy.	El cielo esta nublado.
+I enjoy running.	Disfruto correr.
+She is making coffee.	Ella esta haciendo cafe.
+We are in the garden.	Estamos en el jardin.
+He is fixing the roof.	El esta arreglando el techo.
+The dog is friendly.	El perro es amigable.
+I am eating lunch.	Estoy almorzando.
+She has a new job.	Ella tiene un trabajo nuevo.
+We are going shopping.	Vamos de compras.
+He is a photographer.	El es fotografo.
+The music is loud.	La musica esta fuerte.
+I need a haircut.	Necesito un corte de pelo.
+She is planting flowers.	Ella esta plantando flores.
+We are having a picnic.	Estamos haciendo un picnic.
+He is riding a bike.	El esta montando una bicicleta.
+The room is clean.	La habitacion esta limpia.
+I am reading a novel.	Estoy leyendo una novela.
+She is baking cookies.	Ella esta horneando galletas.
+We are watching a play.	Estamos viendo una obra de teatro.
+The ice is melting.	El hielo se esta derritiendo.
+I have a cold.	Tengo un resfriado.
+She is playing the piano.	Ella esta tocando el piano.
+We need more chairs.	Necesitamos mas sillas.
+He is very strong.	El es muy fuerte.
+The bus is late.	El autobus esta retrasado.
+I am drinking coffee.	Estoy bebiendo cafe.
+She is doing her homework.	Ella esta haciendo su tarea.
+We are baking a cake.	Estamos horneando un pastel.
+He is driving to work.	El esta conduciendo al trabajo.
+The book is interesting.	El libro es interesante.
+I lost my glasses.	Perdi mis gafas.
+She is very organized.	Ella es muy organizada.
+We are cleaning the house.	Estamos limpiando la casa.
+He is painting the wall.	El esta pintando la pared.
+The baby is sleeping.	El bebe esta durmiendo.
+I am going for a walk.	Voy a dar un paseo.
+She is swimming in the pool.	Ella esta nadando en la piscina.
+We are having a meeting.	Estamos teniendo una reunion.
+He is buying groceries.	El esta comprando comestibles.
+The sun is setting.	El sol esta poniendose.
+I am listening to music.	Estoy escuchando musica.
+She is taking a shower.	Ella esta tomando una ducha.
+We are visiting our grandparents.	Estamos visitando a nuestros abuelos.
+He is building a house.	El esta construyendo una casa.
+The road is closed.	La carretera esta cerrada.
+I am learning to cook.	Estoy aprendiendo a cocinar.
+She is knitting a scarf.	Ella esta tejiendo una bufanda.
+We are having a barbecue.	Estamos haciendo una barbacoa.
+He is doing the laundry.	El esta lavando la ropa.
+The cake is in the oven.	El pastel esta en el horno.
+I am packing my bags.	Estoy empacando mis maletas.
+She is feeding the baby.	Ella esta alimentando al bebe.
+We are decorating the room.	Estamos decorando la habitacion.
+He is writing a book.	El esta escribiendo un libro.
+The water is boiling.	El agua esta hirviendo.
+I am calling my friend.	Estoy llamando a mi amigo.
+She is cleaning the kitchen.	Ella esta limpiando la cocina.
+We are planting a tree.	Estamos plantando un arbol.
+He is walking the dog.	El esta paseando al perro.
+The car needs gas.	El coche necesita gasolina.
+I am sewing a dress.	Estoy cosiendo un vestido.
+She is watching a documentary.	Ella esta viendo un documental.
+We are making plans.	Estamos haciendo planes.
+He is fixing the fence.	El esta arreglando la cerca.
+The grass is green.	La hierba es verde.
+I am learning to drive.	Estoy aprendiendo a conducir.
+She is organizing the closet.	Ella esta organizando el armario.
+We are going to a concert.	Vamos a un concierto.
+He is writing a report.	El esta escribiendo un informe.
+The tree is tall.	El arbol es alto.
+I am painting a picture.	Estoy pintando un cuadro.
+She is wearing a dress.	Ella esta usando un vestido.
+We are playing a game.	Estamos jugando un juego.
+He is learning French.	El esta aprendiendo frances.
+The coffee is hot.	El cafe esta caliente.
+I am writing a letter.	Estoy escribiendo una carta.
+She is cooking dinner.	Ella esta cocinando la cena.
+We are traveling to Spain.	Estamos viajando a Espana.
+He is playing soccer.	El esta jugando al futbol.
+The bird is singing.	El pajaro esta cantando.
+I am fixing my bike.	Estoy arreglando mi bicicleta.
+She is teaching math.	Ella esta ensenando matematicas.
+We are visiting the museum.	Estamos visitando el museo.
+He is running a marathon.	El esta corriendo un maraton.
+The cake is sweet.	El pastel es dulce.
+I am reading a magazine.	Estoy leyendo una revista.
+She is gardening.	Ella esta jardineando.
+We are buying tickets.	Estamos comprando boletos.
+He is brushing his teeth.	El se esta cepillando los dientes.
+The sky is clear.	El cielo esta despejado.
+I am feeling happy.	Me siento feliz.
+She is sewing a button.	Ella esta cosiendo un boton.
+We are enjoying the weather.	Estamos disfrutando del clima.
+He is painting a mural.	El esta pintando un mural.
+The soup is cold.	La sopa esta fria.
+I am going to bed.	Me voy a la cama.
+She is taking a nap.	Ella esta tomando una siesta.
+We are organizing a party.	Estamos organizando una fiesta.
+He is reading a map.	El esta leyendo un mapa.
+The flowers are beautiful.	Las flores son hermosas.
+I am drinking tea.	Estoy bebiendo te.
+She is folding clothes.	Ella esta doblando ropa.
+We are baking bread.	Estamos horneando pan.
+He is checking his email.	El esta revisando su correo electronico.
+The dog is playful.	El perro es jugueton.
+I am learning to swim.	Estoy aprendiendo a nadar.
+She is fixing her hair.	Ella se esta arreglando el cabello.
+We are washing the car.	Estamos lavando el coche.
+He is playing chess.	El esta jugando ajedrez.
+The cat is purring.	El gato esta ronroneando.
+I am sending a message.	Estoy enviando un mensaje.
+She is setting the table.	Ella esta poniendo la mesa.
+We are building a sandcastle.	Estamos construyendo un castillo de arena.
+He is eating breakfast.	El esta desayunando.
+The road is bumpy.	El camino esta lleno de baches.
+I am studying history.	Estoy estudiando historia.
+She is lighting a candle.	Ella esta encendiendo una vela.
+We are singing a song.	Estamos cantando una cancion.
+He is watering the plants.	El esta regando las plantas.
+The sun is shining brightly.	El sol esta brillando intensamente.
+I love eating ice cream.	Me encanta comer helado.
+She is my younger sister.	Ella es mi hermana menor.
+We are walking to the store.	Estamos caminando a la tienda.
+He works in a bank.	El trabaja en un banco.
+They have a beautiful garden.	Tienen un hermoso jardin.
+The cat is on the roof.	El gato esta en el techo.
+It is snowing heavily.	Esta nevando mucho.
+I have a pet dog.	Tengo un perro.
+You are very helpful.	Eres muy servicial.
+The concert was amazing.	El concierto fue increible.
+We will visit the zoo.	Visitaremos el zoologico.
+She enjoys hiking.	Ella disfruta hacer senderismo.
+He can speak German.	El puede hablar aleman.
+They are playing cards.	Estan jugando a las cartas.
+The soup tastes spicy.	La sopa sabe picante.
+My favorite color is blue.	Mi color favorito es el azul.
+We need to fix the door.	Necesitamos arreglar la puerta.
+He is a skilled mechanic.	El es un mecanico habil.
+The children are laughing.	Los ninos estan riendo.
+It is a chilly evening.	Es una noche fria.
+I lost my notebook.	Perdi mi cuaderno.
+She enjoys gardening.	A ella le gusta la jardineria.
+We had a nice vacation.	Tuvimos unas buenas vacaciones.
+The dog is very loyal.	El perro es muy leal.
+I need a new laptop.	Necesito una computadora nueva.
+She speaks Italian fluently.	Ella habla italiano con fluidez.
+We are very excited.	Estamos muy emocionados.
+He jogs every evening.	El trota todas las noches.
+The food is delicious.	La comida esta deliciosa.
+I bought a new book.	Compre un libro nuevo.
+They are practicing yoga.	Estan practicando yoga.
+The cake is too sweet.	El pastel esta demasiado dulce.
+I have a new job.	Tengo un trabajo nuevo.
+We need more time.	Necesitamos mas tiempo.
+He likes to read novels.	A el le gusta leer novelas.
+They are very intelligent.	Son muy inteligentes.
+The weather is perfect.	El clima es perfecto.
+I forgot my password.	Olvide mi contrasena.
+She is very friendly.	Ella es muy amigable.
+We are eating dinner.	Estamos cenando.
+He is washing the dishes.	El esta lavando los platos.
+The baby is adorable.	El bebe es adorable.
+I am feeling sleepy.	Me siento con sueno.
+She is baking a cake.	Ella esta horneando un pastel.
+We are having fun.	Nos estamos divirtiendo.
+He is reading a novel.	El esta leyendo una novela.
+The sun is setting.	El sol se esta poniendo.
+I enjoy painting.	Disfruto pintar.
+She is a good dancer.	Ella es una buena bailarina.
+We are playing basketball.	Estamos jugando baloncesto.
+He is fixing the bike.	El esta arreglando la bicicleta.
+The cat is very cute.	El gato es muy lindo.
+I need more coffee.	Necesito mas cafe.
+She likes to jog.	A ella le gusta trotar.
+We went to the mountains.	Fuimos a las montanas.
+He is a good driver.	El es un buen conductor.
+The book is new.	El libro es nuevo.
+I am feeling cold.	Tengo frio.
+She is very patient.	Ella es muy paciente.
+We are having breakfast.	Estamos desayunando.
+He is building a model.	El esta construyendo un modelo.
+The dog is outside.	El perro esta afuera.
+I am learning math.	Estoy aprendiendo matematicas.
+She is taking a break.	Ella esta tomando un descanso.
+We are going fishing.	Vamos a pescar.
+He is watching a movie.	El esta viendo una pelicula.
+The water is warm.	El agua esta tibia.
+I am eating an apple.	Estoy comiendo una manzana.
+She is making lunch.	Ella esta haciendo el almuerzo.
+We are planting flowers.	Estamos plantando flores.
+He is writing a poem.	El esta escribiendo un poema.
+The sky is gray.	El cielo esta gris.
+I enjoy playing the guitar.	Disfruto tocar la guitarra.
+She is a great artist.	Ella es una gran artista.
+We are having a picnic.	Estamos haciendo un picnic.
+He is studying for exams.	El esta estudiando para los examenes.
+The coffee is ready.	El cafe esta listo.
+I am making dinner.	Estoy haciendo la cena.
+She is feeding the cat.	Ella esta alimentando al gato.
+We are learning Spanish.	Estamos aprendiendo espanol.
+He is fixing the sink.	El esta arreglando el fregadero.
+The road is busy.	La carretera esta ocupada.
+I am reading the news.	Estoy leyendo las noticias.
+She is very athletic.	Ella es muy atletica.
+We are going to a party.	Vamos a una fiesta.
+He is cleaning the windows.	El esta limpiando las ventanas.
+The milk is in the fridge.	La leche esta en el refrigerador.
+I need a vacation.	Necesito unas vacaciones.
+She is walking to school.	Ella esta caminando a la escuela.
+We are playing volleyball.	Estamos jugando voleibol.
+He is a talented musician.	El es un musico talentoso.
+The cat is very playful.	El gato es muy jugueton.
+I am fixing my computer.	Estoy arreglando mi computadora.
+She is organizing her desk.	Ella esta organizando su escritorio.
+We are going hiking.	Vamos a hacer senderismo.
+He is learning to cook.	El esta aprendiendo a cocinar.
+The dog is very happy.	El perro esta muy feliz.
+I am writing an email.	Estoy escribiendo un correo electronico.
+She is baking bread.	Ella esta horneando pan.
+We are cleaning the garage.	Estamos limpiando el garaje.
+He is preparing lunch.	El esta preparando el almuerzo.
+The sun is rising.	El sol esta saliendo.
+The water is cold.	El agua esta fria.
+I am brushing my hair.	Me estoy cepillando el cabello.
+She is painting the fence.	Ella esta pintando la cerca.
+We are making decorations.	Estamos haciendo decoraciones.
+He is taking out the trash.	El esta sacando la basura.
+The sky is clear and blue.	El cielo esta despejado y azul.
+I am learning to sew.	Estoy aprendiendo a coser.
+She is reading to the children.	Ella esta leyendo a los ninos.
+We are watching the sunset.	Estamos viendo la puesta del sol.
+He is organizing the files.	El esta organizando los archivos.
+The car is in the garage.	El coche esta en el garaje.
+I am drinking a smoothie.	Estoy bebiendo un batido.
+She is studying for a test.	Ella esta estudiando para un examen.
+We are playing a board game.	Estamos jugando un juego de mesa.
+He is fixing the computer.	El esta arreglando la computadora.
+The flowers are blooming.	Las flores estan floreciendo.
+I am going to the gym.	Voy al gimnasio.
+She is brushing her teeth.	Ella se esta cepillando los dientes.
+We are making a puzzle.	Estamos haciendo un rompecabezas.
+He is teaching a class.	El esta dando una clase.
+The cat is chasing a mouse.	El gato esta persiguiendo un raton.
+I am writing a story.	Estoy escribiendo una historia.
+She is taking a selfie.	Ella esta tomando una selfie.
+We are planning a trip.	Estamos planeando un viaje.
+He is mowing the lawn.	El esta cortando el cesped.
+The baby is crawling.	El bebe esta gateando.
+I am learning to paint.	Estoy aprendiendo a pintar.
+She is washing the car.	Ella esta lavando el coche.
+We are going for a drive.	Vamos a dar una vuelta.
+He is ironing his clothes.	El esta planchando su ropa.
+The coffee is brewing.	El cafe esta colandose.
+I am feeding the birds.	Estoy alimentando a los pajaros.
+She is writing in her diary.	Ella esta escribiendo en su diario.
+We are making crafts.	Estamos haciendo manualidades.
+He is cleaning the garage.	El esta limpiando el garaje.
+The children are drawing.	Los ninos estan dibujando.
+I am practicing yoga.	Estoy practicando yoga.
+She is walking the dog.	Ella esta paseando al perro.
+We are cooking together.	Estamos cocinando juntos.
+He is reading a textbook.	El esta leyendo un libro de texto.
+The dog is digging a hole.	El perro esta cavando un hoyo.
+I am folding the laundry.	Estoy doblando la ropa.
+She is playing the violin.	Ella esta tocando el violin.
+We are decorating the tree.	Estamos decorando el arbol.
+He is fixing the roof.	El esta arreglando el techo.
+The sky is full of stars.	El cielo esta lleno de estrellas.
+I am wrapping a gift.	Estoy envolviendo un regalo.
+She is wearing a coat.	Ella esta usando un abrigo.
+We are visiting friends.	Estamos visitando amigos.
+He is fixing the leak.	El esta arreglando la fuga.
+The cake is cooling.	El pastel se esta enfriando.
+I am sweeping the floor.	Estoy barriendo el piso.
+She is making a scrapbook.	Ella esta haciendo un album de recortes.
+We are going to the mall.	Vamos al centro comercial.
+He is walking to work.	El esta caminando al trabajo.
+The water is boiling.	El agua esta hirviendo.
+I am buying a gift.	Estoy comprando un regalo.
+She is cleaning her room.	Ella esta limpiando su habitacion.
+We are fixing the fence.	Estamos arreglando la cerca.
+He is washing his car.	El esta lavando su coche.
+The sun is shining brightly.	El sol esta brillando intensamente.
+I am calling my family.	Estoy llamando a mi familia.
+She is organizing a party.	Ella esta organizando una fiesta.
+We are watching TV.	Estamos viendo television.
+He is baking a pie.	El esta horneando un pastel.
+The dog is wagging its tail.	El perro esta moviendo la cola.
+I am sending a postcard.	Estoy enviando una postal.
+She is decorating the cake.	Ella esta decorando el pastel.
+We are playing video games.	Estamos jugando videojuegos.
+He is cleaning the pool.	El esta limpiando la piscina.
+The baby is drinking milk.	El bebe esta bebiendo leche.
+I am writing a blog.	Estoy escribiendo un blog.
+She is feeding the fish.	Ella esta alimentando a los peces.
+We are having a barbecue.	Estamos haciendo una barbacoa.
+He is taking a photo.	El esta tomando una foto.
+The cat is purring loudly.	El gato esta ronroneando fuerte.
+I am learning to knit.	Estoy aprendiendo a tejer.
+She is walking in the park.	Ella esta caminando en el parque.
+We are painting the house.	Estamos pintando la casa.
+He is studying geography.	El esta estudiando geografia.
+The coffee is too strong.	El cafe esta demasiado fuerte.
+I am learning to dance.	Estoy aprendiendo a bailar.
+She is cooking pasta.	Ella esta cocinando pasta.
+We are fixing the car.	Estamos arreglando el coche.
+He is practicing piano.	El esta practicando piano.
+The sky is turning red.	El cielo se esta poniendo rojo.
+I am reading a comic book.	Estoy leyendo un comic.
+She is washing her hair.	Ella esta lavandose el cabello.
+We are planning a surprise.	Estamos planeando una sorpresa.
+He is driving a truck.	El esta conduciendo un camion.
+The dog is chasing its tail.	El perro esta persiguiendo su cola.
+I am practicing singing.	Estoy practicando cantar.
+She is making jewelry.	Ella esta haciendo joyas.
+We are visiting the library.	Estamos visitando la biblioteca.
+He is planting a garden.	El esta plantando un jardin.
+The sun is setting in the west.	El sol se esta poniendo en el oeste.
+I enjoy reading mystery novels.	Disfruto leer novelas de misterio.
+She is knitting a sweater.	Ella esta tejiendo un sueter.
+We are building a birdhouse.	Estamos construyendo una casita para pajaros.
+He works at a bookstore.	El trabaja en una libreria.
+They have a big family.	Tienen una familia grande.
+The cat is under the table.	El gato esta debajo de la mesa.
+It is very windy today.	Hoy hace mucho viento.
+I have three pets.	Tengo tres mascotas.
+You are very talented.	Eres muy talentoso.
+The play was fantastic.	La obra fue fantastica.
+We will visit our cousins.	Visitaremos a nuestros primos.
+She enjoys rock climbing.	A ella le gusta escalar rocas.
+He can speak Japanese.	El puede hablar japones.
+They are playing chess.	Estan jugando ajedrez.
+The cake tastes amazing.	El pastel sabe increible.
+My favorite sport is soccer.	Mi deporte favorito es el futbol.
+We need to finish the project.	Necesitamos terminar el proyecto.
+He is a talented artist.	El es un artista talentoso.
+The children are singing.	Los ninos estan cantando.
+It is a warm evening.	Es una noche calida.
+I lost my wallet yesterday.	Perdi mi cartera ayer.
+She enjoys making jewelry.	Ella disfruta hacer joyas.
+We had a wonderful time.	Tuvimos un tiempo maravilloso.
+The dog is very playful.	El perro es muy jugueton.
+I need a new suitcase.	Necesito una maleta nueva.
+She speaks French fluently.	Ella habla frances con fluidez.
+We are very proud.	Estamos muy orgullosos.
+He swims every morning.	El nada todas las mananas.
+The food is very tasty.	La comida esta muy sabrosa.
+I bought a new bicycle.	Compre una bicicleta nueva.
+They are learning to dance.	Estan aprendiendo a bailar.
+The sky is pink at sunset.	El cielo esta rosado al atardecer.
+I forgot my phone at home.	Olvide mi telefono en casa.
+She is very generous.	Ella es muy generosa.
+We are eating dessert.	Estamos comiendo postre.
+He is fixing his watch.	El esta arreglando su reloj.
+The baby is giggling.	El bebe esta riendo.
+I am feeling thirsty.	Tengo sed.
+She is baking cookies.	Ella esta horneando galletas.
+We are having a party.	Estamos teniendo una fiesta.
+He is reading a biography.	El esta leyendo una biografia.
+The sun is rising in the east.	El sol esta saliendo en el este.
+I enjoy playing basketball.	Disfruto jugar baloncesto.
+She is a good singer.	Ella es una buena cantante.
+We are playing soccer.	Estamos jugando futbol.
+He is cleaning the kitchen.	El esta limpiando la cocina.
+The cat is on the couch.	El gato esta en el sofa.
+I need to charge my phone.	Necesito cargar mi telefono.
+She is studying biology.	Ella esta estudiando biologia.
+We are going on vacation.	Nos vamos de vacaciones.
+He is writing a letter.	El esta escribiendo una carta.
+The sky is overcast.	El cielo esta nublado.
+I am taking a nap.	Estoy tomando una siesta.
+She is planting vegetables.	Ella esta plantando vegetales.
+We are organizing the garage.	Estamos organizando el garaje.
+He is drawing a picture.	El esta dibujando un cuadro.
+The water is very deep.	El agua es muy profunda.
+I am learning to code.	Estoy aprendiendo a programar.
+She is very creative.	Ella es muy creativa.
+We are cleaning the attic.	Estamos limpiando el atico.
+He is painting the house.	El esta pintando la casa.
+The cake is baking.	El pastel esta horneandose.
+I am calling my sister.	Estoy llamando a mi hermana.
+She is reading a magazine.	Ella esta leyendo una revista.
+We are planning a wedding.	Estamos planeando una boda.
+He is mowing the lawn.	El esta cortando el cesped.
+The cat is chasing a butterfly.	El gato esta persiguiendo una mariposa.
+I am washing the dishes.	Estoy lavando los platos.
+She is organizing her closet.	Ella esta organizando su armario.
+We are going to the theater.	Vamos al teatro.
+He is practicing the guitar.	El esta practicando la guitarra.
+The dog is chewing a bone.	El perro esta masticando un hueso.
+I am folding the clothes.	Estoy doblando la ropa.
+She is cleaning the windows.	Ella esta limpiando las ventanas.
+We are decorating the house.	Estamos decorando la casa.
+He is fixing the car.	El esta arreglando el coche.
+The sky is full of clouds.	El cielo esta lleno de nubes.
+I am learning to play the piano.	Estoy aprendiendo a tocar el piano.
+She is writing a novel.	Ella esta escribiendo una novela.
+We are having a family reunion.	Estamos teniendo una reunion familiar.
+He is studying chemistry.	El esta estudiando quimica.
+The cat is sleeping on the bed.	El gato esta durmiendo en la cama.
+I am feeding the dog.	Estoy alimentando al perro.
+She is painting her nails.	Ella esta pintandose las unas.
+We are fixing the roof.	Estamos arreglando el techo.
+He is walking in the park.	El esta caminando en el parque.
+The coffee is on the table.	El cafe esta en la mesa.
+I am learning to draw.	Estoy aprendiendo a dibujar.
+She is baking a pie.	Ella esta horneando un pastel.
+We are going to the fair.	Vamos a la feria.
+He is brushing his hair.	El se esta cepillando el cabello.
+The dog is running fast.	El perro esta corriendo rapido.
+I am cleaning my room.	Estoy limpiando mi habitacion.
+She is organizing the books.	Ella esta organizando los libros.
+We are going to the market.	Vamos al mercado.
+He is learning to drive.	El esta aprendiendo a conducir.
+The water is very clear.	El agua esta muy clara.
+I am fixing the bicycle.	Estoy arreglando la bicicleta.
+She is sewing a dress.	Ella esta cosiendo un vestido.
+We are watching a movie.	Estamos viendo una pelicula.
+He is planting flowers.	El esta plantando flores.
+The sun is shining brightly.	El sol esta brillando intensamente.
+I am drinking water.	Estoy bebiendo agua.
+She is knitting a scarf.	Ella esta tejiendo una bufanda.
+We are baking a cake.	Estamos horneando un pastel.
+He is learning Spanish.	El esta aprendiendo espanol.
+The cat is playing with a ball.	El gato esta jugando con una pelota.
+I am reading a book.	Estoy leyendo un libro.
+She is studying history.	Ella esta estudiando historia.
+We are cooking dinner.	Estamos cocinando la cena.
+He is fixing the fence.	El esta arreglando la cerca.
+The sky is blue and clear.	El cielo esta azul y despejado.
+I am writing in my journal.	Estoy escribiendo en mi diario.
+She is brushing her hair.	Ella se esta cepillando el cabello.
+We are cleaning the house.	Estamos limpiando la casa.
+He is playing the piano.	El esta tocando el piano.
+The water is freezing.	El agua esta congelandose.
+I am drinking juice.	Estoy bebiendo jugo.
+She is studying mathematics.	Ella esta estudiando matematicas.
+We are making dinner.	Estamos haciendo la cena.
+He is learning to swim.	El esta aprendiendo a nadar.
+The dog is barking loudly.	El perro esta ladrando fuerte.
+I am reading the newspaper.	Estoy leyendo el periodico.
+She is knitting a blanket.	Ella esta tejiendo una manta.
+We are playing cards.	Estamos jugando a las cartas.
+He is practicing basketball.	El esta practicando baloncesto.
+The cat is purring softly.	El gato esta ronroneando suavemente.
+I am fixing my laptop.	Estoy arreglando mi portatil.
+She is cooking breakfast.	Ella esta cocinando el desayuno.
+We are planning a party.	Estamos planeando una fiesta.
+He is washing the car.	El esta lavando el coche.
+The sky is dark and cloudy.	El cielo esta oscuro y nublado.
+I am learning to skateboard.	Estoy aprendiendo a andar en monopatin.
+She is writing a report.	Ella esta escribiendo un informe.
+We are organizing a garage sale.	Estamos organizando una venta de garaje.
+He is feeding the baby.	El esta alimentando al bebe.
+The dog is chasing a ball.	El perro esta persiguiendo una pelota.
+I am cleaning the bathroom.	Estoy limpiando el bano.
+She is making a salad.	Ella esta haciendo una ensalada.
+We are decorating for a party.	Estamos decorando para una fiesta.
+He is playing video games.	El esta jugando videojuegos.
+The water is calm.	El agua esta tranquila.
+I am learning to sing.	Estoy aprendiendo a cantar.
+She is baking muffins.	Ella esta horneando magdalenas.
+We are painting the fence.	Estamos pintando la cerca.
+He is cleaning the aquarium.	El esta limpiando el acuario.
+The cat is watching birds.	El gato esta observando a los pajaros.
+I am drinking milk.	Estoy bebiendo leche.
+She is fixing her bike.	Ella esta arreglando su bicicleta.
+We are going to the park.	Vamos al parque.
+He is practicing his speech.	El esta practicando su discurso.
+The sun is shining warmly.	El sol esta brillando calidamente.
+I am writing a poem.	Estoy escribiendo un poema.
+She is organizing the pantry.	Ella esta organizando la despensa.
+We are cleaning the windows.	Estamos limpiando las ventanas.
+He is washing his hands.	El esta lavandose las manos.
+The water is refreshing.	El agua es refrescante.
+I am learning to play chess.	Estoy aprendiendo a jugar ajedrez.
+She is reading a novel.	Ella esta leyendo una novela.
+We are planning a picnic.	Estamos planeando un picnic.
+He is painting a landscape.	El esta pintando un paisaje.
+The cat is napping in the sun.	El gato esta durmiendo al sol.
+I am feeding the fish.	Estoy alimentando a los peces.
+She is sewing a quilt.	Ella esta cosiendo una colcha.
+We are having a barbecue.	Estamos haciendo una barbacoa.
+He is cleaning the garage.	El esta limpiando el garaje.
+The sky is clear tonight.	El cielo esta despejado esta noche.
+I am learning to juggle.	Estoy aprendiendo a hacer malabares.
+She is writing a script.	Ella esta escribiendo un guion.
+We are visiting the park.	Estamos visitando el parque.
+He is reading a manual.	El esta leyendo un manual.
+The dog is licking its paws.	El perro esta lamiendose las patas.
+I am folding the towels.	Estoy doblando las toallas.
+She is cleaning the fridge.	Ella esta limpiando el refrigerador.
+We are going to the beach.	Vamos a la playa.
+He is learning to surf.	El esta aprendiendo a surfear.
+The coffee is brewing.	El cafe esta colandose.
+I am fixing the sink.	Estoy arreglando el fregadero.
+She is knitting a hat.	Ella esta tejiendo un sombrero.
+We are washing the dishes.	Estamos lavando los platos.
+He is painting a portrait.	El esta pintando un retrato.
+The cat is purring contentedly.	El gato esta ronroneando contento.
+I am writing a letter.	Estoy escribiendo una carta.
+She is making dinner.	Ella esta haciendo la cena.
+We are organizing the office.	Estamos organizando la oficina.
+He is reading a novel.	El esta leyendo una novela.
+The sun is setting beautifully.	El sol se esta poniendo hermosamente.
+I am learning to crochet.	Estoy aprendiendo a hacer ganchillo.
+She is brushing her dog.	Ella esta cepillando a su perro.
+We are playing a game.	Estamos jugando un juego.
+He is practicing yoga.	El esta practicando yoga.
+The water is cold and clear.	El agua esta fria y clara.
+I am folding the sheets.	Estoy doblando las sabanas.
+She is studying for finals.	Ella esta estudiando para los finales.
+We are decorating the room.	Estamos decorando la habitacion.
+He is washing his bike.	El esta lavando su bicicleta.
+The cat is chasing a toy.	El gato esta persiguiendo un juguete.
+I am writing a story.	Estoy escribiendo una historia.
+She is organizing the shelves.	Ella esta organizando los estantes.
+We are planning a road trip.	Estamos planeando un viaje por carretera.
+He is practicing his lines.	El esta practicando sus lineas.
+The dog is playing fetch.	El perro esta jugando a buscar.
+I am cleaning the stove.	Estoy limpiando la estufa.
+She is writing a review.	Ella esta escribiendo una resena.
+We are going to the gym.	Vamos al gimnasio.
+He is painting a mural.	El esta pintando un mural.
+The sky is full of stars tonight.	El cielo esta lleno de estrellas esta noche.
+I am learning to bake.	Estoy aprendiendo a hornear.
+She is brushing her teeth.	Ella se esta cepillando los dientes.
+We are having a meeting.	Estamos teniendo una reunion.
+He is reading a science book.	El esta leyendo un libro de ciencia.
+The water is crystal clear.	El agua esta cristalina.
+I am feeding my cat.	Estoy alimentando a mi gato.
+She is knitting a pair of socks.	Ella esta tejiendo un par de calcetines.
+We are making a cake.	Estamos haciendo un pastel.
+He is cleaning the windows.	El esta limpiando las ventanas.
+The cat is napping on the couch.	El gato esta durmiendo en el sofa.
+I am learning to play guitar.	Estoy aprendiendo a tocar la guitarra.
+She is writing in her journal.	Ella esta escribiendo en su diario.
+We are planning a surprise party.	Estamos planeando una fiesta sorpresa.
+He is washing his clothes.	El esta lavando su ropa.
+The dog is barking at the mailman.	El perro esta ladrando al cartero.
+I am writing a recipe.	Estoy escribiendo una receta.
+She is organizing her desk.	Ella esta organizando su escritorio.
+We are cleaning the basement.	Estamos limpiando el sotano.
+He is fixing the heater.	El esta arreglando la calefaccion.
+The sky is turning orange.	El cielo se esta poniendo naranja.
+I am learning to meditate.	Estoy aprendiendo a meditar.
+She is painting her nails.	Ella esta pintandose las unas.
+We are watching a documentary.	Estamos viendo un documental.
+He is practicing his dance moves.	El esta practicando sus movimientos de baile.
+The cat is sleeping peacefully.	El gato esta durmiendo pacificamente.
+I am drinking a smoothie.	Estoy bebiendo un batido.
+She is knitting a pair of mittens.	Ella esta tejiendo un par de mitones.
+We are cooking together.	Estamos cocinando juntos.
+He is cleaning his room.	El esta limpiando su habitacion.
+The dog is chewing a toy.	El perro esta masticando un juguete.
+I am writing a letter to a friend.	Estoy escribiendo una carta a un amigo.
+She is organizing her photos.	Ella esta organizando sus fotos.
+We are going to the museum.	Vamos al museo.
+He is planting a tree.	El esta plantando un arbol.
+The sun is setting slowly.	El sol se esta poniendo lentamente.
+I am learning to paint landscapes.	Estoy aprendiendo a pintar paisajes.
+She is brushing her cat.	Ella esta cepillando a su gato.
+We are playing a board game.	Estamos jugando un juego de mesa.
+He is practicing the violin.	El esta practicando el violin.
+The water is flowing gently.	El agua esta fluyendo suavemente.
+I am folding the laundry.	Estoy doblando la ropa.
+She is studying for a quiz.	Ella esta estudiando para un examen.
+We are decorating the tree.	Estamos decorando el arbol.
+He is washing the dog.	El esta lavando al perro.
+The cat is playing with a string.	El gato esta jugando con una cuerda.
+I am writing a thank you note.	Estoy escribiendo una nota de agradecimiento.
+She is making a cup of tea.	Ella esta haciendo una taza de te.
+We are planning a movie night.	Estamos planeando una noche de peliculas.
+He is reading a mystery novel.	El esta leyendo una novela de misterio.
+The sky is filled with clouds.	El cielo esta lleno de nubes.
+I am learning to cook new recipes.	Estoy aprendiendo a cocinar nuevas recetas.
+She is painting a picture of a landscape.	Ella esta pintando un cuadro de un paisaje.
+We are going to the countryside.	Vamos al campo.
+He is fixing his bicycle tire.	El esta arreglando la llanta de su bicicleta.
+The cat is watching the fish tank.	El gato esta mirando la pecera.
+I am writing a list of things to do.	Estoy escribiendo una lista de cosas por hacer.
+She is knitting a baby blanket.	Ella esta tejiendo una manta para bebe.
+We are baking cookies for the neighbors.	Estamos horneando galletas para los vecinos.
+He is cleaning the living room.	El esta limpiando la sala.
+The dog is running in the yard.	El perro esta corriendo en el jardin.
+I am feeding my pet rabbit.	Estoy alimentando a mi conejo.
+She is organizing the kitchen drawers.	Ella esta organizando los cajones de la cocina.
+We are going to the aquarium.	Vamos al acuario.
+He is practicing for a concert.	El esta practicando para un concierto.
+The sun is rising in the morning.	El sol esta saliendo en la manana.
+I am learning to play drums.	Estoy aprendiendo a tocar la bateria.
+She is brushing her long hair.	Ella esta cepillando su cabello largo.
+We are playing a card game.	Estamos jugando un juego de cartas.
+He is studying computer science.	El esta estudiando informatica.
+The water is glistening in the sun.	El agua esta brillando al sol.
+I am folding my clothes neatly.	Estoy doblando mi ropa ordenadamente.
+She is studying for her exams.	Ella esta estudiando para sus examenes.
+We are decorating for the holidays.	Estamos decorando para las fiestas.
+He is washing the windows.	El esta lavando las ventanas.
+The cat is playing with a feather toy.	El gato esta jugando con un juguete de plumas.
+I am writing in my planner.	Estoy escribiendo en mi planificador.
+She is making a fruit salad.	Ella esta haciendo una ensalada de frutas.
+We are planning a weekend trip.	Estamos planeando un viaje de fin de semana.
+He is reading a comic book.	El esta leyendo un comic.
+The sky is turning pink and orange.	El cielo se esta poniendo rosa y naranja.
+I am learning to bake bread.	Estoy aprendiendo a hornear pan.
+She is brushing her teeth before bed.	Ella se esta cepillando los dientes antes de dormir.
+We are having a video call with friends.	Estamos teniendo una videollamada con amigos.
+He is practicing his soccer skills.	El esta practicando sus habilidades de futbol.
+The cat is napping in the sunshine.	El gato esta durmiendo bajo el sol.
+I am drinking a cup of hot chocolate.	Estoy bebiendo una taza de chocolate caliente.
+She is knitting a pair of socks.	Ella esta tejiendo un par de calcetines.
+We are making a big breakfast.	Estamos haciendo un gran desayuno.
+He is cleaning the garden.	El esta limpiando el jardin.
+The dog is playing in the snow.	El perro esta jugando en la nieve.
+I am learning to make sushi.	Estoy aprendiendo a hacer sushi.
+She is organizing her closet by color.	Ella esta organizando su armario por color.
+We are going to the botanical garden.	Vamos al jardin botanico.
+He is planting vegetables in the garden.	El esta plantando vegetales en el jardin.
+The sun is setting behind the mountains.	El sol se esta poniendo detras de las montanas.
+I am learning to play the saxophone.	Estoy aprendiendo a tocar el saxofon.
+She is brushing her horse.	Ella esta cepillando su caballo.
+We are playing a trivia game.	Estamos jugando un juego de trivia.
+He is practicing his presentation.	El esta practicando su presentacion.
+The water is rippling in the pond.	El agua esta ondulando en el estanque.
+I am folding the bed sheets.	Estoy doblando las sabanas de la cama.
+She is studying for her driver's test.	Ella esta estudiando para su examen de manejo.
+We are decorating the living room.	Estamos decorando la sala.
+He is washing the dishes after dinner.	El esta lavando los platos despues de la cena.
+The cat is chasing its own tail.	El gato esta persiguiendo su propia cola.
+I am writing a postcard to my friend.	Estoy escribiendo una postal a mi amigo.
+She is making a delicious dinner.	Ella esta haciendo una cena deliciosa.
+We are planning a surprise for Mom.	Estamos planeando una sorpresa para mama.
+He is reading an interesting book.	El esta leyendo un libro interesante.
+The sky is clear and full of stars.	El cielo esta despejado y lleno de estrellas.
+I am learning to make pottery.	Estoy aprendiendo a hacer ceramica.
+She is brushing her cat's fur.	Ella esta cepillando el pelaje de su gato.
+We are going to the art museum.	Vamos al museo de arte.
+He is planting herbs in the garden.	El esta plantando hierbas en el jardin.
+The sun is shining brightly today.	El sol esta brillando intensamente hoy.
+I am writing a letter to my grandmother.	Estoy escribiendo una carta a mi abuela.
+She is knitting a new scarf.	Ella esta tejiendo una bufanda nueva.
+We are making pancakes for breakfast.	Estamos haciendo panqueques para el desayuno.
+He is cleaning the patio.	El esta limpiando el patio.
+The dog is playing with a frisbee.	El perro esta jugando con un frisbee.
+I am learning to cook Italian food.	Estoy aprendiendo a cocinar comida italiana.
+She is organizing her makeup.	Ella esta organizando su maquillaje.
+We are going to the music festival.	Vamos al festival de musica.
+He is practicing his drawing skills.	El esta practicando sus habilidades de dibujo.
+The water is sparkling in the sun.	El agua esta brillando al sol.
+I am folding the napkins.	Estoy doblando las servilletas.
+She is studying for her history exam.	Ella esta estudiando para su examen de historia.
+We are decorating the kitchen.	Estamos decorando la cocina.
+He is washing his sneakers.	El esta lavando sus zapatillas.
+The cat is playing with a laser pointer.	El gato esta jugando con un puntero laser.
+I am writing a thank you card.	Estoy escribiendo una tarjeta de agradecimiento.
+She is making a birthday cake.	Ella esta haciendo un pastel de cumpleanos.
+We are planning a dinner party.	Estamos planeando una cena.
+He is reading a science fiction novel.	El esta leyendo una novela de ciencia ficcion.
+The sky is turning dark.	El cielo se esta poniendo oscuro.
+I am learning to ride a bicycle.	Estoy aprendiendo a andar en bicicleta.
+She is brushing her dog's teeth.	Ella esta cepillando los dientes de su perro.
+We are having a movie marathon.	Estamos teniendo un maraton de peliculas.
+He is practicing his basketball skills.	El esta practicando sus habilidades de baloncesto.
+The cat is sleeping on the windowsill.	El gato esta durmiendo en el alfeizar de la ventana.
+I am drinking a glass of lemonade.	Estoy bebiendo un vaso de limonada.
+She is knitting a pair of gloves.	Ella esta tejiendo un par de guantes.
+We are making spaghetti for dinner.	Estamos haciendo espaguetis para la cena.
+He is cleaning the birdcage.	El esta limpiando la jaula del pajaro.
+The dog is playing with a tennis ball.	El perro esta jugando con una pelota de tenis.
+I am learning to make a website.	Estoy aprendiendo a hacer una pagina web.
+She is organizing her school supplies.	Ella esta organizando sus utiles escolares.
+We are going to the amusement park.	Vamos al parque de diversiones.
+He is practicing his writing skills.	El esta practicando sus habilidades de escritura.
+The water is calm and peaceful.	El agua esta tranquila y pacifica.
+I am folding the paper cranes.	Estoy doblando las grullas de papel.
+She is studying for her math exam.	Ella esta estudiando para su examen de matematicas.
+We are decorating the hallway.	Estamos decorando el pasillo.
+He is washing his truck.	El esta lavando su camion.
+The cat is purring loudly.	El gato esta ronroneando fuerte.
+I am writing a speech.	Estoy escribiendo un discurso.
+She is making a quilt.	Ella esta haciendo una colcha.
+We are planning a camping trip.	Estamos planeando un viaje de campamento.
+He is reading a fantasy novel.	El esta leyendo una novela de fantasia.
+The sky is clear after the rain.	El cielo esta despejado despues de la lluvia.
+I am learning to bake cookies.	Estoy aprendiendo a hornear galletas.
+She is brushing her dog's fur.	Ella esta cepillando el pelaje de su perro.
+We are playing a trivia game.	Estamos jugando un juego de trivia.
+He is practicing his speech for the presentation.	El esta practicando su discurso para la presentacion.
+The cat is playing with a ball of yarn.	El gato esta jugando con una bola de estambre.
+I am drinking a cup of tea.	Estoy bebiendo una taza de te.
+She is knitting a pair of leg warmers.	Ella esta tejiendo un par de calentadores de piernas.
+We are making sandwiches for lunch.	Estamos haciendo sandwiches para el almuerzo.
+He is cleaning the fish tank.	El esta limpiando la pecera.
+The dog is running in circles.	El perro esta corriendo en circulos.
+I am learning to play the ukulele.	Estoy aprendiendo a tocar el ukelele.
+She is organizing her craft supplies.	Ella esta organizando sus materiales de manualidades.
+We are going to the farmers market.	Vamos al mercado de agricultores.
+He is practicing his skateboarding tricks.	El esta practicando sus trucos de monopatin.
+The water is rippling gently.	El agua esta ondulando suavemente.
+I am folding the laundry.	Estoy doblando la ropa.
+She is studying for her physics test.	Ella esta estudiando para su examen de fisica.
+We are decorating the classroom.	Estamos decorando el salon de clases.
+He is washing his bike.	El esta lavando su bicicleta.
+The cat is climbing the tree.	El gato esta trepando el arbol.
+I am writing a poem about nature.	Estoy escribiendo un poema sobre la naturaleza.
+She is making a painting of the sunset.	Ella esta haciendo una pintura del atardecer.
+We are planning a garden.	Estamos planeando un jardin.
+He is reading a book about history.	El esta leyendo un libro sobre historia.
+The sky is blue with fluffy clouds.	El cielo esta azul con nubes esponjosas.
+I am learning to play chess.	Estoy aprendiendo a jugar ajedrez.
+She is brushing her hair before bed.	Ella esta cepillandose el cabello antes de dormir.
+We are having a family game night.	Estamos teniendo una noche de juegos en familia.
+He is practicing his photography skills.	El esta practicando sus habilidades de fotografia.
+The cat is napping on the windowsill.	El gato esta durmiendo en el alfeizar de la ventana.
+I am drinking a cup of herbal tea.	Estoy bebiendo una taza de te de hierbas.
+She is knitting a baby hat.	Ella esta tejiendo un gorro para bebe.
+We are making soup for dinner.	Estamos haciendo sopa para la cena.
+He is cleaning the bird feeder.	El esta limpiando el comedero para pajaros.
+The dog is playing in the backyard.	El perro esta jugando en el patio trasero.
+I am learning to cook French cuisine.	Estoy aprendiendo a cocinar comida francesa.
+She is organizing her photo albums.	Ella esta organizando sus albumes de fotos.
+We are going to the beach this weekend.	Vamos a la playa este fin de semana.
+He is practicing his drumming.	El esta practicando su bateria.
+The water is crystal clear in the lake.	El agua esta cristalina en el lago.
+I am folding the clothes.	Estoy doblando la ropa.
+She is studying for her geography quiz.	Ella esta estudiando para su prueba de geografia.
+We are decorating the garden with lights.	Estamos decorando el jardin con luces.
+He is washing his hands before dinner.	El esta lavandose las manos antes de la cena.
+The cat is playing with a toy mouse.	El gato esta jugando con un raton de juguete.
+I am writing a story about a dragon.	Estoy escribiendo una historia sobre un dragon.
+She is making a smoothie for breakfast.	Ella esta haciendo un batido para el desayuno.
+We are planning a surprise birthday party.	Estamos planeando una fiesta de cumpleanos sorpresa.
+He is reading a biography of a famous artist.	El esta leyendo una biografia de un artista famoso.
+The sky is turning dark as the storm approaches.	El cielo se esta oscureciendo a medida que se acerca la tormenta.
+I am learning to make homemade pasta.	Estoy aprendiendo a hacer pasta casera.
+She is brushing her dog after a walk.	Ella esta cepillando a su perro despues de una caminata.
+We are playing a game of charades.	Estamos jugando un juego de charadas.
+He is practicing his public speaking.	El esta practicando su oratoria.
+The cat is watching the birds outside.	El gato esta mirando a los pajaros afuera.
+I am drinking a glass of iced tea.	Estoy bebiendo un vaso de te helado.
+She is knitting a blanket for her friend.	Ella esta tejiendo una manta para su amiga.
+We are making tacos for dinner.	Estamos haciendo tacos para la cena.
+He is cleaning the patio furniture.	El esta limpiando los muebles del patio.
+The dog is playing with a rubber ball.	El perro esta jugando con una pelota de goma.
+I am learning to speak German.	Estoy aprendiendo a hablar aleman.
+She is organizing her jewelry box.	Ella esta organizando su joyero.
+We are going to the library to study.	Vamos a la biblioteca a estudiar.
+He is practicing his guitar solos.	El esta practicando sus solos de guitarra.
+The water is gently flowing in the river.	El agua esta fluyendo suavemente en el rio.
+I am folding the laundry neatly.	Estoy doblando la ropa ordenadamente.
+She is studying for her science fair project.	Ella esta estudiando para su proyecto de feria de ciencias.
+We are decorating the backyard for a party.	Estamos decorando el patio trasero para una fiesta.
+He is washing the car in the driveway.	El esta lavando el coche en el camino de entrada.
+The cat is chasing a laser beam.	El gato esta persiguiendo un rayo laser.
+I am writing a poem about the ocean.	Estoy escribiendo un poema sobre el oceano.
+She is making a sandwich for lunch.	Ella esta haciendo un sandwich para el almuerzo.
+We are planning a weekend getaway.	Estamos planeando una escapada de fin de semana.
+He is reading a mystery thriller novel.	El esta leyendo una novela de suspense y misterio.
+The sky is turning orange and purple.	El cielo se esta poniendo naranja y purpura.
+I am learning to play the flute.	Estoy aprendiendo a tocar la flauta.
+She is brushing her hair before school.	Ella esta cepillandose el cabello antes de ir a la escuela.
+We are having a family game night.	Estamos teniendo una noche de juegos en familia.
+He is practicing his soccer skills.	El esta practicando sus habilidades de futbol.
+The cat is napping in the sunbeam.	El gato esta durmiendo en el rayo de sol.
+I am drinking a glass of milk.	Estoy bebiendo un vaso de leche.
+She is knitting a pair of mittens.	Ella esta tejiendo un par de mitones.
+We are making a pie for dessert.	Estamos haciendo un pastel para el postre.
+He is cleaning the garage.	El esta limpiando el garaje.
+The dog is playing with a chew toy.	El perro esta jugando con un juguete para masticar.
+I am learning to cook Thai food.	Estoy aprendiendo a cocinar comida tailandesa.
+She is organizing her desk.	Ella esta organizando su escritorio.
+We are going to the concert tonight.	Vamos al concierto esta noche.
+He is practicing his writing.	El esta practicando su escritura.
+The water is splashing in the fountain.	El agua esta salpicando en la fuente.
+I am folding the laundry after washing.	Estoy doblando la ropa despues de lavar.
+She is studying for her spelling test.	Ella esta estudiando para su prueba de ortografia.
+We are decorating the cake with icing.	Estamos decorando el pastel con glaseado.
+He is washing his face before bed.	El esta lavandose la cara antes de dormir.
+The cat is playing with a ribbon.	El gato esta jugando con una cinta.
+I am writing a letter to my pen pal.	Estoy escribiendo una carta a mi amigo por correspondencia.
+She is making a smoothie for breakfast.	Ella esta haciendo un batido para el desayuno.
+We are planning a trip to the mountains.	Estamos planeando un viaje a las montanas.
+He is reading a biography of a scientist.	El esta leyendo una biografia de un cientifico.
+The sky is turning dark as the sun sets.	El cielo se esta oscureciendo mientras el sol se pone.
+I am learning to bake cookies.	Estoy aprendiendo a hornear galletas.
+She is brushing her dog's fur after a walk.	Ella esta cepillando el pelaje de su perro despues de una caminata.
+We are playing a game of Monopoly.	Estamos jugando un juego de Monopoly.
+He is practicing his public speaking skills.	El esta practicando sus habilidades de oratoria.
+The cat is watching the fish swim in the tank.	El gato esta observando a los peces nadar en la pecera.
+I am drinking a cup of coffee in the morning.	Estoy bebiendo una taza de cafe por la manana.
+She is knitting a sweater for the winter.	Ella esta tejiendo un sueter para el invierno.
+We are making pizza for dinner tonight.	Estamos haciendo pizza para la cena esta noche.
+He is cleaning the windows in the living room.	El esta limpiando las ventanas de la sala.
+The dog is running around in the park.	El perro esta corriendo en el parque.
+I am learning to speak Japanese.	Estoy aprendiendo a hablar japones.
+She is organizing her art supplies.	Ella esta organizando sus materiales de arte.
+We are going to the zoo this weekend.	Vamos al zoologico este fin de semana.
+He is practicing his violin for the concert.	El esta practicando su violin para el concierto.
+The water is flowing peacefully in the stream.	El agua esta fluyendo pacificamente en el arroyo.
+I am folding the laundry and putting it away.	Estoy doblando la ropa y guardandola.
+She is studying for her English exam.	Ella esta estudiando para su examen de ingles.
+We are decorating the living room for the holidays.	Estamos decorando la sala para las fiestas.
+He is washing his clothes at the laundromat.	El esta lavando su ropa en la lavanderia.
+The cat is playing with a toy mouse.	El gato esta jugando con un raton de juguete.
+I am writing a poem about the stars.	Estoy escribiendo un poema sobre las estrellas.
+She is making a cake for her birthday.	Ella esta haciendo un pastel para su cumpleanos.
+We are planning a surprise party for our friend.	Estamos planeando una fiesta sorpresa para nuestro amigo.
+He is reading a science fiction novel.	El esta leyendo una novela de ciencia ficcion.
+The sky is clear and the stars are shining.	El cielo esta despejado y las estrellas estan brillando.
+I am learning to bake a cake from scratch.	Estoy aprendiendo a hornear un pastel desde cero.
+She is brushing her teeth before going to bed.	Ella esta cepillandose los dientes antes de ir a dormir.
+We are having a family movie night.	Estamos teniendo una noche de peliculas en familia.
+He is practicing his guitar for the performance.	El esta practicando su guitarra para la actuacion.
+The cat is napping on the windowsill.	El gato esta durmiendo en el alfeizar de la ventana.
+I am drinking a glass of orange juice.	Estoy bebiendo un vaso de jugo de naranja.
+She is knitting a blanket for her baby.	Ella esta tejiendo una manta para su bebe.
+We are making tacos for dinner.	Estamos haciendo tacos para la cena.
+He is cleaning the backyard.	El esta limpiando el patio trasero.
+The dog is playing with a frisbee in the park.	El perro esta jugando con un frisbee en el parque.
+I am learning to cook Indian food.	Estoy aprendiendo a cocinar comida india.
+She is organizing her closet.	Ella esta organizando su armario.
+We are going to the movies tonight.	Vamos al cine esta noche.
+He is practicing his drawing skills.	El esta practicando sus habilidades de dibujo.
+The water is splashing in the pool.	El agua esta salpicando en la piscina.
+I am folding the towels after washing.	Estoy doblando las toallas despues de lavar.
+She is studying for her history test.	Ella esta estudiando para su examen de historia.
+We are decorating the patio with lights.	Estamos decorando el patio con luces.
+He is washing his car in the driveway.	El esta lavando su coche en la entrada.
+The cat is playing with a piece of string.	El gato esta jugando con un pedazo de cuerda.
+I am writing a story for my class.	Estoy escribiendo una historia para mi clase.
+She is making a salad for lunch.	Ella esta haciendo una ensalada para el almuerzo.
+We are planning a trip to the beach.	Estamos planeando un viaje a la playa.
+He is reading a book about space.	El esta leyendo un libro sobre el espacio.
+The sky is turning dark as the sun sets.	El cielo se esta oscureciendo mientras el sol se pone.
+I am learning to bake muffins.	Estoy aprendiendo a hornear magdalenas.
+She is brushing her dog's fur.	Ella esta cepillando el pelaje de su perro.
+We are playing a game of checkers.	Estamos jugando un juego de damas.
+He is practicing his lines for the play.	El esta practicando sus lineas para la obra.
+The cat is watching the birds from the window.	El gato esta observando a los pajaros desde la ventana.
+I am drinking a glass of water.	Estoy bebiendo un vaso de agua.
+She is knitting a hat for her friend.	Ella esta tejiendo un gorro para su amiga.
+We are making spaghetti for dinner.	Estamos haciendo espaguetis para la cena.
+He is cleaning the basement.	El esta limpiando el sotano.
+The dog is playing with a ball.	El perro esta jugando con una pelota.
+I am learning to speak French.	Estoy aprendiendo a hablar frances.
+She is organizing her makeup collection.	Ella esta organizando su coleccion de maquillaje.
+We are going to the park for a picnic.	Vamos al parque para un picnic.
+He is practicing his skateboarding tricks.	El esta practicando sus trucos de monopatin.
+The water is flowing gently in the river.	El agua esta fluyendo suavemente en el rio.
+I am folding the clothes and putting them away.	Estoy doblando la ropa y guardandola.
+She is studying for her chemistry exam.	Ella esta estudiando para su examen de quimica.
+We are decorating the Christmas tree.	Estamos decorando el arbol de Navidad.
+He is washing the dishes after dinner.	El esta lavando los platos despues de la cena.
+The cat is playing with a feather toy.	El gato esta jugando con un juguete de plumas.
+I am writing a letter to my friend.	Estoy escribiendo una carta a mi amigo.
+She is making a smoothie for breakfast.	Ella esta haciendo un batido para el desayuno.
+We are planning a trip to the mountains.	Estamos planeando un viaje a las montanas.
+He is reading a biography of a famous author.	El esta leyendo una biografia de un autor famoso.
+The sky is clear and the sun is shining.	El cielo esta despejado y el sol esta brillando.
+I am learning to bake bread from scratch.	Estoy aprendiendo a hornear pan desde cero.
+She is brushing her hair before going to school.	Ella esta cepillandose el cabello antes de ir a la escuela.
+We are having a game night with friends.	Estamos teniendo una noche de juegos con amigos.
+He is practicing his drumming skills.	El esta practicando sus habilidades de bateria.
+The cat is napping on the sofa.	El gato esta durmiendo en el sofa.
+I am drinking a cup of coffee in the morning.	Estoy bebiendo una taza de cafe por la manana.
+She is knitting a scarf for her friend.	Ella esta tejiendo una bufanda para su amiga.
+We are making breakfast together.	Estamos haciendo el desayuno juntos.
+He is cleaning the living room.	El esta limpiando la sala.
+The dog is playing with a stick.	El perro esta jugando con un palo.
+I am learning to cook Mexican food.	Estoy aprendiendo a cocinar comida mexicana.
+She is organizing her jewelry.	Ella esta organizando sus joyas.
+We are going to the theater to see a play.	Vamos al teatro a ver una obra.
+He is practicing his dance moves.	El esta practicando sus movimientos de baile.
+The water is calm and clear.	El agua esta tranquila y clara.
+I am folding the laundry and putting it away.	Estoy doblando la ropa y guardandola.
+She is studying for her biology test.	Ella esta estudiando para su examen de biologia.
+We are decorating the house for Halloween.	Estamos decorando la casa para Halloween.
+He is washing his hands before dinner.	El esta lavandose las manos antes de la cena.
+The cat is playing with a toy mouse.	El gato esta jugando con un raton de juguete.
+I am writing a poem about the sunset.	Estoy escribiendo un poema sobre el atardecer.
+She is making a cake for her mom's birthday.	Ella esta haciendo un pastel para el cumpleanos de su mama.
+We are planning a surprise party for our friend.	Estamos planeando una fiesta sorpresa para nuestro amigo.
+He is reading a novel by his favorite author.	El esta leyendo una novela de su autor favorito.
+The sky is turning pink as the sun rises.	El cielo se esta poniendo rosa mientras sale el sol.
+I am learning to bake cupcakes.	Estoy aprendiendo a hornear cupcakes.
+She is brushing her dog's fur after a walk.	Ella esta cepillando el pelaje de su perro despues de una caminata.
+We are playing a game of Scrabble.	Estamos jugando un juego de Scrabble.
+He is practicing his speech for the presentation.	El esta practicando su discurso para la presentacion.
+The cat is watching the fish swim in the tank.	El gato esta mirando a los peces nadar en la pecera.
+I am drinking a glass of lemonade.	Estoy bebiendo un vaso de limonada.
+She is knitting a baby blanket for her friend.	Ella esta tejiendo una manta para bebe para su amiga.
+We are making cookies for dessert.	Estamos haciendo galletas para el postre.
+He is cleaning the windows in the living room.	El esta limpiando las ventanas de la sala.
+The dog is running around in the backyard.	El perro esta corriendo en el patio trasero.
+I am learning to speak Spanish.	Estoy aprendiendo a hablar espanol.
+She is organizing her art supplies.	Ella esta organizando sus materiales de arte.
+We are going to the zoo this weekend.	Vamos al zoologico este fin de semana.
+He is practicing his violin for the concert.	El esta practicando su violin para el concierto.
+The water is flowing peacefully in the stream.	El agua esta fluyendo pacificamente en el arroyo.
+I am folding the laundry and putting it away.	Estoy doblando la ropa y guardandola.
+She is studying for her English exam.	Ella esta estudiando para su examen de ingles.
+We are decorating the living room for the holidays.	Estamos decorando la sala para las fiestas.
+He is washing his clothes at the laundromat.	El esta lavando su ropa en la lavanderia.
+The cat is playing with a toy mouse.	El gato esta jugando con un raton de juguete.
+I am writing a poem about the stars.	Estoy escribiendo un poema sobre las estrellas.
+She is making a cake for her birthday.	Ella esta haciendo un pastel para su cumpleanos.
+We are planning a surprise party for our friend.	Estamos planeando una fiesta sorpresa para nuestro amigo.
+He is reading a science fiction novel.	El esta leyendo una novela de ciencia ficcion.
+The sky is clear and the stars are shining.	El cielo esta despejado y las estrellas estan brillando.
+I am learning to bake a cake from scratch.	Estoy aprendiendo a hornear un pastel desde cero.
+She is brushing her teeth before going to bed.	Ella esta cepillandose los dientes antes de ir a dormir.
+We are having a family movie night.	Estamos teniendo una noche de peliculas en familia.
+He is practicing his guitar for the performance.	El esta practicando su guitarra para la actuacion.
+The cat is napping on the windowsill.	El gato esta durmiendo en el alfeizar de la ventana.
+I am drinking a glass of orange juice.	Estoy bebiendo un vaso de jugo de naranja.
+She is knitting a blanket for her baby.	Ella esta tejiendo una manta para su bebe.
+We are making tacos for dinner.	Estamos haciendo tacos para la cena.
+I like animals.	Me gustan los animales.

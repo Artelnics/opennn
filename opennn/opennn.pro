@@ -60,7 +60,7 @@ HEADERS += \
     kmeans.h \
     numerical_differentiation.h \
     config.h \
-    strings.h \
+    strings_utilities.h \
     images.h \
     statistics.h \
     descriptives.h \
@@ -146,7 +146,7 @@ SOURCES += \
     multihead_attention_layer.cpp \
     kmeans.cpp \
     numerical_differentiation.cpp \
-    strings.cpp \
+    strings_utilities.cpp \
     images.cpp \
     tensors.cpp \
     statistics.cpp \

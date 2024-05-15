@@ -73,19 +73,24 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(layers_number - 1));
-    
-    /// @todo What is this? It should be already calculated. 
         
     probabilistic_layer_3d_back_propagation->targets = targets;
+    
+    Tensor<type, 2>& errors = back_propagation.errors;
+    Tensor<type, 2>& predictions = back_propagation.predictions;
+    Tensor<bool, 2>& matches = back_propagation.matches;
+    Tensor<bool, 2>& mask = back_propagation.mask;
+    bool& built_mask = back_propagation.built_mask;
+    
+    Tensor<type, 0> cross_entropy_error;
 
-    /// @todo Can we remove this?
+    if (!built_mask)
+    {
+        mask.device(*thread_pool_device) = targets != targets.constant(0);
+        built_mask = true;
+    }
 
-    Tensor<type, 2> errors(batch_samples_number, outputs_number);
- 
-    Tensor<type, 0> cross_entropy_error;   
-
-    /// @todo Can we do this in matrix form? 
-    /// @todo put targets.dimension(0) explictly
+    const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
 
     #pragma omp parallel for
 
@@ -93,30 +98,26 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
         for (Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
+    errors.device(*thread_pool_device) = errors * mask.cast<type>();
+
     cross_entropy_error.device(*thread_pool_device) = errors.sum();
 
-    back_propagation.error = cross_entropy_error(0)/type(batch_samples_number * outputs_number);
+    back_propagation.error = cross_entropy_error(0) / mask_sum(0);
 
     // Masked accuracy
-
-    /// @todo
-
-    Tensor<type, 2> predictions(batch_samples_number, outputs_number);
     
     predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
 
-    /// @todo
-
-    Tensor<bool, 2> matches(batch_samples_number, outputs_number);
-
     matches.device(*thread_pool_device) = predictions == targets;
+    
+    matches.device(*thread_pool_device) = matches && mask;
 
     Tensor<type, 0> total_matches;
 
-    total_matches.device(*thread_pool_device) = matches.cast<type>().sum();
+    total_matches.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
 
-    back_propagation.accuracy = total_matches(0) / type(batch_samples_number * outputs_number);
-
+    back_propagation.accuracy = total_matches(0);
+    
     if (isnan(back_propagation.error)) throw runtime_error("Error is NAN");
 }
 
