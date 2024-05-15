@@ -269,7 +269,7 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     synaptic_weights.resize(new_inputs_depth, new_neurons_number);
 
-    set_parameters_random();
+    set_parameters_glorot();
 
     activation_function = new_activation_function;
 
@@ -291,6 +291,8 @@ void PerceptronLayer3D::set_default()
     display = true;
 
     layer_type = Type::Perceptron3D;
+
+    dropout_rate = 0;
 }
 
 

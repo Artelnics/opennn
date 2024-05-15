@@ -180,7 +180,7 @@ namespace opennn
 #include "word_bag.h"
 
 #include "tensors.h"
-#include "strings.h"
+#include "strings_utilities.h"
 
 // TinyXml includes
 
