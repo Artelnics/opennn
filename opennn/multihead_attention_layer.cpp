@@ -292,6 +292,8 @@ void MultiheadAttentionLayer::set_default()
     display = true;
 
     layer_type = Type::MultiheadAttention;
+
+    dropout_rate = 0;
 }
 
 

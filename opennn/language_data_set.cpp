@@ -2065,7 +2065,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             if (j < line_tokens.size() && token_counter < max_completion_length + 1)
             {
                 word = line_tokens(j);
-
+                
                 wordpiece_entry = completion_vocabulary_map.find(word);
 
                 if (wordpiece_entry != completion_vocabulary_map.end())
@@ -2088,7 +2088,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                     wordpiece = word.substr(0, wordpiece_length);
                     wordpiece_entry = completion_vocabulary_map.find(wordpiece);
 
-                    if (wordpiece_entry != context_vocabulary_map.end())
+                    if (wordpiece_entry != completion_vocabulary_map.end())
                     {
                         completion_row(token_counter) = wordpiece_entry->second;
                         token_counter++;

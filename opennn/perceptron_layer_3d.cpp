@@ -291,6 +291,8 @@ void PerceptronLayer3D::set_default()
     display = true;
 
     layer_type = Type::Perceptron3D;
+
+    dropout_rate = 0;
 }
 
 

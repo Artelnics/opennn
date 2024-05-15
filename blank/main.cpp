@@ -45,14 +45,14 @@ int main()
         //language_data_set.set_data_source_path("data/example2.txt");
         //language_data_set.set_data_source_path("data/PTtoEN_dataset.txt");
         //language_data_set.set_data_source_path("data/PTtoEN_1000samples.txt");
-        //language_data_set.set_data_source_path("data/ENtoES.txt");
-        language_data_set.set_data_source_path("data/three_letter_combinations_with_spaces.txt");
+        language_data_set.set_data_source_path("data/ENtoES.txt");
+        //language_data_set.set_data_source_path("data/three_letter_combinations_with_spaces.txt");
         //language_data_set.set_data_source_path("data/modified_three_letter_combinations_with_spaces_one_third.txt");
 
         language_data_set.set_text_separator(DataSet::Separator::Tab);
 
-        language_data_set.set_context_vocabulary_path("data/alphabet_vocab.txt");
-        language_data_set.set_completion_vocabulary_path("data/alphabet_vocab.txt");
+        language_data_set.set_context_vocabulary_path("data/en_simple_vocab.txt");
+        language_data_set.set_completion_vocabulary_path("data/es_simple_vocab.txt");
         const bool imported_vocabulary = true;
 
         language_data_set.read_txt_language_model();
@@ -65,18 +65,23 @@ int main()
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         Index context_dimension = language_data_set.get_context_vocabulary_size();
         
-        /*
+        
         Index number_of_layers = 2;
-        Index depth = 64;
-        Index perceptron_depth = 128;
-        Index heads_number = 6;
-        */
+        Index depth = 32;
+        Index perceptron_depth = 64;
+        Index heads_number = 4;
+
+        /*
+        Index number_of_layers = 4;
+        Index depth = 128;
+        Index perceptron_depth = 512;
+        Index heads_number = 8;
         
         Index number_of_layers = 1;
         Index depth = 4;
         Index perceptron_depth = 12;
         Index heads_number = 2;
-        
+        */
 
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
@@ -91,7 +96,7 @@ int main()
         */
 
         //transformer.set_parameters_constant(1);
-     /*
+     
         Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
         Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
 
@@ -123,27 +128,27 @@ int main()
         string input;
         string output;
 
-        //input = "He likes to paint.";
+        input = "He is sleeping.";
         //input = "Era preto ou branco.";
-        input = "a a b";
+        //input = "a a b";
         output = transformer.calculate_outputs(input, imported_vocabulary);
         
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
         
-        //nput = "She is studying.";
+        input = "She is studying hard.";
         //input = "E posso dizer-vos, a nossa agenda esta lotada.";
-        input = "a l e";
+        //input = "a l e";
         output = transformer.calculate_outputs(input, imported_vocabulary);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
 
-        //input = "The dog is hungry.";
+        input = "The dog is barking.";
         //input = "E posso dizer-vos, era preto ou branco.";
-        input = "o d v";
+        //input = "o d v";
         output = transformer.calculate_outputs(input, imported_vocabulary);
 
         cout << "Input: " << input << endl;
