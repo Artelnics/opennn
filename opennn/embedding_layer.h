@@ -140,7 +140,7 @@ protected:
 
     // MEMBERS
 
-    /// Input dimension (i.e. number of values input can take or vocabulary size)
+    /// Input dimension (i.e. number of values input can take, or vocabulary size)
     /// @todo change this to something that is not confusing?
 
     Index inputs_dimension;

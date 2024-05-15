@@ -78,6 +78,10 @@ struct BackPropagation
     Tensor<type, 1> regularization_gradient;
 
     type accuracy = type(0);
+    Tensor<type, 2> predictions;
+    Tensor<bool, 2> matches;
+    Tensor<bool, 2> mask;
+    bool built_mask = false;
 };
 
 }

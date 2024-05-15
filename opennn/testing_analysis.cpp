@@ -1367,7 +1367,7 @@ type TestingAnalysis::calculate_Wilcoxon_parameter(const type& x, const type& y)
 
 
 /// Returns a matrix with the values of a ROC curve for a binary classification problem.
-/// The number of raw_variables is three. The third column contains the decision threshold.
+/// The number of raw_variables is three. The third raw_variable contains the decision threshold.
 /// The number of rows is one more than the number of outputs if the number of outputs is lower than 100
 /// or 50 in other case.
 /// @param targets Testing target data.

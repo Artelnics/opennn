@@ -1620,7 +1620,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 */
 
     // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1
-    if(false)
+    if(true)
     {
         bool is_training = true;
 
@@ -1730,11 +1730,10 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        batch.print();
 //        system("pause");
 
-        Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
-        convolutional_layer_inputs_dimensions(0) = input_rows_number;
-        convolutional_layer_inputs_dimensions(1) = input_raw_variables_number;
-        convolutional_layer_inputs_dimensions(2) = input_channels_number;
-        convolutional_layer_inputs_dimensions(3) = images_number;
+        dimensions convolutional_layer_inputs_dimensions({input_rows_number,
+                                                         input_raw_variables_number,
+                                                         input_channels_number,
+                                                         images_number});
 
         NeuralNetwork neural_network;
 
@@ -1743,15 +1742,30 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         const Index kernels_channels_number = input_channels_number;
         const Index kernels_number = 2;
 
-        Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
-        convolutional_layer_kernels_dimensions(0) = kernels_rows_number;
-        convolutional_layer_kernels_dimensions(1) = kernels_raw_variables_number;
-        convolutional_layer_kernels_dimensions(2) = kernels_channels_number;
-        convolutional_layer_kernels_dimensions(3) = kernels_number;
+        dimensions convolutional_layer_kernels_dimensions({kernels_rows_number,
+                                                          kernels_raw_variables_number,
+                                                          kernels_channels_number,
+                                                          kernels_number});
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
         convolutional_layer->set_parameters_random();
+
+        dimensions convolutional_layer1_outputs_dimensions = convolutional_layer->get_outputs_dimensions();
+
+        dimensions convolutional_layer2_inputs_dimensions({convolutional_layer1_outputs_dimensions[0],
+                                                           convolutional_layer1_outputs_dimensions[1],
+                                                           convolutional_layer1_outputs_dimensions[2],
+                                                           images_number});
+
+        dimensions convolutional_layer2_kernels_dimensions({kernels_rows_number,
+                                                          kernels_raw_variables_number,
+                                                          convolutional_layer1_outputs_dimensions[2],
+                                                          kernels_number});
+
+        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer2_inputs_dimensions, convolutional_layer2_kernels_dimensions);
+
+        convolutional_layer_2->set_parameters_random();
 
         dimensions flatten_layer_inputs_dimensions({input_rows_number-kernels_rows_number+1,
                                                     input_raw_variables_number-kernels_raw_variables_number+1,
@@ -1771,6 +1785,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         cout << "Perceptron parameters: " << perceptron_layer->get_parameters() << endl;
 
         neural_network.add_layer(convolutional_layer);
+        neural_network.add_layer(convolutional_layer_2);
         neural_network.add_layer(flatten_layer);
         neural_network.add_layer(perceptron_layer);
 
@@ -1805,7 +1820,7 @@ cout << "After back propagation" << endl;
     }
 
     // Pooling layer
-    if(true)
+    if(false)
     {
         bool is_training = true;
 
@@ -1915,11 +1930,7 @@ cout << "After back propagation" << endl;
 //        batch.print();
 //        system("pause");
 
-        Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
-        convolutional_layer_inputs_dimensions(0) = input_rows_number;
-        convolutional_layer_inputs_dimensions(1) = input_raw_variables_number;
-        convolutional_layer_inputs_dimensions(2) = input_channels_number;
-        convolutional_layer_inputs_dimensions(3) = images_number;
+        dimensions convolutional_layer_inputs_dimensions({input_rows_number, input_raw_variables_number, input_channels_number, images_number});
 
         NeuralNetwork neural_network;
 
@@ -1928,11 +1939,7 @@ cout << "After back propagation" << endl;
         const Index kernels_channels_number = input_channels_number;
         const Index kernels_number = 2;
 
-        Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
-        convolutional_layer_kernels_dimensions(0) = kernels_rows_number;
-        convolutional_layer_kernels_dimensions(1) = kernels_raw_variables_number;
-        convolutional_layer_kernels_dimensions(2) = kernels_channels_number;
-        convolutional_layer_kernels_dimensions(3) = kernels_number;
+        dimensions convolutional_layer_kernels_dimensions({kernels_rows_number,kernels_raw_variables_number, kernels_channels_number, kernels_number});
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 

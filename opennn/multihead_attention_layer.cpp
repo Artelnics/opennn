@@ -292,6 +292,8 @@ void MultiheadAttentionLayer::set_default()
     display = true;
 
     layer_type = Type::MultiheadAttention;
+
+    dropout_rate = 0;
 }
 
 
@@ -430,7 +432,7 @@ void MultiheadAttentionLayer::set_weights()
     projection_weights.resize(weights_depth, depth, heads_number);
     projection_biases.resize(depth);
 
-    set_parameters_random();
+    set_parameters_glorot();
 }
 
 
@@ -638,7 +640,7 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 
             TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data, context_size, input_size);
 
-            sample_attention_scores.device(*thread_pool_device) = sample_attention_scores + causal_mask;
+            sample_attention_scores.device(*thread_pool_device) += causal_mask;
         }
     }
 }
@@ -756,27 +758,35 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& v
 void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 {
    
-    const Index batch_samples_number = attention_scores.dimension(0);
+    const Index batch_samples_number = attention_scores.dimension(2);
 
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
+    type* entry_data;
     type random = 0;
-
+    
+#pragma omp parallel for
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
-/*
-        for(Index )
+        for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
-            TensorMap<Tensor<type, 2>> matrix(attention_scores.data() + neuron_index * batch_samples_number * inputs_number,
-                batch_samples_number, inputs_number);
+            for (Index position_index = 0; position_index < input_size; position_index++)
+            {
+                entry_data = attention_scores.data()
+                             + position_index * context_size
+                             + sample_index * input_size * context_size
+                             + head_index * batch_samples_number * input_size * context_size;
 
-            random = calculate_random_uniform((type)0, (type)1);
+                TensorMap<Tensor<type, 1>> entry(entry_data, context_size);
 
-            random < dropout_rate ? matrix.setZero()
-                : matrix = matrix * scaling_factor;
+                random = calculate_random_uniform((type)0, (type)1);
+
+                random < dropout_rate ? entry.setZero()
+                    : entry = entry * scaling_factor;
+            }
         }
-*/
     }
+    
 }
 
 
@@ -1075,7 +1085,6 @@ void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions
                 += sample_query_derivatives.contract(head_query_weights, A_BT);
 
             // CONTEXT DERIVATIVES
-
             context_derivatives.chip(sample_index, 0).device(*thread_pool_device) 
                 += sample_key_derivatives.contract(head_key_weights, A_BT)
                 + sample_value_derivatives.contract(head_value_weights, A_BT);
