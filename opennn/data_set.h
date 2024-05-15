@@ -149,7 +149,7 @@ public:
 
     enum class VariableUse{Id, Input, Target, Time, Unused, Context};
 
-    /// This enumeration represents the data type of a column
+    /// This enumeration represents the data type of a raw_variable
     /// (numeric, binary, categorical or time).
 
     enum class RawVariableType{Numeric, Binary, Categorical, DateTime, Constant};
@@ -297,7 +297,6 @@ public:
     Tensor<string, 1> get_used_raw_variables_names() const;
 
     RawVariableType get_raw_variable_type(const Index& index) const {return raw_variables[index].type;}
-    string get_raw_variable_type_string(const RawVariableType&) const;
 
     VariableUse get_raw_variable_use(const Index&) const;
     Tensor<VariableUse, 1> get_raw_variables_uses() const;
@@ -420,6 +419,8 @@ public:
     const string& get_missing_values_label() const;
 
     static Tensor<string, 1> get_default_raw_variables_names(const Index&);
+    static string get_raw_variable_type_string(const RawVariableType&);
+    static string get_raw_variable_use_string(const VariableUse&);
 
     static Scaler get_scaling_unscaling_method(const string&);
 
@@ -885,6 +886,10 @@ protected:
 };
 
 }
+
+#define STRINGIFY_ENUM(x) #x
+
+#define ENUM_TO_STRING(x) STRINGIFY_ENUM(x)
 
 #endif
 

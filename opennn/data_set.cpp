@@ -111,6 +111,7 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 
 DataSet::DataSet(const string& data_source_path, const char& separator, const bool& has_raw_variables_names, const Codification& data_codification)
 {
+    cout << "This construictor" << endl;
     set(data_source_path, separator, has_raw_variables_names, data_codification);
 }
 
@@ -133,7 +134,7 @@ const bool& DataSet::get_display() const
 }
 
 
-/// Column default constructor
+/// raw_variable default constructor
 
 DataSet::RawVariable::RawVariable()
 {
@@ -147,7 +148,7 @@ DataSet::RawVariable::RawVariable()
 }
 
 
-/// Column default constructor
+/// raw_variable default constructor
 
 DataSet::RawVariable::RawVariable(const string& new_name,
                         const VariableUse& new_raw_variable_use,
@@ -206,8 +207,8 @@ void DataSet::RawVariable::set_scaler(const string& new_scaler)
 }
 
 
-/// Sets the use of the column and of the categories.
-/// @param new_raw_variable_use New use of the column.
+/// Sets the use of the raw_variable and of the categories.
+/// @param new_raw_variable_use New use of the raw_variable.
 
 void DataSet::RawVariable::set_use(const VariableUse& new_raw_variable_use)
 {
@@ -220,8 +221,8 @@ void DataSet::RawVariable::set_use(const VariableUse& new_raw_variable_use)
 }
 
 
-/// Sets the use of the column and of the categories.
-/// @param new_raw_variable_use New use of the column in string format.
+/// Sets the use of the raw_variable and of the categories.
+/// @param new_raw_variable_use New use of the raw_variable in string format.
 
 void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
 {
@@ -247,15 +248,15 @@ void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_use(const string&) method.\n"
-               << "Unknown column use: " << new_raw_variable_use << "\n";
+               << "Unknown raw_variable use: " << new_raw_variable_use << "\n";
 
         throw runtime_error(buffer.str());
     }
 }
 
 
-/// Sets the column type.
-/// @param new_raw_variable_type Column type in string format.
+/// Sets the raw_variable type.
+/// @param new_raw_variable_type raw_variable type in string format.
 
 void DataSet::RawVariable::set_type(const string& new_raw_variable_type)
 {
@@ -284,8 +285,8 @@ void DataSet::RawVariable::set_type(const string& new_raw_variable_type)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void Column::set_type(const string&) method.\n"
-               << "Column type not valid (" << new_raw_variable_type << ").\n";
+               << "void raw_variable::set_type(const string&) method.\n"
+               << "raw_variable type not valid (" << new_raw_variable_type << ").\n";
 
         throw runtime_error(buffer.str());
 
@@ -293,7 +294,7 @@ void DataSet::RawVariable::set_type(const string& new_raw_variable_type)
 }
 
 
-/// Adds a category to the categories vector of this column.
+/// Adds a category to the categories vector of this raw_variable.
 /// It also adds a default use for the category
 /// @param new_category String that contains the name of the new category
 
@@ -359,7 +360,7 @@ void DataSet::RawVariable::set_categories_uses(const Tensor<string, 1>& new_cate
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void Column::set_categories_uses(const Tensor<string, 1>&) method.\n"
+                   << "void raw_variable::set_categories_uses(const Tensor<string, 1>&) method.\n"
                    << "Category use not valid (" << new_categories_uses(i) << ").\n";
 
             throw runtime_error(buffer.str());
@@ -388,7 +389,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
     if(!name_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Name element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -408,7 +409,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
     if(!scaler_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Scaler element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -421,15 +422,15 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
         set_scaler(new_scaler);
     }
 
-    // Column use
+    // raw_variable use
 
-    const tinyxml2::XMLElement* raw_variable_use_element = column_document.FirstChildElement("ColumnUse");
+    const tinyxml2::XMLElement* raw_variable_use_element = column_document.FirstChildElement("RawVariableUse");
 
     if(!raw_variable_use_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Column use element is nullptr.\n";
+               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "raw_variable use element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
@@ -448,7 +449,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
     if(!type_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Type element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -469,7 +470,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
         if(!categories_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Categories element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -489,7 +490,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
         if(!categories_uses_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Categories uses element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -536,9 +537,9 @@ void DataSet::RawVariable::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Column use
+    // raw_variable use
 
-    file_stream.OpenElement("ColumnUse");
+    file_stream.OpenElement("RawVariableUse");
 
     switch(raw_variable_use)
     {
@@ -634,7 +635,7 @@ void DataSet::RawVariable::print() const
 {
     cout << "Name: " << name << endl;
 
-    cout << "Column use: ";
+    cout << "raw_variable use: ";
 
     switch(raw_variable_use)
     {
@@ -662,7 +663,7 @@ void DataSet::RawVariable::print() const
         break;
     }
 
-    cout << "Column type: ";
+    cout << "raw_variable type: ";
 
     switch(type)
     {
@@ -1864,7 +1865,7 @@ void DataSet::set_raw_variables(const Tensor<RawVariable, 1>& new_raw_variables)
 
 
 /// This method sets the n raw_variables of the data_set by default,
-/// i.e. until column n-1 are Input and column n is Target.
+/// i.e. until raw_variable n-1 are Input and raw_variable n is Target.
 
 void DataSet::set_default_raw_variables_uses()
 {
@@ -1925,9 +1926,9 @@ void DataSet::set_default_raw_variables_names()
 }
 
 
-/// Sets the name of a single column.
-/// @param index Index of column.
-/// @param new_use Use for that column.
+/// Sets the name of a single raw_variable.
+/// @param index Index of raw_variable.
+/// @param new_use Use for that raw_variable.
 
 void DataSet::set_raw_variable_name(const Index& raw_variable_index, const string& new_name)
 {
@@ -1944,32 +1945,7 @@ DataSet::VariableUse DataSet::get_numeric_variable_use(const Index& index) const
 }
 
 
-string DataSet::get_raw_variable_type_string(const RawVariableType& column_type) const
-{
-    switch(column_type)
-    {
-    case RawVariableType::Numeric:
-        return "Numeric";
-
-    case RawVariableType::Constant:
-        return "Constant";
-
-    case RawVariableType::Binary:
-        return "Binary";
-
-    case RawVariableType::Categorical:
-        return "Categorical";
-
-    case RawVariableType::DateTime:
-        return "DateTime";
-
-    default:
-        return "";
-    }
-}
-
-
-/// Returns a vector containing the use of the column, without taking into account the categories.
+/// Returns a vector containing the use of the raw_variable, without taking into account the categories.
 
 DataSet::VariableUse DataSet::get_raw_variable_use(const Index&  index) const
 {
@@ -1994,7 +1970,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_raw_variables_uses() const
 }
 
 
-/// Returns a vector containing the use of each column, including the categories.
+/// Returns a vector containing the use of each raw_variable, including the categories.
 /// The size of the vector is equal to the number of variables.
 
 Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
@@ -3256,7 +3232,7 @@ void DataSet::set_raw_variables_types(const Tensor<string, 1>& new_raw_variable_
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_all_raw_variable_types(const Tensor<ColumnType, 1>&) method.\n"
-               << "Size of column types (" << new_raw_variable_types_size << ") must be equal to raw_variables size (" << raw_variables.size() << "). \n";
+               << "Size of raw_variable types (" << new_raw_variable_types_size << ") must be equal to raw_variables size (" << raw_variables.size() << "). \n";
 
         throw runtime_error(buffer.str());
     }
@@ -3339,9 +3315,9 @@ void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variable
 }
 
 
-/// Sets the use of a single column.
-/// @param index Index of column.
-/// @param new_use Use for that column.
+/// Sets the use of a single raw_variable.
+/// @param index Index of raw_variable.
+/// @param new_use Use for that raw_variable.
 
 void DataSet::set_raw_variable_use(const Index& index, const VariableUse& new_use)
 {
@@ -3361,9 +3337,9 @@ void DataSet::set_raw_variables_unused(const Tensor<Index, 1>& unused_raw_variab
     }
 }
 
-/// Sets the use of a single column.
-/// @param name Name of column.
-/// @param new_use Use for that column.
+/// Sets the use of a single raw_variable.
+/// @param name Name of raw_variable.
+/// @param new_use Use for that raw_variable.
 
 void DataSet::set_raw_variable_use(const string& name, const VariableUse& new_use)
 {
@@ -3589,7 +3565,7 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers) method.\n"
-               << "Size of column scalers(" << new_scalers.size() << ") has to be the same as raw_variables numbers(" << raw_variables_number << ").\n";
+               << "Size of raw_variable scalers(" << new_scalers.size() << ") has to be the same as raw_variables numbers(" << raw_variables_number << ").\n";
 
         throw runtime_error(buffer.str());
     }
@@ -3757,66 +3733,66 @@ void DataSet::check_constant_raw_variables()
 
     Index variable_index = 0;
 
-    for(Index column = 0; column < get_raw_variables_number(); column++)
+    for(Index raw_variable = 0; raw_variable < get_raw_variables_number(); raw_variable++)
     {
-        if(raw_variables(column).type == RawVariableType::Numeric)
+        if(raw_variables(raw_variable).type == RawVariableType::Numeric)
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
             if(is_constant(numeric_column))
             {
-                raw_variables(column).type = RawVariableType::Constant;
-                raw_variables(column).raw_variable_use = VariableUse::Unused;
+                raw_variables(raw_variable).type = RawVariableType::Constant;
+                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
             }
             variable_index++;
         }
-        else if(raw_variables(column).type == RawVariableType::DateTime)
+        else if(raw_variables(raw_variable).type == RawVariableType::DateTime)
         {
-            raw_variables(column).raw_variable_use = VariableUse::Unused;
+            raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
             variable_index++;
         }
-        else if(raw_variables(column).type == RawVariableType::Constant)
+        else if(raw_variables(raw_variable).type == RawVariableType::Constant)
         {
             variable_index++;
         }
-        else if(raw_variables(column).type == RawVariableType::Binary)
+        else if(raw_variables(raw_variable).type == RawVariableType::Binary)
         {
-            if(raw_variables(column).get_categories_number() == 1)
+            if(raw_variables(raw_variable).get_categories_number() == 1)
             {
-                raw_variables(column).type = RawVariableType::Constant;
-                raw_variables(column).raw_variable_use = VariableUse::Unused;
+                raw_variables(raw_variable).type = RawVariableType::Constant;
+                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
             }
 
             variable_index++;
         }
-        else if(raw_variables(column).type == RawVariableType::Categorical)
+        else if(raw_variables(raw_variable).type == RawVariableType::Categorical)
         {
-            if(raw_variables(column).get_categories_number() == 1)
+            if(raw_variables(raw_variable).get_categories_number() == 1)
             {
-                raw_variables(column).type = RawVariableType::Constant;
-                raw_variables(column).raw_variable_use = VariableUse::Unused;
+                raw_variables(raw_variable).type = RawVariableType::Constant;
+                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
             }
 
-            variable_index += raw_variables(column).get_categories_number();
+            variable_index += raw_variables(raw_variable).get_categories_number();
         }
     }
 }
 
 
-Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type, 1>& column) const
+Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type, 1>& raw_variable) const
 {
-    const Index rows_number = column.dimension(0);
+    const Index rows_number = raw_variable.dimension(0);
 
     Tensor<type, 2> new_column(rows_number , 2);
     new_column.setZero();
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(abs(column(i) - type(1)) < type(NUMERIC_LIMITS_MIN))
+        if(abs(raw_variable(i) - type(1)) < type(NUMERIC_LIMITS_MIN))
         {
             new_column(i,1) = type(1);
         }
-        else if(abs(column(i)) < type(NUMERIC_LIMITS_MIN))
+        else if(abs(raw_variable(i)) < type(NUMERIC_LIMITS_MIN))
         {
             new_column(i,0) = type(1);
         }
@@ -4356,7 +4332,7 @@ Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) cons
 }
 
 
-/// Returns the index from the column with a given name,
+/// Returns the index from the raw_variable with a given name,
 /// @param raw_variables_names Names of the raw_variables we want to know the index.
 
 Tensor<Index, 1> DataSet::get_raw_variables_index(const Tensor<string, 1>& raw_variables_names) const
@@ -4371,8 +4347,8 @@ Tensor<Index, 1> DataSet::get_raw_variables_index(const Tensor<string, 1>& raw_v
     return raw_variables_index;
 }
 
-/// Returns the index of the column with the given name.
-/// @param column_name Name of the column to be found.
+/// Returns the index of the raw_variable with the given name.
+/// @param column_name Name of the raw_variable to be found.
 
 Index DataSet::get_raw_variable_index(const string& column_name) const
 {
@@ -4393,7 +4369,7 @@ Index DataSet::get_raw_variable_index(const string& column_name) const
 }
 
 
-/// Returns the index of the column to which a variable index belongs.
+/// Returns the index of the raw_variable to which a variable index belongs.
 /// @param variable_index Index of the variable to be found.
 
 Index DataSet::get_raw_variable_index(const Index& variable_index) const
@@ -4489,9 +4465,9 @@ Tensor<Index, 1> DataSet::get_categorical_to_indices(const Index& raw_variable_i
 }
 
 
-/// Returns the data from the data set column with a given index,
-/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
-/// @param raw_variable_index Index of the column.
+/// Returns the data from the data set raw_variable with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not(respectively).
+/// @param raw_variable_index Index of the raw_variable.
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index) const
 {
@@ -4534,7 +4510,7 @@ void DataSet::add_sample(const Tensor<type, 1>& sample)
 
     if(sample.dimension(0) != data.dimension(1))
     {
-        throw runtime_error("Sample size doesn't match data column size.");
+        throw runtime_error("Sample size doesn't match data raw_variable size.");
     }
 
     Tensor<type, 2> new_data(current_samples + 1, data.dimension(1));
@@ -4555,7 +4531,7 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
 
     if(raw_variables[column_index_start].type != RawVariableType::Categorical)
     {
-        throw runtime_error("The specified column is not of categorical type.");
+        throw runtime_error("The specified raw_variable is not of categorical type.");
     }
 
 
@@ -4571,9 +4547,9 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
 }
 
 
-/// Returns the data from the data set column with a given index,
-/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not, respectively.
-/// @param raw_variable_index Index of the column.
+/// Returns the data from the data set raw_variable with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not, respectively.
+/// @param raw_variable_index Index of the raw_variable.
 
 Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected_raw_variable_indices) const
 {
@@ -4597,9 +4573,9 @@ Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected
 }
 
 
-/// Returns the data from the data set column with a given index,
-/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
-/// @param raw_variable_index Index of the column.
+/// Returns the data from the data set raw_variable with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not(respectively).
+/// @param raw_variable_index Index of the raw_variable.
 /// @param rows_indices Rows of the indices.
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const Tensor<Index, 1>& rows_indices) const
@@ -4608,9 +4584,9 @@ Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, 
 }
 
 
-/// Returns the data from the data set column with a given name,
-/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
-/// @param column_name Name of the column.
+/// Returns the data from the data set raw_variable with a given name,
+/// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not(respectively).
+/// @param column_name Name of the raw_variable.
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const string& column_name) const
 {
@@ -4697,16 +4673,16 @@ Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Te
 {
     const Index samples_indices_size = samples_indices.size();
 
-    Tensor<type, 1 > column(samples_indices_size);
+    Tensor<type, 1 > raw_variable(samples_indices_size);
 
     for(Index i = 0; i < samples_indices_size; i++)
     {
         Index sample_index = samples_indices(i);
 
-        column(i) = data(sample_index, variable_index);
+        raw_variable(i) = data(sample_index, variable_index);
     }
 
-    return column;
+    return raw_variable;
 }
 
 
@@ -4769,16 +4745,16 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
 
     const Index samples_indices_size = samples_indices.size();
 
-    Tensor<type, 1 > column(samples_indices_size);
+    Tensor<type, 1 > raw_variable(samples_indices_size);
 
     for(Index i = 0; i < samples_indices_size; i++)
     {
         Index sample_index = samples_indices(i);
 
-        column(i) = data(sample_index, variable_index(0));
+        raw_variable(i) = data(sample_index, variable_index(0));
     }
 
-    return column;
+    return raw_variable;
 }
 
 
@@ -5564,14 +5540,14 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
             }
             else
             {
-                Tensor<type, 1> column(used_samples_number);
+                Tensor<type, 1> raw_variable(used_samples_number);
 
                 for(Index j = 0; j < used_samples_number; j++)
                 {
-                    column(j) = data(used_samples_indices(j), variable_index);
+                    raw_variable(j) = data(used_samples_indices(j), variable_index);
                 }
 
-                histograms(used_raw_variable_index) = histogram(column, bins_number);
+                histograms(used_raw_variable_index) = histogram(raw_variable, bins_number);
 
                 variable_index++;
                 used_raw_variable_index++;
@@ -7105,7 +7081,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // raw_variables names
     {
-        file_stream.OpenElement("raw_variablesNames");
+        file_stream.OpenElement("RawVariablesNames");
 
         buffer.str("");
         buffer << has_raw_variables_names;
@@ -7154,11 +7130,11 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // raw_variables
 
-    file_stream.OpenElement("raw_variables");
+    file_stream.OpenElement("RawVariables");
 
     // raw_variables number
     {
-        file_stream.OpenElement("raw_variablesNumber");
+        file_stream.OpenElement("RawVariablesNumber");
 
         buffer.str("");
         buffer << get_raw_variables_number();
@@ -7175,7 +7151,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         for(Index i = 0; i < raw_variables_number; i++)
         {
-            file_stream.OpenElement("Column");
+            file_stream.OpenElement("RawVariable");
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
@@ -7386,6 +7362,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data set element
 
+    cout << " -- Data set element --" << endl;
+
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
@@ -7397,7 +7375,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Data set element --" << endl;
+
+
+
     // Data file
+
+    cout << " -- Data File --" << endl;
 
     const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
 
@@ -7410,12 +7394,22 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Data File --" << endl;
+
+
+
     // Data file name
+
+    cout << " -- Data File Name --" << endl;
 
     const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
 
+    cout << "-- wall -- 1" << endl;
+
     if(!data_file_name_element)
     {
+        cout << "-- inside not(data_file_name_element) --" << endl;
+
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "DataSourcePath element is nullptr.\n";
@@ -7423,14 +7417,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << "-- wall -- 2" << endl;
+
     if(data_file_name_element->GetText())
     {
+        cout << "-- inside data_file_name_element->GetText() --" << endl;
+
         const string new_data_file_name = data_file_name_element->GetText();
 
         set_data_source_path(new_data_file_name);
     }
 
+    cout << "-- wall -- 3" << endl;
+
+    cout << " -- Data File Name --" << endl;
+
+
+
     // Separator
+
+    cout << " -- Separator --" << endl;
 
     const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
 
@@ -7452,9 +7458,15 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_separator("Comma");
     }
 
+    cout << " -- Separator --" << endl;
+
+
+
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("raw_variablesNames");
+    cout << " -- Has raw_variables names --" << endl;
+
+    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("RawVariablesNames");
 
     if(raw_variables_names_element)
     {
@@ -7470,7 +7482,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Has raw_variables names --" << endl;
+
+
+
     // Rows labels
+
+    cout << " -- Rows labels --" << endl;
 
     const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
 
@@ -7488,7 +7506,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Rows labels --" << endl;
+
+
+
     // Missing values label
+
+    cout << " -- Missing values label --" << endl;
 
     const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
 
@@ -7510,7 +7534,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_label("NA");
     }
 
+    cout << " -- Missing values label --" << endl;
+
+
+
     // Codification
+
+    cout << " -- Codification --" << endl;
 
     const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
 
@@ -7524,9 +7554,15 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Codification --" << endl;
+
+
+
     // raw_variables
 
-    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("raw_variables");
+    cout << " -- raw_variables --" << endl;
+
+    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
     {
@@ -7537,9 +7573,15 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- raw_variables --" << endl;
+
+
+
     // raw_variables number
 
-    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("raw_variablesNumber");
+    cout << " -- raw_variables number --" << endl;
+
+    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     if(!raw_variables_number_element)
     {
@@ -7559,7 +7601,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_raw_variables_number(new_raw_variables_number);
     }
 
+    cout << " -- raw_variables number --" << endl;
+
+
+
     // raw_variables
+
+    cout << " -- raw_variables --" << endl;
 
     const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
@@ -7567,14 +7615,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         for(Index i = 0; i < new_raw_variables_number; i++)
         {
-            const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
+            const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("RawVariable");
             start_element = column_element;
 
             if(column_element->Attribute("Item") != to_string(i+1))
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
+                       << "raw_variable item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
                 throw runtime_error(buffer.str());
             }
@@ -7586,7 +7634,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(!name_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Name element is nullptr.\n";
 
                 throw runtime_error(buffer.str());
@@ -7619,15 +7667,15 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 raw_variables(i).set_scaler(new_scaler);
             }
 
-            // Column use
+            // raw_variable use
 
-            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("ColumnUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("RawVariableUse");
 
             if(!raw_variable_use_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Column use element is nullptr.\n";
+                       << "raw_variable use element is nullptr.\n";
 
                 throw runtime_error(buffer.str());
             }
@@ -7646,7 +7694,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(!type_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Type element is nullptr.\n";
 
                 throw runtime_error(buffer.str());
@@ -7667,7 +7715,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 if(!categories_element)
                 {
                     buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories element is nullptr.\n";
 
                     throw runtime_error(buffer.str());
@@ -7687,7 +7735,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 if(!categories_uses_element)
                 {
                     buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories uses element is nullptr.\n";
 
                     throw runtime_error(buffer.str());
@@ -7703,6 +7751,10 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- raw_variables --" << endl;
+
+
+    /**
 //    // Time series raw_variables
 
 //    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesraw_variables");
@@ -7750,7 +7802,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
 //                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series column item number (" << i+1 << ") does not match (" << time_series_raw_variable_element->Attribute("Item") << ").\n";
+//                           << "Time series raw_variable item number (" << i+1 << ") does not match (" << time_series_raw_variable_element->Attribute("Item") << ").\n";
 
 //                    throw runtime_error(buffer.str());
 //                }
@@ -7762,7 +7814,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                if(!time_series_name_element)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series name element is nullptr.\n";
 
 //                    throw runtime_error(buffer.str());
@@ -7795,15 +7847,15 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    time_series_raw_variables(i).set_scaler(time_series_new_scaler);
 //                }
 
-//                // Column use
+//                // raw_variable use
 
-//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("ColumnUse");
+//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("RawVariableUse");
 
 //                if(!time_series_raw_variable_use_element)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series column use element is nullptr.\n";
+//                           << "Time series raw_variable use element is nullptr.\n";
 
 //                    throw runtime_error(buffer.str());
 //                }
@@ -7822,7 +7874,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                if(!time_series_type_element)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series type element is nullptr.\n";
 
 //                    throw runtime_error(buffer.str());
@@ -7843,7 +7895,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    if(!time_series_categories_element)
 //                    {
 //                        buffer << "OpenNN Exception: DataSet class.\n"
-//                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories element is nullptr.\n";
 
 //                        throw runtime_error(buffer.str());
@@ -7863,7 +7915,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    if(!time_series_categories_uses_element)
 //                    {
 //                        buffer << "OpenNN Exception: DataSet class.\n"
-//                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories uses element is nullptr.\n";
 
 //                        throw runtime_error(buffer.str());
@@ -7879,8 +7931,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //            }
 //        }
 //    }
+    */
+
+
 
     // Rows label
+
+    cout << " -- Rows label --" << endl;
 
     if(has_rows_labels)
     {
@@ -7914,7 +7971,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Rows label --" << endl;
+
+
+
     // Samples
+
+    cout << " -- Samples --" << endl;
 
     const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
@@ -7927,7 +7990,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Samples --" << endl;
+
+
+
     // Samples number
+
+    cout << " -- Samples number --" << endl;
 
     const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
@@ -7949,7 +8018,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_training();
     }
 
+    cout << " -- Samples number --" << endl;
+
+
+
     // Samples uses
+
+    cout << " -- Samples uses --" << endl;
 
     const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
@@ -7967,7 +8042,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_samples_uses(get_tokens(samples_uses_element->GetText(), ' '));
     }
 
+    cout << " -- Samples uses --" << endl;
+
+
+
     // Missing values
+
+    cout << " -- Missing values --" << endl;
 
     const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
@@ -7980,7 +8061,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Missing values --" << endl;
+
+
+
     // Missing values method
+
+    cout << " -- Missing method --" << endl;
 
     const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
@@ -7998,7 +8085,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_method(missing_values_method_element->GetText());
     }
 
+    cout << " -- Missing method --" << endl;
+
+
+
     // Missing values number
+
+    cout << " -- Missing values number --" << endl;
 
     const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
 
@@ -8062,7 +8155,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Missing values number --" << endl;
+
+
+
     // Preview data
+
+    cout << " -- Preview data --" << endl;
 
     const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
@@ -8075,7 +8174,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Preview data --" << endl;
+
+
+
     // Preview size
+
+    cout << " -- Preview size --" << endl;
 
     const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
@@ -8097,7 +8202,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
     }
 
+    cout << " -- Preview size --" << endl;
+
+
+
     // Preview data
+
+    cout << " -- Preview data --" << endl;
 
     start_element = preview_size_element;
 
@@ -8121,7 +8232,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Preview data --" << endl;
+
+
+
     // Display
+
+    cout << " -- Display --" << endl;
 
     const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
@@ -8138,6 +8255,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             cerr << e.what() << endl;
         }
     }
+
+    cout << " -- Display --" << endl;
 }
 
 
@@ -9326,6 +9445,52 @@ Tensor<string, 1> DataSet::get_default_raw_variables_names(const Index& raw_vari
     return raw_variables_names;
 }
 
+string DataSet::get_raw_variable_type_string(const RawVariableType& raw_variable_type)
+{
+    switch(raw_variable_type)
+    {
+    case RawVariableType::Numeric:
+        return "Numeric";
+
+    case RawVariableType::Constant:
+        return "Constant";
+
+    case RawVariableType::Binary:
+        return "Binary";
+
+    case RawVariableType::Categorical:
+        return "Categorical";
+
+    case RawVariableType::DateTime:
+        return "DateTime";
+
+    default:
+        return "";
+    }
+}
+
+
+string DataSet::get_raw_variable_use_string(const VariableUse& raw_variable_use)
+{
+
+    switch(raw_variable_use)
+    {
+    case VariableUse::Input:
+        return "Input";
+
+    case VariableUse::Target:
+        return "Target";
+
+    case VariableUse::Time:
+        return "Time";
+
+    case VariableUse::Unused:
+        return "Unused";
+
+    default:
+        return "";
+    }
+}
 
 void DataSet::read_csv_1()
 {
@@ -9921,7 +10086,7 @@ void DataSet::read_csv_2_complete()
             const string message =
                     "Sample " + to_string(lines_count+1) + " error:\n"
                                                            "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of raw_variables (" + to_string(raw_raw_variables_number) + ").\n"
-                                                                                                                                                                                    "Please check the format of the data file (e.g: Use of commas both as decimal and column separator)";
+                                                                                                                                                                                    "Please check the format of the data file (e.g: Use of commas both as decimal and raw_variable separator)";
 
             throw runtime_error(message);
         }

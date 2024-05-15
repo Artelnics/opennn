@@ -9,6 +9,7 @@
 #include "neural_network_forward_propagation.h"
 #include "loss_index.h"
 #include "back_propagation.h"
+#include "cross_entropy_error_3d.h"
 
 namespace opennn
 {
@@ -972,9 +973,9 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 
     const Index parameters_number = neural_network_p->get_parameters_number();
 
-    const Index outputs_number = neural_network_p->get_outputs_number();
-
     const dimensions output_dimensions = neural_network_p->get_outputs_dimensions();
+
+    const Index outputs_number = output_dimensions[0];
 
     set_layers_outputs_indices(neural_network_p->get_layers_inputs_indices());
 
@@ -1005,6 +1006,13 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
     }
 
     output_deltas.resize(size);
+
+    if (is_instance_of<CrossEntropyError3D>(loss_index))
+    {
+        predictions.resize(batch_samples_number, outputs_number);
+        matches.resize(batch_samples_number, outputs_number);
+        mask.resize(batch_samples_number, outputs_number);
+    }
 }
 
 

@@ -223,8 +223,8 @@ void EmbeddingLayer::set_parameters_random()
 {
     /// @todo Avoid loops
 
-    const type minimum = type(-0.2);
-    const type maximum = type(0.2);
+    const type minimum = type(-0.05);
+    const type maximum = type(0.05);
 
 //    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
 
@@ -234,9 +234,9 @@ void EmbeddingLayer::set_parameters_random()
     
     #pragma omp parallel for
 
-    for(Index i = 1; i < inputs_dimension + 1; i++)
+    for(Index i = 1; i < embedding_weights.dimension(0); i++)
     {
-        for(Index j = 0; j < depth; j++)
+        for(Index j = 0; j < embedding_weights.dimension(1); j++)
         {
             const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
@@ -290,9 +290,6 @@ Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_
 }
 */
 
-
-/// Looks up embedding of an input row, by passing its one-hot encoding through a perceptron layer (that corresponds to the lookup table)
-/// Saves the embedding matrix of the row in outputs_data of the given perceptron layer forward propagation structure
 
 void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {

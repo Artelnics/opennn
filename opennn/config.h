@@ -26,7 +26,6 @@
 #include <algorithm>
 #include <execution>
 
-
 //#define OPENNN_CUDA
 #ifdef OPENNN_CUDA
 
