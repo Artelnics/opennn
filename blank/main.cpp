@@ -97,11 +97,11 @@ int main()
 
         //transformer.set_parameters_constant(1);
      
-        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+//        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+//        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
 
-        transformer.set_input_vocabulary(completion_vocabulary);
-        transformer.set_context_vocabulary(context_vocabulary);
+//        transformer.set_input_vocabulary(completion_vocabulary);
+//        transformer.set_context_vocabulary(context_vocabulary);
 
         CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
         cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
