@@ -1301,7 +1301,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    for(Index i = 0; i < inputs_dimensions.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(inputs_dimensions.size()); i++)
     {
         buffer << inputs_dimensions[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
@@ -1320,7 +1320,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    for(Index i = 0; i < inputs_dimensions.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(inputs_dimensions.size()); i++)
     {
         buffer << get_outputs_dimensions()[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
