@@ -420,6 +420,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
+    cout << "hello back propagate convolutional " << endl;
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],
@@ -431,6 +433,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                                             deltas_pair(0).second[1],
                                             inputs_pair(0).second[2],
                                             deltas_pair(0).second[3]);
+
+    cout << "deltas: " << endl << deltas << endl;
 
     // Convolutional layer
 
@@ -480,6 +484,11 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     const Index kernel_synaptic_weights_number = kernels_channels_number*kernels_rows_number*kernels_columns_number;
 
     Tensor<type, 0> current_sum;
+
+    cout << "Inputs: " << endl << inputs << endl;
+    cout << "error_combinations_derivatives: " << endl << error_combinations_derivatives << endl;
+
+    system("pause");
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
@@ -532,7 +541,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    input_derivatives = error_combinations_derivatives;
+    input_derivatives = deltas * convolutional_layer_forward_propagation->activations_derivatives;;
 
     /// @todo calculate input derivatives (= deltas for previous layer)
 }
