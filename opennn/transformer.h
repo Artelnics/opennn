@@ -64,6 +64,8 @@ public:
     void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
 
+    void load_transformer(const string&);
+
 protected:
 
     string name = "transformer";

@@ -24,9 +24,6 @@
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
-#include "multihead_attention_layer.h"
-#include "perceptron_layer_3d.h"
-#include "probabilistic_layer_3d.h"
 
 namespace opennn
 {
@@ -129,8 +126,8 @@ public:
 
     /// @todo
 
-    //    void from_XML(const tinyxml2::XMLDocument&) final;
-    //    void write_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"

@@ -28,9 +28,6 @@ namespace opennn
     struct AdditionLayer3DForwardPropagation;
     struct AdditionLayer3DBackPropagation;
 
-    struct NormalizationLayer3DForwardPropagation;
-    struct NormalizationLayer3DBackPropagation;
-
 #ifdef OPENNN_CUDA
     struct AdditionLayer3DForwardPropagationCuda;
     struct AdditionLayer3DBackPropagationCuda;

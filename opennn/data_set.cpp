@@ -1209,6 +1209,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     Index next_index = buffer_size;
     Index random_index = 0;
+    Index leftover_batch_samples = batch_size;
 
     // Heuristic cases for batch shuffling
 
@@ -1225,6 +1226,13 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
             if(i == batches_number-diff)
             {
                 Index buffer_index = 0;
+
+                for (Index j = leftover_batch_samples; j < batch_size; j++)
+                {
+                    batches(i - 1, j) = buffer(buffer_index);
+
+                    buffer_index++;
+                }
 
                 for(Index k = batches_number-diff; k < batches_number; k++)
                 {
@@ -1250,6 +1258,12 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                 buffer(random_index) = samples_indices(next_index);
 
                 next_index++;
+
+                if (next_index == samples_number)
+                {
+                    leftover_batch_samples = j + 1;
+                    break;
+                }
             }
         }
 
