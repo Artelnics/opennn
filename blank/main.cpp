@@ -41,18 +41,18 @@ int main()
         _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
         
         LanguageDataSet language_data_set;
-
-        language_data_set.set_data_source_path("data/language/ENtoES_medium.txt");
+        /*
+        language_data_set.set_data_source_path("data/language/ENtoES_large.txt");
         //language_data_set.set_data_source_path("data/three_letter_combinations_with_spaces.txt");
 
         language_data_set.set_text_separator(DataSet::Separator::Tab);
 
-        language_data_set.set_context_vocabulary_path("data/language/en_medium_vocab.txt");
-        language_data_set.set_completion_vocabulary_path("data/language/es_medium_vocab.txt");
+        language_data_set.set_context_vocabulary_path("data/language/en_large_vocab.txt");
+        language_data_set.set_completion_vocabulary_path("data/language/es_large_vocab.txt");
         const bool imported_vocabulary = true;
 
         language_data_set.read_txt_language_model();
-
+        
         //language_data_set.set_training();
         language_data_set.set_raw_variables_scalers(Scaler::NoScaling);
 
@@ -60,37 +60,36 @@ int main()
         Index context_length = language_data_set.get_context_length();
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         Index context_dimension = language_data_set.get_context_vocabulary_size();
-
         
-        Index number_of_layers = 2;
-        Index depth = 32;
-        Index perceptron_depth = 64;
-        Index heads_number = 2;
+        Index number_of_layers = 1;
+        Index depth = 128;
+        Index perceptron_depth = 256;
+        Index heads_number = 4;
 
         /*
         Index number_of_layers = 1;
         Index depth = 4;
         Index perceptron_depth = 12;
         Index heads_number = 2;
-        */
+        *
 
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
 
-        /*
         cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
+        /*
 
         for (Index i = 0; i < transformer.get_layers_number(); i++)
         {
             cout << "\t" << transformer.get_layers()(i)->get_name() << " parameters number: " << transformer.get_layers()(i)->get_parameters_number() << endl;
         }
-        */
+        *
      
-//        const Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-//        const Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
-
-//        transformer.set_input_vocabulary(completion_vocabulary);
-//        transformer.set_context_vocabulary(context_vocabulary);
+        const Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        const Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+        /*
+        transformer.set_input_vocabulary(completion_vocabulary);
+        transformer.set_context_vocabulary(context_vocabulary);
 
         CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
         cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
@@ -102,30 +101,50 @@ int main()
         optimization_algorithm.set_display(true);
         optimization_algorithm.set_display_period(1);
 
-        type training_accuracy_goal = type(0.95);
+        //type loss_goal = type(0.80);
+        type training_accuracy_goal = type(0.90);
 
+        //optimization_algorithm.set_loss_goal(loss_goal);
         optimization_algorithm.set_accuracy_goal(training_accuracy_goal);
         optimization_algorithm.set_maximum_epochs_number(10000);
         optimization_algorithm.set_maximum_time(3 * 86400);
-        optimization_algorithm.set_batch_samples_number(32);
+        optimization_algorithm.set_batch_samples_number(64);
 
         TrainingResults training_results = optimization_algorithm.perform_training();
+
+        transformer.save("data/language/ENtoES_model.xml");
+        */
+
+        Transformer transformer2;
+
+        transformer2.load_transformer("data/language/ENtoES_model.xml");
+
+        Tensor<string, 1> completion_vocabulary;
+        Tensor<string, 1> context_vocabulary;
+
+        language_data_set.import_vocabulary("data/language/es_large_vocab.txt", completion_vocabulary);
+        language_data_set.import_vocabulary("data/language/en_large_vocab.txt", context_vocabulary);
+
+        transformer2.set_input_vocabulary(completion_vocabulary);
+        transformer2.set_context_vocabulary(context_vocabulary);
+
+        const bool imported_vocabulary = true;
         
         cout << endl << "DEPLOYMENT:" << endl;
         string input;
         string output;
-
+        /*
         input = "He is playing soccer.";
         //input = "a a b";
-        output = transformer.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input, imported_vocabulary);
         
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
         
-        input = "She is studying for her test.";
+        input = "She is studying for her history test.";
         //input = "a l e";
-        output = transformer.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input, imported_vocabulary);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
@@ -133,20 +152,42 @@ int main()
 
         input = "The dog is barking.";
         //input = "o d v";
-        output = transformer.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input, imported_vocabulary);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
 
-        input = "The cat is learning.";
+        input = "The cat likes to sleep.";
         //input = "z y f";
-        output = transformer.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input, imported_vocabulary);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
 
+        input = "Tom took his friends out on a party Saturday night.";
+        //input = "z y f";
+        output = transformer2.calculate_outputs(input, imported_vocabulary);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+        */
+        while (true)
+        {
+            cout << "Input: ";
+            getline(cin, input);
+
+            if (input == "-Q")
+                break;
+
+            output = transformer2.calculate_outputs(input, imported_vocabulary);
+
+            cout << "Output: " << output << endl;
+            cout << endl;
+        }
+        
         cout << "Bye!" << endl;
 
         return 0;

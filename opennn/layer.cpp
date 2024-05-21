@@ -52,6 +52,9 @@ string Layer::get_type_string() const
     case Type::Perceptron:
         return "Perceptron";
 
+    case Type::Perceptron3D:
+        return "Perceptron3D";
+
     case Type::Bounding:
         return "Bounding";
 
@@ -60,6 +63,9 @@ string Layer::get_type_string() const
 
     case Type::Probabilistic:
         return "Probabilistic";
+
+    case Type::Probabilistic3D:
+        return "Probabilistic3D";
 
     case Type::Convolutional:
         return "Convolutional";
@@ -87,6 +93,18 @@ string Layer::get_type_string() const
 
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";
+
+    case Type::Addition3D:
+        return "Addition3D";
+
+    case Type::Normalization3D:
+        return "Normalization3D";
+
+    case Type::Embedding:
+        return "Embedding";
+
+    case Type::MultiheadAttention:
+        return "MultiheadAttention";
 
     default:
         return "Unkown type";

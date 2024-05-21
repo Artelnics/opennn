@@ -1665,7 +1665,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     file.close();
 
-    if (display) cout << "Data read succesfully..." << endl;
+    if (display) cout << "Data read successfully..." << endl;
 }
 
 
@@ -1737,17 +1737,19 @@ void LanguageDataSet::read_txt_language_model()
     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(context);
     const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess_language_documents(completion);
 
-    cout << "Calculating vocabularies..." << endl;
-
     bool imported_vocabulary = false;
 
     if (context_vocabulary_path.empty() || completion_vocabulary_path.empty())
     {
+        cout << "Calculating vocabularies..." << endl;
+
         context_vocabulary = calculate_vocabulary(context_tokens);
         completion_vocabulary = calculate_vocabulary(completion_tokens);
     }
     else
     {
+        cout << "Importing vocabularies..." << endl;
+
         imported_vocabulary = true;
         import_vocabulary(context_vocabulary_path, context_vocabulary);
         import_vocabulary(completion_vocabulary_path, completion_vocabulary);
@@ -1786,7 +1788,7 @@ void LanguageDataSet::read_txt_language_model()
 
     // @todo maybe context does NOT need start and end tokens
 
-    for(Index i  = type(0); i < max_context_length + 2; i++) /// there is start (=1) and end (=2) indicators
+    for(Index i  = type(0); i < max_context_length + 2; i++) /// there is start and end indicators
         file << "context_token_position_" << i << ";";
 
     for(Index i  = type(0); i < max_completion_length + 1; i++)
@@ -1810,10 +1812,10 @@ void LanguageDataSet::read_txt_language_model()
 
     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
-
+    
     if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
     else    write_data_file_wordpiece(file, context_tokens, completion_tokens);
-
+    
     file.close();
 
     data_source_path = transformed_data_path;
@@ -1961,7 +1963,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
     auto wordpiece_entry = context_vocabulary_map.find("");
     bool tokenized;
-    
+
     for (Index i = 0; i < entry_number; i++)
     {
         
@@ -2000,7 +2002,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                         tokenized = true;
                         break;
                     }
-                    
+
                     wordpiece = word.substr(0, wordpiece_length);
                     wordpiece_entry = context_vocabulary_map.find(wordpiece);
 
@@ -2030,6 +2032,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
+                if (token_counter > max_context_length + 1)    break;
                 if (j == line_tokens.size() || (token_counter == max_context_length + 1 && !line_ended))
                 {
                     context_row(token_counter) = 3; // end indicator
@@ -2038,7 +2041,6 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                 }
                 else
                 {
-                    if (token_counter > max_context_length + 1)    break;
                     context_row(token_counter) = type(0); // padding
                     token_counter++;
                 }
@@ -2114,6 +2116,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
+                if (token_counter > max_completion_length + 1)    break;
                 if (j == line_tokens.size() || (token_counter == max_completion_length + 1 && !line_ended))
                 {
                     completion_row(token_counter) = 3; // end indicator
@@ -2122,7 +2125,6 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                 }
                 else
                 {
-                    if (token_counter > max_context_length + 1)    break;
                     completion_row(token_counter) = 0; // padding
                     token_counter++;
                 }
