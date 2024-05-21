@@ -32,9 +32,6 @@ struct MultiheadAttentionLayerForwardPropagation;
 struct MultiheadAttentionLayerBackPropagation;
 struct MultiheadAttentionLayerBackPropagationLM;
 
-struct PerceptronLayer3DForwardPropagation;
-struct PerceptronLayer3DBackPropagation;
-
 #ifdef OPENNN_CUDA
     struct MultiheadAttentionLayerForwardPropagationCuda;
     struct MultiheadAttentionLayerBackPropagationCuda;
@@ -158,8 +155,8 @@ public:
 
     /// @todo
 
-    //void from_XML(const tinyxml2::XMLDocument&) final;
-    //void write_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
@@ -187,7 +184,7 @@ protected:
 
     /// Depth used in attention computation
 
-    Index weights_depth;
+    Index hidden_depth;
 
     // Scaling factor used for attention computation in each head
 
@@ -216,7 +213,6 @@ protected:
     // Causal mask matrix
 
     Tensor<type, 2> causal_mask;
-    bool built_causal_mask = false;
 
     /// Dropout rate
 

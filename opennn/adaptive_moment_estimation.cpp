@@ -399,11 +399,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(is_classification_model)    training_accuracy = type(0);
         
         //optimization_data.iteration = 1;
-        
+
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             // Data set
-
+            
             training_batch.fill(training_batches.chip(iteration, 0),
                                 input_variables_indices,
                                 target_variables_indices,
@@ -429,8 +429,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             update_parameters(training_back_propagation, optimization_data);
             
-            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
+            if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
+        cout << endl;
         
         // Loss
 
@@ -445,7 +446,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             
             selection_error = type(0);
             if(is_classification_model)    selection_accuracy = type(0);
-            
+
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
                 // Data set
@@ -454,7 +455,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      input_variables_indices,
                                      target_variables_indices,
                                      context_variables_indices);
-
+                
                 // Neural network
                 
                 inputs_pair = selection_batch.get_inputs_pair();
@@ -471,7 +472,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 
                 selection_error += selection_back_propagation.error;
                 if(is_classification_model)    selection_accuracy += selection_back_propagation.accuracy;
-
+                
             }
 
             selection_error /= type(selection_batches_number);
