@@ -306,6 +306,12 @@ void PerceptronLayer3D::set_name(const string& new_layer_name)
 /// It also initializes the new synaptic weights at random.
 /// @param new_inputs_number Number of layer inputs.
 
+void PerceptronLayer3D::set_inputs_number(const Index& new_inputs_number)
+{
+    inputs_number = new_inputs_number;
+}
+
+
 void PerceptronLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
     const Index neurons_number = get_neurons_number();
@@ -823,6 +829,24 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
     }
 
+    // Inputs depth
+
+    const tinyxml2::XMLElement* inputs_depth_element = perceptron_layer_element->FirstChildElement("InputsDepth");
+
+    if(!inputs_depth_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "InputsDepth element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if(inputs_depth_element->GetText())
+    {
+        set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
+    }
+
     // Neurons number
 
     const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
@@ -901,6 +925,16 @@ void PerceptronLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Inputs depth
+    file_stream.OpenElement("InputsDepth");
+
+    buffer.str("");
+    buffer << get_inputs_depth();
 
     file_stream.PushText(buffer.str().c_str());
 

@@ -285,7 +285,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
         start_indicator = 2;
         end_indicator = 3;
     }
-
+    
     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
 
     const Index batch_samples_number = 1;
@@ -293,7 +293,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     Tensor<type, 2> context(batch_samples_number, context_length);
     context.setZero();
     context(0) = start_indicator;
-
+    
     if (!imported_vocabulary)    tokenize_whitespace(context_tokens(0), context);
     else    tokenize_wordpiece(context_tokens(0), context);
     
@@ -302,7 +302,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     input(0) = start_indicator;
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
-
+    
     pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
     pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
 
@@ -497,6 +497,21 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
             output_string << " " << current_prediction;
         }
     }
+}
+
+void Transformer::load_transformer(const string& path)
+{
+    cout << "Loading transformer model..." << endl;
+
+    load(path);
+
+    MultiheadAttentionLayer* cross_attention_layer = static_cast<MultiheadAttentionLayer*>(get_layer("cross_attention_1"));
+
+    const Index new_context_length = cross_attention_layer->get_context_size();
+    const Index new_input_length = cross_attention_layer->get_input_size();
+
+    context_length = new_context_length;
+    input_length = new_input_length;
 }
 
 

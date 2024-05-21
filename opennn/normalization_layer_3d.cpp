@@ -432,11 +432,11 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
-    // Perceptron layer
+    // Normalization layer
 
-    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("NormalizationLayer3D");
+    const tinyxml2::XMLElement* normalization_layer_element = document.FirstChildElement("NormalizationLayer3D");
 
-    if (!perceptron_layer_element)
+    if (!normalization_layer_element)
     {
         buffer << "OpenNN Exception: NormalizationLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -447,7 +447,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     // Layer name
 
-    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("LayerName");
+    const tinyxml2::XMLElement* layer_name_element = normalization_layer_element->FirstChildElement("LayerName");
 
     if (!layer_name_element)
     {
@@ -465,7 +465,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     // Inputs number
 
-    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
+    const tinyxml2::XMLElement* inputs_number_element = normalization_layer_element->FirstChildElement("InputsNumber");
 
     if (!inputs_number_element)
     {
@@ -481,40 +481,27 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
     }
 
-    // Neurons number
+    // Inputs depth
 
-    const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
+    const tinyxml2::XMLElement* inputs_depth_element = normalization_layer_element->FirstChildElement("InputsDepth");
 
-    if (!neurons_number_element)
+    if (!inputs_depth_element)
     {
         buffer << "OpenNN Exception: NormalizationLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "NeuronsNumber element is nullptr.\n";
+            << "InputsDepth element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
-    if (neurons_number_element->GetText())
+    if (inputs_depth_element->GetText())
     {
-        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
+        set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
     }
 
-    // Activation function
+    // Gammas
 
-    const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
-
-    if (!activation_function_element)
-    {
-        buffer << "OpenNN Exception: NormalizationLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "ActivationFunction element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
+    const tinyxml2::XMLElement* parameters_element = normalization_layer_element->FirstChildElement("Parameters");
 
     if (!parameters_element)
     {
@@ -528,17 +515,15 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     if (parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
-
         set_parameters(to_type_vector(parameters_string, ' '));
     }
 }
-
 
 void NormalizationLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    // Perceptron layer
+    // Normalization layer
 
     file_stream.OpenElement("NormalizationLayer3D");
 
@@ -559,12 +544,12 @@ void NormalizationLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Outputs number
+    // Inputs depth
 
-    file_stream.OpenElement("NeuronsNumber");
+    file_stream.OpenElement("InputsDepth");
 
     buffer.str("");
-    buffer << get_neurons_number();
+    buffer << get_inputs_depth();
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -590,10 +575,11 @@ void NormalizationLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Peceptron layer (end tag)
+    // Normalization layer (end tag)
 
     file_stream.CloseElement();
 }
+
 
 
 pair<type*, dimensions> NormalizationLayer3DForwardPropagation::get_outputs_pair() const

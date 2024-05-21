@@ -420,6 +420,218 @@ void EmbeddingLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
+void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    // Embedding layer
+
+    const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("EmbeddingLayer");
+
+    if (!embedding_layer_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "EmbeddingLayer element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    // Layer name
+
+    const tinyxml2::XMLElement* layer_name_element = embedding_layer_element->FirstChildElement("LayerName");
+
+    if (!layer_name_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "LayerName element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (layer_name_element->GetText())
+    {
+        set_name(layer_name_element->GetText());
+    }
+
+    // Input dimension
+
+    const tinyxml2::XMLElement* input_dimension_element = embedding_layer_element->FirstChildElement("InputDimension");
+
+    if (!input_dimension_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "InputDimension element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (input_dimension_element->GetText())
+    {
+        set_input_dim(Index(stoi(input_dimension_element->GetText())));
+    }
+
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = embedding_layer_element->FirstChildElement("InputsNumber");
+
+    if (!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "InputsNumber element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (inputs_number_element->GetText())
+    {
+        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
+    }
+
+    // Embedding depth
+
+    const tinyxml2::XMLElement* depth_element = embedding_layer_element->FirstChildElement("Depth");
+
+    if (!depth_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "Depth element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (depth_element->GetText())
+    {
+        set_depth(Index(stoi(depth_element->GetText())));
+    }
+
+    // Positional encoding
+
+    const tinyxml2::XMLElement* positional_encoding_element = embedding_layer_element->FirstChildElement("PositionalEncoding");
+
+    if (!positional_encoding_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "PositionalEncoding element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (positional_encoding_element->GetText())
+    {
+        positional_encoding = string(positional_encoding_element->GetText()) == "true";
+    }
+
+    // Embedding weights
+
+    const tinyxml2::XMLElement* parameters_element = embedding_layer_element->FirstChildElement("Parameters");
+
+    if (!parameters_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "Parameters element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (parameters_element->GetText())
+    {
+        const string parameters_string = parameters_element->GetText();
+        set_parameters(to_type_vector(parameters_string, ' '));
+    }
+}
+
+void EmbeddingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    // Embedding layer
+
+    file_stream.OpenElement("EmbeddingLayer");
+
+    // Layer name
+    file_stream.OpenElement("LayerName");
+    buffer.str("");
+    buffer << layer_name;
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
+
+    // Input dimension
+    file_stream.OpenElement("InputDimension");
+
+    buffer.str("");
+    buffer << get_input_dimension();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Embedding depth
+
+    file_stream.OpenElement("Depth");
+
+    buffer.str("");
+    buffer << get_depth();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Positional encoding
+
+    file_stream.OpenElement("PositionalEncoding");
+
+    buffer.str("");
+    buffer << (positional_encoding ? "true" : "false");
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+
+    const Tensor<type, 1> parameters = get_parameters();
+    const Index parameters_size = parameters.size();
+
+    for (Index i = 0; i < parameters_size; i++)
+    {
+        buffer << parameters(i);
+
+        if (i != (parameters_size - 1)) buffer << " ";
+    }
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Embedding layer (end tag)
+
+    file_stream.CloseElement();
+}
+
+
+
 pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() const
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
