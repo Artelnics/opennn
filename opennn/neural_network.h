@@ -125,6 +125,7 @@ public:
 
    Tensor<Layer*, 1> get_layers() const;
    Layer* get_layer(const Index&) const;
+   Layer* get_layer(const string&) const;
    Tensor<Layer*, 1> get_trainable_layers() const;
    Tensor<Index, 1> get_trainable_layers_indices() const;   
 

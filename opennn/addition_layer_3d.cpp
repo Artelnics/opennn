@@ -8,7 +8,6 @@
 
 
 #include "addition_layer_3d.h"
-#include "normalization_layer_3d.h"
 
 namespace opennn
 {
@@ -185,11 +184,11 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
-    // Perceptron layer
+    // Addition layer
 
-    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("AdditionLayer3D");
+    const tinyxml2::XMLElement* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
 
-    if (!perceptron_layer_element)
+    if (!addition_layer_element)
     {
         buffer << "OpenNN Exception: AdditionLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -200,7 +199,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     // Layer name
 
-    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("LayerName");
+    const tinyxml2::XMLElement* layer_name_element = addition_layer_element->FirstChildElement("LayerName");
 
     if (!layer_name_element)
     {
@@ -218,7 +217,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     // Inputs number
 
-    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
+    const tinyxml2::XMLElement* inputs_number_element = addition_layer_element->FirstChildElement("InputsNumber");
 
     if (!inputs_number_element)
     {
@@ -231,68 +230,33 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if (inputs_number_element->GetText())
     {
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
+        inputs_number = Index(stoi(inputs_number_element->GetText()));
     }
 
-    // Neurons number
+    // Inputs depth
 
-    const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
+    const tinyxml2::XMLElement* inputs_depth_element = addition_layer_element->FirstChildElement("InputsDepth");
 
-    if (!neurons_number_element)
+    if (!inputs_depth_element)
     {
         buffer << "OpenNN Exception: AdditionLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "NeuronsNumber element is nullptr.\n";
+            << "InputsDepth element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
-    if (neurons_number_element->GetText())
+    if (inputs_depth_element->GetText())
     {
-        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-    }
-
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
-
-    if (!activation_function_element)
-    {
-        buffer << "OpenNN Exception: AdditionLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "ActivationFunction element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
-
-    if (!parameters_element)
-    {
-        buffer << "OpenNN Exception: AdditionLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "Parameters element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if (parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-        /*
-        set_parameters(to_type_vector(parameters_string, ' '));
-        */
+        inputs_depth = Index(stoi(inputs_depth_element->GetText()));
     }
 }
-
 
 void AdditionLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    // Perceptron layer
+    // Addition layer
 
     file_stream.OpenElement("AdditionLayer3D");
 
@@ -313,41 +277,22 @@ void AdditionLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Outputs number
+    // Inputs depth
 
-    file_stream.OpenElement("NeuronsNumber");
+    file_stream.OpenElement("InputsDepth");
 
     buffer.str("");
-    buffer << get_neurons_number();
+    buffer << get_inputs_depth();
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for (Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if (i != (parameters_size - 1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Peceptron layer (end tag)
+    // Addition layer (end tag)
 
     file_stream.CloseElement();
 }
+
 
 
 pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() const

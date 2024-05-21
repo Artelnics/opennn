@@ -19,7 +19,7 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
                  const Tensor<Index, 1>& context_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
-
+    
     const Tensor<Index, 1>& input_variables_dimensions = data_set->get_input_variables_dimensions();
 
     if(input_variables_dimensions.size() == 1)

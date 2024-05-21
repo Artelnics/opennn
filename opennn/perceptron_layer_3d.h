@@ -111,6 +111,7 @@ public:
 
    // Architecture
 
+   void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;
 
