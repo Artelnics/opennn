@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "strings.h"
+#include "strings_utilities.h"
 #include "probabilistic_layer_3d.h"
 
 namespace opennn
@@ -223,7 +223,7 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_
 
     synaptic_weights.resize(new_inputs_depth, new_neurons_number);
 
-    set_parameters_random();
+    set_parameters_glorot();
 
     set_default();
 }
@@ -504,6 +504,28 @@ void ProbabilisticLayer3D::set_parameters_random()
 }
 
 
+/// Initializes the biases to zeroes and the synaptic weights with the Glorot Uniform initializer
+
+void ProbabilisticLayer3D::set_parameters_glorot()
+{
+    biases.setZero();
+    
+    const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
+
+    const type minimum = -limit;
+    const type maximum = limit;
+    
+#pragma omp parallel for
+
+    for (Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+
+        synaptic_weights(i) = minimum + (maximum - minimum) * random;
+    }
+}
+
+
 void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
 {
     const Index biases_number = get_biases_number();
@@ -523,7 +545,7 @@ void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, 
 
 void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                   Tensor<type, 3>& combinations) const
-{   
+{
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
     sum_matrices(thread_pool_device, biases, combinations);
@@ -555,7 +577,9 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
     
     calculate_combinations(inputs, outputs);
 
-    calculate_activations(outputs, outputs);
+    if (is_training)
+        calculate_activations(outputs, outputs);
+    //else competitive(outputs, outputs);
 }
 
 
@@ -584,6 +608,8 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
             static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
     const Tensor<type, 2>& targets = probabilistic_layer_3d_back_propagation->targets;
+    Tensor<type, 2>& mask = probabilistic_layer_3d_back_propagation->mask;
+    bool& built_mask = probabilistic_layer_3d_back_propagation->built_mask;
 
     Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
 
@@ -595,7 +621,15 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
     const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
     const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    calculate_error_combinations_derivatives(outputs, targets, error_combinations_derivatives);
+    if (!built_mask)
+    {
+        mask.device(*thread_pool_device) = (targets != targets.constant(0)).cast<type>();
+        const Tensor<type, 0> mask_sum = mask.sum();
+        mask.device(*thread_pool_device) = mask / mask_sum(0);
+        built_mask = true;
+    }
+
+    calculate_error_combinations_derivatives(outputs, targets, mask, error_combinations_derivatives);
 
     biases_derivatives.device(*thread_pool_device) 
         = error_combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
@@ -609,24 +643,24 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
 
 
 void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, 
-                                                                    const Tensor<type, 2>& targets,  
+                                                                    const Tensor<type, 2>& targets,
+                                                                    const Tensor<type, 2>& mask,
                                                                     Tensor<type, 3>& error_combinations_derivatives) const
 {
     const Index batch_samples_number = outputs.dimension(0);
+    const Index outputs_number = outputs.dimension(1);
 
     /// @todo Can we simplify this? For instance put the division in the last line somewhere else. 
 
     error_combinations_derivatives.device(*thread_pool_device) = outputs;
 
-    /// @todo write targets.dimension(0) explictly 
-
 #pragma omp parallel for
 
-    for (Index i = 0; i < targets.dimension(0); i++)
-        for (Index j = 0; j < targets.dimension(1); j++)
+    for (Index i = 0; i < batch_samples_number; i++)
+        for (Index j = 0; j < outputs_number; j++)
             error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
-    
-    error_combinations_derivatives.device(*thread_pool_device) = error_combinations_derivatives / type(batch_samples_number);
+
+    multiply_matrices(thread_pool_device, error_combinations_derivatives, mask);
 }
 
 
@@ -655,8 +689,150 @@ void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
 }
 
 
-/// Serializes the probabilistic layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
+void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    // Probabilistic layer
+
+    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer3D");
+
+    if (!probabilistic_layer_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "ProbabilisticLayer3D element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    // Layer name
+
+    const tinyxml2::XMLElement* layer_name_element = probabilistic_layer_element->FirstChildElement("LayerName");
+
+    if (!layer_name_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "LayerName element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (layer_name_element->GetText())
+    {
+        set_name(layer_name_element->GetText());
+    }
+
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = probabilistic_layer_element->FirstChildElement("InputsNumber");
+
+    if (!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "InputsNumber element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (inputs_number_element->GetText())
+    {
+        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
+    }
+
+    // Inputs depth
+
+    const tinyxml2::XMLElement* inputs_depth_element = probabilistic_layer_element->FirstChildElement("InputsDepth");
+
+    if (!inputs_depth_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "InputsDepth element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (inputs_depth_element->GetText())
+    {
+        set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
+    }
+
+    // Neurons number
+
+    const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
+
+    if (!neurons_number_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "NeuronsNumber element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (neurons_number_element->GetText())
+    {
+        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
+    }
+
+    // Decision threshold
+
+    const tinyxml2::XMLElement* decision_threshold_element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
+
+    if (!decision_threshold_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "DecisionThreshold element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (decision_threshold_element->GetText())
+    {
+        set_decision_threshold(type(stod(decision_threshold_element->GetText())));
+    }
+
+    // Activation function
+
+    const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
+
+    if (!activation_function_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "ActivationFunction element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (activation_function_element->GetText())
+    {
+        set_activation_function(activation_function_element->GetText());
+    }
+
+    // Parameters
+
+    const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
+
+    if (!parameters_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "Parameters element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (parameters_element->GetText())
+    {
+        const string parameters_string = parameters_element->GetText();
+        set_parameters(to_type_vector(parameters_string, ' '));
+    }
+}
 
 void ProbabilisticLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -666,12 +842,29 @@ void ProbabilisticLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("ProbabilisticLayer3D");
 
-    // Inputs number
+    // Layer name
+    file_stream.OpenElement("LayerName");
+    buffer.str("");
+    buffer << layer_name;
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
 
+    // Inputs number
     file_stream.OpenElement("InputsNumber");
 
     buffer.str("");
     buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Inputs depth
+
+    file_stream.OpenElement("InputsDepth");
+
+    buffer.str("");
+    buffer << get_inputs_depth();
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -688,15 +881,29 @@ void ProbabilisticLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Decision threshold
+
+    file_stream.OpenElement("DecisionThreshold");
+
+    buffer.str("");
+    buffer << get_decision_threshold();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     // Activation function
 
     file_stream.OpenElement("ActivationFunction");
 
-    file_stream.PushText(write_activation_function().c_str());
+    buffer.str("");
+    buffer << write_activation_function();
+
+    file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Parameters
+    // Biases
 
     file_stream.OpenElement("Parameters");
 
@@ -705,23 +912,12 @@ void ProbabilisticLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     const Tensor<type, 1> parameters = get_parameters();
     const Index parameters_size = parameters.size();
 
-    for(Index i = 0; i < parameters_size; i++)
+    for (Index i = 0; i < parameters_size; i++)
     {
         buffer << parameters(i);
 
-        if(i != (parameters_size-1)) buffer << " ";
+        if (i != (parameters_size - 1)) buffer << " ";
     }
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Decision threshold
-
-    file_stream.OpenElement("DecisionThreshold");
-
-    buffer.str("");
-    buffer << decision_threshold;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -732,143 +928,6 @@ void ProbabilisticLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this probabilistic layer object.
-/// @param document XML document containing the member data.
-
-void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
-{
-    ostringstream buffer;
-
-    // Probabilistic layer
-
-    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer3D");
-
-    if(!probabilistic_layer_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Probabilistic layer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = probabilistic_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-/*
-    Index new_inputs_number;
-
-    if(inputs_number_element->GetText())
-    {
-        new_inputs_number = Index(stoi(inputs_number_element->GetText()));
-    }
-*/
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Neurons number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-/*
-    Index new_neurons_number;
-
-    if(neurons_number_element->GetText())
-    {
-        new_neurons_number = Index(stoi(neurons_number_element->GetText()));
-    }
-
-    set(new_inputs_number, new_neurons_number);
-*/
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Activation function element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if(activation_function_element->GetText())
-    {
-        set_activation_function(activation_function_element->GetText());
-    }
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Parameters element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, ' '));
-    }
-
-    // Decision threshold
-
-    const tinyxml2::XMLElement* decision_threshold_element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
-
-    if(!decision_threshold_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Decision threshold element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if(decision_threshold_element->GetText())
-    {
-        set_decision_threshold(type(atof(decision_threshold_element->GetText())));
-    }
-
-    // Display
-
-    const tinyxml2::XMLElement* display_element = probabilistic_layer_element->FirstChildElement("Display");
-
-    if(display_element)
-    {
-        const string new_display_string = display_element->GetText();
-
-        try
-        {
-            set_display(new_display_string != "0");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-}
 
 
 pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair() const
@@ -914,6 +973,7 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
 
     targets.resize(batch_samples_number, inputs_number);
+    mask.resize(batch_samples_number, inputs_number);
 
     biases_derivatives.resize(neurons_number);
 

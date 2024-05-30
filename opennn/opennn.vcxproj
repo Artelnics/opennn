@@ -139,6 +139,7 @@
       <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <CCppSupport>Cpp17Support</CCppSupport>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
@@ -309,8 +310,8 @@
     <ClInclude Include="opennn.h" />
     <ClInclude Include="images.h" />
     <ClCompile Include="images.cpp" />
-    <ClInclude Include="strings.h" />
-    <ClCompile Include="strings.cpp" />
+    <ClInclude Include="strings_utilities.h" />
+    <ClCompile Include="strings_utilities.cpp" />
     <ClInclude Include="optimization_algorithm.h" />
     <ClCompile Include="optimization_algorithm.cpp" />
     <ClInclude Include="perceptron_layer.h" />

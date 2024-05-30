@@ -162,11 +162,11 @@ void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    Tensor<Index, 1> new_inputs_dimensions(4);
-    Tensor<Index, 1> new_kernels_dimensions(4);
+    dimensions new_inputs_dimensions(4);
+    dimensions new_kernels_dimensions(4);
 
-    new_inputs_dimensions.setValues({23, 64, 3, 1});
-    new_kernels_dimensions.setValues({3, 2, 1, 1});
+//    new_inputs_dimensions.setValues({23, 64, 3, 1});
+//    new_kernels_dimensions.setValues({3, 2, 1, 1});
 
     ConvolutionalLayer convolutional_layer(new_inputs_dimensions, new_kernels_dimensions);
 
@@ -213,11 +213,11 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     biases(1) = type(1.);
     biases(2) = type(2.);
 
-    Tensor<Index, 1> new_inputs_dimension(4);
-    Tensor<Index, 1> new_kernels_dimensions(4);
+    dimensions new_inputs_dimension(4);
+    dimensions new_kernels_dimensions(4);
 
-    new_inputs_dimension.setValues({rows_input, cols_input, channels,input_images});
-    new_kernels_dimensions.setValues({rows_kernel, cols_kernel,channels,input_kernels});
+    //new_inputs_dimension.setValues({rows_input, cols_input, channels,input_images});
+    //new_kernels_dimensions.setValues({rows_kernel, cols_kernel,channels,input_kernels});
 
     ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernels_dimensions);
 
@@ -910,11 +910,9 @@ void ConvolutionalLayerTest::test_insert_padding()
 
     inputs.setConstant(type(1));
 
-    Tensor<Index, 1> inputs_dimensions(4);
-    inputs_dimensions.setValues({rows_input, cols_input, channels, input_images});
+    dimensions inputs_dimensions({rows_input, cols_input, channels, input_images});
 
-    Tensor<Index, 1> kernels_dimensions(4);
-    kernels_dimensions.setValues({rows_kernel, cols_kernel, channels, input_kernels});
+    dimensions kernels_dimensions({rows_kernel, cols_kernel, channels, input_kernels});
 
     ConvolutionalLayer convolutional_layer(inputs_dimensions, kernels_dimensions);
 

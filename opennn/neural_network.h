@@ -125,12 +125,13 @@ public:
 
    Tensor<Layer*, 1> get_layers() const;
    Layer* get_layer(const Index&) const;
+   Layer* get_layer(const string&) const;
    Tensor<Layer*, 1> get_trainable_layers() const;
    Tensor<Index, 1> get_trainable_layers_indices() const;   
 
    Index get_layer_index(const string&) const;
 
-   Tensor<Tensor<Index, 1>, 1> get_layers_inputs_indices() const;
+   const Tensor<Tensor<Index, 1>, 1>& get_layers_inputs_indices() const;
 
    ScalingLayer2D* get_scaling_layer_2d() const;
    ScalingLayer4D* get_scaling_layer_4d() const;
@@ -320,11 +321,6 @@ protected:
    bool display = true;
 
 };
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
-#endif
 
 }
 

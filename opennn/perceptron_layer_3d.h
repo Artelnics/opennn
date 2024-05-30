@@ -111,6 +111,7 @@ public:
 
    // Architecture
 
+   void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;
 
@@ -137,8 +138,8 @@ public:
    void set_synaptic_weights_constant(const type&);
 
    void set_parameters_constant(const type&) final;
-
    void set_parameters_random() final;
+   void set_parameters_glorot();
 
    // Forward propagation
 

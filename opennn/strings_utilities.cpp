@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "strings.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -1064,230 +1064,6 @@ string replace_non_allowed_programming_expressions(string& s)
 
         if(s[0] == '$')
             out=s;
-
-        /*
-        switch(l) {
-
-        // C++ reserved words
-        case 1:
-            replace_all_appearances(s, "int", "in_t");
-            replace_all_appearances(s, "sizeof", "sizeo_f");
-            replace_all_appearances(s, "auto", "aut_o");
-            replace_all_appearances(s, "extern", "exter_n");
-            replace_all_appearances(s, "return", "retur_n");
-            replace_all_appearances(s, "typedef", "typede_f");
-            replace_all_appearances(s, "for", "fo_r");
-            replace_all_appearances(s, "_Packed", "_P_acked");
-            replace_all_appearances(s, "signed", "signe_d");
-            replace_all_appearances(s, "enum", "enu_m");
-            replace_all_appearances(s, "case", "cas_e");
-            replace_all_appearances(s, "char", "cha_r");
-            replace_all_appearances(s, "union", "unio_n");
-            replace_all_appearances(s, "float", "floa_t");
-            replace_all_appearances(s, "short", "shor_t");
-            replace_all_appearances(s, "const", "cons_t");
-            replace_all_appearances(s, "void", "voi_d");
-            replace_all_appearances(s, "continue", "continu_e");
-            replace_all_appearances(s, "goto", "got_o");
-            replace_all_appearances(s, "volatile", "volatil_e");
-            replace_all_appearances(s, "default", "defaul_t");
-            replace_all_appearances(s, "if", "i_f");
-            replace_all_appearances(s, "else", "els_e");
-            replace_all_appearances(s, "long", "lon_g");
-            replace_all_appearances(s, "static", "stati_c");
-            replace_all_appearances(s, "while", "whil_e");
-            replace_all_appearances(s, "do", "d_o");
-            replace_all_appearances(s, "break", "brea_k");
-            replace_all_appearances(s, "switch", "switc_h");
-            replace_all_appearances(s, "struct", "struc_t");
-            replace_all_appearances(s, "double", "doubl_e");
-            replace_all_appearances(s, "unsigned", "unsigne_d");
-            replace_all_appearances(s, "register", "registe_r");
-            break;
-
-        // JAVASCRIPT reserved words
-        case 2:
-            replace_all_appearances(s, "abstract", "abstrac_t");
-            replace_all_appearances(s, "arguments", "argument_s");
-            replace_all_appearances(s, "await", "awai_t");
-            replace_all_appearances(s, "boolea", "boole_an");
-            replace_all_appearances(s, "break", "brea_k");
-            replace_all_appearances(s, "byte", "byt_e");
-            replace_all_appearances(s, "case", "cas_e");
-            replace_all_appearances(s, "catc", "cat_ch");
-            replace_all_appearances(s, "char", "cha_r");
-            replace_all_appearances(s, "class", "clas_s");
-            replace_all_appearances(s, "const", "cons_t");
-            replace_all_appearances(s, "continu", "contin_ue");
-            replace_all_appearances(s, "debugger", "debugge_r");
-            replace_all_appearances(s, "default", "defaul_t");
-            replace_all_appearances(s, "delete", "delet_e");
-            replace_all_appearances(s, "d", "d_o");
-            replace_all_appearances(s, "double", "doubl_e");
-            replace_all_appearances(s, "else", "els_e");
-            replace_all_appearances(s, "enum", "enu_m");
-            replace_all_appearances(s, "eva", "ev_al");
-            replace_all_appearances(s, "export", "expor_t");
-            replace_all_appearances(s, "extends", "extend_s");
-            replace_all_appearances(s, "false", "fals_e");
-            replace_all_appearances(s, "fina", "fin_al");
-            replace_all_appearances(s, "finally", "finall_y");
-            replace_all_appearances(s, "float", "floa_t");
-            replace_all_appearances(s, "for", "fo_r");
-            replace_all_appearances(s, "functio", "functi_on");
-            replace_all_appearances(s, "goto", "got_o");
-            replace_all_appearances(s, "if", "i_f");
-            replace_all_appearances(s, "implements", "implement_s");
-            replace_all_appearances(s, "impor", "impo_rt");
-            replace_all_appearances(s, "in", "i_n");
-            replace_all_appearances(s, "instanceof", "instanceo_f");
-            replace_all_appearances(s, "int", "in_t");
-            replace_all_appearances(s, "interfac", "interfa_ce");
-            replace_all_appearances(s, "let", "le_t");
-            replace_all_appearances(s, "long", "lon_g");
-            replace_all_appearances(s, "native", "nativ_e");
-            replace_all_appearances(s, "ne", "n_ew");
-            replace_all_appearances(s, "null", "nul_l");
-            replace_all_appearances(s, "package", "packag_e");
-            replace_all_appearances(s, "private", "privat_e");
-            replace_all_appearances(s, "protecte", "protect_ed");
-            replace_all_appearances(s, "public", "publi_c");
-            replace_all_appearances(s, "return", "retur_n");
-            replace_all_appearances(s, "short", "shor_t");
-            replace_all_appearances(s, "stati", "stat_ic");
-            replace_all_appearances(s, "super", "supe_r");
-            replace_all_appearances(s, "switch", "switc_h");
-            replace_all_appearances(s, "synchronized", "synchronize_d");
-            replace_all_appearances(s, "thi", "th_is");
-            replace_all_appearances(s, "throw", "thro_w");
-            replace_all_appearances(s, "throws", "throw_s");
-            replace_all_appearances(s, "transient", "transien_t");
-            replace_all_appearances(s, "tru", "tr_ue");
-            replace_all_appearances(s, "try", "tr_y");
-            replace_all_appearances(s, "typeof", "typeo_f");
-            replace_all_appearances(s, "var", "va_r");
-            replace_all_appearances(s, "voi", "vo_id");
-            replace_all_appearances(s, "volatile", "volatil_e");
-            replace_all_appearances(s, "while", "whil_e");
-            replace_all_appearances(s, "with", "wit_h");
-            replace_all_appearances(s, "yiel", "yie_ld");
-            break;
-
-        // PHP reserved words
-        case 3:
-            replace_all_appearances(s, "abstract", "abstrac_t");
-            replace_all_appearances(s, "and", "an_d");
-            replace_all_appearances(s, "array", "arra_y");
-            replace_all_appearances(s, "as", "a_s");
-            replace_all_appearances(s, "break", "brea_k");
-            replace_all_appearances(s, "callable", "callabl_e");
-            replace_all_appearances(s, "case", "cas_e");
-            replace_all_appearances(s, "catch", "catc_h");
-            replace_all_appearances(s, "class", "clas_s");
-            replace_all_appearances(s, "clone", "clon_e");
-            replace_all_appearances(s, "const", "cons_t");
-            replace_all_appearances(s, "continue", "continu_e");
-            replace_all_appearances(s, "declare", "declar_e");
-            replace_all_appearances(s, "default", "defaul_t");
-            replace_all_appearances(s, "die", "di_e");
-            replace_all_appearances(s, "do", "d_o");
-            replace_all_appearances(s, "echo", "ech_o");
-            replace_all_appearances(s, "else", "els_e");
-            replace_all_appearances(s, "elseif", "elsei_f");
-            replace_all_appearances(s, "empty", "empt_y");
-            replace_all_appearances(s, "enddeclare", "enddeclar_e");
-            replace_all_appearances(s, "endfor", "endfo_r");
-            replace_all_appearances(s, "endforeach", "endforeac_h");
-            replace_all_appearances(s, "endif", "endi_f");
-            replace_all_appearances(s, "endswitch", "endswitc_h");
-            replace_all_appearances(s, "endwhile", "endwhil_e");
-            replace_all_appearances(s, "eval", "eva_l");
-            replace_all_appearances(s, "exit", "exi_t");
-            replace_all_appearances(s, "extends", "extend_s");
-            replace_all_appearances(s, "final", "fina_l");
-            replace_all_appearances(s, "finally", "finall_y");
-            replace_all_appearances(s, "fn", "f_n");
-            replace_all_appearances(s, "for", "fo_r");
-            replace_all_appearances(s, "foreach", "foreac_h");
-            replace_all_appearances(s, "function", "functio_n");
-            replace_all_appearances(s, "global", "globa_l");
-            replace_all_appearances(s, "goto", "got_o");
-            replace_all_appearances(s, "if", "i_f");
-            replace_all_appearances(s, "implements", "implement_s");
-            replace_all_appearances(s, "include", "includ_e");
-            replace_all_appearances(s, "instanceof", "instanceo_f");
-            replace_all_appearances(s, "insteadof", "insteado_f");
-            replace_all_appearances(s, "interface", "interfac_e");
-            replace_all_appearances(s, "isset", "isse_t");
-            replace_all_appearances(s, "list", "lis_t");
-            replace_all_appearances(s, "match", "matc_h");
-            replace_all_appearances(s, "namespace", "namespac_e");
-            replace_all_appearances(s, "new", "ne_w");
-            replace_all_appearances(s, "or", "o_r");
-            replace_all_appearances(s, "print", "prin_t");
-            replace_all_appearances(s, "private", "privat_e");
-            replace_all_appearances(s, "protected", "protecte_d");
-            replace_all_appearances(s, "public", "publi_c");
-            replace_all_appearances(s, "readonly", "readonl_y");
-            replace_all_appearances(s, "require", "requir_e");
-            replace_all_appearances(s, "return", "retur_n");
-            replace_all_appearances(s, "static", "stati_c");
-            replace_all_appearances(s, "switch", "switc_h");
-            replace_all_appearances(s, "throw", "thro_w");
-            replace_all_appearances(s, "trait", "trai_t");
-            replace_all_appearances(s, "try", "tr_y");
-            replace_all_appearances(s, "unset", "unse_t");
-            replace_all_appearances(s, "use", "us_e");
-            replace_all_appearances(s, "var", "va_r");
-            replace_all_appearances(s, "while", "whil_e");
-            replace_all_appearances(s, "xor", "xo_r");
-            replace_all_appearances(s, "yield", "yiel_d");
-            replace_all_appearances(s, "include_once", "include_on_ce_");
-            replace_all_appearances(s, "require_once", "require_on_ce_");
-            replace_all_appearances(s, "__halt_compiler", "__h_a_l_t_c_o_m_p_i_l_e_r_");
-            break;
-
-        // PYTHON reserved words
-        case 4:
-            replace_all_appearances(s, "False", "F_alse");
-            replace_all_appearances(s, "def", "de_f");
-            replace_all_appearances(s, "if", "i_f");
-            replace_all_appearances(s, "raise", "ra_ise");
-            replace_all_appearances(s, "None", "Non_e");
-            replace_all_appearances(s, "del", "de_l");
-            replace_all_appearances(s, "import", "imp_ort");
-            replace_all_appearances(s, "return", "retu_rn");
-            replace_all_appearances(s, "True", "Tr_ue");
-            replace_all_appearances(s, "elif", "el_if");
-            replace_all_appearances(s, "in", "i_n");
-            replace_all_appearances(s, "try", "t_ry");
-            replace_all_appearances(s, "and", "an_d");
-            replace_all_appearances(s, "else", "el_se");
-            replace_all_appearances(s, "is", "i_s");
-            replace_all_appearances(s, "while", "wh_ile");
-            replace_all_appearances(s, "as", "a_s");
-            replace_all_appearances(s, "except", "ex_cept");
-            replace_all_appearances(s, "lambda", "lam_bda");
-            replace_all_appearances(s, "with", "wit_h");
-            replace_all_appearances(s, "assert", "as_sert");
-            replace_all_appearances(s, "finally", "fi_nally");
-            replace_all_appearances(s, "nonlocal", "no_nlocal");
-            replace_all_appearances(s, "yield", "yie_ld");
-            replace_all_appearances(s, "break", "bre_ak");
-            replace_all_appearances(s, "for", "fo_r");
-            replace_all_appearances(s, "not", "no_t");
-            replace_all_appearances(s, "class", "c_lass");
-            replace_all_appearances(s, "form", "for_m");
-            replace_all_appearances(s, "or", "o_r");
-            replace_all_appearances(s, "continue", "continu_e");
-            replace_all_appearances(s, "global", "glob_al");
-            replace_all_appearances(s, "pass", "pa_00ss");
-            break;
-
-        default:
-            return 0;
-        }
-        */
 
         replace_all_appearances(s, "fn", "f_n");
         replace_all_appearances(s, "if", "i_f");
@@ -2581,20 +2357,6 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
 }
 
 
-const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens)
-{
-    const Tensor<string, 1> total = join(tokens);
-
-    const Tensor<Index, 1> count = count_unique(total);
-
-    const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
-
-    const Tensor<string, 1> words = sort_by_rank(get_unique_elements(total), descending_rank);
-
-    return words;
-}
-
-
 Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
 {
     Tensor<string, 1> documents_copy(documents);
@@ -2611,13 +2373,31 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     Tensor<Tensor<string, 1>, 1> tokenized_documents = tokenize(documents_copy);
 
-    delete_emails(tokenized_documents);
+    //delete_emails(tokenized_documents);
 
-    delete_blanks(tokenized_documents);
+    //delete_blanks(tokenized_documents);
 
     return tokenized_documents;
 }
 
+
+vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
+{
+    unordered_map<string, int> count;
+
+    for (Index i = 0; i < total_tokens.size(); ++i)      count[total_tokens(i)]++;
+
+    vector<pair<string, int>> word_counts(count.begin(), count.end());
+
+    sort(word_counts.begin(), word_counts.end(), [](const auto& a, const auto& b)
+        {
+            if (a.second != b.second)    return a.second > b.second;
+            else    return a.first < b.first;
+        }
+    );
+
+    return word_counts;
+}
 
 }
 

@@ -9,6 +9,7 @@
 #include "neural_network_forward_propagation.h"
 #include "loss_index.h"
 #include "back_propagation.h"
+#include "cross_entropy_error_3d.h"
 
 namespace opennn
 {
@@ -811,6 +812,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     for(Index i = 0; i < layers_number; i++)
     {
+        
         layers(i)->insert_gradient(back_propagation.neural_network.layers(i),
                                             index,
                                             back_propagation.gradient);
@@ -972,9 +974,9 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 
     const Index parameters_number = neural_network_p->get_parameters_number();
 
-    const Index outputs_number = neural_network_p->get_outputs_number();
-
     const dimensions output_dimensions = neural_network_p->get_outputs_dimensions();
+
+    const Index outputs_number = output_dimensions[0];
 
     set_layers_outputs_indices(neural_network_p->get_layers_inputs_indices());
 
@@ -1005,10 +1007,17 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
     }
 
     output_deltas.resize(size);
+
+    if (is_instance_of<CrossEntropyError3D>(loss_index))
+    {
+        predictions.resize(batch_samples_number, outputs_number);
+        matches.resize(batch_samples_number, outputs_number);
+        mask.resize(batch_samples_number, outputs_number);
+    }
 }
 
 
-void BackPropagation::set_layers_outputs_indices(Tensor<Tensor<Index, 1>, 1>& layer_inputs_indices)
+void BackPropagation::set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>& layer_inputs_indices)
 {
     Index layers_number = layer_inputs_indices.size();
 
@@ -1082,7 +1091,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
-        h = 0.01; // calculate_h(parameters(i));
+        h = /*0.01; //*/ calculate_h(parameters(i));
 
        parameters_forward(i) += h;
        

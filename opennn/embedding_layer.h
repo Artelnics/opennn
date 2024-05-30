@@ -24,9 +24,6 @@
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
-#include "multihead_attention_layer.h"
-#include "perceptron_layer_3d.h"
-#include "probabilistic_layer_3d.h"
 
 namespace opennn
 {
@@ -66,6 +63,7 @@ public:
     Index get_input_dimension() const;
     Index get_inputs_number() const;
     Index get_depth() const;
+    bool get_positional_encoding() const;
 
     dimensions get_outputs_dimensions() const final;
 
@@ -92,6 +90,7 @@ public:
     void set_input_dim(const Index&);
     void set_inputs_number(const Index&);
     void set_depth(const Index&);
+    void set_dropout_rate(const type&);
 
     void set_embedding_weights();
 
@@ -102,6 +101,10 @@ public:
     // Display messages
 
     void set_display(const bool&);
+
+    // Dropout
+
+    void dropout(Tensor<type, 3>&);
 
     // Embedding lookup
 
@@ -129,8 +132,8 @@ public:
 
     /// @todo
 
-    //    void from_XML(const tinyxml2::XMLDocument&) final;
-    //    void write_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
@@ -140,7 +143,7 @@ protected:
 
     // MEMBERS
 
-    /// Input dimension (i.e. number of values input can take or vocabulary size)
+    /// Input dimension (i.e. number of values input can take, or vocabulary size)
     /// @todo change this to something that is not confusing?
 
     Index inputs_dimension;
@@ -152,6 +155,10 @@ protected:
     /// Embedding depth
 
     Index depth;
+
+    /// Dropout rate
+
+    type dropout_rate;
 
     /// Embedding weights
 

@@ -429,7 +429,8 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
     {
         TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
-        column.device(*thread_pool_device) = vector*vector(i);
+        column.device(*thread_pool_device) = vector * vector(i);
+
     }
 }
 
@@ -442,9 +443,9 @@ Tensor<type, 2> self_kronecker_product(ThreadPoolDevice* thread_pool_device, con
 
     for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        TensorMap<Tensor<type, 1>> raw_variable = tensor_map(matrix, i);
 
-        column.device(*thread_pool_device) = vector * vector(i);
+        raw_variable.device(*thread_pool_device) = vector * vector(i);
     }
 
     return matrix;
@@ -460,9 +461,9 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matri
 
     for(Index j = 0; j < columns_number; j++)
     {
-        TensorMap<Tensor<type,1>> column(matrix_data + j*rows_number, rows_number);
+        TensorMap<Tensor<type,1>> raw_variable(matrix_data + j*rows_number, rows_number);
 
-        column.device(*thread_pool_device) = column / vector;
+        raw_variable.device(*thread_pool_device) = raw_variable / vector;
     }
 }
 
@@ -491,9 +492,9 @@ void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& ve
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
+        TensorMap<Tensor<type,1>> raw_variable(matrix.data() + i*rows_number, rows_number);
 
-        column.device(*thread_pool_device) = column + vector(i);
+        raw_variable.device(*thread_pool_device) = raw_variable + vector(i);
     }
 }
 
@@ -1176,8 +1177,8 @@ void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, c
 
 Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, const Index& column_index, const type& minimum, const type& maximum)
 {
-    const Tensor<type,1> column = matrix.chip(column_index,1);
-    const Index new_rows_number = count_between(column, minimum, maximum);
+    const Tensor<type,1> raw_variable = matrix.chip(column_index,1);
+    const Index new_rows_number = count_between(raw_variable, minimum, maximum);
 
     if(new_rows_number == 0)
     {
@@ -1879,14 +1880,14 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
 
 /// Returns true if any value is less or equal than a given value, and false otherwise.
 
-bool is_less_than(const Tensor<type, 1>& column, const type& value)
+bool is_less_than(const Tensor<type, 1>& raw_variable, const type& value)
 {
-    const Tensor<bool, 1> if_sentence = (column <= column.constant(value));
+    const Tensor<bool, 1> if_sentence = (raw_variable <= raw_variable.constant(value));
 
-    Tensor<bool, 1> sentence(column.size());
+    Tensor<bool, 1> sentence(raw_variable.size());
     sentence.setConstant(true);
 
-    Tensor<bool, 1> else_sentence(column.size());
+    Tensor<bool, 1> else_sentence(raw_variable.size());
     else_sentence.setConstant(false);
 
     const Tensor<bool, 0> is_less = (if_sentence.select(sentence, else_sentence)).any();
@@ -2212,9 +2213,9 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)
 {
-    TensorMap<Tensor<type, 1>> column((type*) matrix.data() + column_index * matrix.dimension(0), matrix.dimension(0));
+    TensorMap<Tensor<type, 1>> raw_variable((type*) matrix.data() + column_index * matrix.dimension(0), matrix.dimension(0));
 
-    return column;// ((type*)matrix.data(), column_index * matrix.dimension(0), matrix.dimension(0));
+    return raw_variable;// ((type*)matrix.data(), column_index * matrix.dimension(0), matrix.dimension(0));
 }
 
 }

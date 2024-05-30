@@ -20,6 +20,12 @@
 #include <string_view>
 #include <cctype>
 #include <iomanip>
+#include <set>
+#include <unordered_set>
+#include <vector>
+#include <map>
+#include <numeric>
+#include <tuple>
 
 // Eigen includes
 
@@ -143,9 +149,9 @@ namespace opennn
     void delete_blanks(Tensor<string, 1>&);
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
-    const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>&);
     Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>&);
 
+    vector<pair<string, int>> count_words(const Tensor<string, 1>&);
 }
 
 #endif // OPENNNSTRINGS_H
@@ -180,7 +186,7 @@ namespace opennn
 #include "word_bag.h"
 
 #include "tensors.h"
-#include "strings.h"
+#include "strings_utilities.h"
 
 // TinyXml includes
 

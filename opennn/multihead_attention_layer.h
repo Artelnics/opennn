@@ -32,9 +32,6 @@ struct MultiheadAttentionLayerForwardPropagation;
 struct MultiheadAttentionLayerBackPropagation;
 struct MultiheadAttentionLayerBackPropagationLM;
 
-struct PerceptronLayer3DForwardPropagation;
-struct PerceptronLayer3DBackPropagation;
-
 #ifdef OPENNN_CUDA
     struct MultiheadAttentionLayerForwardPropagationCuda;
     struct MultiheadAttentionLayerBackPropagationCuda;
@@ -49,7 +46,7 @@ struct PerceptronLayer3DBackPropagation;
 
 class MultiheadAttentionLayer : public Layer
 {
-/// @todo get_parameters() and set_parameters()
+
 public:
 
     // Constructors
@@ -112,6 +109,7 @@ public:
 
     void set_weights();
     void set_parameters_random() final;
+    void set_parameters_glorot();
     void set_parameters_constant(const type&) final;
 
     void set_dropout_rate(const type&);
@@ -121,11 +119,12 @@ public:
 
     void set_display(const bool&);
 
+    void build_causal_mask();
     void apply_causal_mask(Tensor<type, 4>&) const;
 
     // Linear transformation & projection
 
-    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&) const;
+    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
@@ -156,8 +155,8 @@ public:
 
     /// @todo
 
-    //void from_XML(const tinyxml2::XMLDocument&) final;
-    //void write_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
@@ -185,7 +184,7 @@ protected:
 
     /// Depth used in attention computation
 
-    Index weights_depth;
+    Index hidden_depth;
 
     // Scaling factor used for attention computation in each head
 
@@ -207,19 +206,21 @@ protected:
     Tensor<type, 3> projection_weights;
     Tensor<type, 1> projection_biases;
 
+    /// Use causal mask or not
+
+    bool use_causal_mask = false;
+
+    // Causal mask matrix
+
+    Tensor<type, 2> causal_mask;
+
     /// Dropout rate
 
     type dropout_rate = type(0);
 
-    /// Apply causal mask or not
-
-    bool causal_mask = false;
-
     /// Display messages to screen.
 
     bool display = true;
-
-    const type m_inf = -numeric_limits<type>::infinity(); // superior triangular = m_inf
 
     // Operation indices
 
@@ -275,9 +276,11 @@ protected:
         Tensor<type, 4> query;
         Tensor<type, 4> key;
         Tensor<type, 4> value;
+        
+        Tensor<type, 2> sample_matrix;
 
         Tensor<type, 4> attention_scores;
-        Tensor<type, 4> softmax_attention_scores;
+        Tensor<type, 4> attention_weights;
         Tensor<type, 4> attention_outputs;
 
         Tensor<type, 4> projection_outputs;
@@ -313,8 +316,10 @@ protected:
         }
 
         Tensor<type, 4> error_attention_scores_derivatives;
-        Tensor<type, 4> error_softmax_attention_scores_derivatives;
+        Tensor<type, 4> error_attention_weights_derivatives;
         Tensor<type, 4> error_attention_output_derivatives;
+
+        Tensor<type, 2> sample_deltas;
 
         Tensor<type, 4> error_query_derivatives;
         Tensor<type, 4> error_key_derivatives;

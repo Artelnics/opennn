@@ -50,13 +50,22 @@ public:
 
     void set(const initializer_list<Index>&);
 
-    void set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
+    void set(const Index& input_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
              const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number);
 
+    void set_dropout_rate(const type&);
     void set_input_vocabulary(Tensor<string, 1>&);
     void set_context_vocabulary(Tensor<string, 1>&);
 
-    string calculate_outputs(const string&);
+    string calculate_outputs(const string&, const bool& = true);
+
+    void tokenize_whitespace(const Tensor<string, 1>&, Tensor<type, 2>&);
+    void tokenize_wordpiece(const Tensor<string, 1>&, Tensor<type, 2>&);
+
+    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
+    void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
+
+    void load_transformer(const string&);
 
 protected:
 
@@ -64,7 +73,7 @@ protected:
 
     /// Length of input entries
 
-    Index inputs_length;
+    Index input_length;
 
     /// Length of context entries
 
@@ -93,6 +102,10 @@ protected:
     /// Number of encoder and decoder layers
 
     Index layers_number;
+
+    /// Dropout rate
+
+    type dropout_rate = 0;
 
     /// Vocabularies
 

@@ -269,7 +269,7 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     synaptic_weights.resize(new_inputs_depth, new_neurons_number);
 
-    set_parameters_random();
+    set_parameters_glorot();
 
     activation_function = new_activation_function;
 
@@ -291,6 +291,8 @@ void PerceptronLayer3D::set_default()
     display = true;
 
     layer_type = Type::Perceptron3D;
+
+    dropout_rate = 0;
 }
 
 
@@ -303,6 +305,12 @@ void PerceptronLayer3D::set_name(const string& new_layer_name)
 /// Sets a new number of inputs in the layer.
 /// It also initializes the new synaptic weights at random.
 /// @param new_inputs_number Number of layer inputs.
+
+void PerceptronLayer3D::set_inputs_number(const Index& new_inputs_number)
+{
+    inputs_number = new_inputs_number;
+}
+
 
 void PerceptronLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
@@ -479,6 +487,28 @@ void PerceptronLayer3D::set_parameters_random()
 }
 
 
+/// Initializes the biases to zeroes and the synaptic weights with the Glorot Uniform initializer
+
+void PerceptronLayer3D::set_parameters_glorot()
+{
+    biases.setZero();
+
+    const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
+
+    const type minimum = -limit;
+    const type maximum = limit;
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+
+        synaptic_weights(i) = minimum + (maximum - minimum) * random;
+    }
+}
+
+
 void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                              const Tensor<type, 1>& biases,
                                              const Tensor<type, 2>& synaptic_weights,
@@ -494,6 +524,7 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 
 void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const 
 {
+    /*
     type* outputs_data = outputs.data();
 
     const Index batch_samples_number = outputs.dimension(0);
@@ -519,6 +550,18 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
         {
             matrix.device(*thread_pool_device) = matrix * scaling_factor;
         }                   
+    }
+    */
+    const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+    type random;
+
+    for (Index i = 0; i < outputs.size(); i++)
+    {
+        random = calculate_random_uniform(type(0), type(1));
+
+        if (random < dropout_rate)    outputs(i) = 0;
+        else    outputs(i) *= scaling_factor;
     }
 }
 
@@ -656,12 +699,7 @@ void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>&
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2]);
 
-    /// @todo What is this??? 
-
-    if (deltas_pair.size() > 1)
-    {
-        add_deltas(deltas_pair);
-    }
+    if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
                                             deltas_pair(0).second[0],
@@ -804,6 +842,24 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
     }
 
+    // Inputs depth
+
+    const tinyxml2::XMLElement* inputs_depth_element = perceptron_layer_element->FirstChildElement("InputsDepth");
+
+    if(!inputs_depth_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "InputsDepth element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if(inputs_depth_element->GetText())
+    {
+        set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
+    }
+
     // Neurons number
 
     const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
@@ -882,6 +938,16 @@ void PerceptronLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Inputs depth
+    file_stream.OpenElement("InputsDepth");
+
+    buffer.str("");
+    buffer << get_inputs_depth();
 
     file_stream.PushText(buffer.str().c_str());
 

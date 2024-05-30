@@ -22,7 +22,7 @@
 
 #include "config.h"
 #include "data_set.h"
-#include "strings.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -56,6 +56,8 @@ public:
     const Tensor<Tensor<string, 1>, 1> get_documents() const;
     const Tensor<Tensor<string, 1>, 1> get_targets() const;
 
+    Tensor<type, 2> get_context_data() const;
+
     void set_default_raw_variables_uses();
     void set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses);
     void set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses);
@@ -64,6 +66,9 @@ public:
 
     void set_text_separator(const Separator&);
     void set_text_separator(const string&);
+
+    void set_context_vocabulary_path(const string&);
+    void set_completion_vocabulary_path(const string&);
 
     void set_data_random_language_model(const Index&, const Index&, const Index&, const Index&, const Index&);
 
@@ -74,12 +79,28 @@ public:
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;
 
+    void import_vocabulary(const string&, Tensor<string, 1>&);
+    const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens,
+                                                 int vocabulary_size,
+                                                 const vector<string>& reserved_tokens,
+                                                 int upper_threshold = 10000000,
+                                                 int lower_threshold = 10,
+                                                 int iterations_number = 4,
+                                                 int max_input_tokens = 5000000,
+                                                 int max_token_length = 50,
+                                                 int max_unique_chars = 1000,
+                                                 float slack_ratio = 0.05,
+                                                 bool include_joiner_token = true,
+                                                 const string& joiner = "##");
+
     void load_documents(const string&);
     void read_csv_3_language_model();
 
     void read_csv_language_model();
 
     void read_txt_language_model();
+    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
+    void write_data_file_wordpiece(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
 
 private:
 
@@ -91,7 +112,11 @@ private:
 
     Tensor<string, 1> context_vocabulary;
 
+    string context_vocabulary_path = "";
+
     Tensor<string, 1> completion_vocabulary;
+
+    string completion_vocabulary_path = "";
 
     Tensor<Index, 1> context_variables_dimensions = Tensor<Index, 1>(1);
 

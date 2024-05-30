@@ -64,6 +64,11 @@ Index EmbeddingLayer::get_depth() const
     return depth;
 }
 
+bool EmbeddingLayer::get_positional_encoding() const
+{
+    return positional_encoding;
+}
+
 
 dimensions EmbeddingLayer::get_outputs_dimensions() const
 {
@@ -199,6 +204,11 @@ void EmbeddingLayer::set_depth(const Index& new_depth)
     set_embedding_weights();
 }
 
+void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
+{
+    dropout_rate = new_dropout_rate;
+}
+
 
 /// Sets the lookup table and randomizes its parameters.
 
@@ -223,8 +233,8 @@ void EmbeddingLayer::set_parameters_random()
 {
     /// @todo Avoid loops
 
-    const type minimum = type(-0.2);
-    const type maximum = type(0.2);
+    const type minimum = type(-0.05);
+    const type maximum = type(0.05);
 
 //    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
 
@@ -234,9 +244,9 @@ void EmbeddingLayer::set_parameters_random()
     
     #pragma omp parallel for
 
-    for(Index i = 1; i < inputs_dimension + 1; i++)
+    for(Index i = 1; i < embedding_weights.dimension(0); i++)
     {
-        for(Index j = 0; j < depth; j++)
+        for(Index j = 0; j < embedding_weights.dimension(1); j++)
         {
             const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
@@ -259,6 +269,22 @@ void EmbeddingLayer::set_parameters_constant(const type& value)
 void EmbeddingLayer::set_display(const bool& new_display)
 {
     display = new_display;
+}
+
+
+void EmbeddingLayer::dropout(Tensor<type, 3>& outputs)
+{
+    const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+    type random;
+
+    for (Index i = 0; i < outputs.size(); i++)
+    {
+        random = calculate_random_uniform(type(0), type(1));
+
+        if (random < dropout_rate)    outputs(i) = 0;
+        else    outputs(i) *= scaling_factor;
+    }
 }
 
 
@@ -291,9 +317,6 @@ Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_
 */
 
 
-/// Looks up embedding of an input row, by passing its one-hot encoding through a perceptron layer (that corresponds to the lookup table)
-/// Saves the embedding matrix of the row in outputs_data of the given perceptron layer forward propagation structure
-
 void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index batch_size = inputs.dimension(0);
@@ -325,18 +348,17 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
     if(positional_encoding)
     {
-        if(!embedding_layer_forward_propagation->built_positional_encoding_matrix)
-        {
-            embedding_layer_forward_propagation->build_positional_encoding_matrix();
-        }
+        outputs.device(*thread_pool_device) = outputs * outputs.constant(sqrt(depth));
 
         const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
-
+        
         for(Index batch_element = 0; batch_element < outputs.dimension(0); batch_element++)
         {
             outputs.chip(batch_element, 0).device(*thread_pool_device) += positional_encoding;
         }
     }
+
+    if (dropout_rate > 0 && is_training)    dropout(outputs);
 }
 
 
@@ -364,12 +386,15 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
-
+    
     embedding_weights_derivatives.setZero();
-
+    
     for (Index i = 0; i < batch_samples_number; i++)
     {
-        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
+        if(positional_encoding)
+            sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
+        else
+            sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
         for (Index j = 0; j < inputs_number; j++)
         {
@@ -418,6 +443,218 @@ void EmbeddingLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
+void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    // Embedding layer
+
+    const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("EmbeddingLayer");
+
+    if (!embedding_layer_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "EmbeddingLayer element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    // Layer name
+
+    const tinyxml2::XMLElement* layer_name_element = embedding_layer_element->FirstChildElement("LayerName");
+
+    if (!layer_name_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "LayerName element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (layer_name_element->GetText())
+    {
+        set_name(layer_name_element->GetText());
+    }
+
+    // Input dimension
+
+    const tinyxml2::XMLElement* input_dimension_element = embedding_layer_element->FirstChildElement("InputDimension");
+
+    if (!input_dimension_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "InputDimension element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (input_dimension_element->GetText())
+    {
+        set_input_dim(Index(stoi(input_dimension_element->GetText())));
+    }
+
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = embedding_layer_element->FirstChildElement("InputsNumber");
+
+    if (!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "InputsNumber element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (inputs_number_element->GetText())
+    {
+        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
+    }
+
+    // Embedding depth
+
+    const tinyxml2::XMLElement* depth_element = embedding_layer_element->FirstChildElement("Depth");
+
+    if (!depth_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "Depth element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (depth_element->GetText())
+    {
+        set_depth(Index(stoi(depth_element->GetText())));
+    }
+
+    // Positional encoding
+
+    const tinyxml2::XMLElement* positional_encoding_element = embedding_layer_element->FirstChildElement("PositionalEncoding");
+
+    if (!positional_encoding_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "PositionalEncoding element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (positional_encoding_element->GetText())
+    {
+        positional_encoding = string(positional_encoding_element->GetText()) == "true";
+    }
+
+    // Embedding weights
+
+    const tinyxml2::XMLElement* parameters_element = embedding_layer_element->FirstChildElement("Parameters");
+
+    if (!parameters_element)
+    {
+        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
+            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+            << "Parameters element is nullptr.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    if (parameters_element->GetText())
+    {
+        const string parameters_string = parameters_element->GetText();
+        set_parameters(to_type_vector(parameters_string, ' '));
+    }
+}
+
+void EmbeddingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    // Embedding layer
+
+    file_stream.OpenElement("EmbeddingLayer");
+
+    // Layer name
+    file_stream.OpenElement("LayerName");
+    buffer.str("");
+    buffer << layer_name;
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
+
+    // Input dimension
+    file_stream.OpenElement("InputDimension");
+
+    buffer.str("");
+    buffer << get_input_dimension();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Embedding depth
+
+    file_stream.OpenElement("Depth");
+
+    buffer.str("");
+    buffer << get_depth();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Positional encoding
+
+    file_stream.OpenElement("PositionalEncoding");
+
+    buffer.str("");
+    buffer << (positional_encoding ? "true" : "false");
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+
+    const Tensor<type, 1> parameters = get_parameters();
+    const Index parameters_size = parameters.size();
+
+    for (Index i = 0; i < parameters_size; i++)
+    {
+        buffer << parameters(i);
+
+        if (i != (parameters_size - 1)) buffer << " ";
+    }
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Embedding layer (end tag)
+
+    file_stream.CloseElement();
+}
+
+
+
 pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() const
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
@@ -447,6 +684,8 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
     outputs.resize(batch_samples_number, inputs_number, depth);
 
     outputs_data = outputs.data();
+
+    if (embedding_layer->get_positional_encoding())    build_positional_encoding_matrix();
 }
 
 
@@ -461,39 +700,20 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 
     positional_encoding.setZero();
 
-    const type half_depth = type(depth) / type(2);
+    const type half_depth = type(depth) / 2;
 
     #pragma omp parallel for
-
     for (Index i = 0; i < inputs_number; i++)
     {
-        for (Index j = 0; j < Index(half_depth - 1); j++)
+        for (Index j = 0; j < Index(depth); j++)
         {
-            positional_encoding(i, 2 * j) = type(sin((i + 1) / pow(10000, (j + 1) / half_depth)));
-            positional_encoding(i, 2 * j + 1) = type(cos((i + 1) / pow(10000, (j + 1) / half_depth)));
+            if (j < Index(half_depth))
+                positional_encoding(i, j) = sin((i) / pow(10000, (j) / half_depth));
+            else
+                positional_encoding(i, j) = cos((i) / pow(10000, (j - Index(half_depth)) / half_depth));
         }
     }
 
-    if (depth % 2 == 0)
-    {
-        #pragma omp parallel for
-
-        for (Index i = 0; i < inputs_number; i++)
-        {
-            positional_encoding(i, depth - 2) = type(sin((i + 1) / 10000));
-
-            positional_encoding(i, depth - 1) = type(cos((i + 1) / 10000));
-        }
-    }
-    else
-    {
-        #pragma omp parallel for
-
-        for (Index i = 0; i < inputs_number; i++)
-        {
-            positional_encoding(i, depth - 1) = type(sin((i + 1) / 10000));
-        }
-    }
 
     built_positional_encoding_matrix = true;
 }

@@ -28,8 +28,8 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 /// @param new_inputs_dimensions A vector containing the new inputs' dimensions.
 /// @param kernels_dimensions A vector containing the kernel rows, columns channels and number.
 
-ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimensions,
-                                       const Tensor<Index, 1>& new_kernels_dimensions) : Layer()
+ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_inputs_dimensions,
+                                       const dimensions& new_kernels_dimensions) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
     set(new_inputs_dimensions, new_kernels_dimensions);
@@ -353,7 +353,7 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
 void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
-{    
+{
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],
@@ -420,6 +420,9 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
+    cout << "--------------------------------------------------------------------" << endl;
+    cout << "hello back propagate convolutional " << endl;
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],
@@ -429,8 +432,10 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     const TensorMap<Tensor<type, 4>> deltas(deltas_pair(0).first,
                                             deltas_pair(0).second[0],
                                             deltas_pair(0).second[1],
-                                            inputs_pair(0).second[2],
+                                            deltas_pair(0).second[2],
                                             deltas_pair(0).second[3]);
+
+    cout << "deltas: " << endl << deltas << endl;
 
     // Convolutional layer
 
@@ -481,6 +486,9 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 0> current_sum;
 
+    cout << "Inputs: " << endl << inputs << endl;
+    cout << "error_combinations_derivatives: " << endl << error_combinations_derivatives << endl;
+
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         current_sum.setZero();
@@ -499,7 +507,6 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
             delta_slice/*.device(*thread_pool_device)*/
                 = error_combinations_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
-
 
             offsets = {image_index, 0, 0, 0};
             extents = {1, inputs_rows_number, inputs_columns_number, inputs_channels_number};
@@ -533,7 +540,11 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    /// @todo calculate input derivatives (= deltas for previous layer)
+    input_derivatives = error_combinations_derivatives.convolve(synaptic_weights,convolutions_dimensions);
+
+    cout << "Last inputs derivatives: " << endl << convolutional_layer_back_propagation->get_inputs_derivatives_pair()(0).first << endl;
+
+    cout << "--------------------------------------------------------------------" << endl;
 }
 
 
@@ -651,7 +662,7 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
 dimensions ConvolutionalLayer::get_inputs_dimensions() const
 {
-    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2)};
+    return inputs_dimensions;
 }
 
 /*
@@ -705,7 +716,7 @@ string ConvolutionalLayer::write_convolution_type() const
 }
 
 
-/// Returns the column stride.
+/// Returns the raw_variable stride.
 
 Index ConvolutionalLayer::get_column_stride() const
 {
@@ -850,8 +861,8 @@ Index ConvolutionalLayer::get_parameters_number() const
 /// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images, number of channels, rows number, columns number).
 /// @param new_kernels_dimensions A vector containing the desired kernels' dimensions (number of kernels, number of channels, rows number, columns number).
 
-void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions,
-                             const Tensor<Index, 1>& new_kernels_dimensions)
+void ConvolutionalLayer::set(const dimensions& new_inputs_dimensions,
+                             const dimensions& new_kernels_dimensions)
 {
     const Index kernels_rows_number = new_kernels_dimensions[0];
     const Index kernels_columns_number = new_kernels_dimensions[1];
@@ -1058,8 +1069,8 @@ void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 }
 
 
-/// Sets the kernels' column stride.
-/// @param new_stride_row The desired column stride.
+/// Sets the kernels' raw_variable stride.
+/// @param new_stride_row The desired raw_variable stride.
 
 void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 {
@@ -1071,7 +1082,7 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
     column_stride = new_stride_column;
 }
 
-void ConvolutionalLayer::set_inputs_dimensions(const Tensor<Index,1>& new_inputs_dimensions)
+void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_inputs_dimensions)
 {
     inputs_dimensions = new_inputs_dimensions;
 }
@@ -1189,7 +1200,7 @@ Index ConvolutionalLayer::get_synaptic_weights_number() const
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[0];
+    return inputs_dimensions[1];
 }
 
 
@@ -1197,7 +1208,7 @@ Index ConvolutionalLayer::get_inputs_rows_number() const
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[1];
+    return inputs_dimensions[2];
 }
 
 
@@ -1205,7 +1216,7 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
 
 Index ConvolutionalLayer::get_inputs_channels_number() const
 {
-    return inputs_dimensions[2];
+    return inputs_dimensions[3];
 }
 
 //void ConvolutionalLayer::calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const
@@ -1293,7 +1304,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(Index i = 0; i < inputs_dimensions.size(); i++)
     {
-        buffer << inputs_dimensions(i);
+        buffer << inputs_dimensions[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
 //        if(i != inputs_dimensions.size() - 1) buffer << " ";
     }

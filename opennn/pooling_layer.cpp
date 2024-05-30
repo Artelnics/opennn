@@ -34,8 +34,9 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 /// @param new_input_variables_dimensions A vector containing the desired number of rows and columns for the input.
 /// @param pool_dimensions A vector containing the desired number of rows and columns for the pool.
 
-PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& pool_dimensions) : Layer()
-{ 
+
+PoolingLayer::PoolingLayer(const dimensions& new_input_variables_dimensions, const dimensions& pool_dimensions) : Layer()
+{
     set(new_input_variables_dimensions, pool_dimensions);
 
     inputs_dimensions = new_input_variables_dimensions;
@@ -61,7 +62,7 @@ dimensions PoolingLayer::get_outputs_dimensions() const
 {
     Index rows_number = get_outputs_rows_number();
     Index columns_number = get_outputs_columns_number();
-    Index depth = inputs_dimensions[2];
+    Index depth = inputs_dimensions[3];
 
     return { rows_number, columns_number, depth };
 }
@@ -80,7 +81,7 @@ Index PoolingLayer::get_inputs_number() const
 
 Index PoolingLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[0];
+    return inputs_dimensions[1];
 }
 
 
@@ -88,7 +89,7 @@ Index PoolingLayer::get_inputs_rows_number() const
 
 Index PoolingLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[1];
+    return inputs_dimensions[2];
 }
 
 
@@ -96,7 +97,7 @@ Index PoolingLayer::get_inputs_columns_number() const
 
 Index PoolingLayer::get_channels_number() const
 {
-    return inputs_dimensions[2];
+    return inputs_dimensions[3];
 }
 
 
@@ -140,7 +141,7 @@ Index PoolingLayer::get_row_stride() const
 }
 
 
-/// Returns the pooling filter's column stride.
+/// Returns the pooling filter's raw_variable stride.
 
 Index PoolingLayer::get_column_stride() const
 {
@@ -176,7 +177,8 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 
 dimensions PoolingLayer::get_inputs_dimensions() const
 {
-    return { inputs_dimensions(0) ,inputs_dimensions(1) , inputs_dimensions(2)};
+    return inputs_dimensions;
+//    return { inputs_dimensions(0) ,inputs_dimensions(1) , inputs_dimensions(2)};
 }
 
 
@@ -201,7 +203,7 @@ string PoolingLayer::write_pooling_method() const
 }
 
 
-void PoolingLayer::set(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& new_pool_dimensions)
+void PoolingLayer::set(const dimensions& new_input_variables_dimensions, const dimensions& new_pool_dimensions)
 {
     inputs_dimensions = new_input_variables_dimensions;
 
@@ -219,7 +221,7 @@ void PoolingLayer::set_name(const string& new_layer_name)
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
-void PoolingLayer::set_inputs_dimensions(const Tensor<Index, 1>& new_inputs_dimensions)
+void PoolingLayer::set_inputs_dimensions(const dimensions& new_inputs_dimensions)
 {
     inputs_dimensions = new_inputs_dimensions;
 }
@@ -243,8 +245,8 @@ void PoolingLayer::set_row_stride(const Index& new_row_stride)
 }
 
 
-/// Sets the pooling filter's column stride.
-/// @param new_raw_variable_stride The desired column stride.
+/// Sets the pooling filter's raw_variable stride.
+/// @param new_raw_variable_stride The desired raw_variable stride.
 
 void PoolingLayer::set_column_stride(const Index& new_column_stride)
 {
@@ -590,7 +592,7 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Column stride
+    // raw_variable stride
 
     file_stream.OpenElement("ColumnStride");
 
@@ -703,7 +705,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //    set_input_variables_dimenisons(input_variables_dimensions_string);
 
-    // Column stride
+    // raw_variable stride
 
     const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
 
@@ -711,7 +713,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: PoolingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pooling column stride element is nullptr.\n";
+               << "Pooling raw_variable stride element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }

@@ -123,8 +123,8 @@ public:
    void set_synaptic_weights_constant_Glorot();
 
    void set_parameters_constant(const type&) final;
-
    void set_parameters_random() final;
+   void set_parameters_glorot();
 
    void insert_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -150,6 +150,7 @@ public:
                                  LayerBackPropagation*) const final;
 
    void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
+                                                 const Tensor<type, 2>&,
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
 
@@ -265,6 +266,8 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     }
 
     Tensor<type, 2> targets;
+    Tensor<type, 2> mask;
+    bool built_mask = false;
 
     Tensor<type, 3> error_combinations_derivatives;
     Tensor<type, 3> input_derivatives;

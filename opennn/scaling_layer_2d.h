@@ -35,7 +35,7 @@ class ScalingLayer2D : public Layer
 {
 
 public:
-
+    void allocate_parameters_device() {};
    // Constructors
 
    explicit ScalingLayer2D();

@@ -62,7 +62,7 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    explicit ConvolutionalLayer(const dimensions&, const dimensions&);
 
     // Destructor
 
@@ -124,7 +124,7 @@ public:
 
     // Set methods
 
-    void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set(const dimensions&, const dimensions&);
 
     void set_name(const string&);
 
@@ -146,7 +146,7 @@ public:
 
     void set_column_stride(const Index&);
 
-    void set_inputs_dimensions(const Tensor<Index,1>&);
+    void set_inputs_dimensions(const dimensions&);
 
     // Initialization
 
@@ -214,7 +214,7 @@ protected:
 
    Index column_stride = 1;
 
-   Tensor<Index, 1> inputs_dimensions;
+   dimensions inputs_dimensions;
 
    ConvolutionType convolution_type = ConvolutionType::Valid;
 

@@ -24,177 +24,156 @@
 #include "../opennn/opennn.h"
 #include <iostream>
 
-
 // OneDNN
 
 using namespace std;
 using namespace opennn;
 using namespace std::chrono;
-//using namespace Eigen;
-
-// Kernel functions
-type* vector_to_device(const Tensor<type, 1>& vector)
-{
-    type* pointer = nullptr;
-
-    const size_t this_size = vector.size();
-
-    if (this_size == 0) cout << "Empty vector" << endl;
-
-    if (cudaMalloc(&pointer, this_size * sizeof(type)) != cudaSuccess) cout << "Cuda vector malloc error" << endl;
-
-    cudaMemcpy(pointer, vector.data(), this_size * sizeof(type), cudaMemcpyHostToDevice);
-
-    return pointer;
-}
-Tensor<type, 1> vector_from_device(const type* pointer, const size_t& new_size)
-{
-    if (new_size == 0) cout << "Empty vector" << endl;
-
-    Tensor<type, 1> vector(new_size);
-
-    if (cudaMemcpy(vector.data(), pointer, new_size * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda vector memcpy error" << endl;
-
-    return vector;
-}
-type* matrix_to_device(const Tensor<type, 2>& matrix)
-{
-    const size_t this_size = matrix.size();
-
-    if (this_size == 0) cout << "Empty matrix" << endl;
-
-    type* pointer = nullptr;
-
-    if (cudaMalloc(&pointer, this_size * sizeof(type)) != cudaSuccess) cout << "Cuda matrix malloc error" << endl;
-
-    cudaMemcpy(pointer, matrix.data(), this_size * sizeof(type), cudaMemcpyHostToDevice);
-
-    return pointer;
-}
-Tensor<type, 2> matrix_from_device(const type* pointer, const size_t& new_rows_number, const size_t& new_raw_variables_number)
-{
-    Tensor<type, 2> matrix(new_rows_number, new_raw_variables_number);
-
-    matrix.setZero();
-
-    if (matrix.size() == 0) cout << "Empty matrix" << endl;
-
-    if (cudaMemcpy(matrix.data(), pointer, new_rows_number * new_raw_variables_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda matrix memcpy error" << endl;
-
-    return matrix;
-}
-
+using namespace Eigen;
 
 int main()
 {
    try
    {
         cout << "Blank\n";
-
-        cout << "OpenNN. Rosenbrock Example." << endl;
-
-        // Data Set
-
-        const Index samples_number = 1000000;
-        const Index inputs_number = 1000;
-        const Index outputs_number = 1;
-        const Index hidden_neurons_number = 1000;
-
-        DataSet data_set;
-
-        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
-
-        data_set.set_training();
-
-        // Neural network
-
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number, hidden_neurons_number, outputs_number });
-
-        neural_network.get_first_perceptron_layer()->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
-
-        PerceptronLayer* pl = static_cast<PerceptronLayer*>(neural_network.get_layers()(2));
-
-        pl->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        //training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
-        //training_strategy.get_loss_index()->set_regularization_weight(0.01);
-
-        training_strategy.set_maximum_epochs_number(10000);
-        training_strategy.set_display_period(1);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
-        training_strategy.set_maximum_time(86400);
-
-        training_strategy.perform_training_cuda();
-
-        cout << "End Rosenbrock" << endl;
-
-
-        /*
+        
+        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+        
         LanguageDataSet language_data_set;
+        
+        language_data_set.set_data_source_path("data/language/ENtoES_medium.txt");
 
-        //language_data_set.set_data_source_path("data/example2.txt");
-        //language_data_set.set_data_source_path("data/PTtoEN_dataset.txt");
-        language_data_set.set_data_source_path("data/three_letter_combinations_with_spaces.txt");
         language_data_set.set_text_separator(DataSet::Separator::Tab);
 
         language_data_set.read_txt_language_model();
         
-        language_data_set.set_training();
+        //language_data_set.set_training();
+        language_data_set.set_raw_variables_scalers(Scaler::NoScaling);
 
         Index input_length = language_data_set.get_completion_length();
         Index context_length = language_data_set.get_context_length();
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         Index context_dimension = language_data_set.get_context_vocabulary_size();
         
-        Index number_of_layers = 1;
-        Index depth = 4;
-        Index perceptron_depth = 12;
-        Index heads_number = 2;
+        
+        Index number_of_layers = 2;
+        Index depth = 128;
+        Index perceptron_depth = 256;
+        Index heads_number = 4;
+        
+        /*
+        Index number_of_layers = 2;
+        Index depth = 128;
+        Index perceptron_depth = 256;
+        Index heads_number = 4;
+        */
 
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
 
+        transformer.set_dropout_rate(0);
+
+        cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
+        /*
+
+        for (Index i = 0; i < transformer.get_layers_number(); i++)
+        {
+            cout << "\t" << transformer.get_layers()(i)->get_name() << " parameters number: " << transformer.get_layers()(i)->get_parameters_number() << endl;
+        }
+        */
+     
         Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
         Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
-
+        
         transformer.set_input_vocabulary(completion_vocabulary);
         transformer.set_context_vocabulary(context_vocabulary);
 
-        //type training_loss_goal = type(0.05);
-
         CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
+        cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        StochasticGradientDescent stochastic_gradient_descent;
-        stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
+        AdaptiveMomentEstimation optimization_algorithm;
+        optimization_algorithm.set_loss_index(&cross_entropy_error_3d);
+        optimization_algorithm.set_custom_learning_rate(depth);
 
-        stochastic_gradient_descent.set_display(true);
-        stochastic_gradient_descent.set_display_period(1);
+        optimization_algorithm.set_display(true);
+        optimization_algorithm.set_display_period(1);
 
-        //stochastic_gradient_descent.set_loss_goal(training_loss_goal);
-        stochastic_gradient_descent.set_maximum_epochs_number(1000);
-        stochastic_gradient_descent.set_maximum_time(86400);
-        stochastic_gradient_descent.set_batch_samples_number(32);
+        //type loss_goal = type(0.80);
+        type training_accuracy_goal = type(0.85);
 
-        Index parameter_number = 0;
-        for (Index i = 0; i < transformer.get_layers().size(); i++)
-        {
-            cout << transformer.get_layer(i)->get_name() << " from parameter " << parameter_number << " to " << parameter_number + transformer.get_layer(i)->get_parameters_number() - 1 << endl;
-            parameter_number += transformer.get_layer(i)->get_parameters_number();
-        }
+        //optimization_algorithm.set_loss_goal(loss_goal);
+        optimization_algorithm.set_accuracy_goal(training_accuracy_goal);
+        optimization_algorithm.set_maximum_epochs_number(10000);
+        optimization_algorithm.set_maximum_time(3 * 86400);
+        optimization_algorithm.set_batch_samples_number(64);
 
-        TrainingResults training_results = stochastic_gradient_descent.perform_training();
+        TrainingResults training_results = optimization_algorithm.perform_training();
 
-        //transformer.calculate_outputs();
+        transformer.save("data/language/ENtoES_model.xml");
         
+
+        Transformer transformer2;
+
+        transformer2.load_transformer("data/language/ENtoES_model.xml");
+
+        transformer2.set_input_vocabulary(completion_vocabulary);
+        transformer2.set_context_vocabulary(context_vocabulary);
+
+        //const bool imported_vocabulary = true;
+        
+        cout << endl << "DEPLOYMENT:" << endl;
+        string input;
+        string output;
+        
+        input = "He is playing soccer.";
+        output = transformer2.calculate_outputs(input);
+        
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+        
+        input = "She is studying for her history test.";
+        output = transformer2.calculate_outputs(input);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+
+        input = "The dog is barking.";
+        output = transformer2.calculate_outputs(input);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+
+        input = "The cat likes to sleep.";
+        output = transformer2.calculate_outputs(input);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+
+        input = "Tom took his friends out on a party Saturday night.";
+        output = transformer2.calculate_outputs(input);
+
+        cout << "Input: " << input << endl;
+        cout << "Output: " << output << endl;
+        cout << endl;
+        /*
+        while (true)
+        {
+            cout << "Input: ";
+            getline(cin, input);
+
+            if (input == "-Q")
+                break;
+
+            output = transformer2.calculate_outputs(input, imported_vocabulary);
+
+            cout << "Output: " << output << endl;
+            cout << endl;
+        }
         */
         cout << "Bye!" << endl;
 

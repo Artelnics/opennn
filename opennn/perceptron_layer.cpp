@@ -474,12 +474,12 @@ void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
 
     for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(outputs, neuron_index);
+        TensorMap<Tensor<type, 1>> raw_variable = tensor_map(outputs, neuron_index);
 
         random = calculate_random_uniform(type(0), type(1));
 
-        random < dropout_rate ? column.setZero()
-                              : column = column*scaling_factor;
+        random < dropout_rate ? raw_variable.setZero()
+                              : raw_variable = raw_variable*scaling_factor;
     }
 }
 
@@ -787,7 +787,7 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
     const Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
-
+    //cout << "Activations_derivatives" << activations_derivatives << endl;
     // Back propagation
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =

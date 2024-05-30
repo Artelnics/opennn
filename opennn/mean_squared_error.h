@@ -78,10 +78,6 @@ public:
    string get_error_type() const final;
    string get_error_type_text() const final;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"
-#endif
-
 };
 
 }

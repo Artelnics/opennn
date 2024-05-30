@@ -22,10 +22,6 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 
-#include "perceptron_layer_3d.h"
-#include "probabilistic_layer_3d.h"
-#include "multihead_attention_layer.h"
-
 namespace opennn
 {
     struct NormalizationLayer3DForwardPropagation;
@@ -97,8 +93,8 @@ namespace opennn
         void set_gammas_constant(const type&);
         void set_betas_constant(const type&);
 
+        void set_parameters_default();
         void set_parameters_constant(const type&) final;
-
         void set_parameters_random() final;
 
         // Forward propagation
