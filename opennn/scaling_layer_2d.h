@@ -121,6 +121,8 @@ public:
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
 
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
+
    // Expression methods
 
    string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;

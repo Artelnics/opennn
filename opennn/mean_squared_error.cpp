@@ -68,6 +68,9 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 
     type& error = back_propagation.error;
 
+    //cout << "Targets: " << endl << targets << endl;
+    //cout << "outputs: " << endl << outputs << endl;
+
     errors.device(*thread_pool_device) = outputs - targets;
     
     Tensor<type, 0> sum_squared_error;
