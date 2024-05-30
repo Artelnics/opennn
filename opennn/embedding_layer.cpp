@@ -64,6 +64,11 @@ Index EmbeddingLayer::get_depth() const
     return depth;
 }
 
+bool EmbeddingLayer::get_positional_encoding() const
+{
+    return positional_encoding;
+}
+
 
 dimensions EmbeddingLayer::get_outputs_dimensions() const
 {
@@ -199,6 +204,11 @@ void EmbeddingLayer::set_depth(const Index& new_depth)
     set_embedding_weights();
 }
 
+void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
+{
+    dropout_rate = new_dropout_rate;
+}
+
 
 /// Sets the lookup table and randomizes its parameters.
 
@@ -262,6 +272,22 @@ void EmbeddingLayer::set_display(const bool& new_display)
 }
 
 
+void EmbeddingLayer::dropout(Tensor<type, 3>& outputs)
+{
+    const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+    type random;
+
+    for (Index i = 0; i < outputs.size(); i++)
+    {
+        random = calculate_random_uniform(type(0), type(1));
+
+        if (random < dropout_rate)    outputs(i) = 0;
+        else    outputs(i) *= scaling_factor;
+    }
+}
+
+
 /*
 /// Calculates one-hot encoding, of dimension = inputs_dimension, of an input row (assuming all input values are integers)
 /// @return Matrix of one-hot encodings of all values in input_row
@@ -322,11 +348,6 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
     if(positional_encoding)
     {
-        if(!embedding_layer_forward_propagation->built_positional_encoding_matrix)
-        {
-            embedding_layer_forward_propagation->build_positional_encoding_matrix();
-        }
-
         outputs.device(*thread_pool_device) = outputs * outputs.constant(sqrt(depth));
 
         const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
@@ -336,6 +357,8 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
             outputs.chip(batch_element, 0).device(*thread_pool_device) += positional_encoding;
         }
     }
+
+    if (dropout_rate > 0 && is_training)    dropout(outputs);
 }
 
 
@@ -661,6 +684,8 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
     outputs.resize(batch_samples_number, inputs_number, depth);
 
     outputs_data = outputs.data();
+
+    if (embedding_layer->get_positional_encoding())    build_positional_encoding_matrix();
 }
 
 

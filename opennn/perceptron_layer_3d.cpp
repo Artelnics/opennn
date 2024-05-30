@@ -524,6 +524,7 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 
 void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const 
 {
+    /*
     type* outputs_data = outputs.data();
 
     const Index batch_samples_number = outputs.dimension(0);
@@ -549,6 +550,18 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
         {
             matrix.device(*thread_pool_device) = matrix * scaling_factor;
         }                   
+    }
+    */
+    const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+    type random;
+
+    for (Index i = 0; i < outputs.size(); i++)
+    {
+        random = calculate_random_uniform(type(0), type(1));
+
+        if (random < dropout_rate)    outputs(i) = 0;
+        else    outputs(i) *= scaling_factor;
     }
 }
 

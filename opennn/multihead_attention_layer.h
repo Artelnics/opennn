@@ -280,7 +280,7 @@ protected:
         Tensor<type, 2> sample_matrix;
 
         Tensor<type, 4> attention_scores;
-        Tensor<type, 4> softmax_attention_scores;
+        Tensor<type, 4> attention_weights;
         Tensor<type, 4> attention_outputs;
 
         Tensor<type, 4> projection_outputs;
@@ -316,7 +316,7 @@ protected:
         }
 
         Tensor<type, 4> error_attention_scores_derivatives;
-        Tensor<type, 4> error_softmax_attention_scores_derivatives;
+        Tensor<type, 4> error_attention_weights_derivatives;
         Tensor<type, 4> error_attention_output_derivatives;
 
         Tensor<type, 2> sample_deltas;
