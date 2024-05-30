@@ -402,7 +402,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
-
             // Data set
             
             training_batch.fill(training_batches.chip(iteration, 0),
@@ -423,14 +422,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
-           
+
             training_error += training_back_propagation.error;
             if(is_classification_model)   training_accuracy += training_back_propagation.accuracy;
 //            training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
             
-            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
+            if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
         cout << endl;
         
@@ -663,8 +662,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
-    //cout << "gradient_exponential_decay :\n " << gradient_exponential_decay << endl;
-    //cout << "square_gradient_exponential_decay :\n " << square_gradient_exponential_decay << endl;
+
     if (!use_custom_learning_rate)
     {
         parameters.device(*thread_pool_device)
@@ -676,7 +674,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         type& step = optimization_data.step;
 
         const type custom_learning_rate = learning_rate * min(pow(step, -0.5), step * pow(warmup_steps, -1.5));
-        
+
         parameters.device(*thread_pool_device)
             -= (custom_learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
 
