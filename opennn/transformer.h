@@ -57,7 +57,7 @@ public:
     void set_input_vocabulary(Tensor<string, 1>&);
     void set_context_vocabulary(Tensor<string, 1>&);
 
-    string calculate_outputs(const string&, const bool&);
+    string calculate_outputs(const string&, const bool& = true);
 
     void tokenize_whitespace(const Tensor<string, 1>&, Tensor<type, 2>&);
     void tokenize_wordpiece(const Tensor<string, 1>&, Tensor<type, 2>&);

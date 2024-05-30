@@ -46,10 +46,6 @@ int main()
 
         language_data_set.set_text_separator(DataSet::Separator::Tab);
 
-        //language_data_set.set_context_vocabulary_path("data/language/en_large_vocab.txt");
-        //language_data_set.set_completion_vocabulary_path("data/language/es_large_vocab.txt");
-        const bool imported_vocabulary = false;
-
         language_data_set.read_txt_language_model();
         
         //language_data_set.set_training();
@@ -104,7 +100,7 @@ int main()
         optimization_algorithm.set_display_period(1);
 
         //type loss_goal = type(0.80);
-        type training_accuracy_goal = type(0.95);
+        type training_accuracy_goal = type(0.85);
 
         //optimization_algorithm.set_loss_goal(loss_goal);
         optimization_algorithm.set_accuracy_goal(training_accuracy_goal);
@@ -131,35 +127,35 @@ int main()
         string output;
         
         input = "He is playing soccer.";
-        output = transformer2.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input);
         
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
         
         input = "She is studying for her history test.";
-        output = transformer2.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
 
         input = "The dog is barking.";
-        output = transformer2.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
 
         input = "The cat likes to sleep.";
-        output = transformer2.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
         cout << endl;
 
         input = "Tom took his friends out on a party Saturday night.";
-        output = transformer2.calculate_outputs(input, imported_vocabulary);
+        output = transformer2.calculate_outputs(input);
 
         cout << "Input: " << input << endl;
         cout << "Output: " << output << endl;
