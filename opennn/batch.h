@@ -4,6 +4,7 @@
 #include <string>
 
 #include "data_set.h"
+#include "tensors.h"
 
 using namespace std;
 using namespace Eigen;
