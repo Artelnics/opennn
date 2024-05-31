@@ -750,9 +750,9 @@ TrainingResults TrainingStrategy::perform_training()
 
         case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
         {
-            Levenberg_Marquardt_algorithm.set_display(display);
+            //Levenberg_Marquardt_algorithm.set_display(display);
 
-            return Levenberg_Marquardt_algorithm.perform_training();
+            //return Levenberg_Marquardt_algorithm.perform_training();
         }
 
         case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:

@@ -69,7 +69,7 @@ Index FlattenLayer::get_inputs_rows_number() const
 }
 
 
-Index FlattenLayer::get_inputs_raw_variables_number() const
+Index FlattenLayer::get_inputs_collums_number() const
 {
     return inputs_dimensions[1];
 }
@@ -164,7 +164,7 @@ void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("InputWidth");
     buffer.str("");
-    buffer << get_inputs_raw_variables_number();
+    buffer << get_inputs_collums_number();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();
