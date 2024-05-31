@@ -62,7 +62,7 @@ dimensions PoolingLayer::get_outputs_dimensions() const
 {
     Index rows_number = get_outputs_rows_number();
     Index columns_number = get_outputs_columns_number();
-    Index depth = inputs_dimensions[2];
+    Index depth = inputs_dimensions[3];
 
     return { rows_number, columns_number, depth };
 }
@@ -81,7 +81,7 @@ Index PoolingLayer::get_inputs_number() const
 
 Index PoolingLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[0];
+    return inputs_dimensions[1];
 }
 
 
@@ -89,7 +89,7 @@ Index PoolingLayer::get_inputs_rows_number() const
 
 Index PoolingLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[1];
+    return inputs_dimensions[2];
 }
 
 
@@ -97,7 +97,7 @@ Index PoolingLayer::get_inputs_columns_number() const
 
 Index PoolingLayer::get_channels_number() const
 {
-    return inputs_dimensions[2];
+    return inputs_dimensions[3];
 }
 
 

@@ -35,7 +35,7 @@ class ScalingLayer2D : public Layer
 {
 
 public:
-
+    void allocate_parameters_device() {};
    // Constructors
 
    explicit ScalingLayer2D();
@@ -120,6 +120,8 @@ public:
    void check_range(const Tensor<type, 1>&) const;
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
+
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
    // Expression methods
 

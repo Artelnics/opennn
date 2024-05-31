@@ -72,6 +72,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     
     EmbeddingLayer* input_embedding_layer = new EmbeddingLayer(inputs_dimension, input_length, embedding_depth, true);
 
+    input_embedding_layer->set_dropout_rate(dropout_rate);
     input_embedding_layer->set_name("input_embedding");
     add_layer(input_embedding_layer);
     set_layer_inputs_indices("input_embedding", "input");
@@ -79,6 +80,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
 
     EmbeddingLayer* context_embedding_layer = new EmbeddingLayer(context_dimension, context_length, embedding_depth, true);
 
+    context_embedding_layer->set_dropout_rate(dropout_rate);
     context_embedding_layer->set_name("context_embedding");
     add_layer(context_embedding_layer);
     set_layer_inputs_indices("context_embedding", "context");
@@ -93,6 +95,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         MultiheadAttentionLayer* context_self_attention_layer =
                 new MultiheadAttentionLayer(context_length, context_length, embedding_depth, heads_number);
 
+        context_self_attention_layer->set_dropout_rate(dropout_rate);
         context_self_attention_layer->set_name("context_self_attention_" + to_string(i+1));
 
         add_layer(context_self_attention_layer);
@@ -141,6 +144,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         PerceptronLayer3D* encoder_external_perceptron_layer =
             new PerceptronLayer3D(context_length, perceptron_depth, embedding_depth, PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
+        encoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
         encoder_external_perceptron_layer->set_name("encoder_external_perceptron_" + to_string(i+1));
         
         add_layer(encoder_external_perceptron_layer);
@@ -176,6 +180,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         MultiheadAttentionLayer* input_self_attention_layer =
                 new MultiheadAttentionLayer(input_length, input_length, embedding_depth, heads_number, true);
 
+        input_self_attention_layer->set_dropout_rate(dropout_rate);
         input_self_attention_layer->set_name("input_self_attention_" + to_string(i+1));
         add_layer(input_self_attention_layer);
 
@@ -207,6 +212,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         MultiheadAttentionLayer* cross_attention_layer =
                 new MultiheadAttentionLayer(input_length, context_length, embedding_depth, heads_number);
 
+        cross_attention_layer->set_dropout_rate(dropout_rate);
         cross_attention_layer->set_name("cross_attention_" + to_string(i+1));
         add_layer(cross_attention_layer);
         set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(layers_number)});
@@ -235,6 +241,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         PerceptronLayer3D* decoder_external_perceptron_layer =
                 new PerceptronLayer3D(input_length, perceptron_depth, embedding_depth, PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
+        decoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
         decoder_external_perceptron_layer->set_name("decoder_external_perceptron_" + to_string(i+1));
         add_layer(decoder_external_perceptron_layer);
         set_layer_inputs_indices("decoder_external_perceptron_" + to_string(i+1), "decoder_internal_perceptron_" + to_string(i+1));
@@ -263,6 +270,12 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
 }
 
 
+void Transformer::set_dropout_rate(const type& new_dropout_rate)
+{
+    dropout_rate = new_dropout_rate;
+}
+
+
 void Transformer::set_input_vocabulary(const Tensor<string, 1>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
@@ -277,14 +290,14 @@ void Transformer::set_context_vocabulary(const Tensor<string, 1>& new_context_vo
 
 string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
 {
-    type start_indicator = 1;
-    type end_indicator = 2;
+    //type start_indicator = 1;
+    //type end_indicator = 2;
 
-    if (imported_vocabulary)
-    {
-        start_indicator = 2;
-        end_indicator = 3;
-    }
+    //if (imported_vocabulary)
+    //{
+    type start_indicator = 2;
+    type end_indicator = 3;
+    //}
     
     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
 
@@ -294,8 +307,9 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     context.setZero();
     context(0) = start_indicator;
     
-    if (!imported_vocabulary)    tokenize_whitespace(context_tokens(0), context);
-    else    tokenize_wordpiece(context_tokens(0), context);
+    //if (!imported_vocabulary)    tokenize_whitespace(context_tokens(0), context);
+    //else
+    tokenize_wordpiece(context_tokens(0), context);
     
     Tensor<type, 2> input(batch_samples_number, input_length);
     input.setZero();
@@ -335,8 +349,9 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     
     ostringstream output_string;
 
-    if (!imported_vocabulary)    detokenize_whitespace(input, output_string);
-    else    detokenize_wordpiece(input, output_string);
+    //if (!imported_vocabulary)    detokenize_whitespace(input, output_string);
+    //else
+    detokenize_wordpiece(input, output_string);
 
     return output_string.str();
     
