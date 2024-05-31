@@ -1406,6 +1406,385 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 }
 
 
+/// Member attributes and functions of calculate_vocabulary()
+
+struct WordpieceAlgorithmParameters
+{
+    int upper_threshold;
+    int lower_threshold;
+    int interations_number;
+    int max_input_tokens;
+    int max_token_length;
+    int max_unique_characters;
+    int vocabulary_size;
+    float slack_ratio;
+    bool include_joiner_token;
+    string joiner;
+    vector<string> reserved_tokens;
+};
+
+
+set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
+{
+    set<char> seen_chars;
+
+    for (const auto& [word, _] : word_counts)
+    {
+        for (char c : word)
+        {
+            seen_chars.insert(c);
+        }
+    }
+
+    return seen_chars;
+}
+
+
+map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
+    map<string, int> output_tokens,
+    bool include_joiner_token,
+    const string& joiner)
+{
+    for (const string& token : input_tokens)
+    {
+        if (output_tokens.find(token) == output_tokens.end())
+        {
+            output_tokens[token] = 1;
+        }
+
+        if (include_joiner_token)
+        {
+            string joined_token = joiner + token;
+
+            if (output_tokens.find(joined_token) == output_tokens.end())
+            {
+                output_tokens[joined_token] = 1;
+            }
+        }
+    }
+
+    return output_tokens;
+}
+
+
+vector<int> get_split_indices(const string& word, const map<string, int>& current_tokens, bool include_joiner_token, const string& joiner)
+{
+    vector<int> indices;
+    int start = 0;
+
+    while (start < word.size())
+    {
+        int end = word.size();
+
+        while (end > start)
+        {
+            string subtoken = word.substr(start, end - start);
+            if (include_joiner_token && start > 0)    subtoken = joiner + subtoken;
+
+            if (current_tokens.find(subtoken) != current_tokens.end())
+            {
+                indices.push_back(end);
+                break;
+            }
+            end--;
+        }
+
+        if (end == start)
+        {
+            return {};
+        }
+
+        start = end;
+    }
+    return indices;
+}
+
+
+tuple<int, int> calculate_thresholds(const vector<pair<string, int>>& word_counts, int upper_threshold, int lower_threshold)
+{
+    vector<int> counts;
+    for (const auto& [_, count] : word_counts)    counts.push_back(count);
+
+    int max_count = *max_element(counts.begin(), counts.end());
+    int min_count = *min_element(counts.begin(), counts.end());
+
+    int upper_search = upper_threshold == -1 ? max_count : min(upper_threshold, max_count);
+    int lower_search = lower_threshold == -1 ? min_count : max(lower_threshold, min_count);
+
+    return { upper_search, lower_search };
+}
+
+
+vector<pair<string, int>> trim_inputs(const vector<pair<string, int>>& word_counts,
+    const vector<string>& reserved_tokens,
+    int max_token_length)
+{
+    vector<pair<string, int>> trimmed_counts;
+
+    for (const auto& [word, count] : word_counts)
+    {
+        if (word.size() > max_token_length || find(reserved_tokens.begin(), reserved_tokens.end(), word) != reserved_tokens.end())
+        {
+            continue;
+        }
+
+        trimmed_counts.push_back({ word, count });
+    }
+
+    return trimmed_counts;
+}
+
+
+set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts, int max_unique_characters)
+{
+    map<char, int> character_counts;
+
+    for (const auto& [word, count] : trimmed_counts)
+    {
+        for (char c : word)
+        {
+            character_counts[c] += count;
+        }
+    }
+
+    vector<pair<char, int>> sorted_counts(character_counts.begin(), character_counts.end());
+
+    sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<char, int>& a, const pair<char, int>& b)
+        {
+            if (a.second != b.second)
+                return a.second > b.second;
+            return a.first < b.first;
+        }
+    );
+
+    set<char> allowed_characters;
+    for (int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); ++i)    allowed_characters.insert(sorted_counts[i].first);
+
+    return allowed_characters;
+}
+
+vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed_counts, const set<char>& allowed_characters, int max_input_tokens)
+{
+    vector<pair<string, int>> sorted_counts = trimmed_counts;
+
+    sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<string, int>& a, const pair<string, int>& b)
+        {
+            return a.second > b.second;
+        }
+    );
+
+    vector<pair<string, int>> filtered_counts;
+
+    for (const auto& [word, count] : sorted_counts)
+    {
+        if (max_input_tokens != -1 && filtered_counts.size() >= max_input_tokens)    break;
+
+        bool has_unallowed_characters = false;
+        for (char c : word)
+        {
+            if (allowed_characters.find(c) == allowed_characters.end())
+            {
+                has_unallowed_characters = true;
+                break;
+            }
+        }
+
+        if (has_unallowed_characters)
+        {
+            continue;
+        }
+
+        filtered_counts.push_back({ word, count });
+    }
+
+    return filtered_counts;
+}
+
+vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
+    const set<char>& character_tokens,
+    const map<string, int>& current_tokens)
+{
+    vector<string> vocabulary;
+    vocabulary.insert(vocabulary.end(), reserved_tokens.begin(), reserved_tokens.end());
+
+    vector<string> sorted_character_tokens;
+    for (const char ch : character_tokens)    sorted_character_tokens.push_back(string(1, ch));
+
+    sort(sorted_character_tokens.begin(), sorted_character_tokens.end());
+    vocabulary.insert(vocabulary.end(), sorted_character_tokens.begin(), sorted_character_tokens.end());
+
+    vector<pair<string, int>> sorted_tokens(current_tokens.begin(), current_tokens.end());
+    sort(sorted_tokens.begin(), sorted_tokens.end(), [](const pair<string, int>& a, const pair<string, int>& b)
+        {
+            if (a.second != b.second)    return a.second > b.second;
+            return a.first < b.first;
+        }
+    );
+
+    for (const auto& [token, _] : sorted_tokens)
+    {
+        vocabulary.push_back(token);
+    }
+
+    set<string> seen_tokens;
+    vector<string> final_vocabulary;
+
+    for (const string& word : vocabulary)
+    {
+        if (seen_tokens.find(word) == seen_tokens.end())
+        {
+            seen_tokens.insert(word);
+            final_vocabulary.push_back(word);
+        }
+    }
+
+    return final_vocabulary;
+}
+
+
+vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int>>& word_counts,
+    int threshold,
+    const WordpieceAlgorithmParameters& parameters)
+{
+    set<char> character_tokens = extract_character_tokens(word_counts);
+    set<string> string_tokens;
+    for (const char ch : character_tokens)    string_tokens.insert(string(1, ch));
+
+    map<string, int> current_tokens = ensure_all_tokens_exist(string_tokens, map<string, int>(), parameters.include_joiner_token, parameters.joiner);
+
+    for (int iteration = 0; iteration < parameters.interations_number; ++iteration)
+    {
+        vector<map<string, int>> subtokens(parameters.max_token_length + 1);
+
+        for (const auto& [word, count] : word_counts)
+        {
+            vector<int> split_indices;
+
+            if (iteration == 0)
+            {
+                split_indices = vector<int>(word.size());
+                iota(split_indices.begin(), split_indices.end(), 1);
+            }
+            else
+            {
+                split_indices = get_split_indices(word, current_tokens, parameters.include_joiner_token, parameters.joiner);
+                if (split_indices.empty()) continue;
+            }
+
+            int start = 0;
+            for (int split_index : split_indices)
+            {
+                for (int end = start + 1; end <= word.size(); ++end)
+                {
+                    string subtoken = word.substr(start, end - start);
+                    int length = subtoken.size();
+
+                    if (parameters.include_joiner_token && start > 0)    subtoken = parameters.joiner + subtoken;
+
+                    subtokens[length][subtoken] += count;
+                }
+                start = split_index;
+            }
+        }
+
+        map<string, int> next_tokens;
+        for (int length = parameters.max_token_length; length > 0; --length)
+        {
+            for (const auto& [token, count] : subtokens[length])
+            {
+                if (count >= threshold)    next_tokens[token] = count;
+
+                if (token.size() > length)
+                {
+                    int joiner_length = parameters.joiner.size();
+                    for (int i = 1 + joiner_length; i <= length + joiner_length; ++i)
+                    {
+                        string prefix = token.substr(0, i);
+
+                        if (subtokens[i - joiner_length].find(prefix) != subtokens[i - joiner_length].end())
+                            subtokens[i - joiner_length][prefix] -= count;
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < length; ++i)
+                    {
+                        string prefix = token.substr(0, i);
+
+                        if (subtokens[i].find(prefix) != subtokens[i].end())    subtokens[i][prefix] -= count;
+                    }
+                }
+            }
+        }
+
+        current_tokens = ensure_all_tokens_exist(string_tokens, next_tokens, parameters.include_joiner_token, parameters.joiner);
+    }
+
+    return generate_final_vocabulary(parameters.reserved_tokens, character_tokens, current_tokens);
+}
+
+
+vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>>& word_counts,
+    int lower_bound,
+    int upper_bound,
+    const WordpieceAlgorithmParameters& parameters)
+{
+    int threshold = (upper_bound + lower_bound) / 2;
+
+    vector<string> current_vocabulary = calculate_vocabulary_with_threshold(word_counts, threshold, parameters);
+
+    int current_vocabulary_size = current_vocabulary.size();
+
+    int slack = parameters.slack_ratio * parameters.vocabulary_size;
+    if (slack < 0)    slack = 0;
+
+    bool is_within_slack = (current_vocabulary_size <= parameters.vocabulary_size) && (parameters.vocabulary_size - current_vocabulary_size <= slack);
+
+    if (is_within_slack || lower_bound >= upper_bound || threshold <= 1)    return current_vocabulary;
+
+    if (current_vocabulary_size > parameters.vocabulary_size)
+        return calculate_vocabulary_binary_search(word_counts, threshold + 1, upper_bound, parameters);
+    else
+        return calculate_vocabulary_binary_search(word_counts, lower_bound, threshold - 1, parameters);
+}
+
+
+const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens,
+                                                              int vocabulary_size,
+                                                              const vector<string>& reserved_tokens,
+                                                              int upper_threshold,
+                                                              int lower_threshold,
+                                                              int interations_number,
+                                                              int max_input_tokens,
+                                                              int max_token_length,
+                                                              int max_unique_characters,
+                                                              float slack_ratio,
+                                                              bool include_joiner_token,
+                                                              const string& joiner)
+{
+    Tensor<string, 1> total_tokens = join(tokens);
+
+    const vector<pair<string, int>> word_counts = count_words(total_tokens);
+
+    WordpieceAlgorithmParameters parameters = { upper_threshold, lower_threshold, interations_number, max_input_tokens, max_token_length, max_unique_characters, vocabulary_size, slack_ratio, include_joiner_token, joiner, reserved_tokens };
+
+    auto [upper_search, lower_search] = calculate_thresholds(word_counts, parameters.upper_threshold, parameters.lower_threshold);
+
+    vector<pair<string, int>> trimmed_counts = trim_inputs(word_counts, parameters.reserved_tokens, parameters.max_token_length);
+
+    std::set<char> allowed_characters = get_allowed_characters(trimmed_counts, parameters.max_unique_characters);
+
+    vector<pair<string, int>> filtered_counts = filter_inputs(trimmed_counts, allowed_characters, parameters.max_input_tokens);
+
+    const vector<string> vocabulary = calculate_vocabulary_binary_search(filtered_counts, lower_search, upper_search, parameters);
+
+    Tensor<string, 1> vocabulary_tensor(vocabulary.size());
+    for (Index i = 0; i < vocabulary.size(); i++)    vocabulary_tensor(i) = vocabulary[i];
+
+    return vocabulary_tensor;
+}
+
+
 void LanguageDataSet::load_documents(const string& path)
 {
     const Index original_size = documents.size();
@@ -1741,8 +2120,11 @@ void LanguageDataSet::read_txt_language_model()
     {
         cout << "Calculating vocabularies..." << endl;
 
-        context_vocabulary = calculate_vocabulary(context_tokens);
-        completion_vocabulary = calculate_vocabulary(completion_tokens);
+        const Index target_vocabulary_size = 8000;
+        vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
+
+        context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
+        completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
     }
     else
     {
@@ -1811,8 +2193,9 @@ void LanguageDataSet::read_txt_language_model()
     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
     
-    if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
-    else    write_data_file_wordpiece(file, context_tokens, completion_tokens);
+    //if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
+    //else
+    write_data_file_wordpiece(file, context_tokens, completion_tokens);
     
     file.close();
 

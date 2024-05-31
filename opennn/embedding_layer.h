@@ -63,6 +63,7 @@ public:
     Index get_input_dimension() const;
     Index get_inputs_number() const;
     Index get_depth() const;
+    bool get_positional_encoding() const;
 
     dimensions get_outputs_dimensions() const final;
 
@@ -89,6 +90,7 @@ public:
     void set_input_dim(const Index&);
     void set_inputs_number(const Index&);
     void set_depth(const Index&);
+    void set_dropout_rate(const type&);
 
     void set_embedding_weights();
 
@@ -99,6 +101,10 @@ public:
     // Display messages
 
     void set_display(const bool&);
+
+    // Dropout
+
+    void dropout(Tensor<type, 3>&);
 
     // Embedding lookup
 
@@ -149,6 +155,10 @@ protected:
     /// Embedding depth
 
     Index depth;
+
+    /// Dropout rate
+
+    type dropout_rate;
 
     /// Embedding weights
 

@@ -40,7 +40,7 @@ class UnscalingLayer : public Layer
 {
 
 public:
-
+    void allocate_parameters_device() {};
    // Constructors
 
    explicit UnscalingLayer();
