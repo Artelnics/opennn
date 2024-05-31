@@ -80,6 +80,18 @@ public:
     void write_XML(tinyxml2::XMLPrinter&) const;
 
     void import_vocabulary(const string&, Tensor<string, 1>&);
+    const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens,
+                                                 int vocabulary_size,
+                                                 const vector<string>& reserved_tokens,
+                                                 int upper_threshold = 10000000,
+                                                 int lower_threshold = 10,
+                                                 int iterations_number = 4,
+                                                 int max_input_tokens = 5000000,
+                                                 int max_token_length = 50,
+                                                 int max_unique_chars = 1000,
+                                                 float slack_ratio = 0.05,
+                                                 bool include_joiner_token = true,
+                                                 const string& joiner = "##");
 
     void load_documents(const string&);
     void read_csv_3_language_model();

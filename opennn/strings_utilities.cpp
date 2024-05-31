@@ -2357,45 +2357,6 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
 }
 
 
-const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens)
-{
-    Tensor<string, 1> total = join(tokens);
-
-    Index total_size = total.size();
-    string* total_start = total.data();
-    string* total_end = total.data() + total_size;
-
-    unordered_map<string, int> count;
-
-    for (Index i = 0; i < total_size; ++i)      count[total(i)]++;
-
-    sort(total_start, total_end, [&count](const string& a, const string& b)
-                                 {
-                                     if(count[a] != count[b])    return count[a] > count[b];
-                                     else    return a < b;
-                                 }
-    );
-
-    string* vocabulary_end = unique(total_start, total_end);
-
-    const Index reserved_tokens_number = 3;
-    Tensor<string, 1> reserved_tokens(reserved_tokens_number);
-    reserved_tokens.setValues({"[PAD]", "[START]", "[END]"});
-
-    const Index vocabulary_size = static_cast<Index>(vocabulary_end - total_start) + reserved_tokens_number;
-    Tensor<string, 1> vocabulary(vocabulary_size);
-
-    for (Index i = 0; i < reserved_tokens_number; i++)    vocabulary(i) = reserved_tokens(i);
-
-    copy(/*execution::par,*/
-         total_start,
-         vocabulary_end,
-         vocabulary.data() + reserved_tokens_number);
-
-    return vocabulary;
-}
-
-
 Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
 {
     Tensor<string, 1> documents_copy(documents);
@@ -2419,6 +2380,24 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
     return tokenized_documents;
 }
 
+
+vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
+{
+    unordered_map<string, int> count;
+
+    for (Index i = 0; i < total_tokens.size(); ++i)      count[total_tokens(i)]++;
+
+    vector<pair<string, int>> word_counts(count.begin(), count.end());
+
+    sort(word_counts.begin(), word_counts.end(), [](const auto& a, const auto& b)
+        {
+            if (a.second != b.second)    return a.second > b.second;
+            else    return a.first < b.first;
+        }
+    );
+
+    return word_counts;
+}
 
 }
 

@@ -42,6 +42,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "tests\tests.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "amazon_reviews", "examples\amazon_reviews\amazon_reviews.vcxproj", "{FEA70256-C0B4-3AA1-9CDE-88120A5C9930}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CudaOpennn", "..\opennn_cuda\CudaOpennn\CudaOpennn.vcxproj", "{98871783-FCEA-4CC8-BF8E-C69D86E21C71}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -122,6 +124,14 @@ Global
 		{FEA70256-C0B4-3AA1-9CDE-88120A5C9930}.Release|x64.Build.0 = Release|x64
 		{FEA70256-C0B4-3AA1-9CDE-88120A5C9930}.RelWithDebInfo|x64.ActiveCfg = Release|x64
 		{FEA70256-C0B4-3AA1-9CDE-88120A5C9930}.RelWithDebInfo|x64.Build.0 = Release|x64
+		{98871783-FCEA-4CC8-BF8E-C69D86E21C71}.Debug|x64.ActiveCfg = Debug|x64
+		{98871783-FCEA-4CC8-BF8E-C69D86E21C71}.Debug|x64.Build.0 = Debug|x64
+		{98871783-FCEA-4CC8-BF8E-C69D86E21C71}.MinSizeRel|x64.ActiveCfg = Debug|x64
+		{98871783-FCEA-4CC8-BF8E-C69D86E21C71}.MinSizeRel|x64.Build.0 = Debug|x64
+		{98871783-FCEA-4CC8-BF8E-C69D86E21C71}.Release|x64.ActiveCfg = Release|x64
+		{98871783-FCEA-4CC8-BF8E-C69D86E21C71}.Release|x64.Build.0 = Release|x64
+		{98871783-FCEA-4CC8-BF8E-C69D86E21C71}.RelWithDebInfo|x64.ActiveCfg = Release|x64
+		{98871783-FCEA-4CC8-BF8E-C69D86E21C71}.RelWithDebInfo|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

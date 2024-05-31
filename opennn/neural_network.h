@@ -290,7 +290,7 @@ public:
                           ForwardPropagation&) const;
 
 #ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
 #endif
 
 protected:
@@ -321,11 +321,6 @@ protected:
    bool display = true;
 
 };
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
-#endif
 
 }
 
