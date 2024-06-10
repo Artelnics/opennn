@@ -1241,7 +1241,7 @@ Index NeuralNetwork::get_outputs_number() const
 
         Index outputs_number = 1;
 
-        for (Index i = 0; i < outputs_dimensions.size(); i++)    outputs_number *= outputs_dimensions[i];
+        for (Index i = 0; i < static_cast<Index>(outputs_dimensions.size()); i++)    outputs_number *= outputs_dimensions[i];
 
         return outputs_number;
     }

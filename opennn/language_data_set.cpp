@@ -1779,7 +1779,7 @@ const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tenso
     const vector<string> vocabulary = calculate_vocabulary_binary_search(filtered_counts, lower_search, upper_search, parameters);
 
     Tensor<string, 1> vocabulary_tensor(vocabulary.size());
-    for (Index i = 0; i < vocabulary.size(); i++)    vocabulary_tensor(i) = vocabulary[i];
+    for (Index i = 0; i < static_cast<Index>(vocabulary.size()); i++)    vocabulary_tensor(i) = vocabulary[i];
 
     return vocabulary_tensor;
 }

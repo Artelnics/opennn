@@ -83,8 +83,8 @@ int main()
         }
         */
      
-        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+        const Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        const Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
         
         transformer.set_input_vocabulary(completion_vocabulary);
         transformer.set_context_vocabulary(context_vocabulary);
