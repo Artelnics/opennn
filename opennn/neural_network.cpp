@@ -2169,8 +2169,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Outputs number
 
     //cout << "Outputs number" << endl;
-    const Index outputs_number = get_outputs_number();
-    //const Index outputs_number = outputs_names.size();
+    //const Index outputs_number = get_outputs_number();
+    const Index outputs_number = outputs_names.size();
 
     file_stream.OpenElement("OutputsNumber");
 
@@ -2184,8 +2184,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Outputs names
 
     //cout << "Outputs names" << endl;
-
-    for(Index i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_names.size(); i++)
     {
         file_stream.OpenElement("Output");
 
@@ -3203,7 +3202,7 @@ string NeuralNetwork::write_expression_c() const
     string target_string0("Logistic");
     string target_string1("ReLU");
     string target_string4("ExponentialLinear");
-    string target_string5("ScaledExponentialLinear");
+    string target_string5("SELU");
     string target_string6("HardSigmoid");
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
@@ -3264,7 +3263,7 @@ string NeuralNetwork::write_expression_c() const
 
     if(SExpLinear)
     {
-        buffer << "float ScaledExponentialLinear(float x) {" << endl;
+        buffer << "float SELU(float x) {" << endl;
         buffer << "float z;" << endl;
         buffer << "float alpha  = 1.67326;" << endl;
         buffer << "float lambda = 1.05070;" << endl;
@@ -3746,7 +3745,7 @@ string NeuralNetwork::write_expression_api() const
     string target_string0("Logistic");
     string target_string1("ReLU");
     string target_string4("ExponentialLinear");
-    string target_string5("ScaledExponentialLinear");
+    string target_string5("SELU");
     string target_string6("HardSigmoid");
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
@@ -3886,7 +3885,7 @@ string NeuralNetwork::write_expression_api() const
     if(SExpLinear)
     {
         buffer << "<?php" << endl;
-        buffer << "function ScaledExponentialLinear(int $x) {" << endl;
+        buffer << "function SELU(int $x) {" << endl;
         buffer << "$alpha  = 1.67326;" << endl;
         buffer << "$lambda = 1.05070;" << endl;
         buffer << "if($x>0){" << endl;
@@ -4368,7 +4367,7 @@ string NeuralNetwork::write_expression_javascript() const
     string target_string_0("Logistic");
     string target_string_1("ReLU");
     string target_string_4("ExponentialLinear");
-    string target_string_5("ScaledExponentialLinear");
+    string target_string_5("SELU");
     string target_string_6("HardSigmoid");
     string target_string_7("SoftPlus");
     string target_string_8("SoftSign");
@@ -4494,7 +4493,7 @@ string NeuralNetwork::write_expression_javascript() const
 
     if(SExpLinear)
     {
-        buffer << "function ScaledExponentialLinear(x) {" << endl;
+        buffer << "function SELU(x) {" << endl;
         buffer << "\tvar alpha  = 1.67326;" << endl;
         buffer << "\tvar lambda = 1.05070;" << endl;
         buffer << "\tif(x>0){" << endl;
