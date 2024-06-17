@@ -816,6 +816,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     for(Index i = 0; i < layers_number; i++)
     {
+        
         layers(i)->insert_gradient(back_propagation.neural_network.layers(i),
                                             index,
                                             back_propagation.gradient);

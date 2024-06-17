@@ -787,7 +787,7 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
     const Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
-
+    //cout << "Activations_derivatives" << activations_derivatives << endl;
     // Back propagation
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
