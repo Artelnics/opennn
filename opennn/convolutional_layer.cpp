@@ -1200,7 +1200,7 @@ Index ConvolutionalLayer::get_synaptic_weights_number() const
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[1];
+    return inputs_dimensions[0];
 }
 
 
@@ -1208,7 +1208,7 @@ Index ConvolutionalLayer::get_inputs_rows_number() const
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[2];
+    return inputs_dimensions[1];
 }
 
 
@@ -1216,7 +1216,7 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
 
 Index ConvolutionalLayer::get_inputs_channels_number() const
 {
-    return inputs_dimensions[3];
+    return inputs_dimensions[2];
 }
 
 //void ConvolutionalLayer::calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const

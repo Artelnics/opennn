@@ -748,12 +748,16 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             layer_inputs.resize(1);
 
             layer_inputs(0) = batch.get_inputs_pair()(0);
+
+            layer_back_propagation->is_first_layer = true;
         }
         else if (neural_network->is_context_layer(layers_inputs_indices(i)))
         {
             layer_inputs.resize(1);
 
             layer_inputs(0) = batch.get_inputs_pair()(1);
+
+            layer_back_propagation->is_first_layer = true;
         }
         else
         {
@@ -812,7 +816,6 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     for(Index i = 0; i < layers_number; i++)
     {
-        
         layers(i)->insert_gradient(back_propagation.neural_network.layers(i),
                                             index,
                                             back_propagation.gradient);

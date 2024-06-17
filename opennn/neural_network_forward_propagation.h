@@ -64,8 +64,5 @@ struct ForwardPropagation
     Tensor<LayerForwardPropagation*, 1> layers;
 };
 
-#ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
-#endif
 }
 #endif

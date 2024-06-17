@@ -494,6 +494,8 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 
 void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
+    cout << "in?" << endl;
+
     ostringstream buffer;
 
     file_stream.OpenElement("BoundingLayer");
