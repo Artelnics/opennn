@@ -1441,7 +1441,7 @@ set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
 
 
 map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
-    map<string, int>& output_tokens,
+    map<string, int> output_tokens,
     bool include_joiner_token,
     const string& joiner)
 {
@@ -1650,8 +1650,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
     set<string> string_tokens;
     for (const char ch : character_tokens)    string_tokens.insert(string(1, ch));
 
-    map<string, int> empty_map;
-    map<string, int> current_tokens = ensure_all_tokens_exist(string_tokens, empty_map, parameters.include_joiner_token, parameters.joiner);
+    map<string, int> current_tokens = ensure_all_tokens_exist(string_tokens, map<string, int>(), parameters.include_joiner_token, parameters.joiner);
 
     for (int iteration = 0; iteration < parameters.interations_number; ++iteration)
     {
@@ -1847,7 +1846,7 @@ void LanguageDataSet::load_documents(const string& path)
     }
 
     file.close();
-    
+
     Tensor<string, 1> document(lines_number);
     Tensor<string, 1> document_target(lines_number);
 
@@ -1863,7 +1862,7 @@ void LanguageDataSet::load_documents(const string& path)
         getline(file2, line);
 
         if(line.empty()) continue;
-        
+
         if(line[0]=='"')
         {
             replace(line,"\"\"", "\"");
@@ -1871,12 +1870,12 @@ void LanguageDataSet::load_documents(const string& path)
             delimiter = "\"\"";
         }
 
-        if (line.find("\"" + separator) != string::npos) replace(line, string("\"") + separator, string("\"\"") + separator);
-        
+        if( line.find("\"" + separator) != string::npos) replace(line,"\"" + separator, "\"\"" + separator);
+
         //tokens_number = count_tokens(line,delimiter + separator);
         Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
         tokens_number = tokens.size();
-        
+
         if(tokens_number == 1)
         {
             if(tokens(0).find(delimiter,0) == 0) document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
@@ -2064,7 +2063,7 @@ void LanguageDataSet::read_txt_language_model()
     cout << "Reading .txt file..." << endl;
 
     load_documents(data_source_path);
-    
+
     Index entry_number = documents(0).size();
 
     for(Index i = 1; i < documents.size(); i++)
