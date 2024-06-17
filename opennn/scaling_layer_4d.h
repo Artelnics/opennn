@@ -35,7 +35,7 @@ class ScalingLayer4D : public Layer
 {
 
 public:
-    void allocate_parameters_device() {};
+
    // Constructors
 
    explicit ScalingLayer4D();

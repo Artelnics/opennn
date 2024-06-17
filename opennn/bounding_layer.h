@@ -35,7 +35,7 @@ class BoundingLayer : public Layer
 {
 
 public:
-    void allocate_parameters_device() {};
+
    // Constructors
 
    explicit BoundingLayer();

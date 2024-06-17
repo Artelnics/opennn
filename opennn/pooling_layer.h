@@ -39,8 +39,8 @@ struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
 #ifdef OPENNN_CUDA
-    struct PoolingLayerForwardPropagationCuda;
-    struct PoolingLayerBackPropagationCuda;
+struct PoolingLayerForwardPropagationCuda;
+struct PoolingLayerBackPropagationCuda;
 #endif
 
 
@@ -51,7 +51,7 @@ class PoolingLayer : public Layer
 {
 
 public:
-    void allocate_parameters_device() {};
+
     /// Enumeration of the available methods for pooling data.
 
     enum class PoolingMethod{NoPooling, MaxPooling, AveragePooling};

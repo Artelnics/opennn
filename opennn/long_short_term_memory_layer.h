@@ -39,7 +39,7 @@ class LongShortTermMemoryLayer : public Layer
 {
 
 public:
-    void allocate_parameters_device() {};
+
     /// Enumeration of the available activation functions for the long-short-term memory layer.
 
     enum class ActivationFunction{Logistic, 
