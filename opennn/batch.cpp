@@ -26,6 +26,33 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
     {
         fill_submatrix(data, samples_indices, inputs_indices, inputs_data);
     }
+    else if(input_variables_dimensions.size() == 2)
+    {
+        const Index rows_number = input_variables_dimensions(0);
+        const Index raw_variables_number = input_variables_dimensions(1);
+
+        TensorMap<Tensor<type, 3>> inputs(inputs_data,
+                                          batch_size,
+                                          rows_number,
+                                          raw_variables_number);
+
+        #pragma omp parallel for
+
+        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+        {
+            Index index = 0;
+
+            for(Index row = 0; row < rows_number; row++)
+            {
+                for(Index raw_variable = 0; raw_variable < raw_variables_number; raw_variable++)
+                {
+                    inputs(sample_index, row, raw_variable) = data(sample_index, index);
+
+                    index++;
+                }
+            }
+        }
+    }
     else if(input_variables_dimensions.size() == 3)
     {
         const Index rows_number = input_variables_dimensions(0);

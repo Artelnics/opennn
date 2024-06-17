@@ -52,26 +52,16 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
 {
-    cout << "Empieza correlation" << endl;
-
     Correlation correlation;
-
-    cout << "1" << endl;
 
     const Index x_rows = x.dimension(0);
     const Index x_raw_variables = x.dimension(1);
     const Index y_raw_variables = y.dimension(1);
 
-    cout << "2" << endl;
-
-    const bool  x_binary = is_binary(x);
-    const bool  y_binary = is_binary(y);
-
-    cout << "3" << endl;
+    const bool x_binary = is_binary(x);
+    const bool y_binary = is_binary(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
-
-    cout << "4" << endl;
 
     if(x_raw_variables == 1 && y_raw_variables == 1)
     {
@@ -102,44 +92,35 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 
             return strongest_correlation;
         }
-
         else if(!x_binary && y_binary)
         {
             return opennn::logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
-
         else if(x_binary && !y_binary)
         {
             return opennn::logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
         }
-
         else if(x_binary && y_binary)
         {
             return opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
-        }    
+        }
     }
-
     else if(x_raw_variables != 1 && y_raw_variables == 1)
     {
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
-
     else if(x_raw_variables == 1 && y_raw_variables != 1)
     {
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
-
     else if(x_raw_variables != 1 && y_raw_variables != 1)
     {
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
-
     else
     {
         throw runtime_error("Correlations Exception: Unknown case.");
     }
-
-    cout << "Termina? correlation" << endl;
 
     return correlation;
 }
@@ -465,10 +446,9 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
 
 Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlations)
 {
-    Tensor<type, 2> values;
-    /**
     const Index rows_number = correlations.dimension(0);
     const Index raw_variables_number = correlations.dimension(1);
+
     Tensor<type, 2> values(rows_number, raw_variables_number);
 
     for(Index i = 0; i < rows_number; i++)
@@ -478,7 +458,7 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
             values(i,j) = correlations(i,j).r;
         }
     }
-    */
+
     return values;
 }
 
@@ -783,7 +763,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 1>& y)
 {
-    cout << "empieza la función logiatic_corr_vec_vec" << endl;
     Correlation correlation;
 
     pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
@@ -803,6 +782,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     cout << "logistic_correlation_vector_vector" << endl;
 
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
+
     DataSet data_set(data);
     data_set.set_training();
 
@@ -856,8 +836,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
 
-    cout << "termina la función logiatic_corr_vec_vec" << endl;
-
     return correlation;
 }
 
@@ -866,8 +844,6 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
                                                         const Tensor<type, 1>& x,
                                                         const Tensor<type, 1>& y)
 {
-    cout << "Empieza la función spearman_logiatic_corr_vec_vec" << endl;
-
     Correlation correlation;
 
     pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
@@ -922,7 +898,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-/**
+/*
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
@@ -938,8 +914,6 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
 */
-    cout << "Empieza la función spearman_logiatic_corr_vec_vec" << endl;
-
     return correlation;
 }
 

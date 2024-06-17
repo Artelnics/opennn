@@ -28,6 +28,7 @@
 #include "normalized_squared_error.h"
 #include "minkowski_error.h"
 #include "cross_entropy_error.h"
+#include "cross_entropy_error_3d.h"
 #include "weighted_squared_error.h"
 
 #include "optimization_algorithm.h"
@@ -74,7 +75,8 @@ public:
         NORMALIZED_SQUARED_ERROR,
         MINKOWSKI_ERROR,
         WEIGHTED_SQUARED_ERROR,
-        CROSS_ENTROPY_ERROR
+        CROSS_ENTROPY_ERROR,
+        CROSS_ENTROPY_ERROR_3D
     };
 
     /// Enumeration of all the available types of optimization algorithms.
@@ -205,6 +207,10 @@ private:
     /// Pointer to the cross-entropy error object wich can be used as the error term.
 
     CrossEntropyError cross_entropy_error;
+
+    /// Pointer to the cross-entropy error 3d object wich can be used as the error term.
+
+    CrossEntropyError3D cross_entropy_error_3d;
 
     /// Pointer to the weighted squared error object wich can be used as the error term.
 
