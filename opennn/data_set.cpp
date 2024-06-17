@@ -4922,11 +4922,10 @@ void DataSet::set(const Tensor<type, 2>& new_data)
 
 void DataSet::set(const Index& new_samples_number, const Index& new_variables_number)
 {
-    
     data.resize(new_samples_number, new_variables_number);
 
     raw_variables.resize(new_variables_number);
-    
+
     for(Index index = 0; index < new_variables_number-1; index++)
     {
         raw_variables(index).name = "column_" + to_string(index+1);
@@ -6281,8 +6280,8 @@ Tensor<Correlation, 2> DataSet::calculate_relevant_input_target_raw_variables_co
 
     Tensor<Correlation, 2> correlations(input_raw_variables_number, target_raw_variables_number);
 
-
 #pragma omp parallel for
+
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
         const Index input_index = input_raw_variables_indices(i);
@@ -6297,8 +6296,10 @@ Tensor<Correlation, 2> DataSet::calculate_relevant_input_target_raw_variables_co
             correlations(i, j) = opennn::correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
+
     delete correlations_thread_pool;
     delete correlations_thread_pool_device;
+
     return correlations;
 }
 
@@ -6457,15 +6458,15 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
 
 Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correlations(const bool& calculate_pearson_correlations, const bool& calculate_spearman_correlations) const
 {
-    // list to return
-    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
-
     const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
 
     const Index input_raw_variables_number = get_input_raw_variables_number();
 
     Tensor<Correlation, 2> correlations(input_raw_variables_number, input_raw_variables_number);
     Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
+
+    // list to return
+    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
 
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
@@ -6512,19 +6513,8 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
                 if(calculate_pearson_correlations)
                 {
                     correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
-
-                    cout << "-=-=-=-=-=-" << endl;
-                    cout << " i : " << i  << "&&" << " j : " << j << endl;
-                    cout << "-=-=-=-=-=-" << endl;
-                    cout << "input_i :: " << input_i << endl;
-                    cout << "input_j :: " << input_j << endl;
-                    cout << "correlations(i,j).r :: " << correlations(i,j).r << endl;
-                    cout << "type(1) :: " << type(1) << endl;
-                    cout << "NUMERIC_LIMITS_MIN :: " << NUMERIC_LIMITS_MIN << endl;
-                    cout << "-=-=-=-=-=-" << endl;
-
                     if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
-                       correlations(i,j).r =  type(1);
+                        correlations(i,j).r = type(1);
                 }
 
                 if(calculate_spearman_correlations)
@@ -6562,7 +6552,6 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
 
     correlations_list(0) = correlations;
     correlations_list(1) = correlations_spearman;
-
     return correlations_list;
 }
 
@@ -7387,6 +7376,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data set element
 
+    cout << " -- Data set element --" << endl;
+
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
@@ -7398,7 +7389,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Data set element --" << endl;
+
+
+
     // Data file
+
+    cout << " -- Data File --" << endl;
 
     const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
 
@@ -7411,9 +7408,17 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Data File --" << endl;
+
+
+
     // Data file name
 
+    cout << " -- Data File Name --" << endl;
+
     const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
+
+    cout << "-- wall -- 1" << endl;
 
     if(!data_file_name_element)
     {
@@ -7426,14 +7431,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << "-- wall -- 2" << endl;
+
     if(data_file_name_element->GetText())
     {
+        cout << "-- inside data_file_name_element->GetText() --" << endl;
+
         const string new_data_file_name = data_file_name_element->GetText();
 
         set_data_source_path(new_data_file_name);
     }
 
+    cout << "-- wall -- 3" << endl;
+
+    cout << " -- Data File Name --" << endl;
+
+
+
     // Separator
+
+    cout << " -- Separator --" << endl;
 
     const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
 
@@ -7455,7 +7472,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_separator("Comma");
     }
 
+    cout << " -- Separator --" << endl;
+
+
+
     // Has raw_variables names
+
+    cout << " -- Has raw_variables names --" << endl;
 
     const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("RawVariablesNames");
 
@@ -7473,7 +7496,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Has raw_variables names --" << endl;
+
+
+
     // Rows labels
+
+    cout << " -- Rows labels --" << endl;
 
     const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
 
@@ -7491,7 +7520,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Rows labels --" << endl;
+
+
+
     // Missing values label
+
+    cout << " -- Missing values label --" << endl;
 
     const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
 
@@ -7513,7 +7548,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_label("NA");
     }
 
+    cout << " -- Missing values label --" << endl;
+
+
+
     // Codification
+
+    cout << " -- Codification --" << endl;
 
     const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
 
@@ -7527,7 +7568,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Codification --" << endl;
+
+
+
     // raw_variables
+
+    cout << " -- raw_variables --" << endl;
 
     const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
@@ -7540,7 +7587,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- raw_variables --" << endl;
+
+
+
     // raw_variables number
+
+    cout << " -- raw_variables number --" << endl;
 
     const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
@@ -7562,7 +7615,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_raw_variables_number(new_raw_variables_number);
     }
 
+    cout << " -- raw_variables number --" << endl;
+
+
+
     // raw_variables
+
+    cout << " -- raw_variables --" << endl;
 
     const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
@@ -7705,6 +7764,9 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             }
         }
     }
+
+    cout << " -- raw_variables --" << endl;
+
 
     /**
 //    // Time series raw_variables
@@ -7889,6 +7951,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
+    cout << " -- Rows label --" << endl;
+
     if(has_rows_labels)
     {
         // Rows labels begin tag
@@ -7921,7 +7985,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Rows label --" << endl;
+
+
+
     // Samples
+
+    cout << " -- Samples --" << endl;
 
     const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
@@ -7934,7 +8004,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Samples --" << endl;
+
+
+
     // Samples number
+
+    cout << " -- Samples number --" << endl;
 
     const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
@@ -7956,7 +8032,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_training();
     }
 
+    cout << " -- Samples number --" << endl;
+
+
+
     // Samples uses
+
+    cout << " -- Samples uses --" << endl;
 
     const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
@@ -7974,7 +8056,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_samples_uses(get_tokens(samples_uses_element->GetText(), ' '));
     }
 
+    cout << " -- Samples uses --" << endl;
+
+
+
     // Missing values
+
+    cout << " -- Missing values --" << endl;
 
     const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
@@ -7987,7 +8075,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Missing values --" << endl;
+
+
+
     // Missing values method
+
+    cout << " -- Missing method --" << endl;
 
     const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
@@ -8005,7 +8099,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_method(missing_values_method_element->GetText());
     }
 
+    cout << " -- Missing method --" << endl;
+
+
+
     // Missing values number
+
+    cout << " -- Missing values number --" << endl;
 
     const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
 
@@ -8069,7 +8169,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Missing values number --" << endl;
+
+
+
     // Preview data
+
+    cout << " -- Preview data --" << endl;
 
     const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
@@ -8082,7 +8188,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
+    cout << " -- Preview data --" << endl;
+
+
+
     // Preview size
+
+    cout << " -- Preview size --" << endl;
 
     const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
@@ -8104,7 +8216,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
     }
 
+    cout << " -- Preview size --" << endl;
+
+
+
     // Preview data
+
+    cout << " -- Preview data --" << endl;
 
     start_element = preview_size_element;
 
@@ -8128,7 +8246,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    cout << " -- Preview data --" << endl;
+
+
+
     // Display
+
+    cout << " -- Display --" << endl;
 
     const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
@@ -8145,6 +8269,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             cerr << e.what() << endl;
         }
     }
+
+    cout << " -- Display --" << endl;
 }
 
 
@@ -8847,7 +8973,7 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
     set(samples_number, variables_number);
 
     data.setRandom();
-    
+
 #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
@@ -8866,7 +8992,7 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
     }
 
     set_default_raw_variables_uses();
-    
+
 }
 
 /// Generates an artifical data_set with a given number of samples, a number of features and a number of classes.
@@ -11115,24 +11241,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     }
 }
 
-
-
 bool DataSet::get_augmentation() const { return augmentation; }
-
-
-
-//Virtual functions
-
-//Image Models
-void DataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& data) {}
-
-//Languaje Models
-void DataSet::read_txt_language_model(){}
-
-//AutoAssociation Models
-void DataSet::transform_associative_dataset(){}
-void DataSet::save_auto_associative_data_binary(const string&) const {};
-
 } // namespace opennn
 
 // OpenNN: Open Neural Networks Library.

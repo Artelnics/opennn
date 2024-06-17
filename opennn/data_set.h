@@ -803,18 +803,6 @@ public:
 
     Tensor<type, 2> read_input_csv(const string&, const char&, const string&, const bool&, const bool&) const;
 
-    //Virtual functions
-
-    //Image Models
-    virtual void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
-
-    //Languaje Models
-    virtual void read_txt_language_model();
-
-    //AutoAssociation Models
-    virtual void transform_associative_dataset();
-    virtual void save_auto_associative_data_binary(const string&) const;
-
 protected:
 
     DataSet::ModelType model_type;

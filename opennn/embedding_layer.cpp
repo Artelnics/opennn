@@ -41,7 +41,7 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
 }
 
 
-/// Returns the dimension (maximum value + 1) of the input to the layer.
+/// Returns the dimension (maximum value) of the input to the layer.
 
 Index EmbeddingLayer::get_input_dimension() const
 {
@@ -214,7 +214,7 @@ void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 
 void EmbeddingLayer::set_embedding_weights()
 {
-    embedding_weights.resize(inputs_dimension + 1, depth);
+    embedding_weights.resize(inputs_dimension, depth);
 
     set_parameters_random();
 }
@@ -732,7 +732,7 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
     const Index input_dimension = embedding_layer->get_input_dimension();
 
     sample_deltas.resize(inputs_number, depth);
-    embedding_weights_derivatives.resize(input_dimension + 1, depth);
+    embedding_weights_derivatives.resize(input_dimension, depth);
 
     inputs_derivatives.resize(0); // Always input layer
 }

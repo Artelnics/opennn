@@ -39,7 +39,7 @@ namespace opennn
     {
 
     public:
-        void allocate_parameters_device() {};
+
         // Constructors
 
         explicit AdditionLayer3D();

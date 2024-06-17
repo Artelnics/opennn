@@ -95,7 +95,7 @@ public:
 
     void set_categories_number(const Index&);
 
-    void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) override;
+    void fill_image_data(const int&, const int&, const int&, Tensor<type, 2>*);
 
     Tensor<type, 2> read_bmp(const string&);
 
@@ -106,7 +106,6 @@ private:
 
     Index images_number = 0;
     Index channels_number = 0;
-
     Index image_width = 0;
     Index image_height = 0;
     Index padding = 0;

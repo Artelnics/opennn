@@ -18,7 +18,7 @@ namespace opennn
 /// It creates an empty neural network object.
 /// It also initializes all pointers in the object to nullptr.
 /// Finally, it initializes the rest of the members to their default values.
-    
+
 NeuralNetwork::NeuralNetwork()
 {
     set();
@@ -1904,6 +1904,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
     return outputs;
 }
 
+
 /// Calculates the input data necessary to compute the output data from the neural network in some direction.
 /// @param direction Input index (must be between 0 and number of inputs - 1).
 /// @param point Input point through the directional input passes.
@@ -2067,13 +2068,19 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
+    cout << "NN" << endl;
+
     file_stream.OpenElement("NeuralNetwork");
 
     // Inputs
 
+    cout << "Inputs" << endl;
+
     file_stream.OpenElement("Inputs");
 
     // Inputs number
+
+    cout << "Inputs number" << endl;
 
     file_stream.OpenElement("InputsNumber");
 
@@ -2086,6 +2093,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Inputs names
+
+    cout << "Inputs names" << endl;
 
     for(Index i = 0; i < inputs_names.size(); i++)
     {
@@ -2100,15 +2109,19 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Inputs (end tag)
 
+    cout << "Inputs (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Layers
+
+    cout << "Layers" << endl;
 
     file_stream.OpenElement("Layers");
 
     // Layers number
 
-    //cout << "Layers types" << endl;
+    cout << "Layers types" << endl;
 
     file_stream.OpenElement("LayersTypes");
 
@@ -2126,8 +2139,11 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers information
 
+    cout << "Layers information\n" << endl;
+
     for(Index i = 0; i < layers.size(); i++)
     {
+        cout << i << " :: " << layers(i)->get_name() << endl;
         layers[i]->write_XML(file_stream);
     }
 
@@ -2160,17 +2176,21 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers (end tag)
 
+    cout << "Layers (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Ouputs
+
+    cout << "Outputs" << endl;
 
     file_stream.OpenElement("Outputs");
 
     // Outputs number
 
-    //cout << "Outputs number" << endl;
-    //const Index outputs_number = get_outputs_number();
-    const Index outputs_number = outputs_names.size();
+    cout << "Outputs number" << endl;
+
+    const Index outputs_number = get_outputs_number();
 
     file_stream.OpenElement("OutputsNumber");
 
@@ -2183,7 +2203,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs names
 
-    //cout << "Outputs names" << endl;
+    cout << "Outputs names" << endl;
+
     for(Index i = 0; i < outputs_names.size(); i++)
     {
         file_stream.OpenElement("Output");
@@ -2197,9 +2218,13 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     //Outputs (end tag)
 
+    cout << "Outputs (end tag)" << endl;
+
     file_stream.CloseElement();
 
     // Neural network (end tag)
+
+    cout << "Neural Network (end tag)" << endl;
 
     file_stream.CloseElement();
 }
@@ -2406,7 +2431,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
     for(Index i = 0; i < layers_types.size(); i++)
     {
-        if(layers_types(i) == "Scaling2D")
+        if(layers_types(i) == "Scaling")
         {
             ScalingLayer2D* scaling_layer = new ScalingLayer2D();
 
@@ -3202,7 +3227,7 @@ string NeuralNetwork::write_expression_c() const
     string target_string0("Logistic");
     string target_string1("ReLU");
     string target_string4("ExponentialLinear");
-    string target_string5("SELU");
+    string target_string5("ScaledExponentialLinear");
     string target_string6("HardSigmoid");
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
@@ -3263,7 +3288,7 @@ string NeuralNetwork::write_expression_c() const
 
     if(SExpLinear)
     {
-        buffer << "float SELU(float x) {" << endl;
+        buffer << "float ScaledExponentialLinear(float x) {" << endl;
         buffer << "float z;" << endl;
         buffer << "float alpha  = 1.67326;" << endl;
         buffer << "float lambda = 1.05070;" << endl;
@@ -3745,7 +3770,7 @@ string NeuralNetwork::write_expression_api() const
     string target_string0("Logistic");
     string target_string1("ReLU");
     string target_string4("ExponentialLinear");
-    string target_string5("SELU");
+    string target_string5("ScaledExponentialLinear");
     string target_string6("HardSigmoid");
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
@@ -3885,7 +3910,7 @@ string NeuralNetwork::write_expression_api() const
     if(SExpLinear)
     {
         buffer << "<?php" << endl;
-        buffer << "function SELU(int $x) {" << endl;
+        buffer << "function ScaledExponentialLinear(int $x) {" << endl;
         buffer << "$alpha  = 1.67326;" << endl;
         buffer << "$lambda = 1.05070;" << endl;
         buffer << "if($x>0){" << endl;
@@ -4367,7 +4392,7 @@ string NeuralNetwork::write_expression_javascript() const
     string target_string_0("Logistic");
     string target_string_1("ReLU");
     string target_string_4("ExponentialLinear");
-    string target_string_5("SELU");
+    string target_string_5("ScaledExponentialLinear");
     string target_string_6("HardSigmoid");
     string target_string_7("SoftPlus");
     string target_string_8("SoftSign");
@@ -4493,7 +4518,7 @@ string NeuralNetwork::write_expression_javascript() const
 
     if(SExpLinear)
     {
-        buffer << "function SELU(x) {" << endl;
+        buffer << "function ScaledExponentialLinear(x) {" << endl;
         buffer << "\tvar alpha  = 1.67326;" << endl;
         buffer << "\tvar lambda = 1.05070;" << endl;
         buffer << "\tif(x>0){" << endl;

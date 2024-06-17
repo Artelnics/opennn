@@ -33,6 +33,8 @@ struct LayerBackPropagation
     Layer* layer = nullptr;
 
     Tensor<pair<type*, dimensions>, 1> inputs_derivatives;
+
+    bool is_first_layer = false;
 };
 
 }
