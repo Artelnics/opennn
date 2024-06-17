@@ -353,7 +353,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
     BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
-    
+
 //    type training_loss = type(0);
     type training_error = type(0);
     type training_accuracy = type(0);
@@ -403,7 +403,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             // Data set
-            
+
             training_batch.fill(training_batches.chip(iteration, 0),
                                 input_variables_indices,
                                 target_variables_indices,
@@ -422,16 +422,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
-
+            
             training_error += training_back_propagation.error;
             if(is_classification_model)   training_accuracy += training_back_propagation.accuracy;
 //            training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
             
-            if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
+            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
-        cout << endl;
+        //cout << endl;
         
         // Loss
 
@@ -645,11 +645,10 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     
     const type bias_correction =
             sqrt(type(1) - pow(beta_2, type(iteration))) /
-            sqrt(type(1) - pow(beta_2, type(iteration))) /
             (type(1) - pow(beta_1, type(iteration)));
-    
+
     const Tensor<type, 1>& gradient = back_propagation.gradient;
-    //cout << "gradient :\n " << gradient << endl;
+
     Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay;
 
     Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
@@ -658,7 +657,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     gradient_exponential_decay.device(*thread_pool_device)
         = gradient * (type(1) - beta_1) + gradient_exponential_decay * beta_1;
-
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
