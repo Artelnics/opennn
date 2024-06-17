@@ -1441,7 +1441,7 @@ set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
 
 
 map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
-    map<string, int> output_tokens,
+    map<string, int>& output_tokens,
     bool include_joiner_token,
     const string& joiner)
 {
