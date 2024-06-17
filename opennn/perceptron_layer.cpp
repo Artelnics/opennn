@@ -799,6 +799,8 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
     Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
 
+    bool& is_first_layer = perceptron_layer_back_propagation->is_first_layer;
+
     Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation->input_derivatives;
     
     error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
@@ -807,7 +809,8 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
     synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(error_combinations_derivatives, AT_B);
 
-    input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, A_BT);
+    if(!is_first_layer)
+        input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, A_BT);
 }
 
 

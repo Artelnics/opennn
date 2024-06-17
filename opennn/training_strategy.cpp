@@ -86,6 +86,8 @@ LossIndex* TrainingStrategy::get_loss_index()
 
         case LossMethod::CROSS_ENTROPY_ERROR: return &cross_entropy_error;
 
+        case LossMethod::CROSS_ENTROPY_ERROR_3D: return &cross_entropy_error_3d;
+
         default: return nullptr;
     }
 }
@@ -281,6 +283,9 @@ string TrainingStrategy::write_loss_method() const
     case LossMethod::CROSS_ENTROPY_ERROR:
         return "CROSS_ENTROPY_ERROR";
 
+    case LossMethod::CROSS_ENTROPY_ERROR_3D:
+        return "CROSS_ENTROPY_ERROR_3D";
+
     default:
         return string();
     }
@@ -395,6 +400,9 @@ string TrainingStrategy::write_loss_method_text() const
     case LossMethod::CROSS_ENTROPY_ERROR:
         return "Cross entropy error";
 
+    case LossMethod::CROSS_ENTROPY_ERROR_3D:
+        return "Cross entropy error 3D";
+
     default:
         return string();
     }
@@ -459,6 +467,10 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
     else if(new_loss_method == "CROSS_ENTROPY_ERROR")
     {
         set_loss_method(LossMethod::CROSS_ENTROPY_ERROR);
+    }
+    else if(new_loss_method == "CROSS_ENTROPY_ERROR_3D")
+    {
+        set_loss_method(LossMethod::CROSS_ENTROPY_ERROR_3D);
     }
     else
     {
@@ -870,6 +882,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     case LossMethod::NORMALIZED_SQUARED_ERROR : normalized_squared_error.write_regularization_XML(file_stream); break;
     case LossMethod::MINKOWSKI_ERROR : Minkowski_error.write_regularization_XML(file_stream); break;
     case LossMethod::CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream); break;
+    case LossMethod::CROSS_ENTROPY_ERROR_3D : cross_entropy_error_3d.write_regularization_XML(file_stream); break;
     case LossMethod::WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream); break;
     case LossMethod::SUM_SQUARED_ERROR : sum_squared_error.write_regularization_XML(file_stream); break;
     default: break;

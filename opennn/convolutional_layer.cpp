@@ -432,7 +432,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     const TensorMap<Tensor<type, 4>> deltas(deltas_pair(0).first,
                                             deltas_pair(0).second[0],
                                             deltas_pair(0).second[1],
-                                            deltass_pair(0).second[2],
+                                            deltas_pair(0).second[2],
                                             deltas_pair(0).second[3]);
 
     cout << "deltas: " << endl << deltas << endl;

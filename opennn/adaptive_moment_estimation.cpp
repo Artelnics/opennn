@@ -403,7 +403,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             // Data set
-            
+
             training_batch.fill(training_batches.chip(iteration, 0),
                                 input_variables_indices,
                                 target_variables_indices,
@@ -429,9 +429,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             update_parameters(training_back_propagation, optimization_data);
             
-            if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
+            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
-        cout << endl;
+        //cout << endl;
         
         // Loss
 
@@ -644,7 +644,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     Index& iteration = optimization_data.iteration;
     
     const type bias_correction =
-            sqrt(type(1) - pow(beta_2, type(iteration))) /
             sqrt(type(1) - pow(beta_2, type(iteration))) /
             (type(1) - pow(beta_1, type(iteration)));
 
