@@ -284,11 +284,10 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    void print() const;
 
    Tensor<type, 4> error_combinations_derivatives;
+   Tensor<type, 4> input_derivatives;
 
    Tensor<type, 1> biases_derivatives;
    Tensor<type, 4> synaptic_weights_derivatives;
-
-   Tensor<type, 4> input_derivatives;
 };
 
 
