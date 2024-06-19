@@ -444,10 +444,10 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     const Index inputs_columns_number = get_inputs_columns_number();
     const Index inputs_channels_number = get_inputs_channels_number();
 
-    const Index kernels_number = get_kernels_number(); 
-    const Index kernels_rows_number = get_kernels_rows_number();
-    const Index kernels_columns_number = get_kernels_columns_number();
-    const Index kernels_channels_number = get_kernels_channels_number();
+    Index kernels_number = get_kernels_number();
+    Index kernels_rows_number = get_kernels_rows_number();
+    Index kernels_columns_number = get_kernels_columns_number();
+    Index kernels_channels_number = get_kernels_channels_number();
 
     const Index outputs_rows_number = get_outputs_rows_number();
     const Index outputs_columns_number = get_outputs_columns_number();
@@ -539,10 +539,32 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     }
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
+    input_derivatives.setZero();
 
-    input_derivatives = error_combinations_derivatives.convolve(synaptic_weights,convolutions_dimensions);
 
-    cout << "Last inputs derivatives: " << endl << convolutional_layer_back_propagation->get_inputs_derivatives_pair()(0).first << endl;
+//    input_derivatives = error_combinations_derivatives.convolve(synaptic_weights,convolutions_dimensions);
+
+    for (int image_index = 0; image_index < batch_samples_number; image_index++)
+    {
+        for (int d = 0; d < deltas_pair(0).second[2]; ++d)
+        {
+            for (int row = 0; row < deltas_pair(0).second[0]; row++)
+            {
+                for (int col = 0; col < deltas_pair(0).second[1]; col++)
+                {
+                     input_derivatives.chip(image_index, 0).chip(d, 0).slice(std::array<Index, 2>({row, col}), std::array<Index, 2>({kernels_rows_number, kernels_columns_number})) +=
+                             error_combinations_derivatives(row,col, d, image_index) * synaptic_weights.chip(d, 0);
+                }
+            }
+        }
+    }
+
+    cout << "weights: " << endl << synaptic_weights << endl;
+    cout << "error comb derivatives: " << endl << error_combinations_derivatives << endl;
+    cout << "der: "  << endl << error_combinations_derivatives.convolve(synaptic_weights,convolutions_dimensions) << endl;
+
+    //input_derivatives.setRandom();
+    cout << "Last inputs derivatives: " << endl << input_derivatives << endl;
 
     cout << "--------------------------------------------------------------------" << endl;
 }

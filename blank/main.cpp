@@ -82,7 +82,7 @@ int main()
             cout << "\t" << transformer.get_layers()(i)->get_name() << " parameters number: " << transformer.get_layers()(i)->get_parameters_number() << endl;
         }
         */
-     
+     /*
         const Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
         const Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
         
