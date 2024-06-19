@@ -305,7 +305,10 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     dimensions inputs_dimensions = flatten_layer->get_inputs_dimensions();
 
-    input_derivatives.resize(batch_samples_number, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2]);
+    input_derivatives.resize(batch_samples_number,
+            inputs_dimensions[0],
+            inputs_dimensions[1],
+            inputs_dimensions[2]);
 
     inputs_derivatives.resize(1);
     inputs_derivatives(0).first = input_derivatives.data();
