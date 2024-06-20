@@ -1038,6 +1038,35 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
     return cross_entropy_error/type(testing_samples_number);
 }
 
+type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets) const
+{
+    const Index batch_samples_number = outputs.dimension(0);
+    const Index outputs_number = outputs.dimension(1);
+
+    Tensor<type, 2> errors(batch_samples_number, outputs_number);
+    Tensor<type, 2> predictions(batch_samples_number, outputs_number);
+    Tensor<bool, 2> matches(batch_samples_number, outputs_number);
+    Tensor<bool, 2> mask(batch_samples_number, outputs_number);
+
+    Tensor<type, 0> cross_entropy_error;
+
+    mask.device(*thread_pool_device) = targets != targets.constant(0);
+
+    const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < batch_samples_number; i++)
+        for (Index j = 0; j < outputs_number; j++)
+            errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
+
+    errors.device(*thread_pool_device) = errors * mask.cast<type>();
+
+    cross_entropy_error.device(*thread_pool_device) = errors.sum();
+
+    return cross_entropy_error(0) / mask_sum(0);
+}
+
 
 /// Returns the weighted squared error between the targets and the outputs of the neural network. It can only be computed for
 /// binary classification problems.
@@ -1105,6 +1134,33 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets, 
     Tensor<type, 0> Minkoski_error = (outputs - targets).abs().pow(minkowski_parameter).sum().pow(type(1)/minkowski_parameter);
 
     return Minkoski_error();
+}
+
+type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets) const
+{
+    const Index batch_samples_number = outputs.dimension(0);
+    const Index outputs_number = outputs.dimension(1);
+
+    Tensor<type, 2> errors(batch_samples_number, outputs_number);
+    Tensor<type, 2> predictions(batch_samples_number, outputs_number);
+    Tensor<bool, 2> matches(batch_samples_number, outputs_number);
+    Tensor<bool, 2> mask(batch_samples_number, outputs_number);
+
+    Tensor<type, 0> accuracy;
+
+    mask.device(*thread_pool_device) = targets != targets.constant(0);
+
+    const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
+
+    predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
+
+    matches.device(*thread_pool_device) = predictions == targets;
+
+    matches.device(*thread_pool_device) = matches && mask;
+
+    accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
+
+    return accuracy(0);
 }
 
 
@@ -2654,6 +2710,24 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     }
 
     return inputs_errors_cross_correlation;
+}
+
+pair<type, type> TestingAnalysis::test_transformer() const
+{
+    Transformer* transformer = static_cast<Transformer*>(neural_network);
+    LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+
+    Tensor<type, 2> input = language_data_set->get_testing_input_data();
+    Tensor<type, 2> context = language_data_set->get_testing_context_data();
+    
+    Tensor<type, 3> outputs = transformer->calculate_outputs(input, context);
+
+    Tensor<type, 2> target = language_data_set->get_testing_target_data();
+
+    type error = calculate_cross_entropy_error_3d(outputs, target);
+    type accuracy = calculate_masked_accuracy(outputs, target);
+
+    return pair<type, type>(error, accuracy);
 }
 
 

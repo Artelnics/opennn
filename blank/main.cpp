@@ -42,14 +42,18 @@ int main()
         
         LanguageDataSet language_data_set;
         
-        language_data_set.set_data_source_path("data/language/ENtoES_medium.txt");
+        language_data_set.set_data_source_path("data/language/ENtoES_large_shuffled.txt");
 
         language_data_set.set_text_separator(DataSet::Separator::Tab);
 
         language_data_set.read_txt_language_model();
-        
+
+        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+        /*
         //language_data_set.set_training();
         language_data_set.set_raw_variables_scalers(Scaler::NoScaling);
+        
 
         Index input_length = language_data_set.get_completion_length();
         Index context_length = language_data_set.get_context_length();
@@ -67,7 +71,7 @@ int main()
         Index depth = 128;
         Index perceptron_depth = 256;
         Index heads_number = 4;
-        */
+        *
 
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
@@ -75,16 +79,13 @@ int main()
         transformer.set_dropout_rate(0);
 
         cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
-        /*
 
+        /*
         for (Index i = 0; i < transformer.get_layers_number(); i++)
         {
             cout << "\t" << transformer.get_layers()(i)->get_name() << " parameters number: " << transformer.get_layers()(i)->get_parameters_number() << endl;
         }
-        */
-     /*
-        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+        *
         
         transformer.set_input_vocabulary(completion_vocabulary);
         transformer.set_context_vocabulary(context_vocabulary);
@@ -99,27 +100,27 @@ int main()
         optimization_algorithm.set_display(true);
         optimization_algorithm.set_display_period(1);
 
-        //type loss_goal = type(0.80);
-        type training_accuracy_goal = type(0.85);
+        type loss_goal = type(0.99);
+        //type training_accuracy_goal = type(0.80);
 
-        //optimization_algorithm.set_loss_goal(loss_goal);
-        optimization_algorithm.set_accuracy_goal(training_accuracy_goal);
+        optimization_algorithm.set_loss_goal(loss_goal);
+        //optimization_algorithm.set_accuracy_goal(training_accuracy_goal);
         optimization_algorithm.set_maximum_epochs_number(10000);
         optimization_algorithm.set_maximum_time(3 * 86400);
         optimization_algorithm.set_batch_samples_number(64);
 
-        TrainingResults training_results = optimization_algorithm.perform_training();
+        //TrainingResults training_results = optimization_algorithm.perform_training();
 
         transformer.save("data/language/ENtoES_model.xml");
-        
+        */
 
         Transformer transformer2;
 
-        transformer2.load_transformer("data/language/ENtoES_model.xml");
+        transformer2.load_transformer("data/language/Large Model.xml");
 
         transformer2.set_input_vocabulary(completion_vocabulary);
         transformer2.set_context_vocabulary(context_vocabulary);
-
+        
         //const bool imported_vocabulary = true;
         
         cout << endl << "DEPLOYMENT:" << endl;
@@ -169,12 +170,22 @@ int main()
             if (input == "-Q")
                 break;
 
-            output = transformer2.calculate_outputs(input, imported_vocabulary);
+            output = transformer2.calculate_outputs(input);
 
             cout << "Output: " << output << endl;
             cout << endl;
         }
         */
+
+        // Testing analysis
+
+        const TestingAnalysis testing_analysis(&transformer2, &language_data_set);
+        
+        pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
+
+        cout << "TESTING ANALYSIS:" << endl;
+        cout << "Testing error: " << transformer_error_accuracy.first << endl;
+        cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
         cout << "Bye!" << endl;
 
         return 0;

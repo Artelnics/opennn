@@ -357,6 +357,26 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     
 }
 
+Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, const Tensor<type, 2>& context)
+{
+    pair<type*, dimensions> input_pair((type*)input.data(), { input.dimension(0), input.dimension(1) });
+    pair<type*, dimensions> context_pair((type*)context.data(), { context.dimension(0), context.dimension(1) });
+
+    Tensor<pair<type*, dimensions>, 1> inputs_pair(2);
+    inputs_pair(0) = input_pair;
+    inputs_pair(1) = context_pair;
+
+    ForwardPropagation forward_propagation(input.dimension(0), this);
+    
+    forward_propagate(inputs_pair, forward_propagation, false);
+    
+    pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+
+    TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1], outputs_pair.second[2]);
+
+    return outputs;
+}
+
 
 void Transformer::tokenize_whitespace(const Tensor<string, 1>& context_tokens, Tensor<type, 2>& context)
 {
