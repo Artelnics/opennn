@@ -714,17 +714,6 @@ TrainingResults TrainingStrategy::perform_training()
         fix_forecasting();
     }
 
-    if(neural_network->has_convolutional_layer())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "TrainingResults perform_training() const method.\n"
-               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
     switch(optimization_method)
     {
         case OptimizationMethod::GRADIENT_DESCENT:
