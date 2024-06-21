@@ -30,9 +30,9 @@ namespace opennn
 {
     // Read 
 
-    void read_bmp_image(const string&, Tensor<type, 3>&);
+    Tensor<unsigned char, 3> read_bmp_image(const string&);
 
-
+    
     struct ImageData {
         Tensor<unsigned char, 1> data;
         int width;
@@ -41,7 +41,7 @@ namespace opennn
     };
 
     ImageData read_bmp_image_gpt(const std::string& filename);
-
+    
     // Unsigned char
 
     void sort_channel(Tensor<unsigned char, 1>&, Tensor<unsigned char, 1>&, const int&);

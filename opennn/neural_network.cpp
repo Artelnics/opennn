@@ -216,6 +216,21 @@ bool NeuralNetwork::has_scaling_layer() const
     return false;
 }
 
+/// Returns true if the neural network object has a scaling layer 4d object inside,
+/// and false otherwise.
+
+bool NeuralNetwork::has_scaling_4d_layer() const
+{
+    const Index layers_number = get_layers_number();
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        if (layers[i]->get_type() == Layer::Type::Scaling4D) return true;
+    }
+
+    return false;
+}
+
 
 /// Returns true if the neural network object has a long short-term memory layer object inside,
 /// and false otherwise.

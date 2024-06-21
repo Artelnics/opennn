@@ -738,11 +738,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
             for (Index j = 0; j < layers_outputs_indices(i).size(); j++)
             {
-                cout << "Layer type: " << back_propagation.neural_network.layers(layers_outputs_indices(i)(j))->layer->get_type_string() << endl;
-
                 input_index = find_input_index(layers_inputs_indices(layers_outputs_indices(i)(j)), i);
-
-                cout << "input index: " << input_index << endl;
 
                 layer_deltas(j) = back_propagation.neural_network.layers(layers_outputs_indices(i)(j))->get_inputs_derivatives_pair()(input_index);
             }

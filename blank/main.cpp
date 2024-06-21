@@ -36,92 +36,49 @@ int main()
    try
    {
         cout << "Blank\n";
-        
+        /**/
         _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
         _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
         
         LanguageDataSet language_data_set;
         
-        language_data_set.set_data_source_path("data/language/ENtoES_medium.txt");
+        language_data_set.set_data_source_path("data/language/ENtoES_large_shuffled.txt");
 
         language_data_set.set_text_separator(DataSet::Separator::Tab);
 
+        language_data_set.set_context_vocabulary_path("data/language/EN_mac_vocabulary.txt");
+        language_data_set.set_completion_vocabulary_path("data/language/ES_mac_vocabulary.txt");
+
         language_data_set.read_txt_language_model();
-        
-        //language_data_set.set_training();
-        language_data_set.set_raw_variables_scalers(Scaler::NoScaling);
+
+        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
 
         Index input_length = language_data_set.get_completion_length();
         Index context_length = language_data_set.get_context_length();
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         Index context_dimension = language_data_set.get_context_vocabulary_size();
-        
-        
-        Index number_of_layers = 2;
-        Index depth = 128;
-        Index perceptron_depth = 256;
-        Index heads_number = 4;
-        
-        /*
-        Index number_of_layers = 2;
-        Index depth = 128;
-        Index perceptron_depth = 256;
-        Index heads_number = 4;
-        */
 
-        Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
-                          depth, perceptron_depth, heads_number, number_of_layers });
-
-        transformer.set_dropout_rate(0);
-
-        cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
-        /*
-
-        for (Index i = 0; i < transformer.get_layers_number(); i++)
+        // Testing Analysis
         {
-            cout << "\t" << transformer.get_layers()(i)->get_name() << " parameters number: " << transformer.get_layers()(i)->get_parameters_number() << endl;
+            Transformer transformer2;
+
+            transformer2.load_transformer("data/language/ENtoES_model.xml");
+
+            transformer2.set_input_vocabulary(completion_vocabulary);
+            transformer2.set_context_vocabulary(context_vocabulary);
+
+            const TestingAnalysis testing_analysis2(&transformer2, &language_data_set);
+
+            pair<type, type> transformer_error_accuracy2 = testing_analysis2.test_transformer();
+
+            cout << "TESTING ANALYSIS:" << endl;
+            cout << "Testing error: " << transformer_error_accuracy2.first << endl;
+            cout << "Testing accuracy: " << transformer_error_accuracy2.second << endl;
         }
-        */
-     /*
-        const Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-        const Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
         
-        transformer.set_input_vocabulary(completion_vocabulary);
-        transformer.set_context_vocabulary(context_vocabulary);
-
-        CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
-        cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        AdaptiveMomentEstimation optimization_algorithm;
-        optimization_algorithm.set_loss_index(&cross_entropy_error_3d);
-        optimization_algorithm.set_custom_learning_rate(depth);
-
-        optimization_algorithm.set_display(true);
-        optimization_algorithm.set_display_period(1);
-
-        //type loss_goal = type(0.80);
-        type training_accuracy_goal = type(0.85);
-
-        //optimization_algorithm.set_loss_goal(loss_goal);
-        optimization_algorithm.set_accuracy_goal(training_accuracy_goal);
-        optimization_algorithm.set_maximum_epochs_number(10000);
-        optimization_algorithm.set_maximum_time(3 * 86400);
-        optimization_algorithm.set_batch_samples_number(64);
-
-        TrainingResults training_results = optimization_algorithm.perform_training();
-
-        transformer.save("data/language/ENtoES_model.xml");
-        
-
-        Transformer transformer2;
-
-        transformer2.load_transformer("data/language/ENtoES_model.xml");
-
-        transformer2.set_input_vocabulary(completion_vocabulary);
-        transformer2.set_context_vocabulary(context_vocabulary);
-
         //const bool imported_vocabulary = true;
-        
+        /*
         cout << endl << "DEPLOYMENT:" << endl;
         string input;
         string output;
@@ -169,12 +126,74 @@ int main()
             if (input == "-Q")
                 break;
 
-            output = transformer2.calculate_outputs(input, imported_vocabulary);
+            output = transformer2.calculate_outputs(input);
 
             cout << "Output: " << output << endl;
             cout << endl;
         }
+        /**/        
+
+        /*
+        const Index samples_number = 200;
+        const Index inputs_number = 1000;
+        const Index inputs_dimension = 1000;
+        const Index depth = 1000;
+
+        Tensor<Index, 1> inputs_dimensions(2);
+        inputs_dimensions.setValues({ inputs_number, depth });
+
+        DataSet dataset(samples_number, inputs_number * depth, inputs_number);
+
+        dataset.set_input_variables_dimensions(inputs_dimensions);
+
+        Tensor<type, 2> data(samples_number, inputs_number * depth + inputs_number);
+        data.setRandom();
+
+        for (Index i = 0; i < samples_number; i++)
+        {
+            for (Index j = inputs_number * depth; j < inputs_number * depth + inputs_number; j++)
+            {
+                data(i, j) = type(Index(data(i, j) * 1000) % inputs_dimension);
+            }
+        }
+
+        Tensor<Index, 1> input_variables(inputs_number * depth);
+        for (Index i = 0; i < input_variables.size(); i++)    input_variables(i) = i;
+
+        Tensor<Index, 1> target_variables(inputs_number);
+        for (Index i = 0; i < target_variables.size(); i++)    target_variables(i) = inputs_number * depth + i;
+
+        dataset.set_data(data);
+        dataset.set_input_target_raw_variables(input_variables, target_variables);
+        dataset.set_training();
+
+        NeuralNetwork neural_network;
+
+        ProbabilisticLayer3D* probabilistic_layer = new ProbabilisticLayer3D(inputs_number, depth, inputs_dimension);
+
+        neural_network.add_layer(probabilistic_layer);
+
+        CrossEntropyError3D cross_entropy_error_3d(&neural_network, &dataset);
+        cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+        AdaptiveMomentEstimation optimization_algorithm;
+        optimization_algorithm.set_loss_index(&cross_entropy_error_3d);
+
+        optimization_algorithm.set_display(true);
+        optimization_algorithm.set_display_period(1);
+
+        type loss_goal = type(0.99);
+        //type training_accuracy_goal = type(0.80);
+
+        optimization_algorithm.set_loss_goal(loss_goal);
+        //optimization_algorithm.set_accuracy_goal(training_accuracy_goal);
+        optimization_algorithm.set_maximum_epochs_number(0);
+        optimization_algorithm.set_maximum_time(3 * 86400);
+        optimization_algorithm.set_batch_samples_number(200);
+
+        TrainingResults training_results = optimization_algorithm.perform_training();
         */
+
         cout << "Bye!" << endl;
 
         return 0;
