@@ -25,7 +25,9 @@
 
 #include "correlations.h"
 #include "data_set.h"
+#include "language_data_set.h"
 #include "neural_network.h"
+#include "transformer.h"
 
 //Eigen includes
 
@@ -194,8 +196,11 @@ public:
 
    type calculate_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_cross_entropy_error_3d(const Tensor<type, 3>&, const Tensor<type, 2>&) const;
    type calculate_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
    type calculate_Minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type = type(1.5)) const;
+
+   type calculate_masked_accuracy(const Tensor<type, 3>&, const Tensor<type, 2>&) const;
 
    type calculate_determination_coefficient(const Tensor<type,1>&, const Tensor<type,1>&) const;
 
@@ -312,6 +317,10 @@ public:
    Tensor<Tensor<type, 1>, 1> calculate_error_autocorrelation(const Index& = 10) const;
 
    Tensor<Tensor<type, 1>, 1> calculate_inputs_errors_cross_correlation(const Index& = 10) const;
+
+   // Transformer methods
+
+   pair<type, type> test_transformer() const;
 
    // Serialization methods
 

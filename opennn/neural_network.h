@@ -103,6 +103,7 @@ public:
    // Get methods
 
    bool has_scaling_layer() const;
+   bool has_scaling_4d_layer() const;
    bool has_long_short_term_memory_layer() const;
    bool has_recurrent_layer() const;
    bool has_unscaling_layer() const;
