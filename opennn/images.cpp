@@ -8,9 +8,7 @@
 namespace opennn
 {
 
-/// @todo ChatGPT gives something easier
-
-void read_bmp_image(const string& filename)
+Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 {
     FILE* file = fopen(filename.data(), "rb");
 
@@ -47,31 +45,34 @@ void read_bmp_image(const string& filename)
 
     const size_t size = image_height*(channels_number*image_width + padding);
 
-    Tensor<Tensor<type, 1>, 1> image_data(2); // One tensor is pixel data and the other one is [height, width, channels]
+    Tensor<unsigned char, 1> image_data;
 
-    Tensor<unsigned char, 1> image(size);
-    image.setZero();
-
-    Tensor<type, 1> image_dimensions(3);
-    image_dimensions(0) = type(image_height);
-    image_dimensions(1) = type(image_width);
-    image_dimensions(2) = type(channels_number);
-
-    image_data(1) = image_dimensions;
+    image_data.resize(size);
 
     int data_offset = *(int*)(&info[0x0A]);
     fseek(file, (long int)(data_offset - 54), SEEK_CUR);
 
-    fread(image.data(), sizeof(unsigned char), size, file);
+    fread(image_data.data(), sizeof(unsigned char), size, file);
 
     fclose(file);
 
+    Tensor<unsigned char, 3> image(image_height, image_width, channels_number);
+
+    for (Index i = 0; i < image_height; ++i) {
+        for (Index j = 0; j < image_width; ++j) {
+            for (Index k = 0; k < channels_number; ++k) {
+                image(i, j, k) = image_data[(i * (image_width * channels_number + padding)) + (j * channels_number) + k];
+            }
+        }
+    }
+    
+    /* @todo
     if(channels_number == 3) // Reshaping and sorting of the pixel data from the BMP image
     {
         const int rows_number = int(image_height);
         const int columns_number = int(image_width);
 
-        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
+        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image_data, rows_number, columns_number, padding);
 
         const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
         const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
@@ -105,12 +106,11 @@ void read_bmp_image(const string& filename)
         }
 
         image_data(0) = image_type;
-    }
+    }*/
 
+    return image;
 }
 
-
-/// @todo The image data is not sorted (the rgb pixels are stored backward in the bmp format: bgr)
 
 ImageData read_bmp_image_gpt(const std::string& filename)
 {

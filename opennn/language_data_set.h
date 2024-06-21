@@ -53,6 +53,8 @@ public:
     Index get_context_raw_variables_number() const;
     Tensor<Index, 1> get_context_raw_variables_indices() const;
 
+    Tensor<type, 2> get_testing_context_data() const;
+
     const Tensor<Tensor<string, 1>, 1> get_documents() const;
     const Tensor<Tensor<string, 1>, 1> get_targets() const;
 

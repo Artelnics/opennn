@@ -1505,7 +1505,7 @@ void ImageDataSet::set_categories_number(const Index& new_categories_number)
 }
 
 
-Tensor<type, 2> ImageDataSet::read_bmp(const string& path)
+void ImageDataSet::read_bmp(const string& path)
 {
     vector<fs::path> folderPath;
     vector<fs::path> imagePath;
@@ -1518,7 +1518,7 @@ Tensor<type, 2> ImageDataSet::read_bmp(const string& path)
         }
     }
 
-    Index classes_number = folderPath.size();
+    const Index classes_number = folderPath.size();
     Tensor<Index, 1> image_number(classes_number+1);
     Index samples_number = 0;
 
@@ -1537,23 +1537,24 @@ Tensor<type, 2> ImageDataSet::read_bmp(const string& path)
 
         image_number[i+1] = samples_number;
     }
+    
+    Tensor<unsigned char,3> imgdata = read_bmp_image(imagePath[0].string());
+    
+    const Index image_height = imgdata.dimension(0);
+    const Index image_width = imgdata.dimension(1);
+    const Index image_channels = imgdata.dimension(2);
 
-    ImageData imgdata;// = read_bmp_image_gpt(imagePath[0]);
-    Index pixels_number = imgdata.channels * imgdata.width * imgdata.height;
-    Tensor<type, 2> data(samples_number, pixels_number + 1);
+    const Index pixels_number = image_height * image_width * image_channels;
 
-    if (classes_number > 2)
-    {
-        data.resize(samples_number, pixels_number + classes_number);
-    }
-
+    set(samples_number, image_height, image_width, image_channels, classes_number);
+    
     data.setZero();
-
+    
     for (Index i = 0; i < samples_number; i++)
     {
-        ImageData imgdata;// = read_bmp_image_gpt(imagePath[i]);
+        imgdata = read_bmp_image(imagePath[i].string());
 
-        if(pixels_number != imgdata.channels * imgdata.width * imgdata.height)
+        if(pixels_number != imgdata.dimension(0) * imgdata.dimension(1) * imgdata.dimension(2))
         {
             ostringstream buffer;
 
@@ -1566,7 +1567,7 @@ Tensor<type, 2> ImageDataSet::read_bmp(const string& path)
 
         for (Index j = 0; j < pixels_number; j++)
         {
-            data(i,j) = imgdata.data[j];
+            data(i,j) = imgdata(j);
         }
 
         if (classes_number == 2)
@@ -1588,8 +1589,6 @@ Tensor<type, 2> ImageDataSet::read_bmp(const string& path)
             }
         }
     }
-
-    return data;
 }
 
 
