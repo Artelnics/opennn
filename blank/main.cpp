@@ -51,8 +51,8 @@ int main()
 
         language_data_set.read_txt_language_model();
 
-        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+        const Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        const Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
 
         Index input_length = language_data_set.get_completion_length();
         Index context_length = language_data_set.get_context_length();

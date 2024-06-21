@@ -147,7 +147,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_random();
 
-    initial_learning_rate = 0.001;
+    initial_learning_rate = static_cast<type>(0.001);
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
