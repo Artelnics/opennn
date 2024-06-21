@@ -188,6 +188,16 @@ Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
 }
 
 
+Tensor<type, 2> LanguageDataSet::get_testing_context_data() const
+{
+    const Tensor<Index, 1> context_variables_indices = get_context_variables_indices();
+
+    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
+
+    return get_subtensor_data(testing_indices, context_variables_indices);
+}
+
+
 const Tensor<Tensor<string, 1>, 1> LanguageDataSet::get_documents() const
 {
     return documents;
