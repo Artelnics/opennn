@@ -2714,18 +2714,30 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
 pair<type, type> TestingAnalysis::test_transformer() const
 {
+    cout << "Testing transformer..." << endl;
+
     Transformer* transformer = static_cast<Transformer*>(neural_network);
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
     Tensor<type, 2> input = language_data_set->get_testing_input_data();
     Tensor<type, 2> context = language_data_set->get_testing_context_data();
-    
-    Tensor<type, 3> outputs = transformer->calculate_outputs(input, context);
-
     Tensor<type, 2> target = language_data_set->get_testing_target_data();
 
-    type error = calculate_cross_entropy_error_3d(outputs, target);
-    type accuracy = calculate_masked_accuracy(outputs, target);
+    const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
+
+    Tensor<type, 2> testing_input(testing_batch_size, input.dimension(1));
+    for (Index i = 0; i < testing_batch_size; i++)    testing_input.chip(i, 0) = input.chip(i, 0);
+
+    Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
+    for (Index i = 0; i < testing_batch_size; i++)    testing_context.chip(i, 0) = context.chip(i, 0);
+
+    Tensor<type, 2> testing_target(testing_batch_size, target.dimension(1));
+    for (Index i = 0; i < testing_batch_size; i++)    testing_target.chip(i, 0) = target.chip(i, 0);
+
+    Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
+
+    type error = calculate_cross_entropy_error_3d(outputs, testing_target);
+    type accuracy = calculate_masked_accuracy(outputs, testing_target);
 
     return pair<type, type>(error, accuracy);
 }
