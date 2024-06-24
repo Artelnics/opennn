@@ -267,13 +267,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     DataSet* data_set = loss_index->get_data_set();
 
     const bool has_selection = data_set->has_selection();
-
+    
     bool is_language_model = false;
     if (is_instance_of<LanguageDataSet>(data_set))  is_language_model = true;
 
     bool is_classification_model = false;
     if (is_instance_of<CrossEntropyError3D>(loss_index))  is_classification_model = true;
-
+    
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
     Tensor<Index, 1> context_variables_indices;
@@ -404,7 +404,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         
 //        training_loss = type(0);
         training_error = type(0);
-        if(is_classification_model)    training_accuracy = type(0);
+        if(is_classification_model) training_accuracy = type(0);
         
         //optimization_data.iteration = 1;
 
@@ -418,7 +418,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                 context_variables_indices);
             
             // Neural network
-            
+
             inputs_pair = training_batch.get_inputs_pair();
 
             neural_network->forward_propagate(inputs_pair,
@@ -435,6 +435,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             if(is_classification_model)   training_accuracy += training_back_propagation.accuracy;
 //            training_loss += training_back_propagation.loss;
 
+            // Update parameters
+            
             update_parameters(training_back_propagation, optimization_data);
             
             //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
