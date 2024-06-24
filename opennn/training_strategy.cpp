@@ -86,6 +86,8 @@ LossIndex* TrainingStrategy::get_loss_index()
 
         case LossMethod::CROSS_ENTROPY_ERROR: return &cross_entropy_error;
 
+        case LossMethod::CROSS_ENTROPY_ERROR_3D: return &cross_entropy_error_3d;
+
         default: return nullptr;
     }
 }
@@ -602,6 +604,7 @@ void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
     mean_squared_error.set_data_set(new_data_set);
     normalized_squared_error.set_data_set(new_data_set);
     cross_entropy_error.set_data_set(new_data_set);
+    cross_entropy_error_3d.set_data_set(new_data_set);
     weighted_squared_error.set_data_set(new_data_set);
     Minkowski_error.set_data_set(new_data_set);
 }
@@ -613,6 +616,7 @@ void TrainingStrategy::set_loss_index_neural_network(NeuralNetwork* new_neural_n
     mean_squared_error.set_neural_network(new_neural_network);
     normalized_squared_error.set_neural_network(new_neural_network);
     cross_entropy_error.set_neural_network(new_neural_network);
+    cross_entropy_error_3d.set_neural_network(new_neural_network);
     weighted_squared_error.set_neural_network(new_neural_network);
     Minkowski_error.set_neural_network(new_neural_network);
 }
