@@ -82,7 +82,7 @@ namespace opennn
         }
 
         std::wstring result(size_needed, 0);
-        MultiByteToWideChar(CP_UTF8, 0, string.data(), (int)string.size(), result.data(), size_needed);
+        MultiByteToWideChar(CP_UTF8, 0, string.data(), (int)string.size(), const_cast<wchar_t*>(result.data()), size_needed);
         return result;
     }
 #endif
