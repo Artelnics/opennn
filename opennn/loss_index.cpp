@@ -731,6 +731,9 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             layer_deltas.resize(1);
 
             layer_deltas(0) = back_propagation.get_output_deltas_pair();
+            //cout << "probabilistic layer deltas pair dimensions : " << endl << layer_deltas(0).second[0] << "  ,  " << layer_deltas(0).second[1] << endl;
+            //const TensorMap<Tensor<type, 2>> test(layer_deltas(0).first, layer_deltas(0).second[0], layer_deltas(0).second[1]);
+            //cout << test << endl;
         }
         else
         {
