@@ -45,110 +45,71 @@ int main()
     {
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
-
         // Data set
 
         ImageDataSet image_data_set;
 
-        image_data_set.set_data_source_path("../data/images/");
+        image_data_set.set_data_source_path("C:/test2_mnist");
 
-        image_data_set.scale_input_variables();
+        image_data_set.read_bmp();
 
-//        augmentation = false;
-//        random_reflection_axis_x = false;
-//        random_reflection_axis_y = false;
-//        random_rotation_minimum = 0;
-//        random_rotation_maximum = 0;
-//        random_rescaling_minimum = 1;
-//        random_rescaling_maximum = 1;
-//        random_horizontal_translation = 0;
-//        random_vertical_translation = 0;
-
+        image_data_set.print();
+        
         const Index target_variables_number = image_data_set.get_target_variables_number();
 
-        const Tensor<Index, 1> samples_indices = image_data_set.get_training_samples_indices();
-        const Index samples_number = samples_indices.size();
+        const Tensor<Index, 1> training_samples_indices = image_data_set.get_training_samples_indices();  
+        const Index training_samples_number = training_samples_indices.size();
 
         const Tensor<Index, 1> input_variables_indices = image_data_set.get_input_variables_indices();
         const Tensor<Index, 1> target_variables_indices = image_data_set.get_target_variables_indices();
 
         const Tensor<Index, 1> input_variables_dimensions = image_data_set.get_input_variables_dimensions();
-        const Index inputs_channels_number = input_variables_dimensions[0];
-        const Index inputs_rows_number = input_variables_dimensions[1];
-        const Index inputs_raw_variables_number = input_variables_dimensions[2];
+        const Index inputs_rows_number = input_variables_dimensions[0];
+        const Index inputs_columns_number = input_variables_dimensions[1];
+        const Index inputs_channels_number = input_variables_dimensions[2];
 
-        dimensions convolutional_layer_inputs_dimensions({inputs_rows_number, inputs_raw_variables_number, inputs_channels_number, samples_number});
-
-        const Index kernels_rows_number = 2;
-        const Index kernels_raw_variables_number = 2;
-        const Index kernels_number = 1;
-        const Index kernels_channels_number = inputs_channels_number;
-
-        dimensions convolutional_layer_kernels_dimensions({kernels_rows_number, kernels_raw_variables_number, kernels_number, kernels_channels_number});
-
-        dimensions flatten_layer_inputs_dimensions({inputs_rows_number-kernels_rows_number+1, inputs_raw_variables_number-kernels_raw_variables_number+1, kernels_number, samples_number });
-
+        dimensions flatten_layer_inputs_dimensions({ training_samples_number, inputs_rows_number, inputs_columns_number, inputs_channels_number });
+        
         // Neural network
 
         NeuralNetwork neural_network;
 
-        ScalingLayer4D scaling_layer(input_variables_dimensions);
-        neural_network.add_layer(&scaling_layer);
+        ScalingLayer4D* scaling_layer = new ScalingLayer4D(input_variables_dimensions);
+        neural_network.add_layer(scaling_layer);
 
-        ConvolutionalLayer* convolutional_layer
-            = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
-        neural_network.add_layer(convolutional_layer);
+        FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+        neural_network.add_layer(flatten_layer);
 
-        FlattenLayer flatten_layer(flatten_layer_inputs_dimensions);
-        neural_network.add_layer(&flatten_layer);
+        PerceptronLayer* perceptron_layer = new PerceptronLayer(flatten_layer->get_outputs_number(), 128);
+        neural_network.add_layer(perceptron_layer);
 
-        PerceptronLayer perceptron_layer(flatten_layer.get_outputs_dimensions()[0], target_variables_number);
-        neural_network.add_layer(&perceptron_layer);
+        ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), target_variables_number);
+        neural_network.add_layer(probabilistic_layer);
+
+        cout << endl;
+        neural_network.print();
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &image_data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10000);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(15);
+        training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
 
         // Testing analysis
 
-        Tensor<type, 4> inputs_4d;
-
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
-        /*
-        Tensor<unsigned char,1> zero = image_data_set.read_bmp_image("../data/images/zero/0_1.bmp");
-        Tensor<unsigned char,1> one = image_data_set.read_bmp_image("../data/images/one/1_1.bmp");
 
-        vector<type> zero_int(zero.size()); ;
-        vector<type> one_int(one.size());
-
-        for(Index i = 0 ; i < zero.size() ; i++ )
-        {
-            zero_int[i]=(type)zero[i];
-            one_int[i]=(type)one[i];
-        }
-
-        Tensor<type, 2> inputs(2, zero.size());
-        Tensor<type, 2> outputs(2, neural_network.get_outputs_number());
-        
+        cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-
-        outputs = neural_network.calculate_outputs(inputs);
-
-        cout << "\nInputs:\n" << inputs << endl;
-
-        cout << "\nOutputs:\n" << outputs << endl;
-
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        */
+        
         cout << "Bye!" << endl;
 
         return 0;

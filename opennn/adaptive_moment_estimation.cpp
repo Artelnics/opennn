@@ -277,6 +277,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
     Tensor<Index, 1> context_variables_indices;
+
     if (is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
@@ -293,7 +294,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();    
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
@@ -321,7 +322,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     Tensor<Index, 2> selection_batches(selection_batches_number, selection_batch_samples_number);
     
     // Neural network
-
+    
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     neural_network->set_inputs_names(inputs_names);
@@ -350,7 +351,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     }
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
-
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
 
     Tensor<pair<type*, dimensions>, 1> inputs_pair;
@@ -362,7 +362,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
     BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
 
-//    type training_loss = type(0);
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -399,13 +398,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
-        
+
         const Index batches_number = training_batches.dimension(0);
-        
-//        training_loss = type(0);
+
         training_error = type(0);
-        if(is_classification_model) training_accuracy = type(0);
-        
+
+        if(is_classification_model) training_accuracy = type(0); 
         //optimization_data.iteration = 1;
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
@@ -416,7 +414,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                 input_variables_indices,
                                 target_variables_indices,
                                 context_variables_indices);
-            
+
             // Neural network
 
             inputs_pair = training_batch.get_inputs_pair();
@@ -424,7 +422,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             neural_network->forward_propagate(inputs_pair,
                                               training_forward_propagation,
                                               is_training);
-            
+
             // Loss index
 
             loss_index->back_propagate(training_batch,
@@ -432,16 +430,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_back_propagation);
             
             training_error += training_back_propagation.error;
-            if(is_classification_model)   training_accuracy += training_back_propagation.accuracy;
-//            training_loss += training_back_propagation.loss;
+            if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
 
-            // Update parameters
+            // Optimization algorithm
             
             update_parameters(training_back_propagation, optimization_data);
             
             //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
+
         }
-        //cout << endl;
         
         // Loss
 
@@ -464,8 +461,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 selection_batch.fill(selection_batches.chip(iteration,0),
                                      input_variables_indices,
                                      target_variables_indices,
-                                     context_variables_indices);
-                
+                                     context_variables_indices);               
                 // Neural network
                 
                 inputs_pair = selection_batch.get_inputs_pair();
@@ -481,17 +477,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                             selection_back_propagation);
                 
                 selection_error += selection_back_propagation.error;
-                if(is_classification_model)    selection_accuracy += selection_back_propagation.accuracy;
-                
+                if(is_classification_model) selection_accuracy += selection_back_propagation.accuracy;
+              
             }
 
             selection_error /= type(selection_batches_number);
-            if(is_classification_model)    selection_accuracy /= type(selection_batches_number);
+            if(is_classification_model) selection_accuracy /= type(selection_batches_number);
 
             results.selection_error_history(epoch) = selection_error;
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
-
         }
         
         // Elapsed time
@@ -670,7 +665,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
-
+    
     if (!use_custom_learning_rate)
     {
         parameters.device(*thread_pool_device)
