@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{52E9F44D-2742-4822-88E9-6279ED932D6E}</ProjectGuid>
+    <RootNamespace>blank_cuda</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.3.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;cublas.lib;cuda.lib;cudart.lib;cudnn.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;cublas.lib;cuda.lib;cudart.lib;cudnn.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CudaCompile Include="kernel.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\opennn\adaptive_moment_estimation.cpp" />
+    <ClCompile Include="..\opennn\addition_layer_3d.cpp" />
+    <ClCompile Include="..\opennn\auto_association_data_set.cpp" />
+    <ClCompile Include="..\opennn\auto_associative_neural_network.cpp" />
+    <ClCompile Include="..\opennn\batch.cpp" />
+    <ClCompile Include="..\opennn\bounding_layer.cpp" />
+    <ClCompile Include="..\opennn\codification.cpp" />
+    <ClCompile Include="..\opennn\conjugate_gradient.cpp" />
+    <ClCompile Include="..\opennn\convolutional_layer.cpp" />
+    <ClCompile Include="..\opennn\correlations.cpp" />
+    <ClCompile Include="..\opennn\cross_entropy_error.cpp" />
+    <ClCompile Include="..\opennn\cross_entropy_error_3d.cpp" />
+    <ClCompile Include="..\opennn\data_set.cpp" />
+    <ClCompile Include="..\opennn\embedding_layer.cpp" />
+    <ClCompile Include="..\opennn\flatten_layer.cpp" />
+    <ClCompile Include="..\opennn\genetic_algorithm.cpp" />
+    <ClCompile Include="..\opennn\gradient_descent.cpp" />
+    <ClCompile Include="..\opennn\growing_inputs.cpp" />
+    <ClCompile Include="..\opennn\growing_neurons.cpp" />
+    <ClCompile Include="..\opennn\images.cpp" />
+    <ClCompile Include="..\opennn\image_data_set.cpp" />
+    <ClCompile Include="..\opennn\inputs_selection.cpp" />
+    <ClCompile Include="..\opennn\kmeans.cpp" />
+    <ClCompile Include="..\opennn\language_data_set.cpp" />
+    <ClCompile Include="..\opennn\layer.cpp" />
+    <ClCompile Include="..\opennn\learning_rate_algorithm.cpp" />
+    <ClCompile Include="..\opennn\levenberg_marquardt_algorithm.cpp" />
+    <ClCompile Include="..\opennn\long_short_term_memory_layer.cpp" />
+    <ClCompile Include="..\opennn\loss_index.cpp" />
+    <ClCompile Include="..\opennn\mean_squared_error.cpp" />
+    <ClCompile Include="..\opennn\minkowski_error.cpp" />
+    <ClCompile Include="..\opennn\model_selection.cpp" />
+    <ClCompile Include="..\opennn\multihead_attention_layer.cpp" />
+    <ClCompile Include="..\opennn\neural_network.cpp" />
+    <ClCompile Include="..\opennn\neurons_selection.cpp" />
+    <ClCompile Include="..\opennn\normalization_layer_3d.cpp" />
+    <ClCompile Include="..\opennn\normalized_squared_error.cpp" />
+    <ClCompile Include="..\opennn\numerical_differentiation.cpp" />
+    <ClCompile Include="..\opennn\optimization_algorithm.cpp" />
+    <ClCompile Include="..\opennn\perceptron_layer.cpp" />
+    <ClCompile Include="..\opennn\perceptron_layer_3d.cpp" />
+    <ClCompile Include="..\opennn\pooling_layer.cpp" />
+    <ClCompile Include="..\opennn\probabilistic_layer.cpp" />
+    <ClCompile Include="..\opennn\probabilistic_layer_3d.cpp" />
+    <ClCompile Include="..\opennn\quasi_newton_method.cpp" />
+    <ClCompile Include="..\opennn\recurrent_layer.cpp" />
+    <ClCompile Include="..\opennn\response_optimization.cpp" />
+    <ClCompile Include="..\opennn\scaling.cpp" />
+    <ClCompile Include="..\opennn\scaling_layer_2d.cpp" />
+    <ClCompile Include="..\opennn\scaling_layer_4d.cpp" />
+    <ClCompile Include="..\opennn\statistics.cpp" />
+    <ClCompile Include="..\opennn\stochastic_gradient_descent.cpp" />
+    <ClCompile Include="..\opennn\strings_utilities.cpp" />
+    <ClCompile Include="..\opennn\sum_squared_error.cpp" />
+    <ClCompile Include="..\opennn\tensors.cpp" />
+    <ClCompile Include="..\opennn\testing_analysis.cpp" />
+    <ClCompile Include="..\opennn\text_data_set.cpp" />
+    <ClCompile Include="..\opennn\time_series_data_set.cpp" />
+    <ClCompile Include="..\opennn\tinyxml2.cpp" />
+    <ClCompile Include="..\opennn\training_strategy.cpp" />
+    <ClCompile Include="..\opennn\transformer.cpp" />
+    <ClCompile Include="..\opennn\unit_testing.cpp" />
+    <ClCompile Include="..\opennn\unscaling_layer.cpp" />
+    <ClCompile Include="..\opennn\weighted_squared_error.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\opennn\adaptive_moment_estimation.h" />
+    <ClInclude Include="..\opennn\addition_layer_3d.h" />
+    <ClInclude Include="..\opennn\auto_association_data_set.h" />
+    <ClInclude Include="..\opennn\auto_associative_neural_network.h" />
+    <ClInclude Include="..\opennn\back_propagation.h" />
+    <ClInclude Include="..\opennn\back_propagation_lm.h" />
+    <ClInclude Include="..\opennn\batch.h" />
+    <ClInclude Include="..\opennn\bounding_layer.h" />
+    <ClInclude Include="..\opennn\box_plot.h" />
+    <ClInclude Include="..\opennn\codification.h" />
+    <ClInclude Include="..\opennn\config.h" />
+    <ClInclude Include="..\opennn\conjugate_gradient.h" />
+    <ClInclude Include="..\opennn\convolutional_layer.h" />
+    <ClInclude Include="..\opennn\correlation.h" />
+    <ClInclude Include="..\opennn\correlations.h" />
+    <ClInclude Include="..\opennn\cross_entropy_error.h" />
+    <ClInclude Include="..\opennn\cross_entropy_error_3d.h" />
+    <ClInclude Include="..\opennn\data_set.h" />
+    <ClInclude Include="..\opennn\descriptives.h" />
+    <ClInclude Include="..\opennn\embedding_layer.h" />
+    <ClInclude Include="..\opennn\filesystem.h" />
+    <ClInclude Include="..\opennn\flatten_layer.h" />
+    <ClInclude Include="..\opennn\genetic_algorithm.h" />
+    <ClInclude Include="..\opennn\gradient_descent.h" />
+    <ClInclude Include="..\opennn\growing_inputs.h" />
+    <ClInclude Include="..\opennn\growing_neurons.h" />
+    <ClInclude Include="..\opennn\histogram.h" />
+    <ClInclude Include="..\opennn\images.h" />
+    <ClInclude Include="..\opennn\image_data_set.h" />
+    <ClInclude Include="..\opennn\inputs_selection.h" />
+    <ClInclude Include="..\opennn\kmeans.h" />
+    <ClInclude Include="..\opennn\language_data_set.h" />
+    <ClInclude Include="..\opennn\layer.h" />
+    <ClInclude Include="..\opennn\layer_back_propagation.h" />
+    <ClInclude Include="..\opennn\layer_back_propagation_lm.h" />
+    <ClInclude Include="..\opennn\layer_forward_propagation.h" />
+    <ClInclude Include="..\opennn\learning_rate_algorithm.h" />
+    <ClInclude Include="..\opennn\levenberg_marquardt_algorithm.h" />
+    <ClInclude Include="..\opennn\long_short_term_memory_layer.h" />
+    <ClInclude Include="..\opennn\loss_index.h" />
+    <ClInclude Include="..\opennn\mean_squared_error.h" />
+    <ClInclude Include="..\opennn\minkowski_error.h" />
+    <ClInclude Include="..\opennn\model_selection.h" />
+    <ClInclude Include="..\opennn\multihead_attention_layer.h" />
+    <ClInclude Include="..\opennn\neural_network.h" />
+    <ClInclude Include="..\opennn\neural_network_back_propagation.h" />
+    <ClInclude Include="..\opennn\neural_network_back_propagation_lm.h" />
+    <ClInclude Include="..\opennn\neural_network_forward_propagation.h" />
+    <ClInclude Include="..\opennn\neurons_selection.h" />
+    <ClInclude Include="..\opennn\normalization_layer_3d.h" />
+    <ClInclude Include="..\opennn\normalized_squared_error.h" />
+    <ClInclude Include="..\opennn\numerical_differentiation.h" />
+    <ClInclude Include="..\opennn\opennn.h" />
+    <ClInclude Include="..\opennn\optimization_algorithm.h" />
+    <ClInclude Include="..\opennn\perceptron_layer.h" />
+    <ClInclude Include="..\opennn\perceptron_layer_3d.h" />
+    <ClInclude Include="..\opennn\perceptron_layer_back_propagation.h" />
+    <ClInclude Include="..\opennn\perceptron_layer_forward_propagation.h" />
+    <ClInclude Include="..\opennn\pooling_layer.h" />
+    <ClInclude Include="..\opennn\pooling_layer_back_propagation.h" />
+    <ClInclude Include="..\opennn\pooling_layer_forward_propagation.h" />
+    <ClInclude Include="..\opennn\probabilistic_layer.h" />
+    <ClInclude Include="..\opennn\probabilistic_layer_3d.h" />
+    <ClInclude Include="..\opennn\probabilistic_layer_back_propagation.h" />
+    <ClInclude Include="..\opennn\probabilistic_layer_back_propagation_lm.h" />
+    <ClInclude Include="..\opennn\probabilistic_layer_forward_propagation.h" />
+    <ClInclude Include="..\opennn\quasi_newton_method.h" />
+    <ClInclude Include="..\opennn\quasi_newton_method_data.h" />
+    <ClInclude Include="..\opennn\raw_variable.h" />
+    <ClInclude Include="..\opennn\recurrent_layer.h" />
+    <ClInclude Include="..\opennn\recurrent_layer_back_propagation.h" />
+    <ClInclude Include="..\opennn\recurrent_layer_forward_propagation.h" />
+    <ClInclude Include="..\opennn\response_optimization.h" />
+    <ClInclude Include="..\opennn\scaling.h" />
+    <ClInclude Include="..\opennn\scaling_layer_2d.h" />
+    <ClInclude Include="..\opennn\scaling_layer_4d.h" />
+    <ClInclude Include="..\opennn\scaling_layer_forward_propagation.h" />
+    <ClInclude Include="..\opennn\statistics.h" />
+    <ClInclude Include="..\opennn\stochastic_gradient_descent.h" />
+    <ClInclude Include="..\opennn\stochastic_gradient_descent_data.h" />
+    <ClInclude Include="..\opennn\strings_utilities.h" />
+    <ClInclude Include="..\opennn\sum_squared_error.h" />
+    <ClInclude Include="..\opennn\tensors.h" />
+    <ClInclude Include="..\opennn\testing_analysis.h" />
+    <ClInclude Include="..\opennn\text_data_set.h" />
+    <ClInclude Include="..\opennn\time_series_data_set.h" />
+    <ClInclude Include="..\opennn\tinyxml2.h" />
+    <ClInclude Include="..\opennn\training_strategy.h" />
+    <ClInclude Include="..\opennn\transformer.h" />
+    <ClInclude Include="..\opennn\unit_testing.h" />
+    <ClInclude Include="..\opennn\unscaling_layer.h" />
+    <ClInclude Include="..\opennn\unscaling_layer_forward_propagation.h" />
+    <ClInclude Include="..\opennn\weighted_squared_error.h" />
+    <ClInclude Include="..\opennn\word_bag.h" />
+    <ClInclude Include="kernel.cuh" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.3.targets" />
+  </ImportGroup>
+</Project>
