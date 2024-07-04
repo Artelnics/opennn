@@ -105,7 +105,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-
+    
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
     // Back propagation

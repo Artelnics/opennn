@@ -186,7 +186,7 @@ namespace opennn
         Tensor<type, 3> means;
         Tensor<type, 3> standard_deviations;
 
-        type epsilon = 0.001;
+        type epsilon = type(0.001);
     };
 
 

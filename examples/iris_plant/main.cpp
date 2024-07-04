@@ -40,7 +40,7 @@ int main()
 
         // Neural network
 
-        const Index hidden_neurons_number = 3;
+        const Index hidden_neurons_number = 5;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
@@ -48,10 +48,10 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.perform_training();
-/*
+
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -78,7 +78,7 @@ int main()
 
         neural_network.save_expression_c("data/neural_network.c");
         neural_network.save_expression_python("data/neural_network.py");
-*/
+
         cout << "Bye!" << endl;
         return 0;
     }
