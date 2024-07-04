@@ -136,21 +136,21 @@ void NeuralNetwork::add_layer(Layer* layer)
     const Layer::Type layer_type = layer->get_type();
 
     if(check_layer_type(layer_type))
-    {
+    {  
         const Index old_layers_number = get_layers_number();
- 
+
         // Layers pointers
         
         Tensor<Layer*, 1> old_layers = get_layers();
         
         layers.resize(old_layers_number + 1);
-
+        
         for(Index i = 0; i < old_layers_number; i++) layers(i) = old_layers(i);
 
         layers(old_layers_number) = layer;
         
         // Layers inputs indices
-
+        
         Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
 
         layers_inputs_indices.resize(old_layers_number+1);
@@ -195,6 +195,7 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
         const Layer::Type first_layer_type = layers[0]->get_type();
 
         if(first_layer_type != Layer::Type::Scaling2D) return false;
+        if(first_layer_type != Layer::Type::Scaling4D) return false;
     }
 
     return true;
@@ -211,6 +212,7 @@ bool NeuralNetwork::has_scaling_layer() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers[i]->get_type() == Layer::Type::Scaling2D) return true;
+        if(layers[i]->get_type() == Layer::Type::Scaling4D) return true;
     }
 
     return false;
@@ -554,6 +556,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers[i]->get_type() != Layer::Type::Scaling2D
+        && layers[i]->get_type() != Layer::Type::Scaling4D
         && layers[i]->get_type() != Layer::Type::Unscaling
         && layers[i]->get_type() != Layer::Type::Bounding)
         {
@@ -590,7 +593,7 @@ ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
 
     buffer << "OpenNN Exception: NeuralNetwork class.\n"
            << "ScalingLayer2D* get_scaling_layer_2d() const method.\n"
-           << "No scaling layer in neural network.\n";
+           << "No scaling layer 2d in neural network.\n";
 
     throw runtime_error(buffer.str());
 }
@@ -611,11 +614,12 @@ ScalingLayer4D* NeuralNetwork::get_scaling_layer_4d() const
     ostringstream buffer;
 
     buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "ScalingLayer* get_scaling_layer_4d() const method.\n"
+           << "ScalingLayer4D* get_scaling_layer_4d() const method.\n"
            << "No scaling layer in neural network.\n";
 
     throw runtime_error(buffer.str());
 }
+
 
 /// Returns a pointer to the unscaling layers object composing this neural network object.
 
@@ -1289,6 +1293,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_neurons_numbers() const
     for(Index i = 0; i < layers.size(); i++)
     {
         if(layers(i)->get_type() != Layer::Type::Scaling2D
+        && layers(i)->get_type() != Layer::Type::Scaling4D
         && layers(i)->get_type() != Layer::Type::Unscaling
         && layers(i)->get_type() != Layer::Type::Bounding)
         {
@@ -1313,6 +1318,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
     for(Index i = 0; i < layers.size(); i++)
     {
         if(layers(i)->get_type() != Layer::Type::Scaling2D
+        && layers(i)->get_type() != Layer::Type::Scaling4D
         && layers(i)->get_type() != Layer::Type::Unscaling
         && layers(i)->get_type() != Layer::Type::Bounding)
         {
@@ -1528,6 +1534,7 @@ Index NeuralNetwork::get_trainable_layers_number() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers(i)->get_type() != Layer::Type::Scaling2D
+        && layers(i)->get_type() != Layer::Type::Scaling4D
         && layers(i)->get_type() != Layer::Type::Unscaling
         && layers(i)->get_type() != Layer::Type::Bounding)
         {
@@ -1795,7 +1802,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 
     Index first_layer_index;
     Index last_layer_index;
-
+    
     if (is_training)
     {
         first_layer_index = first_trainable_layer_index;
@@ -5374,6 +5381,12 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
         case Layer::Type::Scaling2D:
         {
             layers(i) = new ScalingLayer2DForwardPropagation(batch_samples_number, neural_network_layers(i));
+        }
+        break;
+
+        case Layer::Type::Scaling4D:
+        {
+            layers(i) = new ScalingLayer4DForwardPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
 

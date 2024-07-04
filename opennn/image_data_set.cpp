@@ -11,7 +11,8 @@
 #include "strings_utilities.h"
 #include "filesystem"
 
-namespace fs = std::filesystem;
+using namespace std::filesystem;
+
 namespace opennn
 {
 
@@ -23,10 +24,10 @@ ImageDataSet::ImageDataSet() : DataSet()
 
 
 ImageDataSet::ImageDataSet(const Index& new_classes_number,
-                 const Index& new_height,
-                 const Index& new_width,
-                 const Index& new_channels_number,
-                 const Index& new_targets_number)
+                           const Index& new_height,
+                           const Index& new_width,
+                           const Index& new_channels_number,
+                           const Index& new_targets_number)
 {
     set(new_classes_number, new_height, new_width, new_channels_number, new_targets_number);
 }
@@ -36,7 +37,7 @@ ImageDataSet::ImageDataSet(const Index& new_classes_number,
 
 Index ImageDataSet::get_channels_number() const
 {
-    return channels_number;
+    return input_variables_dimensions[2];
 }
 
 
@@ -44,7 +45,7 @@ Index ImageDataSet::get_channels_number() const
 
 Index ImageDataSet::get_image_width() const
 {
-    return image_width;
+    return input_variables_dimensions[1];
 }
 
 
@@ -52,14 +53,14 @@ Index ImageDataSet::get_image_width() const
 
 Index ImageDataSet::get_image_height() const
 {
-    return image_height;
+    return input_variables_dimensions[0];
 }
 
 /// Returns the height of the images in the data set.
 
 Index ImageDataSet::get_image_size() const
 {
-    return image_height*image_width*channels_number;
+    return input_variables_dimensions[0] * input_variables_dimensions[1] * input_variables_dimensions[2];
 }
 
 
@@ -119,23 +120,30 @@ type ImageDataSet::get_random_vertical_translation_minimum() const
 
 
 
-void ImageDataSet::set(const Index& new_classes_number,
-                  const Index& new_height,
-                  const Index& new_width,
-                  const Index& new_channels_number,
-                  const Index& new_targets_number)
+void ImageDataSet::set(const Index& new_images_number,
+                       const Index& new_height,
+                       const Index& new_width,
+                       const Index& new_channels_number,
+                       const Index& new_targets_number)
 {
+    set_images_number(new_images_number);
+    const Index image_height = new_height;
+    const Index image_width = new_width;
+    const Index channels_number = new_channels_number;
+    const Index targets_number = new_targets_number;
 
-    set_image_height(new_height);
-    set_image_width(new_width);
-    set_channels_number(new_channels_number);
+    input_variables_dimensions.resize(3);
+    input_variables_dimensions.setValues({ image_height, image_width, channels_number });
 
-    data_source_path = "";
+    target_variables_dimensions.resize(1);
+    target_variables_dimensions.setValues({ targets_number });
 
-    const Index new_inputs_number = new_channels_number * new_width * new_height;
-    const Index new_variables_number = new_channels_number * new_width * new_height + new_targets_number;
+    Tensor<string, 1> categories(targets_number);
 
-    data.resize(new_classes_number, new_variables_number);
+    const Index new_inputs_number = image_height * image_width * channels_number;
+    const Index new_variables_number = new_inputs_number + targets_number;
+
+    data.resize(images_number, new_variables_number);
 
     raw_variables.resize(new_variables_number);
 
@@ -143,41 +151,41 @@ void ImageDataSet::set(const Index& new_classes_number,
     {
         if(i < new_inputs_number)
         {
-            raw_variables(i).name = "column_" + to_string(i+1);
+            raw_variables(i).name = "pixel_" + to_string(i+1);
             raw_variables(i).raw_variable_use = VariableUse::Input;
             raw_variables(i).type = RawVariableType::Numeric;
         }
         else
         {
-            raw_variables(i).name = "column_" + to_string(i+1);
+            raw_variables(i).name = "target_" + to_string(i+1);
             raw_variables(i).raw_variable_use = VariableUse::Target;
             raw_variables(i).type = RawVariableType::Numeric;
+            //raw_variables(i).add_category("");
+            //raw_variables(i).set_categories_uses(VariableUse::Target);
+            //raw_variables(i).set_categories(categories);
         }
     }
 
-    input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({new_height, new_width, new_channels_number});
-
-    samples_uses.resize(new_classes_number);
+    samples_uses.resize(images_number);
     split_samples_random();
 }
 
 
 void ImageDataSet::set_channels_number(const int& new_channels_number)
 {
-    channels_number = new_channels_number;
+    input_variables_dimensions[2] = new_channels_number;
 }
 
 
 void ImageDataSet::set_image_width(const int& new_width)
 {
-    image_width = new_width;
+    input_variables_dimensions[1] = new_width;
 }
 
 
 void ImageDataSet::set_image_height(const int& new_height)
 {
-    image_height = new_height;
+    input_variables_dimensions[0] = new_height;
 }
 
 
@@ -1308,253 +1316,58 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-void ImageDataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
+void ImageDataSet::read_bmp()
 {
-    const fs::path path = data_source_path;
+    vector<path> directory_path;
+    vector<path> image_path;
 
-    if(data_source_path.empty())
+    for (const directory_entry& current_directory : directory_iterator(data_source_path))
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Data file name is empty.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-    has_raw_variables_names = true;
-    has_rows_labels = true;
-
-    separator = Separator::None;
-
-    vector<fs::path> folder_paths;
-    vector<fs::path> image_paths;
-
-    int classes_number = 0;
-    int images_total_number = 0;
-
-    for(const auto & entry_path : fs::directory_iterator(path))
-    {
-        if(entry_path.path().string().find(".DS_Store") != string::npos)
+        if (is_directory(current_directory))
         {
-            cout << ".DS_Store found in : " << entry_path << endl;
-        }
-        else
-        {
-            fs::path actual_directory = entry_path.path().string();
-
-            folder_paths.emplace_back(actual_directory);
-            classes_number++;
-
-            for(const auto & entry_image : fs::directory_iterator(actual_directory))
-            {
-                if(entry_image.path().string().find(".DS_Store") != string::npos)
-                {
-                    cout << ".DS_Store found in : " << entry_image.path() << endl;
-                }
-                else
-                {
-                    image_paths.emplace_back(entry_image.path().string());
-                    images_total_number++;
-                }
-            }
+            directory_path.emplace_back(current_directory.path().string());
         }
     }
 
-    images_number = images_total_number;
+    const Index targets_number = directory_path.size();
 
-    const int image_size = width * height * channels;
-
-    Tensor<type, 2> imageDataAux(imageData.dimension(0), imageData.dimension(1));
-    imageDataAux = imageData;
-
-    if(classes_number == 2)
-    {
-        Index binary_columns_number = 1;
-        data.resize(images_number, image_size + binary_columns_number);
-        imageDataAux.resize(images_number, image_size + binary_columns_number);
-    }
-    else
-    {
-        data.resize(images_number, image_size + classes_number);
-        imageDataAux.resize(images_number, image_size + classes_number);
-    }
-
-    memcpy(data.data(), imageData.data(), images_number * image_size * sizeof(type));
-
-    rows_labels.resize(images_number);
-
-    Index row_index = 0;
-
-    for(Index i = 0; i < classes_number; i++)
-    {
-        vector<string> images_paths;
-        Index images_in_folder = 0;
-
-        for(const auto & entry : fs::directory_iterator(folder_paths[i]))
-        {
-            if(entry.path().string().find(".DS_Store") != string::npos)
-            {
-                cout << ".DS_Store found in : " << entry << endl;
-            }
-            else
-            {
-                images_paths.emplace_back(entry.path().string());
-                images_in_folder++;
-            }
-        }
-
-        for(Index j = 0;  j < images_in_folder; j++)
-        {
-
-            if(classes_number == 2 && i == 0)
-            {
-                data(row_index, image_size) = 1;
-            }
-            else if(classes_number == 2 && i == 1)
-            {
-                data(row_index, image_size) = 0;
-            }
-            else
-            {
-                data(row_index, image_size + i) = 1;
-            }
-
-            rows_labels(row_index) = images_paths[j];
-
-            row_index++;
-        }
-    }
-
-    raw_variables.resize(image_size + 1);
-
-    // Input columns
-
-    Index raw_variables_index = 0;
-
-    for(Index i = 0; i < channels; i++)
-    {
-        for(Index j = 0; j < width; j++)
-        {
-            for(Index k = 0; k < height ; k++)
-            {
-                raw_variables(raw_variables_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                raw_variables(raw_variables_index).type = RawVariableType::Numeric;
-                raw_variables(raw_variables_index).raw_variable_use = VariableUse::Input;
-                raw_variables(raw_variables_index).scaler = Scaler::MinimumMaximum;
-                raw_variables_index++;
-            }
-        }
-    }
-
-    // Target columns
-
-    raw_variables(image_size).name = "class";
-
-    if(classes_number == 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
-
-        throw invalid_argument(buffer.str());
-
-
-    }
-
-    Tensor<string, 1> categories(classes_number);
-
-    for(Index i = 0 ; i < classes_number; i++)
-    {
-        categories(i) = folder_paths[i].filename().string();
-    }
-
-    raw_variables(image_size).raw_variable_use = VariableUse::Target;
-    raw_variables(image_size).categories = categories;
-    raw_variables(image_size).categories_uses.resize(classes_number);
-    raw_variables(image_size).categories_uses.setConstant(VariableUse::Target);
-
-    if(classes_number == 2)
-    {
-        raw_variables(image_size).type = RawVariableType::Binary;
-    }
-    else
-    {
-        raw_variables(image_size).type = RawVariableType::Categorical;
-    }
-
-    samples_uses.resize(images_number);
-    split_samples_random();
-
-    image_width = width;
-    image_height = height;
-    channels_number = channels;
-
-    input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({height, width, channels});
-}
-
-
-
-
-void ImageDataSet::set_categories_number(const Index& new_categories_number)
-{
-    categories_number = new_categories_number;
-}
-
-
-void ImageDataSet::read_bmp(const string& path)
-{
-    vector<fs::path> folderPath;
-    vector<fs::path> imagePath;
-
-    for (const auto &entry : fs::directory_iterator(path))
-    {
-        if (fs::is_directory(entry))
-        {
-          folderPath.emplace_back(entry.path().string());
-        }
-    }
-
-    const Index classes_number = folderPath.size();
-    Tensor<Index, 1> image_number(classes_number+1);
+    Tensor<Index, 1> images_number(targets_number + 1);
+    
     Index samples_number = 0;
 
-    image_number.setZero();
+    images_number.setZero();
 
-    for (Index i = 0; i < classes_number; i++)
+    for (Index i = 0; i < targets_number; i++)
     {
-        for (const auto &entry : fs::directory_iterator(folderPath[i]))
+        for (const directory_entry& current_directory : directory_iterator(directory_path[i]))
         {
-            if (entry.is_regular_file() && entry.path().extension() == ".bmp")
+            if (current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
-                imagePath.emplace_back(entry.path().string());
+                image_path.emplace_back(current_directory.path().string());
                 samples_number++;
             }
         }
 
-        image_number[i+1] = samples_number;
+        images_number[i+1] = samples_number;
     }
+
+    Tensor<unsigned char,3> image_data = read_bmp_image(image_path[0].string());
     
-    Tensor<unsigned char,3> imgdata = read_bmp_image(imagePath[0].string());
-    
-    const Index image_height = imgdata.dimension(0);
-    const Index image_width = imgdata.dimension(1);
-    const Index image_channels = imgdata.dimension(2);
+    const Index image_height = image_data.dimension(0);
+    const Index image_width = image_data.dimension(1);
+    const Index image_channels = image_data.dimension(2);
 
     const Index pixels_number = image_height * image_width * image_channels;
 
-    set(samples_number, image_height, image_width, image_channels, classes_number);
+    set(samples_number, image_height, image_width, image_channels, targets_number);
     
     data.setZero();
     
     for (Index i = 0; i < samples_number; i++)
     {
-        imgdata = read_bmp_image(imagePath[i].string());
+        image_data = read_bmp_image(image_path[i].string());
 
-        if(pixels_number != imgdata.dimension(0) * imgdata.dimension(1) * imgdata.dimension(2))
+        if(pixels_number != image_data.dimension(0) * image_data.dimension(1) * image_data.dimension(2))
         {
             ostringstream buffer;
 
@@ -1567,28 +1380,35 @@ void ImageDataSet::read_bmp(const string& path)
 
         for (Index j = 0; j < pixels_number; j++)
         {
-            data(i,j) = imgdata(j);
+            data(i,j) = image_data(j);
         }
 
-        if (classes_number == 2)
+        if (targets_number == 2)
         {
-            if (i >= image_number[0] && i < image_number[1])
+            if (i >= images_number[0] && i < images_number[1])
             {
                 data(i,pixels_number) = 1;
             }
         }
         else
         {
-            for (Index k = 0; k < classes_number; k++)
+            for (Index k = 0; k < targets_number; k++)
             {
-                if (i >= image_number[k] && i < image_number[k+1])
+                if (i >= images_number[k] && i < images_number[k+1])
                 {
                     data(i,k+pixels_number) = 1;
                     break;
                 }
             }
         }
+        if (display)
+        {
+            if (i % 1000 == 0)
+                display_progress_bar(i, samples_number - 1000);
+        }
     }
+    if (display)
+        cout << endl << "Finished loading data set..." << endl;
 }
 
 
