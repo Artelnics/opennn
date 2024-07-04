@@ -59,9 +59,58 @@ DataSet::DataSet(const Tensor<type, 2>& data, const Index& samples_number, const
 
     split_samples_sequential();
 
-//    set_default_columns_scalers();
+    set_indra_columns(columns_names);
+
+    set_default_columns_scalers();
+
+    cout << "set data..." << endl;
 }
 
+void DataSet::set_default_columns_scalers()
+{
+    const Index columns_number = raw_variables.size();
+
+    if (model_type == ModelType::ImageClassification)
+    {
+        set_raw_variables_scalers(Scaler::MinimumMaximum);
+    }
+    else
+    {
+        for (Index i = 0; i < columns_number; i++)
+        {
+            if (raw_variables(i).type == RawVariableType::Numeric)
+            {
+                raw_variables(i).scaler = Scaler::MeanStandardDeviation;
+            }
+            else
+            {
+                raw_variables(i).scaler = Scaler::MinimumMaximum;
+            }
+        }
+    }
+
+}
+
+void DataSet::set_indra_columns(const Tensor<string, 1>& columns_names)
+{
+    int target_number = 24 * 8 * 2;
+
+    Tensor<Index, 1> input_column_indices(raw_variables.size() - target_number);
+    Tensor<Index, 1> target_column_indices(target_number);
+
+    raw_variables.resize(columns_names.size());
+
+    for (Index i = 0; i < raw_variables.size(); i++)
+    {
+        raw_variables(i).name = columns_names(i);
+        raw_variables(i).type = RawVariableType::Numeric;
+
+        if (i < target_number) { target_column_indices(i) = i; }
+        else { input_column_indices(i - target_number) = i; }
+    }
+
+    set_input_target_raw_variables(input_column_indices, target_column_indices);
+}
 
 /// Samples and variables number constructor.
 /// It creates a data set object with given samples and variables numbers.
@@ -1203,6 +1252,18 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
+    {
+        Tensor<Index, 1> samples_copy(samples_indices);
+
+        std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
+
+        for (Index i = 0; i < batches_number; i++)
+            for (Index j = 0; j < batch_size; j++)
+                batches(i, j) = samples_copy(i * batches_number + j);
+
+        return batches;
+    }
+
     Tensor<Index, 1> buffer(buffer_size);
 
     for(Index i = 0; i < buffer_size; i++) buffer(i) = i;
@@ -1212,7 +1273,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     Index leftover_batch_samples = batch_size;
 
     // Heuristic cases for batch shuffling
-
+    
     if(batch_size < buffer_size)
     {
         Index diff = buffer_size/ batch_size;
@@ -1319,9 +1380,11 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                 next_index++;
             }
         }
-
-        return batches;
     }
+
+    std::shuffle(batches.data(), batches.data() + batches.size(), urng);
+    return batches;
+
 }
 
 
@@ -2985,9 +3048,7 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 Tensor<Index, 1> DataSet::get_input_variables_indices() const
 {
     const Index inputs_number = get_input_variables_number();
-
     const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
-
     Tensor<Index, 1> input_variables_indices(inputs_number);
 
     Index input_index = 0;
@@ -8152,15 +8213,21 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 void DataSet::print() const
 {
-    if(display)
-    {
-        const Index variables_number = get_variables_number();
-        const Index samples_number = get_samples_number();
-
-        cout << "Data set object summary:\n"
-             << "Number of variables: " << variables_number << "\n"
-             << "Number of samples: " << samples_number << "\n";
-    }
+    if (!display) return;
+    
+    const Index variables_number = get_variables_number();
+    const Index input_variables_number = get_input_variables_number();
+    const Index samples_number = get_samples_number();
+    const Index target_variables_bumber = get_target_variables_number();
+      
+    cout << "Data set object summary:\n"
+         << "Number of samples: " << samples_number << "\n"
+         << "Number of variables: " << variables_number << "\n"
+         << "Number of input variables: " << input_variables_number << "\n"
+         << "Number of targets: " << target_variables_bumber << "\n"
+         << "Input variables dimensions:\n" << input_variables_dimensions << "\n"
+         << "Target variables dimensions: " << target_variables_dimensions << "\n";
+    
 }
 
 

@@ -115,6 +115,9 @@ public:
 
     explicit DataSet(const Tensor<type, 1>&, const Index&);
 
+    void set_default_columns_scalers();
+    void set_indra_columns(const Tensor<string, 1>&);
+
     /// This enumeration represents the data file string codification (utf8, shift_jis)
 
     enum class Codification{UTF8, SHIFT_JIS};
