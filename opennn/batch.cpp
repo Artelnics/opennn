@@ -54,42 +54,44 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
         }
     }
     else if(input_variables_dimensions.size() == 3)
-    {
+    {    
         const Index rows_number = input_variables_dimensions(0);
-        const Index raw_variables_number = input_variables_dimensions(1);
+        const Index columns_number = input_variables_dimensions(1);
         const Index channels_number = input_variables_dimensions(2);
-
+        
         TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                           batch_size,
                                           rows_number,
-                                          raw_variables_number,
+                                          columns_number,
                                           channels_number);
 
         /// @todo index will not work. Since it is for images, it will contain all rows in the matrix.
 
-        #pragma omp parallel for
+        //#pragma omp parallel for 
+        // @todo improve performance
 
         for(Index image = 0; image < batch_size; image++)
         {
-            Index index = 0;
+            const Index data_row = samples_indices(image);
+            Index data_column = 0;
 
             for(Index row = 0; row < rows_number; row++)
             {
-                for(Index raw_variable = 0; raw_variable < raw_variables_number; raw_variable++)
+                for(Index column = 0; column < columns_number; column++)
                 {
                     for(Index channel = 0; channel < channels_number ; channel++)
                     {
-                        inputs(image, row, raw_variable, channel) = data(image, index);
+                        inputs(image, row, column, channel) = data(data_row, data_column);
 
-                        index++;
+                        data_column++;
                     }
                 }
-            }
+            }            
         }
 
-        const bool augmentation = data_set->get_augmentation();
+//        const bool augmentation = data_set->get_augmentation();
 
-        if(augmentation) perform_augmentation();
+//        if(augmentation) perform_augmentation();
     }
 
     if (has_context)
@@ -213,13 +215,13 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         inputs_tensor.resize(batch_size*rows_number*raw_variables_number);
     }
-    else if(input_variables_dimensions.size() == 3)
+    else if (input_variables_dimensions.size() == 3)
     {
-        const Index channels_number = input_variables_dimensions(0);
-        const Index rows_number = input_variables_dimensions(1);
-        const Index raw_variables_number = input_variables_dimensions(2);
+        const Index rows_number = input_variables_dimensions(0);
+        const Index raw_variables_number = input_variables_dimensions(1);
+        const Index channels_number = input_variables_dimensions(2);
 
-        inputs_dimensions = {{batch_size, channels_number, rows_number, raw_variables_number}};
+        inputs_dimensions = { {batch_size, rows_number, raw_variables_number, channels_number} };
 
         inputs_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
@@ -243,11 +245,11 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     }
     else if(target_variables_dimensions.size() == 3)
     {
-        const Index channels_number = target_variables_dimensions(0);
-        const Index rows_number = target_variables_dimensions(1);
-        const Index raw_variables_number = target_variables_dimensions(2);
+        const Index rows_number = target_variables_dimensions(0);
+        const Index raw_variables_number = target_variables_dimensions(1);
+        const Index channels_number = target_variables_dimensions(2);
 
-        targets_dimensions = {{batch_size, channels_number, rows_number, raw_variables_number}};
+        targets_dimensions = { {batch_size, rows_number, raw_variables_number, channels_number} };
 
         targets_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
@@ -305,22 +307,36 @@ Index Batch::get_batch_samples_number() const
 
 void Batch::print() const
 {
+    const Index inputs_rank = inputs_dimensions.size();
+    const Index targets_rank = targets_dimensions.size();
+
     cout << "Batch" << endl;
 
+    cout << "Inputs:" << endl;
     cout << "Inputs dimensions:" << endl;
 
-    const Index inputs_rank = inputs_dimensions.size();
-
-    for(Index i = 0; i < inputs_rank; i++)
+    for (Index i = 0; i < inputs_rank; i++)
     {
-//        cout << inputs_dimensions[i] << endl;
+        cout << inputs_dimensions[i] << endl;
     }
 
-    cout << "Inputs:" << endl;
-    cout << inputs_tensor << endl;
+    if (inputs_rank == 4)
+    {
+        const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2], inputs_dimensions[3]);
+        cout << inputs << endl;
+    }
 
     cout << "Targets:" << endl;
-    cout << targets_tensor << endl;
+
+    cout << "Targets dimensions:" << endl;
+
+    for (Index i = 0; i < targets_rank; i++)
+    {
+        cout << targets_dimensions[i] << endl;
+    }
+
+    const TensorMap<Tensor<type, 2>> targets(targets_data, targets_dimensions[0], targets_dimensions[1]);
+    cout << targets << endl;
 }
 
 

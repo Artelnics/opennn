@@ -23,9 +23,7 @@ FlattenLayer::FlattenLayer() : Layer()
 
 FlattenLayer::FlattenLayer(const dimensions& new_inputs_dimensions) : Layer()
 {
-    inputs_dimensions = new_inputs_dimensions;
-
-    set(inputs_dimensions);
+    set(new_inputs_dimensions);
 
     layer_type = Type::Flatten;
 }
@@ -44,16 +42,16 @@ void FlattenLayer::set_name(const string& new_layer_name)
 
 
 /// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
-
+/// Batch,Height,Width,Channels
 Index FlattenLayer::get_outputs_number() const
 {
-    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2];
+    return inputs_dimensions[1] * inputs_dimensions[2] * inputs_dimensions[3];
 }
 
 
 dimensions FlattenLayer::get_outputs_dimensions() const
 {
-    return { inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2] };
+    return { inputs_dimensions[1] * inputs_dimensions[2] * inputs_dimensions[3] };
 }
 
 
@@ -65,19 +63,19 @@ Index FlattenLayer::get_inputs_number() const
 
 Index FlattenLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[0];
+    return inputs_dimensions[1];
 }
 
 
 Index FlattenLayer::get_inputs_raw_variables_number() const
 {
-    return inputs_dimensions[1];
+    return inputs_dimensions[2];
 }
 
 
 Index FlattenLayer::get_inputs_channels_number() const
 {
-    return inputs_dimensions[2];
+    return inputs_dimensions[3];
 }
 
 
@@ -85,7 +83,7 @@ Index FlattenLayer::get_inputs_channels_number() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2];
+    return inputs_dimensions[1] * inputs_dimensions[2] * inputs_dimensions[3];
 }
 
 
@@ -113,11 +111,13 @@ void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
 
+
+
     memcpy(outputs_data,
            inputs_pair(0).first,
            batch_samples_number*neurons_number*sizeof(type));
 
-    const TensorMap<Tensor<type, 2>> outputs(inputs_pair(0).first, batch_samples_number, neurons_number);
+    flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(inputs_pair(0).first, batch_samples_number, neurons_number);
 }
 
 
@@ -306,13 +306,13 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
     dimensions inputs_dimensions = flatten_layer->get_inputs_dimensions();
 
     input_derivatives.resize(batch_samples_number,
-            inputs_dimensions[0],
             inputs_dimensions[1],
-            inputs_dimensions[2]);
+            inputs_dimensions[2],
+            inputs_dimensions[3]);
 
     inputs_derivatives.resize(1);
     inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2] };
+    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions[1], inputs_dimensions[2], inputs_dimensions[3] };
 }
 
 }

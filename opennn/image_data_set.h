@@ -93,11 +93,7 @@ public:
     void set_random_vertical_translation_minimum(const type&);
     void set_random_vertical_translation_maximum(const type&);
 
-    void set_categories_number(const Index&);
-
-    void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) override;
-
-    void read_bmp(const string&);
+    void read_bmp();
 
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;
@@ -105,10 +101,6 @@ public:
 protected:
 
     Index images_number = 0;
-    Index channels_number = 0;
-
-    Index image_width = 0;
-    Index image_height = 0;
     Index padding = 0;
 
     bool augmentation = false;
@@ -120,8 +112,6 @@ protected:
     type random_horizontal_translation_maximum = type(0);
     type random_vertical_translation_minimum = type(0);
     type random_vertical_translation_maximum = type(0);
-
-    Index categories_number = 0;
 
     Tensor<string, 1> labels_tokens;
 

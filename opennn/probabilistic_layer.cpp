@@ -574,7 +574,9 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     const Index neurons_number = get_neurons_number();
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-
+    //cout << "probabilistic batch_samples_number " << inputs_pair(0).second[0] << endl;
+    //cout << "probabilistic inputs number" << inputs_pair(0).second[1] << endl;
+    //system("pause");
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
@@ -599,6 +601,9 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
             calculate_activations(outputs,
                                   outputs,
                                   aux_rows);
+
+            //cout << "Probabilistic layer softmax:\n" << outputs << endl;
+            //system("pause");
         }
         
     }
