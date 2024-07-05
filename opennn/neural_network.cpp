@@ -2232,6 +2232,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 {
+
     ostringstream buffer;
 
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
@@ -2244,7 +2245,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
         throw runtime_error(buffer.str());
     }
-    
+
     // Inputs
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("Inputs");
@@ -2261,8 +2262,9 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             inputs_from_XML(inputs_document);
         }
     }
-    
+
     // Layers
+
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("Layers");
 
@@ -2277,8 +2279,9 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             layers_from_XML(layers_document);
         }
+
     }
-    
+
     // Outputs
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("Outputs");
@@ -2314,6 +2317,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
+
 }
 
 
@@ -2389,6 +2393,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
 
 void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 {
+
     ostringstream buffer;
 
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Layers");
@@ -2772,18 +2777,21 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Layers inputs indices
-
+/*
     const tinyxml2::XMLElement* layers_inputs_indices_element = root_element->FirstChildElement("LayersInputsIndices");
 
     if (!layers_inputs_indices_element)
     {
+
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
             << "LayersInputsIndices element is nullptr.\n";
 
         throw runtime_error(buffer.str());
-    }
 
+    }
+*/
+/*
     layers_inputs_indices.resize(layers.size());
 
     for (const tinyxml2::XMLElement* layer_inputs_indices_element = layers_inputs_indices_element->FirstChildElement("LayerInputsIndices");
@@ -2797,6 +2805,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             layers_inputs_indices(layer_index) = to_type_vector(indices_string, ' ').cast<Index>();
         }
     }
+*/
 }
 
 
@@ -2836,7 +2845,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Outputs names
-    /*
+/*
     const tinyxml2::XMLElement* start_element = outputs_number_element;
 
     if(new_outputs_number > 0)
@@ -2867,7 +2876,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-    */
+*/
 }
 
 
