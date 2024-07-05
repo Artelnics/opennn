@@ -194,8 +194,10 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
     {
         const Layer::Type first_layer_type = layers[0]->get_type();
 
-        if(first_layer_type != Layer::Type::Scaling2D) return false;
-        if(first_layer_type != Layer::Type::Scaling4D) return false;
+        if ((first_layer_type != Layer::Type::Scaling2D) && (first_layer_type != Layer::Type::Scaling4D))
+        {
+            return false;
+        }
     }
 
     return true;
