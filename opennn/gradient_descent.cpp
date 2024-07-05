@@ -54,14 +54,6 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm()
 }
 
 
-/// Returns the hardware used. Default: Multi-core
-
-string GradientDescent::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
 /// Returns the minimum loss improvement during training.
 
 const type& GradientDescent::get_minimum_loss_decrease() const

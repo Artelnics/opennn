@@ -661,31 +661,6 @@ void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_d
 }
 
 
-/// Sets a new number of iterations between the training saving progress.
-/// @param new_save_period
-/// Number of iterations between the training saving progress.
-
-void ConjugateGradient::set_save_period(const Index& new_save_period)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_save_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_save_period(const type&) method.\n"
-               << "Save period must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    save_period = new_save_period;
-}
-
-
 /// Trains a neural network with an associated loss index according to the conjugate gradient algorithm.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
