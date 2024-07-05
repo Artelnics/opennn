@@ -2461,6 +2461,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
     const Index raw_variables_number = matrix.dimension(1);
 
 #ifdef OPENNN_DEBUG
+    const Index rows_number = matrix.dimension(0);
 
     if(rows_number == 0)
     {
@@ -2522,7 +2523,7 @@ type median(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 
 #ifdef OPENNN_DEBUG
 
-    const Index raw_variables_number = matrix.dimension(1);
+    const Index rows_number = matrix.dimension(0);
 
     if(rows_number == 0)
     {
@@ -2534,6 +2535,8 @@ type median(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 
         throw runtime_error(buffer.str());
     }
+
+    const Index raw_variables_number = matrix.dimension(1);
 
     if(raw_variable_index >= raw_variables_number)
     {
