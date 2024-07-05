@@ -58,8 +58,6 @@ public:
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm();
 
-   virtual string get_hardware_use() const;
-
    // Stopping criteria   
 
    const type& get_minimum_loss_decrease() const;
@@ -73,8 +71,6 @@ public:
    // Set methods
 
    void set_loss_index(LossIndex*) final;
-
-   void set_learning_rate_algorithm(const LearningRateAlgorithm&);
 
    void set_default() final;
 
