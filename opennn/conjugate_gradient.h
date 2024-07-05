@@ -70,9 +70,7 @@ public:
    string write_training_direction_method() const;
 
    // Stopping criteria
-
-   
-
+ 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
    const Index& get_maximum_selection_failures() const;
@@ -92,9 +90,7 @@ public:
    void set_training_direction_method(const TrainingDirectionMethod&);
    void set_training_direction_method(const string&);
 
-   // Stopping criteria
-
-   
+   // Stopping criteria 
 
    void set_loss_goal(const type&);
    void set_minimum_loss_decrease(const type&);
@@ -103,10 +99,6 @@ public:
 
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
-
-   // Utilities
-
-   virtual void set_save_period(const Index&);
 
    // Training direction methods
 
