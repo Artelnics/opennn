@@ -605,174 +605,6 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_forward_propagation,
-    LayerBackPropagationLM* next_back_propagation,
-    LayerBackPropagationLM* layer_back_propagation) const
-{
-    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation =
-        static_cast<PerceptronLayerBackPropagationLM*>(layer_back_propagation);
-
-    const Layer::Type next_type = next_back_propagation->layer->get_type();
-
-    switch (next_type)
-    {
-    case Type::Perceptron:
-    {
-        PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
-            static_cast<PerceptronLayerForwardPropagation*>(next_forward_propagation);
-
-        PerceptronLayerBackPropagationLM* next_perceptron_layer_back_propagation =
-            static_cast<PerceptronLayerBackPropagationLM*>(next_back_propagation);
-
-        calculate_hidden_delta_lm(next_perceptron_layer_forward_propagation,
-            next_perceptron_layer_back_propagation,
-            perceptron_layer_back_propagation);
-    }
-    return;
-
-    case Type::Probabilistic:
-    {
-        ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
-            static_cast<ProbabilisticLayerForwardPropagation*>(next_forward_propagation);
-
-        ProbabilisticLayerBackPropagationLM* next_probabilistic_layer_back_propagation =
-            static_cast<ProbabilisticLayerBackPropagationLM*>(next_back_propagation);
-
-        calculate_hidden_delta_lm(next_probabilistic_layer_forward_propagation,
-            next_probabilistic_layer_back_propagation,
-            perceptron_layer_back_propagation);
-    }
-    return;
-
-    default:
-
-        return;
-    }
-}
-
-
-void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagation* next_forward_propagation,
-                                                PerceptronLayerBackPropagationLM* next_back_propagation,
-                                                PerceptronLayerBackPropagationLM* back_propagation) const
-{
-    const PerceptronLayer* next_perceptron_layer
-        = static_cast<PerceptronLayer*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    // Next back propagation
-
-    const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // Back propagation
-
-    Tensor<type, 2>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-}
-
-
-void PerceptronLayer::calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation* next_forward_propagation,
-                                                ProbabilisticLayerBackPropagationLM* next_back_propagation,
-                                                PerceptronLayerBackPropagationLM* back_propagation) const
-{
-    const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer);
-
-    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer->get_synaptic_weights();
-
-    // Next back propagation
-
-    const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    // Back propagation
-
-    Tensor<type, 2>& deltas = back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-}
-
-
-void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
-                                                           LayerForwardPropagation* forward_propagation,
-                                                           LayerBackPropagationLM* back_propagation)
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    const Index synaptic_weights_number = get_synaptic_weights_number();
-
-    const Index samples_number = inputs.dimension(0);
-
-    // Forward propagation
-
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
-            static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
-
-    const Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
-
-    // Back propagation
-
-    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
-            static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);
-
-    const Tensor<type, 2>& deltas = perceptron_layer_back_propagation_lm->deltas;
-   
-    Tensor<type, 2>& error_combinations_derivatives = perceptron_layer_back_propagation_lm->error_combinations_derivatives;
-
-    error_combinations_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
-
-    Tensor<type, 2>& squared_errors_Jacobian = perceptron_layer_back_propagation_lm->squared_errors_Jacobian;
-
-    /// @todo simplify, in matrix notation?
-
-    Index synaptic_weight_index = 0;
-
-    for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
-    {
-        const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
-
-        for (Index input_index = 0; input_index < inputs_number; input_index++)
-        {
-            const TensorMap<Tensor<type, 1>> input = tensor_map(inputs, input_index);
-
-            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight = tensor_map(squared_errors_Jacobian, synaptic_weight_index);
-
-            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) = error_combinations_derivatives_neuron * input;
-
-            synaptic_weight_index++;
-        }
-
-        // bias
-
-        const Index bias_index = synaptic_weights_number + neuron_index;
-
-        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias = tensor_map(squared_errors_Jacobian, bias_index);
-
-        squared_errors_jacobian_bias.device(*thread_pool_device) = error_combinations_derivatives_neuron;
-    }
-}
-
-
-void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
-                                                        const Index& index,
-                                                        Tensor<type, 2>& squared_errors_Jacobian) const
-{
-    const Index layer_parameters_number = get_parameters_number();
-
-    const Index batch_samples_number = back_propagation->batch_samples_number;
-
-    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
-            static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);
-
-    type* squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
-
-    copy(/*execution::par,*/
-         squared_errors_Jacobian_data,
-         squared_errors_Jacobian_data + layer_parameters_number*batch_samples_number,
-         squared_errors_Jacobian_data + index);
-}
-
-
 void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
                                                LayerForwardPropagation* forward_propagation,
@@ -814,6 +646,78 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 }
 
 
+void PerceptronLayer::back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+                                        const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+                                        LayerForwardPropagation* forward_propagation,
+                                        LayerBackPropagationLM* back_propagation) const
+{
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    const Index synaptic_weights_number = get_synaptic_weights_number();
+
+    const Index samples_number = inputs.dimension(0);
+
+    // Forward propagation
+
+    const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
+        static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
+
+    const Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
+
+    // Back propagation
+
+    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
+        static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);
+
+    Tensor<type, 2>& error_combinations_derivatives = perceptron_layer_back_propagation_lm->error_combinations_derivatives;
+
+    Tensor<type, 2>& squared_errors_Jacobian = perceptron_layer_back_propagation_lm->squared_errors_Jacobian;
+
+    bool& is_first_layer = perceptron_layer_back_propagation_lm->is_first_layer;
+
+    Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation_lm->input_derivatives;
+
+    // Parameters derivatives
+    
+    error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+
+    Index synaptic_weight_index = 0;
+
+    for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+    {
+        const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
+
+        for (Index input_index = 0; input_index < inputs_number; input_index++)
+        {
+            const TensorMap<Tensor<type, 1>> input = tensor_map(inputs, input_index);
+
+            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight = tensor_map(squared_errors_Jacobian, synaptic_weight_index);
+
+            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) = error_combinations_derivatives_neuron * input;
+
+            synaptic_weight_index++;
+        }
+
+        // bias
+
+        const Index bias_index = synaptic_weights_number + neuron_index;
+
+        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias = tensor_map(squared_errors_Jacobian, bias_index);
+
+        squared_errors_jacobian_bias.device(*thread_pool_device) = error_combinations_derivatives_neuron;
+    }
+
+    // Input derivatives
+
+    if (!is_first_layer)
+        input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, A_BT);
+}
+
+
 void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
                                       const Index& index,
                                       Tensor<type, 1>& gradient) const
@@ -843,6 +747,26 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
          biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);
+}
+
+
+void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
+                                                        const Index& index,
+                                                        Tensor<type, 2>& squared_errors_Jacobian) const
+{
+    const Index layer_parameters_number = get_parameters_number();
+
+    const Index batch_samples_number = back_propagation->batch_samples_number;
+
+    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
+        static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);
+
+    type* squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
+
+    copy(/*execution::par,*/
+        squared_errors_Jacobian_data,
+        squared_errors_Jacobian_data + layer_parameters_number * batch_samples_number,
+        squared_errors_Jacobian.data() + index);
 }
 
 
@@ -1234,21 +1158,23 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     const Index neurons_number = layer->get_neurons_number();
+    const Index inputs_number = layer->get_inputs_number();
     const Index parameters_number = layer->get_parameters_number();
-
-    deltas.resize(batch_samples_number, neurons_number);
 
     squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
 
     error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+
+    input_derivatives.resize(batch_samples_number, inputs_number);
+
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
 }
 
 
 void PerceptronLayerBackPropagationLM::print() const
 {
-    cout << "Deltas:" << endl;
-    cout << deltas << endl;
-
     cout << "Squared errors Jacobian: " << endl;
     cout << squared_errors_Jacobian << endl;
 }

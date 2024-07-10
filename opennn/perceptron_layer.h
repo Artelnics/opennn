@@ -169,40 +169,25 @@ public:
         LayerForwardPropagation*,
         const bool&) final;
 
-    // Delta LM
-
-    void calculate_hidden_delta_lm(LayerForwardPropagation*,
-        LayerBackPropagationLM*,
-        LayerBackPropagationLM*) const final;
-
-    void calculate_hidden_delta_lm(PerceptronLayerForwardPropagation*,
-        PerceptronLayerBackPropagationLM*,
-        PerceptronLayerBackPropagationLM*) const;
-
-    void calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation*,
-        ProbabilisticLayerBackPropagationLM*,
-        PerceptronLayerBackPropagationLM*) const;
-
-    // Squared errors methods
-
-    void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-        LayerForwardPropagation*,
-        LayerBackPropagationLM*) final;
-
-    void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
-        const Index&,
-        Tensor<type, 2>&) const final;
-
     // Gradient methods
 
     void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-        const Tensor<pair<type*, dimensions>, 1>&,
-        LayerForwardPropagation*,
-        LayerBackPropagation*) const final;
+                        const Tensor<pair<type*, dimensions>, 1>&,
+                        LayerForwardPropagation*,
+                        LayerBackPropagation*) const final;
+
+    void back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>&,
+                           const Tensor<pair<type*, dimensions>, 1>&,
+                           LayerForwardPropagation*,
+                           LayerBackPropagationLM*) const final;
 
     void insert_gradient(LayerBackPropagation*,
-        const Index&,
-        Tensor<type, 1>&) const final;
+                         const Index&,
+                         Tensor<type, 1>&) const final;
+
+    void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
+                                           const Index&,
+                                           Tensor<type, 2>&) const final;
 
     // Expression methods   
 
@@ -305,9 +290,10 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
     void print() const;
 
-    Tensor<type, 2> squared_errors_Jacobian;
-
     Tensor<type, 2> error_combinations_derivatives;
+    Tensor<type, 2> input_derivatives;
+
+    Tensor<type, 2> squared_errors_Jacobian;
 
 };
 

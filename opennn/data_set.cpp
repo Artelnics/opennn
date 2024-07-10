@@ -160,7 +160,6 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 
 DataSet::DataSet(const string& data_source_path, const char& separator, const bool& has_raw_variables_names, const Codification& data_codification)
 {
-    cout << "This construictor" << endl;
     set(data_source_path, separator, has_raw_variables_names, data_codification);
 }
 
@@ -1229,21 +1228,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
         batches_number = 1;
         batch_size = samples_number;
         buffer_size = batch_size;
-
-        Tensor<Index,1> samples_copy(samples_indices);
-
-        Tensor<Index, 2> batches(batches_number, batch_size);
-
-        // Shuffle
-
-        std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
-
-        for(Index i = 0; i < batch_size; i++)
-        {
-            batches(0, i) = samples_copy(i);
-        }
-
-        return batches;
     }
     else
     {
@@ -1252,18 +1236,19 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
-    {
-        Tensor<Index, 1> samples_copy(samples_indices);
+    Tensor<Index, 1> samples_copy(samples_indices);
 
-        std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
+    // Shuffle
 
-        for (Index i = 0; i < batches_number; i++)
-            for (Index j = 0; j < batch_size; j++)
-                batches(i, j) = samples_copy(i * batches_number + j);
+    std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
-        return batches;
-    }
+    for (Index i = 0; i < batches_number; i++)
+        for (Index j = 0; j < batch_size; j++)
+            batches(i, j) = samples_copy(i * batches_number + j);
 
+    return batches;
+    
+    /*
     Tensor<Index, 1> buffer(buffer_size);
 
     for(Index i = 0; i < buffer_size; i++) buffer(i) = i;
@@ -1384,7 +1369,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     std::shuffle(batches.data(), batches.data() + batches.size(), urng);
     return batches;
-
+    */
 }
 
 
@@ -5077,7 +5062,10 @@ void DataSet::set(const Index& new_samples_number,
     }
 
     input_variables_dimensions.resize(1);
+    input_variables_dimensions(0) = new_inputs_number;
+
     target_variables_dimensions.resize(1);
+    target_variables_dimensions(0) = new_targets_number;
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -5157,7 +5145,7 @@ void DataSet::set_default()
 
     missing_values_label = "NA";
 
-    set_default_raw_variables_uses();
+    //set_default_raw_variables_uses();
 
     set_default_raw_variables_names();
 
