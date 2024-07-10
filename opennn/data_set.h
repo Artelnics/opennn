@@ -397,8 +397,6 @@ public:
 
     Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
 
-    Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
-
     // Members get methods
 
     MissingValuesMethod get_missing_values_method() const;

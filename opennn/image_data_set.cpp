@@ -126,6 +126,8 @@ void ImageDataSet::set(const Index& new_images_number,
                        const Index& new_channels_number,
                        const Index& new_targets_number)
 {
+    model_type = ModelType::ImageClassification;
+
     set_images_number(new_images_number);
     const Index image_height = new_height;
     const Index image_width = new_width;
@@ -168,6 +170,8 @@ void ImageDataSet::set(const Index& new_images_number,
 
     samples_uses.resize(images_number);
     split_samples_random();
+
+    set_default_raw_variables_scalers();
 }
 
 

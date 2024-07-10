@@ -120,7 +120,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     type& error = back_propagation.error;
 
     Tensor<type, 0> cross_entropy_error;
-    
+
     cross_entropy_error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-batch_samples_number);
 
     error = cross_entropy_error();

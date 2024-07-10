@@ -268,12 +268,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool has_selection = data_set->has_selection();
     
-    bool is_language_model = false;
-    if (is_instance_of<LanguageDataSet>(data_set))  is_language_model = true;
+    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set) ? true : false;
 
-    bool is_classification_model = false;
-    if (is_instance_of<CrossEntropyError3D>(loss_index))  is_classification_model = true;
-    
+    const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
+   
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
     Tensor<Index, 1> context_variables_indices;
@@ -342,7 +340,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         }
     }
 
-    if(neural_network->has_unscaling_layer())
+    if (neural_network->has_unscaling_layer())
     {
         target_variables_descriptives = data_set->scale_target_variables();
 
@@ -403,7 +401,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_error = type(0);
 
-        if(is_classification_model) training_accuracy = type(0); 
+        if (is_classification_model) training_accuracy = type(0); 
         //optimization_data.iteration = 1;
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
@@ -458,13 +456,19 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             {
                 // Data set
 
-                selection_batch.fill(selection_batches.chip(iteration,0),
+                selection_batch.fill(selection_batches.chip(iteration, 0),
                                      input_variables_indices,
                                      target_variables_indices,
                                      context_variables_indices);               
                 // Neural network
                 
                 inputs_pair = selection_batch.get_inputs_pair();
+                
+                //TensorMap<Tensor<type, 4>> inpt(inputs_pair(0).first,inputs_pair(0).second[0],inputs_pair(0).second[1],inputs_pair(0).second[2],inputs_pair(0).second[3]);
+                //cout << inpt << endl;
+                //pair<type*, dimensions> target_pair = selection_batch.get_targets_pair();
+                //TensorMap<Tensor<type, 2>> targ(target_pair.first, target_pair.second[0], target_pair.second[1]);
+                //cout << targ << endl;
 
                 neural_network->forward_propagate(inputs_pair,
                                                   selection_forward_propagation,

@@ -96,6 +96,7 @@ Tensor<type, 2> self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&
 // Division
 
 void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_columns(ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 void divide_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
 // Checking
@@ -206,8 +207,7 @@ void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
 
 // Fill
 
-void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>&, type*);
-void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
+void fill_tensor_data(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, type*);
 
 // Contain
 

@@ -748,7 +748,7 @@ void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
     Tensor<type, 4>& outputs = scaling_layer_forward_propagation->outputs;
 
-    outputs.device(*thread_pool_device) = -type(1) + type(2/255)*inputs;
+    outputs.device(*thread_pool_device) = inputs/type(255); 
 }
 
 
@@ -1014,7 +1014,7 @@ void ScalingLayer4DForwardPropagation::set(const Index& new_batch_samples_number
 
     batch_samples_number = new_batch_samples_number;
 
-    outputs.resize(batch_samples_number, neurons_number, 1, 1);
+    outputs.resize(batch_samples_number, neurons_number,1,1);
 
     outputs_data = outputs.data();
 }

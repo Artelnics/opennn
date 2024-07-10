@@ -183,6 +183,7 @@ public:
 
    void calculate_combinations(const Tensor<type, 1>&,
                                const Tensor<type, 2>&,
+                               const Tensor<type, 1>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 1>&,
                                Tensor<type, 1>&);
@@ -253,9 +254,6 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
    ActivationFunction recurrent_activation_function = ActivationFunction::HardSigmoid;
-
-   Tensor<type, 1> hidden_states;
-   Tensor<type, 1> cell_states;
 
    /// Display messages to screen.
 
@@ -329,15 +327,15 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2, RowMajor> output_activations;
     Tensor<type, 2, RowMajor> output_activations_derivatives;
 
-    Tensor<type, 1> current_cell_states;
     Tensor<type, 1> previous_cell_states;
+    Tensor<type, 1> current_cell_states;
     Tensor<type, 2, RowMajor> cell_states;
-    Tensor<type, 2, RowMajor> cell_states_derivatives;
 
-    Tensor<type, 1> previous_hidden_state_activations;
-    Tensor<type, 1> current_hidden_states_derivatives;
+    Tensor<type, 1> previous_hidden_states;
+    Tensor<type, 1> current_hidden_states;
+    Tensor<type, 1> current_hidden_states_activations_derivatives;
     Tensor<type, 2, RowMajor> hidden_states;
-    Tensor<type, 2, RowMajor> hidden_states_derivatives;
+    Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
 
     Tensor<type, 2> outputs;
 };
@@ -375,20 +373,21 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> state_weights_derivatives;
     Tensor<type, 1> output_weights_derivatives;
 
+    Tensor<type, 2> hidden_states_weights_derivatives;
+    Tensor<type, 2> cell_states_weights_derivatives;
+
     Tensor<type, 1> forget_recurrent_weights_derivatives;
     Tensor<type, 1> input_recurrent_weights_derivatives;
     Tensor<type, 1> state_recurrent_weights_derivatives;
     Tensor<type, 1> output_recurrent_weights_derivatives;
 
+    Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
+    Tensor<type, 2> cell_states_recurrent_weights_derivatives;
+
     Tensor<type, 1> forget_biases_derivatives;
     Tensor<type, 1> input_biases_derivatives;
     Tensor<type, 1> state_biases_derivatives;
     Tensor<type, 1> output_biases_derivatives;
-
-    Tensor<type, 2> input_combinations_biases_derivatives;
-    Tensor<type, 2> forget_combinations_biases_derivatives;
-    Tensor<type, 2> state_combinations_biases_derivatives;
-    Tensor<type, 2> output_combinations_biases_derivatives;
 
     Tensor<type, 2> hidden_states_biases_derivatives;
     Tensor<type, 2> cell_states_biases_derivatives;
@@ -398,16 +397,15 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> state_combinations_weights_derivatives;
     Tensor<type, 2> output_combinations_weights_derivatives;
 
-    Tensor<type, 2> hidden_states_weights_derivatives;
-    Tensor<type, 2> cell_states_weights_derivatives;
-
     Tensor<type, 2> input_combinations_recurrent_weights_derivatives;
     Tensor<type, 2> forget_combinations_recurrent_weights_derivatives;
     Tensor<type, 2> state_combinations_recurrent_weights_derivatives;
     Tensor<type, 2> output_combinations_recurrent_weights_derivatives;
 
-    Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
-    Tensor<type, 2> cell_states_recurrent_weights_derivatives;
+    Tensor<type, 2> input_combinations_biases_derivatives;
+    Tensor<type, 2> forget_combinations_biases_derivatives;
+    Tensor<type, 2> state_combinations_biases_derivatives;
+    Tensor<type, 2> output_combinations_biases_derivatives;
 
     Tensor<type, 2> input_derivatives;
 };
