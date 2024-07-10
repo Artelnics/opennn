@@ -20,88 +20,14 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
 {
     const Tensor<type, 2>& data = data_set->get_data();
     
-    const Tensor<Index, 1>& input_variables_dimensions = data_set->get_input_variables_dimensions();
-
-    if(input_variables_dimensions.size() == 1)
-    {
-        fill_submatrix(data, samples_indices, inputs_indices, inputs_data);
-    }
-    else if(input_variables_dimensions.size() == 2)
-    {
-        const Index rows_number = input_variables_dimensions(0);
-        const Index raw_variables_number = input_variables_dimensions(1);
-
-        TensorMap<Tensor<type, 3>> inputs(inputs_data,
-                                          batch_size,
-                                          rows_number,
-                                          raw_variables_number);
-
-        #pragma omp parallel for
-
-        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            Index index = 0;
-
-            for(Index row = 0; row < rows_number; row++)
-            {
-                for(Index raw_variable = 0; raw_variable < raw_variables_number; raw_variable++)
-                {
-                    inputs(sample_index, row, raw_variable) = data(sample_index, index);
-
-                    index++;
-                }
-            }
-        }
-    }
-    else if(input_variables_dimensions.size() == 3)
-    {    
-        const Index rows_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
-        const Index channels_number = input_variables_dimensions(2);
-        
-        TensorMap<Tensor<type, 4>> inputs(inputs_data,
-                                          batch_size,
-                                          rows_number,
-                                          columns_number,
-                                          channels_number);
-
-        /// @todo index will not work. Since it is for images, it will contain all rows in the matrix.
-
-        //#pragma omp parallel for 
-        // @todo improve performance
-
-        for(Index image = 0; image < batch_size; image++)
-        {
-            const Index data_row = samples_indices(image);
-            Index data_column = 0;
-
-            for(Index row = 0; row < rows_number; row++)
-            {
-                for(Index column = 0; column < columns_number; column++)
-                {
-                    for(Index channel = 0; channel < channels_number ; channel++)
-                    {
-                        inputs(image, row, column, channel) = data(data_row, data_column);
-
-                        data_column++;
-                    }
-                }
-            }            
-        }
-
-//        const bool augmentation = data_set->get_augmentation();
-
-//        if(augmentation) perform_augmentation();
-    }
+    fill_tensor_data(data, samples_indices, inputs_indices, inputs_data);
 
     if (has_context)
     {
-        fill_submatrix(data, samples_indices, context_indices, context_data);
+        fill_tensor_data(data, samples_indices, context_indices, context_data);
     }
 
-    /// @todo dimensions
-
-    fill_submatrix(data, samples_indices, targets_indices, targets_data);
+    fill_tensor_data(data, samples_indices, targets_indices, targets_data);
 }
 
 

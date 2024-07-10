@@ -802,6 +802,10 @@ void ScalingLayer2D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
             {
                 output_column.device(*thread_pool_device) = input_column.log();
             }
+            else if(scaler == Scaler::ImageMinMax)
+            {
+                output_column.device(*thread_pool_device) = input_column/type(255);
+            }
             else
             {
                 ostringstream buffer;

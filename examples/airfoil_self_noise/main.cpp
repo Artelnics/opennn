@@ -61,7 +61,7 @@ int main()
         testing_analysis.print_goodness_of_fit_analysis();
 
         // Save results
-
+        
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_c("../data/airfoil_self_noise.c");
 
@@ -77,7 +77,7 @@ int main()
 //      const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
-
+        
         cout << "Good bye!" << endl;       
 
         return 0;
