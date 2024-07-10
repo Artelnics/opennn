@@ -1439,6 +1439,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
+    /*
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = inputs_number * neurons_number;
@@ -1725,7 +1726,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
         cell_states_weights_derivatives.device(*thread_pool_device) += forget_combinations_weights_derivatives;
 
-        copy(/*execution::par,*/
+        copy(/*execution::par,*
             cell_states_weights_derivatives.data(),
             cell_states_weights_derivatives.data() + cell_states_weights_derivatives.size(),
             hidden_states_weights_derivatives.data());
@@ -1755,7 +1756,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
             cell_states_recurrent_weights_derivatives.device(*thread_pool_device) += forget_combinations_recurrent_weights_derivatives;
 
-            copy(/*execution::par,*/
+            copy(/*execution::par,*
                 cell_states_recurrent_weights_derivatives.data(),
                 cell_states_recurrent_weights_derivatives.data() + cell_states_recurrent_weights_derivatives.size(),
                 hidden_states_recurrent_weights_derivatives.data());
@@ -1785,7 +1786,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
         cell_states_biases_derivatives.device(*thread_pool_device) += forget_combinations_biases_derivatives;
 
-        copy(/*execution::par,*/
+        copy(/*execution::par,*
             cell_states_biases_derivatives.data(),
             cell_states_biases_derivatives.data() + cell_states_biases_derivatives.size(),
             hidden_states_biases_derivatives.data());
@@ -1943,7 +1944,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
         cell_states_weights_derivatives.device(*thread_pool_device) += forget_combinations_weights_derivatives;
 
-        copy(/*execution::par,*/
+        copy(/*execution::par,*
             cell_states_weights_derivatives.data(),
             cell_states_weights_derivatives.data() + cell_states_weights_derivatives.size(),
             hidden_states_weights_derivatives.data());
@@ -1974,7 +1975,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
             cell_states_recurrent_weights_derivatives.device(*thread_pool_device) += forget_combinations_recurrent_weights_derivatives;
 
-            copy(/*execution::par,*/
+            copy(/*execution::par,*
                 cell_states_recurrent_weights_derivatives.data(),
                 cell_states_recurrent_weights_derivatives.data() + cell_states_recurrent_weights_derivatives.size(),
                 hidden_states_recurrent_weights_derivatives.data());
@@ -2004,7 +2005,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
         cell_states_biases_derivatives.device(*thread_pool_device) += forget_combinations_biases_derivatives;
 
-        copy(/*execution::par,*/
+        copy(/*execution::par,*
             cell_states_biases_derivatives.data(),
             cell_states_biases_derivatives.data() + cell_states_biases_derivatives.size(),
             hidden_states_biases_derivatives.data());
@@ -2162,7 +2163,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
         cell_states_weights_derivatives.device(*thread_pool_device) += forget_combinations_weights_derivatives;
 
-        copy(/*execution::par,*/
+        copy(/*execution::par,*
             cell_states_weights_derivatives.data(),
             cell_states_weights_derivatives.data() + cell_states_weights_derivatives.size(),
             hidden_states_weights_derivatives.data());
@@ -2193,7 +2194,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
             cell_states_recurrent_weights_derivatives.device(*thread_pool_device) += forget_combinations_recurrent_weights_derivatives;
 
-            copy(/*execution::par,*/
+            copy(/*execution::par,*
                 cell_states_recurrent_weights_derivatives.data(),
                 cell_states_recurrent_weights_derivatives.data() + cell_states_recurrent_weights_derivatives.size(),
                 hidden_states_recurrent_weights_derivatives.data());
@@ -2223,7 +2224,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
         cell_states_biases_derivatives.device(*thread_pool_device) += forget_combinations_biases_derivatives;
 
-        copy(/*execution::par,*/
+        copy(/*execution::par,*
             cell_states_biases_derivatives.data(),
             cell_states_biases_derivatives.data() + cell_states_biases_derivatives.size(),
             hidden_states_biases_derivatives.data());
@@ -2381,7 +2382,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
         cell_states_weights_derivatives.device(*thread_pool_device) += forget_combinations_weights_derivatives;
 
-        copy(/*execution::par,*/
+        copy(/*execution::par,*
             cell_states_weights_derivatives.data(),
             cell_states_weights_derivatives.data() + cell_states_weights_derivatives.size(),
             hidden_states_weights_derivatives.data());
@@ -2412,7 +2413,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
             cell_states_recurrent_weights_derivatives.device(*thread_pool_device) += forget_combinations_recurrent_weights_derivatives;
 
-            copy(/*execution::par,*/
+            copy(/*execution::par,*
                 cell_states_recurrent_weights_derivatives.data(),
                 cell_states_recurrent_weights_derivatives.data() + cell_states_recurrent_weights_derivatives.size(),
                 hidden_states_recurrent_weights_derivatives.data());
@@ -2442,7 +2443,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
 
         cell_states_biases_derivatives.device(*thread_pool_device) += forget_combinations_biases_derivatives;
 
-        copy(/*execution::par,*/
+        copy(/*execution::par,*
             cell_states_biases_derivatives.data(),
             cell_states_biases_derivatives.data() + cell_states_biases_derivatives.size(),
             hidden_states_biases_derivatives.data());
@@ -2457,6 +2458,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
     }
 
     //@todo input derivatives
+    */
 }
 
 
