@@ -25,6 +25,7 @@ type calculate_random_uniform(const type& minimum, const type& maximum)
 
 ///Generate a random boolean
 
+
 bool calculate_random_bool()
 {
     if(rand() % 2 == 1)
@@ -453,6 +454,22 @@ Tensor<type, 2> self_kronecker_product(ThreadPoolDevice* thread_pool_device, con
 
 
 void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    type* matrix_data = matrix.data();
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        TensorMap<Tensor<type,1>> raw_variable(matrix_data + j*rows_number, rows_number);
+
+        raw_variable.device(*thread_pool_device) = raw_variable / vector;
+    }
+}
+
+
+void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -1148,8 +1165,14 @@ Index count_between(const Tensor<type,1>& vector,const type& minimum, const type
 }
 
 
-void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&)
+void get_row(Tensor<type, 1>& row, const Tensor<type, 2, RowMajor>& matrix, const Index& row_index)
 {
+    const Index columns_number = row.dimension(0);
+
+    copy(/*execution::par,*/
+         matrix.data() + row_index * columns_number,
+         matrix.data() + (row_index + 1) * columns_number,
+         row.data());
 }
 
 
@@ -1168,10 +1191,12 @@ void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_i
 
 void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, const Index& row_index)
 {
+    const Index columns_number = vector.size();
+
     copy(/*execution::par,*/
         (type*) vector.data(),
-        (type*) vector.data() + vector.size(),
-        matrix.data() + row_index);
+        (type*) vector.data() + columns_number,
+        matrix.data() + row_index * columns_number);
 }
 
 
@@ -1467,10 +1492,10 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 }
 
 
-void fill_submatrix(const Tensor<type, 2>& matrix,
-                    const Tensor<Index, 1>& rows_indices,
-                    const Tensor<Index, 1>& columns_indices,
-                    type* submatrix)
+void fill_tensor_data(const Tensor<type, 2>& matrix,
+                      const Tensor<Index, 1>& rows_indices,
+                      const Tensor<Index, 1>& columns_indices,
+                      type* tensor_data)
 {
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
@@ -1482,18 +1507,19 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
     for(Index j = 0; j < columns_number; j++)
     {
         const type* matrix_column = matrix_data + matrix.dimension(0)*columns_indices[j];
-        type* submatrix_column = submatrix + rows_number*j;
 
-        const type* value = nullptr;
+        type* tensor_value = tensor_data + rows_number*j;
+
+        const type* matrix_value = nullptr;
 
         const Index* rows_indices_data = rows_indices.data();
 
         for(Index i = 0; i < rows_number; i++)
         {
-            value = matrix_column + *rows_indices_data;
+            matrix_value = matrix_column + *rows_indices_data;
             rows_indices_data++;
-            *submatrix_column = *value;
-            submatrix_column++;
+            *tensor_value = *matrix_value;
+            tensor_value++;
         }
     }
 }

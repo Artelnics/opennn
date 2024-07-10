@@ -124,11 +124,13 @@ void SumSquaredError::calculate_output_delta_lm(const Batch&,
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    Tensor<type, 2>& deltas = output_layer_back_propagation->deltas;
+    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    deltas.device(*thread_pool_device) = errors;
+    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 
-    divide_columns(thread_pool_device, deltas, squared_errors);
+    output_deltas.device(*thread_pool_device) = errors;
+
+    divide_columns(thread_pool_device, output_deltas, squared_errors);
 }
 
 
