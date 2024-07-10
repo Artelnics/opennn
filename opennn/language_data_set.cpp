@@ -194,7 +194,11 @@ Tensor<type, 2> LanguageDataSet::get_testing_context_data() const
 
     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
 
-    return get_subtensor_data(testing_indices, context_variables_indices);
+    Tensor<type, 2> testing_context_data_data(testing_indices.size(), context_variables_indices.size());
+
+    fill_tensor_data(data, testing_indices, context_variables_indices, testing_context_data_data.data());
+
+    return testing_context_data_data;
 }
 
 
@@ -218,7 +222,11 @@ Tensor<type, 2> LanguageDataSet::get_context_data() const
 
     const Tensor<Index, 1> context_variables_indices = get_context_variables_indices();
 
-    return get_subtensor_data(indices, context_variables_indices);
+    Tensor<type, 2> context_data_data(indices.size(), context_variables_indices.size());
+
+    fill_tensor_data(data, indices, context_variables_indices, context_data_data.data());
+
+    return context_data_data;
 }
 
 void LanguageDataSet::set_default_raw_variables_uses()

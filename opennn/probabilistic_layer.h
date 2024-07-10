@@ -120,9 +120,6 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 
     void print() const
     {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
         cout << "Squared errors Jacobian: " << endl;
         cout << squared_errors_Jacobian << endl;
     }
@@ -259,11 +256,11 @@ public:
         Tensor<type, 1>&) const final;
 
     // Squared errors methods
-
+    /*
     void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
         LayerForwardPropagation*,
         LayerBackPropagationLM*) final;
-
+    */
     void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
         const Index&,
         Tensor<type, 2>&) const final;
