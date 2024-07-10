@@ -575,9 +575,7 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
                                         const bool& is_training)
 {
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-    //cout << "perceptron batch_samples_number" << inputs_pair(0).second[0] << endl;
-    //cout << "perceptron inputs number" << inputs_pair(0).second[1] << endl;
-    //system("pause");
+
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
 

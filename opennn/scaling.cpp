@@ -140,6 +140,17 @@ Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)
 }
 
 
+void scale_image_minimum_maximum(Tensor<type, 2>& matrix, const Index& raw_variable_index)
+{
+    #pragma omp parallel for
+
+    for (Index i = 0; i < matrix.dimension(0); i++)
+    {
+        matrix(i, raw_variable_index) /= type(255);
+    }
+}
+
+
 Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 {
     const Index rows_number = x.dimension(0);
@@ -177,7 +188,6 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 void scale_logarithmic(Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
     type min_value = numeric_limits<type>::max();
-
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
@@ -295,6 +305,17 @@ void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& raw_variable_inde
         matrix(i, raw_variable_index) = exp(matrix(i, raw_variable_index));
     }
 }
+
+void unscale_image_minimum_maximum(Tensor<type, 2>& matrix, const Index& raw_variable_index)
+{
+    #pragma omp parallel for
+
+    for (Index i = 0; i < matrix.dimension(0); i++)
+    {
+        matrix(i, raw_variable_index) *= type(255);
+    }
+}
+
 }
 
 

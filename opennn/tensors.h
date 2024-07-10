@@ -206,8 +206,7 @@ void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
 
 // Fill
 
-void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>&, type*);
-void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
+void fill_tensor_data(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, type*);
 
 // Contain
 

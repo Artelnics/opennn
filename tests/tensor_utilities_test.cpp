@@ -40,7 +40,7 @@ void TensorUtilitiesTest::test_fill_submatrix()
 
     submatrix.resize(1, 1);
 
-    fill_submatrix(matrix, rows_indices, columns_indices, submatrix.data());
+    fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
 
     assert_true(is_equal(submatrix, type(3.1416)), LOG);
 }
