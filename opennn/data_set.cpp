@@ -160,7 +160,6 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 
 DataSet::DataSet(const string& data_source_path, const char& separator, const bool& has_raw_variables_names, const Codification& data_codification)
 {
-    cout << "This construictor" << endl;
     set(data_source_path, separator, has_raw_variables_names, data_codification);
 }
 
@@ -1229,21 +1228,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
         batches_number = 1;
         batch_size = samples_number;
         buffer_size = batch_size;
-
-        Tensor<Index,1> samples_copy(samples_indices);
-
-        Tensor<Index, 2> batches(batches_number, batch_size);
-
-        // Shuffle
-
-        std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
-
-        for(Index i = 0; i < batch_size; i++)
-        {
-            batches(0, i) = samples_copy(i);
-        }
-
-        return batches;
     }
     else
     {
@@ -1252,18 +1236,19 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
-    {
-        Tensor<Index, 1> samples_copy(samples_indices);
+    Tensor<Index, 1> samples_copy(samples_indices);
 
-        std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
+    // Shuffle
 
-        for (Index i = 0; i < batches_number; i++)
-            for (Index j = 0; j < batch_size; j++)
-                batches(i, j) = samples_copy(i * batches_number + j);
+    std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
-        return batches;
-    }
+    for (Index i = 0; i < batches_number; i++)
+        for (Index j = 0; j < batch_size; j++)
+            batches(i, j) = samples_copy(i * batches_number + j);
 
+    return batches;
+    
+    /*
     Tensor<Index, 1> buffer(buffer_size);
 
     for(Index i = 0; i < buffer_size; i++) buffer(i) = i;
@@ -1384,7 +1369,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     std::shuffle(batches.data(), batches.data() + batches.size(), urng);
     return batches;
-
+    */
 }
 
 
@@ -4132,7 +4117,11 @@ Tensor<type, 2> DataSet::get_training_data() const
 
     const Tensor<Index, 1> training_indices = get_training_samples_indices();
 
-    return get_subtensor_data(training_indices, variables_indices);
+    Tensor<type, 2> training_data(training_indices.size(), variables_indices.size());
+
+    fill_tensor_data(data, training_indices, variables_indices, training_data.data());
+
+    return training_data;
 }
 
 
@@ -4149,7 +4138,11 @@ Tensor<type, 2> DataSet::get_selection_data() const
     Tensor<Index, 1> variables_indices;
     initialize_sequential(variables_indices, 0, 1, variables_number-1);
 
-    return get_subtensor_data(selection_indices, variables_indices);
+    Tensor<type, 2> selection_data(selection_indices.size(), variables_indices.size());
+
+    fill_tensor_data(data, selection_indices, variables_indices, selection_data.data());
+
+    return selection_data;
 }
 
 
@@ -4166,7 +4159,12 @@ Tensor<type, 2> DataSet::get_testing_data() const
 
     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
 
-    return get_subtensor_data(testing_indices, variables_indices);
+    Tensor<type, 2> testing_data(testing_indices.size(), variables_indices.size());
+
+    fill_tensor_data(data, testing_indices, variables_indices, testing_data.data());
+
+    return testing_data;
+
 }
 
 
@@ -4183,7 +4181,11 @@ Tensor<type, 2> DataSet::get_input_data() const
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_subtensor_data(indices, input_variables_indices);
+    Tensor<type, 2> input_data(indices.size(), input_variables_indices.size());
+
+    fill_tensor_data(data, indices, input_variables_indices, input_data.data());
+
+    return input_data;
 }
 
 
@@ -4197,7 +4199,11 @@ Tensor<type, 2> DataSet::get_target_data() const
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_subtensor_data(indices, target_variables_indices);
+    Tensor<type, 2> target_data(indices.size(), target_variables_indices.size());
+
+    fill_tensor_data(data, indices, target_variables_indices, target_data.data());
+
+    return target_data;
 }
 
 
@@ -4209,7 +4215,11 @@ Tensor<type, 2> DataSet::get_input_data(const Tensor<Index, 1>& samples_indices)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_subtensor_data(samples_indices, input_variables_indices);
+    Tensor<type, 2> input_data(samples_indices.size(), input_variables_indices.size());
+
+    fill_tensor_data(data, samples_indices, input_variables_indices, input_data.data());
+
+    return input_data;
 }
 
 
@@ -4219,9 +4229,15 @@ Tensor<type, 2> DataSet::get_input_data(const Tensor<Index, 1>& samples_indices)
 
 Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& samples_indices) const
 {
+    const Index samples_number = get_samples_number();
+
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_subtensor_data(samples_indices, target_variables_indices);
+    Tensor<type, 2> target_data(samples_number, target_variables_indices.size());
+
+    fill_tensor_data(data, samples_number, target_variables_indices, target_data.data());
+
+    return target_data;
 }
 
 
@@ -4235,7 +4251,11 @@ Tensor<type, 2> DataSet::get_training_input_data() const
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_subtensor_data(training_indices, input_variables_indices);
+    Tensor<type, 2> training_input_data(training_indices.size(), input_variables_indices.size());
+
+    fill_tensor_data(data, training_indices, input_variables_indices, training_input_data.data());
+
+    return training_input_data;
 }
 
 
@@ -4249,7 +4269,11 @@ Tensor<type, 2> DataSet::get_training_target_data() const
 
     const Tensor<Index, 1>& target_variables_indices = get_target_variables_indices();
 
-    return get_subtensor_data(training_indices, target_variables_indices);
+    Tensor<type, 2> training_target_data(training_indices.size(), target_variables_indices.size());
+
+    fill_tensor_data(data, training_indices, target_variables_indices, training_target_data.data());
+
+    return training_target_data;
 }
 
 
@@ -4263,7 +4287,11 @@ Tensor<type, 2> DataSet::get_selection_input_data() const
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_subtensor_data(selection_indices, input_variables_indices);
+    Tensor<type, 2> selection_input_data(selection_indices.size(), input_variables_indices.size());
+
+    fill_tensor_data(data, selection_indices, input_variables_indices, selection_input_data.data());
+
+    return selection_input_data;
 }
 
 
@@ -4277,7 +4305,11 @@ Tensor<type, 2> DataSet::get_selection_target_data() const
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_subtensor_data(selection_indices, target_variables_indices);
+    Tensor<type, 2> selection_target_data(selection_indices.size(), target_variables_indices.size());
+
+    fill_tensor_data(data, selection_indices, target_variables_indices, selection_target_data.data());
+
+    return selection_target_data;
 }
 
 
@@ -4291,7 +4323,11 @@ Tensor<type, 2> DataSet::get_testing_input_data() const
 
     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
 
-    return get_subtensor_data(testing_indices, input_variables_indices);
+    Tensor<type, 2> testing_input_data(testing_indices.size(), input_variables_indices.size());
+
+    fill_tensor_data(data, testing_indices, input_variables_indices, testing_input_data.data());
+
+    return testing_input_data;
 }
 
 
@@ -4305,7 +4341,11 @@ Tensor<type, 2> DataSet::get_testing_target_data() const
 
     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
 
-    return get_subtensor_data(testing_indices, target_variables_indices);
+    Tensor<type, 2> testing_target_data(testing_indices.size(), target_variables_indices.size());
+
+    fill_tensor_data(data, testing_indices, target_variables_indices, testing_target_data.data());
+
+    return testing_target_data;
 }
 
 
@@ -4403,7 +4443,11 @@ Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) cons
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_subtensor_data(Tensor<Index, 1>(sample_index), target_variables_indices);
+    Tensor<type, 2> sample_target_data(1, target_variables_indices.size());
+
+    fill_tensor_data(data, Tensor<Index, 1>(sample_index), target_variables_indices, sample_target_data.data());
+
+    return sample_target_data;
 }
 
 
@@ -4655,7 +4699,12 @@ Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const Tensor<Index, 1>& rows_indices) const
 {
-    return get_subtensor_data(rows_indices, get_numeric_variable_indices(raw_variable_index));
+    Tensor<type, 2> raw_variable_data(rows_indices.size(), get_numeric_variable_indices(raw_variable_index).size());
+
+    fill_tensor_data(data, rows_indices, get_numeric_variable_indices(raw_variable_index), raw_variable_data.data());
+
+    return raw_variable_data;
+
 }
 
 
@@ -4839,34 +4888,6 @@ Tensor<Tensor<string, 1>, 1> DataSet::get_data_file_preview() const
 }
 
 
-Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & variables_indices) const
-{
-    const Index rows_number = rows_indices.size();
-    const Index variables_number = variables_indices.size();
-
-    Tensor<type, 2> subtensor(rows_number, variables_number);
-
-    Index row_index;
-    Index variable_index;
-
-    const Tensor<type, 2>& data = get_data();
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        row_index = rows_indices(i);
-
-        for(Index j = 0; j < variables_number; j++)
-        {
-            variable_index = variables_indices(j);
-
-            subtensor(i, j) = data(row_index, variable_index);
-        }
-    }
-
-    return subtensor;
-}
-
-
 /// Sets zero samples and zero variables in the data set.
 
 void DataSet::set()
@@ -5041,7 +5062,10 @@ void DataSet::set(const Index& new_samples_number,
     }
 
     input_variables_dimensions.resize(1);
+    input_variables_dimensions(0) = new_inputs_number;
+
     target_variables_dimensions.resize(1);
+    target_variables_dimensions(0) = new_targets_number;
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -5121,7 +5145,7 @@ void DataSet::set_default()
 
     missing_values_label = "NA";
 
-    set_default_raw_variables_uses();
+    //set_default_raw_variables_uses();
 
     set_default_raw_variables_names();
 
@@ -6697,7 +6721,7 @@ void DataSet::set_default_raw_variables_scalers()
 {
     if(model_type == ModelType::ImageClassification)
     {
-        set_raw_variables_scalers(Scaler::MinimumMaximum);
+        set_raw_variables_scalers(Scaler::ImageMinMax);
     }
     else
     {
@@ -6823,7 +6847,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
     const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
 
     const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
-
+    
     for(Index i = 0; i < input_variables_number; i++)
     {
         switch(input_variables_scalers(i))
@@ -6846,6 +6870,10 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 
         case Scaler::Logarithm:
             scale_logarithmic(data, input_variables_indices(i));
+            break;
+
+        case Scaler::ImageMinMax:
+            scale_image_minimum_maximum(data, input_variables_indices(i));
             break;
 
         default:
@@ -6953,6 +6981,10 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
 
         case Scaler::Logarithm:
             unscale_logarithmic(data, input_variables_indices(i));
+            break;
+
+        case Scaler::ImageMinMax:
+            unscale_image_minimum_maximum(data, input_variables_indices(i));
             break;
 
         default:

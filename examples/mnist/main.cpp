@@ -49,12 +49,10 @@ int main()
 
         ImageDataSet image_data_set;
 
-        image_data_set.set_data_source_path("C:/test2_mnist");
+        image_data_set.set_data_source_path("C:/training_mnist");
 
         image_data_set.read_bmp();
 
-        image_data_set.print();
-        
         const Index target_variables_number = image_data_set.get_target_variables_number();
 
         const Tensor<Index, 1> training_samples_indices = image_data_set.get_training_samples_indices();  
@@ -80,8 +78,9 @@ int main()
         FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
         neural_network.add_layer(flatten_layer);
 
-        PerceptronLayer* perceptron_layer = new PerceptronLayer(flatten_layer->get_outputs_number(), 128);
+        PerceptronLayer* perceptron_layer = new PerceptronLayer(flatten_layer->get_outputs_number(), 20);
         neural_network.add_layer(perceptron_layer);
+        perceptron_layer->set_activation_function("RectifiedLinear");
 
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), target_variables_number);
         neural_network.add_layer(probabilistic_layer);
@@ -98,20 +97,21 @@ int main()
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(15);
+        training_strategy.get_adaptive_moment_estimation()->set_learning_rate(0.02);
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
-
+        
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
-
+        
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
         
         cout << "Bye!" << endl;
-
+        
         return 0;
     }
     catch(exception& e)

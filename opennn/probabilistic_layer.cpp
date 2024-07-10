@@ -576,7 +576,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
     //cout << "probabilistic batch_samples_number " << inputs_pair(0).second[0] << endl;
     //cout << "probabilistic inputs number" << inputs_pair(0).second[1] << endl;
-    //system("pause");
+
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
@@ -600,10 +600,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
             calculate_activations(outputs,
                                   outputs,
-                                  aux_rows);
-
-            //cout << "Probabilistic layer softmax:\n" << outputs << endl;
-            //system("pause");
+                                  aux_rows); 
         }
         
     }
@@ -694,7 +691,7 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
          gradient.data() + index + synaptic_weights_number);
 }
 
-
+/*
 void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
                                                               LayerForwardPropagation* forward_propagation,
                                                               LayerBackPropagationLM* back_propagation)
@@ -764,7 +761,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
         squared_errors_jacobian_bias.device(*thread_pool_device) = error_combinations_derivatives_neuron;
     }
 }
-
+*/
 
 void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
                                                            const Index& index,
@@ -1313,7 +1310,7 @@ void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_num
     const Index neurons_number = layer->get_neurons_number();
     const Index parameters_number = layer->get_parameters_number();
 
-    deltas.resize(batch_samples_number, neurons_number);
+    //deltas.resize(batch_samples_number, neurons_number);
     deltas_row.resize(neurons_number);
 
     squared_errors_Jacobian.resize(batch_samples_number, parameters_number);

@@ -859,6 +859,8 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
         recurrent_weights_derivatives.device(*thread_pool_device)
             += combinations_recurrent_weights_derivatives.contract(error_current_combinations_derivatives, combinations_weights_indices);
     }
+
+    //@todo input derivatives
 }
 
 

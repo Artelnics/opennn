@@ -128,6 +128,11 @@ public:
                                 LayerForwardPropagation*,
                                 LayerBackPropagation*) const {}
 
+    virtual void back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>&,
+                                   const Tensor<pair<type*, dimensions>, 1>&,
+                                   LayerForwardPropagation*,
+                                   LayerBackPropagationLM*) const {}
+
     /// @todo refactor to back_propagate 
 
     virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
