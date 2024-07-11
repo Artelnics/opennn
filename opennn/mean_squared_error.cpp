@@ -57,22 +57,19 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
     // Forward propagation
-
+    
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
     // Back propagation
-
+    
     Tensor<type, 2>& errors = back_propagation.errors;
 
     type& error = back_propagation.error;
 
-    //cout << "Targets: " << endl << targets << endl;
-    //cout << "outputs: " << endl << outputs << endl;
-
     errors.device(*thread_pool_device) = outputs - targets;
-    
+
     Tensor<type, 0> sum_squared_error;
     
     sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
