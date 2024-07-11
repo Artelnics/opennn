@@ -56,7 +56,7 @@ public:
 
    explicit LongShortTermMemoryLayer();
 
-   explicit LongShortTermMemoryLayer(const Index&, const Index&);
+   explicit LongShortTermMemoryLayer(const Index&, const Index&, const Index&);
 
 
    // Get methods
@@ -104,7 +104,7 @@ public:
    // Set methods
 
    void set();
-   void set(const Index&, const Index&);
+   void set(const Index&, const Index&, const Index&);
    void set(const LongShortTermMemoryLayer&);
 
    void set_default();
@@ -213,9 +213,29 @@ public:
                         Tensor<type, 1>&) const final;
 
    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+                       const Tensor<pair<type*, dimensions>, 1>&,
+                       LayerForwardPropagation*,
+                       LayerBackPropagation*) const final;
+
+   void calculate_forget_parameters_derivatives(const Tensor<type, 2>&,
+                                                const Tensor<type, 2>&,
+                                                LongShortTermMemoryLayerForwardPropagation*,
+                                                LongShortTermMemoryLayerBackPropagation*) const;
+
+   void calculate_input_parameters_derivatives(const Tensor<type, 2>&,
+                                               const Tensor<type, 2>&,
+                                               LongShortTermMemoryLayerForwardPropagation*,
+                                               LongShortTermMemoryLayerBackPropagation*) const;
+
+   void calculate_state_parameters_derivatives(const Tensor<type, 2>&,
+                                               const Tensor<type, 2>&,
+                                               LongShortTermMemoryLayerForwardPropagation*,
+                                               LongShortTermMemoryLayerBackPropagation*) const;
+
+   void calculate_output_parameters_derivatives(const Tensor<type, 2>&,
+                                                const Tensor<type, 2>&,
+                                                LongShortTermMemoryLayerForwardPropagation*,
+                                                LongShortTermMemoryLayerBackPropagation*) const;
 
    // Expression methods
 
