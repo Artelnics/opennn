@@ -296,95 +296,118 @@ void MeanSquaredErrorTest::test_back_propagate_convolutional()
 void MeanSquaredErrorTest::test_back_propagate_recurrent()
 {
     cout << "test_back_propagate_recurrent\n";
+
+    Index samples_number = 100;
+    Index timesteps = 5;
+    Index inputs_number = 12;
+    Index neurons_number = 10;
+    Index targets_number = 4;
+
+    // Data set
+
+    Tensor<type, 2> data(samples_number, inputs_number + targets_number);
+
+    data.setRandom();
+
+    DataSet data_set(data);
+
+    for (Index i = 0; i < inputs_number; i++)
+        data_set.set_raw_variable_use(i, DataSet::VariableUse::Input);
+
+    for (Index i = 0; i < targets_number; i++)
+        data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
+
+    data_set.set_training();
+
+    Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
+
+    Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+    Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+
+    Batch batch(samples_number, &data_set);
+
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+    // Neural network
+
+    NeuralNetwork neural_network;
+
+    RecurrentLayer* recurrent_layer = new RecurrentLayer(inputs_number, neurons_number, timesteps);
+    neural_network.add_layer(recurrent_layer);
+
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
+    neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, true);
+
+    // Loss index
+
+    MeanSquaredError error(&neural_network, &data_set);
+
+    BackPropagation back_propagation(samples_number, &error);
+
+    error.back_propagate(batch, forward_propagation, back_propagation);
+
+    Tensor<type, 1> numerical_gradient = error.calculate_numerical_gradient();
+
+    assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
 }
 
 
 void MeanSquaredErrorTest::test_back_propagate_long_short_term_memory()
 {
     cout << "test_back_propagate_long_short_term_memory\n";
-/*
-    // Test forecasting trivial
-    {
-        inputs_number = 1;
-        outputs_number = 1;
-        samples_number = 1;
 
-        // Data set
+    Index samples_number = 100;
+    Index timesteps = 5;
+    Index inputs_number = 12;
+    Index neurons_number = 10;
+    Index targets_number = 4;
 
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_constant(type(0));
+    // Data set
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+    Tensor<type, 2> data(samples_number, inputs_number + targets_number);
 
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    data.setRandom();
 
-        // Neural network
+    DataSet data_set(data);
 
-        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number });
-        neural_network.set_parameters_constant(type(0));
+    for (Index i = 0; i < inputs_number; i++)
+        data_set.set_raw_variable_use(i, DataSet::VariableUse::Input);
 
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+    for (Index i = 0; i < targets_number; i++)
+        data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
 
-        // Loss index
+    data_set.set_training();
 
-        back_propagation.set(samples_number, &mean_squared_error);
-        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+    Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
 
+    Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+    Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+    Batch batch(samples_number, &data_set);
 
-        assert_true(back_propagation.error < type(1e-1), LOG);
-        assert_true(is_zero(back_propagation.gradient, type(1e-1)), LOG);
-    }
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    // Test forecasting random samples, inputs, outputs, neurons
-    {
-        samples_number = type(1) + rand() % 10;
-        inputs_number = type(1) + rand() % 10;
-        outputs_number = type(1) + rand() % 10;
-        neurons_number = type(1) + rand() % 10;
+    // Neural network
 
-        // Data set
+    NeuralNetwork neural_network;
 
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_random();
-        data_set.set_training();
+    LongShortTermMemoryLayer* lstm_layer = new LongShortTermMemoryLayer(inputs_number, neurons_number, timesteps);
+    neural_network.add_layer(lstm_layer);
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
+    neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, true);
 
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    // Loss index
 
-        // Neural network
+    MeanSquaredError error(&neural_network, &data_set);
 
-        neural_network.set(NeuralNetwork::ModelType::Forecasting, { inputs_number, neurons_number, outputs_number });
-        neural_network.set_parameters_random();
+    BackPropagation back_propagation(samples_number, &error);
 
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+    error.back_propagate(batch, forward_propagation, back_propagation);
 
-        // Loss index
+    Tensor<type, 1> numerical_gradient = error.calculate_numerical_gradient();
 
-        back_propagation.set(samples_number, &mean_squared_error);
-        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
-
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-        assert_true(back_propagation.error >= type(0), LOG);
-
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)), LOG);
-    }
-*/
+    assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
 }
 
 

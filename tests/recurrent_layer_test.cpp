@@ -24,6 +24,7 @@ void RecurrentLayerTest::test_constructor()
 
     Index inputs_number;
     Index neurons_number;
+    Index timesteps;
 
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 2> recurrent_initializer;
@@ -33,8 +34,9 @@ void RecurrentLayerTest::test_constructor()
 
     inputs_number = 1;
     neurons_number = 1;
+    timesteps = 1;
 
-    recurrent_layer.set(inputs_number, neurons_number);
+    recurrent_layer.set(inputs_number, neurons_number, timesteps);
 
     assert_true(recurrent_layer.get_parameters_number() == 3, LOG);
     assert_true(recurrent_layer.get_biases_number() == 1, LOG);
@@ -44,7 +46,7 @@ void RecurrentLayerTest::test_constructor()
     inputs_number = 2;
     neurons_number = 3;
 
-    recurrent_layer.set(inputs_number, neurons_number);
+    recurrent_layer.set(inputs_number, neurons_number, timesteps);
 
     assert_true(recurrent_layer.get_parameters_number() == 18, LOG);
     assert_true(recurrent_layer.get_biases_number() == 3, LOG);
@@ -81,6 +83,7 @@ void RecurrentLayerTest::test_forward_propagate()
     neurons_number = 4;
     samples_number = 2;
     inputs_number = 3;
+    timesteps = 1;
     bool is_training = false;
 
     Tensor<type, 2> outputs;
@@ -92,7 +95,7 @@ void RecurrentLayerTest::test_forward_propagate()
 
     pair<type*, dimensions> inputs_pair;
 
-    recurrent_layer.set(inputs_number, neurons_number);
+    recurrent_layer.set(inputs_number, neurons_number, timesteps);
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 
@@ -118,8 +121,9 @@ void RecurrentLayerTest::test_forward_propagate()
     samples_number = 3;
     inputs_number = 2;
     neurons_number = 2;
+    timesteps = 1;
 
-    recurrent_layer.set(inputs_number, neurons_number);
+    recurrent_layer.set(inputs_number, neurons_number, timesteps);
 
     inputs.resize(samples_number,inputs_number);
     inputs.setConstant(type(1));
