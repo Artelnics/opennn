@@ -37,44 +37,6 @@ int main()
    {
         cout << "Blank\n";
 
-        // Data Set
-
-        const Index samples_number = 1000;
-        const Index inputs_number = 10;
-        const Index outputs_number = 2;
-        const Index hidden_neurons_number = 10;
-
-        DataSet data_set(samples_number, inputs_number, outputs_number);
-
-        data_set.set_data_random();
-        data_set.set_training();
-
-        // Neural network
-        
-        NeuralNetwork neural_network;
-
-        PerceptronLayer* perceptron_layer_1 = new PerceptronLayer(inputs_number, hidden_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-        neural_network.add_layer(perceptron_layer_1);
-        
-        PerceptronLayer* perceptron_layer_2 = new PerceptronLayer(hidden_neurons_number, outputs_number, PerceptronLayer::ActivationFunction::Linear);
-        neural_network.add_layer(perceptron_layer_2);
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
-
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        //training_strategy.get_loss_index()->set_regularization_weight(0.01);
-
-        training_strategy.set_maximum_epochs_number(5);
-        training_strategy.set_display_period(1);
-        training_strategy.set_maximum_time(86400);
-
-        training_strategy.perform_training();
-
         cout << "Bye!" << endl;
 
         return 0;

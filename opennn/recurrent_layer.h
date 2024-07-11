@@ -62,7 +62,7 @@ public:
 
    explicit RecurrentLayer();
 
-   explicit RecurrentLayer(const Index&, const Index&);
+   explicit RecurrentLayer(const Index&, const Index&, const Index&);
 
    // Get methods
 
@@ -107,7 +107,7 @@ public:
    // Set methods
 
    void set();
-   void set(const Index&, const Index&);
+   void set(const Index&, const Index&, const Index&);
    void set(const RecurrentLayer&);
 
    void set_default();
@@ -301,6 +301,7 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     Tensor<type, 3> combinations_input_weights_derivatives;
     Tensor<type, 3> combinations_recurrent_weights_derivatives;
 
+    Tensor<type, 2> error_combinations_derivatives;
     Tensor<type, 1> error_current_combinations_derivatives;
 
     Tensor<type, 1> biases_derivatives;
