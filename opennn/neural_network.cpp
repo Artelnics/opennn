@@ -194,8 +194,7 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
     {
         const Layer::Type first_layer_type = layers[0]->get_type();
 
-        if(first_layer_type != Layer::Type::Scaling2D) return false;
-        if(first_layer_type != Layer::Type::Scaling4D) return false;
+        if(first_layer_type != Layer::Type::Scaling2D || first_layer_type != Layer::Type::Scaling4D) return false;
     }
 
     return true;
@@ -888,12 +887,14 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     }
     else if(model_type == ModelType::Forecasting)
     {
-        LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        // architecture[2] must be timesteps
+
+        LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1], architecture[2]);
         // RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
 
         add_layer(long_short_term_memory_layer);
 
-        for(Index i = 1 ; i < size-1 ; i++)
+        for(Index i = 2 ; i < size-1 ; i++)
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
