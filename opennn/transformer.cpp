@@ -413,12 +413,12 @@ void Transformer::tokenize_whitespace(const Tensor<string, 1>& context_tokens, T
 void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Tensor<type, 2>& context)
 {
     unordered_map<std::string, type> context_vocabulary_map;
-    for (Index i = 0; i < context_vocabulary.size(); i++)    context_vocabulary_map[context_vocabulary(i)] = type(i);
 
-    const Index context_vocabulary_size = context_vocabulary.size();
+    for (Index i = 0; i < context_vocabulary.size(); i++)
+        context_vocabulary_map[context_vocabulary(i)] = type(i);
 
-    Index token_counter;
-    bool line_ended;
+    Index token_counter = 1;
+    bool line_ended = false;
 
     string word;
     string wordpiece;
@@ -426,10 +426,6 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
 
     auto wordpiece_entry = context_vocabulary_map.find("");
     bool tokenized;
-
-    token_counter = 1;
-
-    line_ended = false;
 
     for (Index j = 0; j < context_length - 1; j++)
     {
@@ -485,7 +481,8 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
         }
         else
         {
-            if (j == context_tokens.size() || (token_counter == context_length - 1 && !line_ended))
+            if (j == context_tokens.size()
+            || (token_counter == context_length - 1 && !line_ended))
             {
                 context(token_counter) = 3; // end indicator
                 token_counter++;

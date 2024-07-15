@@ -466,8 +466,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 1>& biases_derivatives = convolutional_layer_back_propagation->biases_derivatives;
 
-    Eigen::array<Eigen::Index, 4> offsets;
-    Eigen::array<Eigen::Index, 4> extents;
+    Eigen::array<Index, 4> offsets;
+    Eigen::array<Index, 4> extents;
 
     // Synaptic weights derivatives
 

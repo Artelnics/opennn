@@ -2460,22 +2460,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 {
     const Index raw_variables_number = matrix.dimension(1);
 
-#ifdef OPENNN_DEBUG
     const Index rows_number = matrix.dimension(0);
-
-    if(rows_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template.\n"
-               << "Tensor<type, 1> median() const method.\n"
-               << "Number of rows must be greater than one.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     // median
 
     Tensor<type, 1> median(raw_variables_number);
@@ -2519,25 +2504,6 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 
 type median(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
-    //const Index rows_number = matrix.dimension(0);
-
-#ifdef OPENNN_DEBUG
-
-    const Index raw_variables_number = matrix.dimension(1);
-
-    if(raw_variable_index >= raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template.\n"
-               << "type median(const Index&) const method.\n"
-               << "Index of raw_variable must be less than number of raw_variables.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     // median
 
     type median = type(0);

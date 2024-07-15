@@ -523,7 +523,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     cout << "Creating initial random population" << endl;
 
-    srand(static_cast<unsigned>(time(nullptr)));
+    srand(unsigned(time(nullptr)));
 
     for(Index i = 0; i < individuals_number; i++)
     {

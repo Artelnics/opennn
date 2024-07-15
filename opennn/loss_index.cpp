@@ -383,26 +383,22 @@ void LossIndex::back_propagate(const Batch& batch,
 
 void LossIndex::add_regularization(BackPropagation& back_propagation) const
 {
-    // Regularization
+    if (regularization_method == RegularizationMethod::NoRegularization) return;
 
-    if (regularization_method != RegularizationMethod::NoRegularization)
-    {
-        const type& error = back_propagation.error;
-        type& regularization = back_propagation.regularization;
-        type& loss = back_propagation.loss;
+    type& regularization = back_propagation.regularization;
+    type& loss = back_propagation.loss;
 
-        const Tensor<type, 1>& parameters = back_propagation.parameters;
-        Tensor<type, 1>& regularization_gradient = back_propagation.regularization_gradient;
-        Tensor<type, 1>& gradient = back_propagation.gradient;
+    const Tensor<type, 1>& parameters = back_propagation.parameters;
+    Tensor<type, 1>& regularization_gradient = back_propagation.regularization_gradient;
+    Tensor<type, 1>& gradient = back_propagation.gradient;
 
-        regularization = calculate_regularization(parameters);
+    regularization = calculate_regularization(parameters);
 
-        loss += regularization_weight * regularization;
+    loss += regularization_weight * regularization;
 
-        calculate_regularization_gradient(parameters, regularization_gradient);
+    calculate_regularization_gradient(parameters, regularization_gradient);
 
-        gradient.device(*thread_pool_device) += regularization_weight * regularization_gradient;
-    }
+    gradient.device(*thread_pool_device) += regularization_weight * regularization_gradient;
 }
 
 
@@ -463,8 +459,7 @@ void LossIndex::back_propagate_lm(const Batch& batch,
 void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
                                                             ForwardPropagation& forward_propagation,
                                                             BackPropagationLM& back_propagation_lm) const
-{
-    
+{  
     const Tensor<Layer*, 1> layers = neural_network->get_layers();
 
     const Index layers_number = layers.size();
@@ -484,10 +479,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     Layer* layer = nullptr;
 
     LayerForwardPropagation* layer_forward_propagation = nullptr;
-    LayerForwardPropagation* previous_layer_forward_propagation = nullptr;
     LayerBackPropagationLM* layer_back_propagation = nullptr;
-    LayerForwardPropagation* next_layer_forward_propagation = nullptr;
-    LayerBackPropagationLM* next_layer_back_propagation = nullptr;
 
     Tensor<pair<type*, dimensions>, 1> layer_inputs;
     Tensor<pair<type*, dimensions>, 1> layer_deltas;
@@ -498,8 +490,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     calculate_output_delta_lm(batch, forward_propagation, back_propagation_lm);
     
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
-    {
-        
+    {        
         layer = layers(i);
 
         layer_forward_propagation = forward_propagation.layers(i);
@@ -542,8 +533,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
             }
         }
         
-        layer->back_propagate_lm(layer_inputs, layer_deltas, layer_forward_propagation, layer_back_propagation);
-        
+        layer->back_propagate_lm(layer_inputs, layer_deltas, layer_forward_propagation, layer_back_propagation);        
     }
     
     Index memory_index = 0;
@@ -558,7 +548,6 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
         
         memory_index += trainable_layers_parameters_number(i) * batch_samples_number;
     }
-
 }
 
 
@@ -703,10 +692,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     Layer* layer = nullptr;
 
     LayerForwardPropagation* layer_forward_propagation = nullptr;
-    LayerForwardPropagation* previous_layer_forward_propagation = nullptr;
     LayerBackPropagation* layer_back_propagation = nullptr;
-    LayerForwardPropagation* next_layer_forward_propagation = nullptr;
-    LayerBackPropagation* next_layer_back_propagation = nullptr;
 
     Tensor<pair<type*, dimensions>, 1> layer_inputs;
     Tensor<pair<type*, dimensions>, 1> layer_deltas;
@@ -728,9 +714,6 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             layer_deltas.resize(1);
 
             layer_deltas(0) = back_propagation.get_output_deltas_pair();
-            //cout << "probabilistic layer deltas pair dimensions : " << endl << layer_deltas(0).second[0] << "  ,  " << layer_deltas(0).second[1] << endl;
-            //const TensorMap<Tensor<type, 2>> test(layer_deltas(0).first, layer_deltas(0).second[0], layer_deltas(0).second[1]);
-            //cout << test << endl;
         }
         else
         {
@@ -788,8 +771,8 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
     for(Index i = 0; i < layers_number; i++)
     {
         layers(i)->insert_gradient(back_propagation.neural_network.layers(i),
-                                            index,
-                                            back_propagation.gradient);
+                                   index,
+                                   back_propagation.gradient);
 
         index += layers_parameters_number(i);
     }
@@ -974,9 +957,11 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
     output_deltas_dimensions[0] = batch_samples_number;
 
     Index size = batch_samples_number;
+
     for (Index i = 0; i < output_dimensions.size(); i++)
     {
         output_deltas_dimensions[i + 1] = output_dimensions[i];
+
         size *= output_dimensions[i];
     }
 
@@ -1305,9 +1290,11 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
     output_deltas_dimensions[0] = batch_samples_number;
     
     Index size = batch_samples_number;
+
     for (Index i = 0; i < output_dimensions.size(); i++)
     {
         output_deltas_dimensions[i + 1] = output_dimensions[i];
+
         size *= output_dimensions[i];
     }
 
