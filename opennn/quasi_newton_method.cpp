@@ -372,10 +372,6 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
 
 void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_number();
-
     const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
     const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
 
@@ -388,7 +384,6 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
 
     Tensor<type, 0> parameters_difference_dot_gradient_difference;
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
-
 
     parameters_difference_dot_gradient_difference.device(*thread_pool_device)
             = parameters_difference.contract(gradient_difference, AT_B);

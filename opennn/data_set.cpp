@@ -68,7 +68,7 @@ DataSet::DataSet(const Tensor<type, 2>& data, const Index& samples_number, const
 
 void DataSet::set_default_columns_scalers()
 {
-    const Index columns_number = raw_variables.size();
+    const Index raw_variables_number = raw_variables.size();
 
     if (model_type == ModelType::ImageClassification)
     {
@@ -76,7 +76,7 @@ void DataSet::set_default_columns_scalers()
     }
     else
     {
-        for (Index i = 0; i < columns_number; i++)
+        for (Index i = 0; i < raw_variables_number; i++)
         {
             if (raw_variables(i).type == RawVariableType::Numeric)
             {
@@ -6343,7 +6343,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
             cout << "input_raw_variable_data: " << input_raw_variable_data << endl;
             cout << "target_raw_variable_data: " << target_raw_variable_data << endl;
 
-            correlations(i,j) = opennn::correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            correlations(i,j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -6366,8 +6366,7 @@ Tensor<Correlation, 2> DataSet::calculate_relevant_input_target_raw_variables_co
 
     Tensor<Correlation, 2> correlations(input_raw_variables_number, target_raw_variables_number);
 
-
-#pragma omp parallel for
+    #pragma omp parallel for
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
         const Index input_index = input_raw_variables_indices(i);
@@ -6379,15 +6378,15 @@ Tensor<Correlation, 2> DataSet::calculate_relevant_input_target_raw_variables_co
             const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_index, get_used_samples_indices());
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, get_used_samples_indices());
 
-            correlations(i, j) = opennn::correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
+
     delete correlations_thread_pool;
     delete correlations_thread_pool_device;
+
     return correlations;
 }
-
-
 
 
 Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlations_spearman() const
@@ -6414,7 +6413,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_samples_indices);
 
-            correlations(i,j) = opennn::correlation_spearman(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            correlations(i,j) = correlation_spearman(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -6596,27 +6595,17 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
 
                 if(calculate_pearson_correlations)
                 {
-                    correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+                    correlations(i,j) = correlation(thread_pool_device, input_i, input_j);
 
-                    cout << "-=-=-=-=-=-" << endl;
-                    cout << " i : " << i  << "&&" << " j : " << j << endl;
-                    cout << "-=-=-=-=-=-" << endl;
-                    cout << "input_i :: " << input_i << endl;
-                    cout << "input_j :: " << input_j << endl;
-                    cout << "correlations(i,j).r :: " << correlations(i,j).r << endl;
-                    cout << "type(1) :: " << type(1) << endl;
-                    cout << "NUMERIC_LIMITS_MIN :: " << NUMERIC_LIMITS_MIN << endl;
-                    cout << "-=-=-=-=-=-" << endl;
-
-                    if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                    if(correlations(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
                        correlations(i,j).r =  type(1);
                 }
 
                 if(calculate_spearman_correlations)
                 {
-                    correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
+                    correlations_spearman(i,j) = correlation_spearman(thread_pool_device, input_i, input_j);
 
-                    if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                    if(correlations_spearman(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
                         correlations_spearman(i,j).r = type(1);
                 }
             }
@@ -7799,7 +7788,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    /**
+    /*
 //    // Time series raw_variables
 
 //    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesraw_variables");
@@ -8461,7 +8450,7 @@ void DataSet::save_data() const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Matrix template." << endl
-               << "void save_csv(const string&, const char&, const Vector<string>&, const Vector<string>&) method." << endl
+               << "void save_data() method." << endl
                << "Cannot open matrix data file: " << data_source_path << endl;
 
         throw runtime_error(buffer.str());
@@ -9605,8 +9594,8 @@ void DataSet::read_csv_1()
 
     if(has_raw_variables_names)
     {
-        has_rows_labels ? set_raw_variables_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
-                                                                       Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
+        has_rows_labels ? set_raw_variables_names(data_file_preview(0).slice(Eigen::array<Index, 1>({1}),
+                                                                       Eigen::array<Index, 1>({data_file_preview(0).size()-1})))
                         : set_raw_variables_names(data_file_preview(0));
     }
     else
@@ -9857,6 +9846,7 @@ void DataSet::read_csv_2_simple()
 void DataSet::read_csv_3_simple()
 {
     const regex accent_regex("[\\xC0-\\xFF]");
+
     ifstream file;
 
     #ifdef _WIN32
@@ -9864,9 +9854,12 @@ void DataSet::read_csv_3_simple()
     if(std::regex_search(data_source_path, accent_regex))
     {
         wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+
         wstring file_name_wide = conv.from_bytes(data_source_path);
+
         file.open(file_name_wide);
-    }else
+    }
+    else
     {
         file.open(data_source_path.c_str());
     }
@@ -9964,8 +9957,6 @@ void DataSet::read_csv_3_simple()
 
         raw_variable_index = 0;
         sample_index++;
-
-        type percentage = static_cast<type>(sample_index)/static_cast<type>(samples_number);
     }
 
     const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;
@@ -10080,7 +10071,7 @@ void DataSet::read_csv_2_complete()
 
         tokens_count = tokens.size();
 
-        if(static_cast<unsigned>(tokens_count) != raw_raw_variables_number)
+        if(unsigned(tokens_count) != raw_raw_variables_number)
         {
             const string message =
                     "Sample " + to_string(lines_count+1) + " error:\n"
@@ -10131,7 +10122,7 @@ void DataSet::read_csv_2_complete()
 
     file.close();
 
-    const Index samples_number = static_cast<unsigned>(lines_count);
+    const Index samples_number = unsigned(lines_count);
 
     const Index variables_number = get_variables_number();
 
@@ -10401,8 +10392,6 @@ void DataSet::read_csv_3_complete()
         }
 
         sample_index++;
-
-        type percentage = static_cast<type>(sample_index)/static_cast<type>(data.dimension(0));
     }
 
     const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;

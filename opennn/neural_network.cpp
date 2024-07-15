@@ -1253,33 +1253,30 @@ Index NeuralNetwork::get_inputs_number() const
 
 Index NeuralNetwork::get_outputs_number() const
 {
-    if(layers.size() > 0)
-    {
-        const Layer* last_layer = layers[layers.size() - 1];
+    if(layers.size() == 0) return 0;
 
-        const dimensions outputs_dimensions = last_layer->get_outputs_dimensions();
+    const Layer* last_layer = layers[layers.size() - 1];
 
-        Index outputs_number = 1;
+    const dimensions outputs_dimensions = last_layer->get_outputs_dimensions();
 
-        for (Index i = 0; i < outputs_dimensions.size(); i++)    outputs_number *= outputs_dimensions[i];
+    const Index outputs_rank = outputs_dimensions.size();
 
-        return outputs_number;
-    }
+    Index outputs_number = 1;
 
-    return 0;
+    for (Index i = 0; i < outputs_rank; i++)
+        outputs_number *= outputs_dimensions[i];
+
+    return outputs_number;
 }
 
 
 dimensions NeuralNetwork::get_outputs_dimensions() const
 {
-    if (layers.size() > 0)
-    {
-        const Layer* last_layer = layers[layers.size() - 1];
+    if (layers.size() == 0) return {};
 
-        return last_layer->get_outputs_dimensions();
-    }
+    const Layer* last_layer = layers[layers.size() - 1];
 
-    return {};
+    return last_layer->get_outputs_dimensions();
 }
 
 
@@ -1885,7 +1882,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     const Index batch_samples_number = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
-    const Index outputs_number = get_outputs_number();
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
@@ -1908,7 +1904,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
     const Index batch_samples_number = inputs.dimension(0);
-    const Index outputs_number = get_outputs_number();
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 

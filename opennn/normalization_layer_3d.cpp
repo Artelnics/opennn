@@ -334,7 +334,6 @@ void NormalizationLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
 
     const Tensor<type, 3>& normalized_inputs = normalization_layer_3d_forward_propagation->normalized_inputs;
 
-    const Tensor<type, 3>& means = normalization_layer_3d_forward_propagation->means;
     const Tensor<type, 3>& standard_deviations = normalization_layer_3d_forward_propagation->standard_deviations;
 
     const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_samples_number, inputs_number);

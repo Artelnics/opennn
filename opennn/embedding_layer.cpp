@@ -248,7 +248,7 @@ void EmbeddingLayer::set_parameters_random()
     {
         for(Index j = 0; j < embedding_weights.dimension(1); j++)
         {
-            const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+            const type random = type(rand()/(RAND_MAX+1.0));
 
             embedding_weights(i, j) = minimum + (maximum - minimum)*random;
         }
@@ -375,10 +375,6 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
     if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first, batch_samples_number, inputs_number, deltas_pair(0).second[2]);
-
-    // Forward propagation
-
-    EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation = static_cast<EmbeddingLayerForwardPropagation*>(forward_propagation);
 
     // Back propagation
 
