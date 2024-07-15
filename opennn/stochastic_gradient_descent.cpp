@@ -157,7 +157,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_decay)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_dacay < type(0))
+    if(new_decay < type(0))
     {
         ostringstream buffer;
 

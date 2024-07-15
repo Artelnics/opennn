@@ -1784,7 +1784,17 @@ const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tenso
 
     const vector<pair<string, int>> word_counts = count_words(total_tokens);
 
-    WordpieceAlgorithmParameters parameters = { upper_threshold, lower_threshold, interations_number, max_input_tokens, max_token_length, max_unique_characters, vocabulary_size, slack_ratio, include_joiner_token, joiner, reserved_tokens };
+    WordpieceAlgorithmParameters parameters = { upper_threshold,
+                                               lower_threshold,
+                                               interations_number,
+                                               max_input_tokens,
+                                               max_token_length,
+                                               max_unique_characters,
+                                               vocabulary_size,
+                                               slack_ratio,
+                                               include_joiner_token,
+                                               joiner,
+                                               reserved_tokens };
 
     auto [upper_search, lower_search] = calculate_thresholds(word_counts, parameters.upper_threshold, parameters.lower_threshold);
 
@@ -1797,7 +1807,9 @@ const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tenso
     const vector<string> vocabulary = calculate_vocabulary_binary_search(filtered_counts, lower_search, upper_search, parameters);
 
     Tensor<string, 1> vocabulary_tensor(vocabulary.size());
-    for (Index i = 0; i < vocabulary.size(); i++)    vocabulary_tensor(i) = vocabulary[i];
+
+    for (Index i = 0; i < vocabulary.size(); i++)
+        vocabulary_tensor(i) = vocabulary[i];
 
     return vocabulary_tensor;
 }
@@ -2348,8 +2360,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
     unordered_map<std::string, type> completion_vocabulary_map;
     for (Index i = 0; i < completion_vocabulary.size(); i++)    completion_vocabulary_map[completion_vocabulary(i)] = type(i);
 
-    const Index context_vocabulary_size = context_vocabulary.size();
-    const Index completion_vocabulary_size = completion_vocabulary.size();
+//    const Index context_vocabulary_size = context_vocabulary.size();
+//    const Index completion_vocabulary_size = completion_vocabulary.size();
 
     Tensor<type, 1> context_row(max_context_length + 2);
     Tensor<type, 1> completion_row(max_completion_length + 2);
@@ -2363,11 +2375,11 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
     string rest;
 
     auto wordpiece_entry = context_vocabulary_map.find("");
+
     bool tokenized;
 
     for (Index i = 0; i < entry_number; i++)
-    {
-        
+    {        
         // Context
 
         context_row.setZero();
