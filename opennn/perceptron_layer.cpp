@@ -460,12 +460,8 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-
 void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
-{
-    type* outputs_data = outputs.data();
-
-    const Index batch_samples_number = outputs.dimension(0);
+{  
     const Index outputs_number = outputs.dimension(1);
 
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
@@ -658,8 +654,6 @@ void PerceptronLayer::back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>
     const Index neurons_number = get_neurons_number();
 
     const Index synaptic_weights_number = get_synaptic_weights_number();
-
-    const Index samples_number = inputs.dimension(0);
 
     // Forward propagation
 

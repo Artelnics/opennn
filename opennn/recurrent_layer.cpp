@@ -185,7 +185,7 @@ Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) co
 
     Tensor<type, 1> new_biases(biases_number);
 
-    new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({input_weights_number}), Eigen::array<Eigen::Index, 1>({biases_number}));
+    new_biases = parameters.slice(Eigen::array<Index, 1>({input_weights_number}), Eigen::array<Index, 1>({biases_number}));
 
     Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
 
@@ -205,7 +205,7 @@ Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& paramet
     const Index input_weights_number = get_input_weights_number();
 
     const Tensor<type, 1> new_inputs_weights
-            = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({input_weights_number}));
+            = parameters.slice(Eigen::array<Index, 1>({0}), Eigen::array<Index, 1>({input_weights_number}));
 
     const Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
 
@@ -228,7 +228,7 @@ Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& par
     const Index start_recurrent_weights_number = (parameters_size - recurrent_weights_number);
 
     const Tensor<type, 1> new_synaptic_weights
-            = parameters.slice(Eigen::array<Eigen::Index, 1>({start_recurrent_weights_number}), Eigen::array<Eigen::Index, 1>({recurrent_weights_number}));
+            = parameters.slice(Eigen::array<Index, 1>({start_recurrent_weights_number}), Eigen::array<Index, 1>({recurrent_weights_number}));
 
     const Eigen::array<Index, 2> two_dim{{neurons_number, neurons_number}};
 
@@ -750,8 +750,6 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
-    Tensor<type, 1>& previous_activations = recurrent_layer_forward_propagation->previous_activations;
-
     const Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
 
     const Tensor<type, 2, RowMajor>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
@@ -788,8 +786,6 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
     recurrent_weights_derivatives.setZero();
 
     Tensor<type, 2>& input_derivatives = recurrent_layer_back_propagation->input_derivatives;
-
-    Index input_weights_number = get_input_weights_number();
 
     const Eigen::array<IndexPair<Index>, 1> combinations_weights_indices = { IndexPair<Index>(2, 0) };
 
@@ -851,11 +847,14 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
         if (sample_index % timesteps != 0)
         {
+            /// @todo parallelize
+
             for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
             {
                 for (Index activation_index = 0; activation_index < neurons_number; activation_index++)
                 {
-                    combinations_recurrent_weights_derivatives(activation_index, neuron_index, neuron_index) += outputs(sample_index - 1, activation_index);
+                    combinations_recurrent_weights_derivatives(activation_index, neuron_index, neuron_index)
+                        += outputs(sample_index - 1, activation_index);
                 }
             }
         }

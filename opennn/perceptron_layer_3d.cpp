@@ -140,7 +140,7 @@ Tensor<type, 2> PerceptronLayer3D::get_synaptic_weights(const Tensor<type, 1>& p
 
     const Index start_synaptic_weights_number = (parameters_size - synaptic_weights_number);
 
-    const Tensor<type, 1> new_synaptic_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({start_synaptic_weights_number}), Eigen::array<Eigen::Index, 1>({synaptic_weights_number}));
+    const Tensor<type, 1> new_synaptic_weights = parameters.slice(Eigen::array<Index, 1>({start_synaptic_weights_number}), Eigen::array<Index, 1>({synaptic_weights_number}));
 
     const Eigen::array<Index, 2> two_dim{{inputs_depth, neurons_number}};
 
@@ -152,7 +152,7 @@ Tensor<type, 2> PerceptronLayer3D::get_biases(const Tensor<type, 1>& parameters)
 {
     const Index biases_number = biases.size();
 
-    const Tensor<type, 1> new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({biases_number}));
+    const Tensor<type, 1> new_biases = parameters.slice(Eigen::array<Index, 1>({0}), Eigen::array<Index, 1>({biases_number}));
 
     const Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
 
@@ -502,7 +502,7 @@ void PerceptronLayer3D::set_parameters_glorot()
 
     for (Index i = 0; i < synaptic_weights.size(); i++)
     {
-        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+        const type random = type(rand() / (RAND_MAX + 1.0));
 
         synaptic_weights(i) = minimum + (maximum - minimum) * random;
     }

@@ -63,7 +63,7 @@ public:
 
    void set_weights();
 
-   void set_normalization_coefficient() override;
+   void set_normalization_coefficient();
 
    void set_data_set(DataSet*) final;
 
