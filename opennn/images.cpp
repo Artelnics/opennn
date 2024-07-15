@@ -74,8 +74,8 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
         const Tensor<unsigned char, 1> data_without_padding = remove_padding(image_data, rows_number, columns_number, padding);
 
-        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
+        const Eigen::array<Index, 3> dims_3D = {channels, rows_number, columns_number};
+        const Eigen::array<Index, 1> dims_1D = {rows_number*columns_number};
 
         Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
@@ -124,9 +124,9 @@ ImageData read_bmp_image_gpt(const std::string& filename)
     char header[54];
     file.read(header, 54);
 
-    int width = *(int*)&header[18];
-    int height = *(int*)&header[22];
-    int channels = header[28] == 24 ? 3 : 1;
+    const int width = *(int*)&header[18];
+    const int height = *(int*)&header[22];
+    const int channels = header[28] == 24 ? 3 : 1;
     int padding = 0;
 
     while ((channels * width + padding) % 4 != 0)
@@ -134,7 +134,7 @@ ImageData read_bmp_image_gpt(const std::string& filename)
         padding++;
     }
 
-    size_t size = height * (channels * width + padding);
+    const size_t size = height * (channels * width + padding);
     Tensor<unsigned char, 1> image_data(size);
 
     file.seekg(54, ios::beg);
@@ -148,8 +148,8 @@ ImageData read_bmp_image_gpt(const std::string& filename)
 
         const Tensor<unsigned char, 1> data_without_padding = remove_padding(image_data, rows_number, columns_number, padding);
 
-        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
+        const Eigen::array<Index, 3> dims_3D = {channels, rows_number, columns_number};
+        const Eigen::array<Index, 1> dims_1D = {rows_number*columns_number};
 
         Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D);
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D);
@@ -440,7 +440,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
 
 //    memcpy(data.data(), image_data.data(), images_number * image_size * sizeof(type));
 
-    copy(/*execution::par,
+    copy(execution::par,
     image_data.data(), image_data.data() + images_number * image_size, data.data());
 
     rows_labels.resize(images_number);

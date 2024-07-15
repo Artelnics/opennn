@@ -65,7 +65,6 @@ void sum_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 void substract_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void substract_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
-
 void set_identity(Tensor<type, 2>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);

@@ -350,8 +350,6 @@ void ProbabilisticLayer3D::set_default()
     
     layer_type = Layer::Type::Probabilistic3D;
     
-    const Index neurons_number = get_neurons_number();
-
     activation_function = ActivationFunction::Softmax;
 
     decision_threshold = type(0.5);
@@ -366,56 +364,6 @@ void ProbabilisticLayer3D::set_default()
 
 void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new_activation_function)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(neurons_number == 1 && new_activation_function == ActivationFunction::Competitive)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void set_activation_function(const ActivationFunction&) method.\n"
-               << "Activation function cannot be Competitive when the number of neurons is 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if(neurons_number == 1 && new_activation_function == ActivationFunction::Softmax)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void set_activation_function(const ActivationFunction&) method.\n"
-               << "Activation function cannot be Softmax when the number of neurons is 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if(neurons_number != 1 && new_activation_function == ActivationFunction::Binary)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void set_activation_function(const ActivationFunction&) method.\n"
-               << "Activation function cannot be Binary when the number of neurons is greater than 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if(neurons_number != 1 && new_activation_function == ActivationFunction::Logistic)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void set_activation_function(const ActivationFunction&) method.\n"
-               << "Activation function cannot be Logistic when the number of neurons is greater than 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     activation_function = new_activation_function;
 }
 
@@ -519,7 +467,7 @@ void ProbabilisticLayer3D::set_parameters_glorot()
 
     for (Index i = 0; i < synaptic_weights.size(); i++)
     {
-        const type random = static_cast<type>(rand() / (RAND_MAX + 1.0));
+        const type random = type(rand() / (RAND_MAX + 1.0));
 
         synaptic_weights(i) = minimum + (maximum - minimum) * random;
     }
@@ -594,8 +542,6 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
                                             inputs_pair(0).second[2]);
 
     // Forward propagation
-
-    const Index batch_samples_number = forward_propagation->batch_samples_number;
 
     ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
             static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);

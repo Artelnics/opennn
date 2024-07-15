@@ -519,6 +519,7 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_num
     optimum_selection_error = numeric_limits<type>::max();
 }
 
+
 void NeuronsSelectionResults::resize_history(const Index& new_size)
 {
     const Tensor<Index, 1> old_neurons_number_history = neurons_number_history;
@@ -536,6 +537,7 @@ void NeuronsSelectionResults::resize_history(const Index& new_size)
         selection_error_history(i) = old_selection_error_history(i);
     }
 }
+
 
 string NeuronsSelectionResults::write_stopping_condition() const
 {

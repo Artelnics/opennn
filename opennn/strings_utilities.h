@@ -133,8 +133,6 @@ namespace opennn
 
     Tensor<type, 2> str_to_input(const string&);
 
-    string output_to_str(const Tensor<type, 2>&);
-
     // Preprocess methods
 
     Index count(const Tensor<Tensor<string, 1>, 1>& documents);
@@ -443,8 +441,6 @@ public:
     string multiple_one_hot_decode(const Tensor<type, 2>&) const;
 
     Tensor<type, 2> str_to_input(const string &) const;
-
-    string output_to_str(const Tensor<type, 2>&) const;
 
 private:
 
