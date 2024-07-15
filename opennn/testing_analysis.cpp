@@ -1340,13 +1340,12 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     const Index samples_number = targets.dimension(0);
 
     const Tensor<Index, 1> input_variables_dimensions = data_set->get_input_variables_dimensions();
-
  
     if (input_variables_dimensions.size() == 1)
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-        return calculate_confusion_classification(outputs, targets, outputs_number);
+        return calculate_confusion(outputs, targets, outputs_number);
     }
     else if (input_variables_dimensions.size() == 2)
     {
@@ -1362,13 +1361,14 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
 
-        return calculate_confusion_classification(outputs, targets, outputs_number);
+        return calculate_confusion(outputs, targets, outputs_number);
     }
 
+    return Tensor<Index, 2>();
 }
 
 
-Tensor<Index, 2> TestingAnalysis::calculate_confusion_classification(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets, Index outputs_number) const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets, Index outputs_number) const
 {
     if (outputs_number == 1)
     {

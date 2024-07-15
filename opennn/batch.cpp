@@ -80,7 +80,7 @@ void Batch::perform_augmentation() const
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
         {
-            const type angle = (random_rotation_minimum < random_rotation_maximum)
+            const type angle = random_rotation_minimum < random_rotation_maximum
                              ? random_rotation_minimum + type(rand())
                              : random_rotation_maximum;
 
@@ -89,7 +89,7 @@ void Batch::perform_augmentation() const
 
         if(random_rescaling_minimum != 0 && random_rescaling_maximum != 0)
         {
-            const type rescaling = (random_rescaling_minimum < random_rescaling_maximum)
+            const type rescaling = random_rescaling_minimum < random_rescaling_maximum
                                  ? random_rescaling_minimum + type(rand())
                                  : random_rescaling_maximum;
 
@@ -98,7 +98,7 @@ void Batch::perform_augmentation() const
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
         {
-            const type translation = (random_horizontal_translation_minimum < random_rescaling_maximum)
+            const type translation = random_horizontal_translation_minimum < random_rescaling_maximum
                                    ? random_horizontal_translation_minimum + type(rand())
                                    : random_rescaling_maximum;
 

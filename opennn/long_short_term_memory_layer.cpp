@@ -1690,7 +1690,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
 
             forget_combinations_weights_derivatives(i, weight_index) += current_input;
             forget_combinations_recurrent_weights_derivatives(i, recurrent_weight_index) += previous_hidden_state_activation;
-            forget_combinations_biases_derivatives(i, i) += static_cast<type>(1.0);
+            forget_combinations_biases_derivatives(i, i) += type(1.0);
 
             input_index++;
             neuron_index++;
@@ -2026,7 +2026,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
 
             input_combinations_weights_derivatives(i, weight_index) += current_input;
             input_combinations_recurrent_weights_derivatives(i, recurrent_weight_index) += previous_hidden_state_activation;
-            input_combinations_biases_derivatives(i, i) += static_cast<type>(1.0);
+            input_combinations_biases_derivatives(i, i) += type(1.0);
 
             input_index++;
             neuron_index++;
@@ -2363,7 +2363,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
 
             state_combinations_weights_derivatives(i, weight_index) += current_input;
             state_combinations_recurrent_weights_derivatives(i, recurrent_weight_index) += previous_hidden_state_activation;
-            state_combinations_biases_derivatives(i, i) += static_cast<type>(1.0);
+            state_combinations_biases_derivatives(i, i) += type(1.0);
 
             input_index++;
             neuron_index++;
@@ -2700,7 +2700,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 
             output_combinations_weights_derivatives(i, weight_index) += current_input;
             output_combinations_recurrent_weights_derivatives(i, recurrent_weight_index) += previous_hidden_state_activation;
-            output_combinations_biases_derivatives(i, i) += static_cast<type>(1.0);
+            output_combinations_biases_derivatives(i, i) += type(1.0);
 
             input_index++;
             neuron_index++;

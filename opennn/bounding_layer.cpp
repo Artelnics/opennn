@@ -515,7 +515,7 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Item");
 
-        file_stream.PushAttribute("Index", static_cast<unsigned>(i+1));
+        file_stream.PushAttribute("Index", unsigned(i+1));
 
         // Lower bound
 

@@ -887,7 +887,7 @@ void ScalingLayer2D::calculate_outputs(type* inputs_data, const Tensor<Index, 1>
                 }
                 else if(scaler == Scaler::MeanStandardDeviation)
                 {
-                    const type slope = static_cast<type>(1)/descriptives(i).standard_deviation;
+                    const type slope = type(1)/descriptives(i).standard_deviation;
 
                     const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
 
@@ -895,7 +895,7 @@ void ScalingLayer2D::calculate_outputs(type* inputs_data, const Tensor<Index, 1>
                 }
                 else if(scaler == Scaler::StandardDeviation)
                 {
-                    column = static_cast<type>(1/descriptives(i).standard_deviation) * inputs.chip(i, 1);/*column/static_cast<type>(descriptives(i).standard_deviation);*/
+                    column = type(1/descriptives(i).standard_deviation) * inputs.chip(i, 1);/*column/type(descriptives(i).standard_deviation);*/
                 }
                 else if(scaler == Scaler::Logarithm)
                 {
@@ -937,7 +937,7 @@ void ScalingLayer2D::calculate_outputs(type* inputs_data, const Tensor<Index, 1>
 
         for(Index i = 0; i < input.size(); i++)
         {
-            output(i) = -static_cast<type>(1) + static_cast<type>(2*input(i)/255);
+            output(i) = -type(1) + type(2*input(i)/255);
         }
     }
     else
