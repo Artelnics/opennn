@@ -388,7 +388,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     // Data set
 
     DataSet* data_set = loss_index->get_data_set();
-
+    
     const bool has_selection = data_set->has_selection();
 
     const Index training_samples_number = data_set->get_training_samples_number();
@@ -410,9 +410,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     // Neural network
-
+    
     NeuralNetwork* neural_network = loss_index->get_neural_network();
-
+    
     neural_network->set_inputs_names(inputs_names);
     neural_network->set_outputs_names(targets_names);
 
@@ -431,7 +431,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
         unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
-
+    
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
@@ -440,7 +440,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
-
+    
     // Loss index
 
     loss_index->set_normalization_coefficient();
@@ -449,7 +449,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     type loss_decrease = numeric_limits<type>::max();
 
     Index selection_failures = 0;
-
+    
     BackPropagationLM training_back_propagation_lm(training_samples_number, loss_index);
     BackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index);
 
@@ -480,36 +480,37 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                           is_training);
         
         // Loss index
-
+        
         loss_index->back_propagate_lm(training_batch,
                                       training_forward_propagation,
                                       training_back_propagation_lm);
         
         results.training_error_history(epoch) = training_back_propagation_lm.error;
-
+        
         if(has_selection)
         {           
             neural_network->forward_propagate(selection_batch.get_inputs_pair(),
-                                                      selection_forward_propagation,
-                                                      is_training);
+                                              selection_forward_propagation,
+                                              is_training);
 
             loss_index->calculate_errors_lm(selection_batch,
+                                            selection_forward_propagation,
+                                            selection_back_propagation_lm);
+
+            loss_index->calculate_squared_errors_lm(selection_batch,
                                                     selection_forward_propagation,
                                                     selection_back_propagation_lm);
 
-            loss_index->calculate_squared_errors_lm(selection_batch,
-                                                            selection_forward_propagation,
-                                                            selection_back_propagation_lm);
-
             loss_index->calculate_error_lm(selection_batch,
-                                                   selection_forward_propagation,
-                                                   selection_back_propagation_lm);
+                                           selection_forward_propagation,
+                                           selection_back_propagation_lm);
 
             results.selection_error_history(epoch) = selection_back_propagation_lm.error;
 
-            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
+            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) 
+                selection_failures++;
         }
-
+        
         // Elapsed time
 
         time(&current_time);
@@ -591,11 +592,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         }
 
         if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
-
+        
         update_parameters(training_batch,
                           training_forward_propagation,
                           training_back_propagation_lm,
                           optimization_data);
+        
     }
 
     if(neural_network->has_scaling_layer())
@@ -622,15 +624,15 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
-
+    
     const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
     const type regularization_weight = loss_index->get_regularization_weight();
-
+    
     NeuralNetwork* neural_network = loss_index->get_neural_network();
-
+    
     Tensor<type, 1>& parameters = back_propagation_lm.parameters;
-
+    
     type& error = back_propagation_lm.error;
     type& loss = back_propagation_lm.loss;
 
@@ -643,7 +645,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     const Index parameters_number = parameters.size();
 
     bool success = false;
-
+    
     do
     {
         sum_diagonal(hessian, damping_parameter);

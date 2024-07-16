@@ -466,7 +466,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
 Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlations)
 {
     Tensor<type, 2> values;
-    /**
+    /*
     const Index rows_number = correlations.dimension(0);
     const Index raw_variables_number = correlations.dimension(1);
     Tensor<type, 2> values(rows_number, raw_variables_number);
@@ -922,7 +922,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-/**
+/*
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));

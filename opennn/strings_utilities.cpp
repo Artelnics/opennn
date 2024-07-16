@@ -364,7 +364,8 @@ bool is_numeric_string(const string& str)
     {
         stod(str, &index);
 
-        if(index == str.size() || (str.find("%") != string::npos && index+1 == str.size()))
+        if(index == str.size()
+        || (str.find("%") != string::npos && index+1 == str.size()))
         {
             return true;
         }
@@ -2097,25 +2098,6 @@ Tensor<type, 2> str_to_input(const string& input_string)
         flatten_input_data.data());
 
     return flatten_input_data;
-}
-
-
-string output_to_str(const Tensor<type, 2>& flatten_output_data) 
-{
-/*
-    const Index alphabet_length = get_alphabet_length();
-
-    const Index tensor_size = Index(flatten_output_data.size() / alphabet_length);
-
-    Tensor<type, 2> output_data(tensor_size, alphabet_length);
-
-    copy(/*execution::par,
-        flatten_output_data.data(),
-        flatten_output_data.data() + tensor_size, output_data.data());
-
-    return multiple_one_hot_decode(output_data);
-*/
-    return string();
 }
 
 
@@ -4620,7 +4602,7 @@ Tensor<double, 1> TextAnalytics::get_words_presence_percentage(const Tensor<Tens
 /// This function calculates the frequency of sets of consecutive words in all documents.
 /// @param minimum_frequency Minimum frequency that a word must have to obtain its combinations.
 /// @param combinations_length Words number of the combinations from 2.
-/*
+
 Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
                                                                    const Index& minimum_frequency,
                                                                    const Index& combinations_length) const
@@ -4875,12 +4857,12 @@ void load_documents(const string& path)
     Tensor<string,1> document_copy(lines_count);
     Tensor<string,1> document_target_copy(lines_count);
 
-    copy(/*execution::par,
+    copy(execution::par,
         document.data(),
         document.data() + lines_count,
         document_copy.data());
 
-    copy(/*execution::par,
+    copy(execution::par,
         document_target.data(),
         document_target.data() + lines_count,
         document_target_copy.data());
@@ -4972,7 +4954,6 @@ string TextAnalytics::generate_word(TextGenerationAlphabet& text_generation_alph
 
 string TextAnalytics::generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
-/*
     const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
 
     if(first_letters.length()*alphabet_length != get_inputs_number())
@@ -5111,7 +5092,7 @@ void TextGenerationAlphabet::create_alphabet()
 
     alphabet.resize(text_copy.length());
 
-    copy(/*execution::par,
+    copy(execution::par,
         text_copy.begin(),
         text_copy.end(),
         alphabet.data());
@@ -5263,28 +5244,12 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
     Tensor<type, 2> flatten_input_data(1, input_data.size());
 
-    copy(/*execution::par,
+    copy(execution::par,
         input_data.data(),
         input_data.data() + input_data.size(),
         flatten_input_data.data());
 
     return flatten_input_data;
-}
-
-
-string TextGenerationAlphabet::output_to_str(const Tensor<type, 2>&flatten_output_data) const
-{
-    const Index alphabet_length = get_alphabet_length();
-
-    const Index tensor_size = Index(flatten_output_data.size()/alphabet_length);
-
-    Tensor<type, 2> output_data(tensor_size, alphabet_length);
-
-    copy(/*execution::par,
-        flatten_output_data.data(),
-        flatten_output_data.data() + tensor_size, output_data.data());
-
-    return multiple_one_hot_decode(output_data);
 }
 
 }

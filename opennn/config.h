@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <execution>
 
-#define OPENNN_CUDA
+//#define OPENNN_CUDA
 #ifdef OPENNN_CUDA
 
 #include "../../opennn_cuda/CudaOpennn/kernel.cuh"
@@ -45,20 +45,20 @@
 
 namespace opennn
 {
-    //using namespace std;
+    using namespace std;
     using namespace Eigen;
 
     using type = float; 
 
-    using dimensions = std::vector<Index>;
+    using dimensions = vector<Index>;
      
     //using execution_policy = std::execution::par;
 
     template<typename Base, typename T>
-    inline bool is_instance_of(const T* ptr) {
+    inline bool is_instance_of(const T* ptr)
+    {
         return dynamic_cast<const Base*>(ptr) != nullptr;
     }
-
 }
 
 

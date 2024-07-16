@@ -312,8 +312,6 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     const Index total_samples_number = data_set->get_samples_number();
 
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
     // Batch
 
     const Index batch_samples_number = batch.get_batch_samples_number();
@@ -321,8 +319,6 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
     // Back propagation
 
     const Tensor<type, 2>& errors = back_propagation.errors;
-
-    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(last_trainable_layer_index);
 
     const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();  
 
@@ -338,18 +334,16 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
                                                        ForwardPropagation&,
                                                        BackPropagationLM & back_propagation) const
 {
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
-
-    LayerBackPropagationLM* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    Tensor<type, 2>& deltas = output_layer_back_propagation->deltas;
+    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    deltas.device(*thread_pool_device) = errors;
+    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 
-    divide_columns(thread_pool_device, deltas, squared_errors);
+    output_deltas.device(*thread_pool_device) = errors;
+
+    divide_columns(thread_pool_device, output_deltas, squared_errors);
 }
 
 
@@ -392,7 +386,6 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     // Back propagation
 
-    const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;

@@ -194,8 +194,7 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
     {
         const Layer::Type first_layer_type = layers[0]->get_type();
 
-        if(first_layer_type != Layer::Type::Scaling2D) return false;
-        if(first_layer_type != Layer::Type::Scaling4D) return false;
+        if(first_layer_type != Layer::Type::Scaling2D || first_layer_type != Layer::Type::Scaling4D) return false;
     }
 
     return true;
@@ -888,12 +887,14 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     }
     else if(model_type == ModelType::Forecasting)
     {
-        LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        // architecture[2] must be timesteps
+
+        LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1], architecture[2]);
         // RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
 
         add_layer(long_short_term_memory_layer);
 
-        for(Index i = 1 ; i < size-1 ; i++)
+        for(Index i = 2 ; i < size-1 ; i++)
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
@@ -1252,33 +1253,30 @@ Index NeuralNetwork::get_inputs_number() const
 
 Index NeuralNetwork::get_outputs_number() const
 {
-    if(layers.size() > 0)
-    {
-        const Layer* last_layer = layers[layers.size() - 1];
+    if(layers.size() == 0) return 0;
 
-        const dimensions outputs_dimensions = last_layer->get_outputs_dimensions();
+    const Layer* last_layer = layers[layers.size() - 1];
 
-        Index outputs_number = 1;
+    const dimensions outputs_dimensions = last_layer->get_outputs_dimensions();
 
-        for (Index i = 0; i < outputs_dimensions.size(); i++)    outputs_number *= outputs_dimensions[i];
+    const Index outputs_rank = outputs_dimensions.size();
 
-        return outputs_number;
-    }
+    Index outputs_number = 1;
 
-    return 0;
+    for (Index i = 0; i < outputs_rank; i++)
+        outputs_number *= outputs_dimensions[i];
+
+    return outputs_number;
 }
 
 
 dimensions NeuralNetwork::get_outputs_dimensions() const
 {
-    if (layers.size() > 0)
-    {
-        const Layer* last_layer = layers[layers.size() - 1];
+    if (layers.size() == 0) return {};
 
-        return last_layer->get_outputs_dimensions();
-    }
+    const Layer* last_layer = layers[layers.size() - 1];
 
-    return {};
+    return last_layer->get_outputs_dimensions();
 }
 
 
@@ -1884,7 +1882,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     const Index batch_samples_number = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
-    const Index outputs_number = get_outputs_number();
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
@@ -1907,7 +1904,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
     const Index batch_samples_number = inputs.dimension(0);
-    const Index outputs_number = get_outputs_number();
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 

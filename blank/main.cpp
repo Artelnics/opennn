@@ -37,8 +37,6 @@ int main()
    {
         cout << "Blank\n";
 
-
-
         cout << "Bye!" << endl;
 
         return 0;

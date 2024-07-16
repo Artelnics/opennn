@@ -57,22 +57,19 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
     // Forward propagation
-
+    
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
     // Back propagation
-
+    
     Tensor<type, 2>& errors = back_propagation.errors;
 
     type& error = back_propagation.error;
 
-    //cout << "Targets: " << endl << targets << endl;
-    //cout << "outputs: " << endl << outputs << endl;
-
     errors.device(*thread_pool_device) = outputs - targets;
-    
+
     Tensor<type, 0> sum_squared_error;
     
     sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
@@ -137,22 +134,18 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagationLM& back_propagation) const
 {
-    // Neural network
-
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
     // Back propagation
-
-    LayerBackPropagationLM* output_layer_back_propagation = back_propagation.neural_network.layers(last_trainable_layer_index);
 
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    Tensor<type, 2>& deltas = output_layer_back_propagation->deltas;
+    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    deltas.device(*thread_pool_device) = errors;
+    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 
-    divide_columns(thread_pool_device, deltas, squared_errors);
+    output_deltas.device(*thread_pool_device) = errors;
+
+    divide_columns(thread_pool_device, output_deltas, squared_errors);
 }
 
 

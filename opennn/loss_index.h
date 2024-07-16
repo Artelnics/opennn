@@ -206,16 +206,12 @@ public:
                                           ForwardPropagation&,
                                           BackPropagationLM&) const {}
 
-   void calculate_layers_delta_lm(const Batch&,
-                                  ForwardPropagation&,
-                                  BackPropagationLM&) const;
+   void calculate_layers_squared_errors_jacobian_lm(const Batch&,
+                                                    ForwardPropagation&,
+                                                    BackPropagationLM&) const;
 
    virtual void calculate_error_gradient_lm(const Batch&,
                                       BackPropagationLM&) const;
-
-   void calculate_squared_errors_jacobian_lm(const Batch&,
-                                             ForwardPropagation&,
-                                             BackPropagationLM&) const;
 
    virtual void calculate_error_hessian_lm(const Batch&,
                                            BackPropagationLM&) const {}
@@ -316,8 +312,17 @@ struct BackPropagationLM
     void set(const Index&, LossIndex*);
 
     void print() const;
+    
+    void set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
+
+    pair<type*, dimensions> get_output_deltas_pair() const;
 
     Index batch_samples_number = 0;
+
+    Tensor<Tensor<Index, 1>, 1> layers_outputs_indices;
+
+    Tensor<type, 1> output_deltas;
+    dimensions output_deltas_dimensions;
 
     LossIndex* loss_index = nullptr;
 

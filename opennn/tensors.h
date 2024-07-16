@@ -65,7 +65,6 @@ void sum_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 void substract_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void substract_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
-
 void set_identity(Tensor<type, 2>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
@@ -96,6 +95,7 @@ Tensor<type, 2> self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&
 // Division
 
 void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_columns(ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 void divide_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
 // Checking

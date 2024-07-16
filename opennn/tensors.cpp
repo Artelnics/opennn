@@ -469,6 +469,22 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matri
 }
 
 
+void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    type* matrix_data = matrix.data();
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        TensorMap<Tensor<type,1>> raw_variable(matrix_data + j*rows_number, rows_number);
+
+        raw_variable.device(*thread_pool_device) = raw_variable / vector;
+    }
+}
+
+
 void divide_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
 {
     const Index rows_number = tensor.dimension(0);
@@ -1149,8 +1165,14 @@ Index count_between(const Tensor<type,1>& vector,const type& minimum, const type
 }
 
 
-void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&)
+void get_row(Tensor<type, 1>& row, const Tensor<type, 2, RowMajor>& matrix, const Index& row_index)
 {
+    const Index columns_number = row.dimension(0);
+
+    copy(/*execution::par,*/
+         matrix.data() + row_index * columns_number,
+         matrix.data() + (row_index + 1) * columns_number,
+         row.data());
 }
 
 
@@ -1169,10 +1191,12 @@ void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_i
 
 void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, const Index& row_index)
 {
+    const Index columns_number = vector.size();
+
     copy(/*execution::par,*/
         (type*) vector.data(),
-        (type*) vector.data() + vector.size(),
-        matrix.data() + row_index);
+        (type*) vector.data() + columns_number,
+        matrix.data() + row_index * columns_number);
 }
 
 

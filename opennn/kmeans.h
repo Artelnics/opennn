@@ -30,20 +30,6 @@
 
 // System includes
 
-//#include <sstream>
-//#include <cstring>
-//#include <time.h>
-//#include <omp.h>
-//#include <Eigen/Dense>
-//#include "unsupported/Eigen/CXX11/Tensor"
-
-// OpenNN includes
-
-//#include "../../opennn/opennn/opennn.h"
-
-using Eigen::Tensor;
-using opennn::type;
-using Eigen::Index;
 using namespace std;
 
 namespace opennn

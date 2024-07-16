@@ -87,8 +87,6 @@ void SumSquaredError::calculate_output_delta(const Batch&,
                                              ForwardPropagation&,
                                              BackPropagation& back_propagation) const
 {
-     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
      // Back propagation
 
      const Tensor<type, 2>& errors = back_propagation.errors;
@@ -113,22 +111,18 @@ void SumSquaredError::calculate_output_delta_lm(const Batch&,
 
 #endif
 
-    // Neural network
-
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
     // Back propagation
-
-    LayerBackPropagationLM* output_layer_back_propagation = back_propagation.neural_network.layers(last_trainable_layer_index);
 
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    Tensor<type, 2>& deltas = output_layer_back_propagation->deltas;
+    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    deltas.device(*thread_pool_device) = errors;
+    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 
-    divide_columns(thread_pool_device, deltas, squared_errors);
+    output_deltas.device(*thread_pool_device) = errors;
+
+    divide_columns(thread_pool_device, output_deltas, squared_errors);
 }
 
 
@@ -153,9 +147,8 @@ void SumSquaredError::calculate_error_gradient_lm(const Batch& ,
 
 
 void SumSquaredError::calculate_error_hessian_lm(const Batch&,
-                                                      BackPropagationLM& back_propagation_lm) const
+                                                 BackPropagationLM& back_propagation_lm) const
 {
-    const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;

@@ -281,10 +281,6 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     const Index total_samples_number = data_set->get_samples_number();
 
-    // Neural network
-
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
     // Batch
 
     const Index batch_samples_number = batch.targets_dimensions[0];
@@ -296,8 +292,6 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
     // Back propagation
 
     const Tensor<type, 2>& errors = back_propagation.errors;
-
-    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(last_trainable_layer_index);
 
     const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
 
@@ -460,11 +454,11 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     if(negatives_weight_element)
     {
-        const string string = negatives_weight_element->GetText();
+        const string str = negatives_weight_element->GetText();
 
         try
         {
-            set_negatives_weight(type(atof(string.c_str())));
+            set_negatives_weight(type(atof(str.c_str())));
         }
         catch(const exception& e)
         {
