@@ -1837,7 +1837,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
                 layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
         }
-        
+
         layers(i)->forward_propagate(layer_inputs,
                                      forward_propagation.layers(i),
                                      is_training);
