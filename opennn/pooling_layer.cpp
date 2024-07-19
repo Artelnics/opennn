@@ -52,7 +52,7 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_variables_dimensions, con
 
 Index PoolingLayer::get_neurons_number() const
 {
-    return get_outputs_rows_number() * get_outputs_columns_number();
+    return get_outputs_rows_number() * get_outputs_columns_number() * get_channels_number();
 }
 
 
@@ -62,9 +62,9 @@ dimensions PoolingLayer::get_outputs_dimensions() const
 {
     Index rows_number = get_outputs_rows_number();
     Index columns_number = get_outputs_columns_number();
-    Index depth = inputs_dimensions[2];
+    Index channels_number = inputs_dimensions[2];
 
-    return { rows_number, columns_number, depth };
+    return { rows_number, columns_number, channels_number };
 }
 
 
@@ -122,6 +122,14 @@ Index PoolingLayer::get_outputs_columns_number() const
     const Index inputs_columns_number = get_inputs_columns_number();
 
     return (inputs_columns_number - pool_columns_number + 2*padding)/column_stride + 1;
+}
+
+
+/// Returns the padding heigth.
+
+Index PoolingLayer::get_padding_heigth() const
+{
+    return padding_heigth;
 }
 
 
@@ -224,6 +232,15 @@ void PoolingLayer::set_name(const string& new_layer_name)
 void PoolingLayer::set_inputs_dimensions(const dimensions& new_inputs_dimensions)
 {
     inputs_dimensions = new_inputs_dimensions;
+}
+
+
+/// Sets the padding heigth.
+/// @param new_padding_heigth The desired heigth.
+
+void PoolingLayer::set_padding_heigth(const Index& new_padding_heigth)
+{
+    padding_heigth = new_padding_heigth;
 }
 
 
