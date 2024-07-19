@@ -8,6 +8,7 @@
 
 #ifndef SET_H
 #define SET_H
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 // System includes
@@ -38,6 +39,7 @@
 #include "config.h"
 #include "correlation.h"
 #include "scaling.h"
+#include "strings_utilities.h"
 
 //using namespace std;
 using namespace Eigen;

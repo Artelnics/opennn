@@ -2151,8 +2151,6 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers inputs indices
 
-    cout << "Layers Inputs Indices" << endl;
-
     file_stream.OpenElement("LayersInputsIndices");
 
     for (Index i = 0; i < layers_inputs_indices.size(); i++)

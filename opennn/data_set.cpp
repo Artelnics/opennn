@@ -6340,9 +6340,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_samples_indices);
 
-            cout << "input_raw_variable_data: " << input_raw_variable_data << endl;
-            cout << "target_raw_variable_data: " << target_raw_variable_data << endl;
-
             correlations(i,j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
@@ -6595,6 +6592,7 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
 
                 if(calculate_pearson_correlations)
                 {
+
                     correlations(i,j) = correlation(thread_pool_device, input_i, input_j);
 
                     if(correlations(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
