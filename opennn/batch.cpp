@@ -262,6 +262,7 @@ void Batch::print() const
     }
 
     const TensorMap<Tensor<type, 2>> targets(targets_data, targets_dimensions[0], targets_dimensions[1]);
+
     cout << targets << endl;
 }
 

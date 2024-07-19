@@ -534,7 +534,6 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
     input_derivatives.setZero();
 
-
 //    input_derivatives = error_combinations_derivatives.convolve(synaptic_weights,convolutions_dimensions);
 
     for (int image_index = 0; image_index < batch_samples_number; image_index++)
@@ -546,7 +545,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                 for (int col = 0; col < deltas_pair(0).second[1]; col++)
                 {
                      input_derivatives.chip(image_index, 0).chip(d, 0).slice(std::array<Index, 2>({row, col}), std::array<Index, 2>({kernels_rows_number, kernels_columns_number})) +=
-                             error_combinations_derivatives(row,col, d, image_index) * synaptic_weights.chip(d, 0);
+                             error_combinations_derivatives(row, col, d, image_index) * synaptic_weights.chip(d, 0);
                 }
             }
         }
