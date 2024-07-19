@@ -2611,9 +2611,7 @@ Index DataSet::get_variables_less_target() const
 }
 
 
-// @todo to hello_world format.
-
-Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Index& bins_number) const
+Tensor<type, 1> DataSet::box_plot_from_histogram(const Histogram& histogram, const Index& bins_number) const
 {
     const Index samples_number = get_training_samples_number();
 
@@ -2624,53 +2622,55 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
     // Assuming you have the bin centers and relative frequencies in the following arrays:
 
     const Tensor<type, 1> bin_centers = histogram.centers;
-    const Tensor<type, 1> binFrequencies = relative_frequencies;
+    const Tensor<type, 1> bin_frequencies = relative_frequencies;
 
     // Calculate the cumulative frequency distribution
 
-    type cumulativeFrequencies[1000];
+    type cumulative_frequencies[1000];
 
-    cumulativeFrequencies[0] = binFrequencies[0];
+    cumulative_frequencies[0] = bin_frequencies[0];
 
     for(int i = 1; i < 1000; i++)
     {
-        cumulativeFrequencies[i] = cumulativeFrequencies[i-1] + binFrequencies[i];
+        cumulative_frequencies[i] = cumulative_frequencies[i-1] + bin_frequencies[i];
     }
 
     // Calculate total frequency
-    type totalFrequency = cumulativeFrequencies[999];
+    const type total_frequency = cumulative_frequencies[999];
 
     // Calculate quartile positions
-    type Q1Position = type(0.25) * totalFrequency;
-    type Q2Position = type(0.5) * totalFrequency;
-    type Q3Position = type(0.75) * totalFrequency;
+    const type q1_position = type(0.25) * total_frequency;
+    const type q2_position = type(0.5) * total_frequency;
+    const type q3_position = type(0.75) * total_frequency;
 
     // Find quartile bin numbers
-    int Q1Bin = 0, Q2Bin = 0, Q3Bin = 0;
+    int q1_bin = 0;
+    int q2_bin = 0;
+    int q3_bin = 0;
 
     for(int i = 0; i < 1000; i++) 
     {
-        if(cumulativeFrequencies[i] >= Q1Position) 
+        if(cumulative_frequencies[i] >= q1_position)
         {
-            Q1Bin = i;
+            q1_bin = i;
             break;
         }
     }
 
     for(int i = 0; i < 1000; i++) 
     {
-        if(cumulativeFrequencies[i] >= Q2Position) 
+        if(cumulative_frequencies[i] >= q2_position)
         {
-            Q2Bin = i;
+            q2_bin = i;
             break;
         }
     }
 
     for(int i = 0; i < 1000; i++) 
     {
-        if(cumulativeFrequencies[i] >= Q3Position) 
+        if(cumulative_frequencies[i] >= q3_position)
         {
-            Q3Bin = i;
+            q3_bin = i;
             break;
         }
     }
@@ -2678,9 +2678,12 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
     // Calculate quartile values
 
     const type bin_width = bin_centers[1] - bin_centers[0];
-    const type q1 = bin_centers[Q1Bin] + ((Q1Position - cumulativeFrequencies[Q1Bin-1]) / binFrequencies[Q1Bin]) * bin_width;
-    const type q2 = bin_centers[Q2Bin] + ((Q2Position - cumulativeFrequencies[Q2Bin-1]) / binFrequencies[Q2Bin]) * bin_width;
-    const type q3 = bin_centers[Q3Bin] + ((Q3Position - cumulativeFrequencies[Q3Bin-1]) / binFrequencies[Q3Bin]) * bin_width;
+
+    const type q1 = bin_centers[q1_bin] + (q1_position - cumulative_frequencies[q1_bin-1]) * bin_width / bin_frequencies[q1_bin];
+
+    const type q2 = bin_centers[q2_bin] + (q2_position - cumulative_frequencies[q2_bin-1]) * bin_width / bin_frequencies[q2_bin];
+
+    const type q3 = bin_centers[q3_bin] + (q3_position - cumulative_frequencies[q3_bin-1]) * bin_width / bin_frequencies[q3_bin];
 
     // Calculate the maximum and minimum values
     const type minimum = bin_centers[0] - bin_width / type(2);
@@ -6702,7 +6705,6 @@ void DataSet::print_top_inputs_correlations() const
 
 
 /// Returns a vector of strings containing the scaling method that best fits each of the input variables.
-/// @todo Takes too long in big files.
 
 void DataSet::set_default_raw_variables_scalers()
 {
@@ -8582,7 +8584,7 @@ void DataSet::load_data_binary()
     if(regex_search(data_source_path, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_source_path);
+        const wstring file_name_wide = conv.from_bytes(data_source_path);
         file.open(file_name_wide, ios::binary);
     }
     else
@@ -9373,7 +9375,7 @@ void DataSet::load_data()
 {
     read_csv_1();
 
-    if(!has_time_raw_variables() && !has_categorical_raw_variables())
+    if(count_time_raw_variables() == 0 && !has_categorical_raw_variables())
     {
         read_csv_2_simple();
 
@@ -9392,7 +9394,7 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
-    if(!has_time_raw_variables() && !has_categorical_raw_variables())
+    if(count_time_raw_variables() == 0 && !has_categorical_raw_variables())
     {
         read_csv_2_simple();
 
@@ -10539,30 +10541,19 @@ bool DataSet::has_categorical_raw_variables() const
 }
 
 
-bool DataSet::has_time_raw_variables() const
+Index DataSet::count_time_raw_variables() const
 {
     const Index raw_variables_number = raw_variables.size();
 
+    Index count = 0;
+
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::DateTime) return true;
+        if(raw_variables(i).type == RawVariableType::DateTime) count++;
     }
 
-    return false;
+    return count;
 }
-
-
-//bool DataSet::has_time_time_series_raw_variables() const
-//{
-//    const Index time_series_raw_variables_number = time_series_raw_variables.size();
-//
-//    for(Index i = 0; i < time_series_raw_variables_number; i++)
-//    {
-//        if(time_series_raw_variables(i).type == ColumnType::DateTime) return true;
-//    }
-//
-//    return false;
-//}
 
 
 bool DataSet::has_selection() const

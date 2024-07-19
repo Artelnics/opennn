@@ -508,8 +508,8 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 
     // Forward propagation
 
-    const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
-        static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
+//    const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
+//        static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
 
     // Back propagation
 
@@ -519,6 +519,8 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
     /// @todo calculate input derivatives (= deltas for previous layer)
+
+    //input_derivatives.device(*thread_pool_device) = 0;
 }
 
 

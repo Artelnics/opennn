@@ -1709,9 +1709,6 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     const Index kernels_columns_number = convolutional_layer->get_kernels_columns_number();
     const Index kernels_channels_number = convolutional_layer->get_kernels_channels_number();
 
-    const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-    const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
-
     error_combinations_derivatives.resize(kernels_number,
         kernesl_rows_number,
         kernels_columns_number,

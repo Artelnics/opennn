@@ -3827,8 +3827,6 @@ string NeuralNetwork::write_expression_api() const
         }
 
         buffer << t << endl;
-
-        //side = 0;
     }
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "php");

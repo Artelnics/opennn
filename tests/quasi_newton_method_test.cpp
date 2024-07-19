@@ -78,7 +78,6 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 }
 
 
-// @todo
 void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
 {
     cout << "test_calculate_BFGS_inverse_hessian_approximation\n";
