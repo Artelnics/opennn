@@ -223,7 +223,8 @@ void reflect_image_y(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>
 
 // @todo Improve performance
 
-void rotate_image(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& input,
+void rotate_image(/*const ThreadPoolDevice* thread_pool_device,*/
+                  Tensor<type, 3>& input,
                   Tensor<type, 3>& output,
                   const type& angle_degree)
 {

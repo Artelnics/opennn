@@ -32,6 +32,7 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_inputs_dimensions,
                                        const dimensions& new_kernels_dimensions) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
+
     set(new_inputs_dimensions, new_kernels_dimensions);
 }
 
@@ -750,7 +751,7 @@ Index ConvolutionalLayer::get_row_stride() const
 
 Index  ConvolutionalLayer::get_kernels_rows_number() const
 {
-    return synaptic_weights.dimension(0);
+    return synaptic_weights.dimension(1);
 }
 
 
@@ -758,7 +759,7 @@ Index  ConvolutionalLayer::get_kernels_rows_number() const
 
 Index ConvolutionalLayer::get_kernels_columns_number() const
 {
-    return synaptic_weights.dimension(1);
+    return synaptic_weights.dimension(2);
 }
 
 
@@ -766,7 +767,7 @@ Index ConvolutionalLayer::get_kernels_columns_number() const
 
 Index ConvolutionalLayer::get_kernels_channels_number() const
 {
-    return synaptic_weights.dimension(2);
+    return synaptic_weights.dimension(3);
 }
 
 
@@ -774,7 +775,7 @@ Index ConvolutionalLayer::get_kernels_channels_number() const
 
 Index ConvolutionalLayer::get_kernels_number() const
 {
-    return synaptic_weights.dimension(3);
+    return synaptic_weights.dimension(1);
 }
 
 
@@ -1214,7 +1215,7 @@ Index ConvolutionalLayer::get_synaptic_weights_number() const
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[0];
+    return inputs_dimensions[1];
 }
 
 
@@ -1222,7 +1223,7 @@ Index ConvolutionalLayer::get_inputs_rows_number() const
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[1];
+    return inputs_dimensions[2];
 }
 
 
@@ -1230,7 +1231,7 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
 
 Index ConvolutionalLayer::get_inputs_channels_number() const
 {
-    return inputs_dimensions[2];
+    return inputs_dimensions[3];
 }
 
 //void ConvolutionalLayer::calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const
