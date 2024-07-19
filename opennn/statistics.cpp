@@ -1605,10 +1605,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
         for(Index i = 0; i < size; i++)
         {
-            if(isnan(vector(i)))
-            {
-                continue;
-            }
+            if(isnan(vector(i))) continue;
 
             for(Index j = 0; j < bins_number - 1; j++)
             {
