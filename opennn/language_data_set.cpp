@@ -1808,7 +1808,7 @@ const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tenso
 
     Tensor<string, 1> vocabulary_tensor(vocabulary.size());
 
-    for (Index i = 0; i < vocabulary.size(); i++)
+    for (Index i = 0; i < Index(vocabulary.size()); i++)
         vocabulary_tensor(i) = vocabulary[i];
 
     return vocabulary_tensor;

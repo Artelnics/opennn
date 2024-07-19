@@ -17,6 +17,7 @@ CorrelationsTest::~CorrelationsTest()
 {
 }
 
+
 void CorrelationsTest::test_spearman_linear_correlation()
 {
     cout << "test_spearman_linear_correlation\n";
@@ -137,12 +138,13 @@ void CorrelationsTest::test_logistic_correlation()
     x.resize(size);
     x.setValues({-5,-4,-3,-2,-1,1,2,3,4,5});
 
-    y.resize(size);
+    y.resize(size
+             );
     y.setValues({0,0,0,0,0,1,1,1,1,1});
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    //assert_true(correlation.r >= type(0.9), LOG);
+    assert_true(correlation.r >= type(0.9), LOG);
     assert_true((correlation.form == Correlation::Form::Logistic), LOG);
 
     y.setConstant(type(0));
@@ -199,7 +201,6 @@ void CorrelationsTest::test_logistic_correlation()
     correlation = logistic_correlation_vector_vector(thread_pool_device, x,y);
 
     assert_true(isnan(correlation.r), LOG);
-
 }
 
 
@@ -353,7 +354,7 @@ void CorrelationsTest::run_test_case()
 
     test_spearman_linear_correlation();
 
-    //test_logistic_correlation(); /* Test Failed */
+    test_logistic_correlation();
 
     test_logarithmic_correlation();
 

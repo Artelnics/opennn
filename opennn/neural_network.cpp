@@ -1762,7 +1762,6 @@ void NeuralNetwork::set_parameters_random() const
     for(Index i = 0; i < layers_number; i++)
     {
         layers[i]->set_parameters_random();
-
     }
 }
 

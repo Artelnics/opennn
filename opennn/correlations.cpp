@@ -774,15 +774,16 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 1>& y)
 {
-    cout << "empieza la función logiatic_corr_vec_vec" << endl;
     Correlation correlation;
 
-    pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
 
-    Tensor<type,1> x_filtered = filtered_elements.first;
-    Tensor<type,1> y_filtered = filtered_elements.second;
+    const Tensor<type,1> x_filtered = filtered_elements.first;
+    const Tensor<type,1> y_filtered = filtered_elements.second;
 
-    if(x_filtered.size() == 0)
+    if(x_filtered.size() == 0
+    || is_constant(x_filtered)
+    || is_constant(y_filtered))
     {
         correlation.r = type(NAN);
 
@@ -791,7 +792,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
         return correlation;
     }
 
-    cout << "logistic_correlation_vector_vector" << endl;
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
     DataSet data_set(data);
     data_set.set_training();
@@ -802,6 +802,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.get_scaling_layer_2d()->set_display(false);
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+
+    neural_network.set_parameters_constant(type(0.001));
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -818,15 +820,13 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     // Logistic correlation
 
     const Eigen::array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
-
-    cout << "correlation.r: " << correlation.r << endl;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
@@ -842,7 +842,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
-    // no r correlation here
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
 
