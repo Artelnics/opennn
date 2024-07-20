@@ -1808,7 +1808,7 @@ const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tenso
 
     Tensor<string, 1> vocabulary_tensor(vocabulary.size());
 
-    for (Index i = 0; i < vocabulary.size(); i++)
+    for (Index i = 0; i < Index(vocabulary.size()); i++)
         vocabulary_tensor(i) = vocabulary[i];
 
     return vocabulary_tensor;
@@ -2146,7 +2146,7 @@ void LanguageDataSet::read_txt_language_model()
     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(context);
     const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess_language_documents(completion);
 
-    bool imported_vocabulary = false;
+    //bool imported_vocabulary = false;
 
     if (context_vocabulary_path.empty() || completion_vocabulary_path.empty())
     {
@@ -2162,7 +2162,7 @@ void LanguageDataSet::read_txt_language_model()
     {
         cout << "Importing vocabularies..." << endl;
 
-        imported_vocabulary = true;
+        //imported_vocabulary = true;
         import_vocabulary(context_vocabulary_path, context_vocabulary);
         import_vocabulary(completion_vocabulary_path, completion_vocabulary);
     }
@@ -2171,7 +2171,8 @@ void LanguageDataSet::read_txt_language_model()
 
     Index max_context_tokens = context_tokens(0).size();
 
-    for(Index i = 0; i < entry_number; i++){
+    for(Index i = 0; i < entry_number; i++)
+    {
         if(context_tokens(i).size() > max_context_tokens) 
             max_context_tokens = context_tokens(i).size();
     }
@@ -2195,7 +2196,7 @@ void LanguageDataSet::read_txt_language_model()
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
-    std::ofstream file;
+    ofstream file;
     file.open(transformed_data_path);
 
     // @todo maybe context does NOT need start and end tokens
@@ -2208,6 +2209,7 @@ void LanguageDataSet::read_txt_language_model()
 
     for(Index i  = type(0); i < max_completion_length; i++)
         file << "target_token_position_" << i << ";";
+
     file << "target_token_position_" << max_completion_length << "\n";
     
     // Data file preview

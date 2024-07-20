@@ -72,26 +72,22 @@ public:
 
     Index get_inputs_number() const;
 
-    Index get_channels_number() const;
-
     Index get_inputs_rows_number() const;
-
     Index get_inputs_columns_number() const;
+    Index get_channels_number() const;
 
     Index get_neurons_number() const;
 
     Index get_outputs_rows_number() const;
-
     Index get_outputs_columns_number() const;
 
+    Index get_padding_heigth() const;
     Index get_padding_width() const;
 
     Index get_row_stride() const;
-
     Index get_column_stride() const;
 
     Index get_pool_rows_number() const;
-
     Index get_pool_columns_number() const;
 
     PoolingMethod get_pooling_method() const;
@@ -108,10 +104,10 @@ public:
 
     void set_inputs_dimensions(const dimensions&);
 
+    void set_padding_heigth(const Index&);
     void set_padding_width(const Index&);
 
     void set_row_stride(const Index&);
-
     void set_column_stride(const Index&);
 
     void set_pool_size(const Index&, const Index&);
@@ -164,6 +160,8 @@ protected:
     Index pool_rows_number = 2;
 
     Index pool_columns_number = 2;
+
+    Index padding_heigth = 0;
 
     Index padding_width = 0;
 

@@ -9,7 +9,8 @@ namespace opennn
 
 Batch::~Batch()
 {
-
+    delete thread_pool;
+    delete thread_pool_device;
 }
 
 
@@ -33,20 +34,19 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
 
 void Batch::perform_augmentation() const
 {
-    ImageDataSet* image_data_set
-            = static_cast<ImageDataSet*>(data_set);
+    ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
 
     const Tensor<Index, 1>& input_variables_dimensions = data_set->get_input_variables_dimensions();
 
     const Index rows_number = input_variables_dimensions(0);
-    const Index raw_variables_number = input_variables_dimensions(1);
+    const Index columns_number = input_variables_dimensions(1);
     const Index channels_number = input_variables_dimensions(2);
-    const Index input_size = rows_number*raw_variables_number*channels_number;
+    const Index input_size = rows_number*columns_number*channels_number;
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                       batch_size,
                                       rows_number,
-                                      raw_variables_number,
+                                      columns_number,
                                       channels_number);
 
     const bool random_reflection_axis_x = image_data_set->get_random_reflection_axis_x();
@@ -60,22 +60,23 @@ void Batch::perform_augmentation() const
     // const type random_vertical_translation_minimum = image_data_set->get_random_vertical_translation_minimum();
     // const type random_vertical_translation_maximum = image_data_set->get_random_vertical_translation_maximum();
 
+    type* inputs_data = inputs.data();
+
     for(Index batch = 0; batch < batch_size; batch++)
     {
-
-        TensorMap<Tensor<type, 3>> image(inputs.data() + batch*input_size,
+        TensorMap<Tensor<type, 3>> image(inputs_data + batch*input_size,
                                          rows_number,
-                                         raw_variables_number,
+                                         columns_number,
                                          channels_number);
 
         if(random_reflection_axis_x)
         {
-            //reflect_image_x(image, image);
+            //reflect_image_x(thread_pool_device, image, image);
         }
 
         if(random_reflection_axis_y)
         {
-            //reflect_image_y(image, image);
+            //reflect_image_y(thread_pool_device, image, image);
         }
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
@@ -84,7 +85,7 @@ void Batch::perform_augmentation() const
                              ? random_rotation_minimum + type(rand())
                              : random_rotation_maximum;
 
-            //rotate_image(image, image, angle);
+            //rotate_image(thread_pool_device, image, image, angle);
         }
 
         if(random_rescaling_minimum != 0 && random_rescaling_maximum != 0)
@@ -93,7 +94,7 @@ void Batch::perform_augmentation() const
                                  ? random_rescaling_minimum + type(rand())
                                  : random_rescaling_maximum;
 
-            //rescale_image(image, image, rescaling);
+            rescale_image(thread_pool_device, image, image, rescaling);
         }
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
@@ -102,7 +103,7 @@ void Batch::perform_augmentation() const
                                    ? random_horizontal_translation_minimum + type(rand())
                                    : random_rescaling_maximum;
 
-            //translate_image(image, image, translation);
+            //translate_image(thread_pool_device, image, image, translation);
         }
     }  
 }
@@ -110,6 +111,10 @@ void Batch::perform_augmentation() const
 
 Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 {
+    const int n = omp_get_max_threads();
+    thread_pool = new ThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+
     set(new_samples_number, new_data_set);
 }
 
@@ -262,6 +267,7 @@ void Batch::print() const
     }
 
     const TensorMap<Tensor<type, 2>> targets(targets_data, targets_dimensions[0], targets_dimensions[1]);
+
     cout << targets << endl;
 }
 

@@ -1453,16 +1453,29 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
     
-    calculate_forget_parameters_derivatives(inputs, deltas, long_short_term_memory_layer_forward_propagation, long_short_term_memory_layer_back_propagation);
+    calculate_forget_parameters_derivatives(inputs,
+                                            deltas,
+                                            long_short_term_memory_layer_forward_propagation,
+                                            long_short_term_memory_layer_back_propagation);
 
-    calculate_input_parameters_derivatives(inputs, deltas, long_short_term_memory_layer_forward_propagation, long_short_term_memory_layer_back_propagation);
+    calculate_input_parameters_derivatives(inputs,
+                                           deltas,
+                                           long_short_term_memory_layer_forward_propagation,
+                                           long_short_term_memory_layer_back_propagation);
 
-    calculate_state_parameters_derivatives(inputs, deltas, long_short_term_memory_layer_forward_propagation, long_short_term_memory_layer_back_propagation);
+    calculate_state_parameters_derivatives(inputs,
+                                           deltas,
+                                           long_short_term_memory_layer_forward_propagation,
+                                           long_short_term_memory_layer_back_propagation);
 
-    calculate_output_parameters_derivatives(inputs, deltas, long_short_term_memory_layer_forward_propagation, long_short_term_memory_layer_back_propagation);
+    calculate_output_parameters_derivatives(inputs,
+                                            deltas,
+                                            long_short_term_memory_layer_forward_propagation,
+                                            long_short_term_memory_layer_back_propagation);
     
     //@todo inputs derivatives
 }
+
 
 void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Tensor<type, 2>& inputs,
                                                                        const Tensor<type, 2>& deltas,

@@ -354,11 +354,7 @@ bool is_numeric_string(const string& str)
 
     iss >> dTestSink;
 
-    // was any input successfully consumed/converted?
-
     if(!iss) return false;
-
-    // was all the input successfully consumed/converted?
 
     try
     {

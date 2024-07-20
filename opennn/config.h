@@ -48,7 +48,7 @@ namespace opennn
     using namespace std;
     using namespace Eigen;
 
-    using type = float; 
+    using type = float;
 
     using dimensions = vector<Index>;
      

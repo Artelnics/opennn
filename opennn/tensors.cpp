@@ -1497,6 +1497,7 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
                       const Tensor<Index, 1>& columns_indices,
                       type* tensor_data)
 {
+
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
@@ -1515,6 +1516,55 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
         const Index* rows_indices_data = rows_indices.data();
 
         for(Index i = 0; i < rows_number; i++)
+        {
+            matrix_value = matrix_column + *rows_indices_data;
+            rows_indices_data++;
+            *tensor_value = *matrix_value;
+            tensor_value++;
+        }
+    }
+}
+
+
+void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
+                                const Tensor<Index, 1>& rows_indices,
+                                const Tensor<Index, 1>& columns_indices,
+                                type* tensor_data)
+{
+    cout << "Matrix data column major:" << endl;
+    for (int i = 0; i < matrix.size(); i++)
+    {
+        cout << matrix(i) << " ";
+    }
+    cout << endl;
+
+    Tensor<type, 2, RowMajor> rowMajor = matrix.swap_layout();
+
+    cout << "Matrix data row major:" << endl;
+    for (int i = 0; i < rowMajor.size(); i++)
+    {
+        cout << rowMajor(i) << " ";
+    }
+    cout << endl;
+
+    const Index rows_number = rows_indices.size();
+    const Index columns_number = columns_indices.size();
+
+    const type* matrix_data = matrix.data();
+
+#pragma omp parallel for
+
+    for (Index j = 0; j < columns_number; j++)
+    {
+        const type* matrix_column = matrix_data + matrix.dimension(0) * columns_indices[j];
+
+        type* tensor_value = tensor_data + rows_number * j;
+
+        const type* matrix_value = nullptr;
+
+        const Index* rows_indices_data = rows_indices.data();
+
+        for (Index i = 0; i < rows_number; i++)
         {
             matrix_value = matrix_column + *rows_indices_data;
             rows_indices_data++;
