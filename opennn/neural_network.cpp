@@ -1762,7 +1762,6 @@ void NeuralNetwork::set_parameters_random() const
     for(Index i = 0; i < layers_number; i++)
     {
         layers[i]->set_parameters_random();
-
     }
 }
 
@@ -1837,7 +1836,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
                 layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
         }
-        
+
         layers(i)->forward_propagate(layer_inputs,
                                      forward_propagation.layers(i),
                                      is_training);
@@ -2150,8 +2149,6 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Layers inputs indices
-
-    cout << "Layers Inputs Indices" << endl;
 
     file_stream.OpenElement("LayersInputsIndices");
 
@@ -3830,8 +3827,6 @@ string NeuralNetwork::write_expression_api() const
         }
 
         buffer << t << endl;
-
-        //side = 0;
     }
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "php");

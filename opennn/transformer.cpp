@@ -48,8 +48,16 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     layers_number = architecture(7);
 
-    set(input_length, context_length, inputs_dimension, context_dimension, embedding_depth, perceptron_depth, heads_number, layers_number);
+    set(input_length,
+        context_length,
+        inputs_dimension,
+        context_dimension,
+        embedding_depth,
+        perceptron_depth,
+        heads_number,
+        layers_number);
 }
+
 
 void Transformer::set(const initializer_list<Index>& architecture_list)
 {

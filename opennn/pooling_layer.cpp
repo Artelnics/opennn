@@ -52,7 +52,7 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_variables_dimensions, con
 
 Index PoolingLayer::get_neurons_number() const
 {
-    return get_outputs_rows_number() * get_outputs_columns_number();
+    return get_outputs_rows_number() * get_outputs_columns_number() * get_channels_number();
 }
 
 
@@ -62,9 +62,9 @@ dimensions PoolingLayer::get_outputs_dimensions() const
 {
     Index rows_number = get_outputs_rows_number();
     Index columns_number = get_outputs_columns_number();
-    Index depth = inputs_dimensions[2];
+    Index channels_number = inputs_dimensions[2];
 
-    return { rows_number, columns_number, depth };
+    return { rows_number, columns_number, channels_number };
 }
 
 
@@ -122,6 +122,14 @@ Index PoolingLayer::get_outputs_columns_number() const
     const Index inputs_columns_number = get_inputs_columns_number();
 
     return (inputs_columns_number - pool_columns_number + 2*padding)/column_stride + 1;
+}
+
+
+/// Returns the padding heigth.
+
+Index PoolingLayer::get_padding_heigth() const
+{
+    return padding_heigth;
 }
 
 
@@ -224,6 +232,15 @@ void PoolingLayer::set_name(const string& new_layer_name)
 void PoolingLayer::set_inputs_dimensions(const dimensions& new_inputs_dimensions)
 {
     inputs_dimensions = new_inputs_dimensions;
+}
+
+
+/// Sets the padding heigth.
+/// @param new_padding_heigth The desired heigth.
+
+void PoolingLayer::set_padding_heigth(const Index& new_padding_heigth)
+{
+    padding_heigth = new_padding_heigth;
 }
 
 
@@ -491,8 +508,8 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 
     // Forward propagation
 
-    const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
-        static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
+//    const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
+//        static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
 
     // Back propagation
 
@@ -502,6 +519,8 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
     /// @todo calculate input derivatives (= deltas for previous layer)
+
+    //input_derivatives.device(*thread_pool_device) = 0;
 }
 
 

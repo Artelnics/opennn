@@ -37,14 +37,14 @@
          <InputsNumber>5</InputsNumber>
          <NeuronsNumber>10</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>-0.237494 0.475424 0.273246 0.331822 0.207652 0.28683 0.81502 0.662762 0.103104 0.551086 0.402935 0.701968 0.183547 0.161019 0.38084 0.256053 -0.134764 0.0431097 0.465406 -0.310993 1.03022 0.299739 0.460703 0.217246 0.961099 -0.210067 0.889043 0.641203 -0.0718783 1.00719 0.190253 0.0497835 0.688123 0.772832 0.290587 -0.0493369 0.180389 0.27387 0.973379 0.937931 0.861515 0.901562 0.682572 0.332775 0.0598009 0.609163 -0.0172566 0.868256 0.921814 0.0689697 -0.133821 0.765565 0.230807 0.180955 0.850346 0.455221 0.99593 0.69638 0.377391 0.0327805</Parameters>
+         <Parameters>0.00104164 0.0347911 0.0414467 -0.016968 0.0410217 0.0288753 0.129842 0.139232 -0.0593722 0.101256 0.0326293 0.137952 0.174569 -0.0691102 0.111836 -0.04049 0.128901 0.298001 -0.0391023 0.120144 -0.00206686 -0.0640928 -0.0951827 0.0531945 -0.083536 0.0373775 0.138991 0.158404 -0.0662042 0.111262 -0.501179 0.0948785 0.317873 0.0573041 0.0547072 0.00595215 0.0950467 0.129549 -0.0410503 0.0963656 0.013146 0.0268585 0.032059 -0.00563042 0.0320868 0.744262 0.241364 0.488199 -0.132239 0.274402 0.017487 0.00647834 0.0140508 0.190203 -0.00710907 -0.000242638 -0.365925 0.0278028 0.0219545 -0.436289</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
          <LayerName>perceptron_layer_2</LayerName>
          <InputsNumber>10</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-         <Parameters>0.346765 -0.574396 -0.105433 0.513394 -0.514077 0.308418 0.00786745 0.110302 -0.121047 -0.124655 0.303874</Parameters>
+         <Parameters>-0.0716737 -0.237193 -0.28242 -0.403847 0.157983 -0.26693 0.522348 -0.205437 -0.0521771 -0.973342 -0.0993684</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>
@@ -64,6 +64,13 @@
          </Item>
          <UseBoundingLayer>1</UseBoundingLayer>
       </BoundingLayer>
+      <LayersInputsIndices>
+         <LayerInputsIndices LayerIndex="1">-1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="2">0</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="3">1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="4">2</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="5">3</LayerInputsIndices>
+      </LayersInputsIndices>
    </Layers>
    <Outputs>
       <OutputsNumber>1</OutputsNumber>
