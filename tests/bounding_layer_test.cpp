@@ -76,7 +76,6 @@ void BoundingLayerTest::test_forward_propagate()
 
     outputs = bounding_layer_forward_propagation.outputs;
 
-
     assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test

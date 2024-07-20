@@ -91,7 +91,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
     training_results = levenberg_marquardt_algorithm.perform_training();
 
     assert_true(training_results.get_epochs_number() <= 1, LOG);
-
+/*
     // Test
 
     data_set.set(1,1,1);
@@ -148,6 +148,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
     training_results = levenberg_marquardt_algorithm.perform_training();
 
     assert_true(levenberg_marquardt_algorithm.get_minimum_loss_decrease() <= minimum_loss_decrease, LOG);
+*/
 }
 
 

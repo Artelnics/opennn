@@ -7,8 +7,8 @@
       <Input Index="4">petal_width</Input>
    </Inputs>
    <Layers>
-      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
-      <ScalingLayer>
+      <LayersTypes>Scaling2D Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer2D>
          <ScalingNeuronsNumber>4</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
             <Descriptives>4.3\7.9\5.84333\0.828066</Descriptives>
@@ -26,21 +26,26 @@
             <Descriptives>0.1\2.5\1.19933\0.762238</Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
-      </ScalingLayer>
+      </ScalingLayer2D>
       <PerceptronLayer>
          <LayerName>perceptron_layer_1</LayerName>
          <InputsNumber>4</InputsNumber>
-         <NeuronsNumber>3</NeuronsNumber>
+         <NeuronsNumber>5</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.0946495 0.261579 -0.124456 -0.926874 0.110657 -0.898096 0.485323 0.821016 -0.56336 -0.216393 -0.241243 -0.885878 1.4765 0.6445 1.64926</Parameters>
+         <Parameters>0.741026 -0.663611 1.45154 1.18765 0.358502 -0.479151 1.45525 1.41857 -1.69966 -0.537585 5.23326 1.88635 -1.0324 0.759658 0.998125 -0.328987 -1.43626 -0.571204 4.53171 1.84266 1.56629 1.46393 -3.62147 1.32703 -3.31407</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
-         <InputsNumber>3</InputsNumber>
+         <InputsNumber>5</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>Softmax</ActivationFunction>
-         <Parameters>3.34401 -4.21733 2.15817 0.766028 1.5728 0.48875 -4.00392 2.97112 -2.37397 -0.504096 1.02967 -0.721184</Parameters>
+         <Parameters>-1.31863 -1.04724 -0.588188 1.06427 -1.15993 3.69865 3.36128 -3.13371 -2.1884 -4.19999 0.970966 1.80889 2.57949 1.33811 2.70513 1.68626 -0.219814 1.41986</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
+      <LayersInputsIndices>
+         <LayerInputsIndices LayerIndex="1">-1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="2">0</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="3">1</LayerInputsIndices>
+      </LayersInputsIndices>
    </Layers>
    <Outputs>
       <OutputsNumber>3</OutputsNumber>

@@ -63,7 +63,7 @@ public:
 
    void set_weights();
 
-   void set_normalization_coefficient();
+   void set_normalization_coefficient() final;
 
    void set_data_set(DataSet*) final;
 

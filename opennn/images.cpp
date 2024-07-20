@@ -58,56 +58,17 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     Tensor<unsigned char, 3> image(image_height, image_width, channels_number);
 
-    for (Index i = 0; i < image_height; ++i) {
-        for (Index j = 0; j < image_width; ++j) {
-            for (Index k = 0; k < channels_number; ++k) {
-                image(i, j, k) = image_data[(i * (image_width * channels_number + padding)) + (j * channels_number) + k];
+    for (Index i = 0; i < image_height; ++i)
+    {
+        for (Index j = 0; j < image_width; ++j)
+        {
+            for (Index k = 0; k < channels_number; ++k)
+            {
+                image(i, j, k) = image_data[i * (image_width * channels_number + padding) + j * channels_number + k];
             }
         }
     }
     
-    /* @todo
-    if(channels_number == 3) // Reshaping and sorting of the pixel data from the BMP image
-    {
-        const int rows_number = int(image_height);
-        const int columns_number = int(image_width);
-
-        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image_data, rows_number, columns_number, padding);
-
-        const Eigen::array<Index, 3> dims_3D = {channels, rows_number, columns_number};
-        const Eigen::array<Index, 1> dims_1D = {rows_number*columns_number};
-
-        Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
-        Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
-        Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D); // row_major
-
-        Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
-        Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
-        Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
-
-        red_channel_flatted_sorted.setZero();
-        green_channel_flatted_sorted.setZero();
-        blue_channel_flatted_sorted.setZero();
-
-        sort_channel(red_channel_flatted, red_channel_flatted_sorted, columns_number);
-        sort_channel(green_channel_flatted, green_channel_flatted_sorted, columns_number);
-        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted, columns_number);
-
-        Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
-        red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
-
-        image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
-
-        Tensor<type, 1> image_type(image.size());
-
-        for(Index i = 0; i < image_type.size(); i++)
-        {
-            image_type(i) = (type)image(i);
-        }
-
-        image_data(0) = image_type;
-    }*/
-
     return image;
 }
 
@@ -118,7 +79,7 @@ ImageData read_bmp_image_gpt(const std::string& filename)
 
     if (!file.is_open())
     {
-        throw std::runtime_error("Couldn't open the file.");
+        throw std::runtime_error("Cannot open file.");
     }
 
     char header[54];
@@ -151,9 +112,9 @@ ImageData read_bmp_image_gpt(const std::string& filename)
         const Eigen::array<Index, 3> dims_3D = {channels, rows_number, columns_number};
         const Eigen::array<Index, 1> dims_1D = {rows_number*columns_number};
 
-        Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D);
-        Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D);
-        Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D);
+        Tensor<unsigned char, 1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D);
+        Tensor<unsigned char, 1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D);
+        Tensor<unsigned char, 1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D);
 
         Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
         Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
@@ -170,6 +131,7 @@ ImageData read_bmp_image_gpt(const std::string& filename)
         Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
 
         red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0);
+
         image_data = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
     }
 
@@ -181,9 +143,7 @@ ImageData read_bmp_image_gpt(const std::string& filename)
 
 void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& columns_number)
 {
-    unsigned char* aux_row = nullptr;
-
-    aux_row = (unsigned char*)malloc(size_t(columns_number*sizeof(unsigned char)));
+    unsigned char* aux_row = (unsigned char*)malloc(size_t(columns_number*sizeof(unsigned char)));
 
     const int rows_number = int(original.size()/ columns_number);
 
@@ -203,7 +163,8 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 }
 
 
-void reflect_image_x(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& input,
+void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
+                     const Tensor<type, 3>& input,
                      Tensor<type, 3>& output)
 {
     const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
@@ -212,7 +173,8 @@ void reflect_image_x(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>
 }
 
 
-void reflect_image_y(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& input,
+void reflect_image_y(const ThreadPoolDevice* thread_pool_device,
+                     const Tensor<type, 3>& input,
                      Tensor<type, 3>& output)
 {
     const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
@@ -223,7 +185,8 @@ void reflect_image_y(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>
 
 // @todo Improve performance
 
-void rotate_image(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& input,
+void rotate_image(const ThreadPoolDevice* thread_pool_device,
+                  const Tensor<type, 3>& input,
                   Tensor<type, 3>& output,
                   const type& angle_degree)
 {
@@ -285,7 +248,8 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& i
 }
 
 
-void translate_image(Tensor<type, 3>& input,
+void translate_image(const ThreadPoolDevice* thread_pool_device,
+                     const Tensor<type, 3>& input,
                      Tensor<type, 3>& output,
                      const Index& shift)
 {
@@ -327,13 +291,15 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
 {
     Tensor<unsigned char, 1> data_without_padding(image.size() - padding*rows_number);
 
+    unsigned char* image_data = image.data();
+
     const int channels = 3;
 
     if(rows_number % 4 == 0)
     {
         copy(/*execution::par,*/ 
-             image.data(), 
-             image.data() + columns_number * channels * rows_number,
+             image_data,
+             image_data + columns_number * channels * rows_number,
              data_without_padding.data());
     }
     else
@@ -343,21 +309,26 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
             if(i == 0)
             {
                 copy(/*execution::par,*/ 
-                    image.data(), image.data() + columns_number * channels, data_without_padding.data());
-
+                     image_data,
+                     image_data + columns_number * channels, data_without_padding.data());
             }
             else
             {
                 copy(/*execution::par,*/ 
-                    image.data() + channels * columns_number * i + padding * i,
-                    image.data() + channels * columns_number * (i + 1) + padding * i,
+                    image_data + channels * columns_number * i + padding * i,
+                    image_data + channels * columns_number * (i + 1) + padding * i,
                     data_without_padding.data() + channels * columns_number * i);
-
             }
         }
     }
 
     return data_without_padding;
+}
+
+
+void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&)
+{
+
 }
 
 

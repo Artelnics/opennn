@@ -321,8 +321,6 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
                                          .reshape(range_4)
                                          .broadcast(expand_softmax_dim);
 
-    /// @todo put this in the above expression?
-
     y.device(*thread_pool_device) = y.exp();
 
     y.device(*thread_pool_device) = y / y.sum(softmax_dimension)

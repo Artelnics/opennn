@@ -8,6 +8,7 @@
 
 #ifndef SET_H
 #define SET_H
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 // System includes
@@ -37,6 +38,7 @@
 #include "config.h"
 #include "correlation.h"
 #include "scaling.h"
+#include "strings_utilities.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -261,7 +263,7 @@ public:
 
     // Create Box plot from histogram
 
-    Tensor<type, 1> box_plot_from_histogram(Histogram&, const Index&) const;
+    Tensor<type, 1> box_plot_from_histogram(const Histogram&, const Index&) const;
 
     // Raw variables get methods
 
@@ -571,7 +573,7 @@ public:
 
     bool has_binary_raw_variables() const;
     bool has_categorical_raw_variables() const;
-    bool has_time_raw_variables() const;
+    Index count_time_raw_variables() const;
 
     //bool has_time_time_series_raw_variables() const;
 

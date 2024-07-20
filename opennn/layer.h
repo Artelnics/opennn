@@ -133,13 +133,6 @@ public:
                                    LayerForwardPropagation*,
                                    LayerBackPropagationLM*) const {}
 
-    /// @todo refactor to back_propagate 
-
-    virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
-        LayerBackPropagationLM*,
-        LayerBackPropagationLM*) const {}
-
-
     virtual void insert_gradient(LayerBackPropagation*,
                                  const Index&,
                                  Tensor<type, 1>&) const {}

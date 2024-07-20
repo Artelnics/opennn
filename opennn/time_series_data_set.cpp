@@ -326,7 +326,7 @@ void TimeSeriesDataSet::set_group_by_column(const string& new_group_by_column)
 
 void TimeSeriesDataSet::transform_time_series_raw_variables()
 {
-    cout << "Transforming time series raw_variables..." << endl;
+    cout << "Transforming time series raw variables..." << endl;
 
     // Categorical raw_variables?
 
@@ -336,14 +336,19 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
 
     Tensor<RawVariable, 1> new_raw_variables;
 
-    if(has_time_raw_variables())
+    const Index time_raw_variables_number = count_time_raw_variables();
+
+    if(time_raw_variables_number == 0)
     {
-        // @todo check if there are more than one time raw_variable
+        new_raw_variables.resize(raw_variables_number*(lags_number+steps_ahead));
+    }
+    else if(time_raw_variables_number == 1)
+    {
         new_raw_variables.resize((raw_variables_number-1)*(lags_number+steps_ahead));
     }
     else
     {
-        new_raw_variables.resize(raw_variables_number*(lags_number+steps_ahead));
+        throw runtime_error("More than 1 time variable.");
     }
 
     Index lag_index = lags_number - 1;
@@ -417,11 +422,13 @@ void TimeSeriesDataSet::transform_time_series_data()
     const Index old_samples_number = data.dimension(0);
     const Index old_variables_number = data.dimension(1);
 
-
     // steps_ahead = 1;
 
     const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
-    const Index new_variables_number = has_time_raw_variables() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
+
+    const Index new_variables_number = count_time_raw_variables() == 1
+                                           ? (old_variables_number-1) * (lags_number + steps_ahead)
+                                           : old_variables_number * (lags_number + steps_ahead);
 
     time_series_data = data;
 
@@ -443,7 +450,6 @@ void TimeSeriesDataSet::transform_time_series_data()
                 time_series_data.data() + i + j * old_samples_number,
                 time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
                 data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number);
-
         }
     }
 
