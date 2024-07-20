@@ -497,9 +497,9 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
 
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
-    /// @todo 
+    /// @todo
 
-//    squared_errors.device(*thread_pool_device) = 0;
+    //squared_errors.device(*thread_pool_device) = 0;
 }
 
 }

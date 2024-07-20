@@ -683,7 +683,7 @@ TrainingResults ConjugateGradient::perform_training()
 
     // Data set
 
-    cout << "----- ConjugateGradient ----" << endl;
+    //cout << "----- ConjugateGradient ----" << endl;
 
     DataSet* data_set = loss_index->get_data_set();
 

@@ -381,14 +381,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     if(neural_network->has_long_short_term_memory_layer()
     || neural_network->has_recurrent_layer())
         shuffle = false;
 
     // Main loop
-    
+
     optimization_data.iteration = 1;
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
@@ -426,7 +426,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
-            
+
             training_error += training_back_propagation.error;
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
 

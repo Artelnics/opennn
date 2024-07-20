@@ -51,8 +51,9 @@ namespace opennn
     void reflect_image_x(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&);
     void reflect_image_y(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&);
     void rotate_image(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&, const type&);
-    void rescale_image(const ThreadPoolDevice*, Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&);
-    void translate_image(const ThreadPoolDevice*, Tensor<type, 3>&, Tensor<type, 3>&, const Index&);
+    void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&);
+    void translate_image(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&, const Index&);
+
     Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image, const int& rows_number, const int& columns_number, const int& padding);
 
     //const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};

@@ -56,22 +56,14 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 
     Correlation correlation;
 
-    cout << "1" << endl;
-
     const Index x_rows = x.dimension(0);
     const Index x_raw_variables = x.dimension(1);
     const Index y_raw_variables = y.dimension(1);
 
-    cout << "2" << endl;
-
     const bool  x_binary = is_binary(x);
     const bool  y_binary = is_binary(y);
 
-    cout << "3" << endl;
-
     const Eigen::array<Index, 1> vector{{x_rows}};
-
-    cout << "4" << endl;
 
     if(x_raw_variables == 1 && y_raw_variables == 1)
     {
@@ -116,7 +108,8 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
         else if(x_binary && y_binary)
         {
             return opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
-        }    
+        }
+
     }
 
     else if(x_raw_variables != 1 && y_raw_variables == 1)
@@ -138,8 +131,6 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     {
         throw runtime_error("Correlations Exception: Unknown case.");
     }
-
-    cout << "Termina? correlation" << endl;
 
     return correlation;
 }
@@ -466,20 +457,20 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
 Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlations)
 {
     Tensor<type, 2> values;
-    /*
+
     const Index rows_number = correlations.dimension(0);
     const Index raw_variables_number = correlations.dimension(1);
-    Tensor<type, 2> values(rows_number, raw_variables_number);
+    Tensor<type, 2> values_(rows_number, raw_variables_number); /* Before "values" en all commented */
 
     for(Index i = 0; i < rows_number; i++)
     {
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            values(i,j) = correlations(i,j).r;
+            values_(i,j) = correlations(i,j).r;
         }
     }
-    */
-    return values;
+
+    return values_;
 }
 
 
@@ -783,15 +774,16 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 1>& y)
 {
-    cout << "empieza la función logiatic_corr_vec_vec" << endl;
     Correlation correlation;
 
-    pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
 
-    Tensor<type,1> x_filtered = filtered_elements.first;
-    Tensor<type,1> y_filtered = filtered_elements.second;
+    const Tensor<type,1> x_filtered = filtered_elements.first;
+    const Tensor<type,1> y_filtered = filtered_elements.second;
 
-    if(x_filtered.size() == 0)
+    if(x_filtered.size() == 0
+    || is_constant(x_filtered)
+    || is_constant(y_filtered))
     {
         correlation.r = type(NAN);
 
@@ -799,8 +791,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
         return correlation;
     }
-
-    cout << "logistic_correlation_vector_vector" << endl;
 
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
     DataSet data_set(data);
@@ -812,6 +802,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.get_scaling_layer_2d()->set_display(false);
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+
+    neural_network.set_parameters_constant(type(0.001));
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -828,15 +820,13 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     // Logistic correlation
 
     const Eigen::array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
-
-    cout << "correlation.r: " << correlation.r << endl;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
@@ -852,11 +842,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
-    // no r correlation here
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
-
-    cout << "termina la función logiatic_corr_vec_vec" << endl;
 
     return correlation;
 }
@@ -866,14 +853,12 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
                                                         const Tensor<type, 1>& x,
                                                         const Tensor<type, 1>& y)
 {
-    cout << "Empieza la función spearman_logiatic_corr_vec_vec" << endl;
-
     Correlation correlation;
 
     pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
 
-    Tensor<type,1> x_filtered = filtered_elements.first;
-    Tensor<type,1> y_filtered = filtered_elements.second;
+    const Tensor<type,1> x_filtered = filtered_elements.first;
+    const Tensor<type,1> y_filtered = filtered_elements.second;
 
     if(x_filtered.size() == 0)
     {
@@ -884,9 +869,9 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
         return correlation;
     }
 
-    Tensor<type,1> x_rank = calculate_spearman_ranks(x_filtered);
+    const Tensor<type,1> x_rank = calculate_spearman_ranks(x_filtered);
 
-    const Tensor<type, 2> data = opennn::assemble_vector_vector(x_rank, y_filtered);
+    const Tensor<type, 2> data = assemble_vector_vector(x_rank, y_filtered);
 
     DataSet data_set(data);
     data_set.set_training();
@@ -909,11 +894,11 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     training_strategy.perform_training();
 
-    Tensor<type, 2> inputs = data_set.get_input_data();
+    const Tensor<type, 2> inputs = data_set.get_input_data();
 
     const Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     // Logistic correlation
 
@@ -922,8 +907,8 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-/*
-    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
+
+    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, x_rank.size());
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
 
@@ -937,8 +922,6 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.b = coefficients(1);
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
-*/
-    cout << "Empieza la función spearman_logiatic_corr_vec_vec" << endl;
 
     return correlation;
 }
@@ -949,11 +932,12 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
                                                const Tensor<type, 2>& y)
 {
     Correlation correlation;
+    correlation.form = Correlation::Form::Logistic;
 
-    pair<Tensor<type,1>, Tensor<type,2>> filtered_elements = opennn::filter_missing_values_vector_matrix(x, y);
+    const pair<Tensor<type,1>, Tensor<type,2>> filtered_elements = opennn::filter_missing_values_vector_matrix(x, y);
 
-    Tensor<type,1> x_filtered = filtered_elements.first;
-    Tensor<type,2> y_filtered = filtered_elements.second;
+    const Tensor<type,1> x_filtered = filtered_elements.first;
+    const Tensor<type,2> y_filtered = filtered_elements.second;
 
     if( y_filtered.dimension(1) > 50)
     {
@@ -961,16 +945,12 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
         correlation.r = type(NAN);
 
-        correlation.form = Correlation::Form::Logistic;
-
         return correlation;
     }
 
     if(x_filtered.size() == 0)
     {
         correlation.r = type(NAN);
-
-        correlation.form = Correlation::Form::Logistic;
 
         return correlation;
     }
@@ -981,7 +961,9 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     input_raw_variables_indices(0) = type(0);
 
     Tensor<Index, 1> target_raw_variables_indices(y_filtered.dimension(1));
-    for(Index i = 0; i < y_filtered.dimension(1); i++) target_raw_variables_indices(i) = i + 1;
+
+    for(Index i = 0; i < y_filtered.dimension(1); i++)
+        target_raw_variables_indices(i) = i + 1;
 
     DataSet data_set(data);
 
@@ -992,7 +974,9 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, target_variables_number-1, target_variables_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+                                 {input_variables_number, target_variables_number-1, target_variables_number});
+
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_2d()->set_display(false);
 
@@ -1012,26 +996,24 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     // Logistic correlation
 
-    Tensor<type, 2> inputs = data_set.get_input_data();
+    const Tensor<type, 2> inputs = data_set.get_input_data();
 
-    Tensor<type, 2> targets = data_set.get_target_data();
+    const Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-/*
-    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
+
+    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, x_filtered.size());
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
 
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
-    correlation.form = Correlation::Form::Logistic;
-*/
     return correlation;
 }
 
@@ -1049,23 +1031,22 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
                                                const Tensor<type, 2>& y)
 {
     Correlation correlation;
+    correlation.form = Correlation::Form::Logistic;
 
     // Scrub missing values
 
-    pair<Tensor<type,2>, Tensor<type,2>> filtered_matrixes = filter_missing_values_matrix_matrix(x,y);
+    const pair<Tensor<type,2>, Tensor<type,2>> filtered_matrixes = filter_missing_values_matrix_matrix(x,y);
 
-    Tensor<type,2> x_filtered = filtered_matrixes.first;
-    Tensor<type,2> y_filtered = filtered_matrixes.second;
+    const Tensor<type,2> x_filtered = filtered_matrixes.first;
+    const Tensor<type,2> y_filtered = filtered_matrixes.second;
 
     if(x.dimension(0)  == y.dimension(0) && x.dimension(1)  == y.dimension(1))
     {
-        Tensor<bool, 0> are_equal = ( x_filtered == y_filtered).all();
+        const Tensor<bool, 0> are_equal = (x_filtered == y_filtered).all();
 
         if(are_equal(0))
         {
             correlation.r = type(1);
-
-            correlation.form = Correlation::Form::Logistic;
 
             return correlation;
         }
@@ -1077,17 +1058,12 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
         correlation.r = type(NAN);
 
-        correlation.form = Correlation::Form::Logistic;
-
         return correlation;
     }
-
 
     if(x_filtered.size() == 0 && y_filtered.size() == 0)
     {
         correlation.r = type(NAN);
-
-        correlation.form = Correlation::Form::Logistic;
 
         return correlation;
     }
@@ -1095,15 +1071,17 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x_filtered, y_filtered);
 
     Tensor<Index, 1> input_raw_variables_indices(x_filtered.dimension(1));
+
     for(Index i = 0; i < x_filtered.dimension(1); i++)
     {
-            input_raw_variables_indices(i) = i;
+        input_raw_variables_indices(i) = i;
     }
 
     Tensor<Index, 1> target_raw_variables_indices(y_filtered.dimension(1));
+
     for(Index i = 0; i < y_filtered.dimension(1); i++)
     {
-            target_raw_variables_indices(i) = x_filtered.dimension(1)+i;
+        target_raw_variables_indices(i) = x_filtered.dimension(1)+i;
     }
 
     DataSet data_set(data);
@@ -1115,8 +1093,11 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, target_variables_number-1,target_variables_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+                                 {input_variables_number, target_variables_number-1,target_variables_number});
+
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+
     neural_network.get_scaling_layer_2d()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -1135,26 +1116,26 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     // Logistic correlation
 
-    Tensor<type, 2> inputs = data_set.get_input_data();
+    const Tensor<type, 2> inputs = data_set.get_input_data();
 
-    Tensor<type, 2> targets = data_set.get_target_data();
+    const Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-/*
-    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
+
+    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.dimension(0));
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
 
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
     correlation.form = Correlation::Form::Logistic;
-*/
+
     return correlation;
 }
 

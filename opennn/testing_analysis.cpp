@@ -1520,9 +1520,14 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     // Sort by ascending values of outputs vector
 
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
-    iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
-    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+    Index* sorted_indices_data = sorted_indices.data();
+
+    iota(sorted_indices_data, sorted_indices_data + sorted_indices.size(), 0);
+
+    stable_sort(sorted_indices_data,
+                sorted_indices_data + sorted_indices.size(),
+                [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
 
     Tensor<type, 2> roc_curve(points_number + 1, 3);
     roc_curve.setZero();
@@ -1564,8 +1569,8 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
             }
         }
 
-        roc_curve(i,0) = type(1) - type(true_positive)/(type(true_positive + false_negative));
-        roc_curve(i,1) = type(true_negative)/(type(true_negative + false_positive));
+        roc_curve(i,0) = type(1) - type(true_positive)/type(true_positive + false_negative);
+        roc_curve(i,1) = type(true_negative)/type(true_negative + false_positive);
         roc_curve(i,2) = type(threshold);
 
         if(isnan(roc_curve(i,0)) )

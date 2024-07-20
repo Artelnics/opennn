@@ -1,4 +1,3 @@
-
 #ifndef TENSORS_H
 #define TENSORS_H
 
@@ -59,8 +58,8 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
 void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
-void sum_matrices(ThreadPoolDevice*, const TensorMap<Tensor<type, 1>>&, Tensor<type, 3>&);
-void sum_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
+//void sum_matrices(ThreadPoolDevice*, const TensorMap<Tensor<type, 1>>&, Tensor<type, 3>&);
+//void sum_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
 void substract_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void substract_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
@@ -82,12 +81,12 @@ void multiply_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2
 void batch_matrix_multiplication(ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 void batch_matrix_multiplication(ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 3>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+//void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+//void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 3>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 
-void self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
-void self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+//void self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
+//void self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
 Tensor<type, 2> self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&);
 
@@ -96,7 +95,7 @@ Tensor<type, 2> self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&
 
 void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
-void divide_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
+//void divide_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
 // Checking
 
@@ -106,7 +105,7 @@ bool has_NAN(Tensor<type, 3>&);
 bool has_NAN(Tensor<type, 4>&);
 
 bool is_zero(const Tensor<type, 1>&);
-bool is_zero(const Tensor<type,1>&, const type&);
+//bool is_zero(const Tensor<type,1>&, const type&);
 
 bool is_binary(const Tensor<type, 2>&);
 
@@ -130,7 +129,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>
 Index count_NAN(const Tensor<type, 1>&);
 Index count_NAN(const Tensor<type, 2>&);
 
-Index count_true(const Tensor<bool, 1>&);
+//Index count_true(const Tensor<bool, 1>&);
 
 Index count_empty(const Tensor<string, 1>&);
 
@@ -142,38 +141,38 @@ Index count_greater_than(const Tensor<Index, 1>&, const Index&);
 
 // Serialization
 
-void save_csv(const Tensor<type,2>&, const string&);
+//void save_csv(const Tensor<type,2>&, const string&);
 
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 
-Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
-Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
+//Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
+//Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
 
-Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
+//Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
 
-Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>&, const double&);
+//Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>&, const double&);
 
 Tensor<Index, 1> get_elements_greater_than(const Tensor<Index, 1>&, const Index&);
 Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>&, const Index&);
 
-void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
-void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
-void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
+//void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
+//void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
+//void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
 
 Tensor<string, 1> get_first(const Tensor<string,1>&, const Index&);
 Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index&);
 
-void scrub_missing_values(Tensor<type, 2>&, const type&);
+//void scrub_missing_values(Tensor<type, 2>&, const type&);
 
 Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
 
 // Kronecker product
 
 Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&);
-/*
-void kronecker_product(const Tensor<type, 1>&, Tensor<type, 2>&);
-*/
+
+//void kronecker_product(const Tensor<type, 1>&, Tensor<type, 2>&);
+
 
 // L1 norm
 
@@ -207,6 +206,7 @@ void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
 // Fill
 
 void fill_tensor_data(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, type*);
+void fill_tensor_data_row_major(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, type*);
 
 // Contain
 

@@ -26,14 +26,14 @@ using namespace opennn;
 int main()
 {
     try
-    {       
+    {
         cout << "OpenNN. Iris Plant Example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
 
-        DataSet data_set("data/iris_plant_original.csv", ';', true);
+        DataSet data_set("../data/iris_plant_original.csv", ';', true);
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
