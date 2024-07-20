@@ -156,7 +156,8 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 kernels_rows_number,
                                                 kernels_columns_number,
                                                 kernels_channels_number);
-
+        //cout << "inputs:\n" << inputs << endl;
+        //cout << "kernel:\n" << kernel << endl;
         TensorMap<Tensor<type, 4>> convolution(convolutions_data + kernel_index*single_output_size,
                                                batch_samples_number,
                                                outputs_rows_number,
@@ -164,8 +165,8 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                1);
 
         convolution.device(*thread_pool_device)
-                = inputs.convolve(kernel, convolutions_dimensions)
-                + biases(kernel_index);
+            = inputs.convolve(kernel, convolutions_dimensions)
+            + biases(kernel_index);
     }
 }
 
@@ -482,11 +483,11 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     const Index kernel_synaptic_weights_number = kernels_channels_number*kernels_rows_number*kernels_columns_number;
 
     Tensor<type, 0> current_sum;
-
+    
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         current_sum.setZero();
-
+        
         TensorMap<Tensor<type, 3>> kernel_synaptic_weights_derivatives(synaptic_weights_derivatives_data + kernel_index*kernel_synaptic_weights_number,
                                                                        kernels_rows_number,
                                                                        kernels_columns_number,
@@ -536,6 +537,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     input_derivatives.setZero();
 
 
+    /*
 //    input_derivatives = error_combinations_derivatives.convolve(synaptic_weights,convolutions_dimensions);
 
     for (int image_index = 0; image_index < batch_samples_number; image_index++)
@@ -547,20 +549,12 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                 for (int col = 0; col < deltas_pair(0).second[1]; col++)
                 {
                      input_derivatives.chip(image_index, 0).chip(d, 0).slice(std::array<Index, 2>({row, col}), std::array<Index, 2>({kernels_rows_number, kernels_columns_number})) +=
-                             error_combinations_derivatives(row,col, d, image_index) * synaptic_weights.chip(d, 0);
+                             error_combinations_derivatives(row, col, d, image_index) * synaptic_weights.chip(d, 0);
                 }
             }
         }
     }
-
-    cout << "weights: " << endl << synaptic_weights << endl;
-    cout << "error comb derivatives: " << endl << error_combinations_derivatives << endl;
-    cout << "der: "  << endl << error_combinations_derivatives.convolve(synaptic_weights,convolutions_dimensions) << endl;
-
-    //input_derivatives.setRandom();
-    cout << "Last inputs derivatives: " << endl << input_derivatives << endl;
-
-    cout << "--------------------------------------------------------------------" << endl;
+    */
 }
 
 
@@ -776,7 +770,7 @@ Index ConvolutionalLayer::get_kernels_channels_number() const
 
 Index ConvolutionalLayer::get_kernels_number() const
 {
-    return synaptic_weights.dimension(1);
+    return synaptic_weights.dimension(0);
 }
 
 
@@ -880,18 +874,18 @@ Index ConvolutionalLayer::get_parameters_number() const
 void ConvolutionalLayer::set(const dimensions& new_inputs_dimensions,
                              const dimensions& new_kernels_dimensions)
 {
-    const Index kernels_rows_number = new_kernels_dimensions[0];
-    const Index kernels_columns_number = new_kernels_dimensions[1];
-    const Index kernels_channels_number = new_kernels_dimensions[2];
-    const Index kernels_number = new_kernels_dimensions[3];
-
+    const Index kernels_number = new_kernels_dimensions[0];
+    const Index kernels_rows_number = new_kernels_dimensions[1];
+    const Index kernels_columns_number = new_kernels_dimensions[2];
+    const Index kernels_channels_number = new_kernels_dimensions[3];
+    
     biases.resize(kernels_number);
     biases.setRandom();
 
-    synaptic_weights.resize(kernels_rows_number,
+    synaptic_weights.resize(kernels_number,
+                            kernels_rows_number,
                             kernels_columns_number,
-                            kernels_channels_number,
-                            kernels_number);
+                            kernels_channels_number);
 
     synaptic_weights.setRandom();
 
@@ -1216,7 +1210,7 @@ Index ConvolutionalLayer::get_synaptic_weights_number() const
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[1];
+    return inputs_dimensions[0];
 }
 
 
@@ -1224,7 +1218,7 @@ Index ConvolutionalLayer::get_inputs_rows_number() const
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[2];
+    return inputs_dimensions[1];
 }
 
 
@@ -1232,7 +1226,7 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
 
 Index ConvolutionalLayer::get_inputs_channels_number() const
 {
-    return inputs_dimensions[3];
+    return inputs_dimensions[2];
 }
 
 //void ConvolutionalLayer::calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const
@@ -1318,7 +1312,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    for(Index i = 0; i < static_cast<Index>(inputs_dimensions.size()); i++)
+    for(Index i = 0; i < Index(inputs_dimensions.size()); i++)
     {
         buffer << inputs_dimensions[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
@@ -1337,7 +1331,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    for(Index i = 0; i < static_cast<Index>(inputs_dimensions.size()); i++)
+    for(Index i = 0; i < Index(inputs_dimensions.size()); i++)
     {
         buffer << get_outputs_dimensions()[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
@@ -1665,6 +1659,7 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
         inputs_channels_number);
 
     outputs_data = outputs.data();
+
 }
 
 
@@ -1709,25 +1704,22 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     const Index inputs_columns_number = convolutional_layer->get_inputs_columns_number();
     const Index inputs_channels_number = convolutional_layer->get_inputs_channels_number();
 
+    const Index kernels_number = convolutional_layer->get_kernels_number();
     const Index kernesl_rows_number = convolutional_layer->get_kernels_rows_number();
     const Index kernels_columns_number = convolutional_layer->get_kernels_columns_number();
-    const Index kernels_number = convolutional_layer->get_kernels_number();
     const Index kernels_channels_number = convolutional_layer->get_kernels_channels_number();
 
-    const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-    const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
-
-    error_combinations_derivatives.resize(batch_samples_number,
-        outputs_rows_number,
-        outputs_columns_number,
-        kernels_number);
+    error_combinations_derivatives.resize(kernels_number,
+        kernesl_rows_number,
+        kernels_columns_number,
+        kernels_channels_number);
 
     biases_derivatives.resize(kernels_number);
 
-    synaptic_weights_derivatives.resize(kernesl_rows_number,
+    synaptic_weights_derivatives.resize(kernels_number,
+        kernesl_rows_number,
         kernels_columns_number,
-        kernels_channels_number,
-        kernels_number);
+        kernels_channels_number);
 
     input_derivatives.resize(batch_samples_number,
         inputs_rows_number,

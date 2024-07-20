@@ -365,9 +365,9 @@ void LossIndex::back_propagate(const Batch& batch,
     // Loss index
 
     calculate_error(batch, forward_propagation, back_propagation);
-    
+
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
-    
+
     assemble_layers_error_gradient(back_propagation);
 
     // Loss
@@ -700,6 +700,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     // Hidden layers
 
+    
     calculate_output_delta(batch, forward_propagation, back_propagation);
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
@@ -958,7 +959,7 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 
     Index size = batch_samples_number;
 
-    for (Index i = 0; i < static_cast<Index>(output_dimensions.size()); i++)
+    for (Index i = 0; i < Index(output_dimensions.size()); i++)
     {
         output_deltas_dimensions[i + 1] = output_dimensions[i];
 
@@ -1290,7 +1291,7 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
     output_deltas_dimensions[0] = batch_samples_number;
     
     Index size = batch_samples_number;
-    for (Index i = 0; i < static_cast<Index>(output_dimensions.size()); i++)
+    for (Index i = 0; i < Index(output_dimensions.size()); i++)
     {
         output_deltas_dimensions[i + 1] = output_dimensions[i];
 

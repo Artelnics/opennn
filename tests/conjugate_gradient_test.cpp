@@ -271,7 +271,9 @@ void ConjugateGradientTest::test_perform_training()
     training_results = conjugate_gradient.perform_training();
 
     //assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
+
 }
+
 
 
 void ConjugateGradientTest::run_test_case()

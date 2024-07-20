@@ -356,6 +356,7 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
+
     if(loss_index->get_error_type() == "MINKOWSKI_ERROR")
     {
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
@@ -370,14 +371,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     }
 
     ostringstream buffer;
-
-    // Control sentence
-
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
 
     // Start training
 
@@ -435,8 +428,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
+    const Tensor<pair<type*, dimensions>, 1> training_inputs_pair = training_batch.get_inputs_pair();
+
     Batch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
+
+    const Tensor<pair<type*, dimensions>, 1> selection_inputs_pair = selection_batch.get_inputs_pair();
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
@@ -475,7 +472,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch.get_inputs_pair(),
+        neural_network->forward_propagate(training_inputs_pair,
                                           training_forward_propagation,
                                           is_training);
         
@@ -489,7 +486,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         
         if(has_selection)
         {           
-            neural_network->forward_propagate(selection_batch.get_inputs_pair(),
+            neural_network->forward_propagate(selection_inputs_pair,
                                               selection_forward_propagation,
                                               is_training);
 
