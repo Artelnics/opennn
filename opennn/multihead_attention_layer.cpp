@@ -436,7 +436,6 @@ void MultiheadAttentionLayer::set_parameters_random()
     const type minimum = type(-0.2);
     const type maximum = type(0.2);
 
-
     /// @todo in Tensor form
     /// @todo can we reduce the number of loops for things with the same size?
 
@@ -1067,8 +1066,6 @@ void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions
 
         head_key_weights_derivatives.device(*thread_pool_device)
             = context.contract(head_key_derivatives, transformation_weights_derivatives_contraction_indices);
-
-        /// @todo try to simplify
 
         for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {

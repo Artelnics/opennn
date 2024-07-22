@@ -223,8 +223,8 @@ public:
         void set_categories_uses(const Tensor<string, 1>&);
         void set_categories_uses(const DataSet::VariableUse&);
 
-        void from_XML(const tinyxml2::XMLDocument&);
-        void write_XML(tinyxml2::XMLPrinter&) const;
+        virtual void from_XML(const tinyxml2::XMLDocument&);
+        virtual void write_XML(tinyxml2::XMLPrinter&) const;
 
         void print() const;
     };
@@ -282,7 +282,7 @@ public:
     Index get_unused_raw_variables_number() const;
     Index get_used_raw_variables_number() const;
 
-    Index get_variables_less_target() const;
+    Index get_input_and_unused_variables_number() const;
 
     Tensor<Index, 1> get_raw_variables_index(const Tensor<string, 1>&) const;
 
@@ -655,7 +655,8 @@ public:
 
     // Inputs correlations
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variables_correlations(const bool& = true, const bool& = false) const;
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variables_correlations(const bool& = true,
+                                                                                 const bool& = false) const;
 
     void print_inputs_correlations() const;
 
