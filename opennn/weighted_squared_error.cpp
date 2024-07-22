@@ -308,7 +308,6 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 void WeightedSquaredError::calculate_error_gradient_lm(const Batch& batch,
                                                        BackPropagationLM& back_propagation_lm) const
 {
-   /*
     // Data set
 
     const Index total_samples_number = data_set->get_samples_number();
@@ -324,17 +323,16 @@ void WeightedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    const type coefficient = (type(2)* type(total_samples_number)) / (type(batch_samples_number) * normalization_coefficient);
+    const type coefficient = type(2*total_samples_number) / type(batch_samples_number*normalization_coefficient);
 
     gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
-    */
+    
 }
 
 
 void WeightedSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                       BackPropagationLM& back_propagation_lm) const
 {
-    /*
     // Data set
 
     const Index total_samples_number = data_set->get_samples_number();
@@ -349,10 +347,10 @@ void WeightedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
-    const type coefficient = (type(2)* type(total_samples_number))/(type(batch_samples_number)*normalization_coefficient);
+    const type coefficient = type(2* total_samples_number)/type(batch_samples_number*normalization_coefficient);
 
     hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
-    */
+    
 }
 
 

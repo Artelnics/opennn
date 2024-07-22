@@ -1485,25 +1485,31 @@ map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
 }
 
 
-vector<int> get_split_indices(const string& word, const map<string, int>& current_tokens, bool include_joiner_token, const string& joiner)
+vector<int> get_split_indices(const string& word, 
+                              const map<string, int>& current_tokens, 
+                              bool include_joiner_token, 
+                              const string& joiner)
 {
     vector<int> indices;
     int start = 0;
 
     while (start < word.size())
     {
-        int end = word.size();
+        size_t end = word.size();
 
         while (end > start)
         {
             string subtoken = word.substr(start, end - start);
-            if (include_joiner_token && start > 0)    subtoken = joiner + subtoken;
+
+            if (include_joiner_token && start > 0)    
+                subtoken = joiner + subtoken;
 
             if (current_tokens.find(subtoken) != current_tokens.end())
             {
                 indices.push_back(end);
                 break;
             }
+
             end--;
         }
 
@@ -1689,7 +1695,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                 if (split_indices.empty()) continue;
             }
 
-            int start = 0;
+            size_t start = 0;
             for (int split_index : split_indices)
             {
                 for (int end = start + 1; end <= word.size(); ++end)
@@ -1697,7 +1703,8 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                     string subtoken = word.substr(start, end - start);
                     int length = subtoken.size();
 
-                    if (parameters.include_joiner_token && start > 0)    subtoken = parameters.joiner + subtoken;
+                    if (parameters.include_joiner_token && start > 0)    
+                        subtoken = parameters.joiner + subtoken;
 
                     subtokens[length][subtoken] += count;
                 }
@@ -1706,7 +1713,8 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
         }
 
         map<string, int> next_tokens;
-        for (int length = parameters.max_token_length; length > 0; --length)
+
+        for (size_t length = parameters.max_token_length; length > 0; --length)
         {
             for (const auto& [token, count] : subtokens[length])
             {
@@ -1714,8 +1722,9 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
 
                 if (token.size() > length)
                 {
-                    int joiner_length = parameters.joiner.size();
-                    for (int i = 1 + joiner_length; i <= length + joiner_length; ++i)
+                    const size_t joiner_length = parameters.joiner.size();
+
+                    for (size_t i = 1 + joiner_length; i <= length + joiner_length; ++i)
                     {
                         string prefix = token.substr(0, i);
 
@@ -1727,9 +1736,10 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                 {
                     for (int i = 1; i < length; ++i)
                     {
-                        string prefix = token.substr(0, i);
+                        const string prefix = token.substr(0, i);
 
-                        if (subtokens[i].find(prefix) != subtokens[i].end())    subtokens[i][prefix] -= count;
+                        if (subtokens[i].find(prefix) != subtokens[i].end())   
+                            subtokens[i][prefix] -= count;
                     }
                 }
             }
@@ -1747,18 +1757,19 @@ vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>
     int upper_bound,
     const WordpieceAlgorithmParameters& parameters)
 {
-    int threshold = (upper_bound + lower_bound) / 2;
+    const int threshold = (upper_bound + lower_bound) / 2;
 
-    vector<string> current_vocabulary = calculate_vocabulary_with_threshold(word_counts, threshold, parameters);
+    const vector<string> current_vocabulary = calculate_vocabulary_with_threshold(word_counts, threshold, parameters);
 
-    int current_vocabulary_size = current_vocabulary.size();
+    const int current_vocabulary_size = current_vocabulary.size();
 
     int slack = parameters.slack_ratio * parameters.vocabulary_size;
     if (slack < 0)    slack = 0;
 
-    bool is_within_slack = (current_vocabulary_size <= parameters.vocabulary_size) && (parameters.vocabulary_size - current_vocabulary_size <= slack);
+    const bool is_within_slack = (current_vocabulary_size <= parameters.vocabulary_size) && (parameters.vocabulary_size - current_vocabulary_size <= slack);
 
-    if (is_within_slack || lower_bound >= upper_bound || threshold <= 1)    return current_vocabulary;
+    if (is_within_slack || lower_bound >= upper_bound || threshold <= 1)    
+        return current_vocabulary;
 
     if (current_vocabulary_size > parameters.vocabulary_size)
         return calculate_vocabulary_binary_search(word_counts, threshold + 1, upper_bound, parameters);
@@ -1885,7 +1896,7 @@ void LanguageDataSet::load_documents(const string& path)
     Index tokens_number = 0;
 
     string delimiter = "";
-    char separator = get_separator_char();
+    const char separator = get_separator_char();
 
     while(file2.good())
     {
@@ -1900,10 +1911,11 @@ void LanguageDataSet::load_documents(const string& path)
             delimiter = "\"\"";
         }
 
-        if( line.find("\"" + separator) != string::npos) replace(line,"\"" + separator, "\"\"" + separator);
+        if( line.find("\"" + separator) != string::npos) 
+            replace(line,"\"" + separator, "\"\"" + separator);
 
         //tokens_number = count_tokens(line,delimiter + separator);
-        Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
+        const Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
         tokens_number = tokens.size();
 
         if(tokens_number == 1)
@@ -1923,13 +1935,13 @@ void LanguageDataSet::load_documents(const string& path)
 
                 throw runtime_error(buffer.str());
             }
+
             if(tokens(0).empty() && tokens(1).empty())  continue;
 
             document(lines_count) += " " + tokens(0);
             document_target(lines_count) += tokens(1);
             delimiter = "";
             lines_count++;
-
         }
 
         if(file2.peek() == EOF) break;
@@ -1958,7 +1970,7 @@ void LanguageDataSet::load_documents(const string& path)
 void LanguageDataSet::read_csv_3_language_model()
 {
     std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    ifstream file;
 
 #ifdef _WIN32
 

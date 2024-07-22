@@ -564,7 +564,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::calculate_samples_distances(type* 
 
 void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distances_vector,const Tensor<string, 1>& types_vector, const string& file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(distances_vector.size() != types_vector.size())
     {

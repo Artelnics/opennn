@@ -708,6 +708,36 @@ bool is_constant(const Tensor<type, 1>& vector)
 }
 
 
+bool is_constant(const Tensor<type, 2>& matrix)
+{
+    const Index size = matrix.size();
+
+    type first_not_nan_element = type(0);
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(isnan(matrix(i)))
+        {
+            continue;
+        }
+        else
+        {
+            first_not_nan_element = matrix(i);
+            break;
+        }
+    }
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(isnan(matrix(i))) continue;
+
+        if(abs(first_not_nan_element - matrix(i)) > numeric_limits<float>::min()) return false;
+    }
+
+    return true;
+}
+
+
 bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
 {
     const Index size = matrix.size();
@@ -1531,45 +1561,24 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
                                 const Tensor<Index, 1>& columns_indices,
                                 type* tensor_data)
 {
-    cout << "Matrix data column major:" << endl;
-    for (int i = 0; i < matrix.size(); i++)
-    {
-        cout << matrix(i) << " ";
-    }
-    cout << endl;
-
-    Tensor<type, 2, RowMajor> rowMajor = matrix.swap_layout();
-
-    cout << "Matrix data row major:" << endl;
-    for (int i = 0; i < rowMajor.size(); i++)
-    {
-        cout << rowMajor(i) << " ";
-    }
-    cout << endl;
 
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
     const type* matrix_data = matrix.data();
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
-    for (Index j = 0; j < columns_number; j++)
+    for (Index i = 0; i < rows_number; i++) 
     {
-        const type* matrix_column = matrix_data + matrix.dimension(0) * columns_indices[j];
+        const Index row_index = rows_indices(i);
 
-        type* tensor_value = tensor_data + rows_number * j;
-
-        const type* matrix_value = nullptr;
-
-        const Index* rows_indices_data = rows_indices.data();
-
-        for (Index i = 0; i < rows_number; i++)
+        for (Index j = 0; j < columns_number; j++) 
         {
-            matrix_value = matrix_column + *rows_indices_data;
-            rows_indices_data++;
+            const Index column_index = columns_indices(j);
+            const type* matrix_value = matrix_data + row_index + matrix.dimension(0) * column_index;
+            type* tensor_value = tensor_data + i * columns_number + j;
             *tensor_value = *matrix_value;
-            tensor_value++;
         }
     }
 }
@@ -2119,11 +2128,11 @@ Tensor<type, 1> mode(Tensor<type, 1>& data)
 {
     Tensor<type, 1> mode_and_frequency(2);
 
-    std::map<type, type> frequency_map;
+    map<type, type> frequency_map;
 
     for(int i = 0; i < data.size(); i++)
     {
-        type value = data(i);
+        const type value = data(i);
         frequency_map[value]++;
     }
 
@@ -2159,7 +2168,7 @@ Tensor<type, 1> mode(Tensor<type, 1>& data)
 
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& difference_data, const type& value)
 {
-    std::vector<type> result;
+    vector<type> result;
 
     for(Index i = 1; i < difference_data.size(); i++)
     {
