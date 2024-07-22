@@ -137,8 +137,7 @@ void TransformerTest::test_calculate_parameters_norm()
         Index parameters_number = transformer.get_parameters_number();
 
         assert_true(abs(parameters_norm - sqrt(type(parameters_number))) < type(NUMERIC_LIMITS_MIN), LOG);
-    }
-    
+    }   
 }
 
 

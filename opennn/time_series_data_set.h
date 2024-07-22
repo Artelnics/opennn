@@ -111,14 +111,7 @@ private:
 
     /// Index where time variable is located for forecasting applications.
 
-    string time_column;
-
-    Index time_variable_index;
-
-    string group_by_column;
-
-    Index group_by_raw_variable_index;
-
+    Index time_raw_variable_index = 0;
 };
 
 }

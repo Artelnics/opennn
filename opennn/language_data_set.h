@@ -122,9 +122,9 @@ private:
 
     Tensor<Index, 1> context_variables_dimensions = Tensor<Index, 1>(1);
 
-    Index max_completion_length;
+    Index max_completion_length = 0;
 
-    Index max_context_length;
+    Index max_context_length = 0;
 
     Tensor<Tensor<string, 1>, 1> documents;
 

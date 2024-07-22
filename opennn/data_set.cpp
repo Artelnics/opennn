@@ -2575,9 +2575,7 @@ Index DataSet::get_used_raw_variables_number() const
 }
 
 
-/// @todo change name of method
-
-Index DataSet::get_variables_less_target() const
+Index DataSet::get_input_and_unused_variables_number() const
 {
     Index raw_variables_number = 0;
 
@@ -2626,29 +2624,31 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(const Histogram& histogram, con
 
     // Calculate the cumulative frequency distribution
 
-    type cumulative_frequencies[1000];
+    vector<type> cumulative_frequencies(1000);
 
     cumulative_frequencies[0] = bin_frequencies[0];
 
-    for(int i = 1; i < 1000; i++)
+    for(size_t i = 1; i < 1000; i++)
     {
         cumulative_frequencies[i] = cumulative_frequencies[i-1] + bin_frequencies[i];
     }
 
     // Calculate total frequency
+
     const type total_frequency = cumulative_frequencies[999];
 
     // Calculate quartile positions
+
     const type q1_position = type(0.25) * total_frequency;
     const type q2_position = type(0.5) * total_frequency;
     const type q3_position = type(0.75) * total_frequency;
 
     // Find quartile bin numbers
-    int q1_bin = 0;
-    int q2_bin = 0;
-    int q3_bin = 0;
+    size_t q1_bin = 0;
+    size_t q2_bin = 0;
+    size_t q3_bin = 0;
 
-    for(int i = 0; i < 1000; i++) 
+    for(size_t i = 0; i < 1000; i++) 
     {
         if(cumulative_frequencies[i] >= q1_position)
         {
@@ -2657,7 +2657,7 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(const Histogram& histogram, con
         }
     }
 
-    for(int i = 0; i < 1000; i++) 
+    for(size_t i = 0; i < 1000; i++) 
     {
         if(cumulative_frequencies[i] >= q2_position)
         {
@@ -2666,7 +2666,7 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(const Histogram& histogram, con
         }
     }
 
-    for(int i = 0; i < 1000; i++) 
+    for(size_t i = 0; i < 1000; i++) 
     {
         if(cumulative_frequencies[i] >= q3_position)
         {
@@ -5742,19 +5742,19 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
 }
 
 
-BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1>& values) const
-{
-    const Index n = values.size();
+//BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1>& values) const
+//{
+//    const Index n = values.size();
 
-    Tensor<Index, 1> indices(n);
+//    Tensor<Index, 1> indices(n);
 
-    for(Index i = 0; i < n; i++)
-    {
-        indices(i) = i;
-    }
+//    for(Index i = 0; i < n; i++)
+//    {
+//        indices(i) = i;
+//    }
 
-    return box_plot(values, indices);
-}
+//    return box_plot(values, indices);
+//}
 
 
 Tensor<BoxPlot, 1> DataSet::calculate_data_raw_variables_box_plot(Tensor<type,2>& data) const
@@ -8443,7 +8443,7 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-    std::ofstream file(data_source_path.c_str());
+    ofstream file(data_source_path.c_str());
 
     if(!file.is_open())
     {
@@ -8509,7 +8509,7 @@ void DataSet::save_data() const
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    std::ofstream file;
+    ofstream file;
 
     #ifdef _WIN32
 
@@ -9488,7 +9488,7 @@ void DataSet::read_csv_1()
     }
 
     std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    ifstream file;
 
 #ifdef _WIN32
 
@@ -9739,7 +9739,7 @@ void DataSet::read_csv_1()
 void DataSet::read_csv_2_simple()
 {   
     regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    ifstream file;
 
     #ifdef _WIN32
 
@@ -9982,7 +9982,7 @@ void DataSet::read_csv_3_simple()
 void DataSet::read_csv_2_complete()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    ifstream file;
 
     #ifdef _WIN32
 
@@ -10839,7 +10839,7 @@ string DataSet::decode(const string& input_string) const
 
 void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
 {
-    std::ifstream file(input_data_file_name.c_str());
+    ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10916,7 +10916,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const bool& has_raw_variables_name,
                                         const bool& has_rows_label) const
 {
-    std::ifstream file(input_data_file_name.c_str());
+    ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
