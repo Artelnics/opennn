@@ -708,6 +708,36 @@ bool is_constant(const Tensor<type, 1>& vector)
 }
 
 
+bool is_constant(const Tensor<type, 2>& matrix)
+{
+    const Index size = matrix.size();
+
+    type first_not_nan_element = type(0);
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(isnan(matrix(i)))
+        {
+            continue;
+        }
+        else
+        {
+            first_not_nan_element = matrix(i);
+            break;
+        }
+    }
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(isnan(matrix(i))) continue;
+
+        if(abs(first_not_nan_element - matrix(i)) > numeric_limits<float>::min()) return false;
+    }
+
+    return true;
+}
+
+
 bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
 {
     const Index size = matrix.size();

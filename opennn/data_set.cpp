@@ -6538,17 +6538,18 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
 /// Calculate the correlation between each input in the data set.
 /// Returns a matrix with the correlation values between variables in the data set.
 
-
-Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correlations(const bool& calculate_pearson_correlations, const bool& calculate_spearman_correlations) const
+Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correlations(const bool& calculate_pearson_correlations,
+                                                                                      const bool& calculate_spearman_correlations) const
 {
     // list to return
+
     Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
 
     const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
 
     const Index input_raw_variables_number = get_input_raw_variables_number();
 
-    Tensor<Correlation, 2> correlations(input_raw_variables_number, input_raw_variables_number);
+    Tensor<Correlation, 2> correlations_pearson(input_raw_variables_number, input_raw_variables_number);
     Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
 
     for(Index i = 0; i < input_raw_variables_number; i++)
@@ -6565,14 +6566,21 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
             {
                 if(calculate_pearson_correlations)
                 {
-                    correlations(i,j).r = type(1);
-                    correlations(i,j).b = type(1);
-                    correlations(i,j).a = type(0);
+                    correlations_pearson(i,j).r = type(1);
+                    correlations_pearson(i,j).b = type(1);
+                    correlations_pearson(i,j).a = type(0);
 
-                    correlations(i,j).upper_confidence = type(1);
-                    correlations(i,j).lower_confidence = type(1);
-                    correlations(i,j).form = Correlation::Form::Linear;
-                    correlations(i,j).method = Correlation::Method::Pearson;
+                    correlations_pearson(i,j).upper_confidence = type(1);
+                    correlations_pearson(i,j).lower_confidence = type(1);
+                    correlations_pearson(i,j).form = Correlation::Form::Linear;
+                    correlations_pearson(i,j).method = Correlation::Method::Pearson;
+
+                    if(is_constant(input_i))
+                    {
+                        correlations_pearson(i,j).r = NAN;
+                        correlations_pearson(i,j).b = NAN;
+                        correlations_pearson(i,j).a = NAN;
+                    }
                 }
 
                 if(calculate_spearman_correlations)
@@ -6585,6 +6593,13 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
                     correlations_spearman(i,j).lower_confidence = type(1);
                     correlations_spearman(i,j).form = Correlation::Form::Linear;
                     correlations_spearman(i,j).method = Correlation::Method::Spearman;
+
+                    if(is_constant(input_i))
+                    {
+                        correlations_spearman(i,j).r = NAN;
+                        correlations_spearman(i,j).b = NAN;
+                        correlations_spearman(i,j).a = NAN;
+                    }
                 }
             }
             else
@@ -6595,11 +6610,10 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
 
                 if(calculate_pearson_correlations)
                 {
+                    correlations_pearson(i,j) = correlation(thread_pool_device, input_i, input_j);
 
-                    correlations(i,j) = correlation(thread_pool_device, input_i, input_j);
-
-                    if(correlations(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
-                       correlations(i,j).r =  type(1);
+                    if(correlations_pearson(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
+                       correlations_pearson(i,j).r =  type(1);
                 }
 
                 if(calculate_spearman_correlations)
@@ -6619,7 +6633,7 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
         {
             for(Index j = 0; j < i; j++)
             {
-                correlations(i,j) = correlations(j,i);
+                correlations_pearson(i,j) = correlations_pearson(j,i);
             }
         }
     }
@@ -6635,7 +6649,7 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
         }
     }
 
-    correlations_list(0) = correlations;
+    correlations_list(0) = correlations_pearson;
     correlations_list(1) = correlations_spearman;
 
     return correlations_list;
