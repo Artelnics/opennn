@@ -110,6 +110,7 @@ bool is_zero(const Tensor<type, 1>&);
 bool is_binary(const Tensor<type, 2>&);
 
 bool is_constant(const Tensor<type, 1>&);
+bool is_constant(const Tensor<type, 2>&);
 
 bool is_false(const Tensor<bool, 1>&);
 

@@ -51,10 +51,17 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
 Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
-{
-    cout << "Empieza correlation" << endl;
-
+{      
     Correlation correlation;
+
+    if(is_constant(x) || is_constant(y))
+    {
+        correlation.a = NAN;
+        correlation.b = NAN;
+        correlation.r = NAN;
+
+        return correlation;
+    }
 
     const Index x_rows = x.dimension(0);
     const Index x_raw_variables = x.dimension(1);
@@ -521,7 +528,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         linear_correlation.a = y(0);
         linear_correlation.b = type(0);
         linear_correlation.r = type(NAN);
-
 
         linear_correlation.lower_confidence = type(NAN);
         linear_correlation.upper_confidence = type(NAN);
