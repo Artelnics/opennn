@@ -51,10 +51,17 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
 Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
-{
-    cout << "Empieza correlation" << endl;
-
+{      
     Correlation correlation;
+
+    if(is_constant(x) || is_constant(y))
+    {
+        correlation.a = NAN;
+        correlation.b = NAN;
+        correlation.r = NAN;
+
+        return correlation;
+    }
 
     const Index x_rows = x.dimension(0);
     const Index x_raw_variables = x.dimension(1);
@@ -522,7 +529,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         linear_correlation.b = type(0);
         linear_correlation.r = type(NAN);
 
-
         linear_correlation.lower_confidence = type(NAN);
         linear_correlation.upper_confidence = type(NAN);
 
@@ -666,28 +672,28 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
 {
     const int n = x.size();
 
-    vector<pair<type, size_t> > v_sort(n);
+    vector<pair<type, size_t> > sorted_vector(n);
 
-    for(size_t i = 0U; i < v_sort.size();++i)
+    for(size_t i = 0U; i < n; i++)
     {
-        v_sort[i] = make_pair(x[i], i);
+        sorted_vector[i] = make_pair(x[i], i);
     }
 
-    sort(v_sort.begin(), v_sort.end());
+    sort(sorted_vector.begin(), sorted_vector.end());
 
     vector<type> x_rank_vector(n);
 
     type rank = type(1);
 
-    for(int i = 0U; i < v_sort.size();++i)
+    for(size_t i = 0; i < n; i++)
     {
         size_t repeated = 1U;
 
-        for(size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first;++j,++repeated);
+        for(size_t j = i + 1U; j < sorted_vector.size() && sorted_vector[j].first == sorted_vector[i].first;++j,++repeated);
 
         for(size_t k = 0; k < repeated;++k)
         {
-            x_rank_vector[v_sort[i + k].second] = rank + type(repeated - 1) / type(2);
+            x_rank_vector[sorted_vector[i + k].second] = rank + type(repeated - 1) / type(2);
         }
 
         i += repeated - 1;
