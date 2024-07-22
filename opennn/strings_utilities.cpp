@@ -1650,7 +1650,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
         push_back_string(tokens, token);
     }
 
-    for(size_t i = 0; i < tokens.dimension(0); i++)
+    for(size_t i = 0; i < static_cast<size_t>(tokens.dimension(0)); i++)
     {
         string s = tokens(i);
         string word = "";
