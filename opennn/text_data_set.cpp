@@ -36,7 +36,6 @@ const Tensor<Index,1>& TextDataSet::get_words_frequencies() const
 }
 
 
-
 /// Returns the string which will be used as separator in the data file for Text Classification.
 
 string TextDataSet::get_text_separator_string() const
@@ -53,6 +52,7 @@ string TextDataSet::get_text_separator_string() const
         return string();
     }
 }
+
 
 /// Sets a new separator.
 /// @param new_separator Separator value.
@@ -88,6 +88,7 @@ void TextDataSet::set_text_separator(const string& new_separator_string)
     }
 }
 
+
 Tensor<string, 2> TextDataSet::get_text_data_file_preview() const
 {
     return text_data_file_preview;
@@ -113,7 +114,7 @@ void TextDataSet::set_words_frequencies(const Tensor<Index,1>& new_words_frequen
 
 
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
-/*
+
 void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
 
@@ -121,7 +122,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     time_t start, finish;
     time(&start);
-
+/*
     file_stream.OpenElement("DataSet");
 
     // Data file
@@ -499,7 +500,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close data set
 
     file_stream.CloseElement();
-
+*/
     time(&finish);
 }
 
@@ -692,8 +693,9 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(stop_words_list_element->GetText())
         {
             const string new_stop_words_list = stop_words_list_element->GetText();
-
+            /*
             stop_words = get_tokens(new_stop_words_list,",");
+        */
         }
     }
 
@@ -889,7 +891,6 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             }
         }
     }
-
 
     // Rows label
 
@@ -1195,9 +1196,8 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             cerr << e.what() << endl;
         }
     }
-
 }
-*/
+
 
 /// Transforms a sentence to Tensor, according to dataset raw_variables.
 /// @param sentence Sentence that we will transform
@@ -1205,9 +1205,9 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
 {
 
-    Tensor<string, 1> tokens = get_tokens(sentence,' ');
+    const Tensor<string, 1> tokens = get_tokens(sentence, ' ');
 
-    Tensor<type, 1> vector(get_raw_variables_number() - 1);
+    const Tensor<type, 1> vector(get_raw_variables_number() - 1);
 /*
     TextAnalytics text_analytics;
     text_analytics.set_short_words_length(short_words_length);
@@ -1245,7 +1245,7 @@ void TextDataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 /*
-    text_analytics.load_documents(data_source_path);
+    const Tensor<Tensor<string, 1>, 1> document = load_documents();
 
     const Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
 
@@ -1275,7 +1275,7 @@ void TextDataSet::read_txt()
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
-    std::ofstream file;
+    ofstream file;
     file.open(transformed_data_path);
 
     for(Index i  = type(0); i < document_words_number; i++)

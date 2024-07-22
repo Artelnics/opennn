@@ -120,7 +120,7 @@ void GeneticAlgorithm::set_default()
     }
     else
     {
-        genes_number = training_strategy->get_data_set()->get_variables_less_target();
+        genes_number = training_strategy->get_data_set()->get_input_and_unused_variables_number();
     }
 
     Index individuals_number = 40;
@@ -439,7 +439,7 @@ void GeneticAlgorithm::initialize_population_random()
 
         //Genes and inidivuals number
 
-    const Index genes_number = data_set->get_variables_less_target();
+    const Index genes_number = data_set->get_input_and_unused_variables_number();
 
     const Index individuals_number = get_individuals_number();
 
@@ -1491,7 +1491,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
 {
     DataSet* data_set = training_strategy->get_data_set();
 
-    const Index genes_number = data_set->get_variables_less_target();
+    const Index genes_number = data_set->get_input_and_unused_variables_number();
     const Index raw_variables_number = individual_raw_variables.size();
 
     Tensor <bool, 1> individual_raw_variables_to_variables(genes_number);

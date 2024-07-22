@@ -63,7 +63,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     Tensor<Descriptives, 1> variables_descriptives;
 
-    std::ofstream file;
+    ofstream file;
     string data_string;
 
     const string data_source_path = "../data/data.dat";
@@ -994,7 +994,7 @@ void DataSetTest::test_scrub_missing_values()
 
     Tensor<DataSet::SampleUse, 1> samples_uses;
 
-    std::ofstream file;
+    ofstream file;
 
     data_set.set_data_source_path(data_source_path);
 
@@ -1409,10 +1409,9 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data.resize(3, 4);
 
-    data.setValues({
-                       {type(1), type(1), type(-1), type(1)},
-                       {type(2), type(2), type(-2), type(2)},
-                       {type(3), type(3), type(-3), type(3)} });
+    data.setValues({{type(1), type(1), type(-1), type(1)},
+                    {type(2), type(2), type(-2), type(2)},
+                    {type(3), type(3), type(-3), type(3)} });
 
     data_set.set_data(data);
 
@@ -1427,8 +1426,13 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
+    assert_true(inputs_correlations(0,1).r == 1, LOG);
+    assert_true(inputs_correlations(0,2).r == -1, LOG);
+
     assert_true(inputs_correlations(1,0).r == 1, LOG);
     assert_true(inputs_correlations(1,1).r == 1, LOG);
+    assert_true(inputs_correlations(1,2).r == -1, LOG);
+
     assert_true(inputs_correlations(2,0).r == -1, LOG);
     assert_true(inputs_correlations(2,1).r == -1, LOG);
     assert_true(inputs_correlations(2,2).r == 1, LOG);
@@ -1438,11 +1442,9 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     cout << "Test 2" << endl;
 
     data.resize(3, 4);
-    data.setValues({
-                       {type(1), type(2), type(4), type(1)},
-                       {type(2), type(3), type(9), type(2)},
-                       {type(3), type(1), type(10), type(2)}
-                   });
+    data.setValues({{type(1), type(2), type(4), type(1)},
+                    {type(2), type(3), type(9), type(2)},
+                    {type(3), type(1), type(10), type(2)}});
 
     data_set.set_data(data);
 
@@ -1457,6 +1459,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     for(Index i = 0; i <  data_set.get_input_raw_variables_number() ; i++)
     {
         assert_true( inputs_correlations(i,i).r == 1, LOG);
+
         for(Index j = 0; i < j ; j++)
         {
             assert_true(-1 < inputs_correlations(i,j).r && inputs_correlations(i,j).r < 1, LOG);
@@ -1468,10 +1471,9 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     cout << "Test 3" << endl;
 
     data.resize(3, 4);
-    data.setValues({
-                       {type(0), type(0), type(1), type(1)},
-                       {type(1), type(0), type(0), type(2)},
-                       {type(1), type(0), type(0), type(2)} });
+    data.setValues({{type(0), type(0), type(1), type(1)},
+                    {type(1), type(0), type(0), type(2)},
+                    {type(1), type(0), type(0), type(2)} });
 
     data_set.set_data(data);
 
@@ -1484,17 +1486,11 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
-    cout << "\n ---- inputs_correlations ---- \n";
-    data_set.print_inputs_correlations();
-    //cout << "\n ---- target_raw_variables_indices ---- \n";
-    //data_set.print_input_target_raw_variables_correlations();
-
-
-
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Linear, LOG);
 
     assert_true(isnan(inputs_correlations(1,0).r), LOG);
+
     assert_true(inputs_correlations(1,0).form == Correlation::Form::Linear, LOG);
 
     assert_true(isnan(inputs_correlations(1,1).r), LOG);
@@ -1510,12 +1506,12 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
 
     // Test 4 (binary and binary trivial case)
-/*
+
     cout << "Test 4" << endl;
 
-    data.setValues({{type(0), type(0), type(0), type(1)},
-                    {type(1), type(1), type(1), type(2)},
-                    {type(1), type(1), type(1), type(2)}});
+    data.setValues({{type(1), type(0), type(1), type(1)},
+                    {type(2), type(1), type(1), type(2)},
+                    {type(3), type(1), type(0), type(2)}});
 
     data_set.set_data(data);
 
@@ -1528,15 +1524,35 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
-    for(Index i = 0; i < data_set.get_input_raw_variables_number(); i++)
-    {
-        for(Index j = 0; i < j ; j++)
-        {
-            assert_true(inputs_correlations(i,j).r == 1, LOG);
-            assert_true(inputs_correlations(i,j).form == Correlation::Form::Linear, LOG);
-        }
-    }
-*/
+    assert_true(inputs_correlations(0,0).r == 1, LOG);
+    assert_true(inputs_correlations(0,0).form == Correlation::Form::Linear, LOG);
+
+    assert_true(inputs_correlations(0,1).r > 0 && inputs_correlations(0,1).r < 1, LOG);
+    assert_true(inputs_correlations(0,1).form == Correlation::Form::Logistic, LOG);
+
+    assert_true(inputs_correlations(0,2).r < 0 && inputs_correlations(0,2).r > -1, LOG);
+    assert_true(inputs_correlations(0,2).form == Correlation::Form::Logistic, LOG);
+
+
+    assert_true(inputs_correlations(1,0).r > 0 && inputs_correlations(1,0).r < 1, LOG);
+    assert_true(inputs_correlations(1,0).form == Correlation::Form::Logistic, LOG);
+
+    assert_true(inputs_correlations(1,1).r == 1, LOG);
+    assert_true(inputs_correlations(1,1).form == Correlation::Form::Linear, LOG);
+
+    assert_true(inputs_correlations(1,2).r == -0.5, LOG);
+    assert_true(inputs_correlations(1,2).form == Correlation::Form::Linear, LOG);
+
+
+    assert_true(inputs_correlations(2,0).r < 0 && inputs_correlations(2,0).r > -1, LOG);
+    assert_true(inputs_correlations(2,0).form == Correlation::Form::Logistic, LOG);
+
+    assert_true(inputs_correlations(2,1).r == -0.5, LOG);
+    assert_true(inputs_correlations(2,1).form == Correlation::Form::Linear, LOG);
+
+    assert_true(inputs_correlations(2,2).r == 1, LOG);
+    assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
+
     // Test 5 (categorical and categorical)
 
     cout << "Test 5" << endl;
@@ -1551,8 +1567,9 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
 
-    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0); /* Test Failed */
 /*
+    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
 
@@ -1572,7 +1589,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG); // CHECK
 */
     // Test 6 (numeric and binary)
-
+/*
     cout << "Test 6" << endl;
 
     input_variables_indices.resize(3);
@@ -1583,8 +1600,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0); /* Test Failed */
-/*
+    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
     assert_true(-1 < inputs_correlations(1,0).r && inputs_correlations(1,0).r < 1, LOG);
@@ -1601,8 +1618,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
-*/
-    // Test 7 (numeric and categorical) /* Test Failed */
+
+    // Test 7 (numeric and categorical)
 
     cout << "Test 7" << endl;
 
@@ -1614,10 +1631,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0); /* Test Failed */
-/*
-    cout << "\n ----- inputs_correlations ------- \n"<< inputs_correlations.data();
-
+    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -1634,8 +1648,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG);
-*/
-    // Test 8 (binary and categorical) /* Test Failed */
+
+    // Test 8 (binary and categorical)
 
     cout << "Test 8" << endl;
 
@@ -1647,8 +1661,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0); /* Test Failed */
-/*
+    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
 
@@ -1666,7 +1680,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG);
-*/
+
     // With missing values or NAN
 
     // Test 9 (categorical and categorical)
@@ -1684,9 +1698,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
 
-    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0); /* Test Failed */
+    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
- /*
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
 
@@ -1703,8 +1716,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,1).form == Correlation::Form::Logistic, LOG);
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
-    assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG); // CHECK
-*/
+    assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG);
+
     // Test 10 (numeric and binary)
 
     cout << "Test 10" << endl;
@@ -1717,8 +1730,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0); /* Test Failed */
-/*
+    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
     assert_true(-1 < inputs_correlations(1,0).r && inputs_correlations(1,0).r < 1, LOG);
@@ -1735,7 +1748,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
-*/
+
     // Test 11 (numeric and categorical)
 
     cout << "Test 11" << endl;
@@ -1748,8 +1761,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0); /* Test Failed */
-/*
+    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
     assert_true(-1 < inputs_correlations(1,0).r && inputs_correlations(1,0).r < 1, LOG);
@@ -1765,7 +1778,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG);
-*/
+
     // Test 12 (binary and categorical)
 
     cout << "Test 12" << endl;
@@ -1778,8 +1791,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    //inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0); /* Test Failed */
-/*
+    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
 
@@ -2007,7 +2020,7 @@ void DataSetTest::run_test_case()
     test_destructor();
 
     // Data resizing methods
-/*
+
     test_unuse_constant_raw_variables();
     test_unuse_repeated_samples();
     test_unuse_uncorrelated_raw_variables();
@@ -2018,11 +2031,11 @@ void DataSetTest::run_test_case()
     test_calculate_variables_means();
     test_calculate_input_variables_descriptives();
     test_calculate_used_targets_mean();
-    test_calculate_selection_targets_mean();
+   test_calculate_selection_targets_mean();
 
     // Histrogram methods
 
-    test_calculate_data_distributions();
+   test_calculate_data_distributions();
 
     // Filtering methods
 
@@ -2035,38 +2048,38 @@ void DataSetTest::run_test_case()
     // Correlations
 
     test_calculate_input_target_correlations();
+/*
+    test_calculate_input_raw_variables_correlations();
 */
-    //test_calculate_input_raw_variables_correlations(); /* Test Failed */
-
     // Classification methods
 
- //   test_calculate_target_distribution();
+    test_calculate_target_distribution();
 
     // Outlier detection
 
- //   test_calculate_Tukey_outliers();
+    test_calculate_Tukey_outliers();
 
     // Serialization methods
 
- //   test_read_csv(); /* Test Failed */
+   test_read_csv();
 
- //   test_read_bank_churn_csv();
- //   test_read_adult_csv();
- //   test_read_car_csv();
- //   test_read_empty_csv();
- //   test_read_heart_csv();
- //   test_read_iris_csv();
- //   test_read_mnsit_csv();
- //   test_read_one_variable_csv();
- //   test_read_pollution_csv();
- //   test_read_urinary_inflammations_csv();
- //   test_read_wine_csv();
- //   test_read_binary_csv();
- //   test_calculate_training_negatives();
- //   test_calculate_selection_negatives();
- //   test_scrub_missing_values();
+    test_read_bank_churn_csv();
+    test_read_adult_csv();
+    test_read_car_csv();
+    test_read_empty_csv();
+    test_read_heart_csv();
+    test_read_iris_csv();
+    test_read_mnsit_csv();
+    test_read_one_variable_csv();
+    test_read_pollution_csv();
+    test_read_urinary_inflammations_csv();
+    test_read_wine_csv();
+    test_read_binary_csv();
+    test_calculate_training_negatives();
+    test_calculate_selection_negatives();
+    test_scrub_missing_values();
 
- //   test_fill();
+    test_fill();
 
     cout << "End of data set test case.\n\n";
 }

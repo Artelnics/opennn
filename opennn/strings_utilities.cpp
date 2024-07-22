@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "strings_utilities.h"
+#include "opennn.h"
+#include "word_bag.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -179,7 +182,6 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
 
-
 Index count_tokens(const string& s, const string& sep)
 {
     Index tokens_number = 0;
@@ -202,7 +204,7 @@ Index count_tokens(const string& s, const string& sep)
         tokens_number--;
     }
 
-    return (tokens_number+1);
+    return tokens_number+1;
 }
 
 
@@ -529,7 +531,7 @@ bool ends_with(const string& word, const Tensor<string,1>& endings)
 
 time_t date_to_timestamp(const string& date, const Index& gmt)
 {
-    struct tm time_structure;
+    struct tm time_structure = {};
 
     smatch month;
 
@@ -1639,7 +1641,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
     else if(programming_languaje == "python"){ option = 3; }
     else if(programming_languaje == "c")     { option = 4; }
 
-    int dimension = outputs.dimension(0);
+    size_t dimension = outputs.dimension(0);
 
     while(getline(ss, token, '\n'))
     {
@@ -1648,15 +1650,15 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
         push_back_string(tokens, token);
     }
 
-    for(int i = 0; i < tokens.dimension(0); i++)
+    for(size_t i = 0; i < tokens.dimension(0); i++)
     {
         string s = tokens(i);
         string word = "";
 
         for(char& c : s)
         {
-            if( c!=' ' && c!='=' ){ word += c; }
-            else { break; }
+            if( c!=' ' && c!='=' ) word += c; 
+            else break; 
         }
 
         if(word.size() > 1)
@@ -1978,7 +1980,6 @@ Index get_alphabet_index(const char& ch)
         return -1;
     }
 */
-
     return 0;
 }
 
@@ -1996,7 +1997,6 @@ Tensor<type, 1> one_hot_encode(const string& ch)
 
     return result;
 */
-
     return Tensor<type, 1>();
 }
 
@@ -2153,7 +2153,6 @@ void to_lower(Tensor<string, 1>& documents)
     {
         transform(documents[i].begin(), documents[i].end(), documents[i].begin(), ::tolower);
     }
-
 }
 
 
@@ -2217,7 +2216,8 @@ void split_punctuation(Tensor<string, 1>& documents)
 
 void delete_non_printable_chars(Tensor<string, 1>& documents)
 {
-    for (Index i = 0; i < documents.size(); i++) remove_non_printable_chars(documents(i));
+    for (Index i = 0; i < documents.size(); i++) 
+        remove_non_printable_chars(documents(i));
 }
 
 
@@ -2363,7 +2363,8 @@ vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
 {
     unordered_map<string, int> count;
 
-    for (Index i = 0; i < total_tokens.size(); ++i)      count[total_tokens(i)]++;
+    for (Index i = 0; i < total_tokens.size(); ++i)      
+        count[total_tokens(i)]++;
 
     vector<pair<string, int>> word_counts(count.begin(), count.end());
 
@@ -2377,54 +2378,277 @@ vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
     return word_counts;
 }
 
+
+/// Deletes punctuation in documents.
+
+void delete_punctuation(Tensor<string, 1>& documents) 
+{
+    replace_substring(documents, "�", " ");
+    replace_substring(documents, "\"", " ");
+    replace_substring(documents, ".", " ");
+    replace_substring(documents, "!", " ");
+    replace_substring(documents, "#", " ");
+    replace_substring(documents, "$", " ");
+    replace_substring(documents, "~", " ");
+    replace_substring(documents, "%", " ");
+    replace_substring(documents, "&", " ");
+    replace_substring(documents, "/", " ");
+    replace_substring(documents, "(", " ");
+    replace_substring(documents, ")", " ");
+    replace_substring(documents, "\\", " ");
+    replace_substring(documents, "=", " ");
+    replace_substring(documents, "?", " ");
+    replace_substring(documents, "}", " ");
+    replace_substring(documents, "^", " ");
+    replace_substring(documents, "`", " ");
+    replace_substring(documents, "[", " ");
+    replace_substring(documents, "]", " ");
+    replace_substring(documents, "*", " ");
+    replace_substring(documents, "+", " ");
+    replace_substring(documents, ",", " ");
+    replace_substring(documents, ";", " ");
+    replace_substring(documents, ":", " ");
+    replace_substring(documents, "-", " ");
+    replace_substring(documents, ">", " ");
+    replace_substring(documents, "<", " ");
+    replace_substring(documents, "|", " ");
+    replace_substring(documents, "–", " ");
+    replace_substring(documents, "Ø", " ");
+    replace_substring(documents, "º", " ");
+    replace_substring(documents, "°", " ");
+    replace_substring(documents, "'", " ");
+    replace_substring(documents, "ç", " ");
+    replace_substring(documents, "✓", " ");
+    replace_substring(documents, "|", " ");
+    replace_substring(documents, "@", " ");
+    replace_substring(documents, "#", " ");
+    replace_substring(documents, "^", " ");
+    replace_substring(documents, "*", " ");
+    replace_substring(documents, "€", " ");
+    replace_substring(documents, "¬", " ");
+    replace_substring(documents, "•", " ");
+    replace_substring(documents, "·", " ");
+    replace_substring(documents, "”", " ");
+    replace_substring(documents, "“", " ");
+    replace_substring(documents, "´", " ");
+    replace_substring(documents, "§", " ");
+    replace_substring(documents, "_", " ");
+    replace_substring(documents, ".", " ");
+
+    delete_extra_spaces(documents);
 }
+
+
+
+/// Deletes consecutive extra spaces in documents.
+/// @param documents Document to be proccesed.
+/*
+void delete_extra_spaces(Tensor<string, 1>& documents) 
+{
+    Tensor<string, 1> new_documents(documents);
+
+    for (Index i = 0; i < documents.size(); i++)
+    {
+        string::iterator new_end = unique(new_documents[i].begin(), new_documents[i].end(),
+            [](char lhs, char rhs) { return(lhs == rhs) && (lhs == ' '); });
+
+        new_documents[i].erase(new_end, new_documents[i].end());
+    }
+
+    documents = new_documents;
+}
+*/
+
+/// Deletes line breaks and tabulations
+/// @param documents Document to be proccesed.
+
+void delete_breaks_and_tabs(Tensor<string, 1>& documents) 
+{
+    for (Index i = 0; i < documents.size(); i++)
+    {
+        string line = documents(i);
+
+        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\n', ' ');
+        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\t', ' ');
+        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\f', ' ');
+        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\r', ' ');
+    }
+}
+
+
+/// Deletes unicode non printable characters
+/*
+void delete_non_printable_chars(Tensor<string, 1>& documents) 
+{
+    for (Index i = 0; i < documents.size(); i++) 
+        remove_non_printable_chars(documents(i));
+}
+*/
+
+/// Splits punctuation symbols in documents.
+/*
+void split_punctuation(Tensor<string, 1>& documents) 
+{
+    replace_substring(documents, "�", " � ");
+    replace_substring(documents, "\"", " \" ");
+    replace_substring(documents, ".", " . ");
+    replace_substring(documents, "!", " ! ");
+    replace_substring(documents, "#", " # ");
+    replace_substring(documents, "$", " $ ");
+    replace_substring(documents, "~", " ~ ");
+    replace_substring(documents, "%", " % ");
+    replace_substring(documents, "&", " & ");
+    replace_substring(documents, "/", " / ");
+    replace_substring(documents, "(", " ( ");
+    replace_substring(documents, ")", " ) ");
+    replace_substring(documents, "\\", " \\ ");
+    replace_substring(documents, "=", " = ");
+    replace_substring(documents, "?", " ? ");
+    replace_substring(documents, "}", " } ");
+    replace_substring(documents, "^", " ^ ");
+    replace_substring(documents, "`", " ` ");
+    replace_substring(documents, "[", " [ ");
+    replace_substring(documents, "]", " ] ");
+    replace_substring(documents, "*", " * ");
+    replace_substring(documents, "+", " + ");
+    replace_substring(documents, ",", " , ");
+    replace_substring(documents, ";", " ; ");
+    replace_substring(documents, ":", " : ");
+    replace_substring(documents, "-", " - ");
+    replace_substring(documents, ">", " > ");
+    replace_substring(documents, "<", " < ");
+    replace_substring(documents, "|", " | ");
+    replace_substring(documents, "–", " – ");
+    replace_substring(documents, "Ø", " Ø ");
+    replace_substring(documents, "º", " º ");
+    replace_substring(documents, "°", " ° ");
+    replace_substring(documents, "'", " ' ");
+    replace_substring(documents, "ç", " ç ");
+    replace_substring(documents, "✓", " ✓ ");
+    replace_substring(documents, "|", " | ");
+    replace_substring(documents, "@", " @ ");
+    replace_substring(documents, "#", " # ");
+    replace_substring(documents, "^", " ^ ");
+    replace_substring(documents, "*", " * ");
+    replace_substring(documents, "€", " € ");
+    replace_substring(documents, "¬", " ¬ ");
+    replace_substring(documents, "•", " • ");
+    replace_substring(documents, "·", " · ");
+    replace_substring(documents, "”", " ” ");
+    replace_substring(documents, "“", " “ ");
+    replace_substring(documents, "´", " ´ ");
+    replace_substring(documents, "§", " § ");
+    replace_substring(documents, "_", " _ ");
+    replace_substring(documents, ".", " . ");
+
+    delete_extra_spaces(documents);
+}
+*/
+/*
+void aux_remove_non_printable_chars(Tensor<string, 1>& documents) 
+{
+    Tensor<string, 1> new_documents(documents);
+
+    for (Index i = 0; i < documents.size(); i++)
+    {
+        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
+    }
+
+    documents = new_documents;
+}
+*/
+
+/// Split documents into words Tensors. Each word is equivalent to a token.
+/// @param documents String tensor we will split
+/*
+Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>& documents) 
+{
+    const Index documents_number = documents.size();
+
+    Tensor<Tensor<string, 1>, 1> new_tokenized_documents(documents_number);
+
+    #pragma omp parallel for
+    for (Index i = 0; i < documents_number; i++)
+    {
+        new_tokenized_documents(i) = get_tokens(documents(i));
+    }
+
+    return new_tokenized_documents;
+}
+*/
+
+/// Joins a string tensor into a string
+/// @param token String tensor we will join
+
+string to_string(Tensor<string, 1> token) 
+{
+    string word;
+
+    for (Index i = 0; i < token.size() - 1; i++)
+        word += token(i) + " ";
+    word += token(token.size() - 1);
+
+    return word;
+}
+
+
+/// Join the words Tensors into strings documents
+/// @param tokens Tensor of Tensor of words we want to join
+
+Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>& tokens)
+{
+    const Index documents_number = tokens.size();
+
+    Tensor<string, 1> new_documents(documents_number);
+
+    for (Index i = 0; i < documents_number; i++)
+    {
+        new_documents[i] = to_string(tokens(i));
+    }
+
+    return new_documents;
+}
+
+
+void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& delete_words) 
+{
+    for (Index i = 0; i < document.size(); i++)
+    {
+        const Index tokens_number = count_tokens(document(i), ' ');
+        const Tensor<string, 1> tokens = get_tokens(document(i), ' ');
+
+        string result;
+
+        for (Index j = 0; j < tokens_number; j++)
+        {
+            if (!contains(delete_words, tokens(j)))
+            {
+                result += tokens(j) + " ";
+            }
+        }
+
+        document(i) = result;
+    }
+}
+
+
+/// Delete the words we want from the documents
+/// @param delete_words Tensor of words we want to delete
+
+void delete_words(Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>& delete_words) 
+{
+    const Index documents_number = tokens.size();
+
+    for (Index i = 0; i < documents_number; i++)
+    {
+        filter_not_equal_to(tokens(i), delete_words);
+    }
+}
+
+}
+
 
 /*
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-
-//   T E X T   A N A L Y S I S   C L A S S
-
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-namespace opennn
-{
-// DEFAULT CONSTRUCTOR
-
-
-/// Default constructor.
-
-TextAnalytics::TextAnalytics()
-{
-    set_english_stop_words();
-}
-
-
-
-TextAnalytics::~TextAnalytics()
-{
-}
-
-// Get methods
-
-
-/// Returns a Tensor containing the documents.
-
-Tensor<Tensor<string,1> ,1> TextAnalytics::get_documents() const
-{
-    return documents;
-}
-
-
-/// Returns a Tensor containing the targets.
-
-Tensor<Tensor<string,1> ,1> TextAnalytics::get_targets() const
-{
-    return targets;
-}
-
-
 /// Returns the language selected.
 
 TextAnalytics::Language TextAnalytics::get_language() const
@@ -2570,272 +2794,7 @@ void TextAnalytics::set_separator(const string& new_separator)
     }
 }
 
-// Preprocess methods
 
-/// Deletes consecutive extra spaces in documents.
-/// @param documents Document to be proccesed.
-
-void TextAnalytics::delete_extra_spaces(Tensor<string, 1>& documents) const
-{
-    Tensor<string, 1> new_documents(documents);
-
-    for(Index i = 0; i < documents.size(); i++)
-    {
-        string::iterator new_end = unique(new_documents[i].begin(), new_documents[i].end(),
-                                          [](char lhs, char rhs){ return(lhs == rhs) &&(lhs == ' '); });
-
-        new_documents[i].erase(new_end, new_documents[i].end());
-    }
-
-    documents = new_documents;
-}
-
-
-/// Deletes line breaks and tabulations
-/// @param documents Document to be proccesed.
-
-void TextAnalytics::delete_breaks_and_tabs(Tensor<string, 1>& documents) const
-{
-    for(Index i = 0; i < documents.size(); i++)
-    {
-        string line = documents(i);
-
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\n' ,' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\t' ,' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\f' ,' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\r' ,' ');
-    }
-}
-
-
-/// Deletes unicode non printable characters
-
-void TextAnalytics::delete_non_printable_chars(Tensor<string, 1>& documents) const
-{
-
-    for(Index i = 0; i < documents.size(); i++) remove_non_printable_chars(documents(i));
-}
-
-
-/// Deletes punctuation in documents.
-
-void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
-{
-    replace_substring(documents, "�"," ");
-    replace_substring(documents, "\""," ");
-    replace_substring(documents, "."," ");
-    replace_substring(documents, "!"," ");
-    replace_substring(documents, "#"," ");
-    replace_substring(documents, "$"," ");
-    replace_substring(documents, "~"," ");
-    replace_substring(documents, "%"," ");
-    replace_substring(documents, "&"," ");
-    replace_substring(documents, "/"," ");
-    replace_substring(documents, "("," ");
-    replace_substring(documents, ")"," ");
-    replace_substring(documents, "\\"," ");
-    replace_substring(documents, "="," ");
-    replace_substring(documents, "?"," ");
-    replace_substring(documents, "}"," ");
-    replace_substring(documents, "^"," ");
-    replace_substring(documents, "`"," ");
-    replace_substring(documents, "["," ");
-    replace_substring(documents, "]"," ");
-    replace_substring(documents, "*"," ");
-    replace_substring(documents, "+"," ");
-    replace_substring(documents, ","," ");
-    replace_substring(documents, ";"," ");
-    replace_substring(documents, ":"," ");
-    replace_substring(documents, "-"," ");
-    replace_substring(documents, ">"," ");
-    replace_substring(documents, "<"," ");
-    replace_substring(documents, "|"," ");
-    replace_substring(documents, "–"," ");
-    replace_substring(documents, "Ø"," ");
-    replace_substring(documents, "º"," ");
-    replace_substring(documents, "°"," ");
-    replace_substring(documents, "'"," ");
-    replace_substring(documents, "ç"," ");
-    replace_substring(documents, "✓"," ");
-    replace_substring(documents, "|"," ");
-    replace_substring(documents, "@"," ");
-    replace_substring(documents, "#"," ");
-    replace_substring(documents, "^"," ");
-    replace_substring(documents, "*"," ");
-    replace_substring(documents, "€"," ");
-    replace_substring(documents, "¬"," ");
-    replace_substring(documents, "•"," ");
-    replace_substring(documents, "·"," ");
-    replace_substring(documents, "”"," ");
-    replace_substring(documents, "“"," ");
-    replace_substring(documents, "´"," ");
-    replace_substring(documents, "§"," ");
-    replace_substring(documents,"_", " ");
-    replace_substring(documents,".", " ");
-
-    delete_extra_spaces(documents);
-}
-
-
-/// Splits punctuation symbols in documents.
-
-void TextAnalytics::split_punctuation(Tensor<string, 1>& documents) const
-{
-    replace_substring(documents, "�"," � ");
-    replace_substring(documents, "\""," \" ");
-    replace_substring(documents, "."," . ");
-    replace_substring(documents, "!"," ! ");
-    replace_substring(documents, "#"," # ");
-    replace_substring(documents, "$"," $ ");
-    replace_substring(documents, "~"," ~ ");
-    replace_substring(documents, "%"," % ");
-    replace_substring(documents, "&"," & ");
-    replace_substring(documents, "/"," / ");
-    replace_substring(documents, "("," ( ");
-    replace_substring(documents, ")"," ) ");
-    replace_substring(documents, "\\"," \\ ");
-    replace_substring(documents, "="," = ");
-    replace_substring(documents, "?"," ? ");
-    replace_substring(documents, "}"," } ");
-    replace_substring(documents, "^"," ^ ");
-    replace_substring(documents, "`"," ` ");
-    replace_substring(documents, "["," [ ");
-    replace_substring(documents, "]"," ] ");
-    replace_substring(documents, "*"," * ");
-    replace_substring(documents, "+"," + ");
-    replace_substring(documents, ","," , ");
-    replace_substring(documents, ";"," ; ");
-    replace_substring(documents, ":"," : ");
-    replace_substring(documents, "-"," - ");
-    replace_substring(documents, ">"," > ");
-    replace_substring(documents, "<"," < ");
-    replace_substring(documents, "|"," | ");
-    replace_substring(documents, "–"," – ");
-    replace_substring(documents, "Ø"," Ø ");
-    replace_substring(documents, "º"," º ");
-    replace_substring(documents, "°"," ° ");
-    replace_substring(documents, "'"," ' ");
-    replace_substring(documents, "ç"," ç ");
-    replace_substring(documents, "✓"," ✓ ");
-    replace_substring(documents, "|"," | ");
-    replace_substring(documents, "@"," @ ");
-    replace_substring(documents, "#"," # ");
-    replace_substring(documents, "^"," ^ ");
-    replace_substring(documents, "*"," * ");
-    replace_substring(documents, "€"," € ");
-    replace_substring(documents, "¬"," ¬ ");
-    replace_substring(documents, "•"," • ");
-    replace_substring(documents, "·"," · ");
-    replace_substring(documents, "”"," ” ");
-    replace_substring(documents, "“"," “ ");
-    replace_substring(documents, "´"," ´ ");
-    replace_substring(documents, "§"," § ");
-    replace_substring(documents,"_", " _ ");
-    replace_substring(documents,".", " . ");
-
-    delete_extra_spaces(documents);
-}
-
-
-void TextAnalytics::aux_remove_non_printable_chars(Tensor<string, 1> &documents) const
-{
-    Tensor<string, 1> new_documents(documents);
-
-    for(Index i = 0; i < documents.size(); i++)
-    {
-        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
-    }
-
-    documents = new_documents;
-}
-
-
-/// Split documents into words Tensors. Each word is equivalent to a token.
-/// @param documents String tensor we will split
-
-Tensor<Tensor<string,1>,1> TextAnalytics::tokenize(const Tensor<string,1>& documents) const
-{
-    const Index documents_number = documents.size();
-
-    Tensor<Tensor<string,1>,1> new_tokenized_documents(documents_number);
-
-#pragma omp parallel for
-    for(Index i = 0; i < documents_number; i++)
-    {
-        new_tokenized_documents(i) = get_tokens(documents(i));
-    }
-
-    return new_tokenized_documents;
-}
-
-
-/// Joins a string tensor into a string
-/// @param token String tensor we will join
-
-string TextAnalytics::to_string(Tensor<string,1> token) const
-{
-    string word;
-
-    for(Index i = 0; i < token.size() - 1; i++)
-        word += token(i) + " ";
-    word += token(token.size() - 1);
-
-    return word;
-}
-
-
-/// Join the words Tensors into strings documents
-/// @param tokens Tensor of Tensor of words we want to join
-
-Tensor<string,1> TextAnalytics::detokenize(const Tensor<Tensor<string,1>,1>& tokens) const
-{
-    const Index documents_number = tokens.size();
-
-    Tensor<string,1> new_documents(documents_number);
-
-    for(Index i = 0; i < documents_number; i++)
-    {
-        new_documents[i] = to_string(tokens(i));
-    }
-
-    return new_documents;
-}
-
-void TextAnalytics::filter_not_equal_to(Tensor<string,1>& document, const Tensor<string,1>& delete_words) const
-{
-
-    for(Index i = 0; i < document.size(); i++)
-    {
-        const Index tokens_number = count_tokens(document(i),' ');
-        const Tensor<string, 1> tokens = get_tokens(document(i), ' ');
-
-        string result;
-
-        for(Index j = 0; j < tokens_number; j++)
-        {
-            if( ! contains(delete_words, tokens(j)) )
-            {
-                result += tokens(j) + " ";
-            }
-        }
-
-        document(i) = result;
-    }
-}
-
-
-/// Delete the words we want from the documents
-/// @param delete_words Tensor of words we want to delete
-
-void TextAnalytics::delete_words(Tensor<Tensor<string,1>,1>& tokens, const Tensor<string,1>& delete_words) const
-{
-    const Index documents_number = tokens.size();
-
-    for(Index i = 0; i < documents_number; i++)
-    {
-        filter_not_equal_to(tokens(i), delete_words);
-    }
-}
 
 
 
@@ -4214,12 +4173,12 @@ string TextAnalytics::read_txt_file(const string& path) const
 
     return result;
 }
-
+*/
 
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
-
-WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens) const
+/*
+opennn::WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens) 
 {
     const Tensor<string, 1> total = join(tokens);
 
@@ -4244,13 +4203,12 @@ WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<string,1>,1>& toke
 }
 
 
-
 /// Create a word bag that contains the unique words that appear a minimum number
 /// of times in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_frequency Minimum frequency that words must have.
 
 WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
-                                                                           const Index& minimum_frequency) const
+                                                            const Index& minimum_frequency) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
@@ -4462,64 +4420,6 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess_language_model(const Tensor
     delete_blanks(tokenized_documents);
 
     return tokenized_documents;
-}
-
-
-/// Sets the words that will be removed from the documents.
-
-void TextAnalytics::set_english_stop_words()
-{
-    stop_words.resize(242);
-
-    stop_words.setValues({"i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "u", "your", "yours", "yourself", "yourselves", "he",
-                          "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
-                          "what", "which", "who", "whom", "this", "that", "these", "those", "im", "am", "m", "is", "are", "was", "were", "be", "been", "being",
-                          "have", "has", "s", "ve", "re", "ll", "t", "had", "having", "do", "does", "did", "doing", "would", "d", "shall", "should", "could",
-                          "ought", "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd",
-                          "she'd", "we'd", "they'd", "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't",
-                          "haven't", "hadn't", "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't",
-                          "let's", "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't", "needn't", "oughtn't",
-                          "mightn't", "shes", "its", "were", "theyre", "ive", "youve", "weve", "theyve", "id", "youd", "hed", "shed", "wed", "theyd",
-                          "ill", "youll", "hell", "shell", "well", "theyll", "isnt", "arent", "wasnt", "werent", "hasnt", "havent", "hadnt",
-                          "doesnt", "dont", "didnt", "wont", "wouldnt", "shant", "shouldnt", "cant", "cannot", "couldnt", "mustnt", "lets",
-                          "thats", "whos", "whats", "heres", "theres", "whens", "wheres", "whys", "hows", "darent", "neednt", "oughtnt",
-                          "mightnt", "a", "an", "the", "and", "n", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
-                          "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
-                          "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
-                          "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very"});
-}
-
-
-
-void TextAnalytics::set_spanish_stop_words()
-{
-    stop_words.resize(327);
-
-    stop_words.setValues({"de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las", "por", "un", "para", "con", "no", "una", "su", "al",
-                          "es", "lo", "como", "más", "mas", "pero", "sus", "le", "ya", "o", "fue", "este", "ha", "si", "sí", "porque", "esta", "son",
-                          "entre", "está", "cuando", "muy", "aún", "aunque", "sin", "sobre", "ser", "tiene", "también", "me", "hasta", "hay", "donde", "han", "quien",
-                          "están", "desde", "todo", "nos", "durante", "todos", "uno", "les", "ni", "contra", "otros", "fueron", "ese", "eso", "había",
-                          "ante", "ellos", "e", "esto", "mí", "antes", "algunos", "qué", "unos", "yo", "otro", "otras", "otra", "él", "tanto", "esa",
-                          "estos", "mucho", "quienes", "nada", "muchos", "cual", "sea", "poco", "ella", "estar", "haber", "estas", "estaba", "estamos",
-                          "algunas", "algo", "nosotros", "mi", "mis", "tú", "te", "ti", "tu", "tus", "ellas", "nosotras", "vosotros", "vosotras", "os",
-                          "mío", "mía", "míos", "mías", "tuyo", "tuya", "tuyos", "tuyas", "suyo", "suya", "suyos", "suyas", "nuestro", "nuestra", "nuestros",
-                          "nuestras", "vuestro", "vuestra", "vuestros", "vuestras", "esos", "esas", "estoy", "estás", "está", "estamos", "estáis", "están",
-                          "esté", "estés", "estemos", "estéis", "estén", "estaré", "estarás", "estará", "estaremos", "estaréis", "estarán", "estaría",
-                          "estarías", "estaríamos", "estaríais", "estarían", "estaba", "estabas", "estábamos", "estabais", "estaban", "estuve", "estuviste",
-                          "estuvo", "estuvimos", "estuvisteis", "estuvieron", "estuviera", "estuvieras", "estuviéramos", "estuvierais", "estuvieran", "estuviese",
-                          "estuvieses", "estuviésemos", "estuvieseis", "estuviesen", "estando", "estado", "estada", "estados", "estadas", "estad", "he",
-                          "has", "ha", "hemos", "habéis", "han", "haya", "hayas", "hayamos", "hayáis", "hayan", "habré", "habrás", "habrá", "habremos",
-                          "habréis", "habrán", "habría", "habrías", "habríamos", "habríais", "habrían", "había", "habías", "habíamos", "habíais", "habían",
-                          "hube", "hubiste", "hubo", "hubimos", "hubisteis", "hubieron", "hubiera", "hubieras", "hubiéramos", "hubierais", "hubieran",
-                          "hubiese", "hubieses", "hubiésemos", "hubieseis", "hubiesen", "habiendo", "habido", "habida", "habidos", "habidas", "soy", "eres",
-                          "es", "somos", "sois", "son", "sea", "seas", "seamos", "seáis", "sean", "seré", "serás", "será", "seremos", "seréis", "serán",
-                          "sería", "serías", "seríamos", "seríais", "serían", "era", "eras", "éramos", "erais", "eran", "fui", "fuiste", "fue", "fuimos",
-                          "fuisteis", "fueron", "fuera", "fueras", "fuéramos", "fuerais", "fueran", "fuese", "fueses", "fuésemos", "fueseis", "fuesen", "siendo",
-                          "sido", "tengo", "tienes", "tiene", "tenemos", "tenéis", "tienen", "tenga", "tengas", "tengamos", "tengáis", "tengan", "tendré",
-                          "tendrás", "tendrá", "tendremos", "tendréis", "tendrán", "tendría", "tendrías", "tendríamos", "tendríais", "tendrían", "tenía",
-                          "tenías", "teníamos", "teníais", "tenían", "tuve", "tuviste", "tuvo", "tuvimos", "tuvisteis", "tuvieron", "tuviera", "tuvieras",
-                          "tuviéramos", "tuvierais", "tuvieran", "tuviese", "tuvieses", "tuviésemos", "tuvieseis", "tuviesen", "teniendo", "tenido", "tenida",
-                          "tenidos", "tenidas", "tened"});
 }
 
 

@@ -15,7 +15,6 @@ namespace opennn
 
 TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 {
-
     time_series_data.resize(0, 0);
 
     time_series_raw_variables.resize(0);
@@ -34,7 +33,10 @@ TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 /// @param has_raw_variables_names True if data file contains a row with raw_variables names, False otherwise.
 /// @param data_codification String codification of the input file
 
-TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path, const char& separator, const bool& has_raw_variables_names, const Codification& data_codification)
+TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path, 
+                                     const char& separator, 
+                                     const bool& has_raw_variables_names, 
+                                     const Codification& data_codification)
 {
     set(data_source_path, separator, has_raw_variables_names, data_codification);
 }
@@ -48,13 +50,12 @@ Index TimeSeriesDataSet::get_time_series_raw_variables_number() const
 }
 
 
-
 Tensor<DataSet::RawVariable, 1> TimeSeriesDataSet::get_time_series_raw_variables() const
 {
     return time_series_raw_variables;
 }
 
-
+/*
 /// Returns the indices of the time variables in the data set.
 
 const string& TimeSeriesDataSet::get_time_column() const
@@ -67,15 +68,17 @@ const string& TimeSeriesDataSet::get_group_by_column() const
 {
     return group_by_column;
 }
-
+*/
 
 /// Returns the number of variables in the time series data.
 
 Index TimeSeriesDataSet::get_time_series_variables_number() const
 {
+    const Index time_series_raw_variables_number = time_series_raw_variables.size();
+
     Index variables_number = 0;
 
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
+    for(Index i = 0; i < time_series_raw_variables_number; i++)
     {
         if(raw_variables(i).type == RawVariableType::Categorical)
         {
@@ -89,7 +92,6 @@ Index TimeSeriesDataSet::get_time_series_variables_number() const
 
     return variables_number;
 }
-
 
 
 /// Returns the number of lags to be used in a time series prediction application.
@@ -309,7 +311,7 @@ void TimeSeriesDataSet::set_time_series_data(const Tensor<type, 2>& new_data)
 
 /// Sets the new position where the time data is located in the data set.
 /// @param new_time_index Position where the time data is located.
-
+/*
 void TimeSeriesDataSet::set_time_column(const string& new_time_column)
 {
     time_column = new_time_column;
@@ -320,7 +322,7 @@ void TimeSeriesDataSet::set_group_by_column(const string& new_group_by_column)
 {
     group_by_column = new_group_by_column;
 }
-
+*/
 
 /// This method transforms the raw_variables into time series for forecasting problems.
 
@@ -1724,40 +1726,43 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
-    const Index samples_number = used_samples_indices.size();
-    const Index variables_number = used_variables_indices.size();
+    const Index used_samples_number = used_samples_indices.size();
+    const Index used_variables_number = used_variables_indices.size();
     const Index target_variables_number = target_variables_indices.size();
 
-    Index current_variable;
-    Index current_sample;
+    //Index current_variable_index;
+    //Index current_sample_index;
 
     if(lags_number == 0 && steps_ahead == 0)
     {
-#pragma omp parallel for schedule(dynamic)
+        #pragma omp parallel for 
 
-        for(Index j = 0; j < variables_number - target_variables_number; j++)
+        for(Index j = 0; j < used_variables_number - target_variables_number; j++)
         {
-            current_variable = input_variables_indices(j);
+            const Index current_variable_index = input_variables_indices(j);
 
-            for(Index i = 0; i < samples_number; i++)
+            for(Index i = 0; i < used_samples_number; i++)
             {
-                current_sample = used_samples_indices(i);
+                const Index current_sample_index = used_samples_indices(i);
 
-                if(isnan(data(current_sample, current_variable)))
+                if(isnan(data(current_sample_index, current_variable_index)))
                 {
-                    data(current_sample,current_variable) = means(j);
+                    data(current_sample_index, current_variable_index) = means(j);
                 }
             }
         }
 
+        #pragma omp parallel for 
+
         for(Index j = 0; j < target_variables_number; j++)
         {
-            current_variable = target_variables_indices(j);
-            for(Index i = 0; i < samples_number; i++)
-            {
-                current_sample = used_samples_indices(i);
+            const Index current_variable_index = target_variables_indices(j);
 
-                if(isnan(data(current_sample, current_variable)))
+            for(Index i = 0; i < used_samples_number; i++)
+            {
+                const Index current_sample_index = used_samples_indices(i);
+
+                if(isnan(data(current_sample_index, current_variable_index)))
                 {
                     set_sample_use(i, "Unused");
                 }
@@ -1766,61 +1771,63 @@ void TimeSeriesDataSet::impute_missing_values_mean()
     }
     else
     {
+        #pragma omp parallel for 
+
         for(Index j = 0; j < get_variables_number(); j++)
         {
-            current_variable = j;
+            const Index current_variable_index = j;
 
-            for(Index i = 0; i < samples_number; i++)
+            for(Index i = 0; i < used_samples_number; i++)
             {
-                current_sample = used_samples_indices(i);
+                const Index current_sample_index = used_samples_indices(i);
 
-                if(isnan(data(current_sample, current_variable)))
+                if(isnan(data(current_sample_index, current_variable_index)))
                 {
-                    if(i < lags_number || i > samples_number - steps_ahead)
+                    if(i < lags_number || i > used_samples_number - steps_ahead)
                     {
-                        data(current_sample, current_variable) = means(j);
+                        data(current_sample_index, current_variable_index) = means(j);
                     }
                     else
                     {
                         Index k = i;
-                        double preview_value = NAN, next_value = NAN;
+                        double previous_value = NAN, next_value = NAN;
 
-                        while(isnan(preview_value) && k > 0)
+                        while(isnan(previous_value) && k > 0)
                         {
                             k--;
-                            preview_value = data(used_samples_indices(k), current_variable);
+                            previous_value = data(used_samples_indices(k), current_variable_index);
                         }
 
                         k = i;
 
-                        while(isnan(next_value) && k < samples_number)
+                        while(isnan(next_value) && k < used_samples_number)
                         {
                             k++;
-                            next_value = data(used_samples_indices(k), current_variable);
+                            next_value = data(used_samples_indices(k), current_variable_index);
                         }
 
-                        if(isnan(preview_value) && isnan(next_value))
+                        if(isnan(previous_value) && isnan(next_value))
                         {
                             ostringstream buffer;
 
                             buffer << "OpenNN Exception: DataSet class.\n"
                                    << "void DataSet::impute_missing_values_mean() const.\n"
-                                   << "The last " << (samples_number - i) + 1 << " samples are all missing, delete them.\n";
+                                   << "The last " << (used_samples_number - i) + 1 << " samples are all missing, delete them.\n";
 
                             throw runtime_error(buffer.str());
                         }
 
-                        if(isnan(preview_value))
+                        if(isnan(previous_value))
                         {
-                            data(current_sample, current_variable) = type(next_value);
+                            data(current_sample_index, current_variable_index) = type(next_value);
                         }
                         else if(isnan(next_value))
                         {
-                            data(current_sample, current_variable) = type(preview_value);
+                            data(current_sample_index, current_variable_index) = type(previous_value);
                         }
                         else
                         {
-                            data(current_sample, current_variable) = type((preview_value + next_value)/2);
+                            data(current_sample_index, current_variable_index) = type((previous_value + next_value)/2);
                         }
                     }
                 }
@@ -1834,15 +1841,14 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
 void TimeSeriesDataSet::fill_time_series_gaps()
 {
-/*
     const Index rows_number = data.dimension(0);
     const Index raw_variables_number = data.dimension(1);
 
     const Tensor<type, 1> time_data = data.chip(0, 1);
-
+/*
     const Tensor<type, 1> time_difference_data = calculate_delta(time_data);
 
-    const Tensor<type, 1> time_step_mode = opennn::mode(time_difference_data);
+    const Tensor<type, 1> time_step_mode = mode(time_difference_data);
 
     const Tensor<type, 1> time_series_filled = fill_gaps_by_value(time_data, time_difference_data, time_step_mode(0));
 
@@ -1875,8 +1881,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "Tensor<type, 2> calculate_cross_correlations(const Index& lags_number) const method.\n"
-               << "Lags number(" << lags_number
-               << ") is greater than the number of samples("
+               << "Lags number(" << lags_number << ") is greater than the number of samples("
                << samples_number << ") \n";
 
         throw runtime_error(buffer.str());
@@ -1946,7 +1951,8 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables(i).raw_variable_use != VariableUse::Unused && time_series_raw_variables(i).type == RawVariableType::Numeric)
+        if(time_series_raw_variables(i).raw_variable_use != VariableUse::Unused 
+        && time_series_raw_variables(i).type == RawVariableType::Numeric)
         {
             input_i = get_time_series_raw_variable_data(i);
             cout << "Calculating " << time_series_raw_variables(i).name << " autocorrelations" << endl;
@@ -1984,9 +1990,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
-               << "Lags number(" << lags_number
-               << ") is greater than the number of samples("
-               << samples_number << ") \n";
+               << "Lags number(" << lags_number << ") is greater than samples number (" << samples_number << ") \n";
 
         throw runtime_error(buffer.str());
     }
@@ -2021,12 +2025,13 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
         {
             const Index raw_variable_index = target_raw_variables_indices(counter);
 
-            RawVariableType target_raw_variable_type = time_series_raw_variables(raw_variable_index).type;
+            const RawVariableType target_raw_variable_type = time_series_raw_variables(raw_variable_index).type;
 
             if(target_raw_variable_type == RawVariableType::Numeric)
             {
                 input_target_numeric_raw_variable_number++;
             }
+
             counter++;
         }
     }
@@ -2055,7 +2060,8 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables(i).raw_variable_use != VariableUse::Unused && time_series_raw_variables(i).type == RawVariableType::Numeric)
+        if(time_series_raw_variables(i).raw_variable_use != VariableUse::Unused 
+        && time_series_raw_variables(i).type == RawVariableType::Numeric)
         {
             input_i = get_time_series_raw_variable_data(i);
 
@@ -2070,12 +2076,12 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            if(time_series_raw_variables(j).raw_variable_use != VariableUse::Unused && time_series_raw_variables(j).type == RawVariableType::Numeric)
+            if(time_series_raw_variables(j).raw_variable_use != VariableUse::Unused 
+            && time_series_raw_variables(j).type == RawVariableType::Numeric)
             {
                 input_j = get_time_series_raw_variable_data(j);
 
                 if(display) cout << "   vs. " << time_series_raw_variables(j).name << endl;
-
             }
             else
             {
@@ -2089,14 +2095,13 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
             for(Index k = 0; k < new_lags_number; k++)
             {
-                cross_correlations (counter_i, counter_j, k) = cross_correlations_vector(k) ;
+                cross_correlations(counter_i, counter_j, k) = cross_correlations_vector(k) ;
             }
 
             counter_j++;
         }
 
         counter_i++;
-
     }
 
     return cross_correlations;
@@ -2107,7 +2112,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
 void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-    std::ifstream file;
+    ifstream file;
 
     file.open(time_series_data_file_name.c_str(), ios::binary);
 
@@ -2151,7 +2156,7 @@ void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_d
 
 void TimeSeriesDataSet::save_time_series_data_binary(const string& binary_data_file_name) const
 {
-    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+    ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
