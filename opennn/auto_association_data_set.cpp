@@ -60,9 +60,7 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    Tensor<RawVariable, 1> new_raw_variables;
-
-    new_raw_variables.resize(2*raw_variables_number);
+    Tensor<RawVariable, 1> new_raw_variables(2 * raw_variables_number);
 
     Index raw_variable_index = 0;
     Index index = 0;
@@ -212,7 +210,7 @@ void AutoAssociationDataSet::set_associative_raw_variables_number(const Index& n
 
 void AutoAssociationDataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
 {
-    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+    ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -275,7 +273,7 @@ void AutoAssociationDataSet::transform_associative_dataset()
 
 void AutoAssociationDataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
 {
-    std::ifstream file;
+    ifstream file;
 
     file.open(auto_associative_data_file_name.c_str(), ios::binary);
 
@@ -292,15 +290,15 @@ void AutoAssociationDataSet::load_auto_associative_data_binary(const string& aut
 
     streamsize size = sizeof(Index);
 
-    Index raw_variables_number;
-    Index rows_number;
+    Index raw_variables_number = 0;
+    Index rows_number = 0;
 
     file.read(reinterpret_cast<char*>(&raw_variables_number), size);
     file.read(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
-    type value;
+    type value = 0;
 
     associative_data.resize(rows_number, raw_variables_number);
 

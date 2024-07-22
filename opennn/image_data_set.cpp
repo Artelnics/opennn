@@ -56,6 +56,7 @@ Index ImageDataSet::get_image_height() const
     return input_variables_dimensions[0];
 }
 
+
 /// Returns the height of the images in the data set.
 
 Index ImageDataSet::get_image_size() const
@@ -83,41 +84,47 @@ bool ImageDataSet::get_random_reflection_axis_x() const
     return random_reflection_axis_x;
 }
 
+
 bool ImageDataSet::get_random_reflection_axis_y() const
 {
     return random_reflection_axis_y;
 }
+
 
 type ImageDataSet::get_random_rotation_minimum() const
 {
     return random_rotation_minimum;
 }
 
+
 type ImageDataSet::get_random_rotation_maximum() const
 {
     return random_rotation_maximum;
 }
+
 
 type ImageDataSet::get_random_horizontal_translation_minimum() const
 {
     return random_horizontal_translation_minimum;
 }
 
+
 type ImageDataSet::get_random_horizontal_translation_maximum() const
 {
     return random_horizontal_translation_maximum;
 }
+
 
 type ImageDataSet::get_random_vertical_translation_maximum() const
 {
     return random_vertical_translation_maximum;
 }
 
+
 type ImageDataSet::get_random_vertical_translation_minimum() const
 {
     return random_vertical_translation_minimum;
 }
-
 
 
 void ImageDataSet::set(const Index& new_images_number,
@@ -129,21 +136,17 @@ void ImageDataSet::set(const Index& new_images_number,
     model_type = ModelType::ImageClassification;
 
     set_images_number(new_images_number);
-    const Index image_height = new_height;
-    const Index image_width = new_width;
-    const Index channels_number = new_channels_number;
-    const Index targets_number = new_targets_number;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({ image_height, image_width, channels_number });
+    input_variables_dimensions.setValues({ new_height, new_width, new_channels_number });
 
     target_variables_dimensions.resize(1);
-    target_variables_dimensions.setValues({ targets_number });
+    target_variables_dimensions.setValues({ new_targets_number });
 
-    Tensor<string, 1> categories(targets_number);
+    Tensor<string, 1> categories(new_targets_number);
 
-    const Index new_inputs_number = image_height * image_width * channels_number;
-    const Index new_variables_number = new_inputs_number + targets_number;
+    const Index new_inputs_number = new_height * new_width * new_channels_number;
+    const Index new_variables_number = new_inputs_number + new_targets_number;
 
     data.resize(images_number, new_variables_number);
 
@@ -153,7 +156,7 @@ void ImageDataSet::set(const Index& new_images_number,
     {
         if(i < new_inputs_number)
         {
-            raw_variables(i).name = "pixel_" + to_string(i+1);
+            raw_variables(i).name = "p_" + to_string(i+1);
             raw_variables(i).raw_variable_use = VariableUse::Input;
             raw_variables(i).type = RawVariableType::Numeric;
         }
@@ -161,7 +164,15 @@ void ImageDataSet::set(const Index& new_images_number,
         {
             raw_variables(i).name = "target_" + to_string(i+1);
             raw_variables(i).raw_variable_use = VariableUse::Target;
-            raw_variables(i).type = RawVariableType::Numeric;
+
+            if (new_targets_number == 1)
+            {
+                raw_variables(i).type = RawVariableType::Numeric;
+            }
+            else
+            {
+                raw_variables(i).type = RawVariableType::Categorical;
+            }
             //raw_variables(i).add_category("");
             //raw_variables(i).set_categories_uses(VariableUse::Target);
             //raw_variables(i).set_categories(categories);

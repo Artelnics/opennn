@@ -27,18 +27,18 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        /*
+        
         srand(static_cast<unsigned>(time(nullptr)));
 
         // DataSet
 
         TextDataSet text_data_set;
-
+        
         text_data_set.set_data_source_path("../data/amazon_cells_labelled.txt");
         text_data_set.set_text_separator(DataSet::Separator::Tab);
 
         text_data_set.read_txt();
-
+        /*
         text_data_set.split_samples_random();
 
         const Tensor<string, 1> input_words = text_data_set.get_input_raw_variables_names();

@@ -1473,7 +1473,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
                                             long_short_term_memory_layer_forward_propagation,
                                             long_short_term_memory_layer_back_propagation);
     
-    //@todo inputs derivatives
+    /// @todo Calculate inputs derivatives
 }
 
 
