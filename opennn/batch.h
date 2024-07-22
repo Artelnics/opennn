@@ -64,6 +64,10 @@ struct Batch
     type* context_data = nullptr;
 
     bool has_context = false;
+
+    ThreadPool* thread_pool = nullptr;
+    ThreadPoolDevice* thread_pool_device = nullptr;
+
 };
 
 #ifdef OPENNN_CUDA

@@ -356,6 +356,7 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
+
     if(loss_index->get_error_type() == "MINKOWSKI_ERROR")
     {
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");

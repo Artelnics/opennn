@@ -192,10 +192,9 @@ void ResponseOptimizationTest::run_test_case()
 
     // Performance methods
 
-    test_calculate_inputs();     /* Test Failed */
+    test_calculate_inputs();
 
-    test_perform_optimization();     /* Test Failed */
-
+    test_perform_optimization();
 
     cout << "End of response optimization test case.\n\n";
 }

@@ -240,7 +240,7 @@ public:
 
     // Create Box plot from histogram
 
-    Tensor<type, 1> box_plot_from_histogram(Histogram&, const Index&) const;
+    Tensor<type, 1> box_plot_from_histogram(const Histogram&, const Index&) const;
 
     // Raw variables get methods
 
@@ -550,7 +550,7 @@ public:
 
     bool has_binary_raw_variables() const;
     bool has_categorical_raw_variables() const;
-    bool has_time_raw_variables() const;
+    Index count_time_raw_variables() const;
 
     //bool has_time_time_series_raw_variables() const;
 

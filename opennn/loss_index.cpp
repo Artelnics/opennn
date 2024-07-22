@@ -959,7 +959,7 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 
     Index size = batch_samples_number;
 
-    for (Index i = 0; i < output_dimensions.size(); i++)
+    for (Index i = 0; i < Index(output_dimensions.size()); i++)
     {
         output_deltas_dimensions[i + 1] = output_dimensions[i];
 
@@ -1292,7 +1292,7 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
     
     Index size = batch_samples_number;
 
-    for (Index i = 0; i < output_dimensions.size(); i++)
+    for (Index i = 0; i < Index(output_dimensions.size()); i++)
     {
         output_deltas_dimensions[i + 1] = output_dimensions[i];
 

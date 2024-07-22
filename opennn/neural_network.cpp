@@ -1762,7 +1762,6 @@ void NeuralNetwork::set_parameters_random() const
     for(Index i = 0; i < layers_number; i++)
     {
         layers[i]->set_parameters_random();
-
     }
 }
 
@@ -3828,8 +3827,6 @@ string NeuralNetwork::write_expression_api() const
         }
 
         buffer << t << endl;
-
-        //side = 0;
     }
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "php");

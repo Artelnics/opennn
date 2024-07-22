@@ -38,7 +38,7 @@ bool calculate_random_bool();
 
 // Initialization
 
-//void initialize_sequential(Tensor<type, 1>&);
+void initialize_sequential(Tensor<type, 1>&);
 void initialize_sequential(Tensor<Index, 1>&);
 
 void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&);
@@ -113,12 +113,12 @@ bool is_constant(const Tensor<type, 1>&);
 
 bool is_false(const Tensor<bool, 1>&);
 
-//bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
+bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
 
-//bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = type(0));
-//bool are_equal(const Tensor<bool, 1>&, const Tensor<bool, 1>&);
-//bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = type(0));
-//bool are_equal(const Tensor<bool, 2>&, const Tensor<bool, 2>&);
+bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = type(0));
+bool are_equal(const Tensor<bool, 1>&, const Tensor<bool, 1>&);
+bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = type(0));
+bool are_equal(const Tensor<bool, 2>&, const Tensor<bool, 2>&);
 
 bool is_less_than(const Tensor<type, 1>&, const type&);
 

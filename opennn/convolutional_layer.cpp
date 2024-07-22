@@ -1312,7 +1312,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    for(Index i = 0; i < inputs_dimensions.size(); i++)
+    for(Index i = 0; i < Index(inputs_dimensions.size()); i++)
     {
         buffer << inputs_dimensions[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
@@ -1331,7 +1331,7 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    for(Index i = 0; i < inputs_dimensions.size(); i++)
+    for(Index i = 0; i < Index(inputs_dimensions.size()); i++)
     {
         buffer << get_outputs_dimensions()[i];
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
@@ -1708,9 +1708,6 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     const Index kernesl_rows_number = convolutional_layer->get_kernels_rows_number();
     const Index kernels_columns_number = convolutional_layer->get_kernels_columns_number();
     const Index kernels_channels_number = convolutional_layer->get_kernels_channels_number();
-
-    const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-    const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
 
     error_combinations_derivatives.resize(kernels_number,
         kernesl_rows_number,

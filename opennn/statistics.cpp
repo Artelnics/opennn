@@ -1901,7 +1901,6 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     squared_sums.setZero();
     count.setZero();
 
-
     /// @todo optimize this loop
     for(Index i = 0; i < row_indices_size; i++)
     {
