@@ -149,7 +149,7 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-dimensions Layer::get_outputs_dimensions() const
+dimensions Layer::get_output_dimensions() const
 {
     return dimensions();
 }
@@ -229,7 +229,7 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     y.setZero();
 
-    for (Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         y(i, Index(maximum_indices(i))) = type(1);
     }
@@ -249,9 +249,9 @@ void Layer::competitive(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
 
     y.setZero();
 
-    for (Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
-        for (Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
             y(i, j, Index(maximum_indices(i, j))) = type(1);
         }
@@ -351,9 +351,9 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 
     Tensor<type, 0> sum;
 
-    for (Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels_number; i++)
     {
-        for (Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
             softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
             tensor_vector_data = tensor_data + rows_number * (i * columns_number + j);

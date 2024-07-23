@@ -287,14 +287,14 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
     
-    if (momentum <= type(0))
+    if(momentum <= type(0))
     {
         parameters_increment.device(*thread_pool_device) 
             = gradient * (-learning_rate);
 
         parameters.device(*thread_pool_device) += parameters_increment;
     }    
-    else if (momentum > type(0) && !nesterov)
+    else if(momentum > type(0) && !nesterov)
     {
         parameters_increment.device(*thread_pool_device) =
             gradient * (-learning_rate) + momentum * last_parameters_increment;
@@ -304,7 +304,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         parameters.device(*thread_pool_device) += parameters_increment;
 
     }
-    else if (momentum > type(0) && nesterov)
+    else if(momentum > type(0) && nesterov)
     {
         parameters_increment.device(*thread_pool_device)
             = gradient * (-learning_rate) + momentum * last_parameters_increment;
@@ -368,7 +368,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
     Tensor<Index, 1> context_variables_indices;
-    if (is_instance_of<LanguageDataSet>(data_set))
+    if(is_instance_of<LanguageDataSet>(data_set))
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
         context_variables_indices = language_data_set->get_context_variables_indices();
@@ -399,7 +399,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
-    if (!is_instance_of<LanguageDataSet>(data_set))
+    if(!is_instance_of<LanguageDataSet>(data_set))
         input_variables_descriptives = data_set->scale_input_variables();
 
     Batch training_batch(training_batch_samples_number, data_set);
@@ -639,7 +639,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
     }
 
-    if (!is_instance_of<LanguageDataSet>(data_set))
+    if(!is_instance_of<LanguageDataSet>(data_set))
         data_set->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network->has_unscaling_layer())

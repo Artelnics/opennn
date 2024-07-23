@@ -120,7 +120,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         adaptive_moment_estimation.set_maximum_epochs_number(10000);
         adaptive_moment_estimation.set_maximum_time(1000.0);
 
-        //for (Index i = 0; i < 100; i++)
+        //for(Index i = 0; i < 100; i++)
         //{
             //data_set.set_data_random();
             //neural_network.set_parameters_random();

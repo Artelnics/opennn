@@ -70,7 +70,7 @@ bool EmbeddingLayer::get_positional_encoding() const
 }
 
 
-dimensions EmbeddingLayer::get_outputs_dimensions() const
+dimensions EmbeddingLayer::get_output_dimensions() const
 {
     return { inputs_number, depth };
 }
@@ -278,11 +278,11 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs)
 
     type random;
 
-    for (Index i = 0; i < outputs.size(); i++)
+    for(Index i = 0; i < outputs.size(); i++)
     {
         random = calculate_random_uniform(type(0), type(1));
 
-        if (random < dropout_rate)    outputs(i) = 0;
+        if(random < dropout_rate)    outputs(i) = 0;
         else    outputs(i) *= scaling_factor;
     }
 }
@@ -358,7 +358,7 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
         }
     }
 
-    if (dropout_rate > 0 && is_training)    dropout(outputs);
+    if(dropout_rate > 0 && is_training)    dropout(outputs);
 }
 
 
@@ -372,7 +372,7 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, batch_samples_number, inputs_number);
 
-    if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
+    if(deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first, batch_samples_number, inputs_number, deltas_pair(0).second[2]);
 
@@ -385,14 +385,14 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
     
     embedding_weights_derivatives.setZero();
     
-    for (Index i = 0; i < batch_samples_number; i++)
+    for(Index i = 0; i < batch_samples_number; i++)
     {
         if(positional_encoding)
             sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
         else
             sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
-        for (Index j = 0; j < inputs_number; j++)
+        for(Index j = 0; j < inputs_number; j++)
         {
             embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device) += sample_deltas.chip(j, 0);
         }
@@ -407,7 +407,7 @@ void EmbeddingLayer::add_deltas(const Tensor<pair<type*, dimensions>, 1>& deltas
                                       deltas_pair(0).second[1],
                                       deltas_pair(0).second[2]);
      
-    for (Index i = 1; i < deltas_pair.size(); i++)
+    for(Index i = 1; i < deltas_pair.size(); i++)
     {
         const TensorMap<Tensor<type, 3>> other_deltas(deltas_pair(i).first,
                                                       deltas_pair(i).second[0],
@@ -447,7 +447,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("EmbeddingLayer");
 
-    if (!embedding_layer_element)
+    if(!embedding_layer_element)
     {
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -460,7 +460,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* layer_name_element = embedding_layer_element->FirstChildElement("LayerName");
 
-    if (!layer_name_element)
+    if(!layer_name_element)
     {
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -469,7 +469,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (layer_name_element->GetText())
+    if(layer_name_element->GetText())
     {
         set_name(layer_name_element->GetText());
     }
@@ -478,7 +478,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* input_dimension_element = embedding_layer_element->FirstChildElement("InputDimension");
 
-    if (!input_dimension_element)
+    if(!input_dimension_element)
     {
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -487,7 +487,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (input_dimension_element->GetText())
+    if(input_dimension_element->GetText())
     {
         set_input_dim(Index(stoi(input_dimension_element->GetText())));
     }
@@ -496,7 +496,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* inputs_number_element = embedding_layer_element->FirstChildElement("InputsNumber");
 
-    if (!inputs_number_element)
+    if(!inputs_number_element)
     {
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -505,7 +505,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (inputs_number_element->GetText())
+    if(inputs_number_element->GetText())
     {
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
     }
@@ -514,7 +514,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* depth_element = embedding_layer_element->FirstChildElement("Depth");
 
-    if (!depth_element)
+    if(!depth_element)
     {
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -523,7 +523,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (depth_element->GetText())
+    if(depth_element->GetText())
     {
         set_depth(Index(stoi(depth_element->GetText())));
     }
@@ -532,7 +532,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* positional_encoding_element = embedding_layer_element->FirstChildElement("PositionalEncoding");
 
-    if (!positional_encoding_element)
+    if(!positional_encoding_element)
     {
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -541,7 +541,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (positional_encoding_element->GetText())
+    if(positional_encoding_element->GetText())
     {
         positional_encoding = string(positional_encoding_element->GetText()) == "true";
     }
@@ -550,7 +550,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* parameters_element = embedding_layer_element->FirstChildElement("Parameters");
 
-    if (!parameters_element)
+    if(!parameters_element)
     {
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -559,7 +559,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (parameters_element->GetText())
+    if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
         set_parameters(to_type_vector(parameters_string, ' '));
@@ -633,11 +633,11 @@ void EmbeddingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     const Tensor<type, 1> parameters = get_parameters();
     const Index parameters_size = parameters.size();
 
-    for (Index i = 0; i < parameters_size; i++)
+    for(Index i = 0; i < parameters_size; i++)
     {
         buffer << parameters(i);
 
-        if (i != (parameters_size - 1)) buffer << " ";
+        if(i != (parameters_size - 1)) buffer << " ";
     }
 
     file_stream.PushText(buffer.str().c_str());
@@ -681,7 +681,7 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     outputs_data = outputs.data();
 
-    if (embedding_layer->get_positional_encoding())    build_positional_encoding_matrix();
+    if(embedding_layer->get_positional_encoding())    build_positional_encoding_matrix();
 }
 
 
@@ -699,11 +699,11 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     const type half_depth = type(depth) / 2;
 
     #pragma omp parallel for
-    for (Index i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
-        for (Index j = 0; j < Index(depth); j++)
+        for(Index j = 0; j < Index(depth); j++)
         {
-            if (j < Index(half_depth))
+            if(j < Index(half_depth))
                 positional_encoding(i, j) = sin((i) / pow(10000, (j) / half_depth));
             else
                 positional_encoding(i, j) = cos((i) / pow(10000, (j - Index(half_depth)) / half_depth));

@@ -222,9 +222,9 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     #pragma omp parallel for reduction(+:weighted_squared_error)
 
-    for (Index i = 0; i < errors.size(); i++)
+    for(Index i = 0; i < errors.size(); i++)
     {
-        if (targets(i) == type(0))
+        if(targets(i) == type(0))
         {
             weighted_squared_error += negatives_weight * errors(i);
         }

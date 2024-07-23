@@ -32,9 +32,9 @@ ScalingLayer4D::ScalingLayer4D(const Index& new_neurons_number) : Layer()
 }
 
 
-ScalingLayer4D::ScalingLayer4D(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
+ScalingLayer4D::ScalingLayer4D(const dimensions& new_input_dimensions) : Layer()
 {
-    set(new_inputs_dimensions);
+    set(new_input_dimensions);
 }
 
 
@@ -51,19 +51,19 @@ ScalingLayer4D::ScalingLayer4D(const Tensor<Descriptives, 1>& new_descriptives) 
 
 dimensions ScalingLayer4D::get_inputs_dimensions() const
 {
-    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) , inputs_dimensions(3) };
+    return inputs_dimensions;
 }
 
 
-dimensions ScalingLayer4D::get_outputs_dimensions() const
+dimensions ScalingLayer4D::get_output_dimensions() const
 {
-    return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) , inputs_dimensions(3) };
+    return inputs_dimensions;
 }
 
 
 Index ScalingLayer4D::get_inputs_number() const
 {
-    return descriptives.size();
+    return inputs_dimensions[0]*inputs_dimensions[1]*inputs_dimensions[2];
 }
 
 
@@ -312,15 +312,15 @@ void ScalingLayer4D::set(const Index& new_inputs_number)
 }
 
 
-void ScalingLayer4D::set(const Tensor<Index, 1>& new_inputs_dimensions)
+void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
-    inputs_dimensions = new_inputs_dimensions;
+    inputs_dimensions = new_input_dimensions;
 
-    const Tensor<Index,0> dimension_product = new_inputs_dimensions.prod();
+    const Index inputs_number = get_inputs_number();
 
-    descriptives.resize(dimension_product(0));
+    descriptives.resize(inputs_number);
 
-    scalers.resize(dimension_product(0));
+    scalers.resize(inputs_number);
     scalers.setConstant(Scaler::MinimumMaximum);
 
     set_default();
@@ -758,15 +758,17 @@ void ScalingLayer4D::print() const
 
     const Index inputs_number = get_inputs_number();
 
+    print_dimensions(inputs_dimensions);
+
     const Tensor<string, 1> scalers_text = write_scalers_text();
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        cout << "Neuron " << i << endl;
+        // cout << "Neuron " << i << endl;
 
-        cout << "Scaler " << scalers_text(i) << endl;
+        // cout << "Scaler " << scalers_text(i) << endl;
 
-        descriptives(i).print();
+        // descriptives(i).print();
     }
 }
 

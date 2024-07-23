@@ -480,6 +480,7 @@ void TimeSeriesDataSet::transform_time_series()
 
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 ///
+/*
 void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -877,8 +878,8 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     time(&finish);
 }
-
-
+*/
+/*
 void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     ostringstream buffer;
@@ -1714,6 +1715,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 }
+*/
 
 /// Substitutes all the missing values by the mean of the corresponding variable.
 

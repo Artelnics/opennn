@@ -93,7 +93,7 @@ type PerceptronLayer::get_dropout_rate() const
 }
 
 
-dimensions PerceptronLayer::get_outputs_dimensions() const
+dimensions PerceptronLayer::get_output_dimensions() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -681,11 +681,11 @@ void PerceptronLayer::back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>
 
     Index synaptic_weight_index = 0;
 
-    for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+    for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
     {
         const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
 
-        for (Index input_index = 0; input_index < inputs_number; input_index++)
+        for(Index input_index = 0; input_index < inputs_number; input_index++)
         {
             const TensorMap<Tensor<type, 1>> input = tensor_map(inputs, input_index);
 
@@ -707,7 +707,7 @@ void PerceptronLayer::back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>
 
     // Input derivatives
 
-    if (!is_first_layer)
+    if(!is_first_layer)
         input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, A_BT);
 }
 

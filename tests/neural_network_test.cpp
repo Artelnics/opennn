@@ -128,8 +128,8 @@ void NeuralNetworkTest::test_constructor()
 /*
     // Convolutional layer constructor
 
-    Tensor<Index, 1> new_inputs_dimensions(1);
-    new_inputs_dimensions.setConstant(type(1));
+    Tensor<Index, 1> new_input_dimensions(1);
+    new_input_dimensions.setConstant(type(1));
 
     Index new_blocks_number = 1;
 
@@ -140,7 +140,7 @@ void NeuralNetworkTest::test_constructor()
 
     ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
 
-    NeuralNetwork neural_network_6(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
+    NeuralNetwork neural_network_6(new_input_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
 
     assert_true(neural_network_6.is_empty(), LOG);
     assert_true(neural_network_6.get_layers_number() == 0, LOG);

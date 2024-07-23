@@ -530,7 +530,7 @@ void NeuronsSelectionResults::resize_history(const Index& new_size)
     training_error_history.resize(new_size);
     selection_error_history.resize(new_size);
 
-    for (Index i = 0; i < new_size; i++)
+    for(Index i = 0; i < new_size; i++)
     {
         neurons_number_history(i) = old_neurons_number_history(i);
         training_error_history(i) = old_training_error_history(i);
