@@ -65,7 +65,7 @@ public:
     Index get_depth() const;
     bool get_positional_encoding() const;
 
-    dimensions get_outputs_dimensions() const final;
+    dimensions get_output_dimensions() const final;
 
     Tensor<type, 2> get_embedding_weights() const;
 

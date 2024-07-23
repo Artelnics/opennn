@@ -252,6 +252,8 @@ Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const typ
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 
+void print_dimensions(const dimensions&);
+
 template<class T, int n>
 Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 {
@@ -276,7 +278,7 @@ pair<type*, dimensions> to_pair(Tensor<type, rank>& tensor)
 {
     dimensions tensor_dimensions(rank);
 
-    for (Index i = 0; i < rank; i++)
+    for(Index i = 0; i < rank; i++)
         tensor_dimensions[i] = tensor.dimension(i);
 
     return pair<type*, dimensions>(tensor.data(), tensor_dimensions);

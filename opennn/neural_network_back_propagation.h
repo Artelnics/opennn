@@ -44,7 +44,7 @@ struct NeuralNetworkBackPropagation
             cout << "Layer " << i << ": ";
             cout << neural_network->get_layer(i)->get_type_string() << endl;
             
-            if (layers(i) == nullptr) continue;
+            if(layers(i) == nullptr) continue;
 
             layers(i)->print();
         }

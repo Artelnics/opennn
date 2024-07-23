@@ -116,7 +116,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     error = minkowski_error(0)/type(batch_samples_number);
 
-    if (isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 

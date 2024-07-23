@@ -81,7 +81,7 @@ public:
     void set_image_width(const int&);
     void set_image_height(const int&);
     void set_image_padding(const int&);
-    void set_images_number(const Index&);
+//    void set_images_number(const Index&);
 
     void set_augmentation(const bool&);
     void set_random_reflection_axis_x(const bool&);
@@ -100,7 +100,7 @@ public:
 
 protected:
 
-    Index images_number = 0;
+//    Index images_number = 0;
     Index padding = 0;
 
     bool augmentation = false;
@@ -112,6 +112,8 @@ protected:
     type random_horizontal_translation_maximum = type(0);
     type random_vertical_translation_minimum = type(0);
     type random_vertical_translation_maximum = type(0);
+
+    // Object detection
 
     Tensor<string, 1> labels_tokens;
 
