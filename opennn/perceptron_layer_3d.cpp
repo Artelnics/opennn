@@ -71,7 +71,7 @@ Index PerceptronLayer3D::get_neurons_number() const
 }
 
 
-dimensions PerceptronLayer3D::get_outputs_dimensions() const
+dimensions PerceptronLayer3D::get_output_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 
@@ -500,7 +500,7 @@ void PerceptronLayer3D::set_parameters_glorot()
 
 #pragma omp parallel for
 
-    for (Index i = 0; i < synaptic_weights.size(); i++)
+    for(Index i = 0; i < synaptic_weights.size(); i++)
     {
         const type random = type(rand() / (RAND_MAX + 1.0));
 
@@ -542,7 +542,7 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
 
         random = calculate_random_uniform(type(0), type(1));
 
-        if (random < dropout_rate)
+        if(random < dropout_rate)
         {
             matrix.setZero();
         }
@@ -556,11 +556,11 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
 
     type random;
 
-    for (Index i = 0; i < outputs.size(); i++)
+    for(Index i = 0; i < outputs.size(); i++)
     {
         random = calculate_random_uniform(type(0), type(1));
 
-        if (random < dropout_rate)    outputs(i) = 0;
+        if(random < dropout_rate)    outputs(i) = 0;
         else    outputs(i) *= scaling_factor;
     }
 }
@@ -670,7 +670,7 @@ void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 
 
     if(is_training)
     {
-        if (dropout_rate > type(0))
+        if(dropout_rate > type(0))
         {
             dropout(outputs);
         }
@@ -699,7 +699,7 @@ void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>&
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2]);
 
-    if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
+    if(deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
                                             deltas_pair(0).second[0],
@@ -750,7 +750,7 @@ void PerceptronLayer3D::add_deltas(const Tensor<pair<type*, dimensions>, 1>& del
                                       deltas_pair(0).second[1],
                                       deltas_pair(0).second[2]);
 
-    for (Index i = 1; i < deltas_pair.size(); i++)
+    for(Index i = 1; i < deltas_pair.size(); i++)
     {
         const TensorMap<Tensor<type, 3>> other_deltas(deltas_pair(i).first,
                                                       deltas_pair(i).second[0],

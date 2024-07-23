@@ -387,22 +387,22 @@ void ProbabilisticLayer3DTest::test_calculate_activations_derivatives()
 
 bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activations, Tensor<type, 4>& activations_derivatives) const
 {
-    for (Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
-        for (Index j = 0; j < inputs_number; j++)
+        for(Index j = 0; j < inputs_number; j++)
         {
-            for (Index k = 0; k < neurons_number; k++)
+            for(Index k = 0; k < neurons_number; k++)
             {
-                for (Index v = 0; v < neurons_number; v++)
+                for(Index v = 0; v < neurons_number; v++)
                 {
-                    if (k == v)
+                    if(k == v)
                     {
-                        if (activations_derivatives(i, j, k, v) != activations(i, j, k) - activations(i, j, k) * activations(i, j, k))
+                        if(activations_derivatives(i, j, k, v) != activations(i, j, k) - activations(i, j, k) * activations(i, j, k))
                             return false;
                     }
                     else
                     {
-                        if (activations_derivatives(i, j, k, v) != -activations(i, j, k) * activations(i, j, v))
+                        if(activations_derivatives(i, j, k, v) != -activations(i, j, k) * activations(i, j, v))
                             return false;
                     }
                 }
@@ -447,8 +447,8 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
 
         bool correct_outputs = true;
 
-        for (Index i = 0; i < outputs.size(); i++)
-            if (abs(outputs(i) - type(0.5) > type(1e-3))) correct_outputs = false;
+        for(Index i = 0; i < outputs.size(); i++)
+            if(abs(outputs(i) - type(0.5) > type(1e-3))) correct_outputs = false;
 
         assert_true(
             outputs.dimension(0) == samples_number &&
@@ -502,8 +502,8 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
 
         bool correct_outputs = true;
         
-        for (Index i = 0; i < outputs.size(); i++)
-            if (abs(outputs(i) - softmax_solution(i) > type(1e-3))) correct_outputs = false;
+        for(Index i = 0; i < outputs.size(); i++)
+            if(abs(outputs(i) - softmax_solution(i) > type(1e-3))) correct_outputs = false;
 
         assert_true(
             outputs.dimension(0) == samples_number &&

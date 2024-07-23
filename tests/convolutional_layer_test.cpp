@@ -162,16 +162,16 @@ void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    dimensions new_inputs_dimensions(4);
-    dimensions new_kernels_dimensions(4);
+    dimensions new_input_dimensions(4);
+    dimensions new_kernel_dimensions(4);
 
-//    new_inputs_dimensions.setValues({23, 64, 3, 1});
-//    new_kernels_dimensions.setValues({3, 2, 1, 1});
+//    new_input_dimensions.setValues({23, 64, 3, 1});
+//    new_kernel_dimensions.setValues({3, 2, 1, 1});
 
-    ConvolutionalLayer convolutional_layer(new_inputs_dimensions, new_kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(new_input_dimensions, new_kernel_dimensions);
 
-    assert_true(convolutional_layer.get_inputs_channels_number() == 3 &&
-                convolutional_layer.get_inputs_rows_number() == 23 &&
+    assert_true(convolutional_layer.get_input_channels() == 3 &&
+                convolutional_layer.get_input_height() == 23 &&
                 convolutional_layer.get_inputs_columns_number() == 64, LOG);
 }
 
@@ -214,12 +214,12 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     biases(2) = type(2.);
 
     dimensions new_inputs_dimension(4);
-    dimensions new_kernels_dimensions(4);
+    dimensions new_kernel_dimensions(4);
 
     //new_inputs_dimension.setValues({rows_input, cols_input, channels,input_images});
-    //new_kernels_dimensions.setValues({rows_kernel, cols_kernel,channels,input_kernels});
+    //new_kernel_dimensions.setValues({rows_kernel, cols_kernel,channels,input_kernels});
 
-    ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernel_dimensions);
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
@@ -397,13 +397,13 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result.resize(2,2,2,2);
     inputs.resize(2,2,2,2);
 
-    Tensor<Index, 1> new_inputs_dimensions(4);
-    Tensor<Index, 1> new_kernels_dimensions(4);
+    Tensor<Index, 1> new_input_dimensions(4);
+    Tensor<Index, 1> new_kernel_dimensions(4);
 
-    new_inputs_dimensions.setValues({2, 2, 2, 2});
-    new_kernels_dimensions.setValues({2, 2, 2, 2});
+    new_input_dimensions.setValues({2, 2, 2, 2});
+    new_kernel_dimensions.setValues({2, 2, 2, 2});
 
-    ConvolutionalLayer convolutional_layer(new_inputs_dimensions, new_kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(new_input_dimensions, new_kernel_dimensions);
 
     // Test
 
@@ -778,15 +778,15 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     convolutional_layer.forward_propagate(inputs, &forward_propagation);
 
-    assert_true(forward_propagation.activations.dimension(0) == convolutional_layer.get_outputs_dimensions()(0)&&
-                forward_propagation.activations.dimension(1) == convolutional_layer.get_outputs_dimensions()(1)&&
-                forward_propagation.activations.dimension(2) == convolutional_layer.get_outputs_dimensions()(2)&&
-                forward_propagation.activations.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), LOG);
+    assert_true(forward_propagation.activations.dimension(0) == convolutional_layer.get_output_dimensions()(0)&&
+                forward_propagation.activations.dimension(1) == convolutional_layer.get_output_dimensions()(1)&&
+                forward_propagation.activations.dimension(2) == convolutional_layer.get_output_dimensions()(2)&&
+                forward_propagation.activations.dimension(3) == convolutional_layer.get_output_dimensions()(3), LOG);
 
-    assert_true(forward_propagation.activations_derivatives.dimension(0) == convolutional_layer.get_outputs_dimensions()(0)&&
-                forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_outputs_dimensions()(1)&&
-                forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_outputs_dimensions()(2)&&
-                forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), LOG);
+    assert_true(forward_propagation.activations_derivatives.dimension(0) == convolutional_layer.get_output_dimensions()(0)&&
+                forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_output_dimensions()(1)&&
+                forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_output_dimensions()(2)&&
+                forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_output_dimensions()(3), LOG);
 
 
     assert_true(abs(forward_propagation.activations(0, 0, 0, 0) - type(tanh(27.))) < type(NUMERIC_LIMITS_MIN) &&
@@ -808,39 +808,39 @@ void ConvolutionalLayerTest::test_forward_propagation()
 /*
     const Index batch_samples_number = 5;
 
-    const Index inputs_channels_number = 3;
-    const Index inputs_rows_number = 5;
+    const Index input_channels = 3;
+    const Index input_height = 5;
     const Index inputs_raw_variables_number = 4;
 
     const Index kernels_number = 2;
-    const Index kernels_channels_number = inputs_channels_number;
-    const Index kernels_rows_number = 3;
+    const Index kernel_channels = input_channels;
+    const Index kernel_height = 3;
     const Index kernels_raw_variables_number = 3;
 
     const Index targets_number = 1;
 
     DataSet data_set(batch_samples_number,
-                     inputs_channels_number,
-                     inputs_rows_number,
+                     input_channels,
+                     input_height,
                      inputs_raw_variables_number,
                      targets_number);
 
     data_set.set_data_constant(type(1));
 
-    Tensor<Index, 1> input_variables_dimensions(3);
-    input_variables_dimensions.setValues({inputs_channels_number,
-                                          inputs_rows_number,
+    Tensor<Index, 1> input_dimensions(3);
+    input_dimensions.setValues({input_channels,
+                                          input_height,
                                           inputs_raw_variables_number});
 
     Tensor<Index, 1> kernels_dimensions(4);
     kernels_dimensions.setValues({kernels_number,
-                                  kernels_channels_number,
-                                  kernels_rows_number,
+                                  kernel_channels,
+                                  kernel_height,
                                   kernels_raw_variables_number});
 
     NeuralNetwork neural_network;
 
-    ConvolutionalLayer convolutional_layer(input_variables_dimensions, kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(input_dimensions, kernels_dimensions);
     convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
     convolutional_layer.set_biases_constant(1.0);
     convolutional_layer.set_synaptic_weights_constant(1.0);
@@ -848,10 +848,10 @@ void ConvolutionalLayerTest::test_forward_propagation()
 
     neural_network.add_layer(&convolutional_layer);
 
-    FlattenLayer flatten_layer(convolutional_layer.get_outputs_dimensions());
+    FlattenLayer flatten_layer(convolutional_layer.get_output_dimensions());
     neural_network.add_layer(&flatten_layer);
 
-    PerceptronLayer perceptron_layer(flatten_layer.get_outputs_dimensions()(0), 1);
+    PerceptronLayer perceptron_layer(flatten_layer.get_output_dimensions()(0), 1);
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
     neural_network.add_layer(&perceptron_layer);
 

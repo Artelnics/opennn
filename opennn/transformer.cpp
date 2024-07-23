@@ -205,7 +205,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         AdditionLayer3D* input_self_attention_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         input_self_attention_addition_layer->set_name("input_self_attention_addition_" + to_string(i + 1));
         add_layer(input_self_attention_addition_layer);
-        if (i == 0)
+        if(i == 0)
             set_layer_inputs_indices("input_self_attention_addition_" + to_string(i + 1), { "input_embedding", "input_self_attention_" + to_string(i + 1) });
         else
             set_layer_inputs_indices("input_self_attention_addition_" + to_string(i + 1), { "decoder_perceptron_normalization_" + to_string(i), "input_self_attention_" + to_string(i + 1) });
@@ -301,7 +301,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     //type start_indicator = 1;
     //type end_indicator = 2;
 
-    //if (imported_vocabulary)
+    //if(imported_vocabulary)
     //{
     type start_indicator = 2;
     type end_indicator = 3;
@@ -315,7 +315,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     context.setZero();
     context(0) = start_indicator;
     
-    //if (!imported_vocabulary)    tokenize_whitespace(context_tokens(0), context);
+    //if(!imported_vocabulary)    tokenize_whitespace(context_tokens(0), context);
     //else
     tokenize_wordpiece(context_tokens(0), context);
     
@@ -352,12 +352,12 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
 
         input(i) = type(prediction(0));
 
-        if (prediction(0) == end_indicator) break;
+        if(prediction(0) == end_indicator) break;
     }
     
     ostringstream output_string;
 
-    //if (!imported_vocabulary)    detokenize_whitespace(input, output_string);
+    //if(!imported_vocabulary)    detokenize_whitespace(input, output_string);
     //else
     detokenize_wordpiece(input, output_string);
 
@@ -392,9 +392,9 @@ void Transformer::tokenize_whitespace(const Tensor<string, 1>& context_tokens, T
 
     bool line_ended = false;
 
-    for (Index j = 0; j < context_length - 1; j++)
+    for(Index j = 0; j < context_length - 1; j++)
     {
-        if (j < context_tokens.size())
+        if(j < context_tokens.size())
         {
             auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(j));
 
@@ -404,7 +404,7 @@ void Transformer::tokenize_whitespace(const Tensor<string, 1>& context_tokens, T
         }
         else
         {
-            if (j == context_tokens.size() || (j == context_length - 2 && !line_ended))
+            if(j == context_tokens.size() || (j == context_length - 2 && !line_ended))
             {
                 context(j + 1) = 2; /// end indicator
                 line_ended = true;
@@ -422,7 +422,7 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
 {
     unordered_map<std::string, type> context_vocabulary_map;
 
-    for (Index i = 0; i < context_vocabulary.size(); i++)
+    for(Index i = 0; i < context_vocabulary.size(); i++)
         context_vocabulary_map[context_vocabulary(i)] = type(i);
 
     Index token_counter = 1;
@@ -435,15 +435,15 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
     auto wordpiece_entry = context_vocabulary_map.find("");
     bool tokenized;
 
-    for (Index j = 0; j < context_length - 1; j++)
+    for(Index j = 0; j < context_length - 1; j++)
     {
-        if (j < context_tokens.size() && token_counter < context_length - 1)
+        if(j < context_tokens.size() && token_counter < context_length - 1)
         {
             word = context_tokens(j);
 
             wordpiece_entry = context_vocabulary_map.find(word);
 
-            if (wordpiece_entry != context_vocabulary_map.end())
+            if(wordpiece_entry != context_vocabulary_map.end())
             {
                 context(token_counter) = wordpiece_entry->second;
                 token_counter++;
@@ -452,9 +452,9 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
 
             tokenized = false;
 
-            for (Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
+            for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
             {
-                if (token_counter == context_length - 1)
+                if(token_counter == context_length - 1)
                 {
                     tokenized = true;
                     break;
@@ -463,14 +463,14 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
                 wordpiece = word.substr(0, wordpiece_length);
                 wordpiece_entry = context_vocabulary_map.find(wordpiece);
 
-                if (wordpiece_entry != context_vocabulary_map.end())
+                if(wordpiece_entry != context_vocabulary_map.end())
                 {
                     context(token_counter) = wordpiece_entry->second;
                     token_counter++;
 
                     rest = word.substr(wordpiece_length);
 
-                    if (rest.empty())
+                    if(rest.empty())
                     {
                         tokenized = true;
                         break;
@@ -481,7 +481,7 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
                 }
             }
 
-            if (!tokenized)
+            if(!tokenized)
             {
                 context(token_counter) = 1; // unknown indicator
                 token_counter++;
@@ -489,7 +489,7 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
         }
         else
         {
-            if (j == context_tokens.size()
+            if(j == context_tokens.size()
             || (token_counter == context_length - 1 && !line_ended))
             {
                 context(token_counter) = 3; // end indicator
@@ -507,9 +507,9 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
 
 void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 {
-    for (Index i = 1; i < input_length; i++)
+    for(Index i = 1; i < input_length; i++)
     {
-        if (predictions(i) == 2)   break;
+        if(predictions(i) == 2)   break;
 
         output_string << input_vocabulary(Index(predictions(i))) << " ";
     }
@@ -522,13 +522,13 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
 
     string current_prediction;
 
-    for (Index i = 2; i < input_length; i++)
+    for(Index i = 2; i < input_length; i++)
     {
-        if (predictions(i) == 3)   break;
+        if(predictions(i) == 3)   break;
 
         current_prediction = input_vocabulary(Index(predictions(i)));
 
-        if (current_prediction.substr(0, 2) == "##")
+        if(current_prediction.substr(0, 2) == "##")
         {
             output_string << current_prediction.substr(2);
         }
@@ -559,7 +559,7 @@ TransformerForwardPropagation::~TransformerForwardPropagation()
 {
     const Index layers_number = layers.size();
 
-    for (Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         delete layers(i);
     }
@@ -578,7 +578,7 @@ void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNe
 
     layers.resize(layers_number);
 
-    for (Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         switch (neural_network_layers(i)->get_type())
         {
@@ -625,7 +625,7 @@ void TransformerForwardPropagation::print() const
 
     cout << "Layers number: " << layers_number << endl;
 
-    for (Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         cout << "Layer " << i + 1 << ": " << layers(i)->layer->get_name() << endl;
 

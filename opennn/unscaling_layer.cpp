@@ -52,7 +52,7 @@ Index UnscalingLayer::get_neurons_number() const
 }
 
 
-dimensions UnscalingLayer::get_outputs_dimensions() const
+dimensions UnscalingLayer::get_output_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 

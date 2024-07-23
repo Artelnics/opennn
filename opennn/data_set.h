@@ -335,10 +335,10 @@ public:
     VariableUse get_numeric_variable_use(const Index&) const;
     Tensor<VariableUse, 1> get_variables_uses() const;
 
-    const Tensor<Index, 1>& get_input_variables_dimensions() const;
+    const dimensions& get_input_dimensions() const;
     Index get_input_variables_rank() const;
 
-    const Tensor<Index, 1>& get_target_variables_dimensions() const;
+    const dimensions& get_target_dimensions() const;
 
     // Scalers get methods
 
@@ -531,8 +531,8 @@ public:
     void set_target();
     void set_variables_unused();
 
-    void set_input_variables_dimensions(const Tensor<Index, 1>&);
-    void set_target_variables_dimensions(const Tensor<Index, 1>&);
+    void set_input_variables_dimensions(const dimensions&);
+    void set_target_variables_dimensions(const dimensions&);
 
     // Data set methods
 
@@ -844,9 +844,9 @@ protected:
 
     Tensor<RawVariable, 1> raw_variables;
 
-    Tensor<Index, 1> input_variables_dimensions;
+    dimensions input_dimensions;
 
-    Tensor<Index, 1> target_variables_dimensions;
+    dimensions target_variables_dimensions;
 
     // DATA FILE
 

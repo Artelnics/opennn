@@ -32,9 +32,9 @@ ScalingLayer2D::ScalingLayer2D(const Index& new_neurons_number) : Layer()
 }
 
 
-ScalingLayer2D::ScalingLayer2D(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
+ScalingLayer2D::ScalingLayer2D(const Tensor<Index, 1>& new_input_dimensions) : Layer()
 {
-    set(new_inputs_dimensions);
+    set(new_input_dimensions);
 }
 
 
@@ -49,7 +49,7 @@ ScalingLayer2D::ScalingLayer2D(const Tensor<Descriptives, 1>& new_descriptives) 
 }
 
 
-dimensions ScalingLayer2D::get_outputs_dimensions() const
+dimensions ScalingLayer2D::get_output_dimensions() const
 {
     return { inputs_dimensions(0) , inputs_dimensions(1) , inputs_dimensions(2) };
 }
@@ -312,18 +312,18 @@ void ScalingLayer2D::set(const Index& new_inputs_number)
 }
 
 
-void ScalingLayer2D::set(const Tensor<Index, 1>& new_inputs_dimensions)
+void ScalingLayer2D::set(const Tensor<Index, 1>& new_input_dimensions)
 {
-    const Tensor<Index,0> dimension_product = new_inputs_dimensions.prod();
+    const Tensor<Index,0> dimension_product = new_input_dimensions.prod();
 
     descriptives.resize(dimension_product(0));
 
     scalers.resize(dimension_product(0));
     scalers.setConstant(Scaler::MeanStandardDeviation);
 
-    inputs_dimensions.resize(new_inputs_dimensions.size());
+    inputs_dimensions.resize(new_input_dimensions.size());
 
-    inputs_dimensions = new_inputs_dimensions;
+    inputs_dimensions = new_input_dimensions;
 
     set_default();
 }

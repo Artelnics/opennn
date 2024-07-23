@@ -102,14 +102,14 @@ public:
     // Parameters initialization methods
 
     virtual void set_parameters_constant(const type&);
-
     virtual void set_parameters_random();
 
     // Architecture
 
     virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
-    virtual dimensions get_outputs_dimensions() const;
+
+    virtual dimensions get_output_dimensions() const;
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 

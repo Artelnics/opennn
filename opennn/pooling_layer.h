@@ -68,18 +68,18 @@ public:
 
     dimensions get_inputs_dimensions() const;
 
-    dimensions get_outputs_dimensions() const;
+    dimensions get_output_dimensions() const;
 
     Index get_inputs_number() const;
 
-    Index get_inputs_rows_number() const;
+    Index get_input_height() const;
     Index get_inputs_columns_number() const;
     Index get_channels_number() const;
 
     Index get_neurons_number() const;
 
-    Index get_outputs_rows_number() const;
-    Index get_outputs_columns_number() const;
+    Index get_output_height() const;
+    Index get_output_width() const;
 
     Index get_padding_heigth() const;
     Index get_padding_width() const;

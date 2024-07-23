@@ -54,7 +54,7 @@ public:
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
 
-   dimensions get_outputs_dimensions() const final;
+   dimensions get_output_dimensions() const final;
 
    Tensor<Descriptives, 1> get_descriptives() const; 
 

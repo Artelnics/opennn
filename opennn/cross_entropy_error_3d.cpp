@@ -84,7 +84,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     Tensor<type, 0> cross_entropy_error;
 
-    if (!built_mask)
+    if(!built_mask)
     {
         mask.device(*thread_pool_device) = targets != targets.constant(0);
         built_mask = true;
@@ -94,8 +94,8 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     #pragma omp parallel for
 
-    for (Index i = 0; i < batch_samples_number; i++)
-        for (Index j = 0; j < outputs_number; j++)
+    for(Index i = 0; i < batch_samples_number; i++)
+        for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
@@ -118,7 +118,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     back_propagation.accuracy = accuracy(0);
     
-    if (isnan(back_propagation.error)) throw runtime_error("Error is NAN");
+    if(isnan(back_propagation.error)) throw runtime_error("Error is NAN");
 }
 
 

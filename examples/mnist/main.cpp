@@ -6,11 +6,9 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-
 #ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
-
 
 // System includes
 
@@ -49,43 +47,32 @@ int main()
 
         ImageDataSet image_data_set;
 
-        image_data_set.set_data_source_path("C:/training_mnist");
+        image_data_set.set_data_source_path("C:/mnist/test");
 
         image_data_set.read_bmp();
 
-        const Index target_variables_number = image_data_set.get_target_variables_number();
-
-        const Tensor<Index, 1> training_samples_indices = image_data_set.get_training_samples_indices();  
-        const Index training_samples_number = training_samples_indices.size();
-
-        const Tensor<Index, 1> input_variables_indices = image_data_set.get_input_variables_indices();
-        const Tensor<Index, 1> target_variables_indices = image_data_set.get_target_variables_indices();
-
-        const Tensor<Index, 1> input_variables_dimensions = image_data_set.get_input_variables_dimensions();
-        const Index inputs_rows_number = input_variables_dimensions[0];
-        const Index inputs_columns_number = input_variables_dimensions[1];
-        const Index inputs_channels_number = input_variables_dimensions[2];
-
-        dimensions flatten_layer_inputs_dimensions({ training_samples_number, inputs_rows_number, inputs_columns_number, inputs_channels_number });
-        
         // Neural network
 
         NeuralNetwork neural_network;
 
-        ScalingLayer4D* scaling_layer = new ScalingLayer4D(input_variables_dimensions);
+        ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
         neural_network.add_layer(scaling_layer);
 
-        FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+        scaling_layer->print();
+
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions());
+        neural_network.add_layer(convolutional_layer);
+
+//        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer->get_output_dimensions());
+//        neural_network.add_layer(convolutional_layer);
+
+        FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer->get_output_dimensions());
         neural_network.add_layer(flatten_layer);
 
-        PerceptronLayer* perceptron_layer = new PerceptronLayer(flatten_layer->get_outputs_number(), 20);
-        neural_network.add_layer(perceptron_layer);
-        perceptron_layer->set_activation_function("RectifiedLinear");
-
-        ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), target_variables_number);
+        ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),
+                                                                         image_data_set.get_target_dimensions());
         neural_network.add_layer(probabilistic_layer);
 
-        cout << endl;
         neural_network.print();
 
         // Training strategy
@@ -96,12 +83,12 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(15);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
         training_strategy.get_adaptive_moment_estimation()->set_learning_rate(0.02);
-        training_strategy.set_display_period(1);
+        training_strategy.set_display_period(10);
 
         training_strategy.perform_training();
-        
+/*
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
@@ -109,7 +96,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+*/
         cout << "Bye!" << endl;
         
         return 0;

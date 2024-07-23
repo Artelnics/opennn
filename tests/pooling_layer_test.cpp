@@ -151,8 +151,8 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
 {
     const Index batch_samples_number = 1;
 
-    const Index inputs_channels_number = 3;
-    const Index inputs_rows_number = 5;
+    const Index input_channels = 3;
+    const Index input_height = 5;
     const Index inputs_raw_variables_number = 5;
 
     const Index pool_rows_number = 2;
@@ -161,30 +161,30 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
     const Index targets_number = 1;
 /*
     DataSet data_set(batch_samples_number,
-                     inputs_channels_number,
-                     inputs_rows_number,
+                     input_channels,
+                     input_height,
                      inputs_raw_variables_number,
                      targets_number);
 
     data_set.set_data_constant(type(1));
 
-    Tensor<Index, 1> input_variables_dimensions(3);
-    input_variables_dimensions.setValues({inputs_channels_number,
-                                          inputs_rows_number,
+    Tensor<Index, 1> input_dimensions(3);
+    input_dimensions.setValues({input_channels,
+                                          input_height,
                                           inputs_raw_variables_number});
 
     Tensor<Index, 1> pool_dimensions(2);
     pool_dimensions.setValues({pool_rows_number,
                                pool_raw_variables_number});
 
-    PoolingLayer pooling_layer(input_variables_dimensions, pool_dimensions);
+    PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
 
 
     PoolingLayerForwardPropagation pooling_layer_forward(batch_samples_number, &pooling_layer);
 
     Tensor<type, 4> inputs_data(batch_samples_number,
-                                inputs_channels_number,
-                                inputs_rows_number,
+                                input_channels,
+                                input_height,
                                 inputs_raw_variables_number);
 
     inputs_data.setValues({
@@ -217,16 +217,16 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
     bool is_training = true;
 
     pooling_layer.forward_propagate_average_pooling(inputs_data.data(),
-                                                    input_variables_dimensions,
+                                                    input_dimensions,
                                                     &pooling_layer_forward,
                                                     is_training);
 
     Tensor<Index, 1> outputs_dimensions = pooling_layer_forward.outputs_dimensions;
 
-    assert_true(outputs_dimensions.size() == input_variables_dimensions.size(), LOG);
+    assert_true(outputs_dimensions.size() == input_dimensions.size(), LOG);
     for(Index i = 0; i < outputs_dimensions.size(); ++i)
     {
-        assert_true(outputs_dimensions(i) <= input_variables_dimensions(i), LOG);
+        assert_true(outputs_dimensions(i) <= input_dimensions(i), LOG);
     }
 
     type* outputs_data = pooling_layer_forward.outputs_data(0);

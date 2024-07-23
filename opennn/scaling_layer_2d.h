@@ -47,7 +47,7 @@ public:
 
    // Get methods
 
-   dimensions get_outputs_dimensions() const;
+   dimensions get_output_dimensions() const;
 
    Index get_inputs_number() const final;
    dimensions get_inputs_dimensions() const;
