@@ -1056,8 +1056,8 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
 
 #pragma omp parallel for
 
-    for (Index i = 0; i < batch_samples_number; i++)
-        for (Index j = 0; j < outputs_number; j++)
+    for(Index i = 0; i < batch_samples_number; i++)
+        for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
@@ -1339,23 +1339,26 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
     const Index samples_number = targets.dimension(0);
 
-    const Tensor<Index, 1> input_variables_dimensions = data_set->get_input_variables_dimensions();
+    const dimensions& input_dimensions = data_set->get_input_dimensions();
  
-    if (input_variables_dimensions.size() == 1)
+    if(input_dimensions.size() == 1)
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
         return calculate_confusion(outputs, targets, outputs_number);
     }
-    else if (input_variables_dimensions.size() == 2)
+    else if(input_dimensions.size() == 2)
     {
         // @todo not needed?
     }
-    else if (input_variables_dimensions.size() == 3)
+    else if(input_dimensions.size() == 3)
     {
         type* inputs_data = inputs.data();
 
-        Tensor<type, 4> inputs_4d(samples_number, input_variables_dimensions[0], input_variables_dimensions[1], input_variables_dimensions[2]);
+        Tensor<type, 4> inputs_4d(samples_number,
+                                  input_dimensions[0],
+                                  input_dimensions[1],
+                                  input_dimensions[2]);
 
         memcpy(inputs_4d.data(), inputs_data, samples_number * inputs.dimension(1) * sizeof(type));
 
@@ -1370,11 +1373,11 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets, Index outputs_number) const
 {
-    if (outputs_number == 1)
+    if(outputs_number == 1)
     {
         type decision_threshold;
 
-        if (neural_network->get_probabilistic_layer() != nullptr)
+        if(neural_network->get_probabilistic_layer() != nullptr)
         {
             decision_threshold = neural_network->get_probabilistic_layer()->get_decision_threshold();
         }
@@ -2760,13 +2763,13 @@ pair<type, type> TestingAnalysis::test_transformer() const
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
 
     Tensor<type, 2> testing_input(testing_batch_size, input.dimension(1));
-    for (Index i = 0; i < testing_batch_size; i++)    testing_input.chip(i, 0) = input.chip(i, 0);
+    for(Index i = 0; i < testing_batch_size; i++)    testing_input.chip(i, 0) = input.chip(i, 0);
 
     Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
-    for (Index i = 0; i < testing_batch_size; i++)    testing_context.chip(i, 0) = context.chip(i, 0);
+    for(Index i = 0; i < testing_batch_size; i++)    testing_context.chip(i, 0) = context.chip(i, 0);
 
     Tensor<type, 2> testing_target(testing_batch_size, target.dimension(1));
-    for (Index i = 0; i < testing_batch_size; i++)    testing_target.chip(i, 0) = target.chip(i, 0);
+    for(Index i = 0; i < testing_batch_size; i++)    testing_target.chip(i, 0) = target.chip(i, 0);
 
     Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 

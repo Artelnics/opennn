@@ -68,7 +68,7 @@ public:
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
 
-   dimensions get_outputs_dimensions() const final;
+   dimensions get_output_dimensions() const final;
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;

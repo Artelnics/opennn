@@ -57,12 +57,12 @@ public:
     dimensions get_inputs_dimensions() const;
     Index get_outputs_number() const;
     
-    dimensions get_outputs_dimensions() const final;
+    dimensions get_output_dimensions() const final;
 
     Index get_inputs_number() const;
-    Index get_inputs_channels_number() const;
-    Index get_inputs_rows_number() const;
-    Index get_inputs_raw_variables_number() const;
+    Index get_input_channels() const;
+    Index get_input_height() const;
+    Index get_input_width() const;
     Index get_neurons_number() const;
 
     // Set methods

@@ -86,7 +86,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     error = cross_entropy_error();
 
-    if (isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
@@ -125,7 +125,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     error = cross_entropy_error();
 
-    if (isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 

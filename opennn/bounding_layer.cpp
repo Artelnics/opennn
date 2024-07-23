@@ -92,7 +92,7 @@ Index BoundingLayer::get_neurons_number() const
 }
 
 
-dimensions BoundingLayer::get_outputs_dimensions() const
+dimensions BoundingLayer::get_output_dimensions() const
 {
     const Index neurons_number = get_neurons_number();
 

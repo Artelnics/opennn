@@ -144,7 +144,7 @@ void scale_image_minimum_maximum(Tensor<type, 2>& matrix, const Index& raw_varia
 {
     #pragma omp parallel for
 
-    for (Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.dimension(0); i++)
     {
         matrix(i, raw_variable_index) /= type(255);
     }
@@ -310,7 +310,7 @@ void unscale_image_minimum_maximum(Tensor<type, 2>& matrix, const Index& raw_var
 {
     #pragma omp parallel for
 
-    for (Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.dimension(0); i++)
     {
         matrix(i, raw_variable_index) *= type(255);
     }
