@@ -56,7 +56,7 @@ Index AdditionLayer3D::get_inputs_depth() const
 }
 
 
-dimensions AdditionLayer3D::get_outputs_dimensions() const
+dimensions AdditionLayer3D::get_output_dimensions() const
 {
     return { inputs_number, inputs_depth };
 }
@@ -143,8 +143,15 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> input_1(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
-    const TensorMap<Tensor<type, 3>> input_2(inputs_pair(1).first, inputs_pair(1).second[0], inputs_pair(1).second[1], inputs_pair(1).second[2]);
+    const TensorMap<Tensor<type, 3>> input_1(inputs_pair(0).first,
+                                             inputs_pair(0).second[0],
+                                             inputs_pair(0).second[1],
+                                             inputs_pair(0).second[2]);
+
+    const TensorMap<Tensor<type, 3>> input_2(inputs_pair(1).first,
+                                             inputs_pair(1).second[0],
+                                             inputs_pair(1).second[1],
+                                             inputs_pair(1).second[2]);
 
     AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
         static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation);
@@ -188,7 +195,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
 
-    if (!addition_layer_element)
+    if(!addition_layer_element)
     {
         buffer << "OpenNN Exception: AdditionLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -201,7 +208,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* layer_name_element = addition_layer_element->FirstChildElement("LayerName");
 
-    if (!layer_name_element)
+    if(!layer_name_element)
     {
         buffer << "OpenNN Exception: AdditionLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -210,7 +217,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (layer_name_element->GetText())
+    if(layer_name_element->GetText())
     {
         set_name(layer_name_element->GetText());
     }
@@ -219,7 +226,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* inputs_number_element = addition_layer_element->FirstChildElement("InputsNumber");
 
-    if (!inputs_number_element)
+    if(!inputs_number_element)
     {
         buffer << "OpenNN Exception: AdditionLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -228,7 +235,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (inputs_number_element->GetText())
+    if(inputs_number_element->GetText())
     {
         inputs_number = Index(stoi(inputs_number_element->GetText()));
     }
@@ -237,7 +244,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* inputs_depth_element = addition_layer_element->FirstChildElement("InputsDepth");
 
-    if (!inputs_depth_element)
+    if(!inputs_depth_element)
     {
         buffer << "OpenNN Exception: AdditionLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -246,7 +253,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (inputs_depth_element->GetText())
+    if(inputs_depth_element->GetText())
     {
         inputs_depth = Index(stoi(inputs_depth_element->GetText()));
     }

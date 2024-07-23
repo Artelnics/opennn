@@ -41,13 +41,13 @@ public:
    explicit ScalingLayer4D();
 
    explicit ScalingLayer4D(const Index&);
-   explicit ScalingLayer4D(const Tensor<Index, 1>&);
+   explicit ScalingLayer4D(const dimensions&);
 
    explicit ScalingLayer4D(const Tensor<Descriptives, 1>&);
 
    // Get methods
 
-   dimensions get_outputs_dimensions() const;
+   dimensions get_output_dimensions() const;
 
    Index get_inputs_number() const final;
    dimensions get_inputs_dimensions() const;
@@ -78,7 +78,7 @@ public:
 
    void set();
    void set(const Index&);
-   void set(const Tensor<Index, 1>&);
+   void set(const dimensions&);
    void set(const Tensor<Descriptives, 1>&);
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
@@ -131,7 +131,7 @@ public:
 
 protected:
 
-   Tensor<Index, 1> inputs_dimensions;
+   dimensions inputs_dimensions;
 
    /// Descriptives of input variables.
 

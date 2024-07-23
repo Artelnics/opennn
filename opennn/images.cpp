@@ -58,11 +58,11 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     Tensor<unsigned char, 3> image(image_height, image_width, channels_number);
 
-    for (Index i = 0; i < image_height; ++i)
+    for(Index i = 0; i < image_height; ++i)
     {
-        for (Index j = 0; j < image_width; ++j)
+        for(Index j = 0; j < image_width; ++j)
         {
-            for (Index k = 0; k < channels_number; ++k)
+            for(Index k = 0; k < channels_number; ++k)
             {
                 image(i, j, k) = image_data[i * (image_width * channels_number + padding) + j * channels_number + k];
             }
@@ -77,7 +77,7 @@ ImageData read_bmp_image_gpt(const std::string& filename)
 {
     ifstream file(filename, ios::binary);
 
-    if (!file.is_open())
+    if(!file.is_open())
     {
         throw std::runtime_error("Cannot open file.");
     }
@@ -523,8 +523,8 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     image_height = height;
     channels_number = channels;
 
-    input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, width, height});
+    input_dimensions.resize(3);
+    input_dimensions.setValues({channels, width, height});
     */
 
     return Tensor<unsigned char, 1>();
