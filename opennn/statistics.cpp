@@ -1880,22 +1880,22 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
                                      const Tensor<Index, 1>& raw_variables_indices)
 {
     const Index row_indices_size = row_indices.size();
-    const Index raw_variables_indices_size = raw_variables_indices.size();
+    const Index column_indices_size = raw_variables_indices.size();
 
-    Tensor<Descriptives, 1> descriptives(raw_variables_indices_size);
+    Tensor<Descriptives, 1> descriptives(column_indices_size);
 
     Index row_index;
     Index raw_variable_index;
 
-    Tensor<type, 1> minimums(raw_variables_indices_size);
+    Tensor<type, 1> minimums(column_indices_size);
     minimums.setConstant(numeric_limits<type>::max());
 
-    Tensor<type, 1> maximums(raw_variables_indices_size);
+    Tensor<type, 1> maximums(column_indices_size);
     maximums.setConstant(type(NUMERIC_LIMITS_MIN));
 
-    Tensor<double, 1> sums(raw_variables_indices_size);
-    Tensor<double, 1> squared_sums(raw_variables_indices_size);
-    Tensor<Index, 1> count(raw_variables_indices_size);
+    Tensor<double, 1> sums(column_indices_size);
+    Tensor<double, 1> squared_sums(column_indices_size);
+    Tensor<Index, 1> count(column_indices_size);
 
     sums.setZero();
     squared_sums.setZero();
@@ -1908,7 +1908,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 
         //        #pragma omp parallel for private(raw_variable_index)
 
-        for(Index j = 0; j < raw_variables_indices_size; j++)
+        for(Index j = 0; j < column_indices_size; j++)
         {
             raw_variable_index = raw_variables_indices(j);
 
@@ -1928,13 +1928,13 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 
     const Tensor<double, 1> mean = sums/count.cast<double>();
 
-    Tensor<double, 1> standard_deviation(raw_variables_indices_size);
+    Tensor<double, 1> standard_deviation(column_indices_size);
 
     if(row_indices_size > 1)
     {
         //        #pragma omp parallel for
 
-        for(Index i = 0; i < raw_variables_indices_size; i++)
+        for(Index i = 0; i < column_indices_size; i++)
         {
             const double variance = squared_sums(i)/double(count(i)-1)
                     - (sums(i)/double(count(i)))*(sums(i)/double(count(i)))*double(count(i))/double(count(i)-1);
@@ -1944,21 +1944,19 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     }
     else
     {
-        for(Index i = 0; i < raw_variables_indices_size; i++)
+        for(Index i = 0; i < column_indices_size; i++)
         {
             standard_deviation(i) = type(0);
         }
     }
 
-    for(Index i = 0; i < raw_variables_indices_size; i++)
+    for(Index i = 0; i < column_indices_size; i++)
     {
         descriptives(i).minimum = type(minimums(i));
         descriptives(i).maximum = type(maximums(i));
         descriptives(i).mean = type(mean(i));
         descriptives(i).standard_deviation = type(standard_deviation(i));
     }
-
-
 
     return descriptives;
 }

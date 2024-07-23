@@ -110,7 +110,7 @@ public:
 
   private:
 
-   std::ofstream file;
+   ofstream file;
 
    string data_string;
 

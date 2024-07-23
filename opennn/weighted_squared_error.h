@@ -92,10 +92,10 @@ public:
                            BackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const Batch&,
-                              BackPropagationLM&) const final;
+                                    BackPropagationLM&) const final;
 
    void calculate_error_hessian_lm(const Batch&,
-                                           BackPropagationLM&) const final;
+                                   BackPropagationLM&) const final;
 
    // Serialization methods
 

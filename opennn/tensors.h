@@ -110,6 +110,7 @@ bool is_zero(const Tensor<type, 1>&);
 bool is_binary(const Tensor<type, 2>&);
 
 bool is_constant(const Tensor<type, 1>&);
+bool is_constant(const Tensor<type, 2>&);
 
 bool is_false(const Tensor<bool, 1>&);
 
@@ -247,7 +248,7 @@ void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
 
 Tensor<type, 1> calculate_delta(const Tensor<type, 1>&);
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const type&);
-Tensor<type, 1> mode(Tensor<type, 1>&);
+//Tensor<type, 1> mode(Tensor<type, 1>&);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 

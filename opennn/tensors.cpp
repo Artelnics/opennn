@@ -708,6 +708,36 @@ bool is_constant(const Tensor<type, 1>& vector)
 }
 
 
+bool is_constant(const Tensor<type, 2>& matrix)
+{
+    const Index size = matrix.size();
+
+    type first_not_nan_element = type(0);
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(isnan(matrix(i)))
+        {
+            continue;
+        }
+        else
+        {
+            first_not_nan_element = matrix(i);
+            break;
+        }
+    }
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(isnan(matrix(i))) continue;
+
+        if(abs(first_not_nan_element - matrix(i)) > numeric_limits<float>::min()) return false;
+    }
+
+    return true;
+}
+
+
 bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
 {
     const Index size = matrix.size();
@@ -2098,11 +2128,11 @@ Tensor<type, 1> mode(Tensor<type, 1>& data)
 {
     Tensor<type, 1> mode_and_frequency(2);
 
-    std::map<type, type> frequency_map;
+    map<type, type> frequency_map;
 
     for(int i = 0; i < data.size(); i++)
     {
-        type value = data(i);
+        const type value = data(i);
         frequency_map[value]++;
     }
 
@@ -2138,7 +2168,7 @@ Tensor<type, 1> mode(Tensor<type, 1>& data)
 
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& difference_data, const type& value)
 {
-    std::vector<type> result;
+    vector<type> result;
 
     for(Index i = 1; i < difference_data.size(); i++)
     {
