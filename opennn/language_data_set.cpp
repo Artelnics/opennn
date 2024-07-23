@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "language_data_set.h"
+#include "tensors.h"
 
 namespace opennn
 {

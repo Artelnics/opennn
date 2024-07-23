@@ -82,7 +82,6 @@ public:
         "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very" });
     }
 
-
     void set_spanish_stop_words()
     {
         stop_words.resize(327);
@@ -116,6 +115,7 @@ public:
 */
     }
 
+    void load_documents();
 
 private:
 

@@ -1951,11 +1951,9 @@ void encode_alphabet()
 void preprocess()
 {
 /*
-    TextAnalytics ta;
+    replace_accented(text);
 
-    ta.replace_accented(text);
-
-    transform(text.begin(), text.end(), text.begin(), ::tolower); // To lower
+    transform(text.begin(), text.end(), text.begin(), ::tolower);
 */
 }
 
@@ -2099,7 +2097,7 @@ Tensor<type, 2> str_to_input(const string& input_string)
 
 /// Calculate the total number of tokens in the documents.
 
-Index count(const Tensor<Tensor<string, 1>, 1>& documents)
+Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
 {
     const Index documents_number = documents.dimension(0);
 
@@ -2119,9 +2117,9 @@ Index count(const Tensor<Tensor<string, 1>, 1>& documents)
 
 /// Returns a Tensor with all the words as elements keeping the order.
 
-Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>& documents)
+Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
 {
-    const type words_number = type(count(documents));
+    const Index words_number = count(documents);
 
     Tensor<string, 1> words_list(words_number);
 
@@ -2131,7 +2129,7 @@ Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>& documents)
     {
         for(Index j = 0; j < documents(i).dimension(0); j++)
         {
-            Tensor<string, 1> tokens = get_tokens(documents(i)(j));
+            const Tensor<string, 1> tokens = get_tokens(documents(i)(j));
 
             copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
 
@@ -2645,7 +2643,7 @@ void delete_words(Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>&
     }
 }
 
-}
+
 
 
 /*
@@ -4177,15 +4175,15 @@ string TextAnalytics::read_txt_file(const string& path) const
 
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
-/*
-opennn::WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens) 
+
+WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
 {
     const Tensor<string, 1> total = join(tokens);
 
     const Tensor<Index, 1> count = count_unique(total);
 
     const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
-
+/*
     const Tensor<string,1> words = sort_by_rank(get_unique_elements(total), descending_rank);
 
     const Tensor<Index,1> frequencies = sort_by_rank(count, descending_rank);
@@ -4200,6 +4198,8 @@ opennn::WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
     word_bag.percentages = percentages;
 
     return word_bag;
+*/
+    return WordBag();
 }
 
 
@@ -4207,15 +4207,15 @@ opennn::WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
 /// of times in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_frequency Minimum frequency that words must have.
 
-WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
-                                                            const Index& minimum_frequency) const
+WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+                                             const Index& minimum_frequency)
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
     Tensor<string,1> words = word_bag.words;
     Tensor<Index,1> frequencies = word_bag.frequencies;
     Tensor<double,1> percentages = word_bag.percentages;
-
+/*
     const Tensor<Index,1> indices = get_indices_less_than(frequencies, minimum_frequency);
 
     delete_indices(words, indices);
@@ -4227,6 +4227,8 @@ WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<
     word_bag.percentages = percentages;
 
     return word_bag;
+*/
+    return WordBag();
 }
 
 
@@ -4234,15 +4236,15 @@ WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<
 /// in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_percentage Minimum percentage of occurrence that words must have.
 
-WordBag TextAnalytics::calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
-                                                                            const double& minimum_percentage) const
+WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
+                                              const double& minimum_percentage)
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
     Tensor<string,1> words = word_bag.words;
     Tensor<Index,1> frequencies = word_bag.frequencies;
     Tensor<double,1> percentages = word_bag.percentages;
-
+/*
     const Tensor<Index,1> indices = get_indices_less_than(percentages, minimum_percentage);
 
     delete_indices(words, indices);
@@ -4254,6 +4256,8 @@ WordBag TextAnalytics::calculate_word_bag_minimum_percentage(const Tensor<Tensor
     word_bag.percentages = percentages;
 
     return word_bag;
+*/
+    return WordBag();
 }
 
 
@@ -4261,8 +4265,8 @@ WordBag TextAnalytics::calculate_word_bag_minimum_percentage(const Tensor<Tensor
 /// of frequency in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_ratio Minimum ratio of frequency that words must have.
 
-WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
-                                                                       const double& minimum_ratio) const
+WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
+                                         const double& minimum_ratio)
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
@@ -4271,7 +4275,7 @@ WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<stri
     Tensor<double,1> percentages = word_bag.percentages;
 
     const Tensor<Index,0> frequencies_sum = frequencies.sum();
-
+/*
     const Tensor<double,1> ratios = frequencies.cast<double>()/double(frequencies_sum(0));
 
     const Tensor<Index, 1> indices = get_indices_less_than(ratios, minimum_ratio);
@@ -4285,6 +4289,8 @@ WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<stri
     word_bag.percentages = percentages;
 
     return word_bag;
+*/
+    return WordBag();
 }
 
 
@@ -4293,8 +4299,8 @@ WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<stri
 /// and their percentages in descending order.
 /// @param total_frequency Maximum cumulative frequency that words must have.
 
-WordBag TextAnalytics::calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
-                                                                         const Index& total_frequency) const
+WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+                                           const Index& total_frequency)
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
@@ -4322,8 +4328,8 @@ WordBag TextAnalytics::calculate_word_bag_total_frequency(const Tensor<Tensor<st
 /// frequent words, their frequencies and their percentages in descending order.
 /// @param maximum_size Maximum size of words Tensor.
 
-WordBag TextAnalytics::calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
-                                                                      const Index& maximum_size) const
+WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
+                                        const Index& maximum_size)
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
@@ -4339,7 +4345,7 @@ WordBag TextAnalytics::calculate_word_bag_maximum_size(const Tensor<Tensor<strin
 
 /// Returns weights.
 
-Index TextAnalytics::calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag) const
+Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag)
 {
     Index weight = 0;
 
@@ -4364,7 +4370,7 @@ Index TextAnalytics::calculate_weight(const Tensor<string, 1>& document_words, c
 
 /// Returns the documents easier to work with them
 
-Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& documents) const
+Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 {
     Tensor<string,1> documents_copy(documents);
 
@@ -4381,11 +4387,11 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
     Tensor<Tensor<string,1>,1> tokenized_documents = tokenize(documents_copy);
 
     delete_stop_words(tokenized_documents);
-
+/*
     delete_short_words(tokenized_documents, short_words_length);
 
     delete_long_words(tokenized_documents, long_words_length);
-
+*/
     replace_accented(tokenized_documents);
 
     delete_emails(tokenized_documents);
@@ -4399,7 +4405,8 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
     return tokenized_documents;
 }
 
-Tensor<Tensor<string,1>,1> TextAnalytics::preprocess_language_model(const Tensor<string,1>& documents) const
+
+Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& documents)
 {
     Tensor<string,1> documents_copy(documents);
 
@@ -4423,16 +4430,6 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess_language_model(const Tensor
 }
 
 
-
-/// Clear stop words object.
-
-void TextAnalytics::clear_stop_words()
-{
-    stop_words.resize(0);
-}
-
-
-
 /// Returns a Tensor with the number of words that each document contains.
 
 Tensor<Index, 1> get_words_number(const Tensor<Tensor<string,1>,1>& tokens)
@@ -4450,10 +4447,9 @@ Tensor<Index, 1> get_words_number(const Tensor<Tensor<string,1>,1>& tokens)
 }
 
 
-
 /// Returns a Tensor with the number of sentences that each document contains.
 
-Tensor<Index, 1> TextAnalytics::get_sentences_number(const Tensor<string, 1>& documents) const
+Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 {
     const Index documents_number = documents.size();
 
@@ -4471,7 +4467,8 @@ Tensor<Index, 1> TextAnalytics::get_sentences_number(const Tensor<string, 1>& do
 /// Returns a Tensor with the percentage of presence in the documents with respect to all.
 /// @param words_name Tensor of words from which you want to know the percentage of presence.
 
-Tensor<double, 1> TextAnalytics::get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>& words_name) const
+Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>& tokens,
+                                                const Tensor<string, 1>& words_name)
 {
     Tensor<double, 1> word_presence_percentage(words_name.size());
 
@@ -4490,7 +4487,6 @@ Tensor<double, 1> TextAnalytics::get_words_presence_percentage(const Tensor<Tens
         word_presence_percentage(i) = double(sum)*(double(100.0/tokens.size()));
     }
 
-
     return word_presence_percentage;
 }
 
@@ -4499,13 +4495,13 @@ Tensor<double, 1> TextAnalytics::get_words_presence_percentage(const Tensor<Tens
 /// @param minimum_frequency Minimum frequency that a word must have to obtain its combinations.
 /// @param combinations_length Words number of the combinations from 2.
 
-Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
-                                                                   const Index& minimum_frequency,
-                                                                   const Index& combinations_length) const
+Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
+                                                       const Index& minimum_frequency,
+                                                       const Index& combinations_length)
 {
     const Tensor<string, 1> words = join(tokens);
 
-    const TextAnalytics::WordBag top_word_bag = calculate_word_bag_minimum_frequency(tokens, minimum_frequency);
+    const WordBag top_word_bag = calculate_word_bag_minimum_frequency(tokens, minimum_frequency);
     const Tensor<string, 1> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
@@ -4571,17 +4567,17 @@ Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tens
         }
     }
 
-    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words ) ) );
+//    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words ) ) );
 
-    Tensor<string, 2> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
-
+//    Tensor<string, 2> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
+/*
     combinated_words_frequency_matrix.chip(0,1) = get_unique_elements(combinated_words),"Combinated words");
     combinated_words_frequency_matrix.chip(1,0) = combinated_words_frequency,"Frequency");
 
     combinated_words_frequency_matrix = combinated_words_frequency_matrix.sort_descending_strings(1);
 
 //    return(combinated_words_frequency_matrix);
-
+*/
     return Tensor<string,2>();
 }
 
@@ -4590,20 +4586,20 @@ Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tens
 /// with the targets in descending order.
 /// @param minimum_percentage Minimum percentage of frequency that the word must have.
 
-Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tokens,
-                                                     const double& minimum_percentage,
-                                                     const Tensor<Index, 1>& targets) const
+Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tokens,
+                                         const double& minimum_percentage,
+                                         const Tensor<Index, 1>& targets)
 {
-    const TextAnalytics::WordBag top_word_bag = calculate_word_bag_minimum_percentage(tokens, minimum_percentage);
-    const Tensor<string> words_name = top_word_bag.words;
+    const WordBag top_word_bag = calculate_word_bag_minimum_percentage(tokens, minimum_percentage);
+    const Tensor<string, 1> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
     {
         cout << "There are no words with such high percentage of appearance" << endl;
     }
 
-    Tensor<string> new_documents(tokens.size());
-
+    Tensor<string, 1> new_documents(tokens.size());
+/*
     for(size_t i = 0; i < tokens.size(); i++)
     {
       new_documents[i] = tokens[i].Tensor_to_string(';');
@@ -4627,8 +4623,10 @@ Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<stri
     top_words_correlations = top_words_correlations.sort_descending_strings(1);
 
     return(top_words_correlations);
-}
 */
+
+    return Tensor<string, 2>();
+}
 
 
 void load_documents(const string& path)
@@ -5150,7 +5148,7 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
 }
 */
-
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
