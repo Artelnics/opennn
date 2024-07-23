@@ -137,8 +137,7 @@ void TransformerTest::test_calculate_parameters_norm()
         Index parameters_number = transformer.get_parameters_number();
 
         assert_true(abs(parameters_norm - sqrt(type(parameters_number))) < type(NUMERIC_LIMITS_MIN), LOG);
-    }
-    
+    }   
 }
 
 
@@ -403,9 +402,9 @@ void TransformerTest::test_forward_propagate()
 
         data.resize(batch_samples_number, context_length + 2 * input_length);
 
-        for (Index i = 0; i < batch_samples_number; i++)
+        for(Index i = 0; i < batch_samples_number; i++)
         {
-            for (Index j = 0; j < context_length; j++)
+            for(Index j = 0; j < context_length; j++)
                 data(i, j) = type(rand() % context_dimension);
         
             for(Index j = 0; j < 2 * input_length; j++)
@@ -416,13 +415,13 @@ void TransformerTest::test_forward_propagate()
 
         data_set.set_training();
 
-        for (Index i = 0; i < context_length; i++)
+        for(Index i = 0; i < context_length; i++)
             data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
 
-        for (Index i = 0; i < input_length; i++)
+        for(Index i = 0; i < input_length; i++)
             data_set.set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
 
-        for (Index i = 0; i < input_length; i++)
+        for(Index i = 0; i < input_length; i++)
             data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
 
         training_samples_indices = data_set.get_training_samples_indices();
@@ -473,9 +472,9 @@ void TransformerTest::test_forward_propagate()
 
         data.resize(batch_samples_number, context_length + 2 * input_length);
 
-        for (Index i = 0; i < batch_samples_number; i++)
+        for(Index i = 0; i < batch_samples_number; i++)
         {
-            for (Index j = 0; j < context_length; j++)
+            for(Index j = 0; j < context_length; j++)
                 data(i, j) = type(rand() % context_dimension);
 
             for(Index j = 0; j < 2 * input_length; j++)
@@ -486,13 +485,13 @@ void TransformerTest::test_forward_propagate()
 
         data_set.set_training();
 
-        for (Index i = 0; i < context_length; i++)
+        for(Index i = 0; i < context_length; i++)
             data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
 
-        for (Index i = 0; i < input_length; i++)
+        for(Index i = 0; i < input_length; i++)
             data_set.set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
 
-        for (Index i = 0; i < input_length; i++)
+        for(Index i = 0; i < input_length; i++)
             data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
 
         training_samples_indices = data_set.get_training_samples_indices();

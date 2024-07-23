@@ -63,7 +63,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     Tensor<Descriptives, 1> variables_descriptives;
 
-    std::ofstream file;
+    ofstream file;
     string data_string;
 
     const string data_source_path = "../data/data.dat";
@@ -994,7 +994,7 @@ void DataSetTest::test_scrub_missing_values()
 
     Tensor<DataSet::SampleUse, 1> samples_uses;
 
-    std::ofstream file;
+    ofstream file;
 
     data_set.set_data_source_path(data_source_path);
 

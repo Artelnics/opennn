@@ -50,7 +50,7 @@ namespace opennn
         Index get_inputs_number() const final;
         Index get_inputs_depth() const;
 
-        dimensions get_outputs_dimensions() const final;
+        dimensions get_output_dimensions() const final;
 
         // Display messages
 

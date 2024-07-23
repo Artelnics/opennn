@@ -37,6 +37,17 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Ind
 }
 
 
+ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
+{
+    set(new_input_dimensions[0], new_output_dimensions[0]);
+
+    if(new_output_dimensions[0] > 1)
+    {
+        activation_function = ActivationFunction::Softmax;
+    }
+}
+
+
 void ProbabilisticLayer::set_name(const string& new_layer_name)
 {
     layer_name = new_layer_name;
@@ -55,7 +66,7 @@ Index ProbabilisticLayer::get_neurons_number() const
 }
 
 
-dimensions ProbabilisticLayer::get_outputs_dimensions() const
+dimensions ProbabilisticLayer::get_output_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 
@@ -586,7 +597,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     if(is_training)
     {
-        if (neurons_number == 1)
+        if(neurons_number == 1)
         {
             Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
@@ -643,7 +654,7 @@ void ProbabilisticLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives;
 
-    if (neurons_number == 1)
+    if(neurons_number == 1)
     {
         const Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
@@ -724,7 +735,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation_lm->error_combinations_derivatives;
 
-    if (neurons_number == 1)
+    if(neurons_number == 1)
     {
         error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
     }
@@ -737,11 +748,11 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     Index synaptic_weight_index = 0;
 
-    for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+    for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
     {
         const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
 
-        for (Index input_index = 0; input_index < inputs_number; input_index++)
+        for(Index input_index = 0; input_index < inputs_number; input_index++)
         {
             const TensorMap<Tensor<type, 1>> input = tensor_map(inputs, input_index);
 
@@ -1214,7 +1225,7 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
 
     activations_derivatives.resize(0, 0);
 
-    if (neurons_number == 1)
+    if(neurons_number == 1)
     {
         activations_derivatives.resize(batch_samples_number, neurons_number);
     }
@@ -1234,7 +1245,7 @@ void ProbabilisticLayerForwardPropagation::print() const
 
     const Index neurons_number = layer->get_neurons_number();
 
-    if (neurons_number == 1)
+    if(neurons_number == 1)
     {
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;

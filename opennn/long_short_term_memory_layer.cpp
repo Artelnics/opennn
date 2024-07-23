@@ -57,7 +57,7 @@ Index LongShortTermMemoryLayer::get_neurons_number() const
 }
 
 
-dimensions LongShortTermMemoryLayer::get_outputs_dimensions() const
+dimensions LongShortTermMemoryLayer::get_output_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 
@@ -1413,7 +1413,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
 
         // Hidden states
 
-        if (is_training)
+        if(is_training)
         {
             calculate_activations_derivatives(current_cell_states,
                                               current_hidden_states,
@@ -1473,7 +1473,7 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
                                             long_short_term_memory_layer_forward_propagation,
                                             long_short_term_memory_layer_back_propagation);
     
-    //@todo inputs derivatives
+    /// @todo Calculate inputs derivatives
 }
 
 
@@ -1567,7 +1567,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
     Index input_index = 0;
     Index neuron_index = 0;
 
-    for (Index sample = 0; sample < samples_number; sample++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
         current_inputs.device(*thread_pool_device) = inputs.chip(sample, 0);
 
@@ -1594,7 +1594,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
 
         // FORGET PARAMETERS DERIVATIVES
 
-        if (sample % timesteps == 0)
+        if(sample % timesteps == 0)
         {
             forget_combinations_weights_derivatives.setZero();
             input_combinations_weights_derivatives.setZero();
@@ -1696,7 +1696,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
         input_index = 0;
         neuron_index = 0;
 
-        for (Index i = 0; i < parameters_number; i++)
+        for(Index i = 0; i < parameters_number; i++)
         {
             const type current_input = current_inputs(input_index);
             const type previous_hidden_state_activation = previous_hidden_states(neuron_index);
@@ -1708,13 +1708,13 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
             input_index++;
             neuron_index++;
 
-            if (input_index == inputs_number)
+            if(input_index == inputs_number)
             {
                 input_index = 0;
                 weight_index++;
             }
 
-            if (neuron_index == neurons_number)
+            if(neuron_index == neurons_number)
             {
                 neuron_index = 0;
                 recurrent_weight_index++;
@@ -1751,7 +1751,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
         forget_weights_derivatives.device(*thread_pool_device) += hidden_states_weights_derivatives.contract(current_deltas, A_B);
 
         // Forget recurrent weights derivatives
-        if (sample % timesteps != 0)
+        if(sample % timesteps != 0)
         {
             multiply_rows(cell_states_recurrent_weights_derivatives, current_forget_activations);
 
@@ -1903,7 +1903,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
     Index input_index = 0;
     Index neuron_index = 0;
 
-    for (Index sample = 0; sample < samples_number; sample++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
         current_inputs.device(*thread_pool_device) = inputs.chip(sample, 0);
 
@@ -1930,7 +1930,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
 
         // INPUT PARAMETERS DERIVATIVES
 
-        if (sample % timesteps == 0)
+        if(sample % timesteps == 0)
         {
             forget_combinations_weights_derivatives.setZero();
             input_combinations_weights_derivatives.setZero();
@@ -2032,7 +2032,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
         input_index = 0;
         neuron_index = 0;
 
-        for (Index i = 0; i < parameters_number; i++)
+        for(Index i = 0; i < parameters_number; i++)
         {
             const type current_input = current_inputs(input_index);
             const type previous_hidden_state_activation = previous_hidden_states(neuron_index);
@@ -2044,13 +2044,13 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
             input_index++;
             neuron_index++;
 
-            if (input_index == inputs_number)
+            if(input_index == inputs_number)
             {
                 input_index = 0;
                 weight_index++;
             }
 
-            if (neuron_index == neurons_number)
+            if(neuron_index == neurons_number)
             {
                 neuron_index = 0;
                 recurrent_weight_index++;
@@ -2088,7 +2088,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
 
         // Input recurrent weights derivatives
 
-        if (sample % timesteps != 0)
+        if(sample % timesteps != 0)
         {
             multiply_rows(cell_states_recurrent_weights_derivatives, current_forget_activations);
 
@@ -2240,7 +2240,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
     Index input_index = 0;
     Index neuron_index = 0;
 
-    for (Index sample = 0; sample < samples_number; sample++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
         current_inputs.device(*thread_pool_device) = inputs.chip(sample, 0);
 
@@ -2267,7 +2267,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
 
         // STATE PARAMETERS DERIVATIVES
 
-        if (sample % timesteps == 0)
+        if(sample % timesteps == 0)
         {
             forget_combinations_weights_derivatives.setZero();
             input_combinations_weights_derivatives.setZero();
@@ -2369,7 +2369,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
         input_index = 0;
         neuron_index = 0;
 
-        for (Index i = 0; i < parameters_number; i++)
+        for(Index i = 0; i < parameters_number; i++)
         {
             const type current_input = current_inputs(input_index);
             const type previous_hidden_state_activation = previous_hidden_states(neuron_index);
@@ -2381,13 +2381,13 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
             input_index++;
             neuron_index++;
 
-            if (input_index == inputs_number)
+            if(input_index == inputs_number)
             {
                 input_index = 0;
                 weight_index++;
             }
 
-            if (neuron_index == neurons_number)
+            if(neuron_index == neurons_number)
             {
                 neuron_index = 0;
                 recurrent_weight_index++;
@@ -2425,7 +2425,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
 
         // State recurrent weights derivatives
 
-        if (sample % timesteps != 0)
+        if(sample % timesteps != 0)
         {
             multiply_rows(cell_states_recurrent_weights_derivatives, current_forget_activations);
 
@@ -2577,7 +2577,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
     Index input_index = 0;
     Index neuron_index = 0;
 
-    for (Index sample = 0; sample < samples_number; sample++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
         current_inputs.device(*thread_pool_device) = inputs.chip(sample, 0);
 
@@ -2604,7 +2604,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 
         // OUTPUT PARAMETERS DERIVATIVES
 
-        if (sample % timesteps == 0)
+        if(sample % timesteps == 0)
         {
             forget_combinations_weights_derivatives.setZero();
             input_combinations_weights_derivatives.setZero();
@@ -2706,7 +2706,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
         input_index = 0;
         neuron_index = 0;
 
-        for (Index i = 0; i < parameters_number; i++)
+        for(Index i = 0; i < parameters_number; i++)
         {
             const type current_input = current_inputs(input_index);
             const type previous_hidden_state_activation = previous_hidden_states(neuron_index);
@@ -2718,13 +2718,13 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
             input_index++;
             neuron_index++;
 
-            if (input_index == inputs_number)
+            if(input_index == inputs_number)
             {
                 input_index = 0;
                 weight_index++;
             }
 
-            if (neuron_index == neurons_number)
+            if(neuron_index == neurons_number)
             {
                 neuron_index = 0;
                 recurrent_weight_index++;
@@ -2762,7 +2762,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 
         // Output recurrent weights derivatives
 
-        if (sample % timesteps != 0)
+        if(sample % timesteps != 0)
         {
             multiply_rows(cell_states_recurrent_weights_derivatives, current_forget_activations);
 

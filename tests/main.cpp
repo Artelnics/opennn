@@ -206,7 +206,7 @@ int main()
          tests_failed_count += probabilistic_layer_test.get_tests_failed_count();
       }
 
-      else if (test == "probabilistic_layer_3d" || test == "pbl3d")
+      else if(test == "probabilistic_layer_3d" || test == "pbl3d")
       {
           ProbabilisticLayer3DTest probabilistic_layer_3d_test;
           probabilistic_layer_3d_test.run_test_case();
@@ -455,7 +455,7 @@ int main()
         tests_failed_count += testing_analysis_test.get_tests_failed_count();
       }
 
-      else if (test == "transformer" || test == "tf")
+      else if(test == "transformer" || test == "tf")
       {
         TransformerTest transformer_test;
         transformer_test.run_test_case();

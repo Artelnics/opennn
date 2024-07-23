@@ -81,10 +81,10 @@ public:
     Tensor<string, 1> get_time_series_variables_names() const;
 
     const Tensor<type, 2>& get_time_series_data() const;
-
+/*
     void write_XML(tinyxml2::XMLPrinter&) const;
     void from_XML(const tinyxml2::XMLDocument&);
-
+*/
     Tensor<string, 1> get_time_series_raw_variables_names() const;
 
     Index get_time_series_time_raw_variable_index() const;
@@ -111,14 +111,7 @@ private:
 
     /// Index where time variable is located for forecasting applications.
 
-    string time_column;
-
-    Index time_variable_index;
-
-    string group_by_column;
-
-    Index group_by_raw_variable_index;
-
+    Index time_raw_variable_index = 0;
 };
 
 }

@@ -62,7 +62,7 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const dimensions&, const dimensions&);
+    explicit ConvolutionalLayer(const dimensions&, const dimensions& = {1, 1, 1, 1});
 
     // Destructor
 
@@ -85,7 +85,7 @@ public:
     string write_activation_function() const;
 
     dimensions get_inputs_dimensions() const;
-    dimensions get_outputs_dimensions() const;
+    dimensions get_output_dimensions() const;
 
     pair<Index, Index> get_padding() const;
 
@@ -93,9 +93,9 @@ public:
 
     Eigen::array<ptrdiff_t, 4> get_strides() const;
 
-    Index get_outputs_rows_number() const;
+    Index get_output_height() const;
 
-    Index get_outputs_columns_number() const;
+    Index get_output_width() const;
 
     ConvolutionType get_convolution_type() const;
     string write_convolution_type() const;
@@ -104,16 +104,16 @@ public:
 
     Index get_row_stride() const;
 
-    Index get_kernels_rows_number() const;
-    Index get_kernels_columns_number() const;
-    Index get_kernels_channels_number() const;
+    Index get_kernel_height() const;
+    Index get_kernel_width() const;
+    Index get_kernel_channels() const;
     Index get_kernels_number() const;
 
     Index get_padding_width() const;
     Index get_padding_height() const;
 
-    Index get_inputs_channels_number() const;
-    Index get_inputs_rows_number() const;
+    Index get_input_channels() const;
+    Index get_input_height() const;
     Index get_inputs_columns_number() const;
 
     Index get_inputs_number() const;

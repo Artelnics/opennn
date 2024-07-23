@@ -156,43 +156,6 @@ namespace opennn
 
 /*
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-
-//   T E X T   A N A L Y T I C S   C L A S S   H E A D E R
-
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-#pragma once
-
-#ifndef __TEXTANALYTICS_H__
-#define __TEXTANALYTICS_H__
-
-// System includes
-
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-
-// OpenNN includes
-
-#include "config.h"
-#include "word_bag.h"
-
-#include "tensors.h"
-#include "strings_utilities.h"
-
-// TinyXml includes
-
-#include "tinyxml2.h"
-
-namespace opennn
-{
-
 class TextGenerationAlphabet;
 
 /// This class represent the text analytics methodata_set.

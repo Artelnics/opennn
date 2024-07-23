@@ -26,10 +26,10 @@ ImageDataSet::ImageDataSet() : DataSet()
 ImageDataSet::ImageDataSet(const Index& new_classes_number,
                            const Index& new_height,
                            const Index& new_width,
-                           const Index& new_channels_number,
+                           const Index& new_channels,
                            const Index& new_targets_number)
 {
-    set(new_classes_number, new_height, new_width, new_channels_number, new_targets_number);
+    set(new_classes_number, new_height, new_width, new_channels, new_targets_number);
 }
 
 
@@ -37,7 +37,7 @@ ImageDataSet::ImageDataSet(const Index& new_classes_number,
 
 Index ImageDataSet::get_channels_number() const
 {
-    return input_variables_dimensions[2];
+    return input_dimensions[2];
 }
 
 
@@ -45,7 +45,7 @@ Index ImageDataSet::get_channels_number() const
 
 Index ImageDataSet::get_image_width() const
 {
-    return input_variables_dimensions[1];
+    return input_dimensions[1];
 }
 
 
@@ -53,14 +53,15 @@ Index ImageDataSet::get_image_width() const
 
 Index ImageDataSet::get_image_height() const
 {
-    return input_variables_dimensions[0];
+    return input_dimensions[0];
 }
+
 
 /// Returns the height of the images in the data set.
 
 Index ImageDataSet::get_image_size() const
 {
-    return input_variables_dimensions[0] * input_variables_dimensions[1] * input_variables_dimensions[2];
+    return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
 }
 
 
@@ -83,35 +84,42 @@ bool ImageDataSet::get_random_reflection_axis_x() const
     return random_reflection_axis_x;
 }
 
+
 bool ImageDataSet::get_random_reflection_axis_y() const
 {
     return random_reflection_axis_y;
 }
+
 
 type ImageDataSet::get_random_rotation_minimum() const
 {
     return random_rotation_minimum;
 }
 
+
 type ImageDataSet::get_random_rotation_maximum() const
 {
     return random_rotation_maximum;
 }
+
 
 type ImageDataSet::get_random_horizontal_translation_minimum() const
 {
     return random_horizontal_translation_minimum;
 }
 
+
 type ImageDataSet::get_random_horizontal_translation_maximum() const
 {
     return random_horizontal_translation_maximum;
 }
 
+
 type ImageDataSet::get_random_vertical_translation_maximum() const
 {
     return random_vertical_translation_maximum;
 }
+
 
 type ImageDataSet::get_random_vertical_translation_minimum() const
 {
@@ -119,77 +127,88 @@ type ImageDataSet::get_random_vertical_translation_minimum() const
 }
 
 
-
 void ImageDataSet::set(const Index& new_images_number,
                        const Index& new_height,
                        const Index& new_width,
-                       const Index& new_channels_number,
+                       const Index& new_channels,
                        const Index& new_targets_number)
 {
     model_type = ModelType::ImageClassification;
 
-    set_images_number(new_images_number);
-    const Index image_height = new_height;
-    const Index image_width = new_width;
-    const Index channels_number = new_channels_number;
-    const Index targets_number = new_targets_number;
+    const Index inputs_number = new_height * new_width * new_channels;
+    const Index raw_variables_number = inputs_number + 1;
+    const Index variables_number = inputs_number + new_targets_number;
 
-    input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({ image_height, image_width, channels_number });
+    // Dimensions
+
+    input_dimensions.resize(3);
+    input_dimensions = { new_height, new_width, new_channels };
 
     target_variables_dimensions.resize(1);
-    target_variables_dimensions.setValues({ targets_number });
+    target_variables_dimensions = { new_targets_number };
 
-    Tensor<string, 1> categories(targets_number);
+    // Data
 
-    const Index new_inputs_number = image_height * image_width * channels_number;
-    const Index new_variables_number = new_inputs_number + targets_number;
+    data.resize(new_images_number, variables_number);
 
-    data.resize(images_number, new_variables_number);
+    // Variables
 
-    raw_variables.resize(new_variables_number);
+    raw_variables.resize(raw_variables_number);
 
-    for(Index i = 0; i < new_variables_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
-        if(i < new_inputs_number)
+        raw_variables(i).name = "p_" + to_string(i+1);
+        raw_variables(i).raw_variable_use = VariableUse::Input;
+        raw_variables(i).type = RawVariableType::Numeric;
+    }
+
+    if(new_targets_number == 1)
+    {
+        raw_variables(raw_variables_number-1).type = RawVariableType::Binary;
+    }
+    else
+    {
+        Tensor<string, 1> categories(new_targets_number);
+        categories.setConstant("ABC");
+
+        raw_variables(raw_variables_number-1).type = RawVariableType::Categorical;
+        raw_variables(raw_variables_number-1).raw_variable_use = VariableUse::Target;
+        raw_variables(raw_variables_number-1).name = "target";
+
+        raw_variables(raw_variables_number-1).set_categories(categories);
+
+        raw_variables(raw_variables_number-1).categories_uses.resize(new_targets_number);
+
+        for (Index k = 0 ; k < new_targets_number ; k++)
         {
-            raw_variables(i).name = "pixel_" + to_string(i+1);
-            raw_variables(i).raw_variable_use = VariableUse::Input;
-            raw_variables(i).type = RawVariableType::Numeric;
-        }
-        else
-        {
-            raw_variables(i).name = "target_" + to_string(i+1);
-            raw_variables(i).raw_variable_use = VariableUse::Target;
-            raw_variables(i).type = RawVariableType::Numeric;
-            //raw_variables(i).add_category("");
-            //raw_variables(i).set_categories_uses(VariableUse::Target);
-            //raw_variables(i).set_categories(categories);
+            raw_variables(raw_variables_number-1).categories_uses(k) = VariableUse::Target;
         }
     }
 
-    samples_uses.resize(images_number);
+    // Samples
+
+    samples_uses.resize(new_images_number);
     split_samples_random();
 
-    set_default_raw_variables_scalers();
+    set_raw_variables_scalers(Scaler::ImageMinMax);
 }
 
 
-void ImageDataSet::set_channels_number(const int& new_channels_number)
+void ImageDataSet::set_channels_number(const int& new_channels)
 {
-    input_variables_dimensions[2] = new_channels_number;
+    input_dimensions[2] = new_channels;
 }
 
 
 void ImageDataSet::set_image_width(const int& new_width)
 {
-    input_variables_dimensions[1] = new_width;
+    input_dimensions[1] = new_width;
 }
 
 
 void ImageDataSet::set_image_height(const int& new_height)
 {
-    input_variables_dimensions[0] = new_height;
+    input_dimensions[0] = new_height;
 }
 
 
@@ -199,10 +218,10 @@ void ImageDataSet::set_image_padding(const int& new_padding)
 }
 
 
-void ImageDataSet::set_images_number(const Index & new_classes_number)
-{
-    images_number = new_classes_number;
-}
+// void ImageDataSet::set_images_number(const Index & new_classes_number)
+// {
+//     images_number = new_classes_number;
+// }
 
 
 void ImageDataSet::set_augmentation(const bool& new_augmentation)
@@ -1325,9 +1344,9 @@ void ImageDataSet::read_bmp()
     vector<path> directory_path;
     vector<path> image_path;
 
-    for (const directory_entry& current_directory : directory_iterator(data_source_path))
+    for(const directory_entry& current_directory : directory_iterator(data_source_path))
     {
-        if (is_directory(current_directory))
+        if(is_directory(current_directory))
         {
             directory_path.emplace_back(current_directory.path().string());
         }
@@ -1341,11 +1360,11 @@ void ImageDataSet::read_bmp()
 
     images_number.setZero();
 
-    for (Index i = 0; i < targets_number; i++)
+    for(Index i = 0; i < targets_number; i++)
     {
-        for (const directory_entry& current_directory : directory_iterator(directory_path[i]))
+        for(const directory_entry& current_directory : directory_iterator(directory_path[i]))
         {
-            if (current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
+            if(current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
                 image_path.emplace_back(current_directory.path().string());
                 samples_number++;
@@ -1366,55 +1385,58 @@ void ImageDataSet::read_bmp()
     set(samples_number, image_height, image_width, image_channels, targets_number);
     
     data.setZero();
-    
-    for (Index i = 0; i < samples_number; i++)
-    {
-        image_data = read_bmp_image(image_path[i].string());
 
-        if(pixels_number != image_data.dimension(0) * image_data.dimension(1) * image_data.dimension(2))
+    #pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        const Tensor<unsigned char,3> image_data = read_bmp_image(image_path[i].string());
+
+        if(pixels_number != image_data.size())
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Tensor<type, 2> read_bmp() method.\n"
-                   << "Some images of the dataset have different channel number, width and/or height.\n";
+                   << "void read_bmp() method.\n"
+                   << "Different image sizes.\n";
 
             throw invalid_argument(buffer.str());
         }
 
-        for (Index j = 0; j < pixels_number; j++)
+        for(Index j = 0; j < pixels_number; j++)
         {
             data(i,j) = image_data(j);
         }
 
-        if (targets_number == 2)
+        if(targets_number == 2)
         {
-            if (i >= images_number[0] && i < images_number[1])
+            if(i >= images_number[0] && i < images_number[1])
             {
                 data(i,pixels_number) = 1;
             }
         }
         else
-        {
-            for (Index k = 0; k < targets_number; k++)
+        {                        
+            for(Index k = 0; k < targets_number; k++)
             {
-                if (i >= images_number[k] && i < images_number[k+1])
+                if(i >= images_number[k] && i < images_number[k+1])
                 {
                     data(i,k+pixels_number) = 1;
                     break;
                 }
             }
         }
-        if (display)
+
+        if(display)
         {
-            if (i % 1000 == 0)
+            if(i % 1000 == 0)
                 display_progress_bar(i, samples_number - 1000);
         }
     }
-    if (display)
+
+    if(display)
         cout << endl << "Finished loading data set..." << endl;
 }
-
 
 } // opennn namespace
 

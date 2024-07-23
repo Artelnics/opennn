@@ -116,7 +116,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     error = minkowski_error(0)/type(batch_samples_number);
 
-    if (isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
@@ -148,10 +148,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 
     deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)));
 
-    deltas.device(*thread_pool_device) = (type(1.0/batch_samples_number))*deltas/p_norm_derivative();
-
-    /// @todo check if this is neccessary.
-    replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, type(0));
+    deltas.device(*thread_pool_device) = deltas* type(1.0 / (p_norm_derivative() * batch_samples_number));
 }
 
 

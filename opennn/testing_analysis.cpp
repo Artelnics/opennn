@@ -1056,8 +1056,8 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
 
 #pragma omp parallel for
 
-    for (Index i = 0; i < batch_samples_number; i++)
-        for (Index j = 0; j < outputs_number; j++)
+    for(Index i = 0; i < batch_samples_number; i++)
+        for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
@@ -1339,23 +1339,26 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
     const Index samples_number = targets.dimension(0);
 
-    const Tensor<Index, 1> input_variables_dimensions = data_set->get_input_variables_dimensions();
+    const dimensions& input_dimensions = data_set->get_input_dimensions();
  
-    if (input_variables_dimensions.size() == 1)
+    if(input_dimensions.size() == 1)
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
         return calculate_confusion(outputs, targets, outputs_number);
     }
-    else if (input_variables_dimensions.size() == 2)
+    else if(input_dimensions.size() == 2)
     {
         // @todo not needed?
     }
-    else if (input_variables_dimensions.size() == 3)
+    else if(input_dimensions.size() == 3)
     {
         type* inputs_data = inputs.data();
 
-        Tensor<type, 4> inputs_4d(samples_number, input_variables_dimensions[0], input_variables_dimensions[1], input_variables_dimensions[2]);
+        Tensor<type, 4> inputs_4d(samples_number,
+                                  input_dimensions[0],
+                                  input_dimensions[1],
+                                  input_dimensions[2]);
 
         memcpy(inputs_4d.data(), inputs_data, samples_number * inputs.dimension(1) * sizeof(type));
 
@@ -1370,11 +1373,11 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets, Index outputs_number) const
 {
-    if (outputs_number == 1)
+    if(outputs_number == 1)
     {
         type decision_threshold;
 
-        if (neural_network->get_probabilistic_layer() != nullptr)
+        if(neural_network->get_probabilistic_layer() != nullptr)
         {
             decision_threshold = neural_network->get_probabilistic_layer()->get_decision_threshold();
         }
@@ -2303,7 +2306,7 @@ void TestingAnalysis::save_confusion(const string& confusion_file_name) const
 
     const Index raw_variables_number = confusion.dimension(0);
 
-    std::ofstream confusion_file(confusion_file_name);
+    ofstream confusion_file(confusion_file_name);
 
     Tensor<string, 1> target_variable_names = data_set->get_target_variables_names();
 
@@ -2345,7 +2348,7 @@ void TestingAnalysis::save_multiple_classification_tests(const string& classific
 {
     const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_precision();
 
-    std::ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
+    ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
 
     multiple_classifiaction_tests_file << "accuracy,error" << endl;
     multiple_classifiaction_tests_file << multiple_classification_tests(0)* type(100) << "," << multiple_classification_tests(1)* type(100) << endl;
@@ -2525,7 +2528,7 @@ void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& target
                                                                                            outputs,
                                                                                            labels);
 
-    std::ofstream well_classified_samples_file(well_classified_samples_file_name);
+    ofstream well_classified_samples_file(well_classified_samples_file_name);
     well_classified_samples_file << "sample_name,actual_class,predicted_class,probability" << endl;
     for(Index i = 0; i < well_classified_samples.dimension(0); i++)
     {
@@ -2547,7 +2550,7 @@ void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
                                                                                          outputs,
                                                                                          labels);
 
-    std::ofstream misclassified_samples_file(misclassified_samples_file_name);
+    ofstream misclassified_samples_file(misclassified_samples_file_name);
     misclassified_samples_file << "sample_name,actual_class,predicted_class,probability" << endl;
     for(Index i = 0; i < misclassified_samples.dimension(0); i++)
     {
@@ -2576,7 +2579,7 @@ void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type,
         well_classified_numerical_probabilities(i) = type(::atof(well_classified_samples(i, 3).c_str()));
     }
 
-    std::ofstream classification_statistics_file(statistics_file_name);
+    ofstream classification_statistics_file(statistics_file_name);
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << well_classified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << well_classified_numerical_probabilities.maximum() << ",";
@@ -2760,13 +2763,13 @@ pair<type, type> TestingAnalysis::test_transformer() const
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
 
     Tensor<type, 2> testing_input(testing_batch_size, input.dimension(1));
-    for (Index i = 0; i < testing_batch_size; i++)    testing_input.chip(i, 0) = input.chip(i, 0);
+    for(Index i = 0; i < testing_batch_size; i++)    testing_input.chip(i, 0) = input.chip(i, 0);
 
     Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
-    for (Index i = 0; i < testing_batch_size; i++)    testing_context.chip(i, 0) = context.chip(i, 0);
+    for(Index i = 0; i < testing_batch_size; i++)    testing_context.chip(i, 0) = context.chip(i, 0);
 
     Tensor<type, 2> testing_target(testing_batch_size, target.dimension(1));
-    for (Index i = 0; i < testing_batch_size; i++)    testing_target.chip(i, 0) = target.chip(i, 0);
+    for(Index i = 0; i < testing_batch_size; i++)    testing_target.chip(i, 0) = target.chip(i, 0);
 
     Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 
@@ -3273,7 +3276,7 @@ void TestingAnalysis::load(const string& file_name)
 
 void TestingAnalysis::GoodnessOfFitAnalysis::save(const string& file_name) const
 {
-    std::ofstream file;
+    ofstream file;
     file.open(file_name);
 
     file << "Goodness-of-fit analysis\n";

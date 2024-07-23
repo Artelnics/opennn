@@ -97,7 +97,7 @@ public:
     Index get_parameters_number() const final;
     type get_dropout_rate() const;
 
-    dimensions get_outputs_dimensions() const final;
+    dimensions get_output_dimensions() const final;
 
     // Activation functions
 

@@ -162,16 +162,16 @@ void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    dimensions new_inputs_dimensions(4);
-    dimensions new_kernels_dimensions(4);
+    dimensions new_input_dimensions(4);
+    dimensions new_kernel_dimensions(4);
 
-//    new_inputs_dimensions.setValues({23, 64, 3, 1});
-//    new_kernels_dimensions.setValues({3, 2, 1, 1});
+//    new_input_dimensions.setValues({23, 64, 3, 1});
+//    new_kernel_dimensions.setValues({3, 2, 1, 1});
 
-    ConvolutionalLayer convolutional_layer(new_inputs_dimensions, new_kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(new_input_dimensions, new_kernel_dimensions);
 
-    assert_true(convolutional_layer.get_inputs_channels_number() == 3 &&
-                convolutional_layer.get_inputs_rows_number() == 23 &&
+    assert_true(convolutional_layer.get_input_channels() == 3 &&
+                convolutional_layer.get_input_height() == 23 &&
                 convolutional_layer.get_inputs_columns_number() == 64, LOG);
 }
 
@@ -214,12 +214,12 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     biases(2) = type(2.);
 
     dimensions new_inputs_dimension(4);
-    dimensions new_kernels_dimensions(4);
+    dimensions new_kernel_dimensions(4);
 
     //new_inputs_dimension.setValues({rows_input, cols_input, channels,input_images});
-    //new_kernels_dimensions.setValues({rows_kernel, cols_kernel,channels,input_kernels});
+    //new_kernel_dimensions.setValues({rows_kernel, cols_kernel,channels,input_kernels});
 
-    ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernel_dimensions);
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
@@ -268,19 +268,19 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
     const Index cols_input = 4;
 
     //pooling dimensions
-    const Index rows_polling = 2;
-    const Index cols_polling = 2;
+    const Index rows_pooling = 2;
+    const Index columns_pooling = 2;
 
     //stride
-    const Index rows_stride=1;
-    const Index cols_stride=1;
+    const Index rows_stride = 1;
+    const Index columns_stride = 1;
 
     //output dimensions
-    const Index output_rows_number = (rows_input - rows_polling)/rows_stride + 1;
-    const Index output_cols_number = (cols_input - cols_polling)/cols_stride +1;
+    const Index output_rows_number = (rows_input - rows_pooling)/rows_stride + 1;
+    const Index output_columns_number = (cols_input - columns_pooling)/columns_stride +1;
 
     Tensor<type, 4> inputs(rows_input, cols_input, channels, input_images);
-    Tensor<type, 4> outputs(output_rows_number, output_cols_number, channels, input_images);
+    Tensor<type, 4> outputs(output_rows_number, output_columns_number, channels, input_images);
 
     inputs.setRandom();
 
@@ -293,24 +293,25 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
     {
         for(int c=0; c<channels; c++)
         {
-            for(int k=0; k<output_cols_number; k++)
+            for(int k=0; k<output_columns_number; k++)
             {
                 for(int l=0; l<output_rows_number; l++)
                 {
                     float tmp_result = 0;
 
-                    for(int m=0; m<cols_polling; m++)
+                    for(int m=0; m<columns_pooling; m++)
                     {
-                        col = m*cols_stride + k;
+                        col = m*columns_stride + k;
 
-                        for(int n=0; n<rows_polling; n++)
+                        for(int n=0; n<rows_pooling; n++)
                         {
                             row = n*rows_stride + l;
 
                             tmp_result += inputs(row,col,c,i);
                         }
                     }
-                    outputs(l,k,c,i) = tmp_result/(cols_polling*rows_polling);
+
+                    outputs(l,k,c,i) = tmp_result/(columns_pooling*rows_pooling);
                 }
             }
         }
@@ -330,19 +331,19 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
     const Index cols_input = 4;
 
     //pooling dimensions
-    const Index rows_polling = 2;
-    const Index cols_polling = 2;
+    const Index rows_pooling = 2;
+    const Index columns_pooling = 2;
 
     //stride
     const Index rows_stride=1;
-    const Index cols_stride=1;
+    const Index columns_stride=1;
 
     //output dimensions
-    const Index output_rows_number = (rows_input - rows_polling)/rows_stride + 1;
-    const Index output_cols_number = (cols_input - cols_polling)/cols_stride +1;
+    const Index output_rows_number = (rows_input - rows_pooling)/rows_stride + 1;
+    const Index output_columns_number = (cols_input - columns_pooling)/columns_stride +1;
 
     Tensor<type, 4> inputs(rows_input, cols_input, channels, input_images);
-    Tensor<type, 4> outputs(output_rows_number, output_cols_number, channels, input_images);
+    Tensor<type, 4> outputs(output_rows_number, output_columns_number, channels, input_images);
 
     inputs.setRandom();
 
@@ -351,23 +352,23 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
     Index col = 0;
     Index row = 0;
 
-    for(int i = 0; i<input_images; i++)
+    for(int i = 0; i < input_images; i++)
     {
-        for(int c=0; c<channels; c++)
+        for(int c=0; c < channels; c++)
         {
-            for(int k=0; k<output_cols_number; k++)
+            for(int k=0; k < output_columns_number; k++)
             {
-                for(int l=0; l<output_rows_number; l++)
+                for(int l=0; l < output_rows_number; l++)
                 {
                     float tmp_result = 0;
 
                     float final_result = 0;
 
-                    for(int m=0; m<cols_polling; m++)
+                    for(int m = 0; m < columns_pooling; m++)
                     {
-                        col = m*cols_stride + k;
+                        col = m*columns_stride + k;
 
-                        for(int n=0; n<rows_polling; n++)
+                        for(int n=0; n<rows_pooling; n++)
                         {
                             row = n*rows_stride + l;
 
@@ -376,14 +377,13 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
                             if(tmp_result > final_result) final_result = tmp_result;
                         }
                     }
+
                     outputs(l,k,c,i) = final_result;
                 }
             }
         }
     }
 }
-
-
 
 
 void ConvolutionalLayerTest::test_calculate_activations()
@@ -397,13 +397,13 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result.resize(2,2,2,2);
     inputs.resize(2,2,2,2);
 
-    Tensor<Index, 1> new_inputs_dimensions(4);
-    Tensor<Index, 1> new_kernels_dimensions(4);
+    Tensor<Index, 1> new_input_dimensions(4);
+    Tensor<Index, 1> new_kernel_dimensions(4);
 
-    new_inputs_dimensions.setValues({2, 2, 2, 2});
-    new_kernels_dimensions.setValues({2, 2, 2, 2});
+    new_input_dimensions.setValues({2, 2, 2, 2});
+    new_kernel_dimensions.setValues({2, 2, 2, 2});
 
-    ConvolutionalLayer convolutional_layer(new_inputs_dimensions, new_kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(new_input_dimensions, new_kernel_dimensions);
 
     // Test
 
@@ -778,15 +778,15 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     convolutional_layer.forward_propagate(inputs, &forward_propagation);
 
-    assert_true(forward_propagation.activations.dimension(0) == convolutional_layer.get_outputs_dimensions()(0)&&
-                forward_propagation.activations.dimension(1) == convolutional_layer.get_outputs_dimensions()(1)&&
-                forward_propagation.activations.dimension(2) == convolutional_layer.get_outputs_dimensions()(2)&&
-                forward_propagation.activations.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), LOG);
+    assert_true(forward_propagation.activations.dimension(0) == convolutional_layer.get_output_dimensions()(0)&&
+                forward_propagation.activations.dimension(1) == convolutional_layer.get_output_dimensions()(1)&&
+                forward_propagation.activations.dimension(2) == convolutional_layer.get_output_dimensions()(2)&&
+                forward_propagation.activations.dimension(3) == convolutional_layer.get_output_dimensions()(3), LOG);
 
-    assert_true(forward_propagation.activations_derivatives.dimension(0) == convolutional_layer.get_outputs_dimensions()(0)&&
-                forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_outputs_dimensions()(1)&&
-                forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_outputs_dimensions()(2)&&
-                forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), LOG);
+    assert_true(forward_propagation.activations_derivatives.dimension(0) == convolutional_layer.get_output_dimensions()(0)&&
+                forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_output_dimensions()(1)&&
+                forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_output_dimensions()(2)&&
+                forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_output_dimensions()(3), LOG);
 
 
     assert_true(abs(forward_propagation.activations(0, 0, 0, 0) - type(tanh(27.))) < type(NUMERIC_LIMITS_MIN) &&
@@ -808,39 +808,39 @@ void ConvolutionalLayerTest::test_forward_propagation()
 /*
     const Index batch_samples_number = 5;
 
-    const Index inputs_channels_number = 3;
-    const Index inputs_rows_number = 5;
+    const Index input_channels = 3;
+    const Index input_height = 5;
     const Index inputs_raw_variables_number = 4;
 
     const Index kernels_number = 2;
-    const Index kernels_channels_number = inputs_channels_number;
-    const Index kernels_rows_number = 3;
+    const Index kernel_channels = input_channels;
+    const Index kernel_height = 3;
     const Index kernels_raw_variables_number = 3;
 
     const Index targets_number = 1;
 
     DataSet data_set(batch_samples_number,
-                     inputs_channels_number,
-                     inputs_rows_number,
+                     input_channels,
+                     input_height,
                      inputs_raw_variables_number,
                      targets_number);
 
     data_set.set_data_constant(type(1));
 
-    Tensor<Index, 1> input_variables_dimensions(3);
-    input_variables_dimensions.setValues({inputs_channels_number,
-                                          inputs_rows_number,
+    Tensor<Index, 1> input_dimensions(3);
+    input_dimensions.setValues({input_channels,
+                                          input_height,
                                           inputs_raw_variables_number});
 
     Tensor<Index, 1> kernels_dimensions(4);
     kernels_dimensions.setValues({kernels_number,
-                                  kernels_channels_number,
-                                  kernels_rows_number,
+                                  kernel_channels,
+                                  kernel_height,
                                   kernels_raw_variables_number});
 
     NeuralNetwork neural_network;
 
-    ConvolutionalLayer convolutional_layer(input_variables_dimensions, kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(input_dimensions, kernels_dimensions);
     convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
     convolutional_layer.set_biases_constant(1.0);
     convolutional_layer.set_synaptic_weights_constant(1.0);
@@ -848,10 +848,10 @@ void ConvolutionalLayerTest::test_forward_propagation()
 
     neural_network.add_layer(&convolutional_layer);
 
-    FlattenLayer flatten_layer(convolutional_layer.get_outputs_dimensions());
+    FlattenLayer flatten_layer(convolutional_layer.get_output_dimensions());
     neural_network.add_layer(&flatten_layer);
 
-    PerceptronLayer perceptron_layer(flatten_layer.get_outputs_dimensions()(0), 1);
+    PerceptronLayer perceptron_layer(flatten_layer.get_output_dimensions()(0), 1);
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
     neural_network.add_layer(&perceptron_layer);
 
@@ -987,16 +987,16 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 void ConvolutionalLayerTest::test_memcpy_approach()
 {
 
-    const int images_number = 1;
-    const int kernel_number = 1;
+    const Index images_number = 1;
+    const Index kernel_number = 1;
 
-    const int channel = 3;
+    const Index channel = 3;
 
-    const int rows_input = 4;
-    const int cols_input = 4;
+    const Index rows_input = 4;
+    const Index cols_input = 4;
 
-    const int kernel_rows = 2;
-    const int kernel_cols = 2;
+    const Index kernel_rows = 2;
+    const Index kernel_cols = 2;
 
     Tensor<type, 4> input(rows_input, cols_input, channel, images_number);
 

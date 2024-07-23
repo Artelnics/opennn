@@ -433,7 +433,7 @@ void InputsSelectionResults::resize_history(const Index& new_size)
     mean_selection_error_history.resize(new_size);
 
 
-    for (Index i = 0; i < new_size; i++)
+    for(Index i = 0; i < new_size; i++)
     {
         training_error_history(i) = old_training_error_history(i);
         selection_error_history(i) = old_selection_error_history(i);

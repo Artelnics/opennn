@@ -83,7 +83,7 @@ Index MultiheadAttentionLayer::get_weights_depth() const
 }
 
 
-dimensions MultiheadAttentionLayer::get_outputs_dimensions() const
+dimensions MultiheadAttentionLayer::get_output_dimensions() const
 {
     return { input_size, depth };
 }
@@ -436,7 +436,6 @@ void MultiheadAttentionLayer::set_parameters_random()
     const type minimum = type(-0.2);
     const type maximum = type(0.2);
 
-
     /// @todo in Tensor form
     /// @todo can we reduce the number of loops for things with the same size?
 
@@ -449,7 +448,7 @@ void MultiheadAttentionLayer::set_parameters_random()
     }
 
 #pragma omp parallel for
-    for (Index i = 0; i < query_biases.size(); i++)
+    for(Index i = 0; i < query_biases.size(); i++)
     {
         const type random = type(rand() / (RAND_MAX + 1.0));
 
@@ -465,7 +464,7 @@ void MultiheadAttentionLayer::set_parameters_random()
     }
 
 #pragma omp parallel for
-    for (Index i = 0; i < key_biases.size(); i++)
+    for(Index i = 0; i < key_biases.size(); i++)
     {
         const type random = type(rand() / (RAND_MAX + 1.0));
 
@@ -481,7 +480,7 @@ void MultiheadAttentionLayer::set_parameters_random()
     }
 
 #pragma omp parallel for
-    for (Index i = 0; i < value_biases.size(); i++)
+    for(Index i = 0; i < value_biases.size(); i++)
     {
         const type random = type(rand() / (RAND_MAX + 1.0));
 
@@ -497,7 +496,7 @@ void MultiheadAttentionLayer::set_parameters_random()
     }
 
 #pragma omp parallel for
-    for (Index i = 0; i < projection_biases.size(); i++)
+    for(Index i = 0; i < projection_biases.size(); i++)
     {
         const type random = type(rand() / (RAND_MAX + 1.0));
 
@@ -611,9 +610,9 @@ void MultiheadAttentionLayer::build_causal_mask()
     causal_mask.resize(context_size, input_size);
     causal_mask.setZero();
 
-    for (Index input_index = 0; input_index < input_size; input_index++)
+    for(Index input_index = 0; input_index < input_size; input_index++)
     {
-        for (Index context_index = input_index + 1; context_index < context_size; context_index++)
+        for(Index context_index = input_index + 1; context_index < context_size; context_index++)
         {
             causal_mask(context_index, input_index) = m_inf;
         }
@@ -627,9 +626,9 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 
     #pragma omp parallel for
     
-    for (Index head_index = 0; head_index < heads_number; head_index++)
+    for(Index head_index = 0; head_index < heads_number; head_index++)
     {
-        for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+        for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
             type* sample_attention_scores_data = attention_scores.data()
                 + sample_index * context_size * input_size
@@ -658,7 +657,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
     type* biases_data = (type*)biases.data();
     type* transformed_input_data = transformed_input.data();
     
-    for (Index head_index = 0; head_index < heads_number; head_index++)
+    for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         type* head_weights_data = weights_data + head_index * depth * hidden_depth;
         type* head_biases_data = biases_data + head_index * hidden_depth;
@@ -667,7 +666,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
         const TensorMap<Tensor<type, 2>> head_weights(head_weights_data, depth, hidden_depth);
         const TensorMap<Tensor<type, 1>> head_biases(head_biases_data, hidden_depth);
 
-        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
+        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
             sample_matrix = input.chip(sample_index, 0);
 
@@ -734,7 +733,7 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 
     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
-    if (use_causal_mask)
+    if(use_causal_mask)
     {
         apply_causal_mask(attention_scores);
     }
@@ -762,11 +761,11 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
     type random = 0;
     
 #pragma omp parallel for
-    for (Index head_index = 0; head_index < heads_number; head_index++)
+    for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
-            for (Index position_index = 0; position_index < input_size; position_index++)
+            for(Index position_index = 0; position_index < input_size; position_index++)
             {
                 entry_data = attention_scores.data()
                              + position_index * context_size
@@ -787,11 +786,11 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 
     type random;
 
-    for (Index i = 0; i < attention_scores.size(); i++)
+    for(Index i = 0; i < attention_scores.size(); i++)
     {
         random = calculate_random_uniform(type(0), type(1));
 
-        if (random < dropout_rate)    attention_scores(i) = 0;
+        if(random < dropout_rate)    attention_scores(i) = 0;
         else    attention_scores(i) *= scaling_factor;
     }
 }
@@ -839,7 +838,7 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
                              attention_scores,
                              attention_weights);
 
-    if (is_training && dropout_rate > type(0)) 
+    if(is_training && dropout_rate > type(0)) 
         dropout(attention_weights);
     
     compute_attention_outputs(value,
@@ -949,7 +948,7 @@ void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions
     type* key_biases_derivatives_data = key_biases_derivatives.data();
     type* value_biases_derivatives_data = value_biases_derivatives.data();
     
-    for (Index head_index = 0; head_index < heads_number; head_index++)
+    for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         type* head_query_weights_data = query_weights_data + head_index * depth * hidden_depth;
         type* head_key_weights_data = key_weights_data + head_index * depth * hidden_depth;
@@ -1019,7 +1018,7 @@ void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions
         
         // ATTENTION OUTPUT DERIVATIVES
         
-        for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+        for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
             type* sample_attention_output_derivatives_data = head_attention_output_derivatives_data + sample_index * input_size * hidden_depth;
 
@@ -1068,9 +1067,7 @@ void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions
         head_key_weights_derivatives.device(*thread_pool_device)
             = context.contract(head_key_derivatives, transformation_weights_derivatives_contraction_indices);
 
-        /// @todo try to simplify
-
-        for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+        for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
             type* sample_query_derivatives_data = head_query_derivatives_data + sample_index * input_size * hidden_depth;
             type* sample_key_derivatives_data = head_key_derivatives_data + sample_index * context_size * hidden_depth;
@@ -1194,7 +1191,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttentionLayer");
 
-    if (!multihead_attention_layer_element)
+    if(!multihead_attention_layer_element)
     {
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1207,7 +1204,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* layer_name_element = multihead_attention_layer_element->FirstChildElement("LayerName");
 
-    if (!layer_name_element)
+    if(!layer_name_element)
     {
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1216,7 +1213,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (layer_name_element->GetText())
+    if(layer_name_element->GetText())
     {
         set_name(layer_name_element->GetText());
     }
@@ -1225,7 +1222,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* input_size_element = multihead_attention_layer_element->FirstChildElement("InputSize");
 
-    if (!input_size_element)
+    if(!input_size_element)
     {
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1234,7 +1231,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (input_size_element->GetText())
+    if(input_size_element->GetText())
     {
         set_input_size(Index(stoi(input_size_element->GetText())));
     }
@@ -1243,7 +1240,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* context_size_element = multihead_attention_layer_element->FirstChildElement("ContextSize");
 
-    if (!context_size_element)
+    if(!context_size_element)
     {
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1252,7 +1249,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (context_size_element->GetText())
+    if(context_size_element->GetText())
     {
         set_context_size(Index(stoi(context_size_element->GetText())));
     }
@@ -1261,7 +1258,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* depth_element = multihead_attention_layer_element->FirstChildElement("Depth");
 
-    if (!depth_element)
+    if(!depth_element)
     {
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1270,7 +1267,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (depth_element->GetText())
+    if(depth_element->GetText())
     {
         set_depth(Index(stoi(depth_element->GetText())));
     }
@@ -1279,7 +1276,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* heads_number_element = multihead_attention_layer_element->FirstChildElement("HeadsNumber");
 
-    if (!heads_number_element)
+    if(!heads_number_element)
     {
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1288,7 +1285,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (heads_number_element->GetText())
+    if(heads_number_element->GetText())
     {
         set_heads_number(Index(stoi(heads_number_element->GetText())));
     }
@@ -1297,7 +1294,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* causal_mask_element = multihead_attention_layer_element->FirstChildElement("CausalMask");
 
-    if (!causal_mask_element)
+    if(!causal_mask_element)
     {
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1306,7 +1303,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (causal_mask_element->GetText())
+    if(causal_mask_element->GetText())
     {
         set_causal_mask(string(causal_mask_element->GetText()) == "true");
     }
@@ -1315,7 +1312,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* parameters_element = multihead_attention_layer_element->FirstChildElement("Parameters");
 
-    if (!parameters_element)
+    if(!parameters_element)
     {
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1324,7 +1321,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (parameters_element->GetText())
+    if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
 
@@ -1411,11 +1408,11 @@ void MultiheadAttentionLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     const Tensor<type, 1> parameters = get_parameters();
     const Index parameters_size = parameters.size();
 
-    for (Index i = 0; i < parameters_size; i++)
+    for(Index i = 0; i < parameters_size; i++)
     {
         buffer << parameters(i);
 
-        if (i != (parameters_size - 1)) buffer << " ";
+        if(i != (parameters_size - 1)) buffer << " ";
     }
 
     file_stream.PushText(buffer.str().c_str());
