@@ -292,7 +292,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives;// = data_set->scale_input_variables();
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
