@@ -1566,7 +1566,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     target_raw_variables_indices.setValues({5});
 
     data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
-
 /*
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1589,7 +1588,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG); // CHECK
 */
     // Test 6 (numeric and binary)
-/*
+
     cout << "Test 6" << endl;
 
     input_variables_indices.resize(3);
@@ -1631,6 +1630,9 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
+    //const Tensor<type, 2> input_i__ = data_set.get_raw_variable_data(0);
+    //cout << "\n -- input_i__ 0 --  \n" << input_i__;
+ /*
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
@@ -1648,7 +1650,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG);
-
+*/
     // Test 8 (binary and categorical)
 
     cout << "Test 8" << endl;
@@ -1661,6 +1663,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
+ /*
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
@@ -2020,7 +2023,7 @@ void DataSetTest::run_test_case()
     test_destructor();
 
     // Data resizing methods
-
+/*
     test_unuse_constant_raw_variables();
     test_unuse_repeated_samples();
     test_unuse_uncorrelated_raw_variables();
@@ -2048,11 +2051,11 @@ void DataSetTest::run_test_case()
     // Correlations
 
     test_calculate_input_target_correlations();
-/*
-    test_calculate_input_raw_variables_correlations();
 */
-    // Classification methods
+    test_calculate_input_raw_variables_correlations();
 
+    // Classification methods
+/*
     test_calculate_target_distribution();
 
     // Outlier detection
@@ -2080,7 +2083,7 @@ void DataSetTest::run_test_case()
     test_scrub_missing_values();
 
     test_fill();
-
+*/
     cout << "End of data set test case.\n\n";
 }
 

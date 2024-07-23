@@ -6558,10 +6558,11 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
 
         const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
 
-        if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
+        //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
 
         for(Index j = i; j < input_raw_variables_number; j++)
         {
+
             if(j == i)
             {
                 if(calculate_pearson_correlations)
@@ -6604,6 +6605,7 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
             }
             else
             {
+
                 const Index current_input_index_j = input_raw_variables_indices(j);
 
                 const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
@@ -6623,6 +6625,7 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
                     if(correlations_spearman(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
                         correlations_spearman(i,j).r = type(1);
                 }
+
             }
         }
     }
