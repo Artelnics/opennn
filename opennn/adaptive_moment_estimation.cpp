@@ -276,7 +276,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
     Tensor<Index, 1> context_variables_indices;
 
-    if (is_language_model)
+    if(is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
         context_variables_indices = language_data_set->get_context_variables_indices();
@@ -326,9 +326,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     neural_network->set_inputs_names(inputs_names);
     neural_network->set_outputs_names(targets_names);
 
-    if (neural_network->has_scaling_layer())
+    if(neural_network->has_scaling_layer())
     {
-        if (neural_network->has_scaling_4d_layer())
+        if(neural_network->has_scaling_4d_layer())
         {
             ScalingLayer4D* scaling_layer_4d = neural_network->get_scaling_layer_4d();
             scaling_layer_4d->set(input_variables_descriptives, input_variables_scalers);
@@ -340,7 +340,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         }
     }
 
-    if (neural_network->has_unscaling_layer())
+    if(neural_network->has_unscaling_layer())
     {
         target_variables_descriptives = data_set->scale_target_variables();
 
@@ -401,7 +401,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_error = type(0);
 
-        if (is_classification_model) training_accuracy = type(0); 
+        if(is_classification_model) training_accuracy = type(0); 
         //optimization_data.iteration = 1;
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
@@ -501,9 +501,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
-            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
+            if(is_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
             if(has_selection) cout << "Selection error: " << selection_error << endl;
-            if (has_selection && is_classification_model) cout << "Selection accuracy: " << selection_accuracy << endl;
+            if(has_selection && is_classification_model) cout << "Selection accuracy: " << selection_accuracy << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
@@ -670,7 +670,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
     
-    if (!use_custom_learning_rate)
+    if(!use_custom_learning_rate)
     {
         parameters.device(*thread_pool_device)
             -= (learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);

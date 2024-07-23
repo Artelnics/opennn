@@ -73,19 +73,19 @@ Index LanguageDataSet::get_context_variables_number() const
 
     Index context_number = 0;
 
-    for (Index i = 0; i < raw_variables.size(); i++)
+    for(Index i = 0; i < raw_variables.size(); i++)
     {
-        if (raw_variables(i).type == RawVariableType::Categorical)
+        if(raw_variables(i).type == RawVariableType::Categorical)
         {
-            for (Index j = 0; j < raw_variables(i).categories_uses.size(); j++)
+            for(Index j = 0; j < raw_variables(i).categories_uses.size(); j++)
             {
-                if (raw_variables(i).categories_uses(j) == VariableUse::Context)
+                if(raw_variables(i).categories_uses(j) == VariableUse::Context)
                 {
                     context_number++;
                 }
             }
         }
-        else if (raw_variables(i).raw_variable_use == VariableUse::Context)
+        else if(raw_variables(i).raw_variable_use == VariableUse::Context)
         {
             context_number++;
         }
@@ -114,15 +114,15 @@ Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
     Index context_index = 0;
     Index context_variable_index = 0;
 
-    for (Index i = 0; i < raw_variables.size(); i++)
+    for(Index i = 0; i < raw_variables.size(); i++)
     {
-        if (raw_variables(i).type == RawVariableType::Categorical)
+        if(raw_variables(i).type == RawVariableType::Categorical)
         {
             const Index current_categories_number = raw_variables(i).get_categories_number();
 
-            for (Index j = 0; j < current_categories_number; j++)
+            for(Index j = 0; j < current_categories_number; j++)
             {
-                if (raw_variables(i).categories_uses(j) == VariableUse::Context)
+                if(raw_variables(i).categories_uses(j) == VariableUse::Context)
                 {
                     context_variables_indices(context_index) = context_variable_index;
                     context_index++;
@@ -131,7 +131,7 @@ Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
                 context_variable_index++;
             }
         }
-        else if (raw_variables(i).raw_variable_use == VariableUse::Context) // Binary, numeric
+        else if(raw_variables(i).raw_variable_use == VariableUse::Context) // Binary, numeric
         {
             context_variables_indices(context_index) = context_variable_index;
             context_index++;
@@ -153,9 +153,9 @@ Index LanguageDataSet::get_context_raw_variables_number() const
 {
     Index context_raw_variables_number = 0;
 
-    for (Index i = 0; i < raw_variables.size(); i++)
+    for(Index i = 0; i < raw_variables.size(); i++)
     {
-        if (raw_variables(i).raw_variable_use == VariableUse::Context)
+        if(raw_variables(i).raw_variable_use == VariableUse::Context)
         {
             context_raw_variables_number++;
         }
@@ -175,9 +175,9 @@ Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
 
     Index index = 0;
 
-    for (Index i = 0; i < raw_variables.size(); i++)
+    for(Index i = 0; i < raw_variables.size(); i++)
     {
-        if (raw_variables(i).raw_variable_use == VariableUse::Context)
+        if(raw_variables(i).raw_variable_use == VariableUse::Context)
         {
             context_raw_variables_indices(index) = i;
             index++;
@@ -233,7 +233,7 @@ void LanguageDataSet::set_default_raw_variables_uses()
 {
     DataSet::set_default_raw_variables_uses();
 
-    if (raw_variables.size() > 1)
+    if(raw_variables.size() > 1)
         context_variables_dimensions.resize(1);
 }
 
@@ -319,22 +319,22 @@ void LanguageDataSet::set_data_random_language_model(const Index& batch_samples_
 
     set(batch_samples_number, context_length + 2 * completion_length);
 
-    for (Index i = 0; i < batch_samples_number; i++)
+    for(Index i = 0; i < batch_samples_number; i++)
     {
-        for (Index j = 0; j < context_length; j++)
+        for(Index j = 0; j < context_length; j++)
             data(i, j) = type(rand() % context_dimension);
 
-        for (Index j = 0; j < 2 * completion_length; j++)
+        for(Index j = 0; j < 2 * completion_length; j++)
             data(i, j + context_length) = type(rand() % completion_dimension);
     }
 
-    for (Index i = 0; i < context_length; i++)
+    for(Index i = 0; i < context_length; i++)
         set_raw_variable_use(i, DataSet::VariableUse::Context);
 
-    for (Index i = 0; i < completion_length; i++)
+    for(Index i = 0; i < completion_length; i++)
         set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
 
-    for (Index i = 0; i < completion_length; i++)
+    for(Index i = 0; i < completion_length; i++)
         set_raw_variable_use(i + context_length + completion_length, DataSet::VariableUse::Target);
 }
 
@@ -1377,7 +1377,7 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 {
     ifstream file(path.c_str());
 
-    if (!file.is_open())
+    if(!file.is_open())
     {
         ostringstream buffer;
 
@@ -1396,11 +1396,11 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
     {
         getline(file, line);
 
-        if (line.empty()) continue;
+        if(line.empty()) continue;
 
         vocabulary_size++;
 
-        if (file.peek() == EOF) break;
+        if(file.peek() == EOF) break;
     }
 
     file.clear();
@@ -1414,12 +1414,12 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
     {
         getline(file, line);
 
-        if (line.empty()) continue;
+        if(line.empty()) continue;
 
         vocabulary(counter) = line;
         counter++;
 
-        if (file.peek() == EOF) break;
+        if(file.peek() == EOF) break;
     }
 }
 
@@ -1446,9 +1446,9 @@ set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
 {
     set<char> seen_chars;
 
-    for (const auto& [word, _] : word_counts)
+    for(const auto& [word, _] : word_counts)
     {
-        for (char c : word)
+        for(char c : word)
         {
             seen_chars.insert(c);
         }
@@ -1463,18 +1463,18 @@ map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
     bool include_joiner_token,
     const string& joiner)
 {
-    for (const string& token : input_tokens)
+    for(const string& token : input_tokens)
     {
-        if (output_tokens.find(token) == output_tokens.end())
+        if(output_tokens.find(token) == output_tokens.end())
         {
             output_tokens[token] = 1;
         }
 
-        if (include_joiner_token)
+        if(include_joiner_token)
         {
             string joined_token = joiner + token;
 
-            if (output_tokens.find(joined_token) == output_tokens.end())
+            if(output_tokens.find(joined_token) == output_tokens.end())
             {
                 output_tokens[joined_token] = 1;
             }
@@ -1501,10 +1501,10 @@ vector<int> get_split_indices(const string& word,
         {
             string subtoken = word.substr(start, end - start);
 
-            if (include_joiner_token && start > 0)    
+            if(include_joiner_token && start > 0)    
                 subtoken = joiner + subtoken;
 
-            if (current_tokens.find(subtoken) != current_tokens.end())
+            if(current_tokens.find(subtoken) != current_tokens.end())
             {
                 indices.push_back(end);
                 break;
@@ -1513,7 +1513,7 @@ vector<int> get_split_indices(const string& word,
             end--;
         }
 
-        if (end == start)
+        if(end == start)
         {
             return {};
         }
@@ -1527,7 +1527,7 @@ vector<int> get_split_indices(const string& word,
 tuple<int, int> calculate_thresholds(const vector<pair<string, int>>& word_counts, int upper_threshold, int lower_threshold)
 {
     vector<int> counts;
-    for (const auto& [_, count] : word_counts)    counts.push_back(count);
+    for(const auto& [_, count] : word_counts)    counts.push_back(count);
 
     int max_count = *max_element(counts.begin(), counts.end());
     int min_count = *min_element(counts.begin(), counts.end());
@@ -1545,9 +1545,9 @@ vector<pair<string, int>> trim_inputs(const vector<pair<string, int>>& word_coun
 {
     vector<pair<string, int>> trimmed_counts;
 
-    for (const auto& [word, count] : word_counts)
+    for(const auto& [word, count] : word_counts)
     {
-        if (word.size() > max_token_length || find(reserved_tokens.begin(), reserved_tokens.end(), word) != reserved_tokens.end())
+        if(word.size() > max_token_length || find(reserved_tokens.begin(), reserved_tokens.end(), word) != reserved_tokens.end())
         {
             continue;
         }
@@ -1563,9 +1563,9 @@ set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts
 {
     map<char, int> character_counts;
 
-    for (const auto& [word, count] : trimmed_counts)
+    for(const auto& [word, count] : trimmed_counts)
     {
-        for (char c : word)
+        for(char c : word)
         {
             character_counts[c] += count;
         }
@@ -1575,14 +1575,14 @@ set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts
 
     sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<char, int>& a, const pair<char, int>& b)
         {
-            if (a.second != b.second)
+            if(a.second != b.second)
                 return a.second > b.second;
             return a.first < b.first;
         }
     );
 
     set<char> allowed_characters;
-    for (int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); ++i)    allowed_characters.insert(sorted_counts[i].first);
+    for(int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); ++i)    allowed_characters.insert(sorted_counts[i].first);
 
     return allowed_characters;
 }
@@ -1599,21 +1599,21 @@ vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed
 
     vector<pair<string, int>> filtered_counts;
 
-    for (const auto& [word, count] : sorted_counts)
+    for(const auto& [word, count] : sorted_counts)
     {
-        if (max_input_tokens != -1 && filtered_counts.size() >= max_input_tokens)    break;
+        if(max_input_tokens != -1 && filtered_counts.size() >= max_input_tokens)    break;
 
         bool has_unallowed_characters = false;
-        for (char c : word)
+        for(char c : word)
         {
-            if (allowed_characters.find(c) == allowed_characters.end())
+            if(allowed_characters.find(c) == allowed_characters.end())
             {
                 has_unallowed_characters = true;
                 break;
             }
         }
 
-        if (has_unallowed_characters)
+        if(has_unallowed_characters)
         {
             continue;
         }
@@ -1632,7 +1632,7 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
     vocabulary.insert(vocabulary.end(), reserved_tokens.begin(), reserved_tokens.end());
 
     vector<string> sorted_character_tokens;
-    for (const char ch : character_tokens)    sorted_character_tokens.push_back(string(1, ch));
+    for(const char ch : character_tokens)    sorted_character_tokens.push_back(string(1, ch));
 
     sort(sorted_character_tokens.begin(), sorted_character_tokens.end());
     vocabulary.insert(vocabulary.end(), sorted_character_tokens.begin(), sorted_character_tokens.end());
@@ -1640,12 +1640,12 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
     vector<pair<string, int>> sorted_tokens(current_tokens.begin(), current_tokens.end());
     sort(sorted_tokens.begin(), sorted_tokens.end(), [](const pair<string, int>& a, const pair<string, int>& b)
         {
-            if (a.second != b.second)    return a.second > b.second;
+            if(a.second != b.second)    return a.second > b.second;
             return a.first < b.first;
         }
     );
 
-    for (const auto& [token, _] : sorted_tokens)
+    for(const auto& [token, _] : sorted_tokens)
     {
         vocabulary.push_back(token);
     }
@@ -1653,9 +1653,9 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
     set<string> seen_tokens;
     vector<string> final_vocabulary;
 
-    for (const string& word : vocabulary)
+    for(const string& word : vocabulary)
     {
-        if (seen_tokens.find(word) == seen_tokens.end())
+        if(seen_tokens.find(word) == seen_tokens.end())
         {
             seen_tokens.insert(word);
             final_vocabulary.push_back(word);
@@ -1672,19 +1672,19 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
 {
     set<char> character_tokens = extract_character_tokens(word_counts);
     set<string> string_tokens;
-    for (const char ch : character_tokens)    string_tokens.insert(string(1, ch));
+    for(const char ch : character_tokens)    string_tokens.insert(string(1, ch));
 
     map<string, int> current_tokens = ensure_all_tokens_exist(string_tokens, map<string, int>(), parameters.include_joiner_token, parameters.joiner);
 
-    for (int iteration = 0; iteration < parameters.interations_number; ++iteration)
+    for(int iteration = 0; iteration < parameters.interations_number; ++iteration)
     {
         vector<map<string, int>> subtokens(parameters.max_token_length + 1);
 
-        for (const auto& [word, count] : word_counts)
+        for(const auto& [word, count] : word_counts)
         {
             vector<int> split_indices;
 
-            if (iteration == 0)
+            if(iteration == 0)
             {
                 split_indices = vector<int>(word.size());
                 iota(split_indices.begin(), split_indices.end(), 1);
@@ -1692,18 +1692,18 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
             else
             {
                 split_indices = get_split_indices(word, current_tokens, parameters.include_joiner_token, parameters.joiner);
-                if (split_indices.empty()) continue;
+                if(split_indices.empty()) continue;
             }
 
             size_t start = 0;
-            for (int split_index : split_indices)
+            for(int split_index : split_indices)
             {
-                for (int end = start + 1; end <= word.size(); ++end)
+                for(int end = start + 1; end <= word.size(); ++end)
                 {
                     string subtoken = word.substr(start, end - start);
                     int length = subtoken.size();
 
-                    if (parameters.include_joiner_token && start > 0)    
+                    if(parameters.include_joiner_token && start > 0)    
                         subtoken = parameters.joiner + subtoken;
 
                     subtokens[length][subtoken] += count;
@@ -1714,31 +1714,31 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
 
         map<string, int> next_tokens;
 
-        for (size_t length = parameters.max_token_length; length > 0; --length)
+        for(size_t length = parameters.max_token_length; length > 0; --length)
         {
-            for (const auto& [token, count] : subtokens[length])
+            for(const auto& [token, count] : subtokens[length])
             {
-                if (count >= threshold)    next_tokens[token] = count;
+                if(count >= threshold)    next_tokens[token] = count;
 
-                if (token.size() > length)
+                if(token.size() > length)
                 {
                     const size_t joiner_length = parameters.joiner.size();
 
-                    for (size_t i = 1 + joiner_length; i <= length + joiner_length; ++i)
+                    for(size_t i = 1 + joiner_length; i <= length + joiner_length; ++i)
                     {
                         string prefix = token.substr(0, i);
 
-                        if (subtokens[i - joiner_length].find(prefix) != subtokens[i - joiner_length].end())
+                        if(subtokens[i - joiner_length].find(prefix) != subtokens[i - joiner_length].end())
                             subtokens[i - joiner_length][prefix] -= count;
                     }
                 }
                 else
                 {
-                    for (int i = 1; i < length; ++i)
+                    for(int i = 1; i < length; ++i)
                     {
                         const string prefix = token.substr(0, i);
 
-                        if (subtokens[i].find(prefix) != subtokens[i].end())   
+                        if(subtokens[i].find(prefix) != subtokens[i].end())   
                             subtokens[i][prefix] -= count;
                     }
                 }
@@ -1764,14 +1764,14 @@ vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>
     const int current_vocabulary_size = current_vocabulary.size();
 
     int slack = parameters.slack_ratio * parameters.vocabulary_size;
-    if (slack < 0)    slack = 0;
+    if(slack < 0)    slack = 0;
 
     const bool is_within_slack = (current_vocabulary_size <= parameters.vocabulary_size) && (parameters.vocabulary_size - current_vocabulary_size <= slack);
 
-    if (is_within_slack || lower_bound >= upper_bound || threshold <= 1)    
+    if(is_within_slack || lower_bound >= upper_bound || threshold <= 1)    
         return current_vocabulary;
 
-    if (current_vocabulary_size > parameters.vocabulary_size)
+    if(current_vocabulary_size > parameters.vocabulary_size)
         return calculate_vocabulary_binary_search(word_counts, threshold + 1, upper_bound, parameters);
     else
         return calculate_vocabulary_binary_search(word_counts, lower_bound, threshold - 1, parameters);
@@ -1819,7 +1819,7 @@ const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tenso
 
     Tensor<string, 1> vocabulary_tensor(vocabulary.size());
 
-    for (Index i = 0; i < Index(vocabulary.size()); i++)
+    for(Index i = 0; i < Index(vocabulary.size()); i++)
         vocabulary_tensor(i) = vocabulary[i];
 
     return vocabulary_tensor;
@@ -1974,7 +1974,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
 #ifdef _WIN32
 
-    if (std::regex_search(data_source_path, accent_regex))
+    if(std::regex_search(data_source_path, accent_regex))
     {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
         std::wstring file_name_wide = conv.from_bytes(data_source_path);
@@ -1989,7 +1989,7 @@ void LanguageDataSet::read_csv_3_language_model()
     file.open(data_source_path.c_str());
 #endif
 
-    if (!file.is_open())
+    if(!file.is_open())
     {
         ostringstream buffer;
 
@@ -2008,7 +2008,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     // Read header
 
-    if (has_raw_variables_names)
+    if(has_raw_variables_names)
     {
         while (file.good())
         {
@@ -2016,7 +2016,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
             line = decode(line);
 
-            if (line.empty()) continue;
+            if(line.empty()) continue;
 
             break;
         }
@@ -2030,9 +2030,9 @@ void LanguageDataSet::read_csv_3_language_model()
 
     const Index samples_number = data.dimension(0);
 
-    if (has_rows_labels) rows_labels.resize(samples_number);
+    if(has_rows_labels) rows_labels.resize(samples_number);
 
-    if (display) cout << "Reading data..." << endl;
+    if(display) cout << "Reading data..." << endl;
 
     Index sample_index = 0;
     Index raw_variable_index = 0;
@@ -2047,24 +2047,24 @@ void LanguageDataSet::read_csv_3_language_model()
 
         erase(line, '"');
 
-        if (line.empty()) continue;
+        if(line.empty()) continue;
 
         fill_tokens(line, separator_char, tokens);
 
-        for (Index j = 0; j < raw_raw_variables_number; j++)
+        for(Index j = 0; j < raw_raw_variables_number; j++)
         {
             trim(tokens(j));
 
-            if (has_rows_labels && j == 0)
+            if(has_rows_labels && j == 0)
             {
                 rows_labels(sample_index) = tokens(j);
             }
-            else if (tokens(j) == missing_values_label || tokens(j).empty())
+            else if(tokens(j) == missing_values_label || tokens(j).empty())
             {
                 data(sample_index, raw_variable_index) = type(NAN);
                 raw_variable_index++;
             }
-            else if (is_float)
+            else if(is_float)
             {
                 data(sample_index, raw_variable_index) = type(strtof(tokens(j).data(), nullptr));
                 raw_variable_index++;
@@ -2086,7 +2086,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     file.close();
 
-    if (display) cout << "Data read successfully..." << endl;
+    if(display) cout << "Data read successfully..." << endl;
 }
 
 
@@ -2116,7 +2116,7 @@ void LanguageDataSet::read_txt_language_model()
     for(Index i = 1; i < targets.size(); i++)
         completion_entry_number += targets(i).size();
 
-    if (entry_number != completion_entry_number)
+    if(entry_number != completion_entry_number)
     {
         ostringstream buffer;
 
@@ -2131,9 +2131,9 @@ void LanguageDataSet::read_txt_language_model()
 
     Index entry_index = 0;
 
-    for (Index i = 0; i < documents.size(); i++)
+    for(Index i = 0; i < documents.size(); i++)
     {
-        for (Index j = 0; j < documents(i).size(); j++)
+        for(Index j = 0; j < documents(i).size(); j++)
         {
             context(entry_index) = documents(i)(j);
             entry_index++;
@@ -2144,9 +2144,9 @@ void LanguageDataSet::read_txt_language_model()
 
     entry_index = 0;
 
-    for (Index i = 0; i < targets.size(); i++)
+    for(Index i = 0; i < targets.size(); i++)
     {
-        for (Index j = 0; j < targets(i).size(); j++)
+        for(Index j = 0; j < targets(i).size(); j++)
         {
             completion(entry_index) = targets(i)(j);
             entry_index++;
@@ -2160,7 +2160,7 @@ void LanguageDataSet::read_txt_language_model()
 
     //bool imported_vocabulary = false;
 
-    if (context_vocabulary_path.empty() || completion_vocabulary_path.empty())
+    if(context_vocabulary_path.empty() || completion_vocabulary_path.empty())
     {
         cout << "Calculating vocabularies..." << endl;
 
@@ -2239,7 +2239,7 @@ void LanguageDataSet::read_txt_language_model()
     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
     
-    //if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
+    //if(!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
     //else
     write_data_file_wordpiece(file, context_tokens, completion_tokens);
     
@@ -2256,10 +2256,10 @@ void LanguageDataSet::read_txt_language_model()
     for(Index i = 0; i < max_context_length + 2; i++)
         set_raw_variable_use(i, VariableUse::Context);
 
-    for (Index i = 0; i < max_completion_length + 1; i++)
+    for(Index i = 0; i < max_completion_length + 1; i++)
         set_raw_variable_use(i + max_context_length + 2, VariableUse::Input);
 
-    for (Index i = 0; i < max_completion_length + 1; i++)
+    for(Index i = 0; i < max_completion_length + 1; i++)
         set_raw_variable_use(i + max_context_length + max_completion_length + 3, VariableUse::Target);
     
 }
@@ -2280,7 +2280,7 @@ void LanguageDataSet::write_data_file_whitespace(ofstream& file,
     Tensor<string, 1> line_tokens;
     bool line_ended;
 
-    for (Index i = 0; i < entry_number; i++)
+    for(Index i = 0; i < entry_number; i++)
     {
         // Context
 
@@ -2291,9 +2291,9 @@ void LanguageDataSet::write_data_file_whitespace(ofstream& file,
 
         line_tokens = context_tokens(i);
 
-        for (Index j = 0; j < max_context_length + 1; j++)
+        for(Index j = 0; j < max_context_length + 1; j++)
         {
-            if (j < line_tokens.size())
+            if(j < line_tokens.size())
             {
                 auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j));
 
@@ -2303,7 +2303,7 @@ void LanguageDataSet::write_data_file_whitespace(ofstream& file,
             }
             else
             {
-                if (j == line_tokens.size() || (j == max_context_length && !line_ended))
+                if(j == line_tokens.size() || (j == max_context_length && !line_ended))
                 {
                     context_row(j + 1) = 2; // end indicator
                     line_ended = true;
@@ -2315,7 +2315,7 @@ void LanguageDataSet::write_data_file_whitespace(ofstream& file,
             }
         }
 
-        for (Index j = 0; j < max_context_length + 2; j++)
+        for(Index j = 0; j < max_context_length + 2; j++)
             file << context_row(j) << ";";
 
         // Completion
@@ -2327,9 +2327,9 @@ void LanguageDataSet::write_data_file_whitespace(ofstream& file,
 
         line_tokens = completion_tokens(i);
 
-        for (Index j = 0; j < max_completion_length + 1; j++)
+        for(Index j = 0; j < max_completion_length + 1; j++)
         {
-            if (j < line_tokens.size())
+            if(j < line_tokens.size())
             {
                 auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j));
 
@@ -2339,7 +2339,7 @@ void LanguageDataSet::write_data_file_whitespace(ofstream& file,
             }
             else
             {
-                if (j == line_tokens.size() || (j == max_completion_length && !line_ended))
+                if(j == line_tokens.size() || (j == max_completion_length && !line_ended))
                 {
                     completion_row(j + 1) = 2;
                     line_ended = true;
@@ -2351,10 +2351,10 @@ void LanguageDataSet::write_data_file_whitespace(ofstream& file,
             }
         }
 
-        for (Index j = 0; j < max_completion_length + 1; j++)
+        for(Index j = 0; j < max_completion_length + 1; j++)
             file << completion_row(j) << ";";
 
-        for (Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
+        for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
             file << completion_row(j) << ";";
         file << completion_row(max_completion_length + 1) << "\n";
 
@@ -2369,10 +2369,10 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
     const Index entry_number = context_tokens.dimension(0);
 
     unordered_map<std::string, type> context_vocabulary_map;
-    for (Index i = 0; i < context_vocabulary.size(); i++)    context_vocabulary_map[context_vocabulary(i)] = type(i);
+    for(Index i = 0; i < context_vocabulary.size(); i++)    context_vocabulary_map[context_vocabulary(i)] = type(i);
 
     unordered_map<std::string, type> completion_vocabulary_map;
-    for (Index i = 0; i < completion_vocabulary.size(); i++)    completion_vocabulary_map[completion_vocabulary(i)] = type(i);
+    for(Index i = 0; i < completion_vocabulary.size(); i++)    completion_vocabulary_map[completion_vocabulary(i)] = type(i);
 
 //    const Index context_vocabulary_size = context_vocabulary.size();
 //    const Index completion_vocabulary_size = completion_vocabulary.size();
@@ -2392,7 +2392,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
     bool tokenized;
 
-    for (Index i = 0; i < entry_number; i++)
+    for(Index i = 0; i < entry_number; i++)
     {        
         // Context
 
@@ -2405,15 +2405,15 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         line_tokens = context_tokens(i);
         
-        for (Index j = 0; j < max_context_length + 1; j++)
+        for(Index j = 0; j < max_context_length + 1; j++)
         {
-            if (j < line_tokens.size() && token_counter < max_context_length + 1)
+            if(j < line_tokens.size() && token_counter < max_context_length + 1)
             {
                 word = line_tokens(j);
 
                 wordpiece_entry = context_vocabulary_map.find(word);
                 
-                if (wordpiece_entry != context_vocabulary_map.end())
+                if(wordpiece_entry != context_vocabulary_map.end())
                 {
                     context_row(token_counter) = wordpiece_entry->second;
                     token_counter++;
@@ -2422,9 +2422,9 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                 
                 tokenized = false;
 
-                for (Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
+                for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
                 {
-                    if (token_counter == max_context_length + 1)
+                    if(token_counter == max_context_length + 1)
                     {
                         tokenized = true;
                         break;
@@ -2433,14 +2433,14 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                     wordpiece = word.substr(0, wordpiece_length);
                     wordpiece_entry = context_vocabulary_map.find(wordpiece);
 
-                    if (wordpiece_entry != context_vocabulary_map.end())
+                    if(wordpiece_entry != context_vocabulary_map.end())
                     {
                         context_row(token_counter) = wordpiece_entry->second;
                         token_counter++;
                         
                         rest = word.substr(wordpiece_length);
 
-                        if (rest.empty())
+                        if(rest.empty())
                         {
                             tokenized = true;
                             break;
@@ -2451,7 +2451,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                     }
                 }
 
-                if (!tokenized)
+                if(!tokenized)
                 {
                     context_row(token_counter) = 1; // unknown indicator
                     token_counter++;
@@ -2459,8 +2459,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
-                if (token_counter > max_context_length + 1)    break;
-                if (j == line_tokens.size() || (token_counter == max_context_length + 1 && !line_ended))
+                if(token_counter > max_context_length + 1)    break;
+                if(j == line_tokens.size() || (token_counter == max_context_length + 1 && !line_ended))
                 {
                     context_row(token_counter) = 3; // end indicator
                     token_counter++;
@@ -2474,7 +2474,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
         }
         
-        for (Index j = 0; j < max_context_length + 2; j++)
+        for(Index j = 0; j < max_context_length + 2; j++)
             file << context_row(j) << ";";
         
         
@@ -2489,15 +2489,15 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         line_tokens = completion_tokens(i);
 
-        for (Index j = 0; j < max_completion_length + 1; j++)
+        for(Index j = 0; j < max_completion_length + 1; j++)
         {
-            if (j < line_tokens.size() && token_counter < max_completion_length + 1)
+            if(j < line_tokens.size() && token_counter < max_completion_length + 1)
             {
                 word = line_tokens(j);
                 
                 wordpiece_entry = completion_vocabulary_map.find(word);
 
-                if (wordpiece_entry != completion_vocabulary_map.end())
+                if(wordpiece_entry != completion_vocabulary_map.end())
                 {
                     completion_row(token_counter) = wordpiece_entry->second;
                     token_counter++;
@@ -2506,9 +2506,9 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
                 tokenized = false;
 
-                for (Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
+                for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
                 {
-                    if (token_counter == max_completion_length + 1)
+                    if(token_counter == max_completion_length + 1)
                     {
                         tokenized = true;
                         break;
@@ -2517,14 +2517,14 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                     wordpiece = word.substr(0, wordpiece_length);
                     wordpiece_entry = completion_vocabulary_map.find(wordpiece);
 
-                    if (wordpiece_entry != completion_vocabulary_map.end())
+                    if(wordpiece_entry != completion_vocabulary_map.end())
                     {
                         completion_row(token_counter) = wordpiece_entry->second;
                         token_counter++;
 
                         rest = word.substr(wordpiece_length);
 
-                        if (rest.empty())
+                        if(rest.empty())
                         {
                             tokenized = true;
                             break;
@@ -2535,7 +2535,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                     }
                 }
 
-                if (!tokenized)
+                if(!tokenized)
                 {
                     completion_row(token_counter) = 1; // unknown indicator
                     token_counter++;
@@ -2543,8 +2543,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
-                if (token_counter > max_completion_length + 1)    break;
-                if (j == line_tokens.size() || (token_counter == max_completion_length + 1 && !line_ended))
+                if(token_counter > max_completion_length + 1)    break;
+                if(j == line_tokens.size() || (token_counter == max_completion_length + 1 && !line_ended))
                 {
                     completion_row(token_counter) = 3; // end indicator
                     token_counter++;
@@ -2558,10 +2558,10 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
         }
 
-        for (Index j = 0; j < max_completion_length + 1; j++)
+        for(Index j = 0; j < max_completion_length + 1; j++)
             file << completion_row(j) << ";";
 
-        for (Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
+        for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
             file << completion_row(j) << ";";
         file << completion_row(max_completion_length + 1) << "\n";
         

@@ -54,7 +54,7 @@ Index RecurrentLayer::get_neurons_number() const
 }
 
 
-dimensions RecurrentLayer::get_outputs_dimensions() const
+dimensions RecurrentLayer::get_output_dimensions() const
 {
     Index neurons_number = get_neurons_number();
 
@@ -797,7 +797,7 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
         get_row(current_activations_derivatives, activations_derivatives, sample_index);
 
-        if (sample_index % timesteps == 0)
+        if(sample_index % timesteps == 0)
         {
             combinations_biases_derivatives.setZero();
             combinations_input_weights_derivatives.setZero();
@@ -837,21 +837,21 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
         biases_derivatives.device(*thread_pool_device)
             += combinations_biases_derivatives.contract(error_current_combinations_derivatives, A_B);
 
-        for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+        for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
         {
-            for (Index input_index = 0; input_index < inputs_number; input_index++)
+            for(Index input_index = 0; input_index < inputs_number; input_index++)
             {
                 combinations_input_weights_derivatives(input_index, neuron_index, neuron_index) += current_inputs(input_index);
             }
         }
 
-        if (sample_index % timesteps != 0)
+        if(sample_index % timesteps != 0)
         {
             /// @todo parallelize
 
-            for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+            for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
             {
-                for (Index activation_index = 0; activation_index < neurons_number; activation_index++)
+                for(Index activation_index = 0; activation_index < neurons_number; activation_index++)
                 {
                     combinations_recurrent_weights_derivatives(activation_index, neuron_index, neuron_index)
                         += outputs(sample_index - 1, activation_index);

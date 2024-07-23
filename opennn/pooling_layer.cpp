@@ -52,16 +52,16 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_variables_dimensions, con
 
 Index PoolingLayer::get_neurons_number() const
 {
-    return get_outputs_rows_number() * get_outputs_columns_number() * get_channels_number();
+    return get_output_height() * get_output_width() * get_channels_number();
 }
 
 
 /// Returns the layer's outputs dimensions.
 
-dimensions PoolingLayer::get_outputs_dimensions() const
+dimensions PoolingLayer::get_output_dimensions() const
 {
-    Index rows_number = get_outputs_rows_number();
-    Index columns_number = get_outputs_columns_number();
+    Index rows_number = get_output_height();
+    Index columns_number = get_output_width();
     Index channels_number = inputs_dimensions[2];
 
     return { rows_number, columns_number, channels_number };
@@ -79,7 +79,7 @@ Index PoolingLayer::get_inputs_number() const
 
 /// Returns the number of rows of the layer's input.
 
-Index PoolingLayer::get_inputs_rows_number() const
+Index PoolingLayer::get_input_height() const
 {
     return inputs_dimensions[0];
 }
@@ -103,25 +103,25 @@ Index PoolingLayer::get_channels_number() const
 
 /// Returns the number of rows of the layer's output.
 
-Index PoolingLayer::get_outputs_rows_number() const
+Index PoolingLayer::get_output_height() const
 {
     type padding = type(0);
 
-    const Index inputs_rows_number = get_inputs_rows_number();
+    const Index input_height = get_input_height();
 
-    return (inputs_rows_number - pool_rows_number + 2*padding)/row_stride + 1;
+    return (input_height - pool_rows_number + 2*padding)/row_stride + 1;
 }
 
 
 /// Returns the number of columns of the layer's output.
 
-Index PoolingLayer::get_outputs_columns_number() const
+Index PoolingLayer::get_output_width() const
 {
     type padding = type(0);
 
-    const Index inputs_columns_number = get_inputs_columns_number();
+    const Index input_width = get_inputs_columns_number();
 
-    return (inputs_columns_number - pool_columns_number + 2*padding)/column_stride + 1;
+    return (input_width - pool_columns_number + 2*padding)/column_stride + 1;
 }
 
 
@@ -181,7 +181,7 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 }
 
 
-/// Returns the input_variables_dimensions.
+/// Returns the input_dimensions.
 
 dimensions PoolingLayer::get_inputs_dimensions() const
 {
@@ -229,9 +229,9 @@ void PoolingLayer::set_name(const string& new_layer_name)
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
-void PoolingLayer::set_inputs_dimensions(const dimensions& new_inputs_dimensions)
+void PoolingLayer::set_inputs_dimensions(const dimensions& new_input_dimensions)
 {
-    inputs_dimensions = new_inputs_dimensions;
+    inputs_dimensions = new_input_dimensions;
 }
 
 
@@ -409,8 +409,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 {
     cout << "pooling inputs: " << endl << inputs << endl;
 
-    const Index outputs_columns_number = get_outputs_columns_number();
-    const Index oututs_rows_number = get_outputs_rows_number();
+    const Index output_width = get_output_width();
+    const Index oututs_rows_number = get_output_height();
     const Index outputs_channels_number = get_channels_number();
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
@@ -426,7 +426,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array({batch_samples_number,
                                                                oututs_rows_number,
-                                                               outputs_columns_number,
+                                                               output_width,
                                                                outputs_channels_number});
 
     image_patches.device(*thread_pool_device)
@@ -828,11 +828,11 @@ pair<type*, dimensions> PoolingLayerForwardPropagation::get_outputs_pair() const
 {
     const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
-    const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
-    const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
+    const Index output_height = pooling_layer->get_output_height();
+    const Index output_width = pooling_layer->get_output_width();
     const Index channels_number = pooling_layer->get_channels_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, outputs_rows_number, outputs_columns_number, channels_number});
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, output_height, output_width, channels_number});
 }
 
 
@@ -848,15 +848,15 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     const Index pool_columns_number = pooling_layer->get_pool_columns_number();
 
-    const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
+    const Index output_height = pooling_layer->get_output_height();
 
-    const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
+    const Index output_width = pooling_layer->get_output_width();
 
     const Index channels_number = pooling_layer->get_channels_number();
 
     outputs.resize(batch_samples_number,
-        outputs_rows_number,
-        outputs_columns_number,
+        output_height,
+        output_width,
         channels_number);
 
     outputs_data = outputs.data();
@@ -864,7 +864,7 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
     image_patches.resize(batch_samples_number,
         pool_rows_number,
         pool_columns_number,
-        outputs_rows_number * outputs_columns_number,
+        output_height * output_width,
         channels_number);
 }
 

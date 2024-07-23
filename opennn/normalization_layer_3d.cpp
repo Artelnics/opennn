@@ -57,7 +57,7 @@ Index NormalizationLayer3D::get_inputs_depth() const
 }
 
 
-dimensions NormalizationLayer3D::get_outputs_dimensions() const
+dimensions NormalizationLayer3D::get_output_dimensions() const
 {
     return { inputs_number, inputs_depth };
 }
@@ -320,7 +320,7 @@ void NormalizationLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2]);
 
-    if (deltas_pair.size() > 1)     add_deltas(deltas_pair);
+    if(deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
     const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
                                             deltas_pair(0).second[0],
@@ -389,7 +389,7 @@ void NormalizationLayer3D::add_deltas(const Tensor<pair<type*, dimensions>, 1>& 
                                       deltas_pair(0).second[1],
                                       deltas_pair(0).second[2]);
 
-    for (Index i = 1; i < deltas_pair.size(); i++)
+    for(Index i = 1; i < deltas_pair.size(); i++)
     {
         const TensorMap<Tensor<type, 3>> other_deltas(deltas_pair(i).first,
                                                       deltas_pair(i).second[0],
@@ -435,7 +435,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* normalization_layer_element = document.FirstChildElement("NormalizationLayer3D");
 
-    if (!normalization_layer_element)
+    if(!normalization_layer_element)
     {
         buffer << "OpenNN Exception: NormalizationLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -448,7 +448,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* layer_name_element = normalization_layer_element->FirstChildElement("LayerName");
 
-    if (!layer_name_element)
+    if(!layer_name_element)
     {
         buffer << "OpenNN Exception: NormalizationLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -457,7 +457,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (layer_name_element->GetText())
+    if(layer_name_element->GetText())
     {
         set_name(layer_name_element->GetText());
     }
@@ -466,7 +466,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* inputs_number_element = normalization_layer_element->FirstChildElement("InputsNumber");
 
-    if (!inputs_number_element)
+    if(!inputs_number_element)
     {
         buffer << "OpenNN Exception: NormalizationLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -475,7 +475,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (inputs_number_element->GetText())
+    if(inputs_number_element->GetText())
     {
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
     }
@@ -484,7 +484,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* inputs_depth_element = normalization_layer_element->FirstChildElement("InputsDepth");
 
-    if (!inputs_depth_element)
+    if(!inputs_depth_element)
     {
         buffer << "OpenNN Exception: NormalizationLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -493,7 +493,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (inputs_depth_element->GetText())
+    if(inputs_depth_element->GetText())
     {
         set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
     }
@@ -502,7 +502,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* parameters_element = normalization_layer_element->FirstChildElement("Parameters");
 
-    if (!parameters_element)
+    if(!parameters_element)
     {
         buffer << "OpenNN Exception: NormalizationLayer3D class.\n"
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -511,7 +511,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    if (parameters_element->GetText())
+    if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
         set_parameters(to_type_vector(parameters_string, ' '));
@@ -563,11 +563,11 @@ void NormalizationLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     const Tensor<type, 1> parameters = get_parameters();
     const Index parameters_size = parameters.size();
 
-    for (Index i = 0; i < parameters_size; i++)
+    for(Index i = 0; i < parameters_size; i++)
     {
         buffer << parameters(i);
 
-        if (i != (parameters_size - 1)) buffer << " ";
+        if(i != (parameters_size - 1)) buffer << " ";
     }
 
     file_stream.PushText(buffer.str().c_str());

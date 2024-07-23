@@ -709,7 +709,7 @@ void ResponseOptimizationResults::print() const
     const Tensor<string, 1> outputs_names = neural_network->get_outputs_names();
 
     cout << "\nResponse optimization results: " << endl;
-    if (optimal_variables.size() == 0)
+    if(optimal_variables.size() == 0)
     {
         ostringstream buffer;
 
@@ -720,12 +720,12 @@ void ResponseOptimizationResults::print() const
         throw runtime_error(buffer.str());
     }
 
-    for (Index i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         cout << inputs_names[i] << ": " << optimal_variables[i] << endl;
     }
 
-    for (Index i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         cout << outputs_names[i] << ": " << optimal_variables[inputs_number + i] << endl;
     }

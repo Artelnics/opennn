@@ -21,9 +21,9 @@ FlattenLayer::FlattenLayer() : Layer()
 }
 
 
-FlattenLayer::FlattenLayer(const dimensions& new_inputs_dimensions) : Layer()
+FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
 {
-    set(new_inputs_dimensions);
+    set(new_input_dimensions);
 
     layer_type = Type::Flatten;
 }
@@ -43,39 +43,40 @@ void FlattenLayer::set_name(const string& new_layer_name)
 
 /// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
 /// Batch,Height,Width,Channels
+
 Index FlattenLayer::get_outputs_number() const
 {
-    return inputs_dimensions[1] * inputs_dimensions[2] * inputs_dimensions[3];
+    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2];
 }
 
 
-dimensions FlattenLayer::get_outputs_dimensions() const
+dimensions FlattenLayer::get_output_dimensions() const
 {
-    return { inputs_dimensions[1] * inputs_dimensions[2] * inputs_dimensions[3] };
+    return { inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2] };
 }
 
 
 Index FlattenLayer::get_inputs_number() const
 {
-    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2] * inputs_dimensions[3];
+    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2];
 }
 
 
-Index FlattenLayer::get_inputs_rows_number() const
+Index FlattenLayer::get_input_height() const
+{
+    return inputs_dimensions[0];
+}
+
+
+Index FlattenLayer::get_input_width() const
 {
     return inputs_dimensions[1];
 }
 
 
-Index FlattenLayer::get_inputs_raw_variables_number() const
+Index FlattenLayer::get_input_channels() const
 {
     return inputs_dimensions[2];
-}
-
-
-Index FlattenLayer::get_inputs_channels_number() const
-{
-    return inputs_dimensions[3];
 }
 
 
@@ -83,18 +84,18 @@ Index FlattenLayer::get_inputs_channels_number() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return inputs_dimensions[1] * inputs_dimensions[2] * inputs_dimensions[3];
+    return inputs_dimensions[0]* inputs_dimensions[1] * inputs_dimensions[2];
 }
 
 
 /// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
-/// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images (batch), number of channels, width, height).
+/// @param new_input_dimensions A vector containing the desired inputs' dimensions (number of images (batch), number of channels, width, height).
 
-void FlattenLayer::set(const dimensions& new_inputs_dimensions)
+void FlattenLayer::set(const dimensions& new_input_dimensions)
 {
     layer_name = "flatten_layer";
 
-    inputs_dimensions = new_inputs_dimensions;
+    inputs_dimensions = new_input_dimensions;
 }
 
 
@@ -158,21 +159,21 @@ void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("InputHeight");
     buffer.str("");
-    buffer << get_inputs_rows_number();
+    buffer << get_input_height();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();
 
     file_stream.OpenElement("InputWidth");
     buffer.str("");
-    buffer << get_inputs_raw_variables_number();
+    buffer << get_input_width();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();
 
     file_stream.OpenElement("InputChannels");
     buffer.str("");
-    buffer << get_inputs_channels_number();
+    buffer << get_input_channels();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();
@@ -307,13 +308,13 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
     dimensions inputs_dimensions = flatten_layer->get_inputs_dimensions();
 
     input_derivatives.resize(batch_samples_number,
+            inputs_dimensions[0],
             inputs_dimensions[1],
-            inputs_dimensions[2],
-            inputs_dimensions[3]);
+            inputs_dimensions[2]);
 
     inputs_derivatives.resize(1);
     inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions[1], inputs_dimensions[2], inputs_dimensions[3] };
+    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2] };
 }
 
 }

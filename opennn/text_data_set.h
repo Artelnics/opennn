@@ -83,11 +83,10 @@ public:
     }
 
 
-
     void set_spanish_stop_words()
     {
         stop_words.resize(327);
-
+/*
         stop_words.setValues(
         { "de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las", "por", "un", "para", "con", "no", "una", "su", "al",
         "es", "lo", "como", "más", "mas", "pero", "sus", "le", "ya", "o", "fue", "este", "ha", "si", "sí", "porque", "esta", "son",
@@ -114,6 +113,7 @@ public:
         "tenías", "teníamos", "teníais", "tenían", "tuve", "tuviste", "tuvo", "tuvimos", "tuvisteis", "tuvieron", "tuviera", "tuvieras",
         "tuviéramos", "tuvierais", "tuvieran", "tuviese", "tuvieses", "tuviésemos", "tuvieseis", "tuviesen", "teniendo", "tenido", "tenida",
         "tenidos", "tenidas", "tened" });
+*/
     }
 
 
