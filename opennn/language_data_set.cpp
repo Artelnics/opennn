@@ -1583,7 +1583,7 @@ set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts
     );
 
     set<char> allowed_characters;
-    for(int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); ++i)    allowed_characters.insert(sorted_counts[i].first);
+    for(int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); i++)    allowed_characters.insert(sorted_counts[i].first);
 
     return allowed_characters;
 }
@@ -1725,7 +1725,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                 {
                     const size_t joiner_length = parameters.joiner.size();
 
-                    for(size_t i = 1 + joiner_length; i <= length + joiner_length; ++i)
+                    for(size_t i = 1 + joiner_length; i <= length + joiner_length; i++)
                     {
                         string prefix = token.substr(0, i);
 
@@ -1735,7 +1735,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                 }
                 else
                 {
-                    for(int i = 1; i < length; ++i)
+                    for(int i = 1; i < length; i++)
                     {
                         const string prefix = token.substr(0, i);
 

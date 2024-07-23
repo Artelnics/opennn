@@ -224,7 +224,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
     Tensor<Index, 1> outputs_dimensions = pooling_layer_forward.outputs_dimensions;
 
     assert_true(outputs_dimensions.size() == input_dimensions.size(), LOG);
-    for(Index i = 0; i < outputs_dimensions.size(); ++i)
+    for(Index i = 0; i < outputs_dimensions.size(); i++)
     {
         assert_true(outputs_dimensions(i) <= input_dimensions(i), LOG);
     }

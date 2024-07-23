@@ -653,7 +653,7 @@ Index count_true(const Tensor<bool, 1>& tensor)
 {
     Index count = 0;
 
-    for(int i = 0; i < tensor.size(); ++i)
+    for(int i = 0; i < tensor.size(); i++)
     {
         if(tensor(i))
         {
@@ -1107,7 +1107,6 @@ void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
 }
 
 
-
 void delete_indices(Tensor<Index,1>& vector, const Tensor<Index,1>& indices)
 {
     const Index original_size = vector.size();
@@ -1153,7 +1152,7 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
     }
 }
 
-/*
+
 Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
 {
     Tensor<string, 1> new_vector(index);
@@ -1172,7 +1171,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 
     return new_vector;
 }
-*/
+
 
 /// Returns the number of elements which are equal or greater than a minimum given value
 /// and equal or less than a maximum given value.
@@ -1664,19 +1663,19 @@ bool has_NAN(Tensor<type, 4>& x)
 }
 
 
-Index count_empty(const Tensor<string, 1>& vector)
+Index count_empty(const Tensor<string, 1>& strings)
 {
-    const Index words_number = vector.size();
+    const Index strings_number = strings.size();
 
     Index count = 0;
 
-    for( Index i = 0; i < words_number; i++)
+    for( Index i = 0; i < strings_number; i++)
     {
-        string str = vector(i);
+        string element = strings(i);
 
-        trim(str);
-        
-        if(str.empty()) count++;
+        trim(element);
+                
+        if(element.empty()) count++;
     }
 
     return count;
@@ -2274,7 +2273,7 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
 {
     vector<float> auxiliar_v = {};
 
-    for(int i = 0; i < tensor.dimension(0); ++i)
+    for(int i = 0; i < tensor.dimension(0); i++)
     {
         if(tensor(i)!=NAN)
         {

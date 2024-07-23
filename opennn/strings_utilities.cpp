@@ -30,9 +30,9 @@ Index count_tokens(string& str, const char& separator)
 
     // Find first "non-delimiter".
 
-    string::size_type pos = str.find_first_of(separator, last_pos);
+    string::size_type position = str.find_first_of(separator, last_pos);
 
-    while(string::npos != pos || string::npos != last_pos)
+    while(string::npos != position || string::npos != last_pos)
     {
         // Found a token, add it to the vector
 
@@ -40,11 +40,11 @@ Index count_tokens(string& str, const char& separator)
 
         // Skip delimiters.  Note the "not_of"
 
-        last_pos = str.find_first_not_of(separator, pos);
+        last_pos = str.find_first_not_of(separator, position);
 
         // Find next "non-delimiter"
 
-        pos = str.find_first_of(separator, last_pos);
+        position = str.find_first_of(separator, last_pos);
     }
 
     return tokens_count;
@@ -53,7 +53,7 @@ Index count_tokens(string& str, const char& separator)
 
 Index count_tokens(const string& s, const char& c)
 {
-    string str_copy = s;
+    const string str_copy = s;
 
     Index tokens_number = count(s.begin(), s.end(), c);
 
@@ -66,8 +66,7 @@ Index count_tokens(const string& s, const char& c)
         tokens_number--;
     }
 
-    return (tokens_number+1);
-
+    return tokens_number + 1;
 }
 
 
@@ -90,9 +89,9 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
     Index index = 0;
     Index old_pos = lastPos;
 
-    string::size_type pos = str.find_first_of(separator, lastPos);
+    string::size_type position = str.find_first_of(separator, lastPos);
 
-    while(string::npos != pos || string::npos != lastPos)
+    while(string::npos != position || string::npos != lastPos)
     {
         if((lastPos-old_pos != 1) && index!= 0)
         {
@@ -105,18 +104,18 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
         {
             // Found a token, add it to the vector
 
-            tokens[index] = str.substr(lastPos, pos - lastPos);
+            tokens[index] = str.substr(lastPos, position - lastPos);
         }
 
-        old_pos = pos;
+        old_pos = position;
 
         // Skip delimiters. Note the "not_of"
 
-        lastPos = str.find_first_not_of(separator, pos);
+        lastPos = str.find_first_not_of(separator, position);
 
         // Find next "non-delimiter"
 
-        pos = str.find_first_of(separator, lastPos);
+        position = str.find_first_of(separator, lastPos);
 
         index++;
     }
@@ -149,11 +148,11 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
     {
         // Found a token, add it to the vector
 
-        if((last_position-old_pos != 1) && index!= 0)
+        if(last_position - old_pos != 1 && index != 0)
         {
             tokens[index] = "";
             index++;
-            old_pos = old_pos+1;
+            old_pos++;
             continue;
         }
         else
@@ -182,24 +181,25 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
 
-Index count_tokens(const string& s, const string& sep)
+Index count_tokens(const string& s, const string& separator)
 {
     Index tokens_number = 0;
 
-    string::size_type pos = 0;
+    string::size_type position = 0;
 
-    while( s.find(sep, pos) != string::npos )
+    while(s.find(separator, position) != string::npos)
     {
-        pos = s.find(sep, pos);
-       ++ tokens_number;
-        pos += sep.length();
+        position = s.find(separator, position);
+        ++tokens_number;
+        position += separator.length();
     }
 
-    if(s.find(sep,0) == 0)
+    if(s.find(separator, 0) == 0)
     {
         tokens_number--;
     }
-    if(pos == s.length())
+
+    if(position == s.length())
     {
         tokens_number--;
     }
@@ -212,30 +212,30 @@ Index count_tokens(const string& s, const string& sep)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-Tensor<string, 1> get_tokens(const string& s, const string& sep)
+Tensor<string, 1> get_tokens(const string& s, const string& separator)
 {
-    const Index tokens_number = count_tokens(s, sep);
+    const Index tokens_number = count_tokens(s, separator);
 
     Tensor<string,1> tokens(tokens_number);
 
     string str = s;
-    size_t pos = 0;
+    size_t position = 0;
     size_t last_pos = 0;
     Index i = 0;
 
-    while((pos = str.find(sep,pos)) != string::npos)
+    while((position = str.find(separator,position)) != string::npos)
     {
-        if(pos == 0) // Skip first position
+        if(position == 0) // Skip first position
         {
-            pos += sep.length();
-            last_pos = pos;
+            position += separator.length();
+            last_pos = position;
             continue;
         }
 
-        tokens(i) = str.substr(last_pos, pos - last_pos);
+        tokens(i) = str.substr(last_pos, position - last_pos);
 
-        pos += sep.length();
-        last_pos = pos;
+        position += separator.length();
+        last_pos = position;
         i++;
     }
 
@@ -246,6 +246,7 @@ Tensor<string, 1> get_tokens(const string& s, const string& sep)
 
     return tokens;
 }
+
 
 /// Returns a new vector with the elements of this string vector casted to type.
 
@@ -324,7 +325,6 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
 }
 
 
-
 Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
 {
     Tensor<string, 1> unique_elements = get_unique_elements(tokens);
@@ -382,19 +382,23 @@ bool is_numeric_string(const string& str)
 /// Returns true if given string vector is constant and false otherwise.
 /// @param str vector to be checked.
 ///
-bool is_constant_string(const Tensor<string, 1>& str)
+bool is_constant_string(const Tensor<string, 1>& string_list)
 {
-    const string str0 = str[0];
+    const string str0 = string_list[0];
+
     string str1;
 
-    for(int i = 1; i < str.size(); i++)
+    for(int i = 1; i < string_list.size(); i++)
     {
-        str1 = str[i];
+        str1 = string_list[i];
+
         if(str1.compare(str0) != 0)
             return false;
     }
+
     return true;
 }
+
 
 /// Returns true if given numeric vector is constant and false otherwise.
 /// @param str vector to be checked.
@@ -964,7 +968,7 @@ bool contains_substring(const string& str, const string& sub_str)
 void replace_all_word_appearances(string& s, string const& toReplace, string const& replaceWith) {
 
     string buf;
-    size_t pos = 0;
+    size_t position = 0;
     size_t prevPos;
     const string underscore = "_";
 
@@ -973,34 +977,34 @@ void replace_all_word_appearances(string& s, string const& toReplace, string con
 
     while (true) {
 
-        prevPos = pos;
-        pos = s.find(toReplace, pos);
+        prevPos = position;
+        position = s.find(toReplace, position);
 
-        if(pos == string::npos)
+        if(position == string::npos)
             break;
 
         // Verifica que no haya letras antes ni después de toReplace
         if((prevPos == 0 || !isalpha(s[prevPos - 1])) &&
-            (pos + toReplace.size() == s.size() || !isalpha(s[pos + toReplace.size()])))
+            (position + toReplace.size() == s.size() || !isalpha(s[position + toReplace.size()])))
         {
             // Verifica que no haya guiones bajos antes ni después de toReplace
             if((prevPos == 0 || s[prevPos - 1] != '_') &&
-                (pos + toReplace.size() == s.size() || s[pos + toReplace.size()] != '_'))
+                (position + toReplace.size() == s.size() || s[position + toReplace.size()] != '_'))
             {
-                buf.append(s, prevPos, pos - prevPos);
+                buf.append(s, prevPos, position - prevPos);
                 buf += replaceWith;
-                pos += toReplace.size();
+                position += toReplace.size();
             }
             else
             {
-                buf.append(s, prevPos, pos - prevPos + toReplace.size());
-                pos += toReplace.size();
+                buf.append(s, prevPos, position - prevPos + toReplace.size());
+                position += toReplace.size();
             }
         }
         else
         {
-            buf.append(s, prevPos, pos - prevPos + toReplace.size());
-            pos += toReplace.size();
+            buf.append(s, prevPos, position - prevPos + toReplace.size());
+            position += toReplace.size();
         }
     }
 
@@ -1018,7 +1022,7 @@ void replace_all_word_appearances(string& s, string const& toReplace, string con
 void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith) {
 
     string buf;
-    size_t pos = 0;
+    size_t position = 0;
     size_t prevPos;
 
     // Reserves rough estimate of final size of string.
@@ -1026,23 +1030,23 @@ void replace_all_appearances(string& s, string const& toReplace, string const& r
 
     while(true) {
 
-        prevPos =    pos;
-        pos = s.find(toReplace, pos);
+        prevPos =    position;
+        position = s.find(toReplace, position);
 
-        if(pos == string::npos)
+        if(position == string::npos)
             break;
 
-        buf.append(s, prevPos, pos - prevPos);
+        buf.append(s, prevPos, position - prevPos);
 
         if(buf.back() == '_')
         {
             buf += toReplace;
-            pos += toReplace.size();
+            position += toReplace.size();
 
         }else
         {
             buf += replaceWith;
-            pos += toReplace.size();
+            position += toReplace.size();
 
         }
     }
@@ -1062,7 +1066,7 @@ string replace_non_allowed_programming_expressions(string& s)
         string out = "";
 
         if(s[0] == '$')
-            out=s;
+            out = s;
 
         replace_all_appearances(s, "fn", "f_n");
         replace_all_appearances(s, "if", "i_f");
@@ -1231,7 +1235,6 @@ string replace_non_allowed_programming_expressions(string& s)
             if(isalnum(c)==0){ out+='_'; continue;}
         }
 
-
         return out;
 }
 
@@ -1355,11 +1358,11 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
     string target_pattern = target_char + target_char;
     string new_pattern = target_char + missing_label + target_char;
 
-    size_t pos = 0;
-    while((pos = str.find(target_pattern, pos)) != string::npos)
+    size_t position = 0;
+    while((position = str.find(target_pattern, position)) != string::npos)
     {
-        str.replace(pos, target_pattern.length(), new_pattern);
-        pos += new_pattern.length();
+        str.replace(position, target_pattern.length(), new_pattern);
+        position += new_pattern.length();
     }
 }
 
@@ -1375,11 +1378,11 @@ void replac_substring_within_quotes(string &str, const string &target, const str
     {
         string match_str = match.str();
         string replaced_str = match_str;
-        size_t pos = 0;
-        while((pos = replaced_str.find(target, pos)) != string::npos)
+        size_t position = 0;
+        while((position = replaced_str.find(target, position)) != string::npos)
         {
-            replaced_str.replace(pos, target.length(), replacement);
-            pos += replacement.length();
+            replaced_str.replace(position, target.length(), replacement);
+            position += replacement.length();
         }
         result += match.prefix().str() + replaced_str;
         prefix = match.suffix().str();
@@ -1443,25 +1446,24 @@ string prepend(const string& pre, const string& str)
 /// Returns true if all the elements in a string list are numeric, and false otherwise.
 /// @param v String list to be checked.
 
-bool is_numeric_string_vector(const Tensor<string, 1>& v)
+bool is_numeric_string_vector(const Tensor<string, 1>& string_list)
 {
-    for(Index i = 0; i < v.size(); i++)
+    for(Index i = 0; i < string_list.size(); i++)
     {
-        if(!is_numeric_string(v[i])) return false;
+        if(!is_numeric_string(string_list[i])) return false;
     }
 
     return true;
 }
 
 
-bool has_numbers(const Tensor<string, 1>& v)
+bool has_numbers(const Tensor<string, 1>& string_list)
 {
-    for(Index i = 0; i < v.size(); i++)
+    for(Index i = 0; i < string_list.size(); i++)
     {
-//        if(is_numeric_string(v[i])) return true;
-        if(is_numeric_string(v[i]))
+        if(is_numeric_string(string_list[i]))
         {
-            cout << "The number is: " << v[i] << endl;
+            cout << "The number is: " << string_list[i] << endl;
             return true;
         }
     }
@@ -1470,11 +1472,11 @@ bool has_numbers(const Tensor<string, 1>& v)
 }
 
 
-bool has_strings(const Tensor<string, 1>& v)
+bool has_strings(const Tensor<string, 1>& string_list)
 {
-    for(Index i = 0; i < v.size(); i++)
+    for(Index i = 0; i < string_list.size(); i++)
     {
-        if(!is_numeric_string(v[i])) return true;
+        if(!is_numeric_string(string_list[i])) return true;
     }
 
     return false;
@@ -1483,11 +1485,11 @@ bool has_strings(const Tensor<string, 1>& v)
 /// Returns true if none element in a string list is numeric, and false otherwise.
 /// @param v String list to be checked.
 
-bool is_not_numeric(const Tensor<string, 1>& v)
+bool is_not_numeric(const Tensor<string, 1>& string_list)
 {
-    for(Index i = 0; i < v.size(); i++)
+    for(Index i = 0; i < string_list.size(); i++)
     {
-        if(is_numeric_string(v[i])) return false;
+        if(is_numeric_string(string_list[i])) return false;
     }
 
     return true;
@@ -1497,14 +1499,14 @@ bool is_not_numeric(const Tensor<string, 1>& v)
 /// Returns true if some the elements in a string list are numeric and some others are not numeric.
 /// @param v String list to be checked.
 
-bool is_mixed(const Tensor<string, 1>& v)
+bool is_mixed(const Tensor<string, 1>& string_list)
 {
     unsigned count_numeric = 0;
     unsigned count_not_numeric = 0;
 
-    for(Index i = 0; i < v.size(); i++)
+    for(Index i = 0; i < string_list.size(); i++)
     {
-        if(is_numeric_string(v[i]))
+        if(is_numeric_string(string_list[i]))
         {
             count_numeric++;
         }
@@ -1586,19 +1588,19 @@ void remove_not_alnum(string &str)
         str.erase(remove_if(str.begin(), str.end(), isNotAlnum), str.end());
 }
 
+
 bool find_string_in_tensor(Tensor<string, 1>& t, string val)
 {
-    for(Index i = 0; i < t.dimension(0);++i)
+    for(Index i = 0; i < t.dimension(0); i++)
     {
-        string elem = t(i);
+        const string elem = t(i);
 
-        if(elem == val)
-        {
-            return true;
-        }
+        if(elem == val) return true;
     }
-        return false;
+
+    return false;
 }
+
 
 string get_word_from_token(string& token)
 {
@@ -1620,7 +1622,9 @@ string get_word_from_token(string& token)
 }
 
 
-Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<string, 1> &outputs, const string &programming_languaje)
+Tensor<string, 1> fix_write_expression_outputs(const string &str,
+                                               const Tensor<string, 1> &outputs,
+                                               const string &programming_languaje)
 {
     Tensor<string,1> out;
     Tensor<string,1> tokens;
@@ -1731,9 +1735,12 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
     return out;
 }
 
-Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_names, Tensor<string, 1>& outputs_names, ostringstream& buffer_)
+Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_names,
+                                                       Tensor<string, 1>& outputs_names,
+                                                       ostringstream& buffer_)
 {
     //preparing output information
+
     Tensor<Tensor<string,1>, 1> output(3);
 
     ostringstream buffer;
@@ -1783,35 +1790,43 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
     return output;
 }
 
+
 string round_to_precision_string(type x, const int& precision)
 {
-    type factor = type(pow(10, precision));
+    const type factor = type(pow(10, precision));
 
-    type rounded_value = (round(factor*x))/factor;
+    const type rounded_value = (round(factor*x))/factor;
 
     stringstream ss;
     ss << fixed << setprecision(precision) << rounded_value;
-    string result = ss.str();
+
+    const string result = ss.str();
+
     return result;
 }
+
 
 Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const int& precision)
 {
     Tensor<string,2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
 
-    type factor = type(pow(10, precision));
+    const type factor = type(pow(10, precision));
 
     for(int i = 0; i< matrix_rounded.dimension(0); i++)
     {
         for(int j = 0; j < matrix_rounded.dimension(1); j++)
         {
-            type rounded_value = (round(factor*matrix(i,j)))/factor;
+            const type rounded_value = (round(factor*matrix(i,j)))/factor;
+
             stringstream ss;
             ss << fixed << setprecision(precision) << rounded_value;
-            string result = ss.str();
+
+            const string result = ss.str();
+
             matrix_rounded(i,j) = result;
         }
     }
+
     return matrix_rounded;
 }
 
@@ -1842,7 +1857,8 @@ Tensor<string,1> concatenate_string_tensors(const Tensor<string, 1>& tensor_1, c
 {
     Tensor<string, 1> tensor = tensor_2;
 
-    for(int i = 0; i < tensor_1.dimension(0); ++i) push_back_string(tensor, tensor_1(i));
+    for(int i = 0; i < tensor_1.dimension(0); i++)
+        push_back_string(tensor, tensor_1(i));
 
     return tensor;
 }
@@ -1859,24 +1875,24 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression,
 
     for(int i = 0; i < tokens.dimension(0); i++)
     {
-        string found_token = tokens(i);
-        string toReplace(found_token);
-        string newword = keyword + " " + found_token;
+        const string found_token = tokens(i);
+        const string toReplace(found_token);
+        const string newword = keyword + " " + found_token;
 
-        string::size_type pos = 0;
+        string::size_type position = 0;
 
-        while((pos = espression.find(toReplace, pos)) != string::npos)
+        while((position = espression.find(toReplace, position)) != string::npos)
         {
-            if(pos > previous_pos)
+            if(position > previous_pos)
             {
-                espression.replace(pos, toReplace.length(), newword);
-                pos += newword.length();
-                previous_pos = pos;
+                espression.replace(position, toReplace.length(), newword);
+                position += newword.length();
+                previous_pos = position;
                 break;
             }
             else
             {
-                pos += newword.length();
+                position += newword.length();
             }
         }
     }
@@ -1885,20 +1901,25 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression,
 
 void display_progress_bar(int completed, int total)
 {
-    int width = 100; // width of the progress bar
-    float progress = (float)completed / total;
-    int position = width * progress;
+    const int width = 100;
+    const float progress = (float)completed / total;
+    const int position = width * progress;
 
     cout << "[";
-    for(int i = 0; i < width; ++i) {
-        if(i < position)       cout << "=";
 
-        else if(i == position)     cout << ">";
+    for(int i = 0; i < width; i++)
+    {
+        if(i < position)
+            cout << "=";
+
+        else if(i == position)
+            cout << ">";
 
         else cout << " ";
     }
     
     cout << "] " << int(progress * 100.0) << " %\r";
+
     cout.flush();
 }
 
@@ -2154,144 +2175,19 @@ void to_lower(Tensor<string, 1>& documents)
 }
 
 
-void split_punctuation(Tensor<string, 1>& documents)
-{
-    replace_substring(documents, "�", " � ");
-    replace_substring(documents, "\"", " \" ");
-    replace_substring(documents, ".", " . ");
-    replace_substring(documents, "!", " ! ");
-    replace_substring(documents, "#", " # ");
-    replace_substring(documents, "$", " $ ");
-    replace_substring(documents, "~", " ~ ");
-    replace_substring(documents, "%", " % ");
-    replace_substring(documents, "&", " & ");
-    replace_substring(documents, "/", " / ");
-    replace_substring(documents, "(", " ( ");
-    replace_substring(documents, ")", " ) ");
-    replace_substring(documents, "\\", " \\ ");
-    replace_substring(documents, "=", " = ");
-    replace_substring(documents, "?", " ? ");
-    replace_substring(documents, "}", " } ");
-    replace_substring(documents, "^", " ^ ");
-    replace_substring(documents, "`", " ` ");
-    replace_substring(documents, "[", " [ ");
-    replace_substring(documents, "]", " ] ");
-    replace_substring(documents, "*", " * ");
-    replace_substring(documents, "+", " + ");
-    replace_substring(documents, ",", " , ");
-    replace_substring(documents, ";", " ; ");
-    replace_substring(documents, ":", " : ");
-    replace_substring(documents, "-", " - ");
-    replace_substring(documents, ">", " > ");
-    replace_substring(documents, "<", " < ");
-    replace_substring(documents, "|", " | ");
-    replace_substring(documents, "–", " – ");
-    replace_substring(documents, "Ø", " Ø ");
-    replace_substring(documents, "º", " º ");
-    replace_substring(documents, "°", " ° ");
-    replace_substring(documents, "'", " ' ");
-    replace_substring(documents, "ç", " ç ");
-    replace_substring(documents, "✓", " ✓ ");
-    replace_substring(documents, "|", " | ");
-    replace_substring(documents, "@", " @ ");
-    replace_substring(documents, "#", " # ");
-    replace_substring(documents, "^", " ^ ");
-    replace_substring(documents, "*", " * ");
-    replace_substring(documents, "€", " € ");
-    replace_substring(documents, "¬", " ¬ ");
-    replace_substring(documents, "•", " • ");
-    replace_substring(documents, "·", " · ");
-    replace_substring(documents, "”", " ” ");
-    replace_substring(documents, "“", " “ ");
-    replace_substring(documents, "´", " ´ ");
-    replace_substring(documents, "§", " § ");
-    replace_substring(documents, "_", " _ ");
-    replace_substring(documents, ".", " . ");
-
-    delete_extra_spaces(documents);
-}
-
-
-void delete_non_printable_chars(Tensor<string, 1>& documents)
-{
-    for(Index i = 0; i < documents.size(); i++) 
-        remove_non_printable_chars(documents(i));
-}
-
-
-void delete_extra_spaces(Tensor<string, 1>& documents)
-{
-    Tensor<string, 1> new_documents(documents);
-
-    for(Index i = 0; i < documents.size(); i++)
-    {
-        string::iterator new_end = unique(new_documents[i].begin(), new_documents[i].end(),
-            [](char lhs, char rhs) { return(lhs == rhs) && (lhs == ' '); });
-
-        new_documents[i].erase(new_end, new_documents[i].end());
-    }
-
-    documents = new_documents;
-}
-
-
-void aux_remove_non_printable_chars(Tensor<string, 1>& documents)
-{
-    Tensor<string, 1> new_documents(documents);
-
-    for(Index i = 0; i < documents.size(); i++)
-    {
-        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
-    }
-
-    documents = new_documents;
-}
-
-
-Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>& documents)
+Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents)
 {
     const Index documents_number = documents.size();
 
-    Tensor<Tensor<string, 1>, 1> new_tokenized_documents(documents_number);
+    Tensor<Tensor<string, 1>, 1> tokens(documents_number);
 
 #pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
-        new_tokenized_documents(i) = get_tokens(documents(i));
+        tokens(i) = get_tokens(documents(i));
     }
 
-    return new_tokenized_documents;
-}
-
-
-void delete_emails(Tensor<Tensor<string, 1>, 1>& documents)
-{
-    const Index documents_number = documents.size();
-
-#pragma omp parallel for
-    for(Index i = 0; i < documents_number; i++)
-    {
-        Tensor<string, 1> document = documents(i);
-
-        for(Index j = 0; j < document.size(); j++)
-        {
-            Tensor<string, 1> tokens = get_tokens(document(j));
-
-            string result;
-
-            for(Index k = 0; k < tokens.size(); k++)
-            {
-                if(!is_email(tokens(k)))
-                {
-                    result += tokens(k) + " ";
-                }
-            }
-
-            document(j) = result;
-        }
-
-        documents(i) = document;
-    }
+    return tokens;
 }
 
 
@@ -2306,8 +2202,6 @@ void delete_blanks(Tensor<string, 1>& vector)
     vector.resize(words_number - empty_number);
 
     Index index = 0;
-
-    string empty_string;
 
     for(Index i = 0; i < words_number; i++)
     {
@@ -2324,9 +2218,9 @@ void delete_blanks(Tensor<string, 1>& vector)
 
 void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
 {
-    const Index documents_size = tokens.size();
+    const Index documents_number = tokens.size();
 
-    for(Index i = 0; i < documents_size; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
         delete_blanks(tokens(i));
     }
@@ -2347,13 +2241,7 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     aux_remove_non_printable_chars(documents_copy);
 
-    Tensor<Tensor<string, 1>, 1> tokenized_documents = tokenize(documents_copy);
-
-    //delete_emails(tokenized_documents);
-
-    //delete_blanks(tokenized_documents);
-
-    return tokenized_documents;
+    return get_tokens(documents_copy);
 }
 
 
@@ -2361,15 +2249,17 @@ vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
 {
     unordered_map<string, int> count;
 
-    for(Index i = 0; i < total_tokens.size(); ++i)      
+    for(Index i = 0; i < total_tokens.size(); i++)
         count[total_tokens(i)]++;
 
     vector<pair<string, int>> word_counts(count.begin(), count.end());
 
     sort(word_counts.begin(), word_counts.end(), [](const auto& a, const auto& b)
         {
-            if(a.second != b.second)    return a.second > b.second;
-            else    return a.first < b.first;
+            if(a.second != b.second)
+                return a.second > b.second;
+            else
+                return a.first < b.first;
         }
     );
 
@@ -2437,10 +2327,9 @@ void delete_punctuation(Tensor<string, 1>& documents)
 }
 
 
-
 /// Deletes consecutive extra spaces in documents.
 /// @param documents Document to be proccesed.
-/*
+
 void delete_extra_spaces(Tensor<string, 1>& documents) 
 {
     Tensor<string, 1> new_documents(documents);
@@ -2455,7 +2344,7 @@ void delete_extra_spaces(Tensor<string, 1>& documents)
 
     documents = new_documents;
 }
-*/
+
 
 /// Deletes line breaks and tabulations
 /// @param documents Document to be proccesed.
@@ -2463,9 +2352,7 @@ void delete_extra_spaces(Tensor<string, 1>& documents)
 void delete_breaks_and_tabs(Tensor<string, 1>& documents) 
 {
     for(Index i = 0; i < documents.size(); i++)
-    {
-        string line = documents(i);
-
+    {                
         replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\n', ' ');
         replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\t', ' ');
         replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\f', ' ');
@@ -2475,16 +2362,16 @@ void delete_breaks_and_tabs(Tensor<string, 1>& documents)
 
 
 /// Deletes unicode non printable characters
-/*
+
 void delete_non_printable_chars(Tensor<string, 1>& documents) 
 {
     for(Index i = 0; i < documents.size(); i++) 
         remove_non_printable_chars(documents(i));
 }
-*/
+
 
 /// Splits punctuation symbols in documents.
-/*
+
 void split_punctuation(Tensor<string, 1>& documents) 
 {
     replace_substring(documents, "�", " � ");
@@ -2541,8 +2428,8 @@ void split_punctuation(Tensor<string, 1>& documents)
 
     delete_extra_spaces(documents);
 }
-*/
-/*
+
+
 void aux_remove_non_printable_chars(Tensor<string, 1>& documents) 
 {
     Tensor<string, 1> new_documents(documents);
@@ -2554,26 +2441,7 @@ void aux_remove_non_printable_chars(Tensor<string, 1>& documents)
 
     documents = new_documents;
 }
-*/
 
-/// Split documents into words Tensors. Each word is equivalent to a token.
-/// @param documents String tensor we will split
-/*
-Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>& documents) 
-{
-    const Index documents_number = documents.size();
-
-    Tensor<Tensor<string, 1>, 1> new_tokenized_documents(documents_number);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < documents_number; i++)
-    {
-        new_tokenized_documents(i) = get_tokens(documents(i));
-    }
-
-    return new_tokenized_documents;
-}
-*/
 
 /// Joins a string tensor into a string
 /// @param token String tensor we will join
@@ -2649,7 +2517,7 @@ void delete_words(Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>&
 /*
 /// Returns the language selected.
 
-TextAnalytics::Language TextAnalytics::get_language() const
+Language get_language()
 {
     return lang;
 }
@@ -2657,7 +2525,7 @@ TextAnalytics::Language TextAnalytics::get_language() const
 
 /// Returns the language selected in string format.
 
-string TextAnalytics::get_language_string() const
+string get_language_string()
 {
     if(lang == ENG)
     {
@@ -2674,13 +2542,13 @@ string TextAnalytics::get_language_string() const
 }
 
 
-Index TextAnalytics::get_short_words_length() const
+Index get_short_words_length()
 {
     return short_words_length;
 }
 
 
-Index TextAnalytics::get_long_words_length() const
+Index get_long_words_length()
 {
     return long_words_length;
 }
@@ -2688,22 +2556,9 @@ Index TextAnalytics::get_long_words_length() const
 
 /// Returns the stop words.
 
-Tensor<string, 1> TextAnalytics::get_stop_words() const
+Tensor<string, 1> get_stop_words()
 {
     return stop_words;
-}
-
-
-Index TextAnalytics::get_document_sentences_number() const
-{
-    Index count = 0;
-
-    for(Index i = 0; i < documents.dimension(0); i++)
-    {
-        count += documents(i).dimension(0);
-    }
-
-    return count;
 }
 
 
@@ -2712,7 +2567,7 @@ Index TextAnalytics::get_document_sentences_number() const
 
 /// Sets a language.
 
-void TextAnalytics::set_language(const Language& new_language)
+void set_language(const Language& new_language)
 {
     lang = new_language;
 
@@ -2732,7 +2587,7 @@ void TextAnalytics::set_language(const Language& new_language)
 
 /// Sets a language.
 
-void TextAnalytics::set_language(const string& new_language_string)
+void set_language(const string& new_language_string)
 {
     if(new_language_string == "ENG")
     {
@@ -2752,25 +2607,25 @@ void TextAnalytics::set_language(const string& new_language_string)
 /// Sets a stop words.
 /// @param new_stop_words String Tensor with the new stop words.
 
-void TextAnalytics::set_stop_words(const Tensor<string, 1>& new_stop_words)
+void set_stop_words(const Tensor<string, 1>& new_stop_words)
 {
     stop_words = new_stop_words;
 }
 
 
-void TextAnalytics::set_short_words_length(const Index& new_short_words_length)
+void set_short_words_length(const Index& new_short_words_length)
 {
     short_words_length = new_short_words_length;
 }
 
 
-void TextAnalytics::set_long_words_length(const Index& new_long_words_length)
+void set_long_words_length(const Index& new_long_words_length)
 {
     long_words_length = new_long_words_length;
 }
 
 
-void TextAnalytics::set_separator(const string& new_separator)
+void set_separator(const string& new_separator)
 {
     if(new_separator == "Semicolon")
     {
@@ -2791,21 +2646,18 @@ void TextAnalytics::set_separator(const string& new_separator)
         throw runtime_error(buffer.str());
     }
 }
+*/
 
-
-
-
-
-void TextAnalytics::delete_stop_words(Tensor<Tensor<string,1>,1>& tokens) const
+void delete_stop_words(Tensor<Tensor<string,1>,1>& tokens)
 {
-    delete_words(tokens, stop_words);
+//    delete_words(tokens, stop_words);
 }
 
 
 /// Delete short words from the documents
 /// @param minimum_length Minimum length of the words that new documents must have(including herself)
 
-void TextAnalytics::delete_short_words(Tensor<Tensor<string,1>,1>& documents, const Index& minimum_length) const
+void delete_short_words(Tensor<Tensor<string,1>,1>& documents, const Index& minimum_length)
 {
     const Index documents_number = documents.size();
 
@@ -2837,11 +2689,10 @@ void TextAnalytics::delete_short_words(Tensor<Tensor<string,1>,1>& documents, co
 }
 
 
-
 /// Delete short words from the documents
 /// @param maximum_length Maximum length of the words new documents must have(including herself)
 
-void TextAnalytics::delete_long_words(Tensor<Tensor<string,1>,1>& documents, const Index& maximum_length) const
+void delete_long_words(Tensor<Tensor<string,1>,1>& documents, const Index& maximum_length)
 {
     const Index documents_number = documents.size();
 
@@ -2873,1059 +2724,9 @@ void TextAnalytics::delete_long_words(Tensor<Tensor<string,1>,1>& documents, con
 }
 
 
-void TextAnalytics::delete_blanks(Tensor<string, 1>& vector) const
-{
-    const Index words_number = vector.size();
-
-    const Index empty_number = count_empty(vector);
-
-    Tensor<string, 1> vector_copy(vector);
-
-    vector.resize(words_number - empty_number);
-
-    Index index = 0;
-
-    string empty_string;
-
-    for(Index i = 0; i < words_number; i++)
-    {
-        trim(vector_copy(i));
-
-        if(!vector_copy(i).empty())
-        {
-            vector(index) = vector_copy(i);
-            index++;
-        }
-    }
-}
-
-
-void TextAnalytics::delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens) const
-{
-    const Index documents_size = tokens.size();
-
-    for(Index i = 0; i < documents_size; i++)
-    {
-        delete_blanks(tokens(i));
-    }
-}
-
-
-/// Reduces inflected(or sometimes derived) words to their word stem, base or root form.
-
-Tensor<Tensor<string,1>,1> TextAnalytics::apply_stemmer(const Tensor<Tensor<string,1>,1>& tokens) const
-{
-    if(lang == ENG)
-    {
-        return apply_english_stemmer(tokens);
-    }
-    else if(lang == SPA)
-    {
-        //        return apply_spanish_stemmer(tokens);
-    }
-
-    return tokens;
-}
-
-
-/// Reduces inflected (or sometimes derived) words to their word stem, base or root form (english language).
-/// @param tokens
-
-Tensor<Tensor<string,1>,1> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<string,1>,1>& tokens) const
-{
-    const Index documents_number = tokens.size();
-
-    Tensor<Tensor<string,1>,1> new_tokenized_documents(documents_number);
-
-    // Set vowels and suffixes
-
-    Tensor<string,1> vowels(6);
-
-    vowels.setValues({"a","e","i","o","u","y"});
-
-    Tensor<string,1> double_consonants(9);
-
-    double_consonants.setValues({"bb", "dd", "ff", "gg", "mm", "nn", "pp", "rr", "tt"});
-
-    Tensor<string,1> li_ending(10);
-
-    li_ending.setValues({"c", "d", "e", "g", "h", "k", "m", "n", "r", "t"});
-
-    const Index step0_suffixes_size = 3;
-
-    Tensor<string,1> step0_suffixes(step0_suffixes_size);
-
-    step0_suffixes.setValues({"'s'", "'s", "'"});
-
-    const Index step1a_suffixes_size = 6;
-
-    Tensor<string,1> step1a_suffixes(step1a_suffixes_size);
-
-    step1a_suffixes.setValues({"sses", "ied", "ies", "us", "ss", "s"});
-
-    const Index step1b_suffixes_size = 6;
-
-    Tensor<string,1> step1b_suffixes(step1b_suffixes_size);
-
-    step1b_suffixes.setValues({"eedly", "ingly", "edly", "eed", "ing", "ed"});
-
-    const Index step2_suffixes_size = 25;
-
-    Tensor<string,1> step2_suffixes(step2_suffixes_size);
-
-    step2_suffixes.setValues({"ization", "ational", "fulness", "ousness", "iveness", "tional", "biliti", "lessli", "entli", "ation", "alism",
-                              "aliti", "ousli", "iviti", "fulli", "enci", "anci", "abli", "izer", "ator", "alli", "bli", "ogi", "li"});
-
-    const Index step3_suffixes_size = 9;
-
-    Tensor<string,1> step3_suffixes(step3_suffixes_size);
-
-    step3_suffixes.setValues({"ational", "tional", "alize", "icate", "iciti", "ative", "ical", "ness", "ful"});
-
-    const Index step4_suffixes_size = 18;
-
-    Tensor<string,1> step4_suffixes(step4_suffixes_size);
-
-    step4_suffixes.setValues({"ement", "ance", "ence", "able", "ible", "ment", "ant", "ent", "ism", "ate", "iti", "ous",
-                              "ive", "ize", "ion", "al", "er", "ic"});
-
-    Tensor<string,2> special_words(40,2);
-
-    special_words(0,0) = "skis";        special_words(0,1) = "ski";
-    special_words(1,0) = "skies";       special_words(1,1) = "sky";
-    special_words(2,0) = "dying";       special_words(2,1) = "die";
-    special_words(3,0) = "lying";       special_words(3,1) = "lie";
-    special_words(4,0) = "tying";       special_words(4,1) = "tie";
-    special_words(5,0) = "idly";        special_words(5,1) = "idl";
-    special_words(6,0) = "gently";      special_words(6,1) = "gentl";
-    special_words(7,0) = "ugly";        special_words(7,1) = "ugli";
-    special_words(8,0) = "early";       special_words(8,1) = "earli";
-    special_words(9,0) = "only";        special_words(9,1) = "onli";
-    special_words(10,0) = "singly";     special_words(10,1) = "singl";
-    special_words(11,0) = "sky";        special_words(11,1) = "sky";
-    special_words(12,0) = "news";       special_words(12,1) = "news";
-    special_words(13,0) = "howe";       special_words(13,1) = "howe";
-    special_words(14,0) = "atlas";      special_words(14,1) = "atlas";
-    special_words(15,0) = "cosmos";     special_words(15,1) = "cosmos";
-    special_words(16,0) = "bias";       special_words(16,1) = "bias";
-    special_words(17,0) = "andes";      special_words(17,1) = "andes";
-    special_words(18,0) = "inning";     special_words(18,1) = "inning";
-    special_words(19,0) = "innings";    special_words(19,1) = "inning";
-    special_words(20,0) = "outing";     special_words(20,1) = "outing";
-    special_words(21,0) = "outings";    special_words(21,1) = "outing";
-    special_words(22,0) = "canning";    special_words(22,1) = "canning";
-    special_words(23,0) = "cannings";   special_words(23,1) = "canning";
-    special_words(24,0) = "herring";    special_words(24,1) = "herring";
-    special_words(25,0) = "herrings";   special_words(25,1) = "herring";
-    special_words(26,0) = "earring";    special_words(26,1) = "earring";
-    special_words(27,0) = "earrings";   special_words(27,1) = "earring";
-    special_words(28,0) = "proceed";    special_words(28,1) = "proceed";
-    special_words(29,0) = "proceeds";   special_words(29,1) = "proceed";
-    special_words(30,0) = "proceeded";  special_words(30,1) = "proceed";
-    special_words(31,0) = "proceeding"; special_words(31,1) = "proceed";
-    special_words(32,0) = "exceed";     special_words(32,1) = "exceed";
-    special_words(33,0) = "exceeds";    special_words(33,1) = "exceed";
-    special_words(34,0) = "exceeded";   special_words(34,1) = "exceed";
-    special_words(35,0) = "exceeding";  special_words(35,1) = "exceed";
-    special_words(36,0) = "succeed";    special_words(36,1) = "succeed";
-    special_words(37,0) = "succeeds";   special_words(37,1) = "succeed";
-    special_words(38,0) = "succeeded";  special_words(38,1) = "succeed";
-    special_words(39,0) = "succeeding"; special_words(39,1) = "succeed";
-
-#pragma omp parallel for
-    for(Index i = 0; i < documents_number; i++)
-    {
-        Tensor<string,1> current_document = tokens(i);
-
-        replace_substring(current_document, "’", "'");
-        replace_substring(current_document, "‘", "'");
-        replace_substring(current_document, "‛", "'");
-
-        for(Index j = 0; j < current_document.size(); j++)
-        {
-            string current_word = current_document(j);
-
-            trim(current_word);
-
-            if( contains(special_words.chip(0,1),current_word))
-            {
-                auto it = find(special_words.data(), special_words.data() + special_words.size(), current_word);
-
-                Index word_index = it - special_words.data();
-
-                current_document(j) = special_words(word_index,1);
-
-                break;
-            }
-
-            if(starts_with(current_word,"'"))
-            {
-                current_word = current_word.substr(1);
-            }
-
-            if(starts_with(current_word, "y"))
-            {
-                current_word = "Y" + current_word.substr(1);
-            }
-
-            for(size_t k = 1; k < current_word.size(); k++)
-            {
-                if(contains(vowels, string(1,current_word[k-1]) ) && current_word[k] == 'y')
-                {
-                    current_word[k] = 'Y';
-                }
-            }
-
-            Tensor<string,1> r1_r2(2);
-
-            r1_r2 = get_r1_r2(current_word, vowels);
-
-            bool step1a_vowel_found = false;
-            bool step1b_vowel_found = false;
-
-            // Step 0
-
-            for(Index l = 0; l < step0_suffixes_size; l++)
-            {
-                const string current_suffix = step0_suffixes(l);
-
-                if(ends_with(current_word,current_suffix))
-                {
-                    current_word = current_word.substr(0,current_word.length()-current_suffix.length());
-                    r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length());
-                    r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length());
-                    break;
-                }
-            }
-
-            // Step 1a
-
-            for(size_t l = 0; l < step1a_suffixes_size; l++)
-            {
-                const string current_suffix = step1a_suffixes[l];
-
-                if(ends_with(current_word, current_suffix))
-                {
-                    if(current_suffix == "sses")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-2);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
-                    }
-                    else if(current_suffix == "ied" || current_suffix == "ies")
-                    {
-                        if(current_word.length() - current_suffix.length() > 1)
-                        {
-                            current_word = current_word.substr(0,current_word.length()-2);
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
-                        }
-                        else
-                        {
-                            current_word = current_word.substr(0,current_word.length()-1);
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-1);
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-1);
-                        }
-                    }
-                    else if(current_suffix == "s")
-                    {
-                        for(size_t l = 0; l < current_word.length() - 2; l++)
-                        {
-                            if(contains(vowels, string(1,current_word[l])))
-                            {
-                                step1a_vowel_found = true;
-                                break;
-                            }
-                        }
-
-                        if(step1a_vowel_found)
-                        {
-                            current_word = current_word.substr(0,current_word.length()-1);
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-1);
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-1);
-                        }
-                    }
-
-                    break;
-                }
-            }
-
-            // Step 1b
-
-            for(Index k = 0; k < step1b_suffixes_size; k++)
-            {
-                const string current_suffix = step1b_suffixes[k];
-
-                if(ends_with(current_word, current_suffix))
-                {
-                    if(current_suffix == "eed" || current_suffix == "eedly")
-                    {
-                        if(ends_with(r1_r2[0], current_suffix))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ee";
-
-                            if(r1_r2[0].length() >= current_suffix.length())
-                            {
-                                r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ee";
-                            }
-                            else
-                            {
-                                r1_r2[0] = "";
-                            }
-
-                            if(r1_r2[1].length() >= current_suffix.length())
-                            {
-                                r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ee";
-                            }
-                            else
-                            {
-                                r1_r2[1] = "";
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for(size_t l = 0; l <(current_word.length() - current_suffix.length()); l++)
-                        {
-                            if(contains(vowels,string(1,current_word[l])))
-                            {
-                                step1b_vowel_found = true;
-                                break;
-                            }
-                        }
-
-                        if(step1b_vowel_found)
-                        {
-                            current_word = current_word.substr(0,current_word.length()-current_suffix.length());
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length());
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length());
-
-                            if(ends_with(current_word, "at") || ends_with(current_word, "bl") || ends_with(current_word, "iz"))
-                            {
-                                current_word = current_word + "e";
-                                r1_r2[0] = r1_r2[0] + "e";
-
-                                if(current_word.length() > 5 || r1_r2[0].length() >= 3)
-                                {
-                                    r1_r2[1] = r1_r2[1] + "e";
-                                }
-                            }
-                            else if(ends_with(current_word, double_consonants))
-                            {
-                                current_word = current_word.substr(0,current_word.length()-1);
-                                r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-1);
-                                r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-1);
-                            }
-                            else if((r1_r2[0] == "" && current_word.length() >= 3 && !contains(vowels,string(1,current_word[current_word.length()-1])) &&
-                                     !(current_word[current_word.length()-1] == 'w' || current_word[current_word.length()-1] == 'x' || current_word[current_word.length()-1] == 'Y') &&
-                                     contains(vowels,string(1,current_word[current_word.length()-2])) && !contains(vowels,string(1,current_word[current_word.length()-3]))) ||
-                                    (r1_r2[0] == "" && current_word.length() == 2 && contains(vowels,string(1,current_word[0])) && contains(vowels, string(1,current_word[1]))))
-                            {
-                                current_word = current_word + "e";
-
-                                if(r1_r2[0].length() > 0)
-                                {
-                                    r1_r2[0] = r1_r2[0] + "e";
-                                }
-
-                                if(r1_r2[1].length() > 0)
-                                {
-                                    r1_r2[1] = r1_r2[1] + "e";
-                                }
-                            }
-                        }
-                    }
-
-                    break;
-                }
-            }
-
-            // Step 1c
-
-            if(current_word.length() > 2 &&(current_word[current_word.length()-1] == 'y' || current_word[current_word.length()-1] == 'Y') &&
-                    !contains(vowels, string(1,current_word[current_word.length()-2])))
-            {
-                current_word = current_word.substr(0,current_word.length()-1) + "i";
-
-                if(r1_r2[0].length() >= 1)
-                {
-                    r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-1) + "i";
-                }
-                else
-                {
-                    r1_r2[0] = "";
-                }
-
-                if(r1_r2[1].length() >= 1)
-                {
-                    r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-1) + "i";
-                }
-                else
-                {
-                    r1_r2[1] = "";
-                }
-            }
-
-            // Step 2
-
-            for(Index l = 0; l < step2_suffixes_size; l++)
-            {
-                const string current_suffix = step2_suffixes[l];
-
-                if(ends_with(current_word,current_suffix) && ends_with(r1_r2[0],current_suffix))
-                {
-                    if(current_suffix == "tional")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-2);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
-                    }
-                    else if(current_suffix == "enci" || current_suffix == "anci" || current_suffix == "abli")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-1) + "e";
-
-                        if(r1_r2[0].length() >= 1)
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-1) + "e";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= 1)
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-1) + "e";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "";
-                        }
-                    }
-                    else if(current_suffix == "entli")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-2);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
-                    }
-                    else if(current_suffix == "izer" || current_suffix == "ization")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ize";
-
-                        if(r1_r2[0].length() >= current_suffix.length())
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ize";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= current_suffix.length())
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ize";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "";
-                        }
-                    }
-                    else if(current_suffix == "ational" || current_suffix == "ation" || current_suffix == "ator")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ate";
-
-                        if(r1_r2[0].length() >= current_suffix.length())
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ate";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= current_suffix.length())
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ate";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "e";
-                        }
-                    }
-                    else if(current_suffix == "alism" || current_suffix == "aliti" || current_suffix == "alli")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "al";
-
-                        if(r1_r2[0].length() >= current_suffix.length())
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "al";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= current_suffix.length())
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "al";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "";
-                        }
-                    }
-                    else if(current_suffix == "fulness")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-4);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-4);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-4);
-                    }
-                    else if(current_suffix == "ousli" || current_suffix == "ousness")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ous";
-
-                        if(r1_r2[0].length() >= current_suffix.length())
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ous";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= current_suffix.length())
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ous";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "";
-                        }
-                    }
-                    else if(current_suffix == "iveness" || current_suffix == "iviti")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ive";
-
-                        if(r1_r2[0].length() >= current_suffix.length())
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ive";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= current_suffix.length())
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ive";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "e";
-                        }
-                    }
-                    else if(current_suffix == "biliti" || current_suffix == "bli")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ble";
-
-                        if(r1_r2[0].length() >= current_suffix.length())
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ble";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= current_suffix.length())
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ble";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "";
-                        }
-                    }
-                    else if(current_suffix == "ogi" && current_word[current_word.length()-4] == 'l')
-                    {
-                        current_word = current_word.substr(0,current_word.length()-1);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-1);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-1);
-                    }
-                    else if(current_suffix == "fulli" || current_suffix == "lessli")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-2);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
-                    }
-                    else if(current_suffix == "li" && contains(li_ending, string(1,current_word[current_word.length()-4])))
-                    {
-                        current_word = current_word.substr(0,current_word.length()-2);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
-                    }
-
-                    break;
-                }
-            }
-
-            // Step 3
-
-            for(Index l = 0; l < step3_suffixes_size; l++)
-            {
-                const string current_suffix = step3_suffixes[l];
-
-                if(ends_with(current_word,current_suffix) && ends_with(r1_r2[0],current_suffix))
-                {
-                    if(current_suffix == "tional")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-2);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
-                    }
-                    else if(current_suffix == "ational")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ate";
-
-                        if(r1_r2[0].length() >= current_suffix.length())
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ate";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= current_suffix.length())
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ate";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "";
-                        }
-                    }
-                    else if(current_suffix == "alize")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-3);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-3);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-3);
-                    }
-                    else if(current_suffix == "icate" || current_suffix == "iciti" || current_suffix == "ical")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ic";
-
-                        if(r1_r2[0].length() >= current_suffix.length())
-                        {
-                            r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ic";
-                        }
-                        else
-                        {
-                            r1_r2[0] = "";
-                        }
-
-                        if(r1_r2[1].length() >= current_suffix.length())
-                        {
-                            r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ic";
-                        }
-                        else
-                        {
-                            r1_r2[1] = "";
-                        }
-                    }
-                    else if(current_suffix == "ful" || current_suffix == "ness")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length());
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length());
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length());
-                    }
-                    else if(current_suffix == "ative" && ends_with(r1_r2[1],current_suffix))
-                    {
-                        current_word = current_word.substr(0,current_word.length()-5);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-5);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-5);
-                    }
-
-                    break;
-                }
-            }
-
-            // Step 4
-
-            for(Index l = 0; l < step4_suffixes_size; l++)
-            {
-                const string current_suffix = step4_suffixes[l];
-
-                if(ends_with(current_word,current_suffix) && ends_with(r1_r2[1],current_suffix))
-                {
-                    if(current_suffix == "ion" &&(current_word[current_word.length()-4] == 's' || current_word[current_word.length()-4] == 't'))
-                    {
-                        current_word = current_word.substr(0,current_word.length()-3);
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-3);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-3);
-                    }
-                    else
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix.length());
-                        r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length());
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length());
-                    }
-
-                    break;
-                }
-            }
-
-            // Step 5
-
-            if(r1_r2[1][r1_r2[1].length()-1] == 'l' && current_word[current_word.length()-2] == 'l')
-            {
-                current_word = current_word.substr(0,current_word.length()-1);
-            }
-            else if(r1_r2[1][r1_r2[1].length()-1] == 'e')
-            {
-                current_word = current_word.substr(0,current_word.length()-1);
-            }
-            else if(r1_r2[0][r1_r2[0].length()-1] == 'e')
-            {
-                if(current_word.length() >= 4 &&(contains(vowels, string(1,current_word[current_word.length()-2])) ||
-                                                 (current_word[current_word.length()-2] == 'w' || current_word[current_word.length()-2] == 'x' ||
-                                                  current_word[current_word.length()-2] == 'Y') || !contains(vowels, string(1,current_word[current_word.length()-3])) ||
-                                                 contains(vowels, string(1,current_word[current_word.length()-4]))))
-                {
-                    current_word = current_word.substr(0,current_word.length()-1);
-                }
-            }
-
-            replace(current_word,"Y","y");
-            current_document(j) = current_word;
-        }
-        new_tokenized_documents(i) = current_document;
-    }
-
-    return new_tokenized_documents;
-}
-
-
-
-/// Reduces inflected(or sometimes derived) words to their word stem, base or root form(spanish language).
-
-Tensor<Tensor<string>> TextAnalytics::apply_spanish_stemmer(const Tensor<Tensor<string>>& tokens) const
-{
-    const size_t documents_number = tokens.size();
-
-    Tensor<Tensor<string>> new_tokenized_documents(documents_number);
-
-    // Set vowels and suffixes
-
-    string vowels[] = {"a", "e", "i", "o", "u", "á", "é", "í", "ó", "ú", "ü"};
-
-    const Tensor<string> vowels(Tensor<string>(vowels, vowels + sizeof(vowels) / sizeof(string) ));
-
-    string step0_suffixes[] = {"selas", "selos", "sela", "selo", "las", "les", "los", "nos", "me", "se", "la", "le", "lo"};
-
-    const Tensor<string> step0_suffixes(Tensor<string>(step0_suffixes, step0_suffixes + sizeof(step0_suffixes) / sizeof(string) ));
-
-    string step1_suffixes[] = {"amientos", "imientos", "amiento", "imiento", "aciones", "uciones", "adoras", "adores",
-                                       "ancias", "logías", "encias", "amente", "idades", "anzas", "ismos", "ables", "ibles",
-                                       "istas", "adora", "acion", "ación", "antes", "ancia", "logía", "ución", "ucion", "encia",
-                                       "mente", "anza", "icos", "icas", "ion", "ismo", "able", "ible", "ista", "osos", "osas",
-                                       "ador", "ante", "idad", "ivas", "ivos", "ico", "ica", "oso", "osa", "iva", "ivo", "ud"};
-
-    const Tensor<string> step1_suffixes(Tensor<string>(step1_suffixes, step1_suffixes + sizeof(step1_suffixes) / sizeof(string) ));
-
-    string step2a_suffixes[] = {"yeron", "yendo", "yamos", "yais", "yan",
-                                        "yen", "yas", "yes", "ya", "ye", "yo",
-                                        "yó"};
-
-    const Tensor<string> step2a_suffixes(Tensor<string>(step2a_suffixes, step2a_suffixes + sizeof(step2a_suffixes) / sizeof(string) ));
-
-    string step2b_suffixes[] = {"aríamos", "eríamos", "iríamos", "iéramos", "iésemos", "aríais",
-                                        "aremos", "eríais", "eremos", "iríais", "iremos", "ierais", "ieseis",
-                                        "asteis", "isteis", "ábamos", "áramos", "ásemos", "arían",
-                                        "arías", "aréis", "erían", "erías", "eréis", "irían",
-                                        "irías", "iréis", "ieran", "iesen", "ieron", "iendo", "ieras",
-                                        "ieses", "abais", "arais", "aseis", "éamos", "arán", "arás",
-                                        "aría", "erán", "erás", "ería", "irán", "irás",
-                                        "iría", "iera", "iese", "aste", "iste", "aban", "aran", "asen", "aron", "ando",
-                                        "abas", "adas", "idas", "aras", "ases", "íais", "ados", "idos", "amos", "imos",
-                                        "emos", "ará", "aré", "erá", "eré", "irá", "iré", "aba",
-                                        "ada", "ida", "ara", "ase", "ían", "ado", "ido", "ías", "áis",
-                                        "éis", "ía", "ad", "ed", "id", "an", "ió", "ar", "er", "ir", "as",
-                                        "ís", "en", "es"};
-
-    const Tensor<string> step2b_suffixes(Tensor<string>(step2b_suffixes, step2b_suffixes + sizeof(step2b_suffixes) / sizeof(string) ));
-
-    string step3_suffixes[] = {"os", "a", "e", "o", "á", "é", "í", "ó"};
-
-    const Tensor<string> step3_suffixes(Tensor<string>(step3_suffixes, step3_suffixes + sizeof(step3_suffixes) / sizeof(string) ));
-
-    const size_t step0_suffixes_size = step0_suffixes.size();
-    const size_t step1_suffixes_size = step1_suffixes.size();
-    const size_t step2a_suffixes_size = step2a_suffixes.size();
-    const size_t step2b_suffixes_size = step2b_suffixes.size();
-    const size_t step3_suffixes_size = step3_suffixes.size();
-
-    for(size_t i = 0; i < documents_number; i++)
-    {
-        const Tensor<string> current_document_tokens = tokens[i];
-        const size_t current_document_tokens_number = current_document_tokens.size();
-
-        new_tokenized_documents[i] = current_document_tokens;
-
-        for(size_t j = 0; j < current_document_tokens_number; j++)
-        {
-            string current_word = new_tokenized_documents[i][j];
-
-            Tensor<string> r1_r2 = get_r1_r2(current_word, vowels);
-            string rv = get_rv(current_word, vowels);
-
-            // STEP 0: attached pronoun
-
-            for(size_t k = 0; k < step0_suffixes_size; k++)
-            {
-                const string current_suffix = step0_suffixes[k];
-                const size_t current_suffix_length = current_suffix.length();
-
-                if(!(ends_with(current_word,current_suffix) && ends_with(rv, current_suffix)))
-
-                    continue;
-
-
-
-                const string before_suffix_rv = rv.substr(0,rv.length()-current_suffix_length);
-                const string before_suffix_word = current_word.substr(0,current_word.length()-current_suffix_length);
-
-                Tensor<string> presuffix(10);
-
-                presuffix[0] = "ando"; presuffix[1] = "ándo"; presuffix[2] = "ar"; presuffix[3] = "ár";
-                presuffix[4] = "er"; presuffix[5] = "ér"; presuffix[6] = "iendo"; presuffix[7] = "iéndo";
-                presuffix[4] = "ir"; presuffix[5] = "ír";
-
-                if((ends_with(before_suffix_rv,presuffix)) ||
-                  (ends_with(before_suffix_rv,"yendo") && ends_with(before_suffix_word, "uyendo")))
-                {
-                    current_word = replace_accented(before_suffix_word);
-                    rv = replace_accented(before_suffix_rv);
-                    r1_r2[0] = replace_accented(r1_r2[0].substr(0,r1_r2[0].length()-current_suffix_length));
-                    r1_r2[1] = replace_accented(r1_r2[1].substr(0,r1_r2[1].length()-current_suffix_length));
-                }
-
-                break;
-            }
-
-            // STEP 1: standard suffix removal
-
-            bool step1_success = false;
-
-            for(size_t k = 0; k < step1_suffixes_size; k++)
-            {
-                const string current_suffix = step1_suffixes[k];
-                const size_t current_suffix_length = current_suffix.length();
-
-                if(!ends_with(current_word, current_suffix))
-                {
-                    continue;
-                }
-
-                if(current_suffix == "amente" && ends_with(r1_r2[0], current_suffix))
-                {
-                    step1_success = true;
-
-                    current_word = current_word.substr(0,current_word.length()-6);
-                    r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-6);
-                    rv = rv.substr(0,rv.length()-6);
-
-                    if(ends_with(r1_r2[1],"iv"))
-                    {
-                        current_word = current_word.substr(0,current_word.length()-2);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
-                        rv = rv.substr(0,rv.length()-2);
-
-                        if(ends_with(r1_r2[1],"at"))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-2);
-                            rv = rv.substr(0,rv.length()-2);
-                        }
-                    }
-                    else if(ends_with(r1_r2[1], "os") || ends_with(r1_r2[1], "ic") || ends_with(r1_r2[1], "ad"))
-                    {
-                        current_word = current_word.substr(0,current_word.length()-2);
-                        rv = rv.substr(0,rv.length()-2);
-                    }
-                }
-                else if(ends_with(r1_r2[1], current_suffix))
-                {
-                    step1_success = true;
-
-                    if(current_suffix == "adora" || current_suffix == "ador" || current_suffix == "ación" || current_suffix == "adoras" ||
-                       current_suffix == "adores" || current_suffix == "aciones" || current_suffix == "ante" || current_suffix == "antes" ||
-                       current_suffix == "ancia" || current_suffix == "ancias")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix_length);
-                        rv = rv.substr(0,rv.length()-current_suffix_length);
-
-                        if(ends_with(r1_r2[1], "ic"))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-2);
-                            rv = rv.substr(0,rv.length()-2);
-                        }
-                    }
-                    else if(current_suffix == "logía" || current_suffix == "logías")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length) + "log";
-                        rv = rv.substr(0,rv.length()-current_suffix_length) + "log";
-                    }
-                    else if(current_suffix == "ución" || current_suffix == "uciones")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length) + "u";
-                        rv = rv.substr(0,rv.length()-current_suffix_length) + "u";
-                    }
-                    else if(current_suffix == "encia" || current_suffix == "encias")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length) + "ente";
-                        rv = rv.substr(0,rv.length()-current_suffix_length) + "ente";
-                    }
-                    else if(current_suffix == "mente")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix_length);
-                        rv = rv.substr(0,rv.length()-current_suffix_length);
-
-                        if(ends_with(r1_r2[1], "ante") || ends_with(r1_r2[1], "able") || ends_with(r1_r2[1], "ible"))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-4);
-                            rv = rv.substr(0,rv.length()-4);
-                        }
-                    }
-                    else if(current_suffix == "idad" || current_suffix == "idades")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix_length);
-                        rv = rv.substr(0,rv.length()-current_suffix_length);
-
-                        if(ends_with(r1_r2[1],"abil"))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-4);
-                            rv = rv.substr(0,rv.length()-4);
-                        }
-                        else if(ends_with(r1_r2[1],"ic"))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-2);
-                            rv = rv.substr(0,rv.length()-2);
-                        }
-                        else if(ends_with(r1_r2[1],"iv"))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-2);
-                            rv = rv.substr(0,rv.length()-2);
-                        }
-                    }
-                    else if(current_suffix == "ivo" || current_suffix == "iva" || current_suffix == "ivos" || current_suffix == "ivas")
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length);
-                        r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix_length);
-                        rv = rv.substr(0,rv.length()-current_suffix_length);
-
-                        if(ends_with(r1_r2[1], "at"))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-2);
-                            rv = rv.substr(0,rv.length()-2);
-                        }
-                    }
-                    else
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length);
-                        rv = rv.substr(0,rv.length()-current_suffix_length);
-                    }
-                }
-
-                break;
-            }
-
-            if(!step1_success)
-            {
-                // STEP 2a: verb suffixes beginning 'y'
-
-                for(size_t k = 0; k < step2a_suffixes_size; k++)
-                {
-                    const string current_suffix = step2a_suffixes[k];
-                    const size_t current_suffix_length = current_suffix.length();
-
-                    if(ends_with(rv,current_suffix) && current_word[current_word.length() - current_suffix_length - 1] == 'u')
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length);
-                        rv = rv.substr(0,rv.length()-current_suffix_length);
-
-                        break;
-                    }
-                }
-
-                // STEP 2b: other verb suffixes
-
-                for(size_t k = 0; k < step2b_suffixes_size; k++)
-                {
-                    const string current_suffix = step2b_suffixes[k];
-                    const size_t current_suffix_length = current_suffix.length();
-
-                    if(ends_with(rv, current_suffix))
-                    {
-                        current_word = current_word.substr(0,current_word.length()-current_suffix_length);
-                        rv = rv.substr(0,rv.length()-current_suffix_length);
-
-                        if(current_suffix == "en" || current_suffix == "es" || current_suffix == "éis" || current_suffix == "emos")
-                        {
-                            if(ends_with(current_word, "gu"))
-                            {
-                                current_word = current_word.substr(0,current_word.length()-1);
-                            }
-
-                            if(ends_with(rv,"gu"))
-                            {
-                                rv = rv.substr(0,rv.length()-1);
-                            }
-                        }
-
-                        break;
-                    }
-                }
-            }
-
-            // STEP 3: residual suffix
-
-            for(size_t k = 0; k < step3_suffixes_size; k++)
-            {
-                const string current_suffix = step3_suffixes[k];
-                const size_t current_suffix_length = current_suffix.length();
-
-                if(ends_with(rv, current_suffix))
-                {
-                    current_word = current_word.substr(0,current_word.length()-current_suffix_length);
-
-                    if(current_suffix == "e" || current_suffix == "é")
-                    {
-                        rv = rv.substr(0,rv.length()-current_suffix_length);
-
-                        if(ends_with(current_word, "gu") && ends_with(rv,"u"))
-                        {
-                            current_word = current_word.substr(0,current_word.length()-1);
-                        }
-                    }
-
-                    break;
-                }
-            }
-
-            new_tokenized_documents[i][j] = replace_accented(current_word);
-        }
-    }
-
-    return new_tokenized_documents;
-}
-
-
 /// Delete the numbers of the documents.
 
-void TextAnalytics::delete_numbers(Tensor<Tensor<string,1>,1>& documents) const
+void delete_numbers(Tensor<Tensor<string,1>,1>& documents)
 {
     const Index documents_number = documents.size();
 
@@ -3960,7 +2761,7 @@ void TextAnalytics::delete_numbers(Tensor<Tensor<string,1>,1>& documents) const
 
 /// Remove emails from documents.
 
-void TextAnalytics::delete_emails(Tensor<Tensor<string,1>,1>& documents) const
+void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 {
     const Index documents_number = documents.size();
 
@@ -3993,7 +2794,7 @@ void TextAnalytics::delete_emails(Tensor<Tensor<string,1>,1>& documents) const
 
 /// Remove the accents of the vowels in the documents.
 
-void TextAnalytics::replace_accented(Tensor<Tensor<string,1>,1>& documents) const
+void replace_accented(Tensor<Tensor<string,1>,1>& documents)
 {
     const Index documents_size = documents.size();
 
@@ -4011,7 +2812,7 @@ void TextAnalytics::replace_accented(Tensor<Tensor<string,1>,1>& documents) cons
 
 /// Remove the accents of the vowels of a word.
 
-void TextAnalytics::replace_accented(string& word) const
+void replace_accented(string& word)
 {
     replace(word, "á", "a");
     replace(word, "é", "e");
@@ -4048,7 +2849,7 @@ void TextAnalytics::replace_accented(string& word) const
 }
 
 
-Tensor<string,1> TextAnalytics::get_r1_r2(const string& word, const Tensor<string,1>& vowels) const
+Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
 {
     const Index word_length = word.length();
 
@@ -4085,7 +2886,7 @@ Tensor<string,1> TextAnalytics::get_r1_r2(const string& word, const Tensor<strin
 }
 
 
-string TextAnalytics::get_rv(const string& word, const Tensor<string,1>& vowels) const
+string get_rv(const string& word, const Tensor<string,1>& vowels)
 {
     string rv = "";
 
@@ -4125,81 +2926,28 @@ string TextAnalytics::get_rv(const string& word, const Tensor<string,1>& vowels)
 }
 
 
-/// Returns a string with all the text of a file
-/// @param path Path of the file to be read
-
-string TextAnalytics::read_txt_file(const string& path) const
-{
-    if(path.empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextAnalytics class.\n"
-            << "void load_documents() method.\n"
-            << "Data file name is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    ifstream file(path.c_str());
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextAnalytics class.\n"
-            << "void load_documents() method.\n"
-            << "Cannot open data file: " << path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    string result="", line;
-
-    while(file.good())
-    {
-        getline(file, line);
-        trim(line);
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        result += line;
-
-        if(file.peek() == EOF) break;
-    }
-
-    return result;
-}
-*/
-
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
 
 WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
 {
+    WordBag word_bag;
+
     const Tensor<string, 1> total = join(tokens);
 
     const Tensor<Index, 1> count = count_unique(total);
 
     const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
-/*
-    const Tensor<string,1> words = sort_by_rank(get_unique_elements(total), descending_rank);
 
-    const Tensor<Index,1> frequencies = sort_by_rank(count, descending_rank);
+    word_bag.words =  sort_by_rank(get_unique_elements(total), descending_rank);
 
-    const Tensor<Index,0> total_frequencies = frequencies.sum();
+    word_bag.frequencies = sort_by_rank(count, descending_rank);
 
-    const Tensor<double,1> percentages = ( 100/double(total_frequencies(0)) * frequencies.cast<double>()  );
+    const Tensor<Index, 0> total_frequencies = word_bag.frequencies.sum();
 
-    WordBag word_bag;
-    word_bag.words = words;
-    word_bag.frequencies = frequencies;
-    word_bag.percentages = percentages;
+    word_bag.percentages = 100*word_bag.frequencies.cast<double>()/double(total_frequencies(0));
 
     return word_bag;
-*/
-    return WordBag();
 }
 
 
@@ -4215,7 +2963,7 @@ WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& t
     Tensor<string,1> words = word_bag.words;
     Tensor<Index,1> frequencies = word_bag.frequencies;
     Tensor<double,1> percentages = word_bag.percentages;
-/*
+
     const Tensor<Index,1> indices = get_indices_less_than(frequencies, minimum_frequency);
 
     delete_indices(words, indices);
@@ -4227,8 +2975,6 @@ WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& t
     word_bag.percentages = percentages;
 
     return word_bag;
-*/
-    return WordBag();
 }
 
 
@@ -4244,7 +2990,7 @@ WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& 
     Tensor<string,1> words = word_bag.words;
     Tensor<Index,1> frequencies = word_bag.frequencies;
     Tensor<double,1> percentages = word_bag.percentages;
-/*
+
     const Tensor<Index,1> indices = get_indices_less_than(percentages, minimum_percentage);
 
     delete_indices(words, indices);
@@ -4256,8 +3002,6 @@ WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& 
     word_bag.percentages = percentages;
 
     return word_bag;
-*/
-    return WordBag();
 }
 
 
@@ -4275,7 +3019,7 @@ WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& token
     Tensor<double,1> percentages = word_bag.percentages;
 
     const Tensor<Index,0> frequencies_sum = frequencies.sum();
-/*
+
     const Tensor<double,1> ratios = frequencies.cast<double>()/double(frequencies_sum(0));
 
     const Tensor<Index, 1> indices = get_indices_less_than(ratios, minimum_ratio);
@@ -4289,8 +3033,6 @@ WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& token
     word_bag.percentages = percentages;
 
     return word_bag;
-*/
-    return WordBag();
 }
 
 
@@ -4384,25 +3126,25 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 
     aux_remove_non_printable_chars(documents_copy);
 
-    Tensor<Tensor<string,1>,1> tokenized_documents = tokenize(documents_copy);
+    Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
 
-    delete_stop_words(tokenized_documents);
+    delete_stop_words(tokens);
 /*
-    delete_short_words(tokenized_documents, short_words_length);
+    delete_short_words(tokens, short_words_length);
 
-    delete_long_words(tokenized_documents, long_words_length);
+    delete_long_words(tokens, long_words_length);
 */
-    replace_accented(tokenized_documents);
+    replace_accented(tokens);
 
-    delete_emails(tokenized_documents);
+    delete_emails(tokens);
 
-    tokenized_documents = apply_stemmer(tokenized_documents);
+    //tokens = apply_stemmer(tokens); deleted recover from git
 
-    delete_numbers(tokenized_documents);
+    delete_numbers(tokens);
 
-    delete_blanks(tokenized_documents);
+    delete_blanks(tokens);
 
-    return tokenized_documents;
+    return tokens;
 }
 
 
@@ -4420,13 +3162,13 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
 
     aux_remove_non_printable_chars(documents_copy);
 
-    Tensor<Tensor<string,1>,1> tokenized_documents = tokenize(documents_copy);
+    Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
 
-    delete_emails(tokenized_documents);
+    delete_emails(tokens);
 
-    delete_blanks(tokenized_documents);
+    delete_blanks(tokens);
 
-    return tokenized_documents;
+    return tokens;
 }
 
 
@@ -4509,9 +3251,9 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TextAnalytics class.\n"
-               << "Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,"
+               << "Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,"
                   "const Index& minimum_frequency,"
-                  "const Index& combinations_length) const method."
+                  "const Index& combinations_length)  method."
                << "Words number must be greater than 1.\n";
 
         throw runtime_error(buffer.str());
@@ -4522,9 +3264,9 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TextAnalytics class.\n"
-               << "Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,"
+               << "Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,"
                   "const Index& minimum_frequency,"
-                  "const Index& combinations_length) const method."
+                  "const Index& combinations_length) method."
                << "Length of combinations not valid, must be greater than 1";
 
         throw runtime_error(buffer.str());
@@ -4774,7 +3516,7 @@ void load_documents(const string& path)
 /// @param max_length Maximum length of the returned string
 /// @param one_word Boolean, if true returns just one word, if false returns a phrase
 /*
-string TextAnalytics::calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet, const string& input_string, const Index& max_length, const bool& one_word)
+string calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet, const string& input_string, const Index& max_length, const bool& one_word)
 {
     string result = one_word ? generate_word(text_generation_alphabet, input_string, max_length) : generate_phrase(text_generation_alphabet, input_string, max_length);
 
@@ -4784,7 +3526,7 @@ string TextAnalytics::calculate_text_outputs(TextGenerationAlphabet& text_genera
 
 /// @todo TEXT GENERATION
 
-string TextAnalytics::generate_word(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
+string generate_word(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
     ostringstream buffer;
 
@@ -4846,7 +3588,7 @@ string TextAnalytics::generate_word(TextGenerationAlphabet& text_generation_alph
 
 /// @todo TEXT GENERATION
 
-string TextAnalytics::generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
+string generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
     const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
 
@@ -4907,25 +3649,25 @@ TextGenerationAlphabet::~TextGenerationAlphabet()
 }
 
 
-string TextGenerationAlphabet::get_text() const
+string TextGenerationAlphabet::get_text()
 {
     return text;
 }
 
 
-Tensor<type, 2> TextGenerationAlphabet::get_data_tensor() const
+Tensor<type, 2> TextGenerationAlphabet::get_data_tensor()
 {
     return data_tensor;
 }
 
 
-Tensor<string, 1> TextGenerationAlphabet::get_alphabet() const
+Tensor<string, 1> TextGenerationAlphabet::get_alphabet()
 {
     return alphabet;
 }
 
 
-Index TextGenerationAlphabet::get_alphabet_length() const
+Index TextGenerationAlphabet::get_alphabet_length()
 {
     return alphabet.size();
 }
@@ -4959,7 +3701,7 @@ void TextGenerationAlphabet::set_alphabet(const Tensor<string, 1>& new_alphabet)
 }
 
 
-void TextGenerationAlphabet::print() const
+void TextGenerationAlphabet::print()
 {
     const Index alphabet_length = get_alphabet_length();
 
@@ -5025,7 +3767,7 @@ void TextGenerationAlphabet::preprocess()
 }
 
 
-Index TextGenerationAlphabet::get_alphabet_index(const char& ch) const
+Index TextGenerationAlphabet::get_alphabet_index(const char& ch)
 {
     auto alphabet_begin = alphabet.data();
     auto alphabet_end = alphabet.data() + alphabet.size();
@@ -5046,7 +3788,7 @@ Index TextGenerationAlphabet::get_alphabet_index(const char& ch) const
 }
 
 
-Tensor<type, 1> TextGenerationAlphabet::one_hot_encode(const string &ch) const
+Tensor<type, 1> TextGenerationAlphabet::one_hot_encode(const string &ch)
 {
     Tensor<type, 1> result(alphabet.size());
 
@@ -5060,7 +3802,7 @@ Tensor<type, 1> TextGenerationAlphabet::one_hot_encode(const string &ch) const
 }
 
 
-Tensor<type, 2> TextGenerationAlphabet::multiple_one_hot_encode(const string &phrase) const
+Tensor<type, 2> TextGenerationAlphabet::multiple_one_hot_encode(const string &phrase)
 {
     const Index phrase_length = phrase.length();
 
@@ -5081,7 +3823,7 @@ Tensor<type, 2> TextGenerationAlphabet::multiple_one_hot_encode(const string &ph
 }
 
 
-string TextGenerationAlphabet::one_hot_decode(const Tensor<type, 1>& tensor) const
+string TextGenerationAlphabet::one_hot_decode(const Tensor<type, 1>& tensor)
 {
     const Index length = alphabet.size();
 
@@ -5102,7 +3844,7 @@ string TextGenerationAlphabet::one_hot_decode(const Tensor<type, 1>& tensor) con
 }
 
 
-string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& tensor) const
+string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& tensor)
 {
     const Index length = alphabet.size();
 
@@ -5132,7 +3874,7 @@ string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& te
 }
 
 
-Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string) const
+Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 {
     Tensor<type, 2> input_data = multiple_one_hot_encode(input_string);
 
