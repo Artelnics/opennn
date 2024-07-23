@@ -1630,8 +1630,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
-    //const Tensor<type, 2> input_i__ = data_set.get_raw_variable_data(0);
-    //cout << "\n -- input_i__ 0 --  \n" << input_i__;
  /*
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -2023,7 +2021,7 @@ void DataSetTest::run_test_case()
     test_destructor();
 
     // Data resizing methods
-/*
+
     test_unuse_constant_raw_variables();
     test_unuse_repeated_samples();
     test_unuse_uncorrelated_raw_variables();
@@ -2034,11 +2032,11 @@ void DataSetTest::run_test_case()
     test_calculate_variables_means();
     test_calculate_input_variables_descriptives();
     test_calculate_used_targets_mean();
-   test_calculate_selection_targets_mean();
+    test_calculate_selection_targets_mean();
 
     // Histrogram methods
 
-   test_calculate_data_distributions();
+    test_calculate_data_distributions();
 
     // Filtering methods
 
@@ -2051,11 +2049,11 @@ void DataSetTest::run_test_case()
     // Correlations
 
     test_calculate_input_target_correlations();
-*/
+
     test_calculate_input_raw_variables_correlations();
 
     // Classification methods
-/*
+
     test_calculate_target_distribution();
 
     // Outlier detection
@@ -2064,7 +2062,7 @@ void DataSetTest::run_test_case()
 
     // Serialization methods
 
-   test_read_csv();
+    test_read_csv();
 
     test_read_bank_churn_csv();
     test_read_adult_csv();
@@ -2083,7 +2081,7 @@ void DataSetTest::run_test_case()
     test_scrub_missing_values();
 
     test_fill();
-*/
+
     cout << "End of data set test case.\n\n";
 }
 
