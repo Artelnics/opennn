@@ -137,7 +137,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
         Index input_length = 2;
         Index context_length = 3;
-        Index inputs_dimension = 5;
+        Index input_dimensions = 5;
         Index context_dimension = 6;
 
         Index depth = 4;
@@ -149,11 +149,11 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
         LanguageDataSet language_data_set;
 
-        language_data_set.set_data_random_language_model(batch_samples_number, input_length, context_length, inputs_dimension, context_dimension);
+        language_data_set.set_data_random_language_model(batch_samples_number, input_length, context_length, input_dimensions, context_dimension);
 
         language_data_set.set_training();
 
-        Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
+        Transformer transformer({ input_length, context_length, input_dimensions, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
 
         type training_loss_goal = type(0.05);

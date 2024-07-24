@@ -131,7 +131,7 @@ public:
 
 protected:
 
-   dimensions inputs_dimensions;
+   dimensions input_dimensions;
 
    /// Descriptives of input variables.
 

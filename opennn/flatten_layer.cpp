@@ -31,7 +31,7 @@ FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
 
 dimensions FlattenLayer::get_inputs_dimensions() const
 {
-    return inputs_dimensions;
+    return input_dimensions;
 }
 
 
@@ -46,37 +46,37 @@ void FlattenLayer::set_name(const string& new_layer_name)
 
 Index FlattenLayer::get_outputs_number() const
 {
-    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2];
+    return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
 }
 
 
 dimensions FlattenLayer::get_output_dimensions() const
 {
-    return { inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2] };
+    return { input_dimensions[0] * input_dimensions[1] * input_dimensions[2] };
 }
 
 
 Index FlattenLayer::get_inputs_number() const
 {
-    return inputs_dimensions[0] * inputs_dimensions[1] * inputs_dimensions[2];
+    return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
 }
 
 
 Index FlattenLayer::get_input_height() const
 {
-    return inputs_dimensions[0];
+    return input_dimensions[0];
 }
 
 
 Index FlattenLayer::get_input_width() const
 {
-    return inputs_dimensions[1];
+    return input_dimensions[1];
 }
 
 
 Index FlattenLayer::get_input_channels() const
 {
-    return inputs_dimensions[2];
+    return input_dimensions[2];
 }
 
 
@@ -84,7 +84,7 @@ Index FlattenLayer::get_input_channels() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return inputs_dimensions[0]* inputs_dimensions[1] * inputs_dimensions[2];
+    return input_dimensions[0]* input_dimensions[1] * input_dimensions[2];
 }
 
 
@@ -95,7 +95,7 @@ void FlattenLayer::set(const dimensions& new_input_dimensions)
 {
     layer_name = "flatten_layer";
 
-    inputs_dimensions = new_input_dimensions;
+    input_dimensions = new_input_dimensions;
 }
 
 
@@ -305,16 +305,16 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
 
-    dimensions inputs_dimensions = flatten_layer->get_inputs_dimensions();
+    dimensions input_dimensions = flatten_layer->get_inputs_dimensions();
 
     input_derivatives.resize(batch_samples_number,
-            inputs_dimensions[0],
-            inputs_dimensions[1],
-            inputs_dimensions[2]);
+            input_dimensions[0],
+            input_dimensions[1],
+            input_dimensions[2]);
 
     inputs_derivatives.resize(1);
     inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2] };
+    inputs_derivatives(0).second = { batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2] };
 }
 
 }
