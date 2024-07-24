@@ -78,7 +78,7 @@ int main()
         Tensor<type,1> processed_review_2 = text_data_set.sentence_to_data(review_2);
 
         Tensor<type,2> input_data(2, words_number);
-        Tensor<Index, 1> inputs_dimension = get_dimensions(input_data);
+        Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
         Tensor<type, 2> output_data;
 

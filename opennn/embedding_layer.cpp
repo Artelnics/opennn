@@ -45,7 +45,7 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
 
 Index EmbeddingLayer::get_input_dimension() const
 {
-    return inputs_dimension;
+    return input_dimensions;
 }
 
 
@@ -123,7 +123,7 @@ const bool& EmbeddingLayer::get_display() const
 
 void EmbeddingLayer::set()
 {
-    inputs_dimension = 0;
+    input_dimensions = 0;
 
     inputs_number = 0;
 
@@ -145,7 +145,7 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
                          const Index& new_depth,
                          const bool& new_positional_encoding)
 {
-    inputs_dimension = new_inputs_dimension;
+    input_dimensions = new_inputs_dimension;
 
     inputs_number = new_inputs_number;
 
@@ -181,7 +181,7 @@ void EmbeddingLayer::set_name(const string& new_layer_name)
 
 void EmbeddingLayer::set_input_dim(const Index& new_inputs_dimension)
 {
-    inputs_dimension = new_inputs_dimension;
+    input_dimensions = new_inputs_dimension;
 
     set_embedding_weights();
 }
@@ -214,7 +214,7 @@ void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 
 void EmbeddingLayer::set_embedding_weights()
 {
-    embedding_weights.resize(inputs_dimension, depth);
+    embedding_weights.resize(input_dimensions, depth);
 
     set_parameters_random();
 }
@@ -289,22 +289,22 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs)
 
 
 /*
-/// Calculates one-hot encoding, of dimension = inputs_dimension, of an input row (assuming all input values are integers)
+/// Calculates one-hot encoding, of dimension = input_dimensions, of an input row (assuming all input values are integers)
 /// @return Matrix of one-hot encodings of all values in input_row
 
 Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_row)
 {
-    Tensor<type, 2> one_hot_encoded_input_row(inputs_number, inputs_dimension);
+    Tensor<type, 2> one_hot_encoded_input_row(inputs_number, input_dimensions);
     one_hot_encoded_input_row.setZero();
 
     const Tensor<type, 0> max_input = input_row.maximum();
 
-    if(max_input(0) >= type(inputs_dimension))
+    if(max_input(0) >= type(input_dimensions))
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
                << "void EmbeddingLayer::one_hot_encode_row(const Tensor<Index, 1>&)\n"
-               << "All input values must be less than " << inputs_dimension << " (" << max_input(0) << ").\n";
+               << "All input values must be less than " << input_dimensions << " (" << max_input(0) << ").\n";
         throw invalid_argument(buffer.str());
     }
 

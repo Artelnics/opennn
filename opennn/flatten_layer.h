@@ -109,7 +109,7 @@ public:
 
 protected:
 
-    dimensions inputs_dimensions;
+    dimensions input_dimensions;
 
     /// Display warning messages to screen.
 

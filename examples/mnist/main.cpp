@@ -58,8 +58,6 @@ int main()
         ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
         neural_network.add_layer(scaling_layer);
 
-        scaling_layer->print();
-
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions());
         neural_network.add_layer(convolutional_layer);
 
