@@ -22,7 +22,7 @@ public:
 
    virtual ~ConvolutionalLayerTest();
 
-   void test_eigen_convolution();
+   void test_eigen_convolution_2d();
    void test_eigen_convolution_3d();
    void test_read_bmp();
 
@@ -36,7 +36,7 @@ public:
 
    void test_calculate_combinations();
 
-   ///@move to polling
+   ///@move to pooling
    void test_calculate_average_pooling_outputs();
    void test_calculate_max_pooling_outputs();
 

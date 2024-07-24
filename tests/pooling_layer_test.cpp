@@ -153,10 +153,10 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
 
     const Index input_channels = 3;
     const Index input_height = 5;
-    const Index inputs_raw_variables_number = 5;
+    const Index input_width = 5;
 
-    const Index pool_rows_number = 2;
-    const Index pool_raw_variables_number = 2;
+    const Index pool_height = 2;
+    const Index pool_width = 2;
 
     const Index targets_number = 1;
 /*
@@ -174,8 +174,8 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
                                           inputs_raw_variables_number});
 
     Tensor<Index, 1> pool_dimensions(2);
-    pool_dimensions.setValues({pool_rows_number,
-                               pool_raw_variables_number});
+    pool_dimensions.setValues({pool_height,
+                               pool_width});
 
     PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
 
@@ -224,7 +224,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
     Tensor<Index, 1> outputs_dimensions = pooling_layer_forward.outputs_dimensions;
 
     assert_true(outputs_dimensions.size() == input_dimensions.size(), LOG);
-    for(Index i = 0; i < outputs_dimensions.size(); ++i)
+    for(Index i = 0; i < outputs_dimensions.size(); i++)
     {
         assert_true(outputs_dimensions(i) <= input_dimensions(i), LOG);
     }
