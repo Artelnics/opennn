@@ -45,7 +45,7 @@ struct Batch
 
     DataSet* data_set = nullptr;
 
-    dimensions inputs_dimensions;
+    dimensions input_dimensions;
 
     Tensor<type, 1> inputs_tensor;
 

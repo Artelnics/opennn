@@ -49,9 +49,9 @@ void FlattenLayerTest::test_forward_propagate()
     Tensor<type, 4> inputs(image_height, image_width, image_channels_number, images_number);
     inputs.setRandom();
 
-    dimensions inputs_dimensions({image_height, image_width, image_channels_number, images_number});
+    dimensions input_dimensions({image_height, image_width, image_channels_number, images_number});
 
-    flatten_layer.set(inputs_dimensions);
+    flatten_layer.set(input_dimensions);
 
     Tensor<type, 2> outputs;
 
