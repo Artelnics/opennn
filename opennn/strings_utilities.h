@@ -143,8 +143,7 @@ namespace opennn
     void delete_non_printable_chars(Tensor<string, 1>&);
     void delete_extra_spaces(Tensor<string, 1>&);
     void aux_remove_non_printable_chars(Tensor<string, 1>&);
-    Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>&);
-    void delete_emails(Tensor<Tensor<string, 1>, 1>&);
+    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
     void delete_blanks(Tensor<string, 1>&);
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
@@ -172,8 +171,6 @@ namespace opennn
     Tensor<Tensor<string, 1>, 1> get_targets();
 
     Tensor<string, 1> get_stop_words();
-
-    Index get_document_sentences_number();
 
     Tensor<Index, 1> get_words_number(const Tensor<Tensor<string, 1>, 1>&);
 
@@ -211,7 +208,7 @@ namespace opennn
 
     string to_string(Tensor<string,1>);
 
-    Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>&);
+    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
 
     Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>&);
 
@@ -220,8 +217,6 @@ namespace opennn
     Index calculate_weight(const Tensor<string, 1>&, const WordBag&);
 
     Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&);
-
-    string read_txt_file(const string&);
 
     // Preprocess methods
 
@@ -266,12 +261,6 @@ namespace opennn
     string get_rv(const string&, const Tensor<string, 1>&);
 
     Tensor<string, 1> get_r1_r2(const string&, const Tensor<string, 1>&);
-
-    Tensor<Tensor<string, 1>, 1> apply_stemmer(const Tensor<Tensor<string, 1>, 1>&);
-
-    Tensor<Tensor<string, 1>, 1> apply_english_stemmer(const Tensor<Tensor<string, 1>, 1>&);
-
-    Tensor<Tensor<string, 1>, 1> apply_spanish_stemmer(const Tensor<Tensor<string, 1>, 1>&);
 
     // Word bag
 

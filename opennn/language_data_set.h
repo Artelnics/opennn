@@ -82,6 +82,7 @@ public:
     void write_XML(tinyxml2::XMLPrinter&) const;
 
     void import_vocabulary(const string&, Tensor<string, 1>&);
+
     const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens,
                                                  int vocabulary_size,
                                                  const vector<string>& reserved_tokens,
