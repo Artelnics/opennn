@@ -114,7 +114,7 @@ public:
 
     Index get_input_channels() const;
     Index get_input_height() const;
-    Index get_inputs_columns_number() const;
+    Index get_input_width() const;
 
     Index get_inputs_number() const;
     Index get_neurons_number() const;
@@ -160,7 +160,7 @@ public:
 
     // Padding
 
-    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+//    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     // Forward propagation
 
@@ -218,7 +218,7 @@ protected:
 
    Index column_stride = 1;
 
-   dimensions inputs_dimensions;
+   dimensions input_dimensions;
 
    ConvolutionType convolution_type = ConvolutionType::Valid;
 
@@ -272,7 +272,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
-
    explicit ConvolutionalLayerBackPropagation();
 
    explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
@@ -283,23 +282,22 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    void print() const;
 
-   Tensor<type, 4> error_combinations_derivatives;
+   Tensor<type, 4> error_convolutions_derivatives;
    Tensor<type, 4> input_derivatives;
 
    Tensor<type, 1> biases_derivatives;
    Tensor<type, 4> synaptic_weights_derivatives;
 };
 
-
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/convolutional_layer_forward_propagation_cuda.h"
     #include "../../opennn_cuda/opennn_cuda/convolutional_layer_back_propagation_cuda.h"
 #endif
 
-
 }
 
 #endif
+
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //

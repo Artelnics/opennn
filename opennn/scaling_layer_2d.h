@@ -145,7 +145,7 @@ public:
 
 protected:
 
-   Tensor<Index, 1> inputs_dimensions;
+   Tensor<Index, 1> input_dimensions;
 
    /// Descriptives of input variables.
 

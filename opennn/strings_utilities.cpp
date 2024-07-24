@@ -2140,7 +2140,7 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
 
 Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
 {
-    const Index words_number = count(documents);
+    const Index words_number = count_tokens(documents);
 
     Tensor<string, 1> words_list(words_number);
 
@@ -2933,7 +2933,7 @@ WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
 {
     WordBag word_bag;
 
-    const Tensor<string, 1> total = join(tokens);
+    const Tensor<string, 1> total = tokens_list(tokens);
 
     const Tensor<Index, 1> count = count_unique(total);
 
@@ -3241,7 +3241,7 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
                                                        const Index& minimum_frequency,
                                                        const Index& combinations_length)
 {
-    const Tensor<string, 1> words = join(tokens);
+    const Tensor<string, 1> words = tokens_list(tokens);
 
     const WordBag top_word_bag = calculate_word_bag_minimum_frequency(tokens, minimum_frequency);
     const Tensor<string, 1> words_name = top_word_bag.words;

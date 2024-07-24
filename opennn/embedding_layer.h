@@ -40,7 +40,7 @@ struct EmbeddingLayerBackPropagationCuda;
 
 /// This class represents an Embedding layer.
 
-/// EmbeddingLayer has inputs of a fixed length (inputs_number) and within a fixed set of possible integer values (inputs_dimensions).
+/// EmbeddingLayer has inputs of a fixed length (inputs_number) and within a fixed set of possible integer values (input_dimensions).
 /// The layer will assign to each possible value a dense vector of fixed length (depth).
 
 
@@ -146,7 +146,7 @@ protected:
     /// Input dimension (i.e. number of values input can take, or vocabulary size)
     /// @todo change this to something that is not confusing?
 
-    Index inputs_dimension;
+    Index input_dimensions;
 
     /// Length of each input entry (assuming equal length)
 
@@ -209,10 +209,10 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 //            cout << attention_scores.dimensions() << endl;
 
 //            cout << "Outputs dimensions:" << endl;
-//            cout << outputs_dimensions << endl;
+//            cout << output_dimensions << endl;
 
 //            cout << "Outputs:" << endl;
-//            cout << TensorMap<Tensor<type,3>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2)) << endl;
+//            cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
 
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores << endl;

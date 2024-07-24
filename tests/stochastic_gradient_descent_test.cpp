@@ -133,7 +133,7 @@ void StochasticGradientDescentTest::test_transformer_training()
 
     Index context_length;
     Index context_dimension;
-    Index inputs_dimension;
+    Index input_dimensions;
 
     LanguageDataSet data_set;
 
@@ -154,7 +154,7 @@ void StochasticGradientDescentTest::test_transformer_training()
 
     inputs_number = 2;
     context_length = 3;
-    inputs_dimension = 5;
+    input_dimensions = 5;
     context_dimension = 6;
 
     depth = 4;
@@ -162,9 +162,9 @@ void StochasticGradientDescentTest::test_transformer_training()
     heads_number = 4;
     number_of_layers = 1;
 
-    data_set.set_data_random_language_model(samples_number, inputs_number, context_length, inputs_dimension, context_dimension);
+    data_set.set_data_random_language_model(samples_number, inputs_number, context_length, input_dimensions, context_dimension);
 
-    transformer.set({ inputs_number, context_length, inputs_dimension, context_dimension,
+    transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
                         depth, perceptron_depth, heads_number, number_of_layers });
 
     stochastic_gradient_descent.set_loss_goal(NUMERIC_LIMITS_MIN);

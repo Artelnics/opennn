@@ -47,7 +47,7 @@ void CrossEntropyError3DTest::test_back_propagate()
     {
         batch_samples_number = 1;
         inputs_number = 1;
-        inputs_dimension = 0;
+        input_dimensions = 0;
         depth = 1;
         
         // Data set
@@ -74,10 +74,10 @@ void CrossEntropyError3DTest::test_back_propagate()
 
         neural_network.set();
         
-        EmbeddingLayer* embedding_layer = new EmbeddingLayer(inputs_dimension, inputs_number, depth);
+        EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
         neural_network.add_layer(embedding_layer);
 
-        ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, inputs_dimension + 1);
+        ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, input_dimensions + 1);
         neural_network.add_layer(probabilistic_layer_3d);
         
         neural_network.set_parameters_constant(type(0));
@@ -100,7 +100,7 @@ void CrossEntropyError3DTest::test_back_propagate()
     {
         batch_samples_number = type(1) + rand() % 5;
         inputs_number = type(1) + rand() % 5;
-        inputs_dimension = type(1) + rand() % 5;
+        input_dimensions = type(1) + rand() % 5;
         depth = type(1) + rand() % 5;
 
         // Data set
@@ -110,7 +110,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         for(Index i = 0; i < batch_samples_number; i++)
         {
             for(Index j = 0; j < 2 * inputs_number; j++)
-                data(i, j) = type(rand() % (inputs_dimension+1));
+                data(i, j) = type(rand() % (input_dimensions+1));
         }
 
         data_set.set_data(data);
@@ -135,10 +135,10 @@ void CrossEntropyError3DTest::test_back_propagate()
 
         neural_network.set();
 
-        EmbeddingLayer* embedding_layer = new EmbeddingLayer(inputs_dimension, inputs_number, depth);
+        EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
         neural_network.add_layer(embedding_layer);
 
-        ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, inputs_dimension + 1);
+        ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, input_dimensions + 1);
         neural_network.add_layer(probabilistic_layer_3d);
 
         forward_propagation.set(batch_samples_number, &neural_network);
@@ -160,7 +160,7 @@ void CrossEntropyError3DTest::test_back_propagate()
     {
         batch_samples_number = type(1) + rand() % 5;
         inputs_number = type(1) + rand() % 5;
-        inputs_dimension = type(1) + rand() % 5;
+        input_dimensions = type(1) + rand() % 5;
         depth = type(1) + rand() % 5;
 
         Index hidden_depth = type(1) + rand() % 5;
@@ -172,7 +172,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         for(Index i = 0; i < batch_samples_number; i++)
         {
             for(Index j = 0; j < 2 * inputs_number; j++)
-                data(i, j) = type(rand() % (inputs_dimension + 1));
+                data(i, j) = type(rand() % (input_dimensions + 1));
         }
 
         data_set.set_data(data);
@@ -197,7 +197,7 @@ void CrossEntropyError3DTest::test_back_propagate()
 
         neural_network.set();
 
-        EmbeddingLayer* embedding_layer = new EmbeddingLayer(inputs_dimension, inputs_number, depth);
+        EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
         neural_network.add_layer(embedding_layer);
 
         PerceptronLayer3D* perceptron_layer_3d_internal = new PerceptronLayer3D(inputs_number, depth, hidden_depth);
@@ -206,7 +206,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         PerceptronLayer3D* perceptron_layer_3d_external = new PerceptronLayer3D(inputs_number, hidden_depth, depth);
         neural_network.add_layer(perceptron_layer_3d_external);
 
-        ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, inputs_dimension + 1);
+        ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, input_dimensions + 1);
         neural_network.add_layer(probabilistic_layer_3d);
 
         forward_propagation.set(batch_samples_number, &neural_network);
@@ -251,7 +251,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         inputs_number = 4;
         context_length = 6;
-        inputs_dimension = 11;
+        input_dimensions = 11;
         context_dimension = 10;
 
         depth = 4; 
@@ -261,7 +261,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         bool is_training = true;
         
-        data_set.set_data_random_language_model(batch_samples_number, inputs_number, context_length, inputs_dimension, context_dimension);
+        data_set.set_data_random_language_model(batch_samples_number, inputs_number, context_length, input_dimensions, context_dimension);
 
         data_set.set_training();
 
@@ -274,7 +274,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
         
-        transformer.set({ inputs_number, context_length, inputs_dimension, context_dimension,
+        transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
                           depth, perceptron_depth, heads_number, number_of_layers });
         
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);

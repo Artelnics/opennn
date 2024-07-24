@@ -23,8 +23,6 @@ public:
    virtual ~ConvolutionalLayerTest();
 
    void test_eigen_convolution();
-   void test_eigen_convolution_3d();
-   void test_read_bmp();
 
    // Constructor and destructor methods
 
@@ -34,19 +32,13 @@ public:
 
    // Combinations
 
-   void test_calculate_combinations();
-
-   ///@move to polling
-   void test_calculate_average_pooling_outputs();
-   void test_calculate_max_pooling_outputs();
+   void test_calculate_convolutions();
 
    // Activation
 
    void test_calculate_activations();
 
    void test_calculate_activations_derivatives();
-
-   void test_forward_propagation();
 
   // Outputs
 

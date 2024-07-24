@@ -22,31 +22,28 @@ PoolingLayerTest::~PoolingLayerTest()
 void PoolingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
-
 }
 
 void PoolingLayerTest::test_destructor()
 {
    cout << "test_destructor\n";
-
 }
 
+/*
 void PoolingLayerTest::test_calculate_average_pooling_outputs()
 {
     cout << "test_calculate_average_pooling_outputs\n";
 
-//
-
-//    Tensor<type, 2> inputs;
-//    Tensor<type, 2> outputs;
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> outputs;
 
     // Test
 
-//    inputs.resize(({6,6,6,6}));
+    inputs.resize(6,6,6,6);
 
-//    pooling_layer.set_pool_size(1,1);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_raw_variable_stride(1);
+    pooling_layer.set_pool_size(1, 1);
+    pooling_layer.set_row_stride(1);
+    pooling_layer.set_column_stride(1);
 
 //    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
@@ -61,7 +58,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 //    pooling_layer.set_pool_size(2,2);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_raw_variable_stride(1);
+//    pooling_layer.set_column_stride(1);
 
 //    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
@@ -92,7 +89,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 //    pooling_layer.set_pool_size(2, 2);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_raw_variable_stride(1);
+//    pooling_layer.set_column_stride(1);
 
 //    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
@@ -132,7 +129,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 //    pooling_layer.set_pool_size(3, 3);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_raw_variable_stride(1);
+//    pooling_layer.set_column_stride(1);
 
 //    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
@@ -144,114 +141,180 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 //                outputs(0,0,0,1) - 13.5555 < 0.001 &&
 //                outputs(0,0,1,0) - 46.4444 < 0.001 &&
 //                outputs(0,0,1,1) - 23.4444 < 0.001, LOG);
+
+    // input_dimensions
+
+    const Index input_images = 1;
+    const Index channels = 1;
+
+    const Index input_heigth = 4;
+    const Index input_width = 4;
+
+    //pooling dimensions
+
+    const Index pool_height = 2;
+    const Index pool_width = 2;
+
+    //stride
+
+    const Index row_stride = 1;
+    const Index column_stride = 1;
+
+    //output dimensions
+
+    const Index output_height = (input_heigth - pool_height)/row_stride + 1;
+    const Index output_width = (input_width - pool_width)/column_stride +1;
+
+    inputs.resize(input_heigth, input_width, channels, input_images);
+    outputs.resize(output_height, output_width, channels, input_images);
+
+    inputs.setRandom();
+
+    //pooling average
+
+    Index column = 0;
+    Index row = 0;
+
+    for(int i = 0; i<input_images; i++)
+    {
+        for(int c = 0; c < channels; c++)
+        {
+            for(int k = 0; k < output_width; k++)
+            {
+                for(int l = 0; l < output_height; l++)
+                {
+                    float tmp_result = 0;
+
+                    for(int m = 0; m < pool_width; m++)
+                    {
+                        column = m*column_stride + k;
+
+                        for(int n = 0; n < pool_height; n++)
+                        {
+                            row = n*row_stride + l;
+
+                            tmp_result += inputs(row,column,c,i);
+                        }
+                    }
+
+                    outputs(l,k,c,i) = tmp_result/(pool_width*pool_height);
+                }
+            }
+        }
+    }
+}
+*/
+
+
+void PoolingLayerTest::test_forward_propagate_max_pooling()
+{
+    cout << "test_forward_propagate_max_pooling" << endl;
 }
 
 
 void PoolingLayerTest::test_forward_propagate_average_pooling()
 {
+    cout << "test_forward_propagate_average_pooling" << endl;
+
     const Index batch_samples_number = 1;
 
     const Index input_channels = 3;
     const Index input_height = 5;
-    const Index inputs_raw_variables_number = 5;
+    const Index input_width = 5;
 
-    const Index pool_rows_number = 2;
-    const Index pool_raw_variables_number = 2;
+    const Index pool_height = 2;
+    const Index pool_width = 2;
 
     const Index targets_number = 1;
-/*
-    DataSet data_set(batch_samples_number,
-                     input_channels,
-                     input_height,
-                     inputs_raw_variables_number,
-                     targets_number);
 
-    data_set.set_data_constant(type(1));
+    dimensions input_dimensions;
+    dimensions pool_dimensions;
+    dimensions output_dimensions;
 
-    Tensor<Index, 1> input_dimensions(3);
-    input_dimensions.setValues({input_channels,
-                                          input_height,
-                                          inputs_raw_variables_number});
+    pair<type*, dimensions> outputs_pair;
 
-    Tensor<Index, 1> pool_dimensions(2);
-    pool_dimensions.setValues({pool_rows_number,
-                               pool_raw_variables_number});
-
-    PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
-
-
-    PoolingLayerForwardPropagation pooling_layer_forward(batch_samples_number, &pooling_layer);
-
-    Tensor<type, 4> inputs_data(batch_samples_number,
+    ImageDataSet image_data_set(batch_samples_number,
                                 input_channels,
                                 input_height,
-                                inputs_raw_variables_number);
+                                input_width,
+                                targets_number);
 
-    inputs_data.setValues({
-                    {
-        {
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0}
-        },
-        {
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0}
-        },
-        {
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0}
-        }
-    }
-});
+    image_data_set.set_data_constant(type(1));
 
+    input_dimensions = {input_channels,
+                        input_height,
+                        input_width};
+
+    pool_dimensions = {pool_height,
+                       pool_width};
 
     bool is_training = true;
 
-    pooling_layer.forward_propagate_average_pooling(inputs_data.data(),
-                                                    input_dimensions,
-                                                    &pooling_layer_forward,
+    PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
+
+    PoolingLayerForwardPropagation pooling_layer_forward_propagation(batch_samples_number, &pooling_layer);
+
+    Tensor<type, 4> inputs(batch_samples_number,
+                           input_channels,
+                           input_height,
+                           input_width);
+
+    inputs.setValues({{
+        {{0.0, 1.0, 2.0, 2.0, 2.0},
+         {0.0, 1.0, 2.0, 2.0, 2.0},
+         {0.0, 1.0, 2.0, 2.0, 2.0},
+         {0.0, 1.0, 2.0, 2.0, 2.0},
+         {0.0, 1.0, 2.0, 2.0, 2.0}
+        },
+        {
+        {0.0, 1.0, 2.0, 2.0, 2.0},
+        {0.0, 1.0, 2.0, 2.0, 2.0},
+        {0.0, 1.0, 2.0, 2.0, 2.0},
+        {0.0, 1.0, 2.0, 2.0, 2.0},
+        {0.0, 1.0, 2.0, 2.0, 2.0}
+        },
+        {
+        {0.0, 1.0, 2.0, 2.0, 2.0},
+        {0.0, 1.0, 2.0, 2.0, 2.0},
+        {0.0, 1.0, 2.0, 2.0, 2.0},
+        {0.0, 1.0, 2.0, 2.0, 2.0},
+        {0.0, 1.0, 2.0, 2.0, 2.0}
+        }
+    }});
+
+    pooling_layer.forward_propagate_average_pooling(inputs,
+                                                    &pooling_layer_forward_propagation,
                                                     is_training);
 
-    Tensor<Index, 1> outputs_dimensions = pooling_layer_forward.outputs_dimensions;
+    outputs_pair = pooling_layer_forward_propagation.get_outputs_pair();
 
-    assert_true(outputs_dimensions.size() == input_dimensions.size(), LOG);
-    for(Index i = 0; i < outputs_dimensions.size(); i++)
+    assert_true(outputs_pair.second.size() == input_dimensions.size(), LOG);
+
+    for(Index i = 0; i < output_dimensions.size(); i++)
     {
-        assert_true(outputs_dimensions(i) <= input_dimensions(i), LOG);
+//        assert_true(outputs_pair.second.dimensions(i) <= input_dimensions(i), LOG);
     }
-
+/*
     type* outputs_data = pooling_layer_forward.outputs_data(0);
 
     TensorMap<Tensor<type, 4>> outputs(outputs_data,
-                                       outputs_dimensions[0],
-                                       outputs_dimensions(1),
-                                       outputs_dimensions(2),
-                                       outputs_dimensions(3));
+                                       output_dimensions[0],
+                                       output_dimensions(1),
+                                       output_dimensions(2),
+                                       output_dimensions(3));
 
     Tensor<type, 3> batch = outputs.chip(0,0);
 
     cout << "1 single channel: " << endl << batch.chip(0,0) << endl;
 
     cout << "outputs: " << endl << outputs << endl;
-
-    cout << "Bye!" << endl;
 */
 }
 
+/*
 void PoolingLayerTest::test_calculate_max_pooling_outputs()
 {
     cout << "test_calculate_max_pooling_outputs\n";
-
-//
 
 //    Tensor<type, 2> inputs;
 //    Tensor<type, 2> outputs;
@@ -262,7 +325,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
 //    pooling_layer.set_pool_size(1,1);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_raw_variable_stride(1);
+//    pooling_layer.set_column_stride(1);
 
 //    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -277,7 +340,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
 //    pooling_layer.set_pool_size(2,2);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_raw_variable_stride(1);
+//    pooling_layer.set_column_stride(1);
 
 //    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -308,7 +371,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
 //    pooling_layer.set_pool_size(2, 2);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_raw_variable_stride(1);
+//    pooling_layer.set_column_stride(1);
 
 //    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -348,7 +411,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
 //    pooling_layer.set_pool_size(3, 3);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_raw_variable_stride(1);
+//    pooling_layer.set_column_stride(1);
 
 //    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -360,8 +423,72 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 //                outputs(0,0,0,1) == 64.0 &&
 //                outputs(0,0,1,0) == 27.0 &&
 //                outputs(0,0,1,1) == 64.0, LOG);
-}
 
+    cout << "test_calculate_max_pooling_outputs\n";
+
+    //input_dimensions
+    const Index input_images = 1;
+    const Index channels = 1;
+
+    const Index input_heigth = 4;
+    const Index input_width = 4;
+
+    //pooling dimensions
+    const Index pool_height = 2;
+    const Index pool_width = 2;
+
+    //stride
+    const Index row_stride = 1;
+    const Index column_stride = 1;
+
+    //output dimensions
+
+    const Index output_height = (input_heigth - pool_height)/row_stride + 1;
+    const Index output_width = (input_width - pool_width)/column_stride +1;
+
+    Tensor<type, 4> inputs(input_heigth, input_width, channels, input_images);
+    Tensor<type, 4> outputs(output_height, output_width, channels, input_images);
+
+    inputs.setRandom();
+
+    //pooling average
+
+    Index column = 0;
+    Index row = 0;
+
+    for(int i = 0; i < input_images; i++)
+    {
+        for(int c = 0; c < channels; c++)
+        {
+            for(int k = 0; k < output_width; k++)
+            {
+                for(int l = 0; l < output_height; l++)
+                {
+                    float tmp_result = 0;
+
+                    float final_result = 0;
+
+                    for(int m = 0; m < pool_width; m++)
+                    {
+                        column = m*column_stride + k;
+
+                        for(int n = 0; n < pool_height; n++)
+                        {
+                            row = n*row_stride + l;
+
+                            tmp_result = inputs(row,column,c,i);
+
+                            if(tmp_result > final_result) final_result = tmp_result;
+                        }
+                    }
+
+                    outputs(l,k,c,i) = final_result;
+                }
+            }
+        }
+    }
+}
+*/
 
 void PoolingLayerTest::run_test_case()
 {
@@ -374,8 +501,8 @@ void PoolingLayerTest::run_test_case()
 
     // Outputs
 
-    test_calculate_average_pooling_outputs();
-    test_calculate_max_pooling_outputs();
+    test_forward_propagate_average_pooling();
+    test_forward_propagate_max_pooling();
 
    cout << "End of pooling layer test case.\n\n";
 }

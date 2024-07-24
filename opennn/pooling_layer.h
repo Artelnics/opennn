@@ -60,8 +60,6 @@ public:
 
     explicit PoolingLayer();
 
-    explicit PoolingLayer(const Tensor<Index, 1>&);
-
     explicit PoolingLayer(const dimensions&, const dimensions& = {1, 1, 1, 1});
 
     // Get methods
@@ -73,7 +71,7 @@ public:
     Index get_inputs_number() const;
 
     Index get_input_height() const;
-    Index get_inputs_columns_number() const;
+    Index get_input_width() const;
     Index get_channels_number() const;
 
     Index get_neurons_number() const;
@@ -87,8 +85,8 @@ public:
     Index get_row_stride() const;
     Index get_column_stride() const;
 
-    Index get_pool_rows_number() const;
-    Index get_pool_columns_number() const;
+    Index get_pool_height() const;
+    Index get_pool_width() const;
 
     PoolingMethod get_pooling_method() const;
 
@@ -126,23 +124,23 @@ public:
                            const bool&) final;
 
     void forward_propagate_no_pooling(const Tensor<type, 4>&,
-                           LayerForwardPropagation*,
-                           const bool&);
+                                      LayerForwardPropagation*,
+                                      const bool&);
 
     void forward_propagate_max_pooling(const Tensor<type, 4>&,
-                           LayerForwardPropagation*,
-                           const bool&) const;
+                                       LayerForwardPropagation*,
+                                       const bool&) const;
 
     void forward_propagate_average_pooling(const Tensor<type, 4>&,
-                           LayerForwardPropagation*,
-                           const bool&) const;
+                                           LayerForwardPropagation*,
+                                           const bool&) const;
 
     // Back-propagation
 
     void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                  const Tensor<pair<type*, dimensions>, 1>&,
-                                  LayerForwardPropagation*,
-                                  LayerBackPropagation*) const final;
+                        const Tensor<pair<type*, dimensions>, 1>&,
+                        LayerForwardPropagation*,
+                        LayerBackPropagation*) const final;
 
     // Serialization methods
 
@@ -155,11 +153,11 @@ public:
 
 protected:
 
-    dimensions inputs_dimensions;
+    dimensions input_dimensions;
 
-    Index pool_rows_number = 2;
+    Index pool_height = 2;
 
-    Index pool_columns_number = 2;
+    Index pool_width = 2;
 
     Index padding_heigth = 0;
 
@@ -171,7 +169,7 @@ protected:
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
-    const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3}; // For average pooling
+    const Eigen::array<ptrdiff_t, 4> average_pooling_dimensions = {0, 1, 2, 3}; // For average pooling
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
 
 };
