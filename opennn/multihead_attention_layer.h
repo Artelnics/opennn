@@ -264,10 +264,10 @@ protected:
 
 
 //            cout << "Outputs dimensions:" << endl;
-//            cout << outputs_dimensions << endl;
+//            cout << output_dimensions << endl;
 
 //            cout << "Outputs:" << endl;
-//            cout << TensorMap<Tensor<type,3>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2)) << endl;
+//            cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
 
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores << endl;

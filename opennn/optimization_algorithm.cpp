@@ -237,14 +237,14 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 }
 
 
-BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_data, Tensor<Index,1>& inputs_dimensions,
-                                                            type* & new_outputs_data, Tensor<Index,1>& outputs_dimensions)
+BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_data, Tensor<Index,1>& input_dimensions,
+                                                            type* & new_outputs_data, Tensor<Index,1>& output_dimensions)
 {
-    const Index samples_number = inputs_dimensions(0);
-    const Index inputs_number = inputs_dimensions(1);
+    const Index samples_number = input_dimensions(0);
+    const Index inputs_number = input_dimensions(1);
 
     TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
-    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, outputs_dimensions[0], outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, output_dimensions[0], output_dimensions(1));
 
     Tensor<type, 1> distances(samples_number);
     Index distance_index = 0;

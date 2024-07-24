@@ -50,7 +50,7 @@ public:
 
     void set(const initializer_list<Index>&);
 
-    void set(const Index& input_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
+    void set(const Index& input_length, const Index& context_length, const Index& input_dimensions, const Index& context_dimension,
              const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number);
 
     void set_dropout_rate(const type&);
@@ -82,7 +82,7 @@ protected:
 
     /// Maximum value in input
 
-    Index inputs_dimension;
+    Index input_dimensions;
 
     /// Maximum value in context
 

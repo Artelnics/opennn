@@ -14,8 +14,8 @@ namespace opennn
 
 LanguageDataSet::LanguageDataSet() : DataSet()
 {
-    context_variables_dimensions.resize(1);
-    context_variables_dimensions.setZero();
+    context_dimensions.resize(1);
+    context_dimensions.setZero();
 }
 
 
@@ -98,7 +98,7 @@ Index LanguageDataSet::get_context_variables_number() const
 
 const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() const
 {
-    return context_variables_dimensions;
+    return context_dimensions;
 }
 
 
@@ -235,7 +235,7 @@ void LanguageDataSet::set_default_raw_variables_uses()
     DataSet::set_default_raw_variables_uses();
 
     if(raw_variables.size() > 1)
-        context_variables_dimensions.resize(1);
+        context_dimensions.resize(1);
 }
 
 
@@ -243,8 +243,8 @@ void LanguageDataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_va
 {
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
-    context_variables_dimensions.resize(1);
-    context_variables_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.resize(1);
+    context_dimensions.setConstant(get_context_variables_number());
 }
 
 
@@ -252,14 +252,14 @@ void LanguageDataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_r
 {
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
-    context_variables_dimensions.resize(1);
-    context_variables_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.resize(1);
+    context_dimensions.setConstant(get_context_variables_number());
 }
 
 
 void LanguageDataSet::set_context_variables_dimensions(const Tensor<Index, 1>& new_context_dimensions)
 {
-    context_variables_dimensions = new_context_dimensions;
+    context_dimensions = new_context_dimensions;
 }
 
 
@@ -344,9 +344,9 @@ void LanguageDataSet::set_default()
 {
     DataSet::set_default();
 
-    context_variables_dimensions.resize(1);
+    context_dimensions.resize(1);
 
-    context_variables_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.setConstant(get_context_variables_number());
 }
 
 Tensor<string, 2> LanguageDataSet::get_text_data_file_preview() const

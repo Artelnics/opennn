@@ -36,7 +36,7 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     context_length = architecture(1);
 
-    inputs_dimension = architecture(2);
+    input_dimensions = architecture(2);
 
     context_dimension = architecture(3);
 
@@ -50,7 +50,7 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     set(input_length,
         context_length,
-        inputs_dimension,
+        input_dimensions,
         context_dimension,
         embedding_depth,
         perceptron_depth,
@@ -68,7 +68,7 @@ void Transformer::set(const initializer_list<Index>& architecture_list)
 }
 
 
-void Transformer::set(const Index& input_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
+void Transformer::set(const Index& input_length, const Index& context_length, const Index& input_dimensions, const Index& context_dimension,
                       const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number)
 {
     delete_layers();
@@ -78,7 +78,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
 
     // Embedding Layers
     
-    EmbeddingLayer* input_embedding_layer = new EmbeddingLayer(inputs_dimension, input_length, embedding_depth, true);
+    EmbeddingLayer* input_embedding_layer = new EmbeddingLayer(input_dimensions, input_length, embedding_depth, true);
 
     input_embedding_layer->set_dropout_rate(dropout_rate);
     input_embedding_layer->set_name("input_embedding");
@@ -269,7 +269,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     
     // Output layer
     
-    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(input_length, embedding_depth, inputs_dimension);
+    ProbabilisticLayer3D* final_layer = new ProbabilisticLayer3D(input_length, embedding_depth, input_dimensions);
     
     final_layer->set_name("probabilistic");
     add_layer(final_layer);

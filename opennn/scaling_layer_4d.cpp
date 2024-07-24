@@ -51,19 +51,19 @@ ScalingLayer4D::ScalingLayer4D(const Tensor<Descriptives, 1>& new_descriptives) 
 
 dimensions ScalingLayer4D::get_inputs_dimensions() const
 {
-    return inputs_dimensions;
+    return input_dimensions;
 }
 
 
 dimensions ScalingLayer4D::get_output_dimensions() const
 {
-    return inputs_dimensions;
+    return input_dimensions;
 }
 
 
 Index ScalingLayer4D::get_inputs_number() const
 {
-    return inputs_dimensions[0]*inputs_dimensions[1]*inputs_dimensions[2];
+    return input_dimensions[0]*input_dimensions[1]*input_dimensions[2];
 }
 
 
@@ -314,7 +314,7 @@ void ScalingLayer4D::set(const Index& new_inputs_number)
 
 void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
-    inputs_dimensions = new_input_dimensions;
+    input_dimensions = new_input_dimensions;
 
     const Index inputs_number = get_inputs_number();
 
@@ -758,7 +758,7 @@ void ScalingLayer4D::print() const
 
     const Index inputs_number = get_inputs_number();
 
-    print_dimensions(inputs_dimensions);
+    print_dimensions(input_dimensions);
 
     const Tensor<string, 1> scalers_text = write_scalers_text();
 
