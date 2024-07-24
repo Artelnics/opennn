@@ -1253,7 +1253,7 @@ void TextDataSet::read_txt()
 
     const Index documents_number = documents.size();
 
-    const Tensor<string, 1> word_list = join(documents);
+    const Tensor<string, 1> word_list = tokens_list(documents);
 
     cout << "Processing documents..." << endl;
 

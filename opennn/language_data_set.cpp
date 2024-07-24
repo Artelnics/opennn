@@ -1792,7 +1792,7 @@ const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tenso
                                                               bool include_joiner_token,
                                                               const string& joiner)
 {
-    Tensor<string, 1> total_tokens = join(tokens);
+    Tensor<string, 1> total_tokens = tokens_list(tokens);
 
     const vector<pair<string, int>> word_counts = count_words(total_tokens);
 

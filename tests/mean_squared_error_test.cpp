@@ -596,19 +596,19 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
 //        const Index channels = 3;
 
-//        const Index rows_input = 4;
-//        const Index cols_input = 4;
+//        const Index input_heigth = 4;
+//        const Index input_width = 4;
 //        const Index rows_kernel = 3;
 //        const Index cols_kernel = 3;
 
 //        //set dimensions
 
-//        Tensor<type,4> input_batch(rows_input, cols_input, channels, input_images);
+//        Tensor<type,4> input_batch(input_heigth, input_width, channels, input_images);
 //        Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
 //        Tensor<type,1> bias(input_kernels);
 
-//        const Index inputs_number_convolution = (rows_input)*(cols_input)*channels*input_images;
-//        const Index output_number_convolution = (rows_input - rows_kernel + 1)*(cols_input - cols_kernel + 1)*input_kernels*input_images;
+//        const Index inputs_number_convolution = (input_heigth)*(input_width)*channels*input_images;
+//        const Index output_number_convolution = (input_heigth - rows_kernel + 1)*(input_width - cols_kernel + 1)*input_kernels*input_images;
 
 //        //set values
 
@@ -864,8 +864,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
 //       const Index channels = 3;
 
-//       const Index rows_input = 3;
-//       const Index cols_input = 3;
+//       const Index input_heigth = 3;
+//       const Index input_width = 3;
 //       const Index rows_kernel = 2;
 //       const Index cols_kernel = 2;
 
@@ -898,8 +898,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //       Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
 //       Tensor<type,1> bias(input_kernels);
 
-//       const Index inputs_number_convolution = (rows_input)*(cols_input)*channels;
-//       const Index output_number_convolution = (rows_input - rows_kernel + 1)*(cols_input - cols_kernel + 1)*input_kernels;
+//       const Index inputs_number_convolution = (input_heigth)*(input_width)*channels;
+//       const Index output_number_convolution = (input_heigth - rows_kernel + 1)*(input_width - cols_kernel + 1)*input_kernels;
 
 //       //set values
 
