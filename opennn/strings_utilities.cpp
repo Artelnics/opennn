@@ -3382,7 +3382,9 @@ string calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet,
                               const Index& max_length,
                               const bool& one_word)
 {
-    string result = one_word ? generate_word(text_generation_alphabet, input_string, max_length) : generate_phrase(text_generation_alphabet, input_string, max_length);
+    string result = one_word
+? generate_word(text_generation_alphabet, input_string, max_length)
+: generate_phrase(text_generation_alphabet, input_string, max_length);
 
     return result;
 }

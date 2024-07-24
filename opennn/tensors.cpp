@@ -623,7 +623,7 @@ bool is_zero(const Tensor<type, 1>& tensor)
 }
 
 
-bool is_zero(const Tensor<type,1>& tensor,const type& limit)
+bool is_zero(const Tensor<type,1>& tensor, const type& limit)
 {
     const Index size = tensor.size();
 

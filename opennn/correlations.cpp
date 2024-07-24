@@ -463,21 +463,19 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
 
 Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlations)
 {
-    Tensor<type, 2> values;
-
     const Index rows_number = correlations.dimension(0);
-    const Index raw_variables_number = correlations.dimension(1);
-    Tensor<type, 2> values_(rows_number, raw_variables_number); /* Before "values" en all commented */
+    const Index columns_number = correlations.dimension(1);
+    Tensor<type, 2> values(rows_number, columns_number);
 
     for(Index i = 0; i < rows_number; i++)
     {
-        for(Index j = 0; j < raw_variables_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
-            values_(i,j) = correlations(i,j).r;
+            values(i,j) = correlations(i,j).r;
         }
     }
 
-    return values_;
+    return values;
 }
 
 
