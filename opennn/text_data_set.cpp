@@ -1251,7 +1251,9 @@ void TextDataSet::read_txt()
     Tensor<Tensor<string, 1>, 1> documents;
     Tensor<Tensor<string, 1>, 1> targets;
 
-    const Tensor<string, 1> word_list = join(documents);
+    const Index documents_number = documents.size();
+
+    const Tensor<string, 1> word_list = tokens_list(documents);
 
     cout << "Processing documents..." << endl;
 
@@ -1280,6 +1282,7 @@ void TextDataSet::read_txt()
 
     for(Index i  = type(0); i < document_words_number; i++)
         file << raw_variables_names(i) << ";";
+
     file << "target_variable" << "\n";
 
     // Data file preview
@@ -1287,21 +1290,21 @@ void TextDataSet::read_txt()
     Index preview_size = 4;
 
     text_data_file_preview.resize(preview_size,2);
-/*
+
     for(Index i = 0; i < preview_size - 1; i++)
     {
-        text_data_file_preview(i,0) = document(0)(i);
+        text_data_file_preview(i,0) = documents(0)(i);
         text_data_file_preview(i,1) = targets(0)(i);
     }
 
-    text_data_file_preview(preview_size - 1, 0) = document(0)(document(0).size()-1);
+    text_data_file_preview(preview_size - 1, 0) = documents(0)(documents(0).size()-1);
     text_data_file_preview(preview_size - 1, 1) = targets(0)(targets(0).size()-1);
 
 #pragma omp parallel for
 
-    for(Index i = 0; i < document.size(); i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string, 1> sheet = document(i);
+        Tensor<string, 1> sheet = documents(i);
 
         for(Index j = 0; j < sheet.size(); j++)
         {
@@ -1309,18 +1312,19 @@ void TextDataSet::read_txt()
 
             const string line = sheet(j);
 
-            Tensor<string,1> tokens = get_tokens(line);
+            const Tensor<string,1> tokens = get_tokens(line);
 
-            Tensor<Tensor<string, 1>,1> processed_tokens = text_analytics.preprocess(tokens);
+            const Tensor<Tensor<string, 1>,1> processed_tokens = preprocess(tokens);
 
-            WordBag line_word_bag = text_analytics.calculate_word_bag(processed_tokens);
+            const WordBag line_word_bag = calculate_word_bag(processed_tokens);
 
-            Tensor<string, 1> line_words = line_word_bag.words;
+            const Tensor<string, 1> line_words = line_word_bag.words;
 
-            Tensor<Index, 1> line_frequencies = line_word_bag.frequencies;
+            const Tensor<Index, 1> line_frequencies = line_word_bag.frequencies;
 
             for(Index k = 0; k < line_words.size(); k++)
             {
+/*
                 if( contains(raw_variables_names, line_words(k)) )
                 {
                     auto it = find(raw_variables_names.data(), raw_variables_names.data() + document_words_number, line_words(k));
@@ -1329,16 +1333,19 @@ void TextDataSet::read_txt()
 
                     row(word_index) = type(line_frequencies(k));
                 }
+*/
             }
 
             for(Index k = 0; k < document_words_number; k++)
                 file << row(k) << ";";
+
             for_each(targets(i)(j).begin(), targets(i)(j).end(), [](char & c){
                 c = ::tolower(c);});
+
             file << "target_" + targets(i)(j) << "\n";
         }
     }
-*/
+
     file.close();
 
     data_source_path = transformed_data_path;
@@ -1349,7 +1356,6 @@ void TextDataSet::read_txt()
 
     for(Index i = 0; i < get_input_raw_variables_number(); i++)
         set_raw_variable_type(i, RawVariableType::Numeric);
-
 }
 
 

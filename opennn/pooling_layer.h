@@ -62,7 +62,7 @@ public:
 
     explicit PoolingLayer(const Tensor<Index, 1>&);
 
-    explicit PoolingLayer(const dimensions&, const dimensions&);
+    explicit PoolingLayer(const dimensions&, const dimensions& = {1, 1, 1, 1});
 
     // Get methods
 
@@ -157,7 +157,7 @@ protected:
 
     dimensions inputs_dimensions;
 
-    Index pool_rows_number = 2;
+    Index pool_height = 2;
 
     Index pool_columns_number = 2;
 

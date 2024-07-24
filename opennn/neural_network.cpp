@@ -3143,10 +3143,10 @@ string NeuralNetwork::write_expression_c() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << inputs_outputs_buffer(2)[0];
@@ -3554,10 +3554,10 @@ string NeuralNetwork::write_expression_api() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << inputs_outputs_buffer(2)[0];
@@ -4054,10 +4054,10 @@ string NeuralNetwork::write_expression_javascript() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer_to_fix);
 
-    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     ostringstream buffer;
@@ -4626,13 +4626,13 @@ string NeuralNetwork::write_expression_python() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
     {
         inputs(i) = inputs_outputs_buffer(0)(i);
         buffer << "\t" << i << ") " << inputs(i) << endl;
     }
 
-    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << "\n" << endl;
@@ -4772,7 +4772,7 @@ string NeuralNetwork::write_expression_python() const
     {
         string inputs_list;
 
-        for(int i = 0; i < original_inputs.size();++i)
+        for(int i = 0; i < original_inputs.size();i++)
         {
             inputs_list += "'" + original_inputs(i) + "'";
 
@@ -4989,7 +4989,7 @@ string NeuralNetwork::write_expression_python() const
     buffer << "def main():" << endl;
     buffer << "\n\tinputs = []" << "\n" << endl;
 
-    for(Index i = 0; i < inputs.size(); ++i)
+    for(Index i = 0; i < inputs.size(); i++)
     {
         buffer << "\t" << inputs(i) << " = " << "#- ENTER YOUR VALUE HERE -#" << endl;
         buffer << "\t" << "inputs.append(" << inputs(i) << ")" << "\n" << endl;
