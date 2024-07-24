@@ -372,7 +372,7 @@ public:
             _blockPtrs.Push(block );
 
             Item* blockItems = block->items;
-            for(int i = 0; i < ITEMS_PER_BLOCK - 1;++i ) {
+            for(int i = 0; i < ITEMS_PER_BLOCK - 1;i++ ) {
                 blockItems[i].next = &(blockItems[i + 1]);
             }
             blockItems[ITEMS_PER_BLOCK - 1].next = 0;

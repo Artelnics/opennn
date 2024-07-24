@@ -41,7 +41,7 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_variables_dimensions, con
 
     inputs_dimensions = new_input_variables_dimensions;
 
-    pool_rows_number = pool_dimensions[0];
+    pool_height = pool_dimensions[0];
     pool_columns_number = pool_dimensions[1];
 
     set_default();
@@ -109,7 +109,7 @@ Index PoolingLayer::get_output_height() const
 
     const Index input_height = get_input_height();
 
-    return (input_height - pool_rows_number + 2*padding)/row_stride + 1;
+    return (input_height - pool_height + 2*padding)/row_stride + 1;
 }
 
 
@@ -161,7 +161,7 @@ Index PoolingLayer::get_column_stride() const
 
 Index PoolingLayer::get_pool_rows_number() const
 {
-    return pool_rows_number;
+    return pool_height;
 }
 
 
@@ -186,7 +186,6 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 dimensions PoolingLayer::get_inputs_dimensions() const
 {
     return inputs_dimensions;
-//    return { inputs_dimensions(0) ,inputs_dimensions(1) , inputs_dimensions(2)};
 }
 
 
@@ -215,7 +214,7 @@ void PoolingLayer::set(const dimensions& new_input_variables_dimensions, const d
 {
     inputs_dimensions = new_input_variables_dimensions;
 
-    pool_rows_number = new_pool_dimensions[0];
+    pool_height = new_pool_dimensions[0];
     pool_columns_number = new_pool_dimensions[1];
 
     set_default();
@@ -278,7 +277,7 @@ void PoolingLayer::set_column_stride(const Index& new_column_stride)
 void PoolingLayer::set_pool_size(const Index& new_pool_rows_number,
                                  const Index& new_pool_columns_number)
 {
-    pool_rows_number = new_pool_rows_number;
+    pool_height = new_pool_rows_number;
 
     pool_columns_number = new_pool_columns_number;
 }
@@ -368,7 +367,7 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
                        LayerForwardPropagation* layer_forward_propagation,
                        const bool& is_training) const
 {
-    const type kernel_size = type(pool_rows_number * pool_columns_number);
+    const type kernel_size = type(pool_height * pool_columns_number);
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
@@ -377,7 +376,7 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
 
     /// @todo do not create tensor
 
-    Tensor<type, 4> kernel(1, pool_rows_number, pool_columns_number, 1);
+    Tensor<type, 4> kernel(1, pool_height, pool_columns_number, 1);
 
     kernel.setConstant(type(1.0/kernel_size));
 
@@ -430,7 +429,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                                outputs_channels_number});
 
     image_patches.device(*thread_pool_device)
-            = inputs.extract_image_patches(pool_rows_number,
+            = inputs.extract_image_patches(pool_height,
                                            pool_columns_number,
                                            row_stride,
                                            column_stride,
@@ -844,7 +843,7 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
-    const Index pool_rows_number = pooling_layer->get_pool_rows_number();
+    const Index pool_height = pooling_layer->get_pool_rows_number();
 
     const Index pool_columns_number = pooling_layer->get_pool_columns_number();
 
@@ -862,7 +861,7 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
     outputs_data = outputs.data();
 
     image_patches.resize(batch_samples_number,
-        pool_rows_number,
+        pool_height,
         pool_columns_number,
         output_height * output_width,
         channels_number);
