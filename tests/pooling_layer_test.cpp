@@ -290,7 +290,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
 
     assert_true(outputs_pair.second.size() == input_dimensions.size(), LOG);
 
-    for(Index i = 0; i < output_dimensions.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(output_dimensions.size()); i++)
     {
 //        assert_true(outputs_pair.second.dimensions(i) <= input_dimensions(i), LOG);
     }
