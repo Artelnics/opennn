@@ -58,7 +58,7 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     Tensor<unsigned char, 3> image(image_height, image_width, channels_number);
 
-    for(Index i = 0; i < image_height; ++i)
+    for(Index i = 0; i < image_height; i++)
     {
         for(Index j = 0; j < image_width; ++j)
         {

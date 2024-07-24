@@ -30,7 +30,8 @@
 // Eigen includes
 
 #include "config.h"
-#include "tensors.h"
+//#include "tensors.h"
+#include "word_bag.h"
 
 using namespace std;
 
@@ -135,42 +136,21 @@ namespace opennn
 
     // Preprocess methods
 
-    Index count(const Tensor<Tensor<string, 1>, 1>& documents);
-    Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&);
+    Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents);
+    Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>&);
     void to_lower(Tensor<string, 1>& documents);
     void split_punctuation(Tensor<string, 1>&);
     void delete_non_printable_chars(Tensor<string, 1>&);
     void delete_extra_spaces(Tensor<string, 1>&);
     void aux_remove_non_printable_chars(Tensor<string, 1>&);
-    Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>&);
-    void delete_emails(Tensor<Tensor<string, 1>, 1>&);
+    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
     void delete_blanks(Tensor<string, 1>&);
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
     Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>&);
 
     vector<pair<string, int>> count_words(const Tensor<string, 1>&);
-}
 
-#endif // OPENNNSTRINGS_H
-
-/*
-
-class TextGenerationAlphabet;
-
-/// This class represent the text analytics methodata_set.
-/// Text analytics is used to transform unstructured text into high-quality information.
-
-class TextAnalytics
-{
-
-public:
-
-    // DEFAULT CONSTRUCTOR
-
-    explicit TextAnalytics();
-
-    virtual ~TextAnalytics();
 
     /// Enumeration of available languages.
 
@@ -178,25 +158,23 @@ public:
 
     // Get methods
 
-    Language get_language() const;
+    Language get_language();
 
-    string get_language_string() const;
+    string get_language_string();
 
-    Index get_short_words_length() const;
+    Index get_short_words_length();
 
-    Index get_long_words_length() const;
+    Index get_long_words_length();
 
-    Tensor<Tensor<string, 1>,1> get_documents() const;
+    Tensor<Tensor<string, 1>,1> get_documents();
 
-    Tensor<Tensor<string, 1>, 1> get_targets() const;
+    Tensor<Tensor<string, 1>, 1> get_targets();
 
-    Tensor<string, 1> get_stop_words() const;
+    Tensor<string, 1> get_stop_words();
 
-    Index get_document_sentences_number() const;
+    Tensor<Index, 1> get_words_number(const Tensor<Tensor<string, 1>, 1>&);
 
-    Tensor<Index, 1> get_words_number(const Tensor<Tensor<string, 1>, 1>&) const;
-
-    Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents) const;
+    Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>&);
 
     // Set methods
 
@@ -214,141 +192,113 @@ public:
 
     // Auxiliar methods
 
-    string calculate_text_outputs(TextGenerationAlphabet&, const string&, const Index&, const bool&);
+    //string calculate_text_outputs(TextGenerationAlphabet&, const string&, const Index&, const bool&);
 
-    string generate_word(TextGenerationAlphabet&, const string&, const Index&);
+    //string generate_word(TextGenerationAlphabet&, const string&, const Index&);
 
-    string generate_phrase(TextGenerationAlphabet&, const string&, const Index&);
+    //string generate_phrase(TextGenerationAlphabet&, const string&, const Index&);
 
     void append_document(const string&);
 
     void append_documents(const Tensor<string, 1>&);
 
-    void filter_not_equal_to(Tensor<string,1>&, const Tensor<string,1>&) const;
+    void filter_not_equal_to(Tensor<string,1>&, const Tensor<string,1>&);
 
     void load_documents(const string&);
 
-    string to_string(Tensor<string,1> token) const;
+    string to_string(Tensor<string,1>);
 
-    Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>&) const;
+    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
 
-    Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>&) const;
+    Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>&);
 
-    Index count(const Tensor<Tensor<string, 1>, 1>&) const;
+    Index count(const Tensor<Tensor<string, 1>, 1>&);
 
-    Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag) const;
+    Index calculate_weight(const Tensor<string, 1>&, const WordBag&);
 
-    Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&) const;
-
-    string read_txt_file(const string&) const;
+    Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&);
 
     // Preprocess methods
 
-    void delete_extra_spaces(Tensor<string, 1>&) const;
+    void delete_extra_spaces(Tensor<string, 1>&);
 
-    void delete_breaks_and_tabs(Tensor<string, 1>&) const;
+    void delete_breaks_and_tabs(Tensor<string, 1>&);
 
-    void delete_non_printable_chars(Tensor<string, 1>&) const;
+    void delete_non_printable_chars(Tensor<string, 1>&);
 
-    void delete_punctuation(Tensor<string, 1>&) const;
+    void delete_punctuation(Tensor<string, 1>&);
 
-    void split_punctuation(Tensor<string, 1>&) const;
+    void split_punctuation(Tensor<string, 1>&);
 
-    void delete_stop_words(Tensor<Tensor<string, 1>, 1>&) const;
+    void delete_stop_words(Tensor<Tensor<string, 1>, 1>&);
 
-    void delete_short_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 2) const;
+    void delete_short_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 2);
 
-    void delete_long_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 15) const;
+    void delete_long_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 15);
 
-    void delete_numbers(Tensor<Tensor<string, 1>, 1>&) const;
+    void delete_numbers(Tensor<Tensor<string, 1>, 1>&);
 
-    void delete_emails(Tensor<Tensor<string, 1>, 1>&) const;
+    void delete_emails(Tensor<Tensor<string, 1>, 1>&);
 
-    void delete_words(Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&) const;
+    void delete_words(Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&);
 
-    void delete_blanks(Tensor<string, 1>&) const;
+    void delete_blanks(Tensor<string, 1>&);
 
-    void delete_blanks(Tensor<Tensor<string, 1>, 1>&) const;
+    void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
-    void replace_accented(Tensor<Tensor<string, 1>, 1>&) const;
+    void replace_accented(Tensor<Tensor<string, 1>, 1>&);
 
-    void replace_accented(string&) const;
+    void replace_accented(string&);
 
-    void to_lower(Tensor<string, 1>&) const;
+    void to_lower(Tensor<string, 1>&);
 
-    void aux_remove_non_printable_chars(Tensor<string,1>&) const;
+    void aux_remove_non_printable_chars(Tensor<string,1>&);
 
     // Stemming methods
 
     /// Reduces inflected(or sometimes derived) words to their word stem, base or root form
 
-    string get_rv(const string&, const Tensor<string, 1>&) const;
+    string get_rv(const string&, const Tensor<string, 1>&);
 
-    Tensor<string, 1> get_r1_r2(const string&, const Tensor<string, 1>&) const;
-
-    Tensor<Tensor<string, 1>, 1> apply_stemmer(const Tensor<Tensor<string, 1>, 1>&) const;
-
-    Tensor<Tensor<string, 1>, 1> apply_english_stemmer(const Tensor<Tensor<string, 1>, 1>&) const;
-
-    Tensor<Tensor<string, 1>, 1> apply_spanish_stemmer(const Tensor<Tensor<string, 1>, 1>&) const;
+    Tensor<string, 1> get_r1_r2(const string&, const Tensor<string, 1>&);
 
     // Word bag
 
     /// It is a simplifying representation where a text(such as a sentence or a document) is represented
     /// as the bag(multiset) of its words, disregarding grammar and even word order but keeping multiplicity.
 
-    WordBag calculate_word_bag(const Tensor<Tensor<string, 1>, 1>&) const;
+    WordBag calculate_word_bag(const Tensor<Tensor<string, 1>, 1>&);
 
-    WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&) const;
+    WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&);
 
-    WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string, 1>, 1>&, const double&) const;
+    WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string, 1>, 1>&, const double&);
 
-    WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string, 1>, 1>&, const double&) const;
+    WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string, 1>, 1>&, const double&);
 
-    WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&) const;
+    WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&);
 
-    WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string, 1>, 1>&, const Index&) const;
+    WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string, 1>, 1>&, const Index&);
 
     // Algorithms
 
-    Tensor<Tensor<string, 1>, 1> preprocess(const Tensor<string, 1>&) const;
+    Tensor<Tensor<string, 1>, 1> preprocess(const Tensor<string, 1>&);
 
-    Tensor<Tensor<string, 1>, 1> preprocess_language_model(const Tensor<string, 1>&) const;
+    Tensor<Tensor<string, 1>, 1> preprocess_language_model(const Tensor<string, 1>&);
 
-    Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&) const;
+    Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&);
 
-    Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&, const Index&) const;
+    Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&, const Index&);
 
-    Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&) const;
-
-
-private:
+    Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&);
 
     void set_english_stop_words();
     void set_spanish_stop_words();
     void clear_stop_words();
+}
 
-    // MEMBERS
+#endif // OPENNNSTRINGS_H
 
-    /// Documents language.
-
-    Language lang = ENG;
-
-    /// Words which are filtered out before or after processing of natural language data.
-
-    Tensor<string, 1> stop_words;
-
-    Index short_words_length = 2;
-
-    Index long_words_length = 15;
-
-    string separator = "\t";
-
-    Tensor<Tensor<string,1>,1> documents;
-
-    Tensor<Tensor<string,1>,1> targets;
-
-};
+/*
 
 
 class TextGenerationAlphabet
@@ -392,8 +342,6 @@ public:
     void create_alphabet();
 
     void encode_alphabet();
-
-    void preprocess();
 
     Tensor<type, 1> one_hot_encode(const string &) const;
 

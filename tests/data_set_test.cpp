@@ -1566,7 +1566,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     target_raw_variables_indices.setValues({5});
 
     data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
-
 /*
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1589,7 +1588,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG); // CHECK
 */
     // Test 6 (numeric and binary)
-/*
+
     cout << "Test 6" << endl;
 
     input_variables_indices.resize(3);
@@ -1631,6 +1630,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
+ /*
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
@@ -1648,7 +1648,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG);
-
+*/
     // Test 8 (binary and categorical)
 
     cout << "Test 8" << endl;
@@ -1661,6 +1661,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
 
+ /*
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
@@ -2031,11 +2032,11 @@ void DataSetTest::run_test_case()
     test_calculate_variables_means();
     test_calculate_input_variables_descriptives();
     test_calculate_used_targets_mean();
-   test_calculate_selection_targets_mean();
+    test_calculate_selection_targets_mean();
 
     // Histrogram methods
 
-   test_calculate_data_distributions();
+    test_calculate_data_distributions();
 
     // Filtering methods
 
@@ -2048,9 +2049,9 @@ void DataSetTest::run_test_case()
     // Correlations
 
     test_calculate_input_target_correlations();
-/*
+
     test_calculate_input_raw_variables_correlations();
-*/
+
     // Classification methods
 
     test_calculate_target_distribution();
@@ -2061,7 +2062,7 @@ void DataSetTest::run_test_case()
 
     // Serialization methods
 
-   test_read_csv();
+    test_read_csv();
 
     test_read_bank_churn_csv();
     test_read_adult_csv();

@@ -4573,7 +4573,7 @@ Tensor<Index, 1> DataSet::get_categorical_to_indices(const Index& raw_variable_i
 
     Tensor<Index, 1> indices(rows_number);
 
-    for(Index i = 0; i < rows_number; ++i) {
+    for(Index i = 0; i < rows_number; i++) {
         for(Index j = 0; j < categories_number; ++j) {
             if(one_hot_data(i, j) == 1)
             {
@@ -4637,7 +4637,7 @@ void DataSet::add_sample(const Tensor<type, 1>& sample)
 
     Tensor<type, 2> new_data(current_samples + 1, data.dimension(1));
 
-    for(Index i = 0; i < current_samples; ++i)
+    for(Index i = 0; i < current_samples; i++)
     {
         new_data.chip(i, 0) = data.chip(i, 0);
     }
@@ -4920,7 +4920,7 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
 
     // Set raw_variables
 
-    for(Index i = 0; i < inputs_variables_dimensions.dimension(0);++i)
+    for(Index i = 0; i < inputs_variables_dimensions.dimension(0);i++)
     {
         for(Index j = 0; j < inputs_variables_dimensions(i);++j)
         {
@@ -4930,7 +4930,7 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
         }
     }
 
-    for(Index i = 0; i < channels_number;++i)
+    for(Index i = 0; i < channels_number;i++)
     {
         raw_variables(inputs_variables_dimensions.dimension(0) + i).name = "column_" + to_string(inputs_variables_dimensions.dimension(0) + i + 1);
         raw_variables(inputs_variables_dimensions.dimension(0) + i).raw_variable_use = VariableUse::Target;
@@ -6558,10 +6558,11 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
 
         const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
 
-        if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
+        //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
 
         for(Index j = i; j < input_raw_variables_number; j++)
         {
+
             if(j == i)
             {
                 if(calculate_pearson_correlations)
@@ -6604,6 +6605,7 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
             }
             else
             {
+
                 const Index current_input_index_j = input_raw_variables_indices(j);
 
                 const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
@@ -6623,6 +6625,7 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
                     if(correlations_spearman(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
                         correlations_spearman(i,j).r = type(1);
                 }
+
             }
         }
     }
@@ -10770,7 +10773,7 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
 
     Index count = 0;
 
-    for(Index i = 0; i < batches_number;++i)
+    for(Index i = 0; i < batches_number;i++)
     {
         for(Index j = 0; j < batch_size;++j)
         {
