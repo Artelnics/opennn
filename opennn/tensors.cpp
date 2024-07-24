@@ -2304,7 +2304,7 @@ TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index
 
 void print_dimensions(const dimensions& new_dimensions)
 {
-    for(Index i = 0; i < new_dimensions.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(new_dimensions.size()); i++)
         cout << new_dimensions[i] << " ";
 
     cout << endl;
