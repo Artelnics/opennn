@@ -121,6 +121,7 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 
 void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 {
+/*
     batch_size = new_batch_size;
 
     data_set = new_data_set;
@@ -133,18 +134,18 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
     if(input_dimensions.size() == 1)
     {
-        inputs_dimensions = {{batch_size, input_variables_number}};
+        input_dimensions = {{batch_size, input_variables_number}};
 
         inputs_tensor.resize(batch_size*input_variables_number);
     }
     else if(input_dimensions.size() == 2)
     {
         const Index rows_number = input_dimensions[0];
-        const Index raw_variables_number = input_dimensions[1];
+        const Index columns_number = input_dimensions[1];
 
-        inputs_dimensions = {{batch_size, rows_number, raw_variables_number}};
+        input_dimensions = {{batch_size, rows_number, columns_number}};
 
-        inputs_tensor.resize(batch_size*rows_number*raw_variables_number);
+        inputs_tensor.resize(batch_size*rows_number*columns_number);
     }
     else if(input_dimensions.size() == 3)
     {
@@ -152,7 +153,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         const Index raw_variables_number = input_dimensions[1];
         const Index channels_number = input_dimensions[2];
 
-        inputs_dimensions = { {batch_size, rows_number, raw_variables_number, channels_number} };
+        input_dimensions = { {batch_size, rows_number, raw_variables_number, channels_number} };
 
         inputs_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
@@ -197,28 +198,28 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         const Index context_variables_number = language_data_set->get_context_variables_number();
 
-        const Tensor<Index, 1> context_variables_dimensions = language_data_set->get_context_variables_dimensions();
+        const Tensor<Index, 1> context_dimensions = language_data_set->get_context_variables_dimensions();
 
-        if(context_variables_dimensions.size() == 1)
+        if(context_dimensions.size() == 1)
         {
             context_dimensions = { {batch_size, context_variables_number} };
 
             context_tensor.resize(batch_size * context_variables_number);
         }
-        else if(context_variables_dimensions.size() == 2)
+        else if(context_dimensions.size() == 2)
         {
-            const Index rows_number = context_variables_dimensions(0);
-            const Index raw_variables_number = context_variables_dimensions(1);
+            const Index rows_number = context_dimensions(0);
+            const Index raw_variables_number = context_dimensions(1);
 
             context_dimensions = { {batch_size, rows_number, raw_variables_number} };
 
             context_tensor.resize(batch_size * rows_number * raw_variables_number);
         }
-        else if(context_variables_dimensions.size() == 3)
+        else if(context_dimensions.size() == 3)
         {
-            const Index channels_number = context_variables_dimensions(0);
-            const Index rows_number = context_variables_dimensions(1);
-            const Index raw_variables_number = context_variables_dimensions(2);
+            const Index channels_number = context_dimensions(0);
+            const Index rows_number = context_dimensions(1);
+            const Index raw_variables_number = context_dimensions(2);
 
             context_dimensions = { {batch_size, channels_number, rows_number, raw_variables_number} };
 
@@ -227,6 +228,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         context_data = context_tensor.data();
     }
+*/
 }
 
 
@@ -238,7 +240,7 @@ Index Batch::get_batch_samples_number() const
 
 void Batch::print() const
 {
-    const Index inputs_rank = inputs_dimensions.size();
+    const Index inputs_rank = input_dimensions.size();
     const Index targets_rank = targets_dimensions.size();
 
     cout << "Batch" << endl;
@@ -248,12 +250,17 @@ void Batch::print() const
 
     for(Index i = 0; i < inputs_rank; i++)
     {
-        cout << inputs_dimensions[i] << endl;
+        cout << input_dimensions[i] << endl;
     }
 
     if(inputs_rank == 4)
     {
-        const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions[0], inputs_dimensions[1], inputs_dimensions[2], inputs_dimensions[3]);
+        const TensorMap<Tensor<type, 4>> inputs(inputs_data,
+                                                input_dimensions[0],
+                                                input_dimensions[1],
+                                                input_dimensions[2],
+                                                input_dimensions[3]);
+
         cout << inputs << endl;
     }
 
@@ -266,7 +273,9 @@ void Batch::print() const
         cout << targets_dimensions[i] << endl;
     }
 
-    const TensorMap<Tensor<type, 2>> targets(targets_data, targets_dimensions[0], targets_dimensions[1]);
+    const TensorMap<Tensor<type, 2>> targets(targets_data,
+                                             targets_dimensions[0],
+                                             targets_dimensions[1]);
 
     cout << targets << endl;
 }
@@ -280,14 +289,14 @@ Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
     {
         inputs.resize(1);
         inputs(0).first = inputs_data;
-        inputs(0).second = inputs_dimensions;
+        inputs(0).second = input_dimensions;
     }
     else
     {
         inputs.resize(2);
 
         inputs(0).first = inputs_data;
-        inputs(0).second = inputs_dimensions;
+        inputs(0).second = input_dimensions;
 
         inputs(1).first = context_data;
         inputs(1).second = context_dimensions;

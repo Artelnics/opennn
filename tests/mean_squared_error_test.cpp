@@ -598,17 +598,17 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
 //        const Index input_heigth = 4;
 //        const Index input_width = 4;
-//        const Index rows_kernel = 3;
-//        const Index cols_kernel = 3;
+//        const Index kernel_height = 3;
+//        const Index kernel_width = 3;
 
 //        //set dimensions
 
 //        Tensor<type,4> input_batch(input_heigth, input_width, channels, input_images);
-//        Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
-//        Tensor<type,1> bias(input_kernels);
+//        Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
+//        Tensor<type,1> bias(kernels_number);
 
 //        const Index inputs_number_convolution = (input_heigth)*(input_width)*channels*input_images;
-//        const Index output_number_convolution = (input_heigth - rows_kernel + 1)*(input_width - cols_kernel + 1)*input_kernels*input_images;
+//        const Index output_number_convolution = (input_heigth - kernel_height + 1)*(input_width - kernel_width + 1)*kernels_number*input_images;
 
 //        //set values
 
@@ -860,14 +860,14 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
     {
 
 //       const Index input_images = 3;
-//       const Index input_kernels = 3;
+//       const Index kernels_number = 3;
 
 //       const Index channels = 3;
 
 //       const Index input_heigth = 3;
 //       const Index input_width = 3;
-//       const Index rows_kernel = 2;
-//       const Index cols_kernel = 2;
+//       const Index kernel_height = 2;
+//       const Index kernel_width = 2;
 
 //       data_set.set_data_file_name("../../blank/test-6px-python-bmp/");
 
@@ -895,11 +895,11 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
 //       //set dimensions
 
-//       Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
-//       Tensor<type,1> bias(input_kernels);
+//       Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
+//       Tensor<type,1> bias(kernels_number);
 
 //       const Index inputs_number_convolution = (input_heigth)*(input_width)*channels;
-//       const Index output_number_convolution = (input_heigth - rows_kernel + 1)*(input_width - cols_kernel + 1)*input_kernels;
+//       const Index output_number_convolution = (input_heigth - kernel_height + 1)*(input_width - kernel_width + 1)*kernels_number;
 
 //       //set values
 
@@ -955,10 +955,10 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //    const Index images_number = 2;
 
-//    Tensor<Index, 1> inputs_dimensions(3);
-//    inputs_dimensions(0) = 2;
-//    inputs_dimensions(1) = 2;
-//    inputs_dimensions(2) = 2;
+//    Tensor<Index, 1> input_dimensions(3);
+//    input_dimensions(0) = 2;
+//    input_dimensions(1) = 2;
+//    input_dimensions(2) = 2;
 
 //    Tensor<type, 2> data(images_number,9);
 
@@ -995,7 +995,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //    DataSet data_set(images_number,1,1);
 //    //    data_set.set_data_constant(3.1416);
-//    data_set.set_input_variables_dimensions(inputs_dimensions);
+//    data_set.set_input_variables_dimensions(input_dimensions);
 //    data_set.set_data(data); // 2d data
 
 //    const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
@@ -1151,10 +1151,10 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //    {
 //        const Index images_number = 2;
 
-//        Tensor<Index, 1> inputs_dimensions(3);
-//        inputs_dimensions(0) = 2;
-//        inputs_dimensions(1) = 2;
-//        inputs_dimensions(2) = 2;
+//        Tensor<Index, 1> input_dimensions(3);
+//        input_dimensions(0) = 2;
+//        input_dimensions(1) = 2;
+//        input_dimensions(2) = 2;
 
 //        Tensor<type, 2> data(images_number,9);
 
@@ -1187,7 +1187,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        data(1,8) = 1; // Target
 
 //        DataSet data_set(images_number,1,1);
-//        data_set.set_input_variables_dimensions(inputs_dimensions);
+//        data_set.set_input_variables_dimensions(input_dimensions);
 //        data_set.set_data(data); // 2d data
 
 //        const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
@@ -1283,10 +1283,10 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     {
         const Index images_number = 2;
 
-        Tensor<Index, 1> inputs_dimensions(3);
-        inputs_dimensions(0) = 2; // Channels number
-        inputs_dimensions(1) = 3; // rows number
-        inputs_dimensions(2) = 3; // columns number
+        Tensor<Index, 1> input_dimensions(3);
+        input_dimensions(0) = 2; // Channels number
+        input_dimensions(1) = 3; // rows number
+        input_dimensions(2) = 3; // columns number
 
         Tensor<type, 2> data(images_number,19);
 
@@ -1337,7 +1337,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data(1,18) = 1; // Target
 
         DataSet data_set(images_number,1,1);
-        data_set.set_input_variables_dimensions(inputs_dimensions);
+        data_set.set_input_variables_dimensions(input_dimensions);
         data_set.set_data(data); // 2d data
 
         const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
@@ -1444,15 +1444,15 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         bool is_training = true;
 
         const Index input_channels_number = 2;
-        const Index input_rows_number = 3;
+        const Index input_height = 3;
         const Index input_raw_variables_number = 3;
 
         const Index images_number = 2;
 
-        Tensor<Index, 1> inputs_dimensions(3);
-        inputs_dimensions(0) = input_channels_number; // Channels number
-        inputs_dimensions(1) = input_rows_number; // rows number
-        inputs_dimensions(2) = input_raw_variables_number; // columns number
+        Tensor<Index, 1> input_dimensions(3);
+        input_dimensions(0) = input_channels_number; // Channels number
+        input_dimensions(1) = input_height; // rows number
+        input_dimensions(2) = input_raw_variables_number; // columns number
 
         Tensor<type, 2> data(images_number,19);
 
@@ -1503,7 +1503,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data(1,18) = 1; // Target
 
         DataSet data_set(images_number,1,1);
-        data_set.set_input_variables_dimensions(inputs_dimensions);
+        data_set.set_input_variables_dimensions(input_dimensions);
 
         data_set.set_data(data); // 2d data
 
@@ -1539,7 +1539,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
-        convolutional_layer_inputs_dimensions(0) = input_rows_number;
+        convolutional_layer_inputs_dimensions(0) = input_height;
         convolutional_layer_inputs_dimensions(1) = input_raw_variables_number;
         convolutional_layer_inputs_dimensions(2) = input_channels_number;
         convolutional_layer_inputs_dimensions(3) = images_number;
@@ -1586,7 +1586,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         convolutional_layer->set_biases_constant(0);
 
         Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
-        flatten_layer_inputs_dimensions(0) = input_rows_number-kernel_height+1;
+        flatten_layer_inputs_dimensions(0) = input_height-kernel_height+1;
         flatten_layer_inputs_dimensions(1) = input_raw_variables_number-kernels_raw_variables_number+1;
         flatten_layer_inputs_dimensions(2) = kernels_number;
         flatten_layer_inputs_dimensions(3) = images_number;
@@ -1653,15 +1653,15 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         bool is_training = true;
 
         const Index input_channels_number = 2;
-        const Index input_rows_number = 3;
+        const Index input_height = 3;
         const Index input_raw_variables_number = 3;
 
         const Index images_number = 2;
 
-        dimensions inputs_dimensions(3);
-        inputs_dimensions[0] = input_channels_number; // Channels number
-        inputs_dimensions[1] = input_rows_number; // rows number
-        inputs_dimensions[2] = input_raw_variables_number; // columns number
+        dimensions input_dimensions(3);
+        input_dimensions[0] = input_channels_number; // Channels number
+        input_dimensions[1] = input_height; // rows number
+        input_dimensions[2] = input_raw_variables_number; // columns number
 
         Tensor<type, 2> data(images_number,19);
 
@@ -1720,7 +1720,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         system("pause");
 
-        data_set.set_input_variables_dimensions(inputs_dimensions);
+        data_set.set_input_variables_dimensions(input_dimensions);
 
         data_set.set_training();
 
@@ -1758,7 +1758,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        batch.print();
 //        system("pause");
 
-        dimensions convolutional_layer_1_inputs_dimensions({input_rows_number,
+        dimensions convolutional_layer_1_inputs_dimensions({input_height,
                                                          input_raw_variables_number,
                                                          input_channels_number,
                                                          images_number});
@@ -1857,15 +1857,15 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         bool is_training = true;
 
         const Index input_channels_number = 2;
-        const Index input_rows_number = 3;
+        const Index input_height = 3;
         const Index input_raw_variables_number = 3;
 
         const Index images_number = 2;
 
-        dimensions inputs_dimensions(3);
-        inputs_dimensions[0] = input_channels_number;
-        inputs_dimensions[1] = input_rows_number;
-        inputs_dimensions[2] = input_raw_variables_number;
+        dimensions input_dimensions(3);
+        input_dimensions[0] = input_channels_number;
+        input_dimensions[1] = input_height;
+        input_dimensions[2] = input_raw_variables_number;
 
         Tensor<type, 2> data(images_number, 19);
 
@@ -1924,7 +1924,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         system("pause");
 
-        data_set.set_input_variables_dimensions(inputs_dimensions);
+        data_set.set_input_variables_dimensions(input_dimensions);
 
         data_set.set_training();
 
@@ -1962,7 +1962,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        batch.print();
 //        system("pause");
 
-        dimensions convolutional_layer_inputs_dimensions({input_rows_number, input_raw_variables_number, input_channels_number, images_number});
+        dimensions convolutional_layer_inputs_dimensions({input_height, input_raw_variables_number, input_channels_number, images_number});
 
         NeuralNetwork neural_network;
 
@@ -1986,18 +1986,18 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         pooling_layer->set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
 
 //        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
-//        flatten_layer_inputs_dimensions(0) = input_rows_number-kernel_height+1;
+//        flatten_layer_inputs_dimensions(0) = input_height-kernel_height+1;
 //        flatten_layer_inputs_dimensions(1) = input_raw_variables_number-kernels_raw_variables_number+1;
 //        flatten_layer_inputs_dimensions(2) = kernels_number;
 //        flatten_layer_inputs_dimensions(3) = images_number;
 
-        dimensions flatten_layer_inputs_dimensions({input_rows_number-kernel_height+1,
+        dimensions flatten_layer_inputs_dimensions({input_height-kernel_height+1,
                                                     input_raw_variables_number-kernels_raw_variables_number+1,
                                                     kernels_number,
                                                     images_number});
         FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
 
-        const Index perceptron_layer_inputs_number = (input_rows_number-kernel_height+1)
+        const Index perceptron_layer_inputs_number = (input_height-kernel_height+1)
                                                     *(input_raw_variables_number-kernels_raw_variables_number+1)
                                                     *kernels_number;
         const Index perceptrons_number = 1;

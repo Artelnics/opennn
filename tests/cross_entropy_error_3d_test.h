@@ -44,7 +44,7 @@ private:
 
     Index batch_samples_number = 0;
     Index inputs_number = 0;
-    Index inputs_dimension = 0;
+    Index input_dimensions = 0;
     Index depth = 0;
 
     bool is_training = true;

@@ -974,32 +974,32 @@ void NeuralNetwork::set(const dimensions& input_dimensions,
     ScalingLayer4D* scaling_layer = new ScalingLayer4D(input_dimensions);
     add_layer(scaling_layer);
 
-    dimensions outputs_dimensions = scaling_layer->get_output_dimensions();  
+    dimensions output_dimensions = scaling_layer->get_output_dimensions();  
 
 //    for(Index i = 0; i < blocks_number; i++)
 //    {
         // Check convolutional
-        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(output_dimensions, filters_dimensions);
         //convolutional_layer->set_name("convolutional_layer_1" /* + to_string(1) */); // This change the initial name of the table.
 
     //add_layer(convolutional_layer);
-    //outputs_dimensions = convolutional_layer->get_output_dimensions();
+    //output_dimensions = convolutional_layer->get_output_dimensions();
 
 //        // Pooling layer 1
 
-//        PoolingLayer* pooling_layer = new PoolingLayer(outputs_dimensions);
+//        PoolingLayer* pooling_layer = new PoolingLayer(output_dimensions);
 //        pooling_layer->set_name("pooling_layer_" + to_string(i+1));
 
 //        add_layer(pooling_layer);
 
-//        outputs_dimensions = pooling_layer->get_output_dimensions();
+//        output_dimensions = pooling_layer->get_output_dimensions();
 
-    FlattenLayer* flatten_layer = new FlattenLayer(outputs_dimensions);
+    FlattenLayer* flatten_layer = new FlattenLayer(output_dimensions);
     add_layer(flatten_layer);
 
-    outputs_dimensions = flatten_layer->get_output_dimensions();
+    output_dimensions = flatten_layer->get_output_dimensions();
 
-    const Index product = outputs_dimensions[0] * outputs_dimensions[1] * outputs_dimensions[2] * outputs_dimensions[3];
+    const Index product = output_dimensions[0] * output_dimensions[1] * output_dimensions[2] * output_dimensions[3];
 
     PerceptronLayer* perceptron_layer = new PerceptronLayer(product, 3);
     perceptron_layer->set_name("perceptron_layer_1");
@@ -1256,14 +1256,14 @@ Index NeuralNetwork::get_outputs_number() const
 
     const Layer* last_layer = layers[layers.size() - 1];
 
-    const dimensions outputs_dimensions = last_layer->get_output_dimensions();
+    const dimensions output_dimensions = last_layer->get_output_dimensions();
 
-    const Index outputs_rank = outputs_dimensions.size();
+    const Index outputs_rank = output_dimensions.size();
 
     Index outputs_number = 1;
 
     for(Index i = 0; i < outputs_rank; i++)
-        outputs_number *= outputs_dimensions[i];
+        outputs_number *= output_dimensions[i];
 
     return outputs_number;
 }
