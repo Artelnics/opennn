@@ -42,7 +42,7 @@ int main()
     try
     {
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
-
+        
         // Data set
 
         ImageDataSet image_data_set;
@@ -63,8 +63,8 @@ int main()
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions());
         neural_network.add_layer(convolutional_layer);
 
-//        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer->get_output_dimensions());
-//        neural_network.add_layer(convolutional_layer);
+        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer->get_output_dimensions());
+        neural_network.add_layer(pooling_layer);
 
         FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer->get_output_dimensions());
         neural_network.add_layer(flatten_layer);

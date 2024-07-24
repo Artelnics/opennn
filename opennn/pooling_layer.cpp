@@ -186,7 +186,6 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 dimensions PoolingLayer::get_inputs_dimensions() const
 {
     return inputs_dimensions;
-//    return { inputs_dimensions(0) ,inputs_dimensions(1) , inputs_dimensions(2)};
 }
 
 
