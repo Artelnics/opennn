@@ -54,7 +54,7 @@ private:
 
     Index input_length = 0;
     Index context_length = 0;
-    Index inputs_dimension = 0;
+    Index input_dimensions = 0;
     Index context_dimension = 0;
     Index embedding_depth = 0;
     Index perceptron_depth = 0;

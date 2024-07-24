@@ -121,7 +121,7 @@ private:
 
     string completion_vocabulary_path = "";
 
-    Tensor<Index, 1> context_variables_dimensions = Tensor<Index, 1>(1);
+    Tensor<Index, 1> context_dimensions = Tensor<Index, 1>(1);
 
     Index max_completion_length = 0;
 

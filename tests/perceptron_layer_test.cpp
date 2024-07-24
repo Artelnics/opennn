@@ -662,7 +662,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     Tensor<type, 1> biases;
     Tensor<type, 2> synaptic_weights;
-    Tensor<Index, 1> outputs_dimensions;
+    Tensor<Index, 1> output_dimensions;
 
     // Test
 

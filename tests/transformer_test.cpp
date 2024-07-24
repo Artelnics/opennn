@@ -35,7 +35,7 @@ void TransformerTest::test_constructor()
 
     input_length = 1;
     context_length = 1;
-    inputs_dimension = 1;
+    input_dimensions = 1;
     context_dimension = 1;
     embedding_depth = 1;
     perceptron_depth = 1;
@@ -43,7 +43,7 @@ void TransformerTest::test_constructor()
     number_of_layers = 1;
 
     Tensor<Index, 1> architecture(8);
-    architecture.setValues({ input_length, context_length, inputs_dimension, context_dimension,
+    architecture.setValues({ input_length, context_length, input_dimensions, context_dimension,
                              embedding_depth, perceptron_depth, heads_number, number_of_layers });
     
     Transformer transformer_1(architecture);
@@ -52,7 +52,7 @@ void TransformerTest::test_constructor()
     
     // List constructor test
 
-    Transformer transformer_2({ input_length, context_length, inputs_dimension, context_dimension,
+    Transformer transformer_2({ input_length, context_length, input_dimensions, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
     assert_true(transformer_2.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
@@ -61,14 +61,14 @@ void TransformerTest::test_constructor()
 
     input_length = 2;
     context_length = 3;
-    inputs_dimension = 5;
+    input_dimensions = 5;
     context_dimension = 6;
     embedding_depth = 10;
     perceptron_depth = 12;
     heads_number = 4;
     number_of_layers = 1;
 
-    Transformer transformer_3({ input_length, context_length, inputs_dimension, context_dimension,
+    Transformer transformer_3({ input_length, context_length, input_dimensions, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
     assert_true(transformer_3.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
@@ -77,7 +77,7 @@ void TransformerTest::test_constructor()
 
     number_of_layers = 3;
 
-    Transformer transformer_4({ input_length, context_length, inputs_dimension, context_dimension,
+    Transformer transformer_4({ input_length, context_length, input_dimensions, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
     assert_true(transformer_4.get_layers_number() == 2 + 7 * number_of_layers + 10 * number_of_layers + 1, LOG);
@@ -107,12 +107,12 @@ void TransformerTest::test_calculate_parameters_norm()
         perceptron_depth = 1;
         heads_number = 1;
 
-        inputs_dimension = -1;
+        input_dimensions = -1;
         context_dimension = 0;
         embedding_depth = 0;
         number_of_layers = 0;
 
-        transformer.set({ input_length, context_length, inputs_dimension, context_dimension,
+        transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
         parameters_norm = transformer.calculate_parameters_norm();
@@ -122,12 +122,12 @@ void TransformerTest::test_calculate_parameters_norm()
     // Test
     
     {
-        inputs_dimension = 1;
+        input_dimensions = 1;
         context_dimension = 1;
         embedding_depth = 1;
         number_of_layers = 1;
 
-        transformer.set({ input_length, context_length, inputs_dimension, context_dimension,
+        transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
         transformer.set_parameters_constant(type(1));
@@ -157,14 +157,14 @@ void TransformerTest::test_calculate_outputs()
 
     input_length = 1;
     context_length = 1;
-    inputs_dimension = 1;
+    input_dimensions = 1;
     context_dimension = 1;
     embedding_depth = 1;
     perceptron_depth = 1;
     heads_number = 1;
     number_of_layers = 1;
 
-    transformer.set({ input_length, context_length, inputs_dimension, context_dimension,
+    transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                       embedding_depth, perceptron_depth, heads_number, number_of_layers });
     transformer.set_parameters_constant(type(0));
 
@@ -178,7 +178,7 @@ void TransformerTest::test_calculate_outputs()
 
     assert_true(outputs.dimension(0) == batch_samples_number, LOG);
     assert_true(outputs.dimension(1) == input_length, LOG);
-    assert_true(outputs.dimension(2) == inputs_dimension, LOG);
+    assert_true(outputs.dimension(2) == input_dimensions, LOG);
 
     //assert_true(outputs.abs() < type(NUMERIC_LIMITS_MIN), LOG);
     
@@ -390,7 +390,7 @@ void TransformerTest::test_forward_propagate()
 
         input_length = 4;
         context_length = 3;
-        inputs_dimension = 5;
+        input_dimensions = 5;
         context_dimension = 6;
 
         embedding_depth = 4;
@@ -408,7 +408,7 @@ void TransformerTest::test_forward_propagate()
                 data(i, j) = type(rand() % context_dimension);
         
             for(Index j = 0; j < 2 * input_length; j++)
-                data(i, j + context_length) = type(rand() % inputs_dimension);
+                data(i, j + context_length) = type(rand() % input_dimensions);
         }
         
         data_set.set(data);
@@ -433,7 +433,7 @@ void TransformerTest::test_forward_propagate()
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
         
-        transformer.set({ input_length, context_length, inputs_dimension, context_dimension,
+        transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
@@ -448,7 +448,7 @@ void TransformerTest::test_forward_propagate()
         assert_true(probabilistic_activations.rank() == 3, LOG);
         assert_true(probabilistic_activations.dimension(0) == batch_samples_number, LOG);
         assert_true(probabilistic_activations.dimension(1) == input_length, LOG);
-        assert_true(probabilistic_activations.dimension(2) == inputs_dimension + 1, LOG);
+        assert_true(probabilistic_activations.dimension(2) == input_dimensions + 1, LOG);
 
         assert_true(check_activations_sums(probabilistic_activations), LOG);
     }
@@ -460,7 +460,7 @@ void TransformerTest::test_forward_propagate()
 
         input_length = 2;
         context_length = 3;
-        inputs_dimension = 5;
+        input_dimensions = 5;
         context_dimension = 6;
 
         embedding_depth = 4;
@@ -478,7 +478,7 @@ void TransformerTest::test_forward_propagate()
                 data(i, j) = type(rand() % context_dimension);
 
             for(Index j = 0; j < 2 * input_length; j++)
-                data(i, j + context_length) = type(rand() % inputs_dimension);
+                data(i, j + context_length) = type(rand() % input_dimensions);
         }
 
         data_set.set(data);
@@ -503,7 +503,7 @@ void TransformerTest::test_forward_propagate()
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
 
-        transformer.set({ input_length, context_length, inputs_dimension, context_dimension,
+        transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, number_of_layers });
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
@@ -518,7 +518,7 @@ void TransformerTest::test_forward_propagate()
         assert_true(probabilistic_activations.rank() == 3, LOG);
         assert_true(probabilistic_activations.dimension(0) == batch_samples_number, LOG);
         assert_true(probabilistic_activations.dimension(1) == input_length, LOG);
-        assert_true(probabilistic_activations.dimension(2) == inputs_dimension + 1, LOG);
+        assert_true(probabilistic_activations.dimension(2) == input_dimensions + 1, LOG);
 
         assert_true(check_activations_sums(probabilistic_activations), LOG);
     }
