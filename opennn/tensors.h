@@ -140,26 +140,24 @@ Index count_between(Tensor<type, 1>&, const type&, const type&);
 Index count_less_than(const Tensor<double, 1>&, const double&);
 Index count_greater_than(const Tensor<Index, 1>&, const Index&);
 
-// Serialization
-
 //void save_csv(const Tensor<type,2>&, const string&);
 
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 
-//Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
-//Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
+Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
+Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
 
-//Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
+Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
 
-//Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>&, const double&);
+Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>&, const double&);
 
 Tensor<Index, 1> get_elements_greater_than(const Tensor<Index, 1>&, const Index&);
 Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>&, const Index&);
 
-//void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
-//void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
-//void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
+void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
+void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
+void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
 
 Tensor<string, 1> get_first(const Tensor<string,1>&, const Index&);
 Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index&);

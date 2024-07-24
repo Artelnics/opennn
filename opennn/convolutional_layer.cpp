@@ -553,10 +553,10 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
         {
             for(int row = 0; row < deltas_pair(0).second[0]; row++)
             {
-                for(int col = 0; col < deltas_pair(0).second[1]; col++)
+                for(int column = 0; column < deltas_pair(0).second[1]; column++)
                 {
-                     input_derivatives.chip(image_index, 0).chip(d, 0).slice(std::array<Index, 2>({row, col}), std::array<Index, 2>({kernel_height, kernel_width})) +=
-                             error_combinations_derivatives(row, col, d, image_index) * synaptic_weights.chip(d, 0);
+                     input_derivatives.chip(image_index, 0).chip(d, 0).slice(std::array<Index, 2>({row, column}), std::array<Index, 2>({kernel_height, kernel_width})) +=
+                             error_combinations_derivatives(row, column, d, image_index) * synaptic_weights.chip(d, 0);
                 }
             }
         }
