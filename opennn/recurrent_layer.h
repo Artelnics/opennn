@@ -23,9 +23,11 @@
 #include "config.h"
 #include "tensors.h"
 #include "layer.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
 
-#include "probabilistic_layer.h"
-#include "perceptron_layer.h"
+//#include "probabilistic_layer.h"
+//#include "perceptron_layer.h"
 
 namespace opennn
 {
@@ -181,19 +183,7 @@ public:
                                  const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
-   /*
-   void calculate_biases_error_gradient(const Tensor<type, 2>&,
-                                        RecurrentLayerForwardPropagation*,
-                                        RecurrentLayerBackPropagation*) const;
 
-   void calculate_input_weights_error_gradient(const Tensor<type, 2>&,
-                                               RecurrentLayerForwardPropagation*,
-                                               RecurrentLayerBackPropagation*) const;
-
-   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                   RecurrentLayerForwardPropagation*,
-                                                   RecurrentLayerBackPropagation*) const;
-    */
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;

@@ -23,9 +23,12 @@
 // OpenNN includes
 
 #include "layer.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+
 #include "config.h"
-#include "flatten_layer.h"
-#include "pooling_layer.h"
+//#include "flatten_layer.h"
+//#include "pooling_layer.h"
 
 namespace opennn
 {
