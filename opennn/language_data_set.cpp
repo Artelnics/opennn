@@ -1897,7 +1897,7 @@ void LanguageDataSet::load_documents(const string& path)
     Index tokens_number = 0;
 
     string delimiter = "";
-    const char separator = get_separator_char();
+    const string separator = get_separator_string();
 
     while(file2.good())
     {

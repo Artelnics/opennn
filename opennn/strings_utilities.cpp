@@ -2542,18 +2542,6 @@ string get_language_string()
 }
 
 
-Index get_short_words_length()
-{
-    return short_words_length;
-}
-
-
-Index get_long_words_length()
-{
-    return long_words_length;
-}
-
-
 /// Returns the stop words.
 
 Tensor<string, 1> get_stop_words()
