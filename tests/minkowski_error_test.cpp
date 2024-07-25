@@ -7,8 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "minkowski_error_test.h"
-#include "tensors.h"
-
 
 MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting() 
 {
