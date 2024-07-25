@@ -1208,20 +1208,16 @@ Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
     const Index raw_variables_number = get_raw_variables_number();
     const Tensor<string,1> raw_variables_names = get_raw_variables_names();
 
-
     const Tensor<string, 1> tokens = get_tokens(sentence, ' ');
 
     Tensor<type, 1> vectorx(raw_variables_number - 1);
     vectorx.setZero();
 
-    //set_short_words_length(short_words_length);
-    //set_long_words_length(long_words_length);
-
     const Tensor<Tensor<string,1>,1> words = preprocess(tokens);
 
     const WordBag word_bag = calculate_word_bag(words);
 
-    const Index words_number = word_bag.words.size();
+    const Index words_number = word_bag.size();
 
     for(Index i = 0; i < words_number; i++)
     {
@@ -1244,85 +1240,113 @@ void TextDataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 
-    //const Tensor<Tensor<string, 1>, 1> documents =
-
     //load_documents();
 
     Tensor<Tensor<string, 1>, 1> documents;
-    Tensor<Tensor<string, 1>, 1> targets;
 
     const Index documents_number = documents.size();
 
-    const Tensor<string, 1> word_list = tokens_list(documents);
+    Tensor<string, 1> tokens = tokens_list(documents);
+
+    to_lower(tokens);
+    delete_punctuation(tokens);
+    delete_non_printable_chars(tokens);
+    delete_extra_spaces(tokens);
+    delete_non_alphanumeric(tokens);
+
+    //Tensor<Tensor<string,1>,1> xxx = get_tokens(documents);
+
+    //delete_stop_words(tokens);
+
+    //delete_short_words(tokens, short_words_length);
+
+    //delete_long_words(tokens, long_words_length);
+
+    //replace_accented(tokens);
+
+    //delete_emails(tokens);
+
+    //tokens = apply_stemmer(tokens); deleted recover from git
+
+    //delete_numbers(tokens);
+
+    //delete_blanks(tokens);
+
+/*
+    Tensor<Tensor<string, 1>, 1> targets;
+    to_lower(targets);
+
 
     cout << "Processing documents..." << endl;
 
-    const Tensor<Tensor<string, 1>, 1> document_tokens;// = preprocess(word_list);
+    //const Tensor<Tensor<string, 1>, 1> document_tokens = preprocess(word_list);
 
     cout << "Calculating wordbag..." << endl;
 
-    const WordBag word_bag = calculate_word_bag(document_tokens);
+    //const WordBag word_bag = calculate_word_bag(document_tokens);
     set_words_frequencies(word_bag.frequencies);
 
-    Tensor<string, 1> raw_variables_names = word_bag.words;
-    const Index document_words_number = word_bag.words.size();
+    const Tensor<string, 1> raw_variables_names = word_bag.words;
+    const Index raw_variables_number = word_bag.size();
 
-    Tensor<type, 1> row(document_words_number);
+    Tensor<type, 1> row(raw_variables_number);
 
     // Output
 
     cout << "Writting data file..." << endl;
 
-    string transformed_data_path = data_source_path;
-    replace(transformed_data_path,".txt","_data.txt");
-    replace(transformed_data_path,".csv","_data.csv");
+    string new_data_source_path = data_source_path;
+    replace(new_data_source_path, ".txt", "_data.txt");
+    replace(new_data_source_path, ".csv", "_data.csv");
 
     ofstream file;
-    file.open(transformed_data_path);
+    file.open(new_data_source_path);
 
-    for(Index i  = type(0); i < document_words_number; i++)
+    for(Index i  = 0; i < raw_variables_number; i++)
         file << raw_variables_names(i) << ";";
 
     file << "target_variable" << "\n";
 
     // Data file preview
 
-    Index preview_size = 4;
+    const Index preview_size = 4;
 
-    text_data_file_preview.resize(preview_size,2);
+    text_data_file_preview.resize(preview_size, 2);
 
     for(Index i = 0; i < preview_size - 1; i++)
     {
-        text_data_file_preview(i,0) = documents(0)(i);
-        text_data_file_preview(i,1) = targets(0)(i);
+        text_data_file_preview(i, 0) = documents(0)(i);
+        text_data_file_preview(i, 1) = targets(0)(i);
     }
 
-    text_data_file_preview(preview_size - 1, 0) = documents(0)(documents(0).size()-1);
-    text_data_file_preview(preview_size - 1, 1) = targets(0)(targets(0).size()-1);
+    text_data_file_preview(preview_size - 1, 0) = documents(0)(documents(0).size() - 1);
+    text_data_file_preview(preview_size - 1, 1) = targets(0)(targets(0).size() - 1);
 
 #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string, 1> sheet = documents(i);
+        const Tensor<string, 1> document = documents(i);
 
-        for(Index j = 0; j < sheet.size(); j++)
+        const Index tokens_number = document.size();
+
+        for(Index j = 0; j < tokens_number; j++)
         {
             row.setZero();
 
-            const string line = sheet(j);
+//            const string line = sheet(j);
 
-            const Tensor<string,1> tokens = get_tokens(line);
+//            const Tensor<string,1> tokens = get_tokens(line);
 
-            const Tensor<Tensor<string, 1>,1> processed_tokens = preprocess(tokens);
+//            const Tensor<Tensor<string, 1>, 1> processed_tokens = preprocess(tokens);
 
-            const WordBag line_word_bag = calculate_word_bag(processed_tokens);
+//            const WordBag line_word_bag = calculate_word_bag(processed_tokens);
 
-            const Tensor<string, 1> line_words = line_word_bag.words;
+//            const Tensor<string, 1> line_words = line_word_bag.words;
 
-            const Tensor<Index, 1> line_frequencies = line_word_bag.frequencies;
+//            const Tensor<Index, 1> line_frequencies = line_word_bag.frequencies;
 
-            for(Index k = 0; k < line_words.size(); k++)
+//            for(Index k = 0; k < line_words.size(); k++)
             {
 /*
                 if( contains(raw_variables_names, line_words(k)) )
@@ -1333,22 +1357,20 @@ void TextDataSet::read_txt()
 
                     row(word_index) = type(line_frequencies(k));
                 }
-*/
+
             }
 
-            for(Index k = 0; k < document_words_number; k++)
-                file << row(k) << ";";
-
-            for_each(targets(i)(j).begin(), targets(i)(j).end(), [](char & c){
-                c = ::tolower(c);});
+//            for(Index k = 0; k < document_words_number; k++)
+//                file << row(k) << ";";
 
             file << "target_" + targets(i)(j) << "\n";
         }
+
     }
 
     file.close();
 
-    data_source_path = transformed_data_path;
+    data_source_path = new_data_source_path;
     separator = Separator::Semicolon;
     has_raw_variables_names = true;
 
@@ -1356,6 +1378,7 @@ void TextDataSet::read_txt()
 
     for(Index i = 0; i < get_input_raw_variables_number(); i++)
         set_raw_variable_type(i, RawVariableType::Numeric);
+*/
 }
 
 
@@ -1402,106 +1425,76 @@ void TextDataSet::load_documents()
         if(file.peek() == EOF) break;
     }
 
+    file.seekg (0, ios::beg);
+
     cout << lines_count << endl;
 
-    file.close();
-
-    Tensor<Tensor<string,1>, 1> documents(lines_count);
-
-//    const Index original_size = documents.size();
-
-//    Tensor<Tensor<string,1>, 1> documents_copy(documents);
-
-//    documents.resize(original_size + 1);
-
-//    Tensor<Tensor<string,1>, 1> targets_copy(targets);
-
-//    targets.resize(original_size + 1);
-
-//    for(Index i = 0; i < original_size; i++)
-//    {
-//        documents(i) = documents_copy(i);
-//        targets(i) = targets_copy(i);
-//    }
-
-
-//    Tensor<string, 1> document(lines_number);
-//    Tensor<string, 1> document_target(lines_number);
-
-    ifstream file2(data_source_path.c_str());
+    Tensor<string, 1> documents(lines_count);
+    Tensor<string, 1> targets(lines_count);
 
     Index tokens_number = 0;
 
     string delimiter = "";
-    const char separator = get_separator_char();
+    const string separator = get_separator_string();
 
     Tensor<string, 1> tokens;
 
-    while(file2.good())
+    while(file.good())
     {
-        getline(file2, line);
+        getline(file, line);
 
         if(line.empty()) continue;
 
         if(line[0] == '"')
         {
             replace(line, "\"\"", "\"");
+
             line = "\"" + line;
+
             delimiter = "\"\"";
         }
 
-        if( line.find("\"" + separator) != string::npos)
-            replace(line,"\"" + separator, "\"\"" + separator);
+        if(line.find("\"" + separator) != string::npos)
+            replace(line, "\"" + separator, "\"\"" + separator);
 
         const Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
+
         tokens_number = tokens.size();
-/*
+
         if(tokens_number == 1)
         {
-            if(tokens(0).find(delimiter,0) == 0) document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
-            else document(lines_count) += " " + tokens(0);
+            if(tokens(0).find(delimiter, 0) == 0)
+                documents(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
+            else
+                documents(lines_count) += " " + tokens(0);
         }
-        else
+        else if(tokens_number == 2)
         {
-            if(tokens_number > 2)
-            {
-                ostringstream buffer;
+            if(tokens(0).empty() && tokens(1).empty()) continue;
 
-                buffer << "OpenNN Exception: TextAnalytics class.\n"
-                       << "void load_documents() method.\n"
-                       << "Found more than one separator in line: " << line << "\n";
+            documents(lines_count) += " " + tokens(0);
 
-                throw runtime_error(buffer.str());
-            }
+            targets(lines_count) += tokens(1);
 
-            if(tokens(0).empty() && tokens(1).empty())  continue;
-
-            document(lines_count) += " " + tokens(0);
-            document_target(lines_count) += tokens(1);
             delimiter = "";
+
             lines_count++;
         }
+        else if(tokens_number > 2)
+        {
+            ostringstream buffer;
 
-        if(file2.peek() == EOF) break;
-*/
+            buffer << "OpenNN Exception: TextAnalytics class.\n"
+                   << "void load_documents() method.\n"
+                   << "Found more than one separator in line: " << line << "\n";
+
+            throw runtime_error(buffer.str());
+        }
+
+        if(file.peek() == EOF) break;
     }
-/*
-    Tensor<string,1> document_copy(lines_count);
-    Tensor<string,1> document_target_copy(lines_count);
 
-    copy(document.data(),
-         document.data() + lines_count,
-         document_copy.data());
-
-    copy(document_target.data(),
-         document_target.data() + lines_count,
-         document_target_copy.data());
-
-    documents(original_size) = document_copy;
-    targets(original_size) = document_target_copy;
-
-    file2.close();
-*/
+    file.close();
 }
 
 }
