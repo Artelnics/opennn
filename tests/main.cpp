@@ -73,6 +73,7 @@ int main()
    "weighted_squared_error | wse\n"
    "\n" << endl;
 
+
    string test;
 
    cout << "Test: ";
@@ -92,6 +93,7 @@ int main()
 
       Index tests_count = 0;
       Index tests_passed_count = 0;
+
       Index tests_failed_count = 0;
 
       transform(test.begin(), test.end(), test.begin(),
