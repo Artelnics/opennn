@@ -121,7 +121,6 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 
 void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 {
-/*
     batch_size = new_batch_size;
 
     data_set = new_data_set;
@@ -129,16 +128,16 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     const Index input_variables_number = data_set->get_input_variables_number();
     const Index target_variables_number = data_set->get_target_variables_number();
 
-    const dimensions& input_dimensions = data_set->get_input_dimensions();
-    const dimensions& target_variables_dimensions = data_set->get_target_dimensions();
+    const dimensions& data_set_input_dimensions = data_set->get_input_dimensions();
+    const dimensions& data_set_target_dimensions = data_set->get_target_dimensions();
 
-    if(input_dimensions.size() == 1)
+    if(data_set_input_dimensions.size() == 1)
     {
         input_dimensions = {{batch_size, input_variables_number}};
 
         inputs_tensor.resize(batch_size*input_variables_number);
     }
-    else if(input_dimensions.size() == 2)
+    else if(data_set_input_dimensions.size() == 2)
     {
         const Index rows_number = input_dimensions[0];
         const Index columns_number = input_dimensions[1];
@@ -147,39 +146,39 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         inputs_tensor.resize(batch_size*rows_number*columns_number);
     }
-    else if(input_dimensions.size() == 3)
+    else if(data_set_input_dimensions.size() == 3)
     {
         const Index rows_number = input_dimensions[0];
         const Index raw_variables_number = input_dimensions[1];
         const Index channels_number = input_dimensions[2];
 
-        input_dimensions = { {batch_size, rows_number, raw_variables_number, channels_number} };
+        input_dimensions = {{batch_size, rows_number, raw_variables_number, channels_number}};
 
         inputs_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
 
     inputs_data = inputs_tensor.data();
 
-    if(target_variables_dimensions.size() == 1)
+    if(data_set_target_dimensions.size() == 1)
     {
         targets_dimensions = {{batch_size, target_variables_number}};
 
         targets_tensor.resize(batch_size*target_variables_number);
     }
-    else if(target_variables_dimensions.size() == 2)
+    else if(data_set_target_dimensions.size() == 2)
     {
-        const Index rows_number = target_variables_dimensions[0];
-        const Index raw_variables_number = target_variables_dimensions[1];
+        const Index rows_number = data_set_target_dimensions[0];
+        const Index raw_variables_number = data_set_target_dimensions[1];
 
         targets_dimensions = {{batch_size, rows_number, raw_variables_number}};
 
         targets_tensor.resize(batch_size*rows_number*raw_variables_number);
     }
-    else if(target_variables_dimensions.size() == 3)
+    else if(data_set_target_dimensions.size() == 3)
     {
-        const Index rows_number = target_variables_dimensions[0];
-        const Index raw_variables_number = target_variables_dimensions[1];
-        const Index channels_number = target_variables_dimensions[2];
+        const Index rows_number = data_set_target_dimensions[0];
+        const Index raw_variables_number = data_set_target_dimensions[1];
+        const Index channels_number = data_set_target_dimensions[2];
 
         targets_dimensions = { {batch_size, rows_number, raw_variables_number, channels_number} };
 
@@ -198,28 +197,28 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         const Index context_variables_number = language_data_set->get_context_variables_number();
 
-        const Tensor<Index, 1> context_dimensions = language_data_set->get_context_variables_dimensions();
+        const Tensor<Index, 1> data_set_context_dimensions = language_data_set->get_context_variables_dimensions();
 
-        if(context_dimensions.size() == 1)
+        if(data_set_context_dimensions.size() == 1)
         {
             context_dimensions = { {batch_size, context_variables_number} };
 
             context_tensor.resize(batch_size * context_variables_number);
         }
-        else if(context_dimensions.size() == 2)
+        else if(data_set_context_dimensions.size() == 2)
         {
-            const Index rows_number = context_dimensions(0);
-            const Index raw_variables_number = context_dimensions(1);
+            const Index rows_number = context_dimensions[0];
+            const Index raw_variables_number = context_dimensions[1];
 
             context_dimensions = { {batch_size, rows_number, raw_variables_number} };
 
             context_tensor.resize(batch_size * rows_number * raw_variables_number);
         }
-        else if(context_dimensions.size() == 3)
+        else if(data_set_context_dimensions.size() == 3)
         {
-            const Index channels_number = context_dimensions(0);
-            const Index rows_number = context_dimensions(1);
-            const Index raw_variables_number = context_dimensions(2);
+            const Index channels_number = context_dimensions[0];
+            const Index rows_number = context_dimensions[1];
+            const Index raw_variables_number = context_dimensions[2];
 
             context_dimensions = { {batch_size, channels_number, rows_number, raw_variables_number} };
 
@@ -228,7 +227,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         context_data = context_tensor.data();
     }
-*/
+
 }
 
 

@@ -39,6 +39,8 @@ TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path,
                                      const Codification& data_codification)
 {
     set(data_source_path, separator, has_raw_variables_names, data_codification);
+
+    transform_time_series();
 }
 
 
@@ -137,7 +139,6 @@ Tensor<type, 2> TimeSeriesDataSet::get_time_series_raw_variable_data(const Index
 }
 
 
-
 Tensor<string, 1> TimeSeriesDataSet::get_time_series_raw_variables_names() const
 {
     const Index raw_variables_number = get_time_series_raw_variables_number();
@@ -151,7 +152,6 @@ Tensor<string, 1> TimeSeriesDataSet::get_time_series_raw_variables_names() const
 
     return raw_variables_names;
 }
-
 
 
 Index TimeSeriesDataSet::get_input_time_series_raw_variables_number() const
@@ -170,7 +170,6 @@ Index TimeSeriesDataSet::get_input_time_series_raw_variables_number() const
 }
 
 
-
 Index TimeSeriesDataSet::get_target_time_series_raw_variables_number() const
 {
     Index target_raw_variables_number = 0;
@@ -185,7 +184,6 @@ Index TimeSeriesDataSet::get_target_time_series_raw_variables_number() const
 
     return target_raw_variables_number;
 }
-
 
 
 Index TimeSeriesDataSet::get_time_series_time_raw_variable_index() const
@@ -254,7 +252,6 @@ Tensor<string, 1> TimeSeriesDataSet::get_time_series_variables_names() const
 }
 
 
-
 Tensor<Index, 1> TimeSeriesDataSet::get_input_time_series_raw_variables_indices() const
 {
     const Index input_raw_variables_number = get_input_time_series_raw_variables_number();
@@ -274,7 +271,6 @@ Tensor<Index, 1> TimeSeriesDataSet::get_input_time_series_raw_variables_indices(
 
     return input_raw_variables_indices;
 }
-
 
 
 /// Sets a new number of lags to be defined for a time series prediction application.
@@ -456,6 +452,7 @@ void TimeSeriesDataSet::transform_time_series_data()
     }
 
     samples_uses.resize(new_samples_number);
+
     split_samples_random();
 }
 
@@ -478,9 +475,33 @@ void TimeSeriesDataSet::transform_time_series()
 }
 
 
+void TimeSeriesDataSet::print() const
+{
+    if(!display) return;
+
+    const Index variables_number = get_variables_number();
+    const Index input_variables_number = get_input_variables_number();
+    const Index samples_number = get_samples_number();
+    const Index target_variables_bumber = get_target_variables_number();
+
+    cout << "Time series data set object summary:\n"
+         << "Number of samples: " << samples_number << "\n"
+         << "Number of variables: " << variables_number << "\n"
+         << "Number of input variables: " << input_variables_number << "\n"
+         << "Number of targets: " << target_variables_bumber << "\n"
+         << "Input variables dimensions: ";
+
+    print_dimensions(input_dimensions);
+
+    cout << "Target variables dimensions: ";
+    print_dimensions(target_dimensions);
+
+}
+
+/*
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 ///
-/*
+
 void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -660,7 +681,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(time_series_raw_variables_number != 0)
     {
-        file_stream.OpenElement("TimeSeriesraw_variables");
+        file_stream.OpenElement("TimeSeriesRawVariables");
 
         // Time series raw_variables number
         {
@@ -878,8 +899,8 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     time(&finish);
 }
-*/
-/*
+
+
 void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     ostringstream buffer;
@@ -1288,7 +1309,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time series raw_variables
 
-    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesraw_variables");
+    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
 
     // Time series raw_variables number
 
@@ -1899,7 +1920,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
     const Tensor<Index, 1> input_raw_variables_indices = get_input_time_series_raw_variables_indices();
     const Tensor<Index, 1> target_raw_variables_indices = get_target_time_series_raw_variables_indices();
 
-    Index input_target_numeric_raw_variable_number = 0;
+    Index input_target_numeric_raw_variables_number = 0;
 
     int counter = 0;
 
@@ -1913,7 +1934,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
             if(input_raw_variable_type == RawVariableType::Numeric)
             {
-                input_target_numeric_raw_variable_number++;
+                input_target_numeric_raw_variables_number++;
             }
         }
         else
@@ -1924,7 +1945,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
             if(target_raw_variable_type == RawVariableType::Numeric)
             {
-                input_target_numeric_raw_variable_number++;
+                input_target_numeric_raw_variables_number++;
             }
 
             counter++;
@@ -1946,7 +1967,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
         new_lags_number = lags_number;
     }
 
-    Tensor<type, 2> autocorrelations(input_target_numeric_raw_variable_number, new_lags_number);
+    Tensor<type, 2> autocorrelations(input_target_numeric_raw_variables_number, new_lags_number);
     Tensor<type, 1> autocorrelations_vector(new_lags_number);
     Tensor<type, 2> input_i;
     Index counter_i = 0;
@@ -2007,7 +2028,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
     const Tensor<Index, 1> input_raw_variables_indices = get_input_time_series_raw_variables_indices();
     const Tensor<Index, 1> target_raw_variables_indices = get_target_time_series_raw_variables_indices();
 
-    Index input_target_numeric_raw_variable_number = 0;
+    Index input_target_numeric_raw_variables_number = 0;
     int counter = 0;
 
     for(Index i = 0; i < input_target_raw_variables_number; i++)
@@ -2020,7 +2041,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
             if(input_raw_variable_type == RawVariableType::Numeric)
             {
-                input_target_numeric_raw_variable_number++;
+                input_target_numeric_raw_variables_number++;
             }
         }
         else
@@ -2031,7 +2052,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
             if(target_raw_variable_type == RawVariableType::Numeric)
             {
-                input_target_numeric_raw_variable_number++;
+                input_target_numeric_raw_variables_number++;
             }
 
             counter++;
@@ -2053,10 +2074,15 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
         new_lags_number = lags_number;
     }
 
-    Tensor<type, 3> cross_correlations(input_target_numeric_raw_variable_number, input_target_numeric_raw_variable_number, new_lags_number);
+    Tensor<type, 3> cross_correlations(input_target_numeric_raw_variables_number,
+                                       input_target_numeric_raw_variables_number,
+                                       new_lags_number);
+
     Tensor<type, 1> cross_correlations_vector(new_lags_number);
+
     Tensor<type, 2> input_i;
     Tensor<type, 2> input_j;
+
     Index counter_i = 0;
     Index counter_j = 0;
 

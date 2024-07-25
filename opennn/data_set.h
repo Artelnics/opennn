@@ -509,7 +509,7 @@ public:
     void set_variables_unused();
 
     void set_input_variables_dimensions(const dimensions&);
-    void set_target_variables_dimensions(const dimensions&);
+    void set_target_dimensions(const dimensions&);
 
     // Data set methods
 
@@ -694,7 +694,7 @@ public:
 
     // Serialization methods
 
-    void print() const;
+    virtual void print() const;
 
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;
@@ -793,6 +793,7 @@ public:
     virtual void read_txt_language_model();
 
     //AutoAssociation Models
+
     virtual void transform_associative_dataset();
     virtual void save_auto_associative_data_binary(const string&) const;
 
@@ -817,13 +818,13 @@ protected:
 
     Tensor<string, 1> rows_labels;
 
-    // raw_variables
+    // Raw variables
 
     Tensor<RawVariable, 1> raw_variables;
 
     dimensions input_dimensions;
 
-    dimensions target_variables_dimensions;
+    dimensions target_dimensions;
 
     // DATA FILE
 

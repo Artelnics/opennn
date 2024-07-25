@@ -209,15 +209,12 @@ void ProbabilisticLayerTest::test_calculate_activations()
         aux_rows.resize(samples_number);
 
         probabilistic_layer.calculate_activations(combinations, activations, aux_rows);
-        /*
-        assert_true(
-            activations.rank() == 2 &&
-            activations.dimension(0) == samples_number &&
-            activations.dimension(1) == neurons_number, LOG);
 
-        assert_true(Index(activations(0, 0)) == 1, LOG);
-        */
+        assert_true(activations.rank() == 2
+                 && activations.dimension(0) == samples_number
+                 && activations.dimension(1) == neurons_number, LOG);
 
+        assert_true(Index(activations(0, 0)) == 1, LOG);        
     }
 
     {
@@ -242,8 +239,9 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
         aux_rows.resize(samples_number);
 
-        //probabilistic_layer.calculate_activations(combinations, activations, aux_rows); /* Test Failed */
         /*
+        probabilistic_layer.calculate_activations(combinations, activations, aux_rows);
+
         assert_true(
             activations.rank() == 2 &&
             activations.dimension(0) == samples_number &&
@@ -287,10 +285,10 @@ void ProbabilisticLayerTest::test_calculate_activations()
         probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
         aux_rows.resize(samples_number);
+        /*
+        probabilistic_layer.calculate_activations(combinations, activations, aux_rows); /
 
-    //    probabilistic_layer.calculate_activations(combinations, activations, aux_rows); /* Test Failed */
 
-     /*
         assert_true(
             activations.rank() == 2 &&
             activations.dimension(0) == samples_number &&
@@ -303,7 +301,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
             abs(activations(1, 0) - type(0.333)) < type(1e-3) &&
             abs(activations(1, 1) - type(0.333)) < type(1e-3) &&
             abs(activations(1, 2) - type(0.333)) < type(1e-3), LOG);
-    */
+        */
     }
 
 }
@@ -361,11 +359,11 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
         activations_derivatives_3d.resize(samples_number, neurons_number, neurons_number);
 
         probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-
-        //probabilistic_layer.calculate_activations_derivatives(combinations,
-        //                                                      activations,
-        //                                                     activations_derivatives_3d); /* Test Failed*/
         /*
+        probabilistic_layer.calculate_activations_derivatives(combinations,
+                                                              activations,
+                                                             activations_derivatives_3d);
+
         assert_true(
             activations_derivatives_3d.rank() == 3 &&
             activations_derivatives_3d.dimension(0) == samples_number &&
@@ -396,12 +394,12 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
         activations.resize(samples_number, neurons_number);
 
         activations_derivatives_3d.resize(samples_number, neurons_number, neurons_number);
-
-        //probabilistic_layer.calculate_activations_derivatives(combinations,
-        //                                                      activations,
-        //                                                      activations_derivatives_3d); /* Test Failed */
-
         /*
+        probabilistic_layer.calculate_activations_derivatives(combinations,
+                                                              activations,
+                                                              activations_derivatives_3d);
+
+
         assert_true(activations_derivatives_3d.rank() == 3 &&
             activations_derivatives_3d.dimension(0) == samples_number &&
             activations_derivatives_3d.dimension(1) == neurons_number &&
@@ -521,11 +519,11 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
-
+/*
     probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                           &probabilistic_layer_forward_propagation,
-                                          is_training); /* Test Failed */
-/*
+                                          is_training);
+*/
     Tensor<type, 2> outputs_test_2 = probabilistic_layer_forward_propagation.outputs;
 
     assert_true(outputs_test_2.dimension(0) == 1, LOG);
@@ -534,7 +532,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(Index(outputs_test_2(0,1)) == 0, LOG);
     assert_true(Index(outputs_test_2(0,2)) == 0, LOG);
     assert_true(Index(outputs_test_2(0,3)) == 0, LOG);
-*/
+
     // Test 3
 
     inputs_number = 2;
@@ -620,12 +618,12 @@ void ProbabilisticLayerTest::run_test_case()
     // Forward propagate
 
     test_calculate_combinations();
-    test_calculate_activations(); /* Test Failed */
 
-    //test_calculate_activations_derivatives(); /* Test Failed */
+    test_calculate_activations();
 
-    //test_forward_propagate(); /* Test Failed */
+    test_calculate_activations_derivatives();
 
+    test_forward_propagate();
 
     cout << "End of probabilistic layer test case.\n\n";
 }

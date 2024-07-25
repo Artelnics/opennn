@@ -58,7 +58,9 @@ void initialize_sequential(Tensor<Index, 1>& vector)
 
 
 void initialize_sequential(Tensor<Index, 1>& new_tensor,
-                           const Index& start, const Index& step, const Index& end)
+                           const Index& start,
+                           const Index& step,
+                           const Index& end)
 {
     const Index new_size = (end-start)/step+1;
 
@@ -91,7 +93,9 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
-void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 1>& vector)
+void multiply_matrices(ThreadPoolDevice* thread_pool_device,
+                       Tensor<type, 3>& tensor,
+                       const Tensor<type, 1>& vector)
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
@@ -121,19 +125,20 @@ void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& te
 }
 
 
-// Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
-// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
-// By default contraction axes are (1, 0)
+/// Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
+/// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
+/// By default contraction axes are (1, 0)
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const TensorMap<Tensor<type, 3>>& A,
                                  TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
                                  const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
-    Index A_rows = A.dimension(0);
-    Index A_columns = A.dimension(1);
-    Index B_rows = B.dimension(0);
-    Index B_columns = B.dimension(1);
+    const Index A_rows = A.dimension(0);
+    const Index A_columns = A.dimension(1);
+    const Index B_rows = B.dimension(0);
+    const Index B_columns = B.dimension(1);
 
     Index C_rows = A_rows;
     Index C_columns = B_columns;
@@ -142,7 +147,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].second == 1)    C_columns = B_rows;
 
-    Index channels_number = A.dimension(2);
+    const Index channels_number = A.dimension(2);
 
     type* A_data = (type*)A.data();
     type* B_data = (type*)B.data();
@@ -170,16 +175,17 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
 // By default contraction axes are (1, 0)
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
     TensorMap<Tensor<type, 3>>& A,
     const TensorMap<Tensor<type, 3>>& B,
     TensorMap<Tensor<type, 3>>& C,
     const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
-    Index A_rows = A.dimension(0);
-    Index A_columns = A.dimension(1);
-    Index B_rows = B.dimension(0);
-    Index B_columns = B.dimension(1);
+    const Index A_rows = A.dimension(0);
+    const Index A_columns = A.dimension(1);
+    const Index B_rows = B.dimension(0);
+    const Index B_columns = B.dimension(1);
 
     Index C_rows = A_rows;
     Index C_columns = B_columns;
@@ -188,7 +194,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].second == 1)    C_columns = B_rows;
 
-    Index channels_number = A.dimension(2);
+    const Index channels_number = A.dimension(2);
 
     type* A_data = (type*)A.data();
     type* B_data = (type*)B.data();
@@ -623,7 +629,7 @@ bool is_zero(const Tensor<type, 1>& tensor)
 }
 
 
-bool is_zero(const Tensor<type,1>& tensor,const type& limit)
+bool is_zero(const Tensor<type,1>& tensor, const type& limit)
 {
     const Index size = tensor.size();
 
@@ -1300,21 +1306,6 @@ Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1
     return direct_matrix;
 }
 
-/*
-void kronecker_product(const Tensor<type, 1>& x, Tensor<type, 2>& y)
-{
-    const Index n = x.dimension(0);
-    
-    type* x_data = (type*)x.data();
-    type* y_data = (type*)y.data();
-
-    const auto x_matrix = Map<Matrix<type, Dynamic, Dynamic>>(x_data, n, 1);
-
-    auto product = Map<Matrix<type, Dynamic, Dynamic>>(y_data, n*n, 1);
-
-    product = kroneckerProduct(x_matrix, x_matrix).eval();
-}
-*/
 
 type l1_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
 {
@@ -2094,11 +2085,11 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 
 void swap_rows(Tensor<type, 2>& matrix, const Index& row_1, const Index& row_2)
 {
-    const Tensor<type, 1> temp = matrix.chip(row_1, 0);
+    const Tensor<type, 1> row = matrix.chip(row_1, 0);
 
     matrix.chip(row_1, 0) = matrix.chip(row_2, 0);
 
-    matrix.chip(row_2, 0) = temp;
+    matrix.chip(row_2, 0) = row;
 }
 
 
@@ -2190,7 +2181,10 @@ Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& diffe
 }
 
 
-Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index, Index target_column)
+Index partition(Tensor<type, 2>& data_matrix,
+                const Index& start_index,
+                const Index& end_index,
+                const Index& target_column)
 {
     Tensor<type, 1> pivot_row = data_matrix.chip(start_index, 0);
     type pivot_value = pivot_row(target_column);
@@ -2207,7 +2201,8 @@ Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index
     Index pivot_position = start_index + smaller_elements_count;
     swap_rows(data_matrix, pivot_position, start_index);
 
-    Index left_index = start_index, right_index = end_index;
+    Index left_index = start_index;
+    Index right_index = end_index;
 
     while (left_index < pivot_position && right_index > pivot_position)
     {
@@ -2269,38 +2264,13 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
 }
 
 
-/*Tensor<float, 1> remove_nan_and_resize(Tensor<float, 1> tensor)
-{
-    vector<float> auxiliar_v = {};
-
-    for(int i = 0; i < tensor.dimension(0); i++)
-    {
-        if(tensor(i)!=NAN)
-        {
-            auxiliar_v.push_back(tensor(i));
-        }
-    }
-
-    const int dimension = auxiliar_v.size();
-    Tensor<float,1> auxiliar_t(dimension);
-
-    int i = 0;
-    for(float elem : auxiliar_v)
-    {
-        auxiliar_t(i) = elem;
-        i++;
-    }
-
-    return auxiliar_t;
-}*/
-
-
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     TensorMap<Tensor<type, 1>> raw_variable((type*) matrix.data() + column_index * matrix.dimension(0), matrix.dimension(0));
 
     return raw_variable;
 }
+
 
 void print_dimensions(const dimensions& new_dimensions)
 {
@@ -2309,7 +2279,6 @@ void print_dimensions(const dimensions& new_dimensions)
 
     cout << endl;
 }
-
 
 }
 
