@@ -111,7 +111,7 @@ void ResponseOptimizationTest::test_perform_optimization()
     results = response_optimization.perform_optimization();
     assert_true(results->optimal_variables(0) = 1, LOG);
     assert_true(results->optimal_variables(1) <= 1, LOG);
-    assert_true(1 <= results->optimal_variables(2) <= 2.5, LOG);
+    assert_true((1 <= results->optimal_variables(2)) && (results->optimal_variables(2) <= 2.5), LOG);
 
     // Multiple outputs case 1
 
@@ -125,8 +125,8 @@ void ResponseOptimizationTest::test_perform_optimization()
     results = response_optimization.perform_optimization();
     assert_true(results->optimal_variables(0) = 1, LOG);
     assert_true(results->optimal_variables(1) <= 1, LOG);
-    assert_true(1 <= results->optimal_variables(2) <= 3.0, LOG);
-    assert_true(-1 <= results->optimal_variables(3) <= type(1), LOG);
+    assert_true((1 <= results->optimal_variables(2)) && (results->optimal_variables(2) <= 3.0), LOG);
+    assert_true((-1 <= results->optimal_variables(3)) && (results->optimal_variables(3) <= type(1)), LOG);
 
     // Multiple outputs case 2
 
@@ -145,7 +145,7 @@ void ResponseOptimizationTest::test_perform_optimization()
     results = response_optimization.perform_optimization();
     assert_true(results->optimal_variables(0) = 1, LOG);
     assert_true(results->optimal_variables(1) <= 1, LOG);
-    assert_true(1 <= results->optimal_variables(2) <= 2.0, LOG);
+    assert_true((1 <= results->optimal_variables(2)) && (results->optimal_variables(2) <= 2.0), LOG);
     assert_true(type(-1) <= results->optimal_variables(3), LOG);
     assert_true(results->optimal_variables(3) <= type(0), LOG);
 
