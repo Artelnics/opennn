@@ -3637,7 +3637,6 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
     {
         raw_variables(i).scaler = new_scalers[i];
     }
-
 }
 
 
@@ -3649,26 +3648,33 @@ void DataSet::set_binary_simple_raw_variables()
 
     Index different_values = 0;
 
-    for(Index raw_variable_index = 0; raw_variable_index < raw_variables.size(); raw_variable_index++)
+    const Index raw_variables_number = raw_variables.size();
+
+    const Index rows_number = data.dimension(0);
+
+    for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
-        if(raw_variables(raw_variable_index).type == RawVariableType::Numeric)
+        RawVariable raw_variable =  raw_variables(raw_variable_index);
+
+        if(raw_variable.type == RawVariableType::Numeric)
         {
             Tensor<type, 1> values(3);
             values.setRandom();
             different_values = 0;
             is_binary = true;
 
-            for(Index row_index = 0; row_index < data.dimension(0); row_index++)
+            for(Index row_index = 0; row_index < rows_number; row_index++)
             {
                 if(!isnan(data(row_index, variable_index))
-                        && data(row_index, variable_index) != values(0)
-                        && data(row_index, variable_index) != values(1))
+                && data(row_index, variable_index) != values(0)
+                && data(row_index, variable_index) != values(1))
                 {
                     values(different_values) = data(row_index, variable_index);
+
                     different_values++;
                 }
 
-                if(row_index == (data.dimension(0)-1))
+                if(row_index == rows_number - 1)
                 {
                     if(different_values == 1)
                     {
@@ -3686,104 +3692,110 @@ void DataSet::set_binary_simple_raw_variables()
 
             if(is_binary)
             {
-                raw_variables(raw_variable_index).type = RawVariableType::Binary;
+                raw_variable.type = RawVariableType::Binary;
                 scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
-                raw_variables(raw_variable_index).categories.resize(2);
+                raw_variable.categories.resize(2);
 
-                if((abs(values(0)-type(0))<NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1))<NUMERIC_LIMITS_MIN))
+                if((abs(values(0)-type(0)) < NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1)) < NUMERIC_LIMITS_MIN))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(0)));
+                        raw_variable.categories(1) = to_string(int(values(0)));
                     else
-                        raw_variables(raw_variable_index).categories(1) = to_string(values(0));
+                        raw_variable.categories(1) = to_string(values(0));
+
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(1)));
+                        raw_variable.categories(0) = to_string(int(values(1)));
                     else
-                        raw_variables(raw_variable_index).categories(0) = to_string(values(1));
+                        raw_variable.categories(0) = to_string(values(1));
 
                 }
-                else if(abs(values(0) - type(1))<NUMERIC_LIMITS_MIN && abs(values(1) - type(0))<NUMERIC_LIMITS_MIN)
+                else if(abs(values(0) - type(1)) < NUMERIC_LIMITS_MIN && abs(values(1) - type(0)) < NUMERIC_LIMITS_MIN)
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(0)));
+                        raw_variable.categories(0) = to_string(int(values(0)));
                     else
-                        raw_variables(raw_variable_index).categories(0) = to_string(values(0));
+                        raw_variable.categories(0) = to_string(values(0));
+
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(1)));
+                        raw_variable.categories(1) = to_string(int(values(1)));
                     else
-                        raw_variables(raw_variable_index).categories(1) = to_string(values(1));
+                        raw_variable.categories(1) = to_string(values(1));
                 }
                 else if(values(0) > values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(0)));
+                        raw_variable.categories(0) = to_string(int(values(0)));
                     else
-                        raw_variables(raw_variable_index).categories(0) = to_string(values(0));
+                        raw_variable.categories(0) = to_string(values(0));
+
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(1)));
+                        raw_variable.categories(1) = to_string(int(values(1)));
                     else
-                        raw_variables(raw_variable_index).categories(1) = to_string(values(1));
+                        raw_variable.categories(1) = to_string(values(1));
                 }
                 else if(values(0) < values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(0)));
+                        raw_variable.categories(1) = to_string(int(values(0)));
                     else
-                        raw_variables(raw_variable_index).categories(1) = to_string(values(0));
+                        raw_variable.categories(1) = to_string(values(0));
+
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(1)));
+                        raw_variable.categories(0) = to_string(int(values(1)));
                     else
-                        raw_variables(raw_variable_index).categories(0) = to_string(values(1));
+                        raw_variable.categories(0) = to_string(values(1));
                 }
 
-                const VariableUse raw_variable_use = raw_variables(raw_variable_index).raw_variable_use;
-                raw_variables(raw_variable_index).categories_uses.resize(2);
-                raw_variables(raw_variable_index).categories_uses(0) = raw_variable_use;
-                raw_variables(raw_variable_index).categories_uses(1) = raw_variable_use;
+                const VariableUse raw_variable_use = raw_variable.raw_variable_use;
+                raw_variable.categories_uses.resize(2);
+                raw_variable.categories_uses(0) = raw_variable_use;
+                raw_variable.categories_uses(1) = raw_variable_use;
             }
 
             variable_index++;
         }
-        else if(raw_variables(raw_variable_index).type == RawVariableType::Binary)
+        else if(raw_variable.type == RawVariableType::Binary)
         {
             Tensor<string,1> positive_words(4);
             Tensor<string,1> negative_words(4);
 
-            positive_words.setValues({"yes","positive","+","true"});
-            negative_words.setValues({"no","negative","-","false"});
+            positive_words.setValues({"yes", "positive", "+", "true"});
+            negative_words.setValues({"no", "negative", "-", "false"});
 
-            string first_category = raw_variables(raw_variable_index).categories(0);
-            string original_first_category = raw_variables(raw_variable_index).categories(0);
+            string first_category = raw_variable.categories(0);
+            const string original_first_category = raw_variable.categories(0);
             trim(first_category);
 
-            string second_category = raw_variables(raw_variable_index).categories(1);
-            string original_second_category = raw_variables(raw_variable_index).categories(1);
+            string second_category = raw_variable.categories(1);
+            const string original_second_category = raw_variable.categories(1);
             trim(second_category);
 
             transform(first_category.begin(), first_category.end(), first_category.begin(), ::tolower);
             transform(second_category.begin(), second_category.end(), second_category.begin(), ::tolower);
 
-            if( contains(positive_words, first_category) && contains(negative_words, second_category) )
+            if(contains(positive_words, first_category) && contains(negative_words, second_category))
             {
-                raw_variables(raw_variable_index).categories(0) = original_first_category;
-                raw_variables(raw_variable_index).categories(1) = original_second_category;
+                raw_variable.categories(0) = original_first_category;
+                raw_variable.categories(1) = original_second_category;
             }
-            else if( contains(positive_words, second_category) && contains(negative_words, first_category) )
+            else if(contains(positive_words, second_category) && contains(negative_words, first_category))
             {
-                raw_variables(raw_variable_index).categories(0) = original_second_category;
-                raw_variables(raw_variable_index).categories(1) = original_first_category;
+                raw_variable.categories(0) = original_second_category;
+                raw_variable.categories(1) = original_first_category;
             }
 
             variable_index++;
         }
-        else if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
+        else if(raw_variable.type == RawVariableType::Categorical)
         {
-            variable_index += raw_variables(raw_variable_index).get_categories_number();
+            variable_index += raw_variable.get_categories_number();
         }
         else
         {
             variable_index++;
         }
+
+        raw_variables(raw_variable_index) = raw_variable;
     }
 
     if(display) cout << "Binary raw_variables checked " << endl;
@@ -3796,48 +3808,55 @@ void DataSet::check_constant_raw_variables()
 
     Index variable_index = 0;
 
-    for(Index raw_variable = 0; raw_variable < get_raw_variables_number(); raw_variable++)
+    const Index raw_variables_number = get_raw_variables_number();
+
+    for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
-        if(raw_variables(raw_variable).type == RawVariableType::Numeric)
+        RawVariable raw_variable = raw_variables(raw_variable_index);
+
+        if(raw_variable.type == RawVariableType::Numeric)
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
             if(is_constant(numeric_column))
             {
-                raw_variables(raw_variable).type = RawVariableType::Constant;
-                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
-            }
-            variable_index++;
-        }
-        else if(raw_variables(raw_variable).type == RawVariableType::DateTime)
-        {
-            raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
-            variable_index++;
-        }
-        else if(raw_variables(raw_variable).type == RawVariableType::Constant)
-        {
-            variable_index++;
-        }
-        else if(raw_variables(raw_variable).type == RawVariableType::Binary)
-        {
-            if(raw_variables(raw_variable).get_categories_number() == 1)
-            {
-                raw_variables(raw_variable).type = RawVariableType::Constant;
-                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
+                raw_variable.type = RawVariableType::Constant;
+                raw_variable.raw_variable_use = VariableUse::Unused;
             }
 
             variable_index++;
         }
-        else if(raw_variables(raw_variable).type == RawVariableType::Categorical)
+        else if(raw_variable.type == RawVariableType::DateTime)
         {
-            if(raw_variables(raw_variable).get_categories_number() == 1)
+            raw_variable.raw_variable_use = VariableUse::Unused;
+            variable_index++;
+        }
+        else if(raw_variable.type == RawVariableType::Constant)
+        {
+            variable_index++;
+        }
+        else if(raw_variable.type == RawVariableType::Binary)
+        {
+            if(raw_variable.get_categories_number() == 1)
             {
-                raw_variables(raw_variable).type = RawVariableType::Constant;
-                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
+                raw_variable.type = RawVariableType::Constant;
+                raw_variable.raw_variable_use = VariableUse::Unused;
             }
 
-            variable_index += raw_variables(raw_variable).get_categories_number();
+            variable_index++;
         }
+        else if(raw_variable.type == RawVariableType::Categorical)
+        {
+            if(raw_variable.get_categories_number() == 1)
+            {
+                raw_variable.type = RawVariableType::Constant;
+                raw_variables(raw_variable_index).raw_variable_use = VariableUse::Unused;
+            }
+
+            variable_index += raw_variable.get_categories_number();
+        }
+
+        raw_variables(raw_variable_index) = raw_variable;
     }
 }
 
@@ -9807,7 +9826,7 @@ void DataSet::read_csv_3_simple()
 
     if(display) cout << "Checking binary raw_variables..." << endl;
 
-    /* set_binary_simple_raw_variables(); Test Failed */
+    set_binary_simple_raw_variables();
 }
 
 

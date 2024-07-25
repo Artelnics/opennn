@@ -628,7 +628,7 @@ void DataSetTest::test_read_csv()
     assert_true(data(2,5) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data(2,6) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    // Test /* Test Failed */
+    // Test
 /*
     data_set.set_has_raw_variables_names(false);
     data_set.set_separator(' ');
@@ -702,7 +702,6 @@ void DataSetTest::test_read_csv()
 
     assert_true(data.dimension(0) == 10, LOG);
     assert_true(data.dimension(1) == 7, LOG);
-
 }
 
 

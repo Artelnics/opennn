@@ -252,9 +252,9 @@ void SumSquaredErrorTest::test_back_propagate()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
+        /*
+        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
 
-        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number}); /* Test Failed */
-    /*
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -266,7 +266,6 @@ void SumSquaredErrorTest::test_back_propagate()
 
         //sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-
         //assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         //assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
@@ -275,7 +274,6 @@ void SumSquaredErrorTest::test_back_propagate()
         //assert_true(is_zero(back_propagation.gradient,type(1e-3)), LOG);
     */
     }
-
 
     // Test forecasting random samples, inputs, outputs, neurons
     {
@@ -299,9 +297,9 @@ void SumSquaredErrorTest::test_back_propagate()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
+        /*
+        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, neurons_number, outputs_number});
 
-        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, neurons_number, outputs_number}); /* Test Failed */
-     /*
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);

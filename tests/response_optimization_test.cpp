@@ -56,8 +56,7 @@ void ResponseOptimizationTest::test_calculate_inputs()
     ResponseOptimization response_optimization(&neural_network, &data_set);
 
     Tensor<type,2> inputs = response_optimization.calculate_inputs();
-    /* Test Failed */
-/*
+
     assert_true(inputs.dimension(0) == response_optimization.get_evaluations_number(), LOG);
     assert_true(inputs.dimension(1) == neural_network.get_inputs_number(), LOG);
 
@@ -65,7 +64,7 @@ void ResponseOptimizationTest::test_calculate_inputs()
     assert_true(inputs(1) <= response_optimization.get_inputs_maximums()(1), LOG);
     assert_true(inputs(0) >= response_optimization.get_inputs_minimums()(1), LOG);
     assert_true(inputs(1) >= response_optimization.get_inputs_minimums()(1), LOG);
-*/
+
 }
 
 
@@ -84,8 +83,6 @@ void ResponseOptimizationTest::test_perform_optimization()
     ResponseOptimizationResults* results = response_optimization.perform_optimization();
     assert_true(results->optimal_variables.size() == 0, LOG);
 
-    /* Test Failed */
-/*
     // Trivial case 1
 
     conditions_values.resize(1);
@@ -98,7 +95,6 @@ void ResponseOptimizationTest::test_perform_optimization()
     assert_true(results->optimal_variables(0) = 1, LOG);
     assert_true(results->optimal_variables(1) <= 1, LOG);
     assert_true(results->optimal_variables(2) >= 1, LOG);
-
 
     // Trivial case 2
 
@@ -116,10 +112,9 @@ void ResponseOptimizationTest::test_perform_optimization()
     assert_true(results->optimal_variables(0) = 1, LOG);
     assert_true(results->optimal_variables(1) <= 1, LOG);
     assert_true(1 <= results->optimal_variables(2) <= 2.5, LOG);
-*/
 
     // Multiple outputs case 1
-/*
+
     response_optimization.set(&neural_network_2);
 
     conditions_values.resize(1);
@@ -177,7 +172,7 @@ void ResponseOptimizationTest::test_perform_optimization()
     assert_true(results->optimal_variables(2) <= 3.0, LOG);
     assert_true(results->optimal_variables(3) >= type(-1), LOG);
     assert_true(results->optimal_variables(3) <= 0.0, LOG);
-*/
+
 }
 
 

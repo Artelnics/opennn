@@ -53,10 +53,10 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_2.get_layer(1)->get_type() == Layer::Type::Perceptron, LOG);
     assert_true(neural_network_2.get_layer(2)->get_type() == Layer::Type::Probabilistic, LOG);
 
-    // Forecasting /* Test Failed */
-
-    // NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1, 4, 2}); /* Test Failed */
+    // Forecasting
 /*
+    NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1, 4, 2});
+
     assert_true(neural_network_3.get_layers_number() == 5, LOG);
     assert_true(neural_network_3.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
     assert_true(neural_network_3.get_layer(1)->get_type() == Layer::Type::Recurrent, LOG);
@@ -201,7 +201,7 @@ void NeuralNetworkTest::test_add_layer()
     neural_network.add_layer(&scaling_layer);
     assert_true(neural_network.get_layers_number() == 1, LOG);
     assert_true(neural_network.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-/* Test Failed ".set()"
+/*
     // LSTM Layer
 
     neural_network.set();
@@ -274,7 +274,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
     cout << "test_calculate_parameters_norm\n";
 
     type parameters_norm = type(0);
-/* Test Failed
+/*
     // Test
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {});
@@ -321,8 +321,8 @@ void NeuralNetworkTest::test_calculate_outputs()
     Index parameters_number;
 
     Tensor<type, 1> parameters;
-/* Test Failed
-     *
+/*
+
     // Test two layers perceptron with all zeros
 
     batch_samples_number = 1;
@@ -492,7 +492,7 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
     Tensor<type, 1> point;
 
     Tensor<type, 2> directional_inputs;
-/* Test Failed
+/*
     // Test
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {3, 4, 2});
@@ -550,8 +550,8 @@ void NeuralNetworkTest::test_save()
     Index outputs_number;
 
     string file_name = "../data/neural_network.xml";
- /* Test Failed
-     *
+ /*
+
     // Empty neural network
 
     neural_network.set();
@@ -592,7 +592,7 @@ void NeuralNetworkTest::test_load()
 
 void NeuralNetworkTest::test_forward_propagate()
 {
-/* Test Failed
+/*
     cout << "test_forward_propagate\n";
 
     {

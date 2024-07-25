@@ -58,7 +58,9 @@ void initialize_sequential(Tensor<Index, 1>& vector)
 
 
 void initialize_sequential(Tensor<Index, 1>& new_tensor,
-                           const Index& start, const Index& step, const Index& end)
+                           const Index& start,
+                           const Index& step,
+                           const Index& end)
 {
     const Index new_size = (end-start)/step+1;
 
@@ -91,7 +93,9 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
-void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 1>& vector)
+void multiply_matrices(ThreadPoolDevice* thread_pool_device,
+                       Tensor<type, 3>& tensor,
+                       const Tensor<type, 1>& vector)
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
@@ -121,19 +125,20 @@ void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& te
 }
 
 
-// Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
-// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
-// By default contraction axes are (1, 0)
+/// Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
+/// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
+/// By default contraction axes are (1, 0)
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const TensorMap<Tensor<type, 3>>& A,
                                  TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
                                  const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
-    Index A_rows = A.dimension(0);
-    Index A_columns = A.dimension(1);
-    Index B_rows = B.dimension(0);
-    Index B_columns = B.dimension(1);
+    const Index A_rows = A.dimension(0);
+    const Index A_columns = A.dimension(1);
+    const Index B_rows = B.dimension(0);
+    const Index B_columns = B.dimension(1);
 
     Index C_rows = A_rows;
     Index C_columns = B_columns;
@@ -142,7 +147,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].second == 1)    C_columns = B_rows;
 
-    Index channels_number = A.dimension(2);
+    const Index channels_number = A.dimension(2);
 
     type* A_data = (type*)A.data();
     type* B_data = (type*)B.data();
@@ -170,16 +175,17 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
 // By default contraction axes are (1, 0)
+
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
     TensorMap<Tensor<type, 3>>& A,
     const TensorMap<Tensor<type, 3>>& B,
     TensorMap<Tensor<type, 3>>& C,
     const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
-    Index A_rows = A.dimension(0);
-    Index A_columns = A.dimension(1);
-    Index B_rows = B.dimension(0);
-    Index B_columns = B.dimension(1);
+    const Index A_rows = A.dimension(0);
+    const Index A_columns = A.dimension(1);
+    const Index B_rows = B.dimension(0);
+    const Index B_columns = B.dimension(1);
 
     Index C_rows = A_rows;
     Index C_columns = B_columns;
@@ -188,7 +194,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].second == 1)    C_columns = B_rows;
 
-    Index channels_number = A.dimension(2);
+    const Index channels_number = A.dimension(2);
 
     type* A_data = (type*)A.data();
     type* B_data = (type*)B.data();
