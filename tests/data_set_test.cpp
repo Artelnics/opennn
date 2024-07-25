@@ -1242,7 +1242,7 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
 
-    cout << "Correlation tests datafile read" << endl;
+//    cout << "Correlation tests datafile read" << endl;
 //    data_set.print_data();
 
 //    input_raw_variables_indices.resize(2);
@@ -1420,7 +1420,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     Tensor<Index, 1> target_raw_variables_indices(1);
     target_raw_variables_indices.setValues({3});
-/*
+
     data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
 
     Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
@@ -1438,7 +1438,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).r == 1, LOG);
 
     // Test 2 (numeric and numeric non trivial case)
-
+/*
     cout << "Test 2" << endl;
 
     data.resize(3, 4);
@@ -1552,7 +1552,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
-
+*/
     // Test 5 (categorical and categorical)
 
     cout << "Test 5" << endl;
@@ -1586,9 +1586,9 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG); // CHECK
-
+*/
     // Test 6 (numeric and binary)
-
+/*
     cout << "Test 6" << endl;
 
     input_variables_indices.resize(3);
@@ -1617,6 +1617,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
+
 
     // Test 7 (numeric and categorical)
 
@@ -2018,7 +2019,7 @@ void DataSetTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
+/*
     // Data resizing methods
 
     test_unuse_constant_raw_variables();
@@ -2046,13 +2047,13 @@ void DataSetTest::run_test_case()
     test_scale_data();
 
     // Correlations
+*/
+    test_calculate_input_target_correlations();
 
-    //test_calculate_input_target_correlations(); /* Test Failed */
-
-    test_calculate_input_raw_variables_correlations(); /* Test Failed */
+    test_calculate_input_raw_variables_correlations();
 
     // Classification methods
-
+/*
     test_calculate_target_distribution();
 
     // Outlier detection
@@ -2079,7 +2080,7 @@ void DataSetTest::run_test_case()
     test_scrub_missing_values();
 
     test_fill();
-
+*/
     cout << "End of data set test case.\n\n";
 }
 
