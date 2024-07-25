@@ -184,7 +184,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
                                            BackPropagation& back_propagation) const
 {
     // Data set
-/*
+
     const Index total_samples_number = data_set->get_samples_number();
 
     // Neural network
@@ -237,7 +237,6 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     const type coefficient = type(total_samples_number) / (type(batch_samples_number) * normalization_coefficient);
 
     error = weighted_squared_error*coefficient;
-*/
 }
 
 
@@ -245,7 +244,7 @@ void WeightedSquaredError::calculate_error_lm(const Batch& batch,
                                               const ForwardPropagation&,
                                               BackPropagationLM &back_propagation) const
 {
-/*
+
     /// @todo This is working???
 
     // Data set
@@ -269,7 +268,6 @@ void WeightedSquaredError::calculate_error_lm(const Batch& batch,
     weighted_squared_error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
 
     error = weighted_squared_error();
-*/
 }
 
 

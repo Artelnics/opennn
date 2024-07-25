@@ -190,13 +190,16 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
     {
         return false;
     }
-    else if(layers_number == 1 && (layer_type == Layer::Type::Recurrent || layer_type == Layer::Type::LongShortTermMemory))
+    /*
+    else if(layers_number == 1 && (layer_type == Layer::Type::LongShortTermMemory))
     {
         const Layer::Type first_layer_type = layers[0]->get_type();
 
-        if (first_layer_type != Layer::Type::Scaling2D && first_layer_type != Layer::Type::Scaling4D) return false;
+        if(first_layer_type != Layer::Type::Scaling2D
+        && first_layer_type != Layer::Type::Scaling4D)
+            return false;
     }
-
+    */
     return true;
 }
 
@@ -961,12 +964,12 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const initia
 /// It also sets the rest of the members to their default values.
 /// @param input_dimensions Define the dimensions of the input varibales.
 /// @param blocks_number Number of blocks.
-/// @param filters_dimensions Architecture of the neural network.
+/// @param kernel_dimensions Architecture of the neural network.
 /// @param outputs_number Architecture of the neural network.
 
 void NeuralNetwork::set(const dimensions& input_dimensions,
                         const Index& blocks_number,
-                        const Tensor<Index, 1>& filters_dimensions,
+                        const Tensor<Index, 1>& kernel_dimensions,
                         const Index& outputs_number)
 {
     delete_layers();
@@ -979,8 +982,8 @@ void NeuralNetwork::set(const dimensions& input_dimensions,
 //    for(Index i = 0; i < blocks_number; i++)
 //    {
         // Check convolutional
-        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(output_dimensions, filters_dimensions);
-        //convolutional_layer->set_name("convolutional_layer_1" /* + to_string(1) */); // This change the initial name of the table.
+        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(output_dimensions, kernel_dimensions);
+        //convolutional_layer->set_name("convolutional_layer_1" + to_string(1) );
 
     //add_layer(convolutional_layer);
     //output_dimensions = convolutional_layer->get_output_dimensions();
@@ -2782,8 +2785,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
 
     }
-*/
-/*
+
     layers_inputs_indices.resize(layers.size());
 
     for(const tinyxml2::XMLElement* layer_inputs_indices_element = layers_inputs_indices_element->FirstChildElement("LayerInputsIndices");

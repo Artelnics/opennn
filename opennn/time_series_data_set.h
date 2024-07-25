@@ -81,6 +81,8 @@ public:
     Tensor<string, 1> get_time_series_variables_names() const;
 
     const Tensor<type, 2>& get_time_series_data() const;
+
+    void print() const final;
 /*
     void write_XML(tinyxml2::XMLPrinter&) const;
     void from_XML(const tinyxml2::XMLDocument&);

@@ -23,8 +23,11 @@
 #include "config.h"
 #include "layer.h"
 
-#include "probabilistic_layer.h"
-#include "perceptron_layer.h"
+//#include "probabilistic_layer.h"
+//#include "perceptron_layer.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+
 
 namespace opennn
 {

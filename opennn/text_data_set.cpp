@@ -123,7 +123,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     time_t start, finish;
     time(&start);
-/*
+
     file_stream.OpenElement("DataSet");
 
     // Data file
@@ -501,7 +501,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close data set
 
     file_stream.CloseElement();
-*/
+
     time(&finish);
 }
 
@@ -694,9 +694,9 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(stop_words_list_element->GetText())
         {
             const string new_stop_words_list = stop_words_list_element->GetText();
-            /*
-            stop_words = get_tokens(new_stop_words_list,",");
-        */
+
+            stop_words = get_tokens(new_stop_words_list, ",");
+
         }
     }
 

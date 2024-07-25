@@ -1897,7 +1897,7 @@ void LanguageDataSet::load_documents(const string& path)
     Index tokens_number = 0;
 
     string delimiter = "";
-    const char separator = get_separator_char();
+    const string separator = get_separator_string();
 
     while(file2.good())
     {
@@ -2023,9 +2023,9 @@ void LanguageDataSet::read_csv_3_language_model()
 
     // Read data
 
-    const Index raw_raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
+    const Index raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
 
-    Tensor<string, 1> tokens(raw_raw_variables_number);
+    Tensor<string, 1> tokens(raw_variables_number);
 
     const Index samples_number = data.dimension(0);
 
@@ -2050,7 +2050,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
         fill_tokens(line, separator_char, tokens);
 
-        for(Index j = 0; j < raw_raw_variables_number; j++)
+        for(Index j = 0; j < raw_variables_number; j++)
         {
             trim(tokens(j));
 

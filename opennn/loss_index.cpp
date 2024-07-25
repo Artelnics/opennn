@@ -442,7 +442,6 @@ void LossIndex::back_propagate_lm(const Batch& batch,
 
         back_propagation_lm.hessian += regularization_weight*back_propagation_lm.regularization_hessian;
     }
-    
 }
 
 
@@ -1051,7 +1050,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
-        h = /*0.01; //*/ calculate_h(parameters(i));
+        h = calculate_h(parameters(i));
 
        parameters_forward(i) += h;
        
