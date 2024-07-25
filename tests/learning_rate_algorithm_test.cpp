@@ -231,10 +231,10 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     /// @todo loss_index.calculate_training_loss not available
 
-    /*Tensor<type, 1> gradient = sum_squared_error.calculate_numerical_gradient();
+    Tensor<type, 1> gradient = sum_squared_error.calculate_numerical_gradient();
 
     Tensor<type, 1> training_direction = gradient*(type(-1.0));
-    type initial_learning_rate = 0.001;*/
+    type initial_learning_rate = 0.001;
 /*
     pair<type, type> directional_point
            = learning_rate_algorithm.calculate_directional_point(1e-2, training_direction, initial_learning_rate);

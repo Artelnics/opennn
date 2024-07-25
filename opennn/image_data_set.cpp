@@ -144,8 +144,8 @@ void ImageDataSet::set(const Index& new_images_number,
     input_dimensions.resize(3);
     input_dimensions = { new_height, new_width, new_channels };
 
-    target_variables_dimensions.resize(1);
-    target_variables_dimensions = { new_targets_number };
+    target_dimensions.resize(1);
+    target_dimensions = { new_targets_number };
 
     // Data
 
@@ -962,7 +962,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 //    // Time series raw_variables
 
-//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesraw_variables");
+//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
 
 //    if(!time_series_raw_variables_element)
 //    {
@@ -1426,13 +1426,13 @@ void ImageDataSet::read_bmp()
                 }
             }
         }
-        /*
+
         if(display)
         {
             if(i % 1000 == 0)
                 display_progress_bar(i, samples_number - 1000);
         }
-        */
+
     }
 
     if(display)

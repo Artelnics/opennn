@@ -386,7 +386,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
             cout << zeroes_indices(count - 1) << " ]" << endl;
         }
 
-        /*
+
         Index embedding_parameters_number = transformer.get_layer(0)->get_parameters_number() + transformer.get_layer(1)->get_parameters_number();
         
         Index count = 0;
@@ -398,7 +398,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         cout << "Number of 0s in numerical gradient (non-embedding): " << count << " of " << numerical_gradient.size() - embedding_parameters_number << endl;
         
 
-        /*
+
         Tensor<type, 1> abs_difference = (back_propagation.gradient - numerical_gradient).abs();
 
         Index count = 0;
@@ -451,20 +451,23 @@ void CrossEntropyError3DTest::run_test_case()
     cout << "Running cross-entropy error test case...\n";
     
     // Test constructor
-    
+
     test_constructor();
     test_destructor();
     
     // Back-propagation methods
     
-    //test_back_propagate();
+    test_back_propagate();
     
     // Transformer test (Must be last since we change &neural_network to &transformer)
 
     cout << "test_calculate_gradient_transformer\n";
-    for(Index i = 0; i < 10; i++)   test_calculate_gradient_transformer();
+
+    for(Index i = 0; i < 10; i++)
+        test_calculate_gradient_transformer();
     
     cout << "End of cross-entropy error test case.\n\n";
+
 }
 
 

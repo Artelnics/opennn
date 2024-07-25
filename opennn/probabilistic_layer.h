@@ -26,7 +26,7 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 #include "layer_back_propagation_lm.h"
-#include "perceptron_layer.h"
+//#include "perceptron_layer.h"
 
 namespace opennn
 {
@@ -35,9 +35,9 @@ struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
-struct PerceptronLayerForwardPropagation;
-struct PerceptronLayerBackPropagation;
-struct PerceptronLayerBackPropagationLM;
+//struct PerceptronLayerForwardPropagation;
+//struct PerceptronLayerBackPropagation;
+//struct PerceptronLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     struct ProbabilisticLayerForwardPropagationCuda;
@@ -238,7 +238,6 @@ public:
         Tensor<type, 2>&,
         Tensor<type, 2>&) const;
 
-
     // Outputs
 
     void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
@@ -257,11 +256,7 @@ public:
         Tensor<type, 1>&) const final;
 
     // Squared errors methods
-    /*
-    void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-        LayerForwardPropagation*,
-        LayerBackPropagationLM*) final;
-    */
+
     void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
         const Index&,
         Tensor<type, 2>&) const final;

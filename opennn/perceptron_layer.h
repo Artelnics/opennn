@@ -24,7 +24,7 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 #include "layer_back_propagation_lm.h"
-#include "probabilistic_layer.h"
+//#include "probabilistic_layer.h"
 
 namespace opennn
 {
@@ -36,9 +36,9 @@ struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
 struct PerceptronLayerBackPropagationLM;
 
-struct ProbabilisticLayerForwardPropagation;
-struct ProbabilisticLayerBackPropagation;
-struct ProbabilisticLayerBackPropagationLM;
+//struct ProbabilisticLayerForwardPropagation;
+//struct ProbabilisticLayerBackPropagation;
+//struct ProbabilisticLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     struct PerceptronLayerForwardPropagationCuda;
@@ -206,9 +206,6 @@ public:
 
 
 protected:
-
-    // MEMBERS
-
 
     /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
     /// and passed through the neuron's transfer function to generate the neuron's output.
