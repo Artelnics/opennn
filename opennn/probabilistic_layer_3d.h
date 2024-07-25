@@ -60,7 +60,7 @@ public:
 
    /// Enumeration of the available methods for interpreting variables as probabilities.
 
-   enum class ActivationFunction{Softmax, Competitive};
+   enum class ActivationFunction{Softmax, Competitive, Binary, Logistic};
 
    // Get methods
 

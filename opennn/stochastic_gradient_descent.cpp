@@ -123,7 +123,7 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 }
 
 
-/// Set the initial value for the learning rate. If dacay is not active learning rate will be constant
+/// Set the initial value for the learning rate. If decay is not active learning rate will be constant
 /// otherwise learning rate will decay over each update.
 /// @param new_initial_learning_rate initial learning rate value.
 
@@ -163,7 +163,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_decay)
 
         buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
                << "void set_initial_decay(const type&) method.\n"
-               << "new_dacay must be equal or greater than 0.\n";
+               << "new_decay must be equal or greater than 0.\n";
 
         throw runtime_error(buffer.str());
     }
