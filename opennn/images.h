@@ -31,16 +31,6 @@ namespace opennn
     // Read 
 
     Tensor<unsigned char, 3> read_bmp_image(const string&);
-
-    
-    struct ImageData {
-        Tensor<unsigned char, 1> data;
-        int width;
-        int height;
-        int channels;
-    };
-
-    ImageData read_bmp_image_gpt(const std::string& filename);
     
     // Unsigned char
 
