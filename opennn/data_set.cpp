@@ -2733,22 +2733,22 @@ Tensor<DataSet::RawVariable, 1> DataSet::get_input_raw_variables() const
 
 /// Returns the input raw_variables of the data set.
 
-Tensor<bool, 1> DataSet::get_input_raw_variables_binary() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
+//Tensor<bool, 1> DataSet::get_input_raw_variables_binary() const
+//{
+//    const Index raw_variables_number = get_raw_variables_number();
 
-    Tensor<bool, 1> input_raw_variables_binary(raw_variables_number);
+//    Tensor<bool, 1> input_raw_variables_binary(raw_variables_number);
 
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).raw_variable_use == VariableUse::Input)
-            input_raw_variables_binary(i) = true;
-        else
-            input_raw_variables_binary(i) = false;
-    }
+//    for(Index i = 0; i < raw_variables_number; i++)
+//     {
+//         if(raw_variables(i).raw_variable_use == VariableUse::Input)
+//             input_raw_variables_binary(i) = true;
+//         else
+//             input_raw_variables_binary(i) = false;
+//     }
 
-    return input_raw_variables_binary;
-}
+//     return input_raw_variables_binary;
+// }
 
 
 /// Returns the target raw_variables of the data set.
@@ -3652,7 +3652,9 @@ void DataSet::set_binary_simple_raw_variables()
 
     const Index rows_number = data.dimension(0);
 
-    for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
+    for(Index raw_variable_index = 0;
+        raw_variable_index < raw_variables_number;
+        raw_variable_index++)
     {
         RawVariable raw_variable =  raw_variables(raw_variable_index);
 
@@ -3670,7 +3672,6 @@ void DataSet::set_binary_simple_raw_variables()
                 && data(row_index, variable_index) != values(1))
                 {
                     values(different_values) = data(row_index, variable_index);
-
                     different_values++;
                 }
 
@@ -3696,6 +3697,9 @@ void DataSet::set_binary_simple_raw_variables()
                 scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
                 raw_variable.categories.resize(2);
 
+                Tensor<type, 1> values(3);
+                values.setRandom();
+
                 if((abs(values(0)-type(0)) < NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1)) < NUMERIC_LIMITS_MIN))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
@@ -3707,7 +3711,6 @@ void DataSet::set_binary_simple_raw_variables()
                         raw_variable.categories(0) = to_string(int(values(1)));
                     else
                         raw_variable.categories(0) = to_string(values(1));
-
                 }
                 else if(abs(values(0) - type(1)) < NUMERIC_LIMITS_MIN && abs(values(1) - type(0)) < NUMERIC_LIMITS_MIN)
                 {
@@ -3721,6 +3724,7 @@ void DataSet::set_binary_simple_raw_variables()
                     else
                         raw_variable.categories(1) = to_string(values(1));
                 }
+                /*
                 else if(values(0) > values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
@@ -3745,6 +3749,7 @@ void DataSet::set_binary_simple_raw_variables()
                     else
                         raw_variable.categories(0) = to_string(values(1));
                 }
+                */
 
                 const VariableUse raw_variable_use = raw_variable.raw_variable_use;
                 raw_variable.categories_uses.resize(2);
@@ -3810,7 +3815,9 @@ void DataSet::check_constant_raw_variables()
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
+    for(Index raw_variable_index = 0;
+        raw_variable_index < raw_variables_number;
+        raw_variable_index++)
     {
         RawVariable raw_variable = raw_variables(raw_variable_index);
 
@@ -9936,9 +9943,13 @@ void DataSet::read_csv_2_complete()
         {
             if(has_rows_labels && j == 0) continue;
 
-            if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
+            RawVariable raw_variable =  raw_variables(raw_variable_index);
+
+            if(raw_variable.type == RawVariableType::Categorical)
             {
-                if(find(raw_variables(raw_variable_index).categories.data(), raw_variables(raw_variable_index).categories.data() + raw_variables(raw_variable_index).categories.size(), tokens(j)) == (raw_variables(raw_variable_index).categories.data() + raw_variables(raw_variable_index).categories.size()))
+                if(find(raw_variable.categories.data(),
+                   raw_variable.categories.data() + raw_variable.categories.size(), tokens(j))
+                   == (raw_variable.categories.data() + raw_variable.categories.size()))
                 {
                     if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                     {
@@ -9946,10 +9957,10 @@ void DataSet::read_csv_2_complete()
                         continue;
                     }
 
-                    raw_variables(raw_variable_index).add_category(tokens(j));
+                    raw_variable.add_category(tokens(j));
                 }
             }
-
+            raw_variables(raw_variable_index) = raw_variable;
             raw_variable_index++;
         }
 
@@ -10086,16 +10097,19 @@ void DataSet::read_csv_3_complete()
         raw_variable_index = 0;
         bool insert_nan_row = false;
 
+
         for(Index j = 0; j < raw_variables_number; j++)
         {
+
             trim(tokens(j));
+            RawVariable raw_variable =  raw_variables(raw_variable_index);
 
             if(has_rows_labels && j ==0)
             {
                 rows_labels(sample_index) = tokens(j);
                 continue;
             }
-            else if(raw_variables(raw_variable_index).type == RawVariableType::Numeric)
+            else if(raw_variable.type == RawVariableType::Numeric)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
@@ -10121,7 +10135,7 @@ void DataSet::read_csv_3_complete()
                     }
                 }
             }
-            else if(raw_variables(raw_variable_index).type == RawVariableType::DateTime)
+            else if(raw_variable.type == RawVariableType::DateTime)
             {
                 time_t current_timestamp = 0;
 
@@ -10175,15 +10189,15 @@ void DataSet::read_csv_3_complete()
             //         variable_index++;
             //     }
             // }
-            else if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
+            else if(raw_variable.type == RawVariableType::Categorical)
             {
-                for(Index k = 0; k < raw_variables(raw_variable_index).get_categories_number(); k++)
+                for(Index k = 0; k < raw_variable.get_categories_number(); k++)
                 {
                     if(tokens(j) == missing_values_label)
                     {
                         data(sample_index, variable_index) = type(NAN);
                     }
-                    else if(tokens(j) == raw_variables(raw_variable_index).categories(k))
+                    else if(tokens(j) == raw_variable.categories(k))
                     {
                         data(sample_index, variable_index) = type(1);
                     }
@@ -10191,7 +10205,7 @@ void DataSet::read_csv_3_complete()
                     variable_index++;
                 }
             }
-            else if(raw_variables(raw_variable_index).type == RawVariableType::Binary)
+            else if(raw_variable.type == RawVariableType::Binary)
             {
                 string lower_case_token = tokens(j);
 
@@ -10216,18 +10230,18 @@ void DataSet::read_csv_3_complete()
                 {
                     data(sample_index, variable_index) = type(0);
                 }
-                else if(raw_variables(raw_variable_index).categories.size() > 0 && tokens(j) == raw_variables(raw_variable_index).categories(0))
+                else if(raw_variable.categories.size() > 0 && tokens(j) == raw_variables(raw_variable_index).categories(0))
                 {
                     data(sample_index, variable_index) = type(1);
                 }
-                else if(tokens(j) == raw_variables(raw_variable_index).name)
+                else if(tokens(j) == raw_variable.name)
                 {
                     data(sample_index, variable_index) = type(1);
                 }
 
                 variable_index++;
             }
-
+            raw_variables(raw_variable_index) = raw_variable;
             raw_variable_index++;
         }
 
