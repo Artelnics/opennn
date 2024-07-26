@@ -165,15 +165,20 @@ void ConvolutionalLayerTest::test_constructor()
     dimensions input_dimensions;
     dimensions kernel_dimensions;
 
-    input_dimensions = {64, 3, 1};
-    kernel_dimensions = {3, 2, 1, 1};
+    input_dimensions = {28, 29, 1};
+    kernel_dimensions = {3, 2, 1, 16};
 
     ConvolutionalLayer convolutional_layer(input_dimensions, kernel_dimensions);
-/*
-    assert_true(convolutional_layer.get_input_channels() == 3 &&
-                convolutional_layer.get_input_height() == 23 &&
-                convolutional_layer.get_input_width() == 64, LOG);
-*/
+
+    assert_true(convolutional_layer.get_input_channels() == 1 &&
+                convolutional_layer.get_input_height() == 28 &&
+                convolutional_layer.get_input_width() == 29, LOG);
+
+    assert_true(convolutional_layer.get_kernel_height() == 3 &&
+                convolutional_layer.get_kernel_width() == 2 &&
+                convolutional_layer.get_kernel_channels() == 1 &&
+                convolutional_layer.get_kernels_number() == 16, LOG);
+
 }
 
 
@@ -187,89 +192,86 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 {
     cout << "test_calculate_convolutions\n";
 
-    Tensor<unsigned char, 3> bmp_image;
+    // 2 images 1 channel 1 kernel
+
+    Tensor<unsigned char, 3> bmp_image_1;
+    Tensor<unsigned char, 3> bmp_image_2;
 
     ConvolutionalLayer convolutional_layer;
 
     dimensions input_dimensions;
     dimensions kernel_dimensions;
 
-    const Index input_images = 1;
-    const Index kernels_number = 3;
+    bmp_image_1 = read_bmp_image("../examples/mnist/data/images/one/1_0.bmp");
+    bmp_image_2 = read_bmp_image("../examples/mnist/data/images/one/1_1.bmp");
 
-    const Index channels = 3;
+    const Index input_images = 2;
+    const Index kernels_number = 1;
 
-    const Index input_heigth = 5;
-    const Index input_width = 5;
-    const Index kernel_height = 3;
-    const Index kernel_width = 3;
+    const Index input_height = bmp_image_1.dimension(0); // 28
+    const Index input_width = bmp_image_1.dimension(1); // 28
+    const Index kernel_height = 27;
+    const Index kernel_width = 27;
 
-    Tensor<type, 4> inputs(input_heigth,
+    const Index channels = bmp_image_1.dimension(2); // 1
+
+    Tensor<type, 4> inputs(input_images,
+                           input_height,
                            input_width,
-                           channels,
-                           input_images);
+                           channels);
 
     Tensor<type, 4> kernels(kernel_height,
                             kernel_width,
                             channels,
                             kernels_number);
 
-    Tensor<type, 4> convolutions(input_heigth - kernel_height + 1,
-                                 input_width - kernel_width + 1,
-                                 kernels_number,
-                                 input_images);
+    Tensor<type, 1> biases(kernels_number);
 
-    Tensor<type, 1> biases(channels);
+    // Copy bmp_image data into inputs
+    for (int h = 0; h < input_height; ++h) 
+    {
+        for (int w = 0; w < input_width; ++w) 
+        {
+            for (int c = 0; c < channels; ++c) 
+            {
+                inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
+            }
+        }
+    }
 
-    inputs.setConstant(type(1.));
-    kernels.setConstant(type(1./12.));
+    // Copy bmp_image_2 data into inputs
+    for (int h = 0; h < input_height; ++h) 
+    {
+        for (int w = 0; w < input_width; ++w) 
+        {
+            for (int c = 0; c < channels; ++c) 
+            {
+                inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
+            }
+        }
+    }
 
-    biases(0) = type(0.);
-    biases(1) = type(1.);
-    biases(2) = type(2.);
+    kernels.setConstant(type(1));
 
-    input_dimensions = {input_heigth, input_width, channels};
-    kernel_dimensions = {kernel_height, kernel_width,channels,kernels_number};
+    biases.setConstant(type(1));
+
+    input_dimensions = {input_height, input_width, channels};
+    kernel_dimensions = {kernel_height, kernel_width, channels, kernels_number};
 
     convolutional_layer.set(input_dimensions, kernel_dimensions);
 
-    convolutional_layer.set_biases(biases);
-    convolutional_layer.set_synaptic_weights(kernels);
-/*
-    convolutional_layer.calculate_convolutions(inputs, combinations);
-
-    assert_true(abs(combinations(0, 0, 0, 0) - type(2.25)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 1, 0) - type(3.25)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 2, 0) - type(4.25)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    inputs.resize(5, 5, 2, 2);
-    kernels.resize(2, 2, 2, 2);
-    combinations.resize(4, 4, 2, 2);
-    biases.resize(2);
-
-    inputs.chip(0, 3).setConstant(type(1.));
-    inputs.chip(1, 3).setConstant(type(2.));
-    kernels.chip(0, 3).setConstant(type(1./8.));
-    kernels.chip(1, 3).setConstant(type(1./4.));
-
-    biases(0) = type(0);
-    biases(1) = type(1);
+    Tensor<type, 4> convolutions(input_images,
+                                 convolutional_layer.get_output_height(),
+                                 convolutional_layer.get_output_width(),
+                                 kernels_number);
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
-    convolutional_layer.calculate_convolutions(inputs, combinations);
 
-    assert_true(abs(combinations(0, 0, 0, 0) - type(1.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 1, 0) - type(3.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 0, 1) - type(2.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 1, 1) - type(5.)) < type(NUMERIC_LIMITS_MIN), LOG);
-                */
+    convolutional_layer.calculate_convolutions(inputs, convolutions);
 
-    // Test bmp
-
-    bmp_image = read_bmp_image("C:/mnist/test/one/0.bmp");
-
-//    convolutional_layer.set()
+    assert_true(convolutions(0, 0, 0, 0) == type(9871+1) 
+             && convolutions(1, 0, 0, 0) == type(13855+1), LOG);
 
 }
 
@@ -282,20 +284,16 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations;
-    Tensor<type, 4> result;
 
     dimensions input_dimensions;
     dimensions kernel_dimensions;
 
-    result.resize(2,2,2,2);
     inputs.resize(2,2,2,2);
 
     input_dimensions = {2, 2, 2};
     kernel_dimensions = {2, 2, 2, 2};
 
     convolutional_layer.set(input_dimensions, kernel_dimensions);
-
-    // Test
 
     inputs(0,0,0,0) = type(type(-1.111f));
     inputs(0,0,0,1) = type(type(-1.112));
@@ -315,52 +313,10 @@ void ConvolutionalLayerTest::test_calculate_activations()
     inputs(1,1,1,1) = type(2.222f);
 
     activations.resize(2,2,2,2);
-    //convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::Threshold);
-    convolutional_layer.calculate_activations(inputs, activations);
-
-    assert_true(activations(0,0,0,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations(0,0,0,1) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations(0,0,1,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations(0,0,1,1) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations(0,1,0,0) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations(0,1,0,1) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations(0,1,1,0) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations(0,1,1,1) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations(1,0,0,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations(1,0,0,1) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations(1,0,1,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations(1,0,1,1) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations(1,1,0,0) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations(1,1,0,1) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations(1,1,1,0) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations(1,1,1,1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    //convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SymmetricThreshold);
-
-    convolutional_layer.calculate_activations(inputs, activations);
-
-    //    assert_true(activations == result, LOG);
-
-    assert_true(activations(0,0,0,0) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations(0,0,0,1) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations(0,0,1,0) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations(0,0,1,1) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations(0,1,0,0) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,0,1) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,1,0) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,1,1) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,0,0) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations(1,0,0,1) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations(1,0,1,0) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations(1,0,1,1) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations(1,1,0,0) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,0,1) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,1,0) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,1,1) - type(1) <type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
-    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
     convolutional_layer.calculate_activations(inputs, activations);
 
     assert_true(abs(activations(0,0,0,0) - type(-0.804416f)) < type(NUMERIC_LIMITS_MIN) &&
@@ -382,7 +338,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     // Test
 
-    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
     convolutional_layer.calculate_activations(inputs, activations);
 
     assert_true(activations(0,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN),LOG);
@@ -412,8 +368,8 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     cout << "test_calculate_activations_derivatives\n";
 
     Tensor<type, 4> inputs;
-    Tensor<type, 4> activations_derivatives;
     Tensor<type, 4> activations;
+    Tensor<type, 4> activations_derivatives;
     Tensor<type, 4> result;
 
     ConvolutionalLayer convolutional_layer;
@@ -421,50 +377,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     activations.resize(2, 2, 2, 2);
     activations_derivatives.resize(2, 2, 2, 2);
 
-    // Test
-
     inputs.resize(2, 2, 2, 2);
-    inputs(0,0,0,0) = type(-1.111f);
-    inputs(0,0,0,1) = type(-1.112);
-    inputs(0,0,1,0) = type(-1.121);
-    inputs(0,0,1,1) = type(-1.122f);
-    inputs(0,1,0,0) = type(1.211f);
-    inputs(0,1,0,1) = type(1.212f);
-    inputs(0,1,1,0) = type(1.221f);
-    inputs(0,1,1,1) = type(1.222f);
-    inputs(1,0,0,0) = type(-2.111f);
-    inputs(1,0,0,1) = type(-2.112f);
-    inputs(1,0,1,0) = type(-2.121f);
-    inputs(1,0,1,1) = type(-2.122f);
-    inputs(1,1,0,0) = type(2.211f);
-    inputs(1,1,0,1) = type(2.212f);
-    inputs(1,1,1,0) = type(2.221f);
-    inputs(1,1,1,1) = type(2.222f);
-
-//    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::Threshold);
-
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
-
-    result = activations.constant(type(0));
-
-    assert_true((activations_derivatives(0, 0, 0, 0) - result(0, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 0) - result(0, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 0) - result(1, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 0) - result(1, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 0) - result(0, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 0) - result(0, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 0) - result(1, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 0) - result(1, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 0, 1) - result(0, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 1) - result(0, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 1) - result(1, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 1) - result(1, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 1) - result(0, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 1) - result(0, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 1) - result(1, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
 
     inputs(0,0,0,0) = type(-1.111f);
     inputs(0,0,0,1) = type(-1.112);
@@ -483,36 +396,13 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     inputs(1,1,1,0) = type(2.221f);
     inputs(1,1,1,1) = type(2.222f);
 
-//    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SymmetricThreshold);
-
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
-
-    result = activations.constant(type(0));
-
-    assert_true((activations_derivatives(0, 0, 0, 0) - result(0, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 0) - result(0, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 0) - result(1, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 0) - result(1, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 0) - result(0, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 0) - result(0, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 0) - result(1, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 0) - result(1, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 0, 1) - result(0, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 1) - result(0, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 1) - result(1, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 1) - result(1, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 1) - result(0, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 1) - result(0, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 1) - result(1, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
+    // Test
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
+    convolutional_layer.calculate_activations_derivatives(inputs,activations,activations_derivatives);
+
+    result.resize(2, 2, 2, 2);
 
     result(0,0,0,0) = type(0.352916f);
     result(0,0,0,1) = type(0.352348f);
@@ -547,6 +437,8 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
+
+    // Test
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
 
@@ -588,6 +480,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 (activations_derivatives(1, 0, 1, 1) - result(1, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
                 (activations_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
 
+    // Test
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SoftPlus);
     convolutional_layer.calculate_activations_derivatives(inputs,
@@ -630,163 +523,6 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 }
 
 
-void ConvolutionalLayerTest::test_forward_propagate()
-{
-    cout << "test_forward_propagate\n";
-/*
-    const bool is_training = true;
-
-    const Index input_images = 2;
-    const Index kernels_number = 3;
-
-    const Index channels = 3;
-
-    const Index input_heigth = 4;
-    const Index input_width = 4;
-    const Index kernel_height = 3;
-    const Index kernel_width = 3;
-
-    dimensions input_dimensions;
-    input_dimensions = {input_heigth, input_width, channels};
-
-    dimensions kernel_dimensions;
-    kernel_dimensions = {kernels_number, kernel_height, kernel_width, channels};
-
-    Tensor<type,4> inputs(input_heigth, input_width, channels, input_images);
-    Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
-    Tensor<type,1> bias(kernels_number);
-    inputs.setConstant(1.);
-    bias.setValues({0,1,2});
-
-    inputs.chip(0,3).chip(0,2).setConstant(2.);
-    inputs.chip(0,3).chip(1,2).setConstant(3.);
-    inputs.chip(0,3).chip(2,2).setConstant(4.);
-
-    kernel.chip(0,3).setConstant(type(1./3.));
-    kernel.chip(1,3).setConstant(type(1./9.));
-    kernel.chip(2,3).setConstant(type(1./27.));
-
-    Tensor<pair<type*, dimensions>, 1> inputs_pair;
-    inputs_pair(0).first = inputs.data();
-    inputs_pair(0).second = input_dimensions;
-
-    convolutional_layer.set(input_dimensions, kernel_dimensions);
-
-    forward_propagation.set(input_images, &convolutional_layer);
-
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
-
-    convolutional_layer.forward_propagate(inputs_pair, &forward_propagation, is_training);
-/*
-    assert_true(forward_propagation.activations.dimension(0) == convolutional_layer.get_output_dimensions()(0)&&
-                forward_propagation.activations.dimension(1) == convolutional_layer.get_output_dimensions()(1)&&
-                forward_propagation.activations.dimension(2) == convolutional_layer.get_output_dimensions()(2)&&
-                forward_propagation.activations.dimension(3) == convolutional_layer.get_output_dimensions()(3), LOG);
-
-    assert_true(forward_propagation.activations_derivatives.dimension(0) == convolutional_layer.get_output_dimensions()(0)&&
-                forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_output_dimensions()(1)&&
-                forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_output_dimensions()(2)&&
-                forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_output_dimensions()(3), LOG);
-
-
-    assert_true(abs(forward_propagation.activations(0, 0, 0, 0) - type(tanh(27.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 1, 0) - type(tanh(10.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 2, 0) - type(tanh(5.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 0, 1) - type(tanh(9.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 1, 1) - type(tanh(4.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 2, 1) - type(tanh(3.))) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    assert_true(forward_propagation.combinations(0, 0, 0, 0) - type(27) < type(0.00001) &&
-                forward_propagation.activations(0, 0, 0, 0) - type(1.) < type(0.00001) &&
-                type(forward_propagation.activations_derivatives(0, 0, 0, 0)) - type(0.)< type(0.00001), LOG);
-    */
-
-    /*
-    const Index batch_samples_number = 5;
-
-    const Index input_channels = 3;
-    const Index input_height = 5;
-    const Index input_width = 4;
-
-    const Index kernels_number = 2;
-    const Index kernel_channels = input_channels;
-    const Index kernel_height = 3;
-    const Index kernels_raw_variables_number = 3;
-
-    const Index targets_number = 1;
-
-    DataSet data_set(batch_samples_number,
-                     input_channels,
-                     input_height,
-                     input_width,
-                     targets_number);
-
-    data_set.set_data_constant(type(1));
-
-    Tensor<Index, 1> input_dimensions(3);
-    input_dimensions.setValues({input_channels,
-                                          input_height,
-                                          input_width});
-
-    Tensor<Index, 1> kernels_dimensions(4);
-    kernels_dimensions.setValues({kernels_number,
-                                  kernel_channels,
-                                  kernel_height,
-                                  kernels_raw_variables_number});
-
-    NeuralNetwork neural_network;
-
-    ConvolutionalLayer convolutional_layer(input_dimensions, kernels_dimensions);
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
-    convolutional_layer.set_biases_constant(1.0);
-    convolutional_layer.set_synaptic_weights_constant(1.0);
-    convolutional_layer.set_name("convolutional_layer");
-
-    neural_network.add_layer(&convolutional_layer);
-
-    FlattenLayer flatten_layer(convolutional_layer.get_output_dimensions());
-    neural_network.add_layer(&flatten_layer);
-
-    PerceptronLayer perceptron_layer(flatten_layer.get_output_dimensions()(0), 1);
-    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-    neural_network.add_layer(&perceptron_layer);
-
-    neural_network.set_parameters_constant(type(1));
-
-    // Forward Propagation
-
-    Batch batch(batch_samples_number, &data_set);
-
-    const Tensor<Index, 1>& samples(batch_samples_number);
-    const Tensor<Index, 1>& inputs = data_set.get_input_raw_variables_indices();
-    const Tensor<Index, 1>& targets = data_set.get_target_raw_variables_indices();
-
-    batch.fill(samples, inputs, targets);
-
-    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
-
-    bool is_training = false;
-
-    neural_network.forward_propagate(batch,
-                                     forward_propagation,
-                                     is_training);
-
-    type* forward_outputs_data = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_data(0);
-    Tensor<Index, 1> output_dimensions = forward_propagation.layers(neural_network.get_layers_number() - 1)->output_dimensions;
-
-    TensorMap<Tensor<type, 2>> outputs(forward_outputs_data,
-                                       output_dimensions[0],
-                                       output_dimensions(1));
-
-    for(Index i = 0; i < batch_samples_number; i++)
-    {
-        assert_true(abs(outputs(i, 0) - 337) < type(NUMERIC_LIMITS_MIN), LOG);
-    }
-*/
-
-}
-
-
 void ConvolutionalLayerTest::test_insert_padding()
 {
     cout << "test_insert_padding\n";
@@ -796,35 +532,154 @@ void ConvolutionalLayerTest::test_insert_padding()
 
     const Index channels = 3;
 
-    const Index input_heigth = 4;
+    const Index input_height = 4;
     const Index input_width = 4;
     const Index kernel_height = 3;
     const Index kernel_width = 3;
 
-    Tensor<type,4> inputs(input_heigth, input_width, channels, input_images);
-    Tensor<type,4> kernels(kernel_height, kernel_width, channels, kernels_number);
-    Tensor<type,4> padded(input_heigth, input_width, channels, input_images);
-/*
-    inputs.setConstant(type(1));
+    Tensor<type, 4> inputs(input_height, input_width, channels, input_images);
+    Tensor<type, 4> kernels(kernel_height, kernel_width, channels, kernels_number);
+    Tensor<type, 4> padded(input_height, input_width, channels, input_images);
+    /*
+    * 
+        inputs.setConstant(type(1));
 
-    dimensions input_dimensions({input_heigth, input_width, channels, input_images});
+        dimensions input_dimensions({input_height, input_width, channels, input_images});
 
-    dimensions kernels_dimensions({kernel_height, kernel_width, channels, kernels_number});
+        dimensions kernels_dimensions({kernel_height, kernel_width, channels, kernels_number});
 
-    ConvolutionalLayer convolutional_layer(input_dimensions, kernels_dimensions);
+        ConvolutionalLayer convolutional_layer(input_dimensions, kernels_dimensions);
 
-    convolutional_layer.set_convolution_type(opennn::ConvolutionalLayer::ConvolutionType::Same);
-    convolutional_layer.set(input_dimensions, kernels_dimensions);
+        convolutional_layer.set_convolution_type(opennn::ConvolutionalLayer::ConvolutionType::Same);
+        convolutional_layer.set(input_dimensions, kernels_dimensions);
 
-//    convolutional_layer.insert_padding(inputs, padded);
+        convolutional_layer.insert_padding(inputs, padded);
 
-    assert_true(padded.dimension(0) == 6 &&
-                padded.dimension(1) == 6,LOG);
+        assert_true(padded.dimension(0) == 6 &&
+                    padded.dimension(1) == 6,LOG);
 
-    assert_true((padded(0, 0, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
-                (padded(0, 1, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
-                (padded(0, 2, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+        assert_true((padded(0, 0, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
+                    (padded(0, 1, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
+                    (padded(0, 2, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    */
+}
+
+
+void ConvolutionalLayerTest::test_forward_propagate()
+{
+    cout << "test_forward_propagate\n";
+
+    // 2 images , 3 channels
+
+    Tensor<unsigned char, 3> bmp_image_1;
+    Tensor<unsigned char, 3> bmp_image_2;
+
+    const bool is_training = true;
+
+    const Index input_images = 2;
+    const Index kernels_number = 3;
+
+    bmp_image_1 = read_bmp_image("../examples/mnist/data/test/4x4_0.bmp");
+    bmp_image_2 = read_bmp_image("../examples/mnist/data/test/4x4_1.bmp");
+
+    const Index channels = bmp_image_1.dimension(2); // 3
+
+    const Index input_height = bmp_image_1.dimension(0); // 4
+    const Index input_width = bmp_image_1.dimension(1); // 4
+    const Index kernel_height = 3;
+    const Index kernel_width = 3;
+
+    dimensions input_dimensions;
+    input_dimensions = {input_height, input_width, channels};
+
+    dimensions kernel_dimensions;
+    kernel_dimensions = {kernel_height, kernel_width, channels, kernels_number };
+
+    Tensor<type,4> inputs(input_images, input_height, input_width, channels);
+    Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
+    Tensor<type,1> bias(kernels_number);
+    
+    // Copy bmp_image data into inputs
+    for (int h = 0; h < input_height; ++h)
+    {
+        for (int w = 0; w < input_width; ++w)
+        {
+            for (int c = 0; c < channels; ++c)
+            {
+                inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
+            }
+        }
+    }
+
+    // Copy bmp_image_2 data into inputs
+    for (int h = 0; h < input_height; ++h)
+    {
+        for (int w = 0; w < input_width; ++w)
+        {
+            for (int c = 0; c < channels; ++c)
+            {
+                inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
+            }
+        }
+    }
+
+    bias.setValues({1,1,1});
+
+    kernel.setConstant(type(1));
+
+    Tensor<pair<type*, dimensions>, 1> inputs_pair(1);
+    inputs_pair(0).first = inputs.data();
+    inputs_pair(0).second = { input_images, input_height, input_width, channels };
+
+    // bmp_image_1:
+    //    255 255   0   0   255 255   0   0     255 255   0   0
+    //    255 255   0   0   255 255   0   0     255 255   0   0
+    //    255 255   0   0   255 255   0   0     255 255   0   0
+    //    255 255   0   0   255 255   0   0     255 255   0   0
+
+    // bmp_image_2:
+    //    0   0 255 255      0   0 255 255       0   0 255 255
+    //    0   0 255 255      0   0 255 255       0   0 255 255
+    //    0   0   0   0      0   0   0   0       0   0   0   0
+    //    0   0   0   0      0   0   0   0       0   0   0   0
+
+    // kernel x3:
+    //    1  1  1
+    //    1  1  1
+    //    1  1  1
+
+    // Expected outputs: (2,2,2,1)
+    //    4590+1  2295+1
+    //    4590+1  2295+1
+    //    1530+1  3060+1   
+    //    765+1   1530+1     
+    
+    // Test
+
+    convolutional_layer.set(input_dimensions, kernel_dimensions);
+
+    convolutional_layer.set_synaptic_weights(kernel);
+    convolutional_layer.set_biases(bias);
+
+    forward_propagation.set(input_images, &convolutional_layer);
+
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
+
+    convolutional_layer.forward_propagate(inputs_pair, &forward_propagation, is_training);
+ 
+    assert_true(forward_propagation.outputs.dimension(0) == input_images
+                && forward_propagation.outputs.dimension(1) == convolutional_layer.get_output_dimensions()[0] 
+                && forward_propagation.outputs.dimension(2) == convolutional_layer.get_output_dimensions()[1]
+                && forward_propagation.outputs.dimension(3) == convolutional_layer.get_output_dimensions()[2], LOG);
+
+    assert_true(forward_propagation.activations_derivatives.dimension(0) == input_images
+                && forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_inputs_dimensions()[0]
+                && forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_inputs_dimensions()[1]
+                && forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_inputs_dimensions()[2], LOG);
+
+    assert_true(forward_propagation.outputs(0, 0, 0, 0) == type(4590 + 1)
+                && forward_propagation.outputs(1, 0, 0, 0) == type(1530 + 1), LOG);
+    
 }
 
 
@@ -889,26 +744,26 @@ void ConvolutionalLayerTest::test_memcpy_approach()
 
     const Index channel = 3;
 
-    const Index input_heigth = 4;
+    const Index input_height = 4;
     const Index input_width = 4;
 
     const Index kernel_rows = 2;
     const Index kernel_cols = 2;
 
-    Tensor<type, 4> input(input_heigth, input_width, channel, images_number);
+    Tensor<type, 4> input(input_height, input_width, channel, images_number);
 
     Tensor<type, 4> kernel(kernel_rows, kernel_cols, channel, kernel_number);
 
-    Tensor<type, 4> result(input_heigth-kernel_rows+1,
+    Tensor<type, 4> result(input_height-kernel_rows+1,
                            input_width-kernel_cols+1,
                            kernel_number,
                            images_number);
 
-    Tensor<type, 3> tmp_result((input_heigth-kernel_rows)+1,
+    Tensor<type, 3> tmp_result((input_height-kernel_rows)+1,
                                (input_width-kernel_cols)+1,
                                1);
 
-    const Index output_size_rows_cols = (input_heigth-kernel_rows+1)*(input_width-kernel_cols+1);
+    const Index output_size_rows_cols = (input_height-kernel_rows+1)*(input_width-kernel_cols+1);
 
     float* ptr_result = (float*) malloc(size_t(output_size_rows_cols*kernel_number*images_number*sizeof(type)));
 
@@ -942,10 +797,10 @@ void ConvolutionalLayerTest::test_memcpy_approach()
             const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
 
             Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dimensions);
-/*
+
             memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
                    tmp_result.data(), output_size_rows_cols*sizeof(type));
-*/
+
             copy(/*execution::par,*/ 
                 tmp_result.data(),
                 tmp_result.data() + output_size_rows_cols,
@@ -959,43 +814,43 @@ void ConvolutionalLayerTest::test_memcpy_approach()
 
 void ConvolutionalLayerTest::run_test_case()
 {
-   cout << "Running convolutional layer test case...\n";
+    cout << "Running convolutional layer test case...\n";
 
-   // Constructor and destructor
+    // Constructor and destructor
 
-   test_constructor();
-   test_destructor();
+    test_constructor();
+    test_destructor();
 
-   // Convolutions
+    // Convolutions
 
-   test_eigen_convolution();
+    //test_eigen_convolution();
 
-   // Convolutions
+    // Convolutions
 
-   test_calculate_convolutions();
-/*
-   // Activation
+    test_calculate_convolutions();
 
-   test_calculate_activations();
-   test_calculate_activations_derivatives();
+    // Activation
 
-   // Padding
+    test_calculate_activations();
+    test_calculate_activations_derivatives();
 
-//   test_insert_padding();
+    // Padding
 
-   // Forward propagate
+    test_insert_padding();
 
-   test_forward_propagate();
+    // Forward propagate
 
-   // Back_propagate
+    test_forward_propagate();
 
-   //test_calculate_hidden_delta_perceptron_test();
+    // Back_propagate
 
-   //Utils
+    //test_calculate_hidden_delta_perceptron_test();
 
-   //test_memcpy_approach();
-*/
-   cout << "End of convolutional layer test case.\n\n";
+    //Utils
+
+    test_memcpy_approach();
+
+    cout << "End of convolutional layer test case.\n\n";
 }
 
 

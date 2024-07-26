@@ -678,20 +678,8 @@ dimensions ConvolutionalLayer::get_inputs_dimensions() const
     return input_dimensions;
 }
 
-/*
+
 /// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
-
-Tensor<Index, 1> ConvolutionalLayer::get_output_dimensions() const
-{
-    Tensor<Index, 1> output_dimensions(3);
-
-    output_dimensions(0) = get_output_height();
-    output_dimensions(1) = get_output_width();
-    output_dimensions(2) = get_kernels_number();
-
-    return output_dimensions;
-}
-*/
 
 dimensions ConvolutionalLayer::get_output_dimensions() const
 {
@@ -745,19 +733,11 @@ Index ConvolutionalLayer::get_row_stride() const
 }
 
 
-///Returns the number of kernels of the layer.
-
-Index ConvolutionalLayer::get_kernels_number() const
-{
-    return synaptic_weights.dimension(0);
-}
-
-
 /// Returns the number of rows of the layer's kernels.
 
 Index  ConvolutionalLayer::get_kernel_height() const
 {
-    return synaptic_weights.dimension(1);
+    return synaptic_weights.dimension(0);
 }
 
 
@@ -765,13 +745,21 @@ Index  ConvolutionalLayer::get_kernel_height() const
 
 Index ConvolutionalLayer::get_kernel_width() const
 {
-    return synaptic_weights.dimension(2);
+    return synaptic_weights.dimension(1);
 }
 
 
 /// Returns the number of channels of the layer's kernels.
 
 Index ConvolutionalLayer::get_kernel_channels() const
+{
+    return synaptic_weights.dimension(2);
+}
+
+
+///Returns the number of kernels of the layer.
+
+Index ConvolutionalLayer::get_kernels_number() const
 {
     return synaptic_weights.dimension(3);
 }
@@ -882,19 +870,19 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
     if(new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
-
-    const Index kernels_number = new_kernel_dimensions[0];
-    const Index kernel_height = new_kernel_dimensions[1];
-    const Index kernel_width = new_kernel_dimensions[2];
-    const Index kernel_channels = new_kernel_dimensions[3];
     
+    const Index kernel_height = new_kernel_dimensions[0];
+    const Index kernel_width = new_kernel_dimensions[1];
+    const Index kernel_channels = new_kernel_dimensions[2];
+    const Index kernels_number = new_kernel_dimensions[3];
+
     biases.resize(kernels_number);
     biases.setRandom();
 
-    synaptic_weights.resize(kernels_number,
-                            kernel_height,
+    synaptic_weights.resize(kernel_height,
                             kernel_width,
-                            kernel_channels);
+                            kernel_channels,
+                            kernels_number);
 
     synaptic_weights.setRandom();
 
