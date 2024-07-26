@@ -1248,7 +1248,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     return batches;
     
-    /*
+
     Tensor<Index, 1> buffer(buffer_size);
 
     for(Index i = 0; i < buffer_size; i++) buffer(i) = i;
@@ -1369,7 +1369,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     std::shuffle(batches.data(), batches.data() + batches.size(), urng);
     return batches;
-    */
+
 }
 
 
@@ -1968,7 +1968,7 @@ void DataSet::set_default_raw_variables_uses()
         }
 
         input_dimensions.resize(1);
-        target_variables_dimensions.resize(1);
+        target_dimensions.resize(1);
     }
 }
 
@@ -2219,7 +2219,7 @@ Index DataSet::get_input_variables_rank() const
 
 const dimensions& DataSet::get_target_dimensions() const
 {
-    return target_variables_dimensions;
+    return target_dimensions;
 }
 
 
@@ -2733,22 +2733,22 @@ Tensor<DataSet::RawVariable, 1> DataSet::get_input_raw_variables() const
 
 /// Returns the input raw_variables of the data set.
 
-Tensor<bool, 1> DataSet::get_input_raw_variables_binary() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
+//Tensor<bool, 1> DataSet::get_input_raw_variables_binary() const
+//{
+//    const Index raw_variables_number = get_raw_variables_number();
 
-    Tensor<bool, 1> input_raw_variables_binary(raw_variables_number);
+//    Tensor<bool, 1> input_raw_variables_binary(raw_variables_number);
 
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).raw_variable_use == VariableUse::Input)
-            input_raw_variables_binary(i) = true;
-        else
-            input_raw_variables_binary(i) = false;
-    }
+//    for(Index i = 0; i < raw_variables_number; i++)
+//     {
+//         if(raw_variables(i).raw_variable_use == VariableUse::Input)
+//             input_raw_variables_binary(i) = true;
+//         else
+//             input_raw_variables_binary(i) = false;
+//     }
 
-    return input_raw_variables_binary;
-}
+//     return input_raw_variables_binary;
+// }
 
 
 /// Returns the target raw_variables of the data set.
@@ -3234,8 +3234,8 @@ void DataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_
     input_dimensions.resize(1);
     input_dimensions = {get_input_variables_number()};
 
-    target_variables_dimensions.resize(1);
-    target_variables_dimensions = {get_target_variables_number()};
+    target_dimensions.resize(1);
+    target_dimensions = {get_target_variables_number()};
 }
 
 
@@ -3266,8 +3266,8 @@ void DataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_varia
     input_dimensions.resize(1);
     input_dimensions = {get_input_variables_number()};
 
-    target_variables_dimensions.resize(1);
-    target_variables_dimensions = {get_target_variables_number()};
+    target_dimensions.resize(1);
+    target_dimensions = {get_target_variables_number()};
 }
 
 
@@ -3637,7 +3637,6 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
     {
         raw_variables(i).scaler = new_scalers[i];
     }
-
 }
 
 
@@ -3649,26 +3648,34 @@ void DataSet::set_binary_simple_raw_variables()
 
     Index different_values = 0;
 
-    for(Index raw_variable_index = 0; raw_variable_index < raw_variables.size(); raw_variable_index++)
+    const Index raw_variables_number = raw_variables.size();
+
+    const Index rows_number = data.dimension(0);
+
+    for(Index raw_variable_index = 0;
+        raw_variable_index < raw_variables_number;
+        raw_variable_index++)
     {
-        if(raw_variables(raw_variable_index).type == RawVariableType::Numeric)
+        RawVariable raw_variable =  raw_variables(raw_variable_index);
+
+        if(raw_variable.type == RawVariableType::Numeric)
         {
             Tensor<type, 1> values(3);
             values.setRandom();
             different_values = 0;
             is_binary = true;
 
-            for(Index row_index = 0; row_index < data.dimension(0); row_index++)
+            for(Index row_index = 0; row_index < rows_number; row_index++)
             {
                 if(!isnan(data(row_index, variable_index))
-                        && data(row_index, variable_index) != values(0)
-                        && data(row_index, variable_index) != values(1))
+                && data(row_index, variable_index) != values(0)
+                && data(row_index, variable_index) != values(1))
                 {
                     values(different_values) = data(row_index, variable_index);
                     different_values++;
                 }
 
-                if(row_index == (data.dimension(0)-1))
+                if(row_index == rows_number - 1)
                 {
                     if(different_values == 1)
                     {
@@ -3686,104 +3693,114 @@ void DataSet::set_binary_simple_raw_variables()
 
             if(is_binary)
             {
-                raw_variables(raw_variable_index).type = RawVariableType::Binary;
+                raw_variable.type = RawVariableType::Binary;
                 scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
-                raw_variables(raw_variable_index).categories.resize(2);
+                raw_variable.categories.resize(2);
 
-                if((abs(values(0)-type(0))<NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1))<NUMERIC_LIMITS_MIN))
+                Tensor<type, 1> values(3);
+                values.setRandom();
+
+                if((abs(values(0)-type(0)) < NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1)) < NUMERIC_LIMITS_MIN))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(0)));
+                        raw_variable.categories(1) = to_string(int(values(0)));
                     else
-                        raw_variables(raw_variable_index).categories(1) = to_string(values(0));
-                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(1)));
-                    else
-                        raw_variables(raw_variable_index).categories(0) = to_string(values(1));
+                        raw_variable.categories(1) = to_string(values(0));
 
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        raw_variable.categories(0) = to_string(int(values(1)));
+                    else
+                        raw_variable.categories(0) = to_string(values(1));
                 }
-                else if(abs(values(0) - type(1))<NUMERIC_LIMITS_MIN && abs(values(1) - type(0))<NUMERIC_LIMITS_MIN)
+                else if(abs(values(0) - type(1)) < NUMERIC_LIMITS_MIN && abs(values(1) - type(0)) < NUMERIC_LIMITS_MIN)
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(0)));
+                        raw_variable.categories(0) = to_string(int(values(0)));
                     else
-                        raw_variables(raw_variable_index).categories(0) = to_string(values(0));
+                        raw_variable.categories(0) = to_string(values(0));
+
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(1)));
+                        raw_variable.categories(1) = to_string(int(values(1)));
                     else
-                        raw_variables(raw_variable_index).categories(1) = to_string(values(1));
+                        raw_variable.categories(1) = to_string(values(1));
                 }
+                /*
                 else if(values(0) > values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(0)));
+                        raw_variable.categories(0) = to_string(int(values(0)));
                     else
-                        raw_variables(raw_variable_index).categories(0) = to_string(values(0));
+                        raw_variable.categories(0) = to_string(values(0));
+
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(1)));
+                        raw_variable.categories(1) = to_string(int(values(1)));
                     else
-                        raw_variables(raw_variable_index).categories(1) = to_string(values(1));
+                        raw_variable.categories(1) = to_string(values(1));
                 }
                 else if(values(0) < values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(1) = to_string(int(values(0)));
+                        raw_variable.categories(1) = to_string(int(values(0)));
                     else
-                        raw_variables(raw_variable_index).categories(1) = to_string(values(0));
-                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        raw_variables(raw_variable_index).categories(0) = to_string(int(values(1)));
-                    else
-                        raw_variables(raw_variable_index).categories(0) = to_string(values(1));
-                }
+                        raw_variable.categories(1) = to_string(values(0));
 
-                const VariableUse raw_variable_use = raw_variables(raw_variable_index).raw_variable_use;
-                raw_variables(raw_variable_index).categories_uses.resize(2);
-                raw_variables(raw_variable_index).categories_uses(0) = raw_variable_use;
-                raw_variables(raw_variable_index).categories_uses(1) = raw_variable_use;
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        raw_variable.categories(0) = to_string(int(values(1)));
+                    else
+                        raw_variable.categories(0) = to_string(values(1));
+                }
+                */
+
+                const VariableUse raw_variable_use = raw_variable.raw_variable_use;
+                raw_variable.categories_uses.resize(2);
+                raw_variable.categories_uses(0) = raw_variable_use;
+                raw_variable.categories_uses(1) = raw_variable_use;
             }
 
             variable_index++;
         }
-        else if(raw_variables(raw_variable_index).type == RawVariableType::Binary)
+        else if(raw_variable.type == RawVariableType::Binary)
         {
             Tensor<string,1> positive_words(4);
             Tensor<string,1> negative_words(4);
 
-            positive_words.setValues({"yes","positive","+","true"});
-            negative_words.setValues({"no","negative","-","false"});
+            positive_words.setValues({"yes", "positive", "+", "true"});
+            negative_words.setValues({"no", "negative", "-", "false"});
 
-            string first_category = raw_variables(raw_variable_index).categories(0);
-            string original_first_category = raw_variables(raw_variable_index).categories(0);
+            string first_category = raw_variable.categories(0);
+            const string original_first_category = raw_variable.categories(0);
             trim(first_category);
 
-            string second_category = raw_variables(raw_variable_index).categories(1);
-            string original_second_category = raw_variables(raw_variable_index).categories(1);
+            string second_category = raw_variable.categories(1);
+            const string original_second_category = raw_variable.categories(1);
             trim(second_category);
 
             transform(first_category.begin(), first_category.end(), first_category.begin(), ::tolower);
             transform(second_category.begin(), second_category.end(), second_category.begin(), ::tolower);
 
-            if( contains(positive_words, first_category) && contains(negative_words, second_category) )
+            if(contains(positive_words, first_category) && contains(negative_words, second_category))
             {
-                raw_variables(raw_variable_index).categories(0) = original_first_category;
-                raw_variables(raw_variable_index).categories(1) = original_second_category;
+                raw_variable.categories(0) = original_first_category;
+                raw_variable.categories(1) = original_second_category;
             }
-            else if( contains(positive_words, second_category) && contains(negative_words, first_category) )
+            else if(contains(positive_words, second_category) && contains(negative_words, first_category))
             {
-                raw_variables(raw_variable_index).categories(0) = original_second_category;
-                raw_variables(raw_variable_index).categories(1) = original_first_category;
+                raw_variable.categories(0) = original_second_category;
+                raw_variable.categories(1) = original_first_category;
             }
 
             variable_index++;
         }
-        else if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
+        else if(raw_variable.type == RawVariableType::Categorical)
         {
-            variable_index += raw_variables(raw_variable_index).get_categories_number();
+            variable_index += raw_variable.get_categories_number();
         }
         else
         {
             variable_index++;
         }
+
+        raw_variables(raw_variable_index) = raw_variable;
     }
 
     if(display) cout << "Binary raw_variables checked " << endl;
@@ -3796,48 +3813,57 @@ void DataSet::check_constant_raw_variables()
 
     Index variable_index = 0;
 
-    for(Index raw_variable = 0; raw_variable < get_raw_variables_number(); raw_variable++)
+    const Index raw_variables_number = get_raw_variables_number();
+
+    for(Index raw_variable_index = 0;
+        raw_variable_index < raw_variables_number;
+        raw_variable_index++)
     {
-        if(raw_variables(raw_variable).type == RawVariableType::Numeric)
+        RawVariable raw_variable = raw_variables(raw_variable_index);
+
+        if(raw_variable.type == RawVariableType::Numeric)
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
             if(is_constant(numeric_column))
             {
-                raw_variables(raw_variable).type = RawVariableType::Constant;
-                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
-            }
-            variable_index++;
-        }
-        else if(raw_variables(raw_variable).type == RawVariableType::DateTime)
-        {
-            raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
-            variable_index++;
-        }
-        else if(raw_variables(raw_variable).type == RawVariableType::Constant)
-        {
-            variable_index++;
-        }
-        else if(raw_variables(raw_variable).type == RawVariableType::Binary)
-        {
-            if(raw_variables(raw_variable).get_categories_number() == 1)
-            {
-                raw_variables(raw_variable).type = RawVariableType::Constant;
-                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
+                raw_variable.type = RawVariableType::Constant;
+                raw_variable.raw_variable_use = VariableUse::Unused;
             }
 
             variable_index++;
         }
-        else if(raw_variables(raw_variable).type == RawVariableType::Categorical)
+        else if(raw_variable.type == RawVariableType::DateTime)
         {
-            if(raw_variables(raw_variable).get_categories_number() == 1)
+            raw_variable.raw_variable_use = VariableUse::Unused;
+            variable_index++;
+        }
+        else if(raw_variable.type == RawVariableType::Constant)
+        {
+            variable_index++;
+        }
+        else if(raw_variable.type == RawVariableType::Binary)
+        {
+            if(raw_variable.get_categories_number() == 1)
             {
-                raw_variables(raw_variable).type = RawVariableType::Constant;
-                raw_variables(raw_variable).raw_variable_use = VariableUse::Unused;
+                raw_variable.type = RawVariableType::Constant;
+                raw_variable.raw_variable_use = VariableUse::Unused;
             }
 
-            variable_index += raw_variables(raw_variable).get_categories_number();
+            variable_index++;
         }
+        else if(raw_variable.type == RawVariableType::Categorical)
+        {
+            if(raw_variable.get_categories_number() == 1)
+            {
+                raw_variable.type = RawVariableType::Constant;
+                raw_variables(raw_variable_index).raw_variable_use = VariableUse::Unused;
+            }
+
+            variable_index += raw_variable.get_categories_number();
+        }
+
+        raw_variables(raw_variable_index) = raw_variable;
     }
 }
 
@@ -3878,9 +3904,9 @@ void DataSet::set_input_variables_dimensions(const dimensions& new_input_dimensi
 }
 
 
-void DataSet::set_target_variables_dimensions(const dimensions& new_targets_dimensions)
+void DataSet::set_target_dimensions(const dimensions& new_targets_dimensions)
 {
-    target_variables_dimensions = new_targets_dimensions;
+    target_dimensions = new_targets_dimensions;
 }
 
 
@@ -4959,7 +4985,10 @@ void DataSet::set(const string& data_source_path, const char& separator, const b
 }
 
 
-void DataSet::set(const string& data_source_path, const char& separator, const bool& new_has_raw_variables_names, const DataSet::Codification& new_codification)
+void DataSet::set(const string& data_source_path,
+                  const char& separator,
+                  const bool& new_has_raw_variables_names,
+                  const DataSet::Codification& new_codification)
 {
     set();
 
@@ -4996,7 +5025,6 @@ void DataSet::set(const Tensor<type, 2>& new_data)
     data = new_data;
 
     set_default_raw_variables_uses();
-
 }
 
 
@@ -5067,8 +5095,8 @@ void DataSet::set(const Index& new_samples_number,
     input_dimensions.resize(1);
     input_dimensions[0] = new_inputs_number;
 
-    target_variables_dimensions.resize(1);
-    target_variables_dimensions[0] = new_targets_number;
+    target_dimensions.resize(1);
+    target_dimensions[0] = new_targets_number;
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -5156,9 +5184,9 @@ void DataSet::set_default()
 
     input_dimensions = {get_input_variables_number()};
 
-    target_variables_dimensions.resize(1);
+    target_dimensions.resize(1);
 
-    target_variables_dimensions = {get_target_variables_number()};
+    target_dimensions = {get_target_variables_number()};
 
 }
 
@@ -7805,187 +7833,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    /*
-//    // Time series raw_variables
-
-//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesraw_variables");
-
-//    if(!time_series_raw_variables_element)
-//    {
-//        // do nothing
-//    }
-//    else
-//    {
-//        // Time series raw_variables number
-
-//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesraw_variablesNumber");
-
-//        if(!time_series_raw_variables_number_element)
-//        {
-//            buffer << "OpenNN Exception: DataSet class.\n"
-//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                   << "Time seires raw_variables number element is nullptr.\n";
-
-//            throw runtime_error(buffer.str());
-//        }
-
-//        Index time_series_new_raw_variables_number = 0;
-
-//        if(time_series_raw_variables_number_element->GetText())
-//        {
-//            time_series_new_raw_variables_number = Index(atoi(time_series_raw_variables_number_element->GetText()));
-
-//            set_time_series_raw_variables_number(time_series_new_raw_variables_number);
-//        }
-
-//        // Time series raw_variables
-
-//        const tinyxml2::XMLElement* time_series_start_element = time_series_raw_variables_number_element;
-
-//        if(time_series_new_raw_variables_number > 0)
-//        {
-//            for(Index i = 0; i < time_series_new_raw_variables_number; i++)
-//            {
-//                const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesColumn");
-//                time_series_start_element = time_series_raw_variable_element;
-
-//                if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series raw_variable item number (" << i+1 << ") does not match (" << time_series_raw_variable_element->Attribute("Item") << ").\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                // Name
-
-//                const tinyxml2::XMLElement* time_series_name_element = time_series_raw_variable_element->FirstChildElement("Name");
-
-//                if(!time_series_name_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series name element is nullptr.\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                if(time_series_name_element->GetText())
-//                {
-//                    const string time_series_new_name = time_series_name_element->GetText();
-
-//                    time_series_raw_variables(i).name = time_series_new_name;
-//                }
-
-//                // Scaler
-
-//                const tinyxml2::XMLElement* time_series_scaler_element = time_series_raw_variable_element->FirstChildElement("Scaler");
-
-//                if(!time_series_scaler_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series scaler element is nullptr.\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                if(time_series_scaler_element->GetText())
-//                {
-//                    const string time_series_new_scaler = time_series_scaler_element->GetText();
-
-//                    time_series_raw_variables(i).set_scaler(time_series_new_scaler);
-//                }
-
-//                // raw_variable use
-
-//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("RawVariableUse");
-
-//                if(!time_series_raw_variable_use_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series raw_variable use element is nullptr.\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                if(time_series_raw_variable_use_element->GetText())
-//                {
-//                    const string time_series_new_raw_variable_use = time_series_raw_variable_use_element->GetText();
-
-//                    time_series_raw_variables(i).set_use(time_series_new_raw_variable_use);
-//                }
-
-//                // Type
-
-//                const tinyxml2::XMLElement* time_series_type_element = time_series_raw_variable_element->FirstChildElement("Type");
-
-//                if(!time_series_type_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series type element is nullptr.\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                if(time_series_type_element->GetText())
-//                {
-//                    const string time_series_new_type = time_series_type_element->GetText();
-//                    time_series_raw_variables(i).set_type(time_series_new_type);
-//                }
-
-//                if(time_series_raw_variables(i).type == ColumnType::Categorical || time_series_raw_variables(i).type == ColumnType::Binary)
-//                {
-//                    // Categories
-
-//                    const tinyxml2::XMLElement* time_series_categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
-
-//                    if(!time_series_categories_element)
-//                    {
-//                        buffer << "OpenNN Exception: DataSet class.\n"
-//                               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                               << "Time series categories element is nullptr.\n";
-
-//                        throw runtime_error(buffer.str());
-//                    }
-
-//                    if(time_series_categories_element->GetText())
-//                    {
-//                        const string time_series_new_categories = time_series_categories_element->GetText();
-
-//                        time_series_raw_variables(i).categories = get_tokens(time_series_new_categories, ';');
-//                    }
-
-//                    // Categories uses
-
-//                    const tinyxml2::XMLElement* time_series_categories_uses_element = time_series_raw_variable_element->FirstChildElement("CategoriesUses");
-
-//                    if(!time_series_categories_uses_element)
-//                    {
-//                        buffer << "OpenNN Exception: DataSet class.\n"
-//                               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                               << "Time series categories uses element is nullptr.\n";
-
-//                        throw runtime_error(buffer.str());
-//                    }
-
-//                    if(time_series_categories_uses_element->GetText())
-//                    {
-//                        const string time_series_new_categories_uses = time_series_categories_uses_element->GetText();
-
-//                        time_series_raw_variables(i).set_categories_uses(get_tokens(time_series_new_categories_uses, ';'));
-//                    }
-//                }
-//            }
-//        }
-//    }
-    */
-
-
-
     // Rows label
 
     if(has_rows_labels)
@@ -8262,10 +8109,11 @@ void DataSet::print() const
          << "Number of samples: " << samples_number << "\n"
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
-         << "Number of targets: " << target_variables_bumber << "\n";
-         //<< "Input variables dimensions:\n" << input_dimensions << "\n"
-         //<< "Target variables dimensions: " << target_variables_dimensions << "\n";
-    
+         << "Number of target variables: " << target_variables_bumber << "\n"
+         << "Input variables dimensions: ";
+         print_dimensions(input_dimensions); /// @todo not set
+         cout << "Target variables dimensions: ";
+         print_dimensions(target_dimensions);
 }
 
 
@@ -8990,7 +8838,7 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
     set(samples_number, variables_number + classes_number);
 
     data.setRandom();
-    /*
+
     data.setConstant(0.0);
 
 #pragma omp parallel for
@@ -8999,21 +8847,13 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
     {
         for(Index j = 0; j < variables_number; j++)
         {
-
-            data(i, j) = rand(); // rand();
-
+            data(i, j) = rand();
         }
-    }
 
-
-#pragma omp parallel for
-
-    for(Index i = 0; i < samples_number; i++)
-    {
         const Index random_class = rand() % classes_number;
         data(i, variables_number + random_class) = 1;
     }
-*/
+
     cout << "Done." << endl;
 }
 
@@ -9815,8 +9655,9 @@ void DataSet::read_csv_2_simple()
     const char separator_char = get_separator_char();
 
     const Index raw_variables_number = get_raw_variables_number();
-    const Index raw_raw_variables_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
-
+/*
+    const Index raw_variables_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
+*/
     while(file.good())
     {
         line_number++;
@@ -9831,7 +9672,7 @@ void DataSet::read_csv_2_simple()
 
         tokens_count = count_tokens(line, separator_char);
 
-        if(tokens_count != raw_raw_variables_number)
+        if(tokens_count != raw_variables_number)
         {
             ostringstream buffer;
 
@@ -9839,7 +9680,7 @@ void DataSet::read_csv_2_simple()
                    << "void read_csv_2_simple() method.\n"
                    << "Line " << line_number << ": Size of tokens("
                    << tokens_count << ") is not equal to number of raw_variables("
-                   << raw_raw_variables_number << ").\n";
+                   << raw_variables_number << ").\n";
 
             throw runtime_error(buffer.str());
         }
@@ -9920,9 +9761,9 @@ void DataSet::read_csv_3_simple()
 
     // Read data
 
-    const Index raw_raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
+    const Index raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
 
-    Tensor<string, 1> tokens(raw_raw_variables_number);
+    Tensor<string, 1> tokens(raw_variables_number);
 
     const Index samples_number = data.dimension(0);
 
@@ -9947,7 +9788,7 @@ void DataSet::read_csv_3_simple()
 
         fill_tokens(line, separator_char, tokens);
 
-        for(Index j = 0; j < raw_raw_variables_number; j++)
+        for(Index j = 0; j < raw_variables_number; j++)
         {
             trim(tokens(j));
 
@@ -10067,9 +9908,9 @@ void DataSet::read_csv_2_complete()
     // Read data
 
     if(display) cout << "Setting data dimensions..." << endl;
-
-    const Index raw_raw_variables_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
-
+/*
+    const Index raw_variables_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
+*/
     Index raw_variable_index = 0;
 
     while(file.good())
@@ -10088,23 +9929,27 @@ void DataSet::read_csv_2_complete()
 
         tokens_count = tokens.size();
 
-        if(unsigned(tokens_count) != raw_raw_variables_number)
+        if(unsigned(tokens_count) != raw_variables_number)
         {
             const string message =
                     "Sample " + to_string(lines_count+1) + " error:\n"
-                                                           "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of raw_variables (" + to_string(raw_raw_variables_number) + ").\n"
+                                                           "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of raw_variables (" + to_string(raw_variables_number) + ").\n"
                                                                                                                                                                                     "Please check the format of the data file (e.g: Use of commas both as decimal and raw_variable separator)";
 
             throw runtime_error(message);
         }
 
-        for(unsigned j = 0; j < raw_raw_variables_number; j++)
+        for(unsigned j = 0; j < raw_variables_number; j++)
         {
             if(has_rows_labels && j == 0) continue;
 
-            if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
+            RawVariable raw_variable =  raw_variables(raw_variable_index);
+
+            if(raw_variable.type == RawVariableType::Categorical)
             {
-                if(find(raw_variables(raw_variable_index).categories.data(), raw_variables(raw_variable_index).categories.data() + raw_variables(raw_variable_index).categories.size(), tokens(j)) == (raw_variables(raw_variable_index).categories.data() + raw_variables(raw_variable_index).categories.size()))
+                if(find(raw_variable.categories.data(),
+                   raw_variable.categories.data() + raw_variable.categories.size(), tokens(j))
+                   == (raw_variable.categories.data() + raw_variable.categories.size()))
                 {
                     if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                     {
@@ -10112,10 +9957,10 @@ void DataSet::read_csv_2_complete()
                         continue;
                     }
 
-                    raw_variables(raw_variable_index).add_category(tokens(j));
+                    raw_variable.add_category(tokens(j));
                 }
             }
-
+            raw_variables(raw_variable_index) = raw_variable;
             raw_variable_index++;
         }
 
@@ -10196,9 +10041,9 @@ void DataSet::read_csv_3_complete()
     const char separator_char = get_separator_char();
 
     const Index raw_variables_number = raw_variables.size();
-
-    const Index raw_raw_variables_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
-
+/*
+    const Index raw_variables_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
+*/
     string line;
 
     Tensor<string, 1> tokens;
@@ -10252,16 +10097,19 @@ void DataSet::read_csv_3_complete()
         raw_variable_index = 0;
         bool insert_nan_row = false;
 
-        for(Index j = 0; j < raw_raw_variables_number; j++)
+
+        for(Index j = 0; j < raw_variables_number; j++)
         {
+
             trim(tokens(j));
+            RawVariable raw_variable =  raw_variables(raw_variable_index);
 
             if(has_rows_labels && j ==0)
             {
                 rows_labels(sample_index) = tokens(j);
                 continue;
             }
-            else if(raw_variables(raw_variable_index).type == RawVariableType::Numeric)
+            else if(raw_variable.type == RawVariableType::Numeric)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
@@ -10287,7 +10135,7 @@ void DataSet::read_csv_3_complete()
                     }
                 }
             }
-            else if(raw_variables(raw_variable_index).type == RawVariableType::DateTime)
+            else if(raw_variable.type == RawVariableType::DateTime)
             {
                 time_t current_timestamp = 0;
 
@@ -10341,15 +10189,15 @@ void DataSet::read_csv_3_complete()
             //         variable_index++;
             //     }
             // }
-            else if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
+            else if(raw_variable.type == RawVariableType::Categorical)
             {
-                for(Index k = 0; k < raw_variables(raw_variable_index).get_categories_number(); k++)
+                for(Index k = 0; k < raw_variable.get_categories_number(); k++)
                 {
                     if(tokens(j) == missing_values_label)
                     {
                         data(sample_index, variable_index) = type(NAN);
                     }
-                    else if(tokens(j) == raw_variables(raw_variable_index).categories(k))
+                    else if(tokens(j) == raw_variable.categories(k))
                     {
                         data(sample_index, variable_index) = type(1);
                     }
@@ -10357,7 +10205,7 @@ void DataSet::read_csv_3_complete()
                     variable_index++;
                 }
             }
-            else if(raw_variables(raw_variable_index).type == RawVariableType::Binary)
+            else if(raw_variable.type == RawVariableType::Binary)
             {
                 string lower_case_token = tokens(j);
 
@@ -10382,18 +10230,18 @@ void DataSet::read_csv_3_complete()
                 {
                     data(sample_index, variable_index) = type(0);
                 }
-                else if(raw_variables(raw_variable_index).categories.size() > 0 && tokens(j) == raw_variables(raw_variable_index).categories(0))
+                else if(raw_variable.categories.size() > 0 && tokens(j) == raw_variables(raw_variable_index).categories(0))
                 {
                     data(sample_index, variable_index) = type(1);
                 }
-                else if(tokens(j) == raw_variables(raw_variable_index).name)
+                else if(tokens(j) == raw_variable.name)
                 {
                     data(sample_index, variable_index) = type(1);
                 }
 
                 variable_index++;
             }
-
+            raw_variables(raw_variable_index) = raw_variable;
             raw_variable_index++;
         }
 
@@ -11224,9 +11072,10 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 }
 
 
-
-bool DataSet::get_augmentation() const { return augmentation; }
-
+bool DataSet::get_augmentation() const
+{
+    return augmentation;
+}
 
 
 //Virtual functions

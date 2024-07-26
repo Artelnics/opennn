@@ -7,11 +7,14 @@
 //   artelnics@artelnics.com
 
 #include "minkowski_error_test.h"
+#include "tensors.h"
 
 
 MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting() 
 {
     minkowski_error.set(&neural_network, &data_set);
+
+    minkowski_error.set_Minkowski_parameter(type(1.5));
 
     minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 }
@@ -54,11 +57,6 @@ void MinkowskiErrorTest::test_destructor()
 void MinkowskiErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
-
-    minkowski_error.set_Minkowski_parameter(type(1.5));
-
-    // Empty test does not work
-    //minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
     // Test approximation trivial
     {
@@ -153,7 +151,7 @@ void MinkowskiErrorTest::test_back_propagate()
     }
 
     // Test binary classification trivial
-    /*{
+    {
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
@@ -195,8 +193,7 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.error - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
-
-    }*/
+    }
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
@@ -225,6 +222,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
+
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
@@ -240,11 +238,12 @@ void MinkowskiErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= 0, LOG);
 
+        /// @todo
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 
     // Test forecasting trivial
-    /*{
+    {
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
@@ -263,7 +262,7 @@ void MinkowskiErrorTest::test_back_propagate()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-
+/*
         neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
@@ -278,8 +277,9 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(is_zero(back_propagation.gradient,type(1e-3)), LOG);
-    }*/
+        assert_true(is_zero(back_propagation.gradient, type(1e-3)), LOG);
+*/
+    }
 
     // Test forecasting random samples, inputs, outputs, neurons
     /*{

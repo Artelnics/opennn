@@ -24,7 +24,10 @@
 #include "config.h"
 //#include "convolutional_layer.h"
 #include "layer.h"
-#include "flatten_layer.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+
+//#include "flatten_layer.h"
 
 #include "statistics.h"
 

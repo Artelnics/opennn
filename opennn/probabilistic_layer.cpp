@@ -702,77 +702,6 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
          gradient.data() + index + synaptic_weights_number);
 }
 
-/*
-void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
-                                                              LayerForwardPropagation* forward_propagation,
-                                                              LayerBackPropagationLM* back_propagation)
-{
-    const Index samples_number = inputs.dimension(0);
-
-    const Index inputs_number = get_inputs_number();
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index synaptic_weights_number = get_synaptic_weights_number();
-
-    // Forward propagation
-
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
-            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
-
-    const Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
-
-    const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
-
-    // Back propagation
-
-    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
-            static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
-
-    const Tensor<type, 2>& deltas = probabilistic_layer_back_propagation_lm->deltas;
-
-    const Tensor<type, 2>& targets = probabilistic_layer_back_propagation_lm->targets;
-
-    Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation_lm->error_combinations_derivatives;
-
-    if(neurons_number == 1)
-    {
-        error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
-    }
-    else
-    {
-        error_combinations_derivatives.device(*thread_pool_device) = outputs - targets;
-    }
-
-    Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
-
-    Index synaptic_weight_index = 0;
-
-    for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
-    {
-        const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
-
-        for(Index input_index = 0; input_index < inputs_number; input_index++)
-        {
-            const TensorMap<Tensor<type, 1>> input = tensor_map(inputs, input_index);
-
-            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight = tensor_map(squared_errors_Jacobian, synaptic_weight_index);
-
-            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) = error_combinations_derivatives_neuron * input;
-
-            synaptic_weight_index++;
-        }
-
-        // bias
-
-        const Index bias_index = synaptic_weights_number + neuron_index;
-
-        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias = tensor_map(squared_errors_Jacobian, bias_index);
-
-        squared_errors_jacobian_bias.device(*thread_pool_device) = error_combinations_derivatives_neuron;
-    }
-}
-*/
 
 void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
                                                            const Index& index,
@@ -783,11 +712,13 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationL
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
 
-    const Index layer_parameters_number = get_parameters_number();
+    const Index parameters_number = get_parameters_number();
+
+    type* squared_errors_Jacobian_data = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
     copy(/*execution::par,*/ 
          probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
-         probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data()+ layer_parameters_number*batch_samples_number,
+         probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data()+ parameters_number*batch_samples_number,
          squared_errors_Jacobian.data() + index);
 }
 

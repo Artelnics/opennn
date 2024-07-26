@@ -142,7 +142,7 @@ void FlattenLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 
     memcpy(input_derivatives.data(),
            deltas_pair(0).first,
-           static_cast<Index>(batch_samples_number * neurons_number * sizeof(type)));
+           Index(batch_samples_number * neurons_number * sizeof(type)));
 }
 
 
@@ -258,23 +258,14 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    const Index input_channels_number = Index(atoi(input_channels_number_element->GetText()));
+    const Index input_channels = Index(atoi(input_channels_number_element->GetText()));
 
-    Tensor<Index,1> inputsDimensionTensor(4);
+    input_dimensions = {input_height, input_width, input_channels, 0};
 
-    inputsDimensionTensor.setValues({input_height, input_width, input_channels_number, 0});
+    set(input_dimensions);
 
-    //set(inputsDimensionTensor);
-
-    // @todo Change to dimensions
-    /*
-    Tensor<Index, 1> inputs_dimension_tensor(3);
-
-    inputs_dimension_tensor.setValues({input_height, input_width, input_channels_number});
-
-    set(inputs_dimension_tensor);
-    */
 }
+
 
 pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 {
@@ -282,6 +273,7 @@ pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 
     return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
 }
+
 
 void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {

@@ -31,9 +31,12 @@ int main()
 
         // Data set
 
-        TimeSeriesDataSet data_set("../data/Pendulum.csv", ',', false);
-        data_set.set_lags_number(5);
+        TimeSeriesDataSet time_series_data_set("../data/Pendulum.csv", ',', false);
+        time_series_data_set.set_lags_number(5); // Not working
 
+        time_series_data_set.print();
+
+        /*
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -41,7 +44,8 @@ int main()
 
         const Index hidden_neurons_number = 50;
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting,
+                                     {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 
@@ -55,9 +59,8 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(10);
 
         training_strategy.perform_training();
-
-        cout << "End Classification" << endl;
-
+*/
+        cout << "Good bye!" << endl;
 
         return 0;
     }

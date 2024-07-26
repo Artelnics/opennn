@@ -37,8 +37,8 @@ using namespace std;
 
 namespace opennn
 {
-    Index count_tokens(const string&, const char& separator = ' ');
-    Tensor<string, 1> get_tokens(const string&, const char& delimiter=' ');
+    Index count_tokens(const string&, const char& = ' ');
+    Tensor<string, 1> get_tokens(const string&, const char& =' ');
     void fill_tokens(const string&, const char&, Tensor<string, 1>&);
 
     Index count_tokens(const string&, const string&);
@@ -55,22 +55,22 @@ namespace opennn
     bool is_email(const string&);
     bool contains_number(const string&);
 
-    bool starts_with(const string& word, const string& starting);
+    bool starts_with(const string&, const string&);
     bool ends_with(const string&, const string&);
     bool ends_with(const string&, const Tensor<string,1>&);
 
     bool is_constant_numeric(const Tensor<type, 1>&);
     bool is_constant_string(const Tensor<string, 1>&);
 
-    time_t date_to_timestamp(const string& date, const Index& gmt = 0);
+    time_t date_to_timestamp(const string&, const Index& = 0);
 
     bool contains_substring(const string&, const string&);
 
-    void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith);
-    void replace_all_word_appearances(string& s, string const& toReplace, string const& replaceWith);
+    void replace_all_appearances(string&, const string&, const string&);
+    void replace_all_word_appearances(string&, const string&, const string&);
 
-    vector<string> get_words_in_a_string(string str);
-    string replace_non_allowed_programming_expressions(string& s);
+    vector<string> get_words_in_a_string(const string&);
+    string replace_non_allowed_programming_expressions(string&);
 
     Tensor<string, 1> fix_write_expression_outputs(const string&, const Tensor<string, 1>&, const string&);
     Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>&, Tensor<string, 1>&, ostringstream&);
@@ -80,7 +80,7 @@ namespace opennn
     void trim(string&);
     void erase(string&, const char&);
     //void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &missing_label);
-    void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label);
+    void replace_first_and_last_char_with_missing_label(string&, char, const string&, const string&);
 
     string get_trimmed(const string&);
 
@@ -94,35 +94,33 @@ namespace opennn
     bool is_not_numeric(const Tensor<string, 1>&);
     bool is_mixed(const Tensor<string, 1>&);
 
-    void remove_non_printable_chars( string&);
+    void delete_non_printable_chars(string&);
 
     void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
     void replac_substring_within_quotes(string&, const string&, const string&);
-    void replace_substring_in_string (Tensor<string, 1>& found_tokens, string& outputs_espresion, const string& keyword);
+    void replace_substring_in_string (Tensor<string, 1>&, string&, const string&);
 
-    void display_progress_bar(int completed, int total);
+    void display_progress_bar(const int&, const int&);
 
-    bool isNotAlnum(char &c);
+    bool is_not_alnum(char &c);
     void remove_not_alnum(string &str);
 
-    bool find_string_in_tensor(Tensor<string, 1>& t, string val);
+    bool find_string_in_tensor(Tensor<string, 1>&, const string&);
     string get_word_from_token(string&);
 
-    string round_to_precision_string(type, const int&);
-    Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2>, const int&);
+    string round_to_precision_string(const type&, const int&);
+    Tensor<string,2> round_to_precision_string_matrix(const Tensor<type,2>&, const int&);
 
-    Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor);
-    Tensor<string,1> concatenate_string_tensors (const Tensor<string, 1>& tensor_1, const Tensor<string, 1>& tensor_2);
+    Tensor<string,1> sort_string_tensor(Tensor<string, 1>&);
+    Tensor<string,1> concatenate_string_tensors (const Tensor<string, 1>&, const Tensor<string, 1>&);
 
     void print();
 
     void create_alphabet();
 
     void encode_alphabet();
-
-    void preprocess();
 
     Tensor<type, 1> one_hot_encode(const string&);
 
@@ -136,13 +134,15 @@ namespace opennn
 
     // Preprocess methods
 
-    Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents);
+    Index count_tokens(const Tensor<Tensor<string, 1>, 1>&);
     Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>&);
-    void to_lower(Tensor<string, 1>& documents);
+    void to_lower(string&);
+    void to_lower(Tensor<string, 1>&);
+    void to_lower(Tensor<Tensor<string, 1>, 1>&);
     void split_punctuation(Tensor<string, 1>&);
     void delete_non_printable_chars(Tensor<string, 1>&);
     void delete_extra_spaces(Tensor<string, 1>&);
-    void aux_remove_non_printable_chars(Tensor<string, 1>&);
+    void delete_non_alphanumeric(Tensor<string, 1>&);
     Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
     void delete_blanks(Tensor<string, 1>&);
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
@@ -150,7 +150,6 @@ namespace opennn
     Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>&);
 
     vector<pair<string, int>> count_words(const Tensor<string, 1>&);
-
 
     /// Enumeration of available languages.
 
@@ -184,10 +183,6 @@ namespace opennn
 
     void set_stop_words(const Tensor<string ,1>&);
 
-    void set_short_words_length(const Index&);
-
-    void set_long_words_length(const Index&);
-
     void set_separator(const string&);
 
     // Auxiliar methods
@@ -203,8 +198,6 @@ namespace opennn
     void append_documents(const Tensor<string, 1>&);
 
     void filter_not_equal_to(Tensor<string,1>&, const Tensor<string,1>&);
-
-    void load_documents(const string&);
 
     string to_string(Tensor<string,1>);
 
@@ -250,9 +243,7 @@ namespace opennn
 
     void replace_accented(string&);
 
-    void to_lower(Tensor<string, 1>&);
-
-    void aux_remove_non_printable_chars(Tensor<string,1>&);
+    void delete_non_alphanumeric(Tensor<string,1>&);
 
     // Stemming methods
 

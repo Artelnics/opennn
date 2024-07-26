@@ -1892,27 +1892,27 @@ void LanguageDataSet::load_documents(const string& path)
     Tensor<string, 1> document(lines_number);
     Tensor<string, 1> document_target(lines_number);
 
-    ifstream file2(path.c_str());
+    file.seekg (0, ios::beg);
 
     Index tokens_number = 0;
 
     string delimiter = "";
-    const char separator = get_separator_char();
+    const string separator = get_separator_string();
 
-    while(file2.good())
+    while(file.good())
     {
-        getline(file2, line);
+        getline(file, line);
 
         if(line.empty()) continue;
 
-        if(line[0]=='"')
+        if(line[0] == '"')
         {
             replace(line,"\"\"", "\"");
-            line = "\""+line;
+            line = "\"" + line;
             delimiter = "\"\"";
         }
 
-        if( line.find("\"" + separator) != string::npos) 
+        if(line.find("\"" + separator) != string::npos)
             replace(line,"\"" + separator, "\"\"" + separator);
 
         //tokens_number = count_tokens(line,delimiter + separator);
@@ -1921,8 +1921,13 @@ void LanguageDataSet::load_documents(const string& path)
 
         if(tokens_number == 1)
         {
-            if(tokens(0).find(delimiter,0) == 0) document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
-            else document(lines_count) += " " + tokens(0);
+            if(tokens(0).find(delimiter,0) == 0)
+
+                document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
+
+            else
+
+                document(lines_count) += " " + tokens(0);
         }
         else
         {
@@ -1945,7 +1950,7 @@ void LanguageDataSet::load_documents(const string& path)
             lines_count++;
         }
 
-        if(file2.peek() == EOF) break;
+        if(file.peek() == EOF) break;
     }
 
     Tensor<string,1> document_copy(lines_count);
@@ -1964,7 +1969,7 @@ void LanguageDataSet::load_documents(const string& path)
     documents(original_size) = document_copy;
     targets(original_size) = document_target_copy;
 
-    file2.close();
+    file.close();
 }
 
 
@@ -1977,8 +1982,10 @@ void LanguageDataSet::read_csv_3_language_model()
 
     if(std::regex_search(data_source_path, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_source_path);
+        wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+
+        wstring file_name_wide = conv.from_bytes(data_source_path);
+
         file.open(file_name_wide);
     }
     else
@@ -2025,9 +2032,9 @@ void LanguageDataSet::read_csv_3_language_model()
 
     // Read data
 
-    const Index raw_raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
+    const Index raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
 
-    Tensor<string, 1> tokens(raw_raw_variables_number);
+    Tensor<string, 1> tokens(raw_variables_number);
 
     const Index samples_number = data.dimension(0);
 
@@ -2052,7 +2059,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
         fill_tokens(line, separator_char, tokens);
 
-        for(Index j = 0; j < raw_raw_variables_number; j++)
+        for(Index j = 0; j < raw_variables_number; j++)
         {
             trim(tokens(j));
 
