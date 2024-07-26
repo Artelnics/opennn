@@ -3697,9 +3697,9 @@ void DataSet::set_binary_simple_raw_variables()
                 scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
                 raw_variable.categories.resize(2);
 
-                Tensor<type, 1> values(3);
-                values.setRandom();
-
+                //Tensor<type, 1> values(3);
+                //values.setRandom();
+                /*
                 if((abs(values(0)-type(0)) < NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1)) < NUMERIC_LIMITS_MIN))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
@@ -3724,7 +3724,7 @@ void DataSet::set_binary_simple_raw_variables()
                     else
                         raw_variable.categories(1) = to_string(values(1));
                 }
-                /*
+
                 else if(values(0) > values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)

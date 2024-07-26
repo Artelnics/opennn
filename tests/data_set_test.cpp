@@ -2018,7 +2018,7 @@ void DataSetTest::run_test_case()
 
     test_constructor();
     test_destructor();
-/*
+
     // Data resizing methods
 
     test_unuse_constant_raw_variables();
@@ -2046,13 +2046,13 @@ void DataSetTest::run_test_case()
     test_scale_data();
 
     // Correlations
-*/
+
     test_calculate_input_target_correlations();
 
     test_calculate_input_raw_variables_correlations();
 
     // Classification methods
-/*
+
     test_calculate_target_distribution();
 
     // Outlier detection
@@ -2079,7 +2079,7 @@ void DataSetTest::run_test_case()
     test_scrub_missing_values();
 
     test_fill();
-*/
+
     cout << "End of data set test case.\n\n";
 }
 
