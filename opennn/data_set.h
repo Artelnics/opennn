@@ -269,7 +269,7 @@ public:
 
     Tensor<RawVariable, 1> get_raw_variables() const;
     Tensor<RawVariable, 1> get_input_raw_variables() const;
-    Tensor<bool, 1> get_input_raw_variables_binary() const;
+    //Tensor<bool, 1> get_input_raw_variables_binary() const;
     Tensor<RawVariable, 1> get_target_raw_variables() const;
     Tensor<RawVariable, 1> get_used_raw_variables() const;
 

@@ -30,9 +30,9 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
     const Index width_no_padding = *(int*)&info[18];
     const Index image_height = *(int*)&info[22];
     const Index bits_per_pixel = *(int*)&info[28];
-    int channels;
-
-    bits_per_pixel == 24 ? channels = 3 : channels = 1;
+    int channels = bits_per_pixel == 24 
+                 ? channels = 3 
+                 : channels = 1;
     
     const Index channels_number = channels;
     
@@ -45,18 +45,20 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     const size_t size = image_height*(channels_number*image_width + padding);
 
-    Tensor<unsigned char, 1> image_data;
+    Tensor<unsigned char, 1> raw_image;
 
-    image_data.resize(size);
+    raw_image.resize(size);
 
-    int data_offset = *(int*)(&info[0x0A]);
+    const int data_offset = *(int*)(&info[0x0A]);
     fseek(file, (long int)(data_offset - 54), SEEK_CUR);
 
-    fread(image_data.data(), sizeof(unsigned char), size, file);
+    fread(raw_image.data(), sizeof(unsigned char), size, file);
 
     fclose(file);
 
     Tensor<unsigned char, 3> image(image_height, image_width, channels_number);
+
+    const Index xxx = image_width * channels_number + padding;
 
     for(Index i = 0; i < image_height; i++)
     {
@@ -64,78 +66,12 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
         {
             for(Index k = 0; k < channels_number; ++k)
             {
-                image(i, j, k) = image_data[i * (image_width * channels_number + padding) + j * channels_number + k];
+                image(i, j, k) = raw_image[i*xxx  + j*channels_number + k];
             }
         }
     }
     
     return image;
-}
-
-
-ImageData read_bmp_image_gpt(const std::string& filename)
-{
-    ifstream file(filename, ios::binary);
-
-    if(!file.is_open())
-    {
-        throw std::runtime_error("Cannot open file.");
-    }
-
-    char header[54];
-    file.read(header, 54);
-
-    const int width = *(int*)&header[18];
-    const int height = *(int*)&header[22];
-    const int channels = header[28] == 24 ? 3 : 1;
-    int padding = 0;
-
-    while ((channels * width + padding) % 4 != 0)
-    {
-        padding++;
-    }
-
-    const size_t size = height * (channels * width + padding);
-    Tensor<unsigned char, 1> image_data(size);
-
-    file.seekg(54, ios::beg);
-    file.read(reinterpret_cast<char*>(image_data.data()), size);
-    file.close();
-
-    if(channels == 3) // Reshaping and sorting of the pixel data from the BMP image
-    {
-        const int rows_number = height;
-        const int columns_number = width;
-
-        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image_data, rows_number, columns_number, padding);
-
-        const Eigen::array<Index, 3> dims_3D = {channels, rows_number, columns_number};
-        const Eigen::array<Index, 1> dims_1D = {rows_number*columns_number};
-
-        Tensor<unsigned char, 1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D);
-        Tensor<unsigned char, 1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D);
-        Tensor<unsigned char, 1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D);
-
-        Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
-        Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
-        Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
-
-        red_channel_flatted_sorted.setZero();
-        green_channel_flatted_sorted.setZero();
-        blue_channel_flatted_sorted.setZero();
-
-        sort_channel(red_channel_flatted, red_channel_flatted_sorted, columns_number);
-        sort_channel(green_channel_flatted, green_channel_flatted_sorted, columns_number);
-        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted, columns_number);
-
-        Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
-
-        red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0);
-
-        image_data = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
-    }
-
-    return {image_data, width, height, channels};
 }
 
 
