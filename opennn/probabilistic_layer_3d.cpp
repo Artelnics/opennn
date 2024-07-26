@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "strings_utilities.h"
 #include "probabilistic_layer_3d.h"
 

@@ -35,12 +35,17 @@ public:
 
     explicit TimeSeriesDataSet();
 
-    explicit TimeSeriesDataSet(const string&, const char&, const bool&, const Codification& = Codification::UTF8);
+    explicit TimeSeriesDataSet(const string&,
+                               const char&,
+                               const bool&,
+                               const Index& = 3,
+                               const Index& = 2,
+                               const Codification& = Codification::UTF8);
 
     void transform_time_series();
     void transform_time_series_raw_variables();
     void transform_time_series_data();
-    void fill_time_series_gaps();
+    void fill_gaps();
 
     Index get_time_series_data_rows_number() const;
 

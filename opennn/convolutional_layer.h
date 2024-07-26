@@ -11,17 +11,18 @@
 
 // System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
 #include <string>
-#include <sstream>
-#include <ctype.h>
-#include <stdexcept>
+//#include <cmath>
+//#include <cstdlib>
+//#include <fstream>
+//#include <iostream>
+//#include <sstream>
+//#include <ctype.h>
+//#include <stdexcept>
 
 // OpenNN includes
 
+#include "tinyxml2.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"

@@ -6,13 +6,34 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <codecvt>
+#include <exception>
+//#include <filesystem>
+#include <fstream>
+#include <iostream>
+//#include <limits.h>
+//#include <list>
+#include <map>
+#include <random>
+#include <regex>
+#include <regex>
+#include <sstream>
+#include <stdexcept>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "data_set.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
 #include "codification.h"
+#include "strings_utilities.h"
 
-using namespace opennn;
+//using namespace opennn;
 //using namespace std;
 
 
@@ -155,12 +176,12 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 /// Please mind about the file format. This is specified in the User's Guide.
 /// @param data_source_path Data file name.
 /// @param separator Data file separator between raw_variables.
-/// @param has_raw_variables_names True if data file contains a row with raw_variables names, False otherwise.
+/// @param has_header True if data file contains a row with raw_variables names, False otherwise.
 /// @param data_codification String codification of the input file
 
-DataSet::DataSet(const string& data_source_path, const char& separator, const bool& has_raw_variables_names, const Codification& data_codification)
+DataSet::DataSet(const string& data_source_path, const char& separator, const bool& has_header, const Codification& data_codification)
 {
-    set(data_source_path, separator, has_raw_variables_names, data_codification);
+    set(data_source_path, separator, has_header, data_codification);
 }
 
 
@@ -3959,7 +3980,7 @@ const string& DataSet::get_data_source_path() const
 
 const bool& DataSet::get_header_line() const
 {
-    return has_raw_variables_names;
+    return has_header;
 }
 
 
@@ -4965,7 +4986,7 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
 }
 
 
-void DataSet::set(const string& data_source_path, const char& separator, const bool& new_has_raw_variables_names)
+void DataSet::set(const string& data_source_path, const char& separator, const bool& new_has_header)
 {
     set();
 
@@ -4975,7 +4996,7 @@ void DataSet::set(const string& data_source_path, const char& separator, const b
 
     set_separator(separator);
 
-    set_has_raw_variables_names(new_has_raw_variables_names);
+    set_has_header(new_has_header);
 
     read_csv();
 
@@ -4987,7 +5008,7 @@ void DataSet::set(const string& data_source_path, const char& separator, const b
 
 void DataSet::set(const string& data_source_path,
                   const char& separator,
-                  const bool& new_has_raw_variables_names,
+                  const bool& new_has_header,
                   const DataSet::Codification& new_codification)
 {
     set();
@@ -4998,7 +5019,7 @@ void DataSet::set(const string& data_source_path,
 
     set_separator(separator);
 
-    set_has_raw_variables_names(new_has_raw_variables_names);
+    set_has_header(new_has_header);
 
     set_codification(new_codification);
 
@@ -5110,7 +5131,7 @@ void DataSet::set(const DataSet& other_data_set)
 {
     data_source_path = other_data_set.data_source_path;
 
-    has_raw_variables_names = other_data_set.has_raw_variables_names;
+    has_header = other_data_set.has_header;
 
     separator = other_data_set.separator;
 
@@ -5170,7 +5191,7 @@ void DataSet::set_default()
     thread_pool = new ThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
-    has_raw_variables_names = false;
+    has_header = false;
 
     separator = Separator::Comma;
 
@@ -5270,9 +5291,9 @@ void DataSet::set_data_source_path(const string& new_data_file_name)
 
 /// Sets if the data file contains a header with the names of the raw_variables.
 
-void DataSet::set_has_raw_variables_names(const bool& new_has_raw_variables_names)
+void DataSet::set_has_header(const bool& new_has_header)
 {
-    has_raw_variables_names = new_has_raw_variables_names;
+    has_header = new_has_header;
 }
 
 
@@ -6234,7 +6255,7 @@ Tensor<Descriptives, 1> DataSet::calculate_testing_target_variables_descriptives
 
 Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
 {
-    return raw_variables_minimums(data, get_used_samples_indices(), get_input_variables_indices());
+    return columns_minimums(data, get_used_samples_indices(), get_input_variables_indices());
 }
 
 
@@ -6242,7 +6263,7 @@ Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
 
 Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 {
-    return raw_variables_minimums(data, get_used_samples_indices(), get_target_variables_indices());
+    return columns_minimums(data, get_used_samples_indices(), get_target_variables_indices());
 }
 
 
@@ -6251,7 +6272,7 @@ Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 
 Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
 {
-    return raw_variables_maximums(data, get_used_samples_indices(), get_input_variables_indices());
+    return columns_maximums(data, get_used_samples_indices(), get_input_variables_indices());
 }
 
 
@@ -6259,7 +6280,7 @@ Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
 
 Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 {
-    return raw_variables_maximums(data, get_used_samples_indices(), get_target_variables_indices());
+    return columns_maximums(data, get_used_samples_indices(), get_target_variables_indices());
 }
 
 
@@ -6267,7 +6288,7 @@ Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 
 Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
 {
-    return raw_variables_minimums(data, get_used_samples_indices(), get_used_variables_indices());
+    return columns_minimums(data, get_used_samples_indices(), get_used_variables_indices());
 }
 
 
@@ -6493,7 +6514,7 @@ void DataSet::print_missing_values_information() const
 
     cout << "Missing values number: " << missing_values_number << " (" << missing_values_number*100/data.size() << "%)" << endl;
 
-    const Tensor<Index, 0> raw_variables_with_missing_values = count_nan_raw_variables().sum();
+    const Tensor<Index, 0> raw_variables_with_missing_values = count_raw_variables_with_nan().sum();
 
     cout << "raw_variables with missing values: " << raw_variables_with_missing_values(0)
          << " (" << raw_variables_with_missing_values(0)*100/data.dimension(1) << "%)" << endl;
@@ -7236,7 +7257,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("RawVariablesNames");
 
         buffer.str("");
-        buffer << has_raw_variables_names;
+        buffer << has_header;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -7592,7 +7613,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         try
         {
-            set_has_raw_variables_names(new_raw_variables_names_string == "1");
+            set_has_header(new_raw_variables_names_string == "1");
         }
         catch(const exception& e)
         {
@@ -9232,7 +9253,7 @@ void DataSet::load_data()
 {
     read_csv_1();
 
-    if(count_time_raw_variables() == 0 && !has_categorical_raw_variables())
+    if(get_time_raw_variables_number() == 0 && !has_categorical_raw_variables())
     {
         read_csv_2_simple();
 
@@ -9251,7 +9272,7 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
-    if(count_time_raw_variables() == 0 && !has_categorical_raw_variables())
+    if(get_time_raw_variables_number() == 0 && !has_categorical_raw_variables())
     {
         read_csv_2_simple();
 
@@ -9377,7 +9398,7 @@ void DataSet::read_csv_1()
 
     if(display) cout << "Setting data file preview..." << endl;
 
-    Index lines_number = has_raw_variables_names ? 4 : 3;
+    Index lines_number = has_header ? 4 : 3;
 
     data_file_preview.resize(lines_number);
 
@@ -9434,7 +9455,7 @@ void DataSet::read_csv_1()
 
     // Check if header has numeric value
 
-    if(has_raw_variables_names && has_numbers(data_file_preview(0)))
+    if(has_header && has_numbers(data_file_preview(0)))
     {
         ostringstream buffer;
 
@@ -9449,7 +9470,7 @@ void DataSet::read_csv_1()
 
     if(display) cout << "Setting raw_variables names..." << endl;
 
-    if(has_raw_variables_names)
+    if(has_header)
     {
         has_rows_labels ? set_raw_variables_names(data_file_preview(0).slice(Eigen::array<Index, 1>({1}),
                                                                        Eigen::array<Index, 1>({data_file_preview(0).size()-1})))
@@ -9576,7 +9597,7 @@ void DataSet::read_csv_1()
 
     if(data_file_preview.size() > 4)
     {
-        lines_number = has_raw_variables_names ? 4 : 3;
+        lines_number = has_header ? 4 : 3;
 
         Tensor<Tensor<string, 1>, 1> data_file_preview_copy(data_file_preview);
 
@@ -9628,7 +9649,7 @@ void DataSet::read_csv_2_simple()
     string line;
     Index line_number = 0;
 
-    if(has_raw_variables_names)
+    if(has_header)
     {
         while(file.good())
         {
@@ -9745,7 +9766,7 @@ void DataSet::read_csv_3_simple()
 
     // Read header
 
-    if(has_raw_variables_names)
+    if(has_header)
     {
         while(file.good())
         {
@@ -9817,7 +9838,7 @@ void DataSet::read_csv_3_simple()
         sample_index++;
     }
 
-    const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;
+    const Index data_file_preview_index = has_header ? 3 : 2;
 
     data_file_preview(data_file_preview_index) = tokens;
 
@@ -9891,7 +9912,7 @@ void DataSet::read_csv_2_complete()
 
     // Skip header
 
-    if(has_raw_variables_names)
+    if(has_header)
     {
         while(file.good())
         {
@@ -10056,7 +10077,7 @@ void DataSet::read_csv_3_complete()
 
     // Skip header
 
-    if(has_raw_variables_names)
+    if(has_header)
     {
         while(file.good())
         {
@@ -10259,7 +10280,7 @@ void DataSet::read_csv_3_complete()
         sample_index++;
     }
 
-    const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;
+    const Index data_file_preview_index = has_header ? 3 : 2;
 
     data_file_preview(data_file_preview_index) = tokens;
 
@@ -10406,21 +10427,6 @@ bool DataSet::has_categorical_raw_variables() const
 }
 
 
-Index DataSet::count_time_raw_variables() const
-{
-    const Index raw_variables_number = raw_variables.size();
-
-    Index count = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).type == RawVariableType::DateTime) count++;
-    }
-
-    return count;
-}
-
-
 bool DataSet::has_selection() const
 {
     if(get_selection_samples_number() == 0) return false;
@@ -10429,13 +10435,13 @@ bool DataSet::has_selection() const
 }
 
 
-Tensor<Index, 1> DataSet::count_nan_raw_variables() const
+Tensor<Index, 1> DataSet::count_raw_variables_with_nan() const
 {
     const Index raw_variables_number = get_raw_variables_number();
     const Index rows_number = get_samples_number();
 
-    Tensor<Index, 1> nan_raw_variables(raw_variables_number);
-    nan_raw_variables.setZero();
+    Tensor<Index, 1> raw_variables_with_nan(raw_variables_number);
+    raw_variables_with_nan.setZero();
 
     for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
@@ -10445,12 +10451,12 @@ Tensor<Index, 1> DataSet::count_nan_raw_variables() const
         {
             if(isnan(data(row_index,current_variable_index)))
             {
-                nan_raw_variables(raw_variable_index)++;
+                raw_variables_with_nan(raw_variable_index)++;
             }
         }
     }
 
-    return nan_raw_variables;
+    return raw_variables_with_nan;
 }
 
 
@@ -10509,7 +10515,7 @@ void DataSet::set_raw_variables_missing_values_number(const Tensor<Index, 1>& ne
 
 void DataSet::set_raw_variables_missing_values_number()
 {
-    raw_variables_missing_values_number = count_nan_raw_variables();
+    raw_variables_missing_values_number = count_raw_variables_with_nan();
 }
 
 

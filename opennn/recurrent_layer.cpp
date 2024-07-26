@@ -6,6 +6,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+//#include <cmath>
+//#include <cstdlib>
+//#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include "tensors.h"
 #include "recurrent_layer.h"
 
 namespace opennn
