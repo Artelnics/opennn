@@ -1557,7 +1557,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     cout << "Test 5" << endl;
 
-    data_set.set("../../datasets/correlation_tests.csv",',', false);
+    data_set.set("../../datasets/correlation_tests.csv", ',', false);
 
     input_raw_variables_indices.resize(3);
     input_raw_variables_indices.setValues({0, 3, 4});
