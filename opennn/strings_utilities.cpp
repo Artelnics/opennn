@@ -18,21 +18,21 @@ namespace opennn
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
 
-Index count_tokens(string& str, const char& separator)
+Index count_tokens(string& text, const char& separator)
 {
-    trim(str);
+    trim(text);
 
     Index tokens_count = 0;
 
     // Skip delimiters at beginning.
 
-    string::size_type last_pos = str.find_first_not_of(separator, 0);
+    string::size_type last_position = text.find_first_not_of(separator, 0);
 
     // Find first "non-delimiter".
 
-    string::size_type position = str.find_first_of(separator, last_pos);
+    string::size_type position = text.find_first_of(separator, last_position);
 
-    while(string::npos != position || string::npos != last_pos)
+    while(string::npos != position || string::npos != last_position)
     {
         // Found a token, add it to the vector
 
@@ -40,28 +40,27 @@ Index count_tokens(string& str, const char& separator)
 
         // Skip delimiters.  Note the "not_of"
 
-        last_pos = str.find_first_not_of(separator, position);
+        last_position = text.find_first_not_of(separator, position);
 
         // Find next "non-delimiter"
 
-        position = str.find_first_of(separator, last_pos);
+        position = text.find_first_of(separator, last_position);
     }
 
     return tokens_count;
 }
 
 
-Index count_tokens(const string& s, const char& c)
+Index count_tokens(const string& text, const char& separator)
 {
-    const string str_copy = s;
+    Index tokens_number = count(text.begin(), text.end(), separator);
 
-    Index tokens_number = count(s.begin(), s.end(), c);
-
-    if(s[0] == c)
+    if(text[0] == separator)
     {
         tokens_number--;
     }
-    if(s[s.size() - 1] == c)
+
+    if(text[text.size() - 1] == separator)
     {
         tokens_number--;
     }
@@ -74,48 +73,46 @@ Index count_tokens(const string& s, const char& c)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-Tensor<string, 1> get_tokens(const string& str, const char& separator)
+Tensor<string, 1> get_tokens(const string& text, const char& separator)
 {
-    const Index tokens_number = count_tokens(str, separator);
+    const Index tokens_number = count_tokens(text, separator);
 
     Tensor<string, 1> tokens(tokens_number);
 
     // Skip delimiters at beginning.
 
-    string::size_type lastPos = str.find_first_not_of(separator, 0);
+    string::size_type last_position = text.find_first_not_of(separator, 0);
 
     // Find first "non-delimiter"
 
     Index index = 0;
-    Index old_pos = lastPos;
+    Index old_position = last_position;
 
-    string::size_type position = str.find_first_of(separator, lastPos);
+    string::size_type position = text.find_first_of(separator, last_position);
 
-    while(string::npos != position || string::npos != lastPos)
+    while(string::npos != position || string::npos != last_position)
     {
-        if((lastPos-old_pos != 1) && index!= 0)
+        if(last_position - old_position != 1
+        && index != 0)
         {
-            tokens[index] = "";
             index++;
-            old_pos = old_pos+1;
+            old_position++;
             continue;
         }
-        else
-        {
-            // Found a token, add it to the vector
 
-            tokens[index] = str.substr(lastPos, position - lastPos);
-        }
+        // Found a token, add it to the vector
 
-        old_pos = position;
+        tokens[index] = text.substr(last_position, position - last_position);
+
+        old_position = position;
 
         // Skip delimiters. Note the "not_of"
 
-        lastPos = str.find_first_not_of(separator, position);
+        last_position = text.find_first_not_of(separator, position);
 
         // Find next "non-delimiter"
 
-        position = str.find_first_of(separator, lastPos);
+        position = text.find_first_of(separator, last_position);
 
         index++;
     }
@@ -128,49 +125,49 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& tokens)
+void fill_tokens(const string& text, const char& separator, Tensor<string, 1>& tokens)
 {
     tokens.setConstant("");
 
     // Skip delimiters at beginning.
 
-    string::size_type last_position = str.find_first_not_of(separator, 0);
+    string::size_type last_position = text.find_first_not_of(separator, 0);
 
-    string::size_type position = str.find_first_of(separator, last_position);
+    string::size_type position = text.find_first_of(separator, last_position);
 
     // Find first "non-delimiter"
 
     Index index = 0;
 
-    Index old_pos = last_position;
+    Index old_position = last_position;
 
     while(string::npos != position || string::npos != last_position)
     {
         // Found a token, add it to the vector
 
-        if(last_position - old_pos != 1 && index != 0)
+        if(last_position - old_position != 1 && index != 0)
         {
             tokens[index] = "";
             index++;
-            old_pos++;
+            old_position++;
             continue;
         }
         else
         {
             // Found a token, add it to the vector
 
-            tokens[index] = str.substr(last_position, position - last_position);
+            tokens[index] = text.substr(last_position, position - last_position);
         }
 
-        old_pos = position;
+        old_position = position;
 
         // Skip delimiters. Note the "not_of"
 
-        last_position = str.find_first_not_of(separator, position);
+        last_position = text.find_first_not_of(separator, position);
 
         // Find next "non-delimiter"
 
-        position = str.find_first_of(separator, last_position);
+        position = text.find_first_of(separator, last_position);
 
         index++;
     }
@@ -181,30 +178,30 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
 
-Index count_tokens(const string& s, const string& separator)
+Index count_tokens(const string& text, const string& separator)
 {
     Index tokens_number = 0;
 
     string::size_type position = 0;
 
-    while(s.find(separator, position) != string::npos)
+    while(text.find(separator, position) != string::npos)
     {
-        position = s.find(separator, position);
-        ++tokens_number;
+        position = text.find(separator, position);
+        tokens_number++;
         position += separator.length();
     }
 
-    if(s.find(separator, 0) == 0)
+    if(text.find(separator, 0) == 0)
     {
         tokens_number--;
     }
 
-    if(position == s.length())
+    if(position == text.length())
     {
         tokens_number--;
     }
 
-    return tokens_number+1;
+    return tokens_number + 1;
 }
 
 
@@ -212,36 +209,36 @@ Index count_tokens(const string& s, const string& separator)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-Tensor<string, 1> get_tokens(const string& s, const string& separator)
+Tensor<string, 1> get_tokens(const string& text, const string& separator)
 {
-    const Index tokens_number = count_tokens(s, separator);
+    const Index tokens_number = count_tokens(text, separator);
 
     Tensor<string,1> tokens(tokens_number);
 
-    string str = s;
+//    string str = s;
     size_t position = 0;
-    size_t last_pos = 0;
+    size_t last_position = 0;
     Index i = 0;
 
-    while((position = str.find(separator,position)) != string::npos)
+    while(position = text.find(separator,position) != string::npos)
     {
         if(position == 0) // Skip first position
         {
             position += separator.length();
-            last_pos = position;
+            last_position = position;
             continue;
         }
 
-        tokens(i) = str.substr(last_pos, position - last_pos);
+        tokens(i) = text.substr(last_position, position - last_position);
 
         position += separator.length();
-        last_pos = position;
+        last_position = position;
         i++;
     }
 
-    if(last_pos != s.length()) // Reading last element
+    if(last_position != text.length()) // Reading last element
     {
-        tokens(i) = str.substr(last_pos, s.length() - last_pos);
+        tokens(i) = text.substr(last_position, text.length() - last_position);
     }
 
     return tokens;
@@ -250,9 +247,9 @@ Tensor<string, 1> get_tokens(const string& s, const string& separator)
 
 /// Returns a new vector with the elements of this string vector casted to type.
 
-Tensor<type, 1> to_type_vector(const string& str, const char& separator)
+Tensor<type, 1> to_type_vector(const string& text, const char& separator)
 {
-    const Tensor<string, 1> tokens = get_tokens(str, separator);
+    const Tensor<string, 1> tokens = get_tokens(text, separator);
 
     const Index tokens_size = tokens.dimension(0);
 
@@ -281,9 +278,9 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 /// Returns a new vector with the elements of this string vector casted to type.
 
 
-Tensor<Index, 1> to_index_vector(const string& str, const char& separator)
+Tensor<Index, 1> to_index_vector(const string& text, const char& separator)
 {
-    const Tensor<string, 1> tokens = get_tokens(str, separator);
+    const Tensor<string, 1> tokens = get_tokens(text, separator);
 
     const Index tokens_size = tokens.dimension(0);
 
@@ -346,11 +343,11 @@ Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
 /// Returns true if the string passed as argument represents a number, and false otherwise.
 /// @param str String to be checked.
 
-bool is_numeric_string(const string& str)
+bool is_numeric_string(const string& text)
 {
     string::size_type index;
 
-    istringstream iss(str.data());
+    istringstream iss(text.data());
 
     float dTestSink;
 
@@ -360,10 +357,10 @@ bool is_numeric_string(const string& str)
 
     try
     {
-        stod(str, &index);
+        stod(text, &index);
 
-        if(index == str.size()
-        || (str.find("%") != string::npos && index+1 == str.size()))
+        if(index == text.size()
+        || (text.find("%") != string::npos && index+1 == text.size()))
         {
             return true;
         }
@@ -419,9 +416,9 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
 /// Returns true if given string is a date and false otherwise.
 /// @param str String to be checked.
 
-bool is_date_time_string(const string& str)
+bool is_date_time_string(const string& text)
 {
-    if(is_numeric_string(str))return false;
+    if(is_numeric_string(text))return false;
 
     const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
@@ -442,11 +439,25 @@ bool is_date_time_string(const string& str)
     const string format_16 = "(\\d{2})[.|/|-](\\d{2})[.|/|-](\\d{4})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
     const string format_17 = "^(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[0-2])/(\\d{2}) ([01]?\\d|2[0-3]):([0-5]\\d)$";
 
-    const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15
-                                   + "|" + format_16 + "|" + format_17);
+    const regex regular_expression(format_1 + "|"
+                                   + format_2 + "|"
+                                   + format_3 + "|"
+                                   + format_4 + "|"
+                                   + format_5 + "|"
+                                   + format_6 + "|"
+                                   + format_7 + "|"
+                                   + format_8 + "|"
+                                   + format_9 + "|"
+                                   + format_10 + "|"
+                                   + format_11 +"|"
+                                   + format_12  + "|"
+                                   + format_13 + "|"
+                                   + format_14 + "|"
+                                   + format_15 + "|"
+                                   + format_16 + "|"
+                                   + format_17);
 
-    if(regex_match(str, regular_expression))
+    if(regex_match(text, regular_expression))
     {
         return true;
     }
@@ -948,111 +959,113 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
 /// Returns true if the string contains the given substring and false otherwise.
 /// @param str String.
-/// @param sub_str Substring to search.
+/// @param sub_string Substring to search.
 
-bool contains_substring(const string& str, const string& sub_str)
+bool contains_substring(const string& text, const string& sub_string)
 {
-    if(str.find(sub_str)  != string::npos)
+    if(text.find(sub_string) != string::npos)
     {
         return true;
     }
+
     return false;
 }
 
 
 ///Replaces all apprearances of a substring with another string
 ///@param s
-///@param toReplace
-///@param replaceWith
+///@param to_replace
+///@param replace_with
 
-void replace_all_word_appearances(string& s, string const& toReplace, string const& replaceWith) {
-
-    string buf;
+void replace_all_word_appearances(string& text, const string& to_replace, const string& replace_with)
+{
+    string buffer;
     size_t position = 0;
-    size_t prevPos;
+    size_t previous_position;
     const string underscore = "_";
 
     // Reserva una estimación aproximada del tamaño final de la cadena.
-    buf.reserve(s.size());
+    buffer.reserve(text.size());
 
-    while (true) {
-
-        prevPos = position;
-        position = s.find(toReplace, position);
+    while (true)
+    {
+        previous_position = position;
+        position = text.find(to_replace, position);
 
         if(position == string::npos)
             break;
 
-        // Verifica que no haya letras antes ni después de toReplace
-        if((prevPos == 0 || !isalpha(s[prevPos - 1])) &&
-            (position + toReplace.size() == s.size() || !isalpha(s[position + toReplace.size()])))
+        // Verifica que no haya letras antes ni después de to_replace
+        if((previous_position == 0 || !isalpha(text[previous_position - 1])) &&
+            (position + to_replace.size() == text.size() || !isalpha(text[position + to_replace.size()])))
         {
-            // Verifica que no haya guiones bajos antes ni después de toReplace
-            if((prevPos == 0 || s[prevPos - 1] != '_') &&
-                (position + toReplace.size() == s.size() || s[position + toReplace.size()] != '_'))
+            // Verifica que no haya guiones bajos antes ni después de to_replace
+            if((previous_position == 0 || text[previous_position - 1] != '_') &&
+                (position + to_replace.size() == text.size() || text[position + to_replace.size()] != '_'))
             {
-                buf.append(s, prevPos, position - prevPos);
-                buf += replaceWith;
-                position += toReplace.size();
+                buffer.append(text, previous_position, position - previous_position);
+                buffer += replace_with;
+                position += to_replace.size();
             }
             else
             {
-                buf.append(s, prevPos, position - prevPos + toReplace.size());
-                position += toReplace.size();
+                buffer.append(text, previous_position, position - previous_position + to_replace.size());
+                position += to_replace.size();
             }
         }
         else
         {
-            buf.append(s, prevPos, position - prevPos + toReplace.size());
-            position += toReplace.size();
+            buffer.append(text, previous_position, position - previous_position + to_replace.size());
+            position += to_replace.size();
         }
     }
 
-    buf.append(s, prevPos, s.size() - prevPos);
-    s.swap(buf);
+    buffer.append(text, previous_position, text.size() - previous_position);
+    text.swap(buffer);
 }
 
 
 
  ///Replaces all apprearances of a substring with another string
  ///@param s
- ///@param toReplace
- ///@param replaceWith
+ ///@param to_replace
+ ///@param replace_with
 
-void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith) {
-
-    string buf;
+void replace_all_appearances(string& text, string const& to_replace, string const& replace_with)
+{
+    string buffer;
     size_t position = 0;
-    size_t prevPos;
+    size_t previous_position;
 
     // Reserves rough estimate of final size of string.
-    buf.reserve(s.size());
+    buffer.reserve(text.size());
 
-    while(true) {
+    while(true)
+    {
+        previous_position = position;
 
-        prevPos =    position;
-        position = s.find(toReplace, position);
+        position = text.find(to_replace, position);
 
-        if(position == string::npos)
-            break;
+        if(position == string::npos) break;
 
-        buf.append(s, prevPos, position - prevPos);
+        buffer.append(text, previous_position, position - previous_position);
 
-        if(buf.back() == '_')
+        if(buffer.back() == '_')
         {
-            buf += toReplace;
-            position += toReplace.size();
+            buffer += to_replace;
+            position += to_replace.size();
 
-        }else
+        }
+        else
         {
-            buf += replaceWith;
-            position += toReplace.size();
-
+            buffer += replace_with;
+            position += to_replace.size();
         }
     }
 
-    buf.append(s, prevPos, s.size() - prevPos);
-    s.swap(buf);
+    buffer.append(text, previous_position, text.size() - previous_position);
+
+    text.swap(buffer);
 }
 
 
@@ -1300,37 +1313,37 @@ int WordOccurrence(char *sentence, char *word)
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
 
-void trim(string& str)
+void trim(string& text)
 {
     // Prefixing spaces
 
-    str.erase(0, str.find_first_not_of(' '));
-    str.erase(0, str.find_first_not_of('\t'));
-    str.erase(0, str.find_first_not_of('\n'));
-    str.erase(0, str.find_first_not_of('\r'));
-    str.erase(0, str.find_first_not_of('\f'));
-    str.erase(0, str.find_first_not_of('\v'));
+    text.erase(0, text.find_first_not_of(' '));
+    text.erase(0, text.find_first_not_of('\t'));
+    text.erase(0, text.find_first_not_of('\n'));
+    text.erase(0, text.find_first_not_of('\r'));
+    text.erase(0, text.find_first_not_of('\f'));
+    text.erase(0, text.find_first_not_of('\v'));
 
     // Surfixing spaces
 
-    str.erase(str.find_last_not_of(' ') + 1);
-    str.erase(str.find_last_not_of('\t') + 1);
-    str.erase(str.find_last_not_of('\n') + 1);
-    str.erase(str.find_last_not_of('\r') + 1);
-    str.erase(str.find_last_not_of('\f') + 1);
-    str.erase(str.find_last_not_of('\v') + 1);
-    str.erase(str.find_last_not_of('\b') + 1);
+    text.erase(text.find_last_not_of(' ') + 1);
+    text.erase(text.find_last_not_of('\t') + 1);
+    text.erase(text.find_last_not_of('\n') + 1);
+    text.erase(text.find_last_not_of('\r') + 1);
+    text.erase(text.find_last_not_of('\f') + 1);
+    text.erase(text.find_last_not_of('\v') + 1);
+    text.erase(text.find_last_not_of('\b') + 1);
 
     // Special character and string modifications
 
-    replace_first_and_last_char_with_missing_label(str, ';', "NA", "");
-    replace_first_and_last_char_with_missing_label(str, ',', "NA", "");
+    replace_first_and_last_char_with_missing_label(text, ';', "NA", "");
+    replace_first_and_last_char_with_missing_label(text, ',', "NA", "");
 
-    replace_double_char_with_label(str, ";", "NA");
-    replace_double_char_with_label(str, ",", "NA");
+    replace_double_char_with_label(text, ";", "NA");
+    replace_double_char_with_label(text, ",", "NA");
 
-    replac_substring_within_quotes(str, ",", "");
-    replac_substring_within_quotes(str, ";", "");
+    replac_substring_within_quotes(text, ",", "");
+    replac_substring_within_quotes(text, ";", "");
 }
 
 
@@ -1392,9 +1405,9 @@ void replac_substring_within_quotes(string &str, const string &target, const str
 }
 
 
-void erase(string& s, const char& c)
+void erase(string& text, const char& character)
 {
-    s.erase(remove(s.begin(), s.end(), c), s.end());
+    text.erase(remove(text.begin(), text.end(), character), text.end());
 }
 
 
@@ -1402,9 +1415,9 @@ void erase(string& s, const char& c)
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
 
-string get_trimmed(const string& str)
+string get_trimmed(const string& text)
 {
-    string output(str);
+    string output(text);
 
     //prefixing spaces
 
@@ -1433,11 +1446,11 @@ string get_trimmed(const string& str)
 /// @param pre String to be prepended.
 /// @param str original string.
 
-string prepend(const string& pre, const string& str)
+string prepend(const string& pre, const string& text)
 {
     ostringstream buffer;
 
-    buffer << pre << str;
+    buffer << pre << text;
 
     return buffer.str();
 }
@@ -1530,17 +1543,18 @@ bool is_mixed(const Tensor<string, 1>& string_list)
 /// Checks if a string is valid encoded in UTF-8 or not
 /// @param string String to be checked.
 
-void remove_non_printable_chars( string& wstr)
+void delete_non_printable_chars(string& text)
 {
-    // get the ctype facet for wchar_t (Unicode code points in pactice)
-    typedef ctype< wchar_t > ctype ;
-    const ctype& ct = use_facet<ctype>( locale() ) ;
+    typedef ctype<wchar_t> ctype;
 
-    // remove non printable Unicode characters
-    wstr.erase( remove_if( wstr.begin(), wstr.end(),
-                    [&ct]( wchar_t ch ) { return !ct.is( ctype::print, ch ) ; } ),
-                wstr.end() ) ;
+    const ctype& ct = use_facet<ctype>(locale());
+
+    text.erase(remove_if(text.begin(),
+                         text.end(),
+                         [&ct](wchar_t ch) {return !ct.is(ctype::print, ch);}),
+                         text.end()) ;
 }
+
 
 /// Replaces a substring by another one in each element of this vector.
 /// @param find_what String to be replaced.
@@ -1577,7 +1591,7 @@ void replace(string& source, const string& find_what, const string& replace_with
 }
 
 
-bool isNotAlnum (char &c)
+bool is_not_alnum (char &c)
 {
     return (c < ' ' || c > '~');
 }
@@ -1585,11 +1599,11 @@ bool isNotAlnum (char &c)
 
 void remove_not_alnum(string &str)
 {
-        str.erase(remove_if(str.begin(), str.end(), isNotAlnum), str.end());
+        str.erase(remove_if(str.begin(), str.end(), is_not_alnum), str.end());
 }
 
 
-bool find_string_in_tensor(Tensor<string, 1>& t, string val)
+bool find_string_in_tensor(Tensor<string, 1>& t, const string& val)
 {
     for(Index i = 0; i < t.dimension(0); i++)
     {
@@ -1833,16 +1847,16 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 
 /// @todo clean this method Clang-tidy gives warnings.
 
-Tensor<string,1> sort_string_tensor(Tensor<string, 1> tensor)
+Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
 {
-    auto compareStringLength = [](const string& a, const string& b)
+    auto compare_string_length = [](const string& a, const string& b)
     {
         return a.length() > b.length();
     };
 
     vector<string> tensor_as_vector(tensor.data(), tensor.data() + tensor.size());
     
-    sort(tensor_as_vector.begin(), tensor_as_vector.end(), compareStringLength);
+    sort(tensor_as_vector.begin(), tensor_as_vector.end(), compare_string_length);
 
     for(int i = 0; i < tensor.size(); i++)
     {
@@ -1876,16 +1890,16 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression,
     for(int i = 0; i < tokens.dimension(0); i++)
     {
         const string found_token = tokens(i);
-        const string toReplace(found_token);
+        const string to_replace(found_token);
         const string newword = keyword + " " + found_token;
 
         string::size_type position = 0;
 
-        while((position = espression.find(toReplace, position)) != string::npos)
+        while((position = espression.find(to_replace, position)) != string::npos)
         {
             if(position > previous_pos)
             {
-                espression.replace(position, toReplace.length(), newword);
+                espression.replace(position, to_replace.length(), newword);
                 position += newword.length();
                 previous_pos = position;
                 break;
@@ -1899,7 +1913,7 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression,
 }
 
 
-void display_progress_bar(int completed, int total)
+void display_progress_bar(const int& completed, const int& total)
 {
     const int width = 100;
     const float progress = (float)completed / total;
@@ -1965,16 +1979,6 @@ void encode_alphabet()
 
         data_tensor(i, word_index) = type(1);
     }
-*/
-}
-
-
-void preprocess()
-{
-/*
-    replace_accented(text);
-
-    transform(text.begin(), text.end(), text.begin(), ::tolower);
 */
 }
 
@@ -2120,19 +2124,19 @@ Tensor<type, 2> str_to_input(const string& input_string)
 
 Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
 {
-    const Index documents_number = documents.dimension(0);
+    const Index documents_number = documents.size();
 
-    Index total_size = 0;
+    Index count = 0;
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents(i).dimension(0); j++)
+        for(Index j = 0; j < documents(i).size(); j++)
         {
-            total_size += count_tokens(documents(i)(j));
+            count += count_tokens(documents(i)(j));
         }
     }
 
-    return total_size;
+    return count;
 }
 
 
@@ -2140,25 +2144,35 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
 
 Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
 {
-    const Index words_number = count_tokens(documents);
+    const Index documents_number = documents.size();
 
-    Tensor<string, 1> words_list(words_number);
+    const Index total_tokens_number = count_tokens(documents);
 
-    Index current_tokens = 0;
+    Tensor<string, 1> total_tokens(total_tokens_number);
 
-    for(Index i = 0; i < documents.dimension(0); i++)
+    Index position = 0;
+
+    for(Index i = 0; i < documents_number; i++)
     {
+        //const Index tokens_num
+
         for(Index j = 0; j < documents(i).dimension(0); j++)
         {
             const Tensor<string, 1> tokens = get_tokens(documents(i)(j));
 
-            copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
+            copy(tokens.data(), tokens.data() + tokens.size(), total_tokens.data() + position);
 
-            current_tokens += tokens.size();
+            position += tokens.size();
         }
     }
 
-    return words_list;
+    return total_tokens;
+}
+
+
+void to_lower(string& text)
+{
+    transform(text.begin(), text.end(), text.begin(), ::tolower);
 }
 
 
@@ -2166,11 +2180,20 @@ Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
 
 void to_lower(Tensor<string, 1>& documents)
 {
-    const size_t documents_number = documents.size();
+    const Index documents_number = documents.size();
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        transform(documents[i].begin(), documents[i].end(), documents[i].begin(), ::tolower);
+        to_lower(documents(i));
+    }
+}
+
+
+void to_lower(Tensor<Tensor<string, 1>, 1>& text)
+{
+    for(Index i = 0; i < text.size(); i++)
+    {
+        to_lower(text(i));
     }
 }
 
@@ -2181,7 +2204,8 @@ Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents)
 
     Tensor<Tensor<string, 1>, 1> tokens(documents_number);
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index i = 0; i < documents_number; i++)
     {
         tokens(i) = get_tokens(documents(i));
@@ -2239,7 +2263,7 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     delete_extra_spaces(documents_copy);
 
-    aux_remove_non_printable_chars(documents_copy);
+    delete_non_alphanumeric(documents_copy);
 
     return get_tokens(documents_copy);
 }
@@ -2366,7 +2390,7 @@ void delete_breaks_and_tabs(Tensor<string, 1>& documents)
 void delete_non_printable_chars(Tensor<string, 1>& documents) 
 {
     for(Index i = 0; i < documents.size(); i++) 
-        remove_non_printable_chars(documents(i));
+        delete_non_printable_chars(documents(i));
 }
 
 
@@ -2430,13 +2454,13 @@ void split_punctuation(Tensor<string, 1>& documents)
 }
 
 
-void aux_remove_non_printable_chars(Tensor<string, 1>& documents) 
+void delete_non_alphanumeric(Tensor<string, 1>& documents)
 {
     Tensor<string, 1> new_documents(documents);
 
     for(Index i = 0; i < documents.size(); i++)
     {
-        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
+        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), is_not_alnum), new_documents[i].end());
     }
 
     documents = new_documents;
@@ -2598,18 +2622,6 @@ void set_language(const string& new_language_string)
 void set_stop_words(const Tensor<string, 1>& new_stop_words)
 {
     stop_words = new_stop_words;
-}
-
-
-void set_short_words_length(const Index& new_short_words_length)
-{
-    short_words_length = new_short_words_length;
-}
-
-
-void set_long_words_length(const Index& new_long_words_length)
-{
-    long_words_length = new_long_words_length;
 }
 
 
@@ -3112,7 +3124,7 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 
     delete_extra_spaces(documents_copy);
 
-    aux_remove_non_printable_chars(documents_copy);
+    delete_non_alphanumeric(documents_copy);
 
     Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
 
@@ -3148,7 +3160,7 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
 
     delete_extra_spaces(documents_copy);
 
-    aux_remove_non_printable_chars(documents_copy);
+    delete_non_alphanumeric(documents_copy);
 
     Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
 
