@@ -281,7 +281,7 @@ void DataSetTest::test_unuse_constant_raw_variables()
     data.setValues({{type(1),type(2),type(0)},{type(1),type(2),type(1)},{type(1),type(2),type(2)}});
 
     data_set.set_data(data);
-    data_set.set_has_raw_variables_names(false);
+    data_set.set_has_header(false);
     data_set.check_constant_raw_variables();
 
     data_set.unuse_constant_raw_variables();
@@ -450,7 +450,7 @@ void DataSetTest::test_read_csv()
     // Test
 
     data_set.set();
-    data_set.set_has_raw_variables_names(true);
+    data_set.set_has_header(true);
     data_set.set_separator(' ');
     data_string = "x y\n"
                   "1 2\n"
@@ -479,7 +479,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 
-    data_set.set_has_raw_variables_names(true);
+    data_set.set_has_header(true);
     data_set.set_separator(',');
 
     data_string = "\tx\t,\ty\n"
@@ -504,7 +504,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 
-    data_set.set_has_raw_variables_names(true);
+    data_set.set_has_header(true);
     data_set.set_separator(',');
 
     data_string = "x , y\n"
@@ -529,7 +529,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 
-    data_set.set_has_raw_variables_names(false);
+    data_set.set_has_header(false);
     data_set.set_separator(',');
     data_string =
             "5.1,3.5,1.4,0.2,Iris-setosa\n"
@@ -548,7 +548,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 
-    data_set.set_has_raw_variables_names(false);
+    data_set.set_has_header(false);
     data_set.set_separator(',');
     data_string =
             "5.1,3.5,1.4,0.2,Iris-setosa\n"
@@ -585,7 +585,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 
-    data_set.set_has_raw_variables_names(true);
+    data_set.set_has_header(true);
     data_set.set_separator(',');
     data_set.set_missing_values_label("NaN");
     data_string =
@@ -630,7 +630,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 /*
-    data_set.set_has_raw_variables_names(false);
+    data_set.set_has_header(false);
     data_set.set_separator(' ');
     data_string = "1 2\n3 4\n5 6";
 
@@ -650,7 +650,7 @@ void DataSetTest::test_read_csv()
 */
     // Test
 
-    data_set.set_has_raw_variables_names(false);
+    data_set.set_has_header(false);
     data_set.set_separator(' ');
     data_string = "1 true\n"
                   "3 false\n"
@@ -713,7 +713,7 @@ void DataSetTest::test_read_adult_csv()
         data_set.set_missing_values_label("?");
         data_set.set_separator(',');
         data_set.set_data_source_path("../../datasets/adult.data");
-        data_set.set_has_raw_variables_names(false);
+        data_set.set_has_header(false);
         data_set.read_csv();
 
         assert_true(data_set.get_samples_number() == 1000, LOG);
@@ -904,7 +904,7 @@ void DataSetTest::test_read_bank_churn_csv()
 
     data_set.set_separator(';');
     data_set.set_data_source_path("../../datasets/bankchurn.csv");
-    data_set.set_has_raw_variables_names(true);
+    data_set.set_has_header(true);
     data_set.read_csv();*/
 }
 
@@ -2019,7 +2019,7 @@ void DataSetTest::run_test_case()
 
     test_constructor();
     test_destructor();
-/*
+
     // Data resizing methods
 
     test_unuse_constant_raw_variables();
@@ -2047,13 +2047,13 @@ void DataSetTest::run_test_case()
     test_scale_data();
 
     // Correlations
-*/
+
     test_calculate_input_target_correlations();
 
     test_calculate_input_raw_variables_correlations();
 
     // Classification methods
-/*
+
     test_calculate_target_distribution();
 
     // Outlier detection
@@ -2080,7 +2080,7 @@ void DataSetTest::run_test_case()
     test_scrub_missing_values();
 
     test_fill();
-*/
+
     cout << "End of data set test case.\n\n";
 }
 

@@ -33,7 +33,7 @@ namespace opennn
  type minimum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
  Index minimum(const Tensor<Index, 1>&);
  type minimum(const Tensor<type, 2>&);
- Tensor<type, 1> raw_variables_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
+ Tensor<type, 1> columns_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
  // Maximum
 
@@ -41,7 +41,7 @@ namespace opennn
  type maximum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
  Index maximum(const Tensor<Index, 1>&);
  type maximum(const Tensor<type, 2>&);
- Tensor<type, 1> raw_variables_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
+ Tensor<type, 1> columns_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
  // Range
  type range(const Tensor<type, 1>&);

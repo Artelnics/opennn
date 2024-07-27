@@ -6,13 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef SET_H
-#define SET_H
+#ifndef DATASET_H
+#define DATASET_H
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 // System includes
 
+<<<<<<< HEAD
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -31,14 +32,18 @@
 #include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
+=======
+>>>>>>> dev
 #include <string>
 
 // OpenNN includes
 
+#include "tinyxml2.h"
+#include "histogram.h"
+#include "box_plot.h"
 #include "config.h"
 #include "correlation.h"
 #include "scaling.h"
-#include "strings_utilities.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -544,7 +549,7 @@ public:
 
     void set_data_source_path(const string&);
 
-    void set_has_raw_variables_names(const bool&);
+    void set_has_header(const bool&);
     void set_has_rows_label(const bool&);
 
     void set_has_text_data(const bool&);
@@ -573,7 +578,6 @@ public:
 
     bool has_binary_raw_variables() const;
     bool has_categorical_raw_variables() const;
-    Index count_time_raw_variables() const;
 
     //bool has_time_time_series_raw_variables() const;
 
@@ -649,7 +653,7 @@ public:
 
     // Box and whiskers
 
-    BoxPlot calculate_single_box_plot(Tensor<type,1>&) const;
+    //BoxPlot calculate_single_box_plot(Tensor<type,1>&) const;
     Tensor<BoxPlot, 1> calculate_raw_variables_box_plots() const;
     Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
@@ -760,7 +764,7 @@ public:
 
     void scrub_missing_values();
 
-    Tensor<Index, 1> count_nan_raw_variables() const;
+    Tensor<Index, 1> count_raw_variables_with_nan() const;
     Index count_rows_with_nan() const;
     Index count_nan() const;
 
@@ -867,7 +871,7 @@ protected:
 
     /// Header which contains variables name.
 
-    bool has_raw_variables_names = false;
+    bool has_header = false;
 
     /// Header which contains the rows label.
 

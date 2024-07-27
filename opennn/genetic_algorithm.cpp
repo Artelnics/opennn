@@ -6,7 +6,26 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+// System includes
+
+#include <algorithm>
+#include <cmath>
+#include <ctime>
+//#include <fstream>
+//#include <functional>
+#include <iostream>
+#include <limits>
+//#include <numeric>
+#include <stdio.h>
+#include <random>
+
+// OpenNN includes
+
+#include "tensors.h"
+#include "correlations.h"
 #include "genetic_algorithm.h"
+
+
 namespace opennn
 {
 
@@ -609,6 +628,7 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
 
     inputs_activation_probabilities = probabilities_vector.cumsum(0);
 }
+
 
 void GeneticAlgorithm::initialize_population_correlations() // outdated
 {

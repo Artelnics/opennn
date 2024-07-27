@@ -6,14 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef ScalingLayer4D4D_H
-#define ScalingLayer4D4D_H
+#ifndef ScalingLayer4D_H
+#define ScalingLayer4D_H
 
 // System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
+//#include <cmath>
+//#include <cstdlib>
+//#include <fstream>
 #include <iostream>
 #include <string>
 #include <sstream>

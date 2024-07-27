@@ -757,7 +757,7 @@ Index maximum(const Tensor<Index, 1>& vector)
 /// @param rows_indices Indices of the rows for which the maximums are to be computed.
 /// @param raw_variables_indices Indices of the raw_variables for which the maximums are to be computed.
 
-Tensor<type, 1> raw_variables_maximums(const Tensor<type, 2>& matrix,
+Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
                                  const Tensor<Index, 1>& rows_indices,
                                  const Tensor<Index, 1>& raw_variables_indices)
 {
@@ -1969,7 +1969,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 /// @param rows_indices Indices of the rows for which the minimums are to be computed.
 /// @param raw_variables_indices Indices of the raw_variables for which the minimums are to be computed.
 
-Tensor<type, 1> raw_variables_minimums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>& raw_variables_indices)
+Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>& raw_variables_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index raw_variables_number = matrix.dimension(1);
@@ -2040,7 +2040,7 @@ Tensor<type, 1> raw_variables_minimums(const Tensor<type, 2>& matrix, const Tens
 /// @param matrix Used matrix.
 /// @param raw_variables_indices Indices of the raw_variables for which the descriptives are to be computed.
 
-Tensor<type, 1> raw_variables_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& raw_variables_indices)
+Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& raw_variables_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index raw_variables_number = matrix.dimension(1);
@@ -3105,7 +3105,7 @@ Tensor<Index, 2> maximal_raw_variables_indices(const Tensor<type, 2>& matrix, co
 
     Tensor<Index, 2> maximal_raw_variables_indices(maximum_number, raw_variables_number);
 
-    Tensor<type, 1> raw_variables_minimums = opennn::raw_variables_minimums(matrix);
+    Tensor<type, 1> columns_minimums = opennn::columns_minimums(matrix);
 
     for(Index j = 0; j < raw_variables_number; j++)
     {
@@ -3125,7 +3125,7 @@ Tensor<Index, 2> maximal_raw_variables_indices(const Tensor<type, 2>& matrix, co
                 }
             }
 
-            raw_variable(maximal_index) = raw_variables_minimums(j)-type(1);
+            raw_variable(maximal_index) = columns_minimums(j)-type(1);
             maximal_raw_variables_indices(i,j) = maximal_index;
         }
     }
