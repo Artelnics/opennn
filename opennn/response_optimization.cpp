@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "response_optimization.h"
 
 namespace opennn

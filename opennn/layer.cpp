@@ -6,17 +6,20 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <vector>
-#include <ctype.h>
+//#include <cmath>
+//#include <cstdlib>
+//#include <fstream>
+//#include <vector>
+//#include <ctype.h>
+//#include <iostream>
+//#include <iostream>
+#include <sstream>
 
 #include "layer.h"
 #include "tensors.h"
-#include "statistics.h"
-#include "scaling.h"
-#include <tuple>
+//#include "statistics.h"
+//#include "scaling.h"
+//#include <tuple>
 
 namespace opennn
 {

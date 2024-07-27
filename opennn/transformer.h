@@ -11,20 +11,14 @@
 
 // System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
+
 #include <string>
 #include <sstream>
-#include <errno.h>
 
 // OpenNN includes
 
 #include "neural_network.h"
 #include "neural_network_forward_propagation.h"
-#include "batch.h"
-
 
 namespace opennn
 {

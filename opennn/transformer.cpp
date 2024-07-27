@@ -6,9 +6,22 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+//#include <cmath>
+//#include <cstdlib>
+//#include <fstream>
+#include <iostream>
+//#include <errno.h>
 
 #include "transformer.h"
 #include "tensors.h"
+#include "embedding_layer.h"
+#include "normalization_layer_3d.h"
+#include "multihead_attention_layer.h"
+#include "addition_layer_3d.h"
+#include "perceptron_layer_3d.h"
+#include "probabilistic_layer_3d.h"
+
+//#include "batch.h"
 
 namespace opennn
 {
@@ -254,12 +267,10 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         add_layer(decoder_external_perceptron_layer);
         set_layer_inputs_indices("decoder_external_perceptron_" + to_string(i + 1), "decoder_internal_perceptron_" + to_string(i + 1));
 
-
         AdditionLayer3D* decoder_perceptron_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         decoder_perceptron_addition_layer->set_name("decoder_perceptron_addition_" + to_string(i + 1));
         add_layer(decoder_perceptron_addition_layer);
         set_layer_inputs_indices("decoder_perceptron_addition_" + to_string(i + 1), { "cross_attention_normalization_" + to_string(i + 1), "decoder_external_perceptron_" + to_string(i + 1) });
-
 
         NormalizationLayer3D* decoder_perceptron_normalization_layer = new NormalizationLayer3D(input_length, embedding_depth);
         decoder_perceptron_normalization_layer->set_name("decoder_perceptron_normalization_" + to_string(i + 1));

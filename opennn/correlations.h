@@ -9,23 +9,8 @@
 #ifndef CORRELATIONS_H
 #define CORRELATIONS_H
 
-// System includes
-
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <cmath>
-#include <algorithm>
-#include <cstdlib>
-#include <stdexcept>
-#include <ctime>
-#include <exception>
-#include <algorithm>
-
 // OpenNN includes
 
-#include "statistics.h"
 #include "correlation.h"
 #include "config.h"
 

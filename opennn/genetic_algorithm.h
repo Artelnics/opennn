@@ -9,26 +9,12 @@
 #ifndef GENETICALGORITHM_H
 #define GENETICALGORITHM_H
 
-// System includes
-
-#include <algorithm>
-#include <cmath>
-#include <ctime>
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <limits>
-#include <numeric>
-#include <stdio.h>
-#include <random>
-
 // OpenNN includes
 
 #include "training_strategy.h"
-#include "tensors.h"
 #include "inputs_selection.h"
 #include "config.h"
-#include "testing_analysis.h"
+
 namespace opennn
 {
 /// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation,

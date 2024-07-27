@@ -11,13 +11,13 @@
 
 // System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <ctype.h>
-#include <fstream>
-#include <iostream>
+//#include <cmath>
+//#include <cstdlib>
+//#include <ctype.h>
+//#include <fstream>
+//#include <iostream>
 #include <string>
-#include <sstream>
+//#include <sstream>
 
 // OpenNN includes
 

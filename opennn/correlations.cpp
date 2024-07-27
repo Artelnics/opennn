@@ -6,7 +6,23 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+// System includes
+
+#include <iostream>
+//#include <fstream>
+//#include <string>
+#include <sstream>
+#include <cmath>
+#include <algorithm>
+#include <cstdlib>
+#include <stdexcept>
+#include <ctime>
+//#include <exception>
+#include <algorithm>
+
+#include "tensors.h"
 #include "correlations.h"
+//#include "statistics.h"
 #include "data_set.h"
 #include "neural_network.h"
 #include "training_strategy.h"

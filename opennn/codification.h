@@ -4,20 +4,22 @@
 
 // System includes
 
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <math.h>
-#include <vector>
-#include <numeric>
-#include <stdio.h>
+#include <string>
+//#include <algorithm>
+//#include <fstream>
+//#include <iostream>
+//#include <limits>
+//#include <math.h>
+//#include <vector>
+//#include <numeric>
+//#include <stdio.h>
 
 // OpenNN includes
 
-#include "config.h"
+//#include "config.h"
 
 using namespace std;
+
 namespace opennn
 {
 

@@ -30,15 +30,20 @@ TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 /// Please mind about the file format. This is specified in the User's Guide.
 /// @param data_source_path Data file name.
 /// @param separator Data file separator between raw_variables.
-/// @param has_raw_variables_names True if data file contains a row with raw_variables names, False otherwise.
+/// @param has_header True if data file contains a row with raw_variables names, False otherwise.
 /// @param data_codification String codification of the input file
 
 TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path, 
-                                     const char& separator, 
-                                     const bool& has_raw_variables_names, 
+                                     const char& separator,
+                                     const bool& has_header,
+                                     const Index& new_lags_number,
+                                     const Index& new_steps_ahead,
                                      const Codification& data_codification)
 {
-    set(data_source_path, separator, has_raw_variables_names, data_codification);
+    set(data_source_path, separator, has_header, data_codification);
+
+    lags_number = new_lags_number;
+    steps_ahead = new_steps_ahead;
 
     transform_time_series();
 }
@@ -334,7 +339,7 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
 
     Tensor<RawVariable, 1> new_raw_variables;
 
-    const Index time_raw_variables_number = count_time_raw_variables();
+    const Index time_raw_variables_number = get_time_raw_variables_number();
 
     if(time_raw_variables_number == 0)
     {
@@ -362,8 +367,9 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
 
         if(i < lags_number*raw_variables_number)
         {
+            /*
             new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_lag_" + to_string(lag_index);
-
+            */
             new_raw_variables(new_raw_variable_index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Input);
 
@@ -374,20 +380,22 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
         }
         else if(i == raw_variables_number*(lags_number+steps_ahead) - 1)
         {
+            /*
             new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_ahead_" + to_string(ahead_index);
-
+            */
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
 
             new_raw_variables(new_raw_variable_index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Target);
 
-            new_raw_variable_index++;
+            new_raw_variable_index++;            
         }
         else
         {
+            /*
             new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_ahead_" + to_string(ahead_index);
-
+            */
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
 
@@ -420,13 +428,13 @@ void TimeSeriesDataSet::transform_time_series_data()
     const Index old_samples_number = data.dimension(0);
     const Index old_variables_number = data.dimension(1);
 
-    // steps_ahead = 1;
+    const Index time_raw_variables_number = get_time_raw_variables_number();
 
     const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
 
-    const Index new_variables_number = count_time_raw_variables() == 1
-                                           ? (old_variables_number-1) * (lags_number + steps_ahead)
-                                           : old_variables_number * (lags_number + steps_ahead);
+    const Index new_variables_number = time_raw_variables_number == 1
+                                     ? (old_variables_number - 1) * (lags_number + steps_ahead)
+                                     : old_variables_number * (lags_number + steps_ahead);
 
     time_series_data = data;
 
@@ -472,6 +480,7 @@ void TimeSeriesDataSet::transform_time_series()
     split_samples_sequential();
 
     unuse_constant_raw_variables();
+
 }
 
 
@@ -547,7 +556,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("RawVariablesNames");
 
         buffer.str("");
-        buffer << has_raw_variables_names;
+        buffer << has_header;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -983,7 +992,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         try
         {
-            set_has_raw_variables_names(new_raw_variables_names_string == "1");
+            set_has_header(new_raw_variables_names_string == "1");
         }
         catch(const exception& e)
         {
@@ -1860,32 +1869,49 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 }
 
 
-/// @todo bad quality code.
+/// @todo Complete method following the structure.
 
-void TimeSeriesDataSet::fill_time_series_gaps()
-{
-    const Index rows_number = data.dimension(0);
-    const Index raw_variables_number = data.dimension(1);
+void TimeSeriesDataSet::fill_gaps()
+{    
+    type start_time = 50;
+    type end_time = 100;
 
-    const Tensor<type, 1> time_data = data.chip(0, 1);
-/*
-    const Tensor<type, 1> time_difference_data = calculate_delta(time_data);
+    type period = 2;
 
-    const Tensor<type, 1> time_step_mode = mode(time_difference_data);
+    type new_time_series_samples_number = (end_time - start_time)/period;
+    type new_time_series_variables_number = time_series_data.dimension(1);
 
-    const Tensor<type, 1> time_series_filled = fill_gaps_by_value(time_data, time_difference_data, time_step_mode(0));
+    Tensor<type, 2> new_time_series_data(new_time_series_samples_number,  new_time_series_variables_number);
 
-    Tensor<type, 2> NaN_data(time_series_filled.size(), raw_variables_number);
-    NaN_data.setConstant(type(NAN));
+    type timestamp = 0;
 
-    NaN_data.chip(0, 1) = time_series_filled;
+    type new_timestamp = 0;
 
-    Tensor<type, 2> final_data(data);
+    Index row_index = 0;
+    Index column_index = 0;
 
-    data.resize(time_data.size() + time_series_filled.size(), raw_variables_number);
+    Tensor<type, 1> sample;
 
-    data = final_data.concatenate(NaN_data, 0);
-*/
+    for(Index i = 0; i < new_time_series_samples_number; i++)
+    {
+        new_timestamp = start_time + i*period;
+        timestamp = time_series_data(row_index, column_index);
+
+        if(new_timestamp == timestamp)
+        {
+            sample = time_series_data.chip(row_index, 0);
+
+            new_time_series_data.chip(i, 0) = sample;
+
+            row_index++;
+        }
+    }
+
+    if(true)
+    {
+        throw runtime_error("Specify here the error");
+    }
+
 }
 
 

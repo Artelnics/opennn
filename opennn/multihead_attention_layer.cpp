@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "multihead_attention_layer.h"
 
 namespace opennn
@@ -14,7 +15,6 @@ namespace opennn
 /// Default constructor.
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
-
 
 MultiheadAttentionLayer::MultiheadAttentionLayer() : Layer()
 {

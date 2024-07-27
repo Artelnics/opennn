@@ -287,7 +287,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         throw runtime_error(buffer.str());
     }
 
-    has_raw_variables_names = true;
+    has_header = true;
     has_rows_labels = true;
 
     separator = Separator::None;
