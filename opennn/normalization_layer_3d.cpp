@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
+#include "tensors.h"
 #include "normalization_layer_3d.h"
 
 namespace opennn

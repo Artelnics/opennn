@@ -12,11 +12,11 @@
 // System includes
 
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <limits>
-#include <math.h>
+//#include <sstream>
+//#include <iostream>
+//#include <fstream>
+//#include <limits>
+//#include <math.h>
 
 // OpenNN includes
 
@@ -34,7 +34,6 @@ public:
     // DEFAULT CONSTRUCTOR
 
     explicit AutoAssociationDataSet();
-
 
     Tensor<RawVariable, 1> get_associative_raw_variables() const;
     const Tensor<type, 2>& get_associative_data() const;

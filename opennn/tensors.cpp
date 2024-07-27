@@ -2093,101 +2093,14 @@ void swap_rows(Tensor<type, 2>& matrix, const Index& row_1, const Index& row_2)
 }
 
 
-Tensor<type, 1> calculate_delta(const Tensor<type, 1>& data)
-{
-    if(data.size() <= 2)
-    {
-        return Tensor<type, 1>();
-    }
-
-    Tensor<type, 1> difference_data(data.size());
-    difference_data(0) = type(0);
-
-    if(data.size() <= 1) return Tensor<type, 1>();
-
-    #pragma omp parallel for
-
-    for(int i = 1; i < data.size(); i++) 
-        difference_data(i) = data(i) - data(i - 1);
-
-    return difference_data;
-}
-
-
-Tensor<type, 1> mode(Tensor<type, 1>& data)
-{
-    Tensor<type, 1> mode_and_frequency(2);
-
-    map<type, type> frequency_map;
-
-    for(int i = 0; i < data.size(); i++)
-    {
-        const type value = data(i);
-        frequency_map[value]++;
-    }
-
-    cout << "frequency_map: " << endl;
-    
-    for(auto it = frequency_map.cbegin(); it != frequency_map.cend(); ++it)
-    {
-        cout << "Key: " << it->first << ", Value: " << it->second << "\n";
-    }
-
-    type mode = type(-1);
-    type max_frequency = type(0);
-
-    for(const auto& entry : frequency_map)
-    {
-        if(entry.second > max_frequency)
-        {
-            max_frequency = entry.second;
-            mode = entry.first;
-        }
-    }
-
-    /// @todo The following does not make sense.
-
-    if(mode == -1) Tensor<type, 1>();
-
-    mode_and_frequency(0) = mode;
-    mode_and_frequency(1) = max_frequency;
-
-    return mode_and_frequency;
-}
-
-
-Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& difference_data, const type& value)
-{
-    vector<type> result;
-
-    for(Index i = 1; i < difference_data.size(); i++)
-    {
-        if(difference_data(i) != value)
-        {
-            type previous_time = data(i-1) + value;
-
-            do
-            {
-                result.push_back(previous_time);
-
-                previous_time += value;
-            }while (previous_time < data(i));
-        }
-    }
-
-    TensorMap<Tensor<type, 1>> filled_data(result.data(), result.size());
-
-    return filled_data;
-}
-
 
 Index partition(Tensor<type, 2>& data_matrix,
                 const Index& start_index,
                 const Index& end_index,
                 const Index& target_column)
 {
-    Tensor<type, 1> pivot_row = data_matrix.chip(start_index, 0);
-    type pivot_value = pivot_row(target_column);
+    const Tensor<type, 1> pivot_row = data_matrix.chip(start_index, 0);
+    const type pivot_value = pivot_row(target_column);
     Index smaller_elements_count = 0;
 
     for(Index current_index = start_index + 1; current_index <= end_index; current_index++)

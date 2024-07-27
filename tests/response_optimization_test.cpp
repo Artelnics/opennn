@@ -64,7 +64,6 @@ void ResponseOptimizationTest::test_calculate_inputs()
     assert_true(inputs(1) <= response_optimization.get_inputs_maximums()(1), LOG);
     assert_true(inputs(0) >= response_optimization.get_inputs_minimums()(1), LOG);
     assert_true(inputs(1) >= response_optimization.get_inputs_minimums()(1), LOG);
-
 }
 
 
@@ -172,7 +171,6 @@ void ResponseOptimizationTest::test_perform_optimization()
     assert_true(results->optimal_variables(2) <= 3.0, LOG);
     assert_true(results->optimal_variables(3) >= type(-1), LOG);
     assert_true(results->optimal_variables(3) <= 0.0, LOG);
-
 }
 
 

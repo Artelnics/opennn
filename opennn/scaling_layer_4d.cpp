@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "scaling_layer_4d.h"
 #include "strings_utilities.h"
 

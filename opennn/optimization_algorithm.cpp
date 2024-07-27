@@ -6,6 +6,16 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+#include <fstream>
+//#include <algorithm>
+//#include <functional>
+//#include <limits>
+#include <cmath>
+//#include <ctime>
+#include <iomanip>
+
+#include "tensors.h"
 #include "optimization_algorithm.h"
 
 namespace opennn

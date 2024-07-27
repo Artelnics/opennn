@@ -12,15 +12,15 @@
 // System includes
 
 #include <string>
-#include <sstream>
+//#include <sstream>
 #include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <limits.h>
-#include <cmath>
-#include <ctime>
+//#include <fstream>
+//#include <algorithm>
+//#include <functional>
+//#include <limits>
+//#include <limits.h>
+//#include <cmath>
+//#include <ctime>
 
 // OpenNN includes
 

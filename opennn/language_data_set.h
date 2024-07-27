@@ -12,17 +12,17 @@
 // System includes
 
 #include <string>
-#include <sstream>
-#include <iostream>
 #include <fstream>
-#include <limits>
-#include <math.h>
+//#include <sstream>
+//#include <iostream>
+//#include <limits>
+//#include <math.h>
 
 // OpenNN includes
 
 #include "config.h"
 #include "data_set.h"
-#include "strings_utilities.h"
+//#include "strings_utilities.h"
 
 namespace opennn
 {
