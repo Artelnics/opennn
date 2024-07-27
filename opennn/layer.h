@@ -11,16 +11,13 @@
 
 // System includes
 
-#include <iostream>
-#include <iostream>
-#include <sstream>
 #include <string>
 
 // OpenNN includes
 
-
 #include "config.h"
-#include "tensors.h"
+#include "tinyxml2.h"
+//#include "tensors.h"
 
 namespace opennn {
 

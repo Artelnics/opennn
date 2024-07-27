@@ -6,6 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+//#include <fstream>
+#include <sstream>
+#include <iomanip>
+//#include <cmath>
+//#include <ctime>
+
 #include "inputs_selection.h"
 
 namespace opennn
@@ -473,9 +479,9 @@ string InputsSelection::write_time(const type& time) const
     }
 #endif
 
-    int hours = int(time) / 3600;
+    const int hours = int(time) / 3600;
     int seconds = int(time) % 3600;
-    int minutes = seconds / 60;
+    const int minutes = seconds / 60;
     seconds = seconds % 60;
 
     ostringstream elapsed_time;

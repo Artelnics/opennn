@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "normalized_squared_error.h"
 #include "neural_network_forward_propagation.h"
 #include "back_propagation.h"

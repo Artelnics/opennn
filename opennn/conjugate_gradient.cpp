@@ -6,6 +6,15 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <sstream>
+#include <iostream>
+//#include <fstream>
+//#include <algorithm>
+//#include <functional>
+//#include <climits>
+#include <cmath>
+#include <ctime>
+
 #include "conjugate_gradient.h"
 #include "neural_network_forward_propagation.h"
 #include "back_propagation.h"

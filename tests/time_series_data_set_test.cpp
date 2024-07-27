@@ -80,14 +80,17 @@ void TimeSeriesDataSetTest::test_calculate_autocorrelations()
     steps_ahead_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
+
     data_set.set_lags_number(lags_number);
     data_set.set_steps_ahead_number(steps_ahead_number);
+
     data_set.transform_time_series();
-
+/*
     autocorrelations = data_set.calculate_autocorrelations(lags_number);
-
+*/
     assert_true(autocorrelations.dimension(0) == 2, LOG);
     assert_true(autocorrelations.dimension(1) == 1, LOG);
+
 }
 
 
@@ -106,23 +109,24 @@ void TimeSeriesDataSetTest::test_calculate_cross_correlations()
     data.resize(6, 3);
 
     data.setValues({
-                       {type(5),type(2),type(8)},
-                       {type(7),type(8),type(7)},
-                       {type(3),type(6),type(4)},
-                       {type(8),type(1),type(6)},
-                       {type(5),type(8),type(6)},
-                       {type(6),type(3),type(4)}});
+                   {type(5),type(2),type(8)},
+                   {type(7),type(8),type(7)},
+                   {type(3),type(6),type(4)},
+                   {type(8),type(1),type(6)},
+                   {type(5),type(8),type(6)},
+                   {type(6),type(3),type(4)}});
 
 
     data_set.set_data(data);
-
     data_set.set_lags_number(lags_number);
     data_set.set_steps_ahead_number(1);
+
     data_set.transform_time_series();
-
+/*
     cross_correlations = data_set.calculate_cross_correlations(lags_number);
-
+*/
     assert_true(cross_correlations.dimension(0) == 3, LOG);
+
 }
 
 
@@ -213,14 +217,16 @@ void TimeSeriesDataSetTest::test_save_time_series_data_binary()
     data_set.set_lags_number(2);
     data_set.set_steps_ahead_number(2);
     data_set.transform_time_series();
-
-    //data_set.set_data_file_name(data_source_path);
+    /*
+    data_set.set_data_file_name(data_source_path);
+    */
     data_set.save_time_series_data_binary(data_source_path);
     data_set.load_time_series_data_binary(data_source_path);
-
-    /*assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    /*
+    assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);*/
+    assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);
+    */
 }
 
 

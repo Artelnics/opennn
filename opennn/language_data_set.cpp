@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <codecvt>
+
 #include "language_data_set.h"
 #include "tensors.h"
 
@@ -416,7 +418,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("RawVariablesNames");
 
         buffer.str("");
-        buffer << has_raw_variables_names;
+        buffer << has_header;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -723,7 +725,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
-/*
+
     ostringstream buffer;
 
     // Data set element
@@ -825,7 +827,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         try
         {
-            set_has_raw_variables_names(new_raw_variables_names_string == "1");
+            set_has_header(new_raw_variables_names_string == "1");
         }
         catch(const exception& e)
         {
@@ -1370,7 +1372,6 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             cerr << e.what() << endl;
         }
     }
-*/
 }
 
 
@@ -2016,7 +2017,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     // Read header
 
-    if(has_raw_variables_names)
+    if(has_header)
     {
         while (file.good())
         {
@@ -2088,7 +2089,7 @@ void LanguageDataSet::read_csv_3_language_model()
         sample_index++;
     }
 
-    const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;
+    const Index data_file_preview_index = has_header ? 3 : 2;
 
     data_file_preview(data_file_preview_index) = tokens;
 
@@ -2221,7 +2222,7 @@ void LanguageDataSet::read_txt_language_model()
 
     // @todo maybe context does NOT need start and end tokens
 
-    for(Index i  = type(0); i < max_context_length + 2; i++) /// there is start and end indicators
+    for(Index i  = type(0); i < max_context_length + 2; i++) // there is start and end indicators
         file << "context_token_position_" << i << ";";
 
     for(Index i  = type(0); i < max_completion_length + 1; i++)
@@ -2255,7 +2256,7 @@ void LanguageDataSet::read_txt_language_model()
 
     data_source_path = transformed_data_path;
     separator = Separator::Semicolon;
-    has_raw_variables_names = true;
+    has_header = true;
 
     read_csv_language_model();
 

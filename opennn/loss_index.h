@@ -12,11 +12,11 @@
 // System includes
 
 #include <string>
-#include <sstream>
-#include <fstream>
-#include <ostream>
-#include <iostream>
-#include <cmath>
+//#include <sstream>
+//#include <fstream>
+//#include <ostream>
+//#include <iostream>
+//#include <cmath>
 
 // OpenNN includes
 
@@ -25,7 +25,7 @@
 #include "data_set.h"
 #include "batch.h"
 #include "neural_network.h"
-#include "neural_network_back_propagation.h"
+//#include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
 
 namespace opennn

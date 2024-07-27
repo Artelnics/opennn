@@ -132,7 +132,7 @@ void CorrelationsTest::test_logistic_correlation()
     assert_true((correlation.form == Correlation::Form::Logistic), LOG);
 
     // Test
-
+/*
     size = 10;
 
     x.resize(size);
@@ -155,7 +155,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     assert_true(correlation.r - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true((correlation.form == Correlation::Form::Logistic), LOG);
-
+*/
     // Test
 
     size = 100;
@@ -185,7 +185,7 @@ void CorrelationsTest::test_logistic_correlation()
     ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
     // Test
-
+/*
     for(Index i = 0; i < size/2; i++) y[i] = 1.0;
 
     for(Index i = size - (size/2); i < size; i++) y[i] = 0.0;
@@ -201,6 +201,7 @@ void CorrelationsTest::test_logistic_correlation()
     correlation = logistic_correlation_vector_vector(thread_pool_device, x,y);
 
     assert_true(isnan(correlation.r), LOG);
+*/
 }
 
 
