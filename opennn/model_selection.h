@@ -11,16 +11,16 @@
 
 // System includes
 
-#include <iostream>
-#include <fstream>
+//#include <iostream>
+//#include <fstream>
 #include <string>
-#include <sstream>
-#include <cmath>
-#include <ctime>
+//#include <sstream>
+//#include <cmath>
+//#include <ctime>
 
 // OpenNN includes
 
-#include "config.h"
+//#include "config.h"
 #include "training_strategy.h"
 #include "growing_neurons.h"
 #include "growing_inputs.h"

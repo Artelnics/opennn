@@ -3,7 +3,6 @@
 
 #include <string>
 
-
 #include "neural_network.h"
 
 using namespace std;

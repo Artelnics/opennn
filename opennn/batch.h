@@ -1,10 +1,7 @@
 #ifndef DATASETBATCH_H
 #define DATASETBATCH_H
 
-#include <string>
-
 #include "data_set.h"
-#include "tensors.h"
 
 using namespace std;
 using namespace Eigen;

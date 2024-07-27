@@ -12,14 +12,14 @@
 // System includes
 
 #include <string>
-#include <sstream>
+//#include <sstream>
 #include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <cmath>
-#include <ctime>
+//#include <fstream>
+//#include <algorithm>
+//#include <functional>
+//#include <limits>
+//#include <cmath>
+//#include <ctime>
 
 // OpenNN includes
 
@@ -32,7 +32,7 @@
 
 // Eigen Includes
 
-#include "../eigen/unsupported/Eigen/KroneckerProduct"
+//#include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 using Eigen::MatrixXd;
 

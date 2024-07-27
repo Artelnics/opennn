@@ -6,6 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <cmath>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include "tensors.h"
+#include "strings_utilities.h"
 #include "auto_associative_neural_network.h"
 
 namespace opennn

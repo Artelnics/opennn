@@ -168,7 +168,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("RawVariablesNames");
 
         buffer.str("");
-        buffer << has_raw_variables_names;
+        buffer << has_header;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -609,7 +609,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         try
         {
-            set_has_raw_variables_names(new_raw_variables_names_string == "1");
+            set_has_header(new_raw_variables_names_string == "1");
         }
         catch(const exception& e)
         {
@@ -1372,7 +1372,7 @@ void TextDataSet::read_txt()
 
     data_source_path = new_data_source_path;
     separator = Separator::Semicolon;
-    has_raw_variables_names = true;
+    has_header = true;
 
     load_data(); 
 
