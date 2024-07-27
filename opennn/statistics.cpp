@@ -2454,7 +2454,6 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 {
     const Index raw_variables_number = matrix.dimension(1);
 
-    const Index rows_number = matrix.dimension(0);
     // median
 
     Tensor<type, 1> median(raw_variables_number);
