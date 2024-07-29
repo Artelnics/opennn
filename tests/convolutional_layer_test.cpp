@@ -170,14 +170,14 @@ void ConvolutionalLayerTest::test_constructor()
 
     ConvolutionalLayer convolutional_layer(input_dimensions, kernel_dimensions);
 
-    assert_true(convolutional_layer.get_input_channels() == 1 &&
-                convolutional_layer.get_input_height() == 28 &&
-                convolutional_layer.get_input_width() == 29, LOG);
+    assert_true(convolutional_layer.get_input_height() == 28
+                && convolutional_layer.get_input_width() == 29
+                && convolutional_layer.get_input_channels() == 1, LOG);
 
-    assert_true(convolutional_layer.get_kernel_height() == 3 &&
-                convolutional_layer.get_kernel_width() == 2 &&
-                convolutional_layer.get_kernel_channels() == 1 &&
-                convolutional_layer.get_kernels_number() == 16, LOG);
+    assert_true(convolutional_layer.get_kernel_height() == 3 
+                && convolutional_layer.get_kernel_width() == 2
+                && convolutional_layer.get_kernel_channels() == 1 
+                && convolutional_layer.get_kernels_number() == 16, LOG);
 
 }
 
