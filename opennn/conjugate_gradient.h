@@ -12,18 +12,11 @@
 // System inlcludes
 
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <climits>
-#include <cmath>
-#include <ctime>
 
 // OpenNN includes
 
 #include "config.h"
+#include "tinyxml2.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"

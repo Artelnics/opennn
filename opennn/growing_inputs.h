@@ -11,19 +11,19 @@
 
 // System includes
 
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <cmath>
-#include <ctime>
+//#include <iostream>
+//#include <fstream>
+//#include <algorithm>
+//#include <functional>
+//#include <limits>
+//#include <cmath>
+//#include <ctime>
 
 // OpenNN includes
 
 #include "training_strategy.h"
 #include "inputs_selection.h"
-#include "config.h"
+//#include "config.h"
 
 namespace opennn
 {

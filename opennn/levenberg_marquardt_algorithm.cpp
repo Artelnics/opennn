@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "neural_network_forward_propagation.h"
 

@@ -464,7 +464,7 @@ int main()
         tests_count += transformer_test.get_tests_count();
         tests_passed_count += transformer_test.get_tests_passed_count();
         tests_failed_count += transformer_test.get_tests_failed_count();
-          }
+      }
 
       else if(test == "response_optimization" || test == "ro")
       {

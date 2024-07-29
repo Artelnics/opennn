@@ -11,17 +11,12 @@
 
 // System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
 #include <string>
-#include <sstream>
 
 // OpenNN includes
 
 #include "config.h"
-#include "tensors.h"
+//#include "tensors.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
@@ -34,7 +29,6 @@ namespace opennn
 
 struct RecurrentLayerForwardPropagation;
 struct RecurrentLayerBackPropagation;
-
 
 #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
