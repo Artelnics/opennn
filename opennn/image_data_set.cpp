@@ -934,7 +934,8 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    raw_variables(i).categories = get_tokens(new_categories, ';');
+                    raw_variables(i).categories = get_tokens(new_categories, ";");
+
                 }
 
                 // Categories uses
@@ -954,7 +955,8 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
+                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
+
                 }
             }
         }
@@ -1110,7 +1112,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    {
 //                        const string time_series_new_categories = time_series_categories_element->GetText();
 
-//                        time_series_raw_variables(i).categories = get_tokens(time_series_new_categories, ';');
+//                        time_series_raw_variables(i).categories = get_tokens(time_series_new_categories, ";);
 //                    }
 
 //                    // Categories uses
@@ -1158,9 +1160,10 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(rows_labels_element->GetText())
         {
+
             const string new_rows_labels = rows_labels_element->GetText();
 
-            char separator = ',';
+            string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
                     && new_rows_labels.find(";") != string::npos) {
@@ -1168,6 +1171,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             }
 
             rows_labels = get_tokens(new_rows_labels, separator);
+
         }
     }
 
@@ -1221,7 +1225,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_uses_element->GetText())
     {
-        set_samples_uses(get_tokens(samples_uses_element->GetText(), ' '));
+        set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
     }
 
    // Missing values
@@ -1290,7 +1294,9 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
        if(raw_variables_missing_values_number_element->GetText())
        {
-           Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
+
+           Tensor<string, 1> new_raw_variables_missing_values_number
+               = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
            raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
@@ -1298,6 +1304,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
            {
                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
            }
+
        }
 
        // Rows missing values number

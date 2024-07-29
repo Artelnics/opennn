@@ -73,59 +73,59 @@ Index count_tokens(const string& text, const char& separator)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-Tensor<string, 1> get_tokens(const string& text, const char& separator)
-{
-    const Index tokens_number = count_tokens(text, separator);
+//Tensor<string, 1> get_tokens(const string& text, const char& separator)
+//{
+//    const Index tokens_number = count_tokens(text, separator);
 
-    Tensor<string, 1> tokens(tokens_number);
+//    Tensor<string, 1> tokens(tokens_number);
 
     // Skip delimiters at beginning.
 
-    string::size_type last_position = text.find_first_not_of(separator, 0);
+//    string::size_type last_position = text.find_first_not_of(separator, 0);
 
     // Find first "non-delimiter"
 
-    Index index = 0;
-    Index old_position = last_position;
+//    Index index = 0;
+//    Index old_position = last_position;
 
-    string::size_type position = text.find_first_of(separator, last_position);
+//    string::size_type position = text.find_first_of(separator, last_position);
 
-    while(string::npos != position || string::npos != last_position)
-    {
-        if(last_position - old_position != 1
-        && index != 0)
-        {
-            index++;
-            old_position++;
-            continue;
-        }
+//    while(string::npos != position || string::npos != last_position)
+//    {
+//        if(last_position - old_position != 1
+//        && index != 0)
+//        {
+//            index++;
+//            old_position++;
+//            continue;
+//        }
 
-        // Found a token, add it to the vector
+// Found a token, add it to the vector
 
-        tokens[index] = text.substr(last_position, position - last_position);
+//        tokens[index] = text.substr(last_position, position - last_position);
 
-        old_position = position;
+//        old_position = position;
 
-        // Skip delimiters. Note the "not_of"
+// Skip delimiters. Note the "not_of"
 
-        last_position = text.find_first_not_of(separator, position);
+//        last_position = text.find_first_not_of(separator, position);
 
-        // Find next "non-delimiter"
+// Find next "non-delimiter"
 
-        position = text.find_first_of(separator, last_position);
+//        position = text.find_first_of(separator, last_position);
 
-        index++;
-    }
+//        index++;
+//    }
 
-    return tokens;
-}
+//    return tokens;
+//}
 
 
 /// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-void fill_tokens(const string& text, const char& separator, Tensor<string, 1>& tokens)
+void fill_tokens(const string& text, const string& separator, Tensor<string, 1>& tokens)
 {
     tokens.setConstant("");
 
@@ -215,7 +215,7 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
 
     Tensor<string,1> tokens(tokens_number);
 
-//    string str = s;
+    //    string str = s;
     size_t position = 0;
     size_t last_position = 0;
     Index i = 0;
@@ -247,7 +247,7 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
 
 /// Returns a new vector with the elements of this string vector casted to type.
 
-Tensor<type, 1> to_type_vector(const string& text, const char& separator)
+Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 {
     const Tensor<string, 1> tokens = get_tokens(text, separator);
 
@@ -277,8 +277,7 @@ Tensor<type, 1> to_type_vector(const string& text, const char& separator)
 
 /// Returns a new vector with the elements of this string vector casted to type.
 
-
-Tensor<Index, 1> to_index_vector(const string& text, const char& separator)
+Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 {
     const Tensor<string, 1> tokens = get_tokens(text, separator);
 
@@ -318,7 +317,7 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
         }
     }
 
-    return get_tokens(result,' ');
+    return get_tokens(result, " ");
 }
 
 
@@ -2127,7 +2126,7 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
     const Index documents_number = documents.size();
 
     Index count = 0;
-
+/*
     for(Index i = 0; i < documents_number; i++)
     {
         for(Index j = 0; j < documents(i).size(); j++)
@@ -2135,7 +2134,7 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
             count += count_tokens(documents(i)(j));
         }
     }
-
+*/
     return count;
 }
 
@@ -2155,7 +2154,7 @@ Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
     for(Index i = 0; i < documents_number; i++)
     {
         //const Index tokens_num
-
+/*
         for(Index j = 0; j < documents(i).dimension(0); j++)
         {
             const Tensor<string, 1> tokens = get_tokens(documents(i)(j));
@@ -2164,6 +2163,7 @@ Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
 
             position += tokens.size();
         }
+*/
     }
 
     return total_tokens;
@@ -2208,7 +2208,9 @@ Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents)
 
     for(Index i = 0; i < documents_number; i++)
     {
+ /*
         tokens(i) = get_tokens(documents(i));
+*/
     }
 
     return tokens;
@@ -2504,8 +2506,8 @@ void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& d
 {
     for(Index i = 0; i < document.size(); i++)
     {
-        const Index tokens_number = count_tokens(document(i), ' ');
-        const Tensor<string, 1> tokens = get_tokens(document(i), ' ');
+        const Index tokens_number = count_tokens(document(i), " ");
+        const Tensor<string, 1> tokens = get_tokens(document(i), " ");
 
         string result;
 
@@ -2668,8 +2670,8 @@ void delete_short_words(Tensor<Tensor<string,1>,1>& documents, const Index& mini
 
         for(Index j = 0; j < document.size(); j++)
         {
-            const Index tokens_number = count_tokens(document(j),' ');
-            const Tensor<string, 1> tokens = get_tokens(document(j), ' ');
+            const Index tokens_number = count_tokens(document(j), " ");
+            const Tensor<string, 1> tokens = get_tokens(document(j), " ");
 
             string result;
 
@@ -2703,14 +2705,14 @@ void delete_long_words(Tensor<Tensor<string,1>,1>& documents, const Index& maxim
 
         for(Index j = 0; j < document.size(); j++)
         {
-            const Index tokens_number = count_tokens(document(j),' ');
-            const Tensor<string, 1> tokens = get_tokens(document(j), ' ');
+            const Index tokens_number = count_tokens(document(j), " ");
+            const Tensor<string, 1> tokens = get_tokens(document(j), " ");
 
             string result;
 
             for(Index k = 0; k < tokens_number; k++)
             {
-                if( Index(tokens(k).length()) <= maximum_length )
+                if(Index(tokens(k).length()) <= maximum_length )
                 {
                     result += tokens(k) + " ";
                 }
@@ -2739,6 +2741,7 @@ void delete_numbers(Tensor<Tensor<string,1>,1>& documents)
 
         for(Index j = 0; j < document_size; j++)
         {
+/*
             Tensor<string,1> tokens = get_tokens(document(j));
 
             string result;
@@ -2752,6 +2755,7 @@ void delete_numbers(Tensor<Tensor<string,1>,1>& documents)
             }
 
             document(j) = result;
+*/
         }
 
         documents(i) = document;
@@ -2772,6 +2776,7 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 
         for(Index j = 0; j < document.size(); j++)
         {
+            /*
             Tensor<string, 1> tokens = get_tokens(document(j));
 
             string result;
@@ -2785,6 +2790,7 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
             }
 
             document(j) = result;
+*/
         }
 
         documents(i) = document;

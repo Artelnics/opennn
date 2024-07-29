@@ -1042,7 +1042,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    raw_variables(i).categories = get_tokens(new_categories, ';');
+                    raw_variables(i).categories = get_tokens(new_categories, ";");
                 }
 
                 // Categories uses
@@ -1062,7 +1062,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
+                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
                 }
             }
         }
@@ -1091,7 +1091,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_rows_labels = rows_labels_element->GetText();
 
-            char separator = ',';
+            string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
                     && new_rows_labels.find(";") != string::npos) {
@@ -1152,7 +1152,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_uses_element->GetText())
     {
-        set_samples_uses(get_tokens(samples_uses_element->GetText(), ' '));
+        set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
     }
 
     // Missing values
@@ -1221,7 +1221,8 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
+            const Tensor<string, 1> new_raw_variables_missing_values_number
+                = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
@@ -1308,7 +1309,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             if(row_element->GetText())
             {
-                data_file_preview(i) = get_tokens(row_element->GetText(), ',');
+                data_file_preview(i) = get_tokens(row_element->GetText(), ",");
             }
         }
     }
@@ -2011,7 +2012,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     const bool is_float = is_same<type, float>::value;
 
-    const char separator_char = get_separator_char();
+    const string separator_string = get_separator_string();
 
     string line;
 
@@ -2058,7 +2059,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
         if(line.empty()) continue;
 
-        fill_tokens(line, separator_char, tokens);
+        fill_tokens(line, separator_string, tokens);
 
         for(Index j = 0; j < raw_variables_number; j++)
         {

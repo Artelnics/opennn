@@ -37,15 +37,15 @@ using namespace std;
 
 namespace opennn
 {
-    Index count_tokens(const string&, const char& = ' ');
-    Tensor<string, 1> get_tokens(const string&, const char& =' ');
-    void fill_tokens(const string&, const char&, Tensor<string, 1>&);
+    //Index count_tokens(const string&, const char& = ' ');
+    //Tensor<string, 1> get_tokens(const string&, const char& =' ');
+    void fill_tokens(const string&, const string&, Tensor<string, 1>&);
 
     Index count_tokens(const string&, const string&);
     Tensor<string, 1> get_tokens(const string&, const string&);
 
-    Tensor<type, 1> to_type_vector(const string&, const char&);
-    Tensor<Index, 1> to_index_vector(const string&, const char&);
+    Tensor<type, 1> to_type_vector(const string&, const string&);
+    Tensor<Index, 1> to_index_vector(const string&, const string&);
 
     Tensor<string, 1> get_unique_elements(const Tensor<string,1>&);
     Tensor<Index, 1> count_unique(const Tensor<string,1>&);
@@ -201,7 +201,7 @@ namespace opennn
 
     string to_string(Tensor<string,1>);
 
-    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
+    //Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
 
     Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>&);
 
