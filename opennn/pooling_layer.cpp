@@ -363,8 +363,8 @@ void PoolingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 /// @param inputs The batch of images.
 
 void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
-                       LayerForwardPropagation* layer_forward_propagation,
-                       const bool& is_training) const
+                                                     LayerForwardPropagation* layer_forward_propagation,
+                                                     const bool& is_training) const
 {
     const type pool_size = type(pool_height * pool_width);
 
@@ -405,7 +405,6 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training) const
 {
-    cout << "pooling inputs: " << endl << inputs << endl;
 
     const Index output_width = get_output_width();
     const Index output_height = get_output_height();
@@ -437,12 +436,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                            PADDING_VALID,
                                            type(padding_width));
 
-    cout << "image_patches: " << endl << image_patches << endl;
-
     outputs.device(*thread_pool_device)
             = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
-
-    cout << "outputs: " << endl << outputs << endl;
 
     // Extract maximum indices
 
@@ -455,12 +450,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     Index outputs_index = 0;
 
-    cout << "Arg max: " << image_patches.argmax() << endl;
-
     for(Index i = 0; i < pooling_layer_forward_propagation->inputs_max_indices.size(); i++)
     {
-        cout << "inputs(i): " << inputs(i)
-             << "; outputs_index: " << outputs(outputs_index) << "; " <<inputs(i) - outputs(outputs_index) << endl;
 
         if(abs(inputs(i) - outputs(outputs_index)) < 1e-3)
         {
@@ -469,7 +460,6 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         }
     }
 
-    cout << "Max indices: " << pooling_layer_forward_propagation->inputs_max_indices << endl;
 }
 
 
