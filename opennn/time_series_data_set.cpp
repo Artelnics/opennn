@@ -1509,7 +1509,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_rows_labels = rows_labels_element->GetText();
 
-            char separator = ',';
+            string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
                     && new_rows_labels.find(";") != string::npos) {

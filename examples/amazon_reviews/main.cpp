@@ -33,8 +33,8 @@ int main()
 
         TextDataSet text_data_set;
         
-        text_data_set.set_data_source_path("../data/amazon_cells_labelled.txt");
-        text_data_set.set_text_separator(DataSet::Separator::Tab);
+        text_data_set.set_data_source_path("../data/amazon_cells_reduced.txt");
+        text_data_set.set_separator(DataSet::Separator::Tab);
 
         text_data_set.read_txt();
         /*

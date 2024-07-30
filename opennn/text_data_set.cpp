@@ -6,6 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <sstream>
+#include <iostream>
+#include <fstream>
+//#include <limits>
+//#include <math.h>
+
 #include "text_data_set.h"
 #include "strings_utilities.h"
 #include "word_bag.h"
@@ -39,55 +45,55 @@ const Tensor<Index,1>& TextDataSet::get_words_frequencies() const
 
 /// Returns the string which will be used as separator in the data file for Text Classification.
 
-string TextDataSet::get_text_separator_string() const
-{
-    switch(text_separator)
-    {
-    case Separator::Tab:
-        return "Tab";
+//string TextDataSet::get_text_separator_string() const
+//{
+//    switch(text_separator)
+//    {
+//    case Separator::Tab:
+//        return "Tab";
 
-    case Separator::Semicolon:
-        return "Semicolon";
+//    case Separator::Semicolon:
+//        return "Semicolon";
 
-    default:
-        return string();
-    }
-}
-
-
-/// Sets a new separator.
-/// @param new_separator Separator value.
-
-void TextDataSet::set_text_separator(const Separator& new_separator)
-{
-    separator = new_separator;
-}
+//    default:
+//        return string();
+//    }
+//}
 
 
-/// Sets a new separator from a string.
-/// @param new_separator Char with the separator value.
+// Sets a new separator.
+// @param new_separator Separator value.
 
-void TextDataSet::set_text_separator(const string& new_separator_string)
-{
-    if(new_separator_string == "Tab")
-    {
-        text_separator = Separator::Tab;
-    }
-    else if(new_separator_string == "Semicolon")
-    {
-        text_separator = Separator::Semicolon;
-    }
-    else
-    {
-        ostringstream buffer;
+//void TextDataSet::set_text_separator(const Separator& new_separator)
+//{
+//    separator = new_separator;
+//}
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_text_separator(const string&) method.\n"
-               << "Unknown separator: " << new_separator_string << ".\n";
 
-        throw runtime_error(buffer.str());
-    }
-}
+// Sets a new separator from a string.
+// @param new_separator Char with the separator value.
+
+//void TextDataSet::set_text_separator(const string& new_separator_string)
+//{
+//    if(new_separator_string == "Tab")
+//    {
+//        text_separator = Separator::Tab;
+//    }
+//    else if(new_separator_string == "Semicolon")
+//    {
+//        text_separator = Separator::Semicolon;
+//    }
+//    else
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "void set_text_separator(const string&) method.\n"
+//               << "Unknown separator: " << new_separator_string << ".\n";
+
+//        throw runtime_error(buffer.str());
+//    }
+//}
 
 
 Tensor<string, 2> TextDataSet::get_text_data_file_preview() const
@@ -108,10 +114,10 @@ void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 }
 
 
-void TextDataSet::set_words_frequencies(const Tensor<Index,1>& new_words_frequencies)
-{
-    words_frequencies = new_words_frequencies;
-}
+//void TextDataSet::set_words_frequencies(const Tensor<Index,1>& new_words_frequencies)
+//{
+//    words_frequencies = new_words_frequencies;
+//}
 
 
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
@@ -156,9 +162,9 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Text separator
     {
-        file_stream.OpenElement("TextSeparator");
+        file_stream.OpenElement("Separator");
 
-        file_stream.PushText(get_text_separator_string().c_str());
+        file_stream.PushText(get_separator_string().c_str());
 
         file_stream.CloseElement();
     }
@@ -580,7 +586,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Text separator
 
-    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("TextSeparator");
+    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("Separator");
 
     if(text_separator_element)
     {
@@ -590,7 +596,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             try
             {
-                set_text_separator(new_separator);
+                set_separator(new_separator);
             }
             catch(const exception& e)
             {
@@ -867,7 +873,8 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    raw_variables(i).categories = get_tokens(new_categories, ';');
+                    raw_variables(i).categories = get_tokens(new_categories, ";");
+
                 }
 
                 // Categories uses
@@ -887,7 +894,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
+                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
                 }
             }
         }
@@ -916,11 +923,11 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_rows_labels = rows_labels_element->GetText();
 
-            char separator = ',';
+            string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) {
-                separator = ';';
+            && new_rows_labels.find(";") != string::npos) {
+                separator = ";";
             }
 
             rows_labels = get_tokens(new_rows_labels, separator);
@@ -977,7 +984,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_uses_element->GetText())
     {
-        set_samples_uses(get_tokens(samples_uses_element->GetText(), ' '));
+        set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
     }
 
     // Missing values
@@ -1046,7 +1053,8 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
+            Tensor<string, 1> new_raw_variables_missing_values_number
+                = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
@@ -1133,7 +1141,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             if(row_element->GetText())
             {
-                data_file_preview(i) = get_tokens(row_element->GetText(), ',');
+                data_file_preview(i) = get_tokens(row_element->GetText(), ",");
             }
         }
     }
@@ -1208,7 +1216,7 @@ Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
     const Index raw_variables_number = get_raw_variables_number();
     const Tensor<string,1> raw_variables_names = get_raw_variables_names();
 
-    const Tensor<string, 1> tokens = get_tokens(sentence, ' ');
+    const Tensor<string, 1> tokens = get_tokens(sentence, " ");
 
     Tensor<type, 1> vectorx(raw_variables_number - 1);
     vectorx.setZero();
@@ -1240,21 +1248,72 @@ void TextDataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 
-    //load_documents();
+    if(data_source_path.empty())
+        throw runtime_error("Text file is empty");
 
-    Tensor<Tensor<string, 1>, 1> documents;
+    ifstream file(data_source_path.c_str());
 
-    const Index documents_number = documents.size();
+    if(!file.is_open())
+        throw runtime_error("Cannot open text file: " + data_source_path + "\n");
 
-    Tensor<string, 1> tokens = tokens_list(documents);
+    Index lines_count = 0;
 
-    to_lower(tokens);
-    delete_punctuation(tokens);
-    delete_non_printable_chars(tokens);
-    delete_extra_spaces(tokens);
-    delete_non_alphanumeric(tokens);
+    string line;
 
-    //Tensor<Tensor<string,1>,1> xxx = get_tokens(documents);
+    while(file.good())
+    {
+        getline(file, line);
+        trim(line);
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        lines_count++;
+
+        if(file.peek() == EOF) break;
+    }
+
+    file.seekg (0, ios::beg);
+
+    Tensor<string, 1> documents(lines_count);
+    Tensor<string, 1> targets(lines_count);
+
+    const string separator = get_separator_string();
+
+    Index index = 0;
+
+    while(file.good())
+    {
+        getline(file, line);
+        trim(line);
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        const Tensor<string, 1> line_tokens = get_tokens(line, separator);
+
+        if(line_tokens.size() != 2)
+            throw runtime_error("More than one separator in line: " + line + "\n");
+
+        documents(index) = line_tokens(0);
+        targets(index) = line_tokens(1);
+
+        index++;
+
+        if(file.peek() == EOF) break;
+    }
+
+    cout << documents << endl;
+
+    file.close();
+
+    to_lower(documents);
+    delete_punctuation(documents);
+    delete_non_printable_chars(documents);
+    delete_extra_spaces(documents);
+    delete_non_alphanumeric(documents);
+
+    Tensor<Tensor<string,1>,1> documents_tokens = get_tokens(documents);
 
     //delete_stop_words(tokens);
 
@@ -1289,7 +1348,7 @@ void TextDataSet::read_txt()
     const Tensor<string, 1> raw_variables_names = word_bag.words;
     const Index raw_variables_number = word_bag.size();
 
-    Tensor<type, 1> row(raw_variables_number);
+    Tensor<type, 1> row(raw_variables   _number);
 
     // Output
 

@@ -12,11 +12,6 @@
 // System includes
 
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <limits>
-#include <math.h>
 
 // OpenNN includes
 
@@ -35,20 +30,20 @@ public:
 
     explicit TextDataSet();
 
-    string get_text_separator_string() const;
+//    string get_text_separator_string() const;
 
     const Index& get_short_words_length() const;
     const Index& get_long_words_length() const;
     const Tensor<Index,1>& get_words_frequencies() const;
 
-    void set_text_separator(const Separator&);
-    void set_text_separator(const string&);
+//    void set_text_separator(const Separator&);
+//    void set_text_separator(const string&);
 
     Tensor<string, 2> get_text_data_file_preview() const;
 
     void set_short_words_length(const Index&);
     void set_long_words_length(const Index&);
-    void set_words_frequencies(const Tensor<Index,1>&);
+//    void set_words_frequencies(const Tensor<Index,1>&);
 
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;
@@ -119,7 +114,7 @@ public:
 
 private:
 
-    Separator text_separator = Separator::Tab;
+//    Separator text_separator = Separator::Tab;
 
     Index short_words_length = 2;
 
