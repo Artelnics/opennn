@@ -461,7 +461,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
         if(variable_box_plot_element->GetText())
         {
             const char* new_box_plot_parameters_element = variable_box_plot_element->GetText();
-            Tensor<string,1> splitted_box_plot_parameters_element = get_tokens(new_box_plot_parameters_element, '\\');
+            Tensor<string,1> splitted_box_plot_parameters_element = get_tokens(new_box_plot_parameters_element, "\\");
             variables_distances_names[i] = static_cast<string>(splitted_box_plot_parameters_element[0]);
             multivariate_distances_box_plot[i].minimum = type(stof(splitted_box_plot_parameters_element[1]));
             multivariate_distances_box_plot[i].first_quartile = type(stof(splitted_box_plot_parameters_element[2]));

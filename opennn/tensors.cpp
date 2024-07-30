@@ -855,7 +855,7 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     const Index data_rows = data.dimension(0);
     const Index data_columns = data.dimension(1);
 
-    char separator_char = ';';
+    char separator_string = ';';
 
     for(Index i = 0; i < data_rows; i++)
     {
@@ -865,7 +865,7 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
 
            if(j != data_columns -1)
            {
-               file << separator_char;
+               file << separator_string;
            }
        }
        file << endl;

@@ -62,6 +62,7 @@ string sj2utf8(const string &input_string)
     }
 
     output.resize(indexOutput); //remove the unnecessary bytes
+
     return output;
 }
 
