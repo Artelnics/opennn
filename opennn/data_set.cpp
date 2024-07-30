@@ -5000,6 +5000,7 @@ void DataSet::set(const string& data_source_path, const char& separator, const b
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
+
 }
 
 
@@ -9270,6 +9271,7 @@ void DataSet::load_data()
 
 void DataSet::read_csv()
 {
+
     read_csv_1();
 
     if(get_time_raw_variables_number() == 0 && !has_categorical_raw_variables())
@@ -9398,7 +9400,10 @@ void DataSet::read_csv_1()
 
     if(display) cout << "Setting data file preview..." << endl;
 
+    /*
     Index lines_number = has_header ? 4 : 3;
+    */
+    Index lines_number = 11;
 
     data_file_preview.resize(lines_number);
 
@@ -9408,6 +9413,7 @@ void DataSet::read_csv_1()
 
     while(file.good())
     {
+
         getline(file, line);
 
         line = decode(line);
@@ -9423,11 +9429,11 @@ void DataSet::read_csv_1()
         data_file_preview(lines_count) = get_tokens(line, separator_string);
 
         lines_count++;
-
         if(lines_count == lines_number) break;
     }
 
     file.close();
+
 
     // Check empty file
 
@@ -9448,7 +9454,7 @@ void DataSet::read_csv_1()
 
     string first_name = data_file_preview(0)(0);
     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
-
+/*
     const Index raw_variables_number = has_rows_labels ? data_file_preview(0).size()-1 : data_file_preview(0).size();
 
     raw_variables.resize(raw_variables_number);
@@ -9550,7 +9556,8 @@ void DataSet::read_csv_1()
             }
         }
     }while(has_nans_raw_variables);
-
+*/
+/*
     // raw_variables types
 
     if(display) cout << "Setting raw_variables types..." << endl;
@@ -9565,19 +9572,21 @@ void DataSet::read_csv_1()
         string data_file_preview_2 = data_file_preview(2)(i);
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
-        
-/*        if(nans_columns(column_index))
+
+        if(nans_columns(column_index))
         {
             columns(column_index).type = ColumnType::Constant;
             column_index++;
         }
-        else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+        else if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
                 || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
                 || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
                 || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
         {
             raw_variables(raw_variable_index).type = RawVariableType::DateTime;
-//            time_column = raw_variables(raw_variable_index).name;
+
+            time_column = raw_variables(raw_variable_index).name;
+
             raw_variable_index++;
         }
         else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
@@ -9611,7 +9620,7 @@ void DataSet::read_csv_1()
         data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
         data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
     }
-    
+*/
 }
 
 
@@ -9808,7 +9817,7 @@ void DataSet::read_csv_3_simple()
         erase(line, '"');
 
         if(line.empty()) continue;
-
+        /*
         fill_tokens(line, separator_string, tokens);
 
         for(Index j = 0; j < raw_variables_number; j++)
@@ -9835,11 +9844,11 @@ void DataSet::read_csv_3_simple()
                 raw_variable_index++;
             }
         }
-
         raw_variable_index = 0;
         sample_index++;
+        */
     }
-
+/*
     const Index data_file_preview_index = has_header ? 3 : 2;
 
     data_file_preview(data_file_preview_index) = tokens;
@@ -9857,6 +9866,7 @@ void DataSet::read_csv_3_simple()
     if(display) cout << "Checking binary raw_variables..." << endl;
 
     set_binary_simple_raw_variables();
+*/
 }
 
 

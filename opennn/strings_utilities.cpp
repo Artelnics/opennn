@@ -220,7 +220,7 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
     size_t last_position = 0;
     Index i = 0;
 
-    while(position = text.find(separator,position) != string::npos)
+    while((position = text.find(separator,position)) != string::npos)
     {
         if(position == 0) // Skip first position
         {
