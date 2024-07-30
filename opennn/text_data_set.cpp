@@ -1223,7 +1223,7 @@ Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
 
     const Tensor<Tensor<string,1>,1> words = preprocess(tokens);
 
-    const WordBag word_bag = calculate_word_bag(words);
+    const WordBag word_bag = calculate_word_bag(words, get_separator_string());
 
     const Index words_number = word_bag.size();
 
@@ -1256,6 +1256,8 @@ void TextDataSet::read_txt()
     if(!file.is_open())
         throw runtime_error("Cannot open text file: " + data_source_path + "\n");
 
+    const string separator = get_separator_string();
+
     Index lines_count = 0;
 
     string line;
@@ -1273,12 +1275,12 @@ void TextDataSet::read_txt()
         if(file.peek() == EOF) break;
     }
 
-    file.seekg (0, ios::beg);
+    cout << lines_count << endl;
 
+    file.seekg (0, ios::beg);
+/*
     Tensor<string, 1> documents(lines_count);
     Tensor<string, 1> targets(lines_count);
-
-    const string separator = get_separator_string();
 
     Index index = 0;
 
@@ -1331,7 +1333,6 @@ void TextDataSet::read_txt()
 
     //delete_blanks(tokens);
 
-/*
     Tensor<Tensor<string, 1>, 1> targets;
     to_lower(targets);
 
@@ -1407,7 +1408,7 @@ void TextDataSet::read_txt()
 
 //            for(Index k = 0; k < line_words.size(); k++)
             {
-/*
+
                 if( contains(raw_variables_names, line_words(k)) )
                 {
                     auto it = find(raw_variables_names.data(), raw_variables_names.data() + document_words_number, line_words(k));

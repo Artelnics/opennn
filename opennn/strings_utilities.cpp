@@ -6,8 +6,22 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+#include <math.h>
+#include <regex>
+#include <iostream>
+#include <stdlib.h>
+#include <algorithm>
+//#include <string_view>
+#include <cctype>
+#include <iomanip>
+//#include <set>
+//#include <unordered_set>
+//#include <map>
+//#include <numeric>
+//#include <tuple>
+
 #include "strings_utilities.h"
-#include "opennn.h"
+//#include "opennn.h"
 #include "word_bag.h"
 #include "tensors.h"
 
@@ -18,37 +32,37 @@ namespace opennn
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
 
-Index count_tokens(string& text, const char& separator)
-{
-    trim(text);
+//Index count_tokens(string& text, const char& separator)
+//{
+//    trim(text);
 
-    Index tokens_count = 0;
+//    Index tokens_count = 0;
 
     // Skip delimiters at beginning.
 
-    string::size_type last_position = text.find_first_not_of(separator, 0);
+//    string::size_type last_position = text.find_first_not_of(separator, 0);
 
     // Find first "non-delimiter".
 
-    string::size_type position = text.find_first_of(separator, last_position);
+//    string::size_type position = text.find_first_of(separator, last_position);
 
-    while(string::npos != position || string::npos != last_position)
-    {
+//    while(string::npos != position || string::npos != last_position)
+//    {
         // Found a token, add it to the vector
 
-        tokens_count++;
+//        tokens_count++;
 
         // Skip delimiters.  Note the "not_of"
 
-        last_position = text.find_first_not_of(separator, position);
+//        last_position = text.find_first_not_of(separator, position);
 
         // Find next "non-delimiter"
 
-        position = text.find_first_of(separator, last_position);
-    }
+//        position = text.find_first_of(separator, last_position);
+//    }
 
-    return tokens_count;
-}
+//    return tokens_count;
+//}
 
 
 Index count_tokens(const string& text, const char& separator)
@@ -220,7 +234,7 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
     size_t last_position = 0;
     Index i = 0;
 
-    while(position = text.find(separator,position) != string::npos)
+    while(position = text.find(separator, position) != string::npos)
     {
         if(position == 0) // Skip first position
         {
@@ -1285,27 +1299,27 @@ vector<string> get_words_in_a_string(string str)
 ///@return
 
 
-int WordOccurrence(char *sentence, char *word)
-{
-    int slen = strlen(sentence);
-    int wordlen = strlen(word);
-    int count = 0;
-    int i, j;
+//int WordOccurrence(char *sentence, char *word)
+//{
+//    int slen = strlen(sentence);
+//    int wordlen = strlen(word);
+//    int count = 0;
+//    int i, j;
 
-    for(i = 0; i<slen; i++)
-    {
-        for(j = 0; j<wordlen; j++)
-        {
-            if(sentence[i+j]!=word[j])
-            break;
-        }
-        if(j==wordlen)
-        {
-            count++;
-        }
-    }
-    return count;
-}
+//    for(i = 0; i<slen; i++)
+//    {
+//        for(j = 0; j<wordlen; j++)
+//        {
+//            if(sentence[i+j]!=word[j])
+//            break;
+//        }
+//        if(j==wordlen)
+//        {
+//            count++;
+//        }
+//    }
+//    return count;
+//}
 
 
 /// Removes whitespaces from the start and the end of the string passed as argument.
@@ -1667,7 +1681,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
         push_back_string(tokens, token);
     }
 
-    for(size_t i = 0; i < tokens.dimension(0); i++)
+    for(Index i = 0; i < tokens.dimension(0); i++)
     {
         string s = tokens(i);
         string word = "";
@@ -1689,9 +1703,9 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 
     if(new_variable != old_variable)
     {
-        int j = found_tokens.size();
+        Index j = found_tokens.size();
 
-        for(int i = dimension; i --> 0;)
+        for(Index i = dimension; i --> 0;)
         {
             j -= 1;
 
@@ -2121,31 +2135,31 @@ Tensor<type, 2> str_to_input(const string& input_string)
 
 /// Calculate the total number of tokens in the documents.
 
-Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
+Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents, const string& separator)
 {
     const Index documents_number = documents.size();
 
     Index count = 0;
-/*
+
     for(Index i = 0; i < documents_number; i++)
     {
         for(Index j = 0; j < documents(i).size(); j++)
         {
-            count += count_tokens(documents(i)(j));
+            count += count_tokens(documents(i)(j), separator);
         }
     }
-*/
+
     return count;
 }
 
 
 /// Returns a Tensor with all the words as elements keeping the order.
 
-Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
+Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents, const string& separator)
 {
     const Index documents_number = documents.size();
 
-    const Index total_tokens_number = count_tokens(documents);
+    const Index total_tokens_number = count_tokens(documents, separator);
 
     Tensor<string, 1> total_tokens(total_tokens_number);
 
@@ -2154,16 +2168,15 @@ Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
     for(Index i = 0; i < documents_number; i++)
     {
         //const Index tokens_num
-/*
+
         for(Index j = 0; j < documents(i).dimension(0); j++)
         {
-            const Tensor<string, 1> tokens = get_tokens(documents(i)(j));
+            const Tensor<string, 1> tokens = get_tokens(documents(i)(j), separator);
 
             copy(tokens.data(), tokens.data() + tokens.size(), total_tokens.data() + position);
 
             position += tokens.size();
         }
-*/
     }
 
     return total_tokens;
@@ -2576,48 +2589,6 @@ Tensor<string, 1> get_stop_words()
 }
 
 
-// Set methods
-
-
-/// Sets a language.
-
-void set_language(const Language& new_language)
-{
-    lang = new_language;
-
-    if(lang == ENG)
-    {
-        set_english_stop_words();
-    }
-    else if(lang == SPA)
-    {
-        set_spanish_stop_words();
-    }
-    else
-    {
-        //        clear_stop_words();
-    }
-}
-
-/// Sets a language.
-
-void set_language(const string& new_language_string)
-{
-    if(new_language_string == "ENG")
-    {
-        set_language(ENG);
-    }
-    else if(new_language_string == "SPA")
-    {
-        set_language(SPA);
-    }
-    else
-    {
-        //        clear_stop_words();
-    }
-}
-
-
 /// Sets a stop words.
 /// @param new_stop_words String Tensor with the new stop words.
 
@@ -2935,11 +2906,11 @@ string get_rv(const string& word, const Tensor<string,1>& vowels)
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
 
-WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
+WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens, const string& separator)
 {
     WordBag word_bag;
 
-    const Tensor<string, 1> total = tokens_list(tokens);
+    const Tensor<string, 1> total = tokens_list(tokens, separator);
 
     const Tensor<Index, 1> count = count_unique(total);
 
@@ -2961,85 +2932,85 @@ WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
 /// of times in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_frequency Minimum frequency that words must have.
 
-WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
-                                             const Index& minimum_frequency)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+//WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+//                                             const Index& minimum_frequency)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    Tensor<string,1> words = word_bag.words;
-    Tensor<Index,1> frequencies = word_bag.frequencies;
-    Tensor<double,1> percentages = word_bag.percentages;
+//     Tensor<string,1> words = word_bag.words;
+//     Tensor<Index,1> frequencies = word_bag.frequencies;
+//     Tensor<double,1> percentages = word_bag.percentages;
 
-    const Tensor<Index,1> indices = get_indices_less_than(frequencies, minimum_frequency);
+//     const Tensor<Index,1> indices = get_indices_less_than(frequencies, minimum_frequency);
 
-    delete_indices(words, indices);
-    delete_indices(frequencies, indices);
-    delete_indices(percentages, indices);
+//     delete_indices(words, indices);
+//     delete_indices(frequencies, indices);
+//     delete_indices(percentages, indices);
 
-    word_bag.words = words;
-    word_bag.frequencies = frequencies;
-    word_bag.percentages = percentages;
+//     word_bag.words = words;
+//     word_bag.frequencies = frequencies;
+//     word_bag.percentages = percentages;
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Create a word bag that contains the unique words that appear a minimum percentage
 /// in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_percentage Minimum percentage of occurrence that words must have.
 
-WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
-                                              const double& minimum_percentage)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+// WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
+//                                               const double& minimum_percentage)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    Tensor<string,1> words = word_bag.words;
-    Tensor<Index,1> frequencies = word_bag.frequencies;
-    Tensor<double,1> percentages = word_bag.percentages;
+//     Tensor<string,1> words = word_bag.words;
+//     Tensor<Index,1> frequencies = word_bag.frequencies;
+//     Tensor<double,1> percentages = word_bag.percentages;
 
-    const Tensor<Index,1> indices = get_indices_less_than(percentages, minimum_percentage);
+//     const Tensor<Index,1> indices = get_indices_less_than(percentages, minimum_percentage);
 
-    delete_indices(words, indices);
-    delete_indices(frequencies, indices);
-    delete_indices(percentages, indices);
+//     delete_indices(words, indices);
+//     delete_indices(frequencies, indices);
+//     delete_indices(percentages, indices);
 
-    word_bag.words = words;
-    word_bag.frequencies = frequencies;
-    word_bag.percentages = percentages;
+//     word_bag.words = words;
+//     word_bag.frequencies = frequencies;
+//     word_bag.percentages = percentages;
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Create a word bag that contains the unique words that appear a minimum ratio
 /// of frequency in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_ratio Minimum ratio of frequency that words must have.
 
-WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
-                                         const double& minimum_ratio)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+// WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
+//                                          const double& minimum_ratio)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    Tensor<string,1> words = word_bag.words;
-    Tensor<Index,1> frequencies = word_bag.frequencies;
-    Tensor<double,1> percentages = word_bag.percentages;
+//     Tensor<string,1> words = word_bag.words;
+//     Tensor<Index,1> frequencies = word_bag.frequencies;
+//     Tensor<double,1> percentages = word_bag.percentages;
 
-    const Tensor<Index,0> frequencies_sum = frequencies.sum();
+//     const Tensor<Index,0> frequencies_sum = frequencies.sum();
 
-    const Tensor<double,1> ratios = frequencies.cast<double>()/double(frequencies_sum(0));
+//     const Tensor<double,1> ratios = frequencies.cast<double>()/double(frequencies_sum(0));
 
-    const Tensor<Index, 1> indices = get_indices_less_than(ratios, minimum_ratio);
+//     const Tensor<Index, 1> indices = get_indices_less_than(ratios, minimum_ratio);
 
-    delete_indices(words, indices);
-    delete_indices(frequencies, indices);
-    delete_indices(percentages, indices);
+//     delete_indices(words, indices);
+//     delete_indices(frequencies, indices);
+//     delete_indices(percentages, indices);
 
-    word_bag.words = words;
-    word_bag.frequencies = frequencies;
-    word_bag.percentages = percentages;
+//     word_bag.words = words;
+//     word_bag.frequencies = frequencies;
+//     word_bag.percentages = percentages;
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Create a word bag that contains the unique most frequent words whose sum
@@ -3047,48 +3018,48 @@ WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& token
 /// and their percentages in descending order.
 /// @param total_frequency Maximum cumulative frequency that words must have.
 
-WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
-                                           const Index& total_frequency)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+// WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+//                                            const Index& total_frequency)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string,1> words = word_bag.words;
-    const Tensor<Index, 1> frequencies = word_bag.frequencies;
+//     const Tensor<string,1> words = word_bag.words;
+//     const Tensor<Index, 1> frequencies = word_bag.frequencies;
 
-    Tensor<Index, 1> cumulative_frequencies = frequencies.cumsum(0);
+//     Tensor<Index, 1> cumulative_frequencies = frequencies.cumsum(0);
 
-    Index i;
+//     Index i;
 
-    for( i = 0; i < frequencies.size(); i++)
-    {
-        if(cumulative_frequencies(i) >= total_frequency)
-            break;
-    }
+//     for( i = 0; i < frequencies.size(); i++)
+//     {
+//         if(cumulative_frequencies(i) >= total_frequency)
+//             break;
+//     }
 
-    word_bag.words = get_first(words, i);
-    word_bag.frequencies = get_first(frequencies, i);
+//     word_bag.words = get_first(words, i);
+//     word_bag.frequencies = get_first(frequencies, i);
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Create a word bag that contains a maximum number of the unique most
 /// frequent words, their frequencies and their percentages in descending order.
 /// @param maximum_size Maximum size of words Tensor.
 
-WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
-                                        const Index& maximum_size)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+// WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
+//                                         const Index& maximum_size)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string, 1> words = word_bag.words;
-    const Tensor<Index ,1> frequencies = word_bag.frequencies;
+//     const Tensor<string, 1> words = word_bag.words;
+//     const Tensor<Index ,1> frequencies = word_bag.frequencies;
 
-    word_bag.words = get_first(words, maximum_size);
-    word_bag.frequencies = get_first(frequencies, maximum_size);
+//     word_bag.words = get_first(words, maximum_size);
+//     word_bag.frequencies = get_first(frequencies, maximum_size);
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Returns weights.
@@ -3242,7 +3213,7 @@ Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 
 /// This function calculates the frequency of sets of consecutive words in all documents.
 /// @param minimum_frequency Minimum frequency that a word must have to obtain its combinations.
 /// @param combinations_length Words number of the combinations from 2.
-
+/*
 Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
                                                        const Index& minimum_frequency,
                                                        const Index& combinations_length)
@@ -3318,22 +3289,22 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
 //    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words ) ) );
 
 //    Tensor<string, 2> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
-/*
+
     combinated_words_frequency_matrix.chip(0,1) = get_unique_elements(combinated_words),"Combinated words");
     combinated_words_frequency_matrix.chip(1,0) = combinated_words_frequency,"Frequency");
 
     combinated_words_frequency_matrix = combinated_words_frequency_matrix.sort_descending_strings(1);
 
 //    return(combinated_words_frequency_matrix);
-*/
+
     return Tensor<string,2>();
 }
-
+*/
 
 /// Returns the correlations of words that appear a minimum percentage of times
 /// with the targets in descending order.
 /// @param minimum_percentage Minimum percentage of frequency that the word must have.
-
+/*
 Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tokens,
                                          const double& minimum_percentage,
                                          const Tensor<Index, 1>& targets)
@@ -3347,7 +3318,7 @@ Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tok
     }
 
     Tensor<string, 1> new_documents(tokens.size());
-/*
+
     for(size_t i = 0; i < tokens.size(); i++)
     {
       new_documents[i] = tokens[i].Tensor_to_string(';');
@@ -3371,11 +3342,11 @@ Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tok
     top_words_correlations = top_words_correlations.sort_descending_strings(1);
 
     return(top_words_correlations);
-*/
+
 
     return Tensor<string, 2>();
 }
-
+*/
 
 /// Generates a text output based on the neural network and some input letters given by the user.
 /// @param text_generation_alphabet TextGenerationAlphabet object used for the text generation model
