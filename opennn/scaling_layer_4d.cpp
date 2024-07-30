@@ -933,7 +933,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
         if(descriptives_element->GetText())
         {
             const char* new_descriptives_element = descriptives_element->GetText();
-            Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, '\\');
+            Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, "\\");
             descriptives[i].minimum = type(stof(splitted_descriptives[0]));
             descriptives[i].maximum = type(stof(splitted_descriptives[1]));
             descriptives[i].mean = type(stof(splitted_descriptives[2]));

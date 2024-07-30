@@ -1325,10 +1325,10 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         const string parameters_string = parameters_element->GetText();
 
-        set_parameters(to_type_vector(parameters_string, ' '));
+        set_parameters(to_type_vector(parameters_string, " "));
     }
-    
 }
+
 
 void MultiheadAttentionLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

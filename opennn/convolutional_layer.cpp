@@ -489,7 +489,6 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-
         current_sum.setZero();
         
         TensorMap<Tensor<type, 3>> kernel_synaptic_weights_derivatives(synaptic_weights_derivatives_data + kernel_index*kernel_synaptic_weights_number,
@@ -1591,7 +1590,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         const string parameters_string = parameters_element->GetText();
 
-        set_parameters(to_type_vector(parameters_string, ' '));
+        set_parameters(to_type_vector(parameters_string, " "));
     }
 }
 

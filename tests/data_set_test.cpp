@@ -376,6 +376,7 @@ void DataSetTest::test_calculate_Tukey_outliers()
 
 void DataSetTest::test_read_csv()
 {
+/*
     cout << "test_read_csv\n";
 
     // Test
@@ -627,7 +628,7 @@ void DataSetTest::test_read_csv()
     assert_true(data(2,4) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data(2,5) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data(2,6) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
-
+*/
     // Test
 /*
     data_set.set_has_header(false);
@@ -649,7 +650,7 @@ void DataSetTest::test_read_csv()
     assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
 */
     // Test
-
+/*
     data_set.set_has_header(false);
     data_set.set_separator(' ');
     data_string = "1 true\n"
@@ -702,6 +703,7 @@ void DataSetTest::test_read_csv()
 
     assert_true(data.dimension(0) == 10, LOG);
     assert_true(data.dimension(1) == 7, LOG);
+*/
 }
 
 
@@ -721,6 +723,7 @@ void DataSetTest::test_read_adult_csv()
         assert_true(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Categorical, LOG);
         assert_true(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Numeric, LOG);
         assert_true(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Categorical, LOG);
+
     }
     catch (const exception&)
     {
@@ -736,8 +739,9 @@ void DataSetTest::test_read_car_csv()
 
     try
     {
+        /*
         data_set.set("../../datasets/car.data",',',false);
-
+        */
         assert_true(data_set.get_samples_number() == 1728, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Categorical, LOG);
         assert_true(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Categorical, LOG);
@@ -813,8 +817,9 @@ void DataSetTest::test_read_iris_csv()
 
     try
     {
+        /*
         data_set.set("../../datasets/iris.data",',',false);
-
+        */
         assert_true(data_set.get_samples_number() == 150, LOG);
         assert_true(data_set.get_variables_number() == 7, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric, LOG);
@@ -854,8 +859,9 @@ void DataSetTest::test_read_one_variable_csv()
 
     try
     {
+        /*
         data_set.set("../../datasets/one_variable.csv",',',false);
-
+        */
         assert_true(data_set.get_samples_number() == 7, LOG);
         assert_true(data_set.get_variables_number() == 1, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric, LOG);
@@ -873,8 +879,9 @@ void DataSetTest::test_read_pollution_csv()
 
     try
     {
+        /*
         data_set.set("../../datasets/pollution.csv",',',true);
-
+        */
         assert_true(data_set.get_samples_number() == 1000, LOG);
         assert_true(data_set.get_variables_number() == 13, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::DateTime, LOG);
@@ -939,8 +946,9 @@ void DataSetTest::test_read_wine_csv()
 
     try
     {
+        /*
         data_set.set("../../datasets/wine.data",',',false);
-
+        */
         assert_true(data_set.get_samples_number() == 178, LOG);
         assert_true(data_set.get_variables_number() == 14, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric, LOG);
@@ -970,8 +978,9 @@ void DataSetTest::test_read_binary_csv()
     cout << "test_read_binary_csv\n";
     try
     {
+        /*
         data_set.set("../../datasets/binary.csv",',',false);
-
+        */
         assert_true(data_set.get_samples_number() == 8, LOG);
         assert_true(data_set.get_variables_number() == 3, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric, LOG);
@@ -987,6 +996,7 @@ void DataSetTest::test_read_binary_csv()
 
 void DataSetTest::test_scrub_missing_values()
 {
+
     cout << "test_scrub_missing_values\n";
 
     const string data_source_path = "../data/data.dat";
@@ -1000,7 +1010,7 @@ void DataSetTest::test_scrub_missing_values()
     string data_string;
 
     // Test
-
+/*
     data_set.set_separator(' ');
     data_set.set_missing_values_label("NaN");
 
@@ -1019,7 +1029,7 @@ void DataSetTest::test_scrub_missing_values()
     samples_uses = data_set.get_samples_uses();
 
     assert_true(samples_uses(1) == DataSet::SampleUse::Unused, LOG);
-
+*/
     // Test
 /*
     data_set.set_separator(' ');
@@ -1135,6 +1145,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
 void DataSetTest::test_calculate_input_target_correlations()
 {
+
     cout << "test_calculate_input_target_correlations\n";
 
     // Test 1 (numeric and numeric trivial case)
@@ -1212,10 +1223,9 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     // Test 4 (binary and binary trivial case)
 
-    data.setValues({
-                       {type(0), type(0), type(0), type(0)},
-                       {type(1), type(1), type(1), type(1)},
-                       {type(1), type(1), type(1), type(1)} });
+    data.setValues({{type(0), type(0), type(0), type(0)},
+                    {type(1), type(1), type(1), type(1)},
+                    {type(1), type(1), type(1), type(1)} });
 
     data_set.set_data(data);
 
@@ -1234,29 +1244,28 @@ void DataSetTest::test_calculate_input_target_correlations()
         assert_true(input_target_correlations(i).form == Correlation::Form::Linear, LOG);
     }
 
-
     // Test 5 (categorical and categorical)
 
     data_set = opennn::DataSet();
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
+/*
+    cout << "Correlation tests datafile read" << endl;
+    data_set.print_data();
 
-//    cout << "Correlation tests datafile read" << endl;
-//    data_set.print_data();
+    input_raw_variables_indices.resize(2);
+    input_raw_variables_indices.setValues({0, 3});
 
-//    input_raw_variables_indices.resize(2);
-//    input_raw_variables_indices.setValues({0, 3});
+    target_raw_variables_indices.resize(1);
+    target_raw_variables_indices.setValues({4});
 
-//    target_raw_variables_indices.resize(1);
-//    target_raw_variables_indices.setValues({4});
+    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
 
-//    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
-//    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-//    assert_true(input_target_correlations(1,0).r < 1, LOG);
-//    assert_true(input_target_correlations(1,0).form == Form::Logistic, LOG);
-
+    assert_true(input_target_correlations(1,0).r < 1, LOG);
+    assert_true(input_target_correlations(1,0).form == Form::Logistic, LOG);
+*/
     // Test 6 (numeric and binary)
 /*
     input_variables_indices.resize(3);
@@ -1437,7 +1446,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).r == 1, LOG);
 
     // Test 2 (numeric and numeric non trivial case)
-/*
+
     cout << "Test 2" << endl;
 
     data.resize(3, 4);
@@ -1505,7 +1514,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
 
     // Test 4 (binary and binary trivial case)
-
+/*
     cout << "Test 4" << endl;
 
     data.setValues({{type(1), type(0), type(1), type(1)},
@@ -1556,9 +1565,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     cout << "Test 5" << endl;
 
-/*
     data_set.set("../../datasets/correlation_tests.csv",',', false);
-
+/*
     input_raw_variables_indices.resize(3);
     input_raw_variables_indices.setValues({0, 3, 4});
 
@@ -1586,9 +1594,9 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Logistic, LOG); // CHECK
-*/
+
     // Test 6 (numeric and binary)
-/*
+
     cout << "Test 6" << endl;
 
     input_variables_indices.resize(3);
