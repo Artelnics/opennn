@@ -1267,7 +1267,7 @@ Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
 /// Reduces inflected (or sometimes derived) words to their word stem, base or root form (english language).
 /// @param tokens
 
-Tensor<Tensor<string,1>,1> apply_english_stemmer(const Tensor<Tensor<string,1>,1>& tokens)
+Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
 {
     const Index documents_number = tokens.size();
 
@@ -1276,15 +1276,12 @@ Tensor<Tensor<string,1>,1> apply_english_stemmer(const Tensor<Tensor<string,1>,1
     // Set vowels and suffixes
 
     Tensor<string,1> vowels(6);
-
     vowels.setValues({"a","e","i","o","u","y"});
 
     Tensor<string,1> double_consonants(9);
-
     double_consonants.setValues({"bb", "dd", "ff", "gg", "mm", "nn", "pp", "rr", "tt"});
 
     Tensor<string,1> li_ending(10);
-
     li_ending.setValues({"c", "d", "e", "g", "h", "k", "m", "n", "r", "t"});
 
     const Index step0_suffixes_size = 3;
@@ -1309,8 +1306,30 @@ Tensor<Tensor<string,1>,1> apply_english_stemmer(const Tensor<Tensor<string,1>,1
 
     Tensor<string,1> step2_suffixes(step2_suffixes_size);
 
-    step2_suffixes.setValues({"ization", "ational", "fulness", "ousness", "iveness", "tional", "biliti", "lessli", "entli", "ation", "alism",
-                              "aliti", "ousli", "iviti", "fulli", "enci", "anci", "abli", "izer", "ator", "alli", "bli", "ogi", "li"});
+    step2_suffixes.setValues({"ization",
+                              "ational",
+                              "fulness",
+                              "ousness",
+                              "iveness",
+                              "tional",
+                              "biliti",
+                              "lessli",
+                              "entli",
+                              "ation",
+                              "alism",
+                              "aliti",
+                              "ousli",
+                              "iviti",
+                              "fulli",
+                              "enci",
+                              "anci",
+                              "abli",
+                              "izer",
+                              "ator",
+                              "alli",
+                              "bli",
+                              "ogi",
+                              "li"});
 
     const Index step3_suffixes_size = 9;
 
@@ -1325,7 +1344,7 @@ Tensor<Tensor<string,1>,1> apply_english_stemmer(const Tensor<Tensor<string,1>,1
     step4_suffixes.setValues({"ement", "ance", "ence", "able", "ible", "ment", "ant", "ent", "ism", "ate", "iti", "ous",
                               "ive", "ize", "ion", "al", "er", "ic"});
 
-    Tensor<string,2> special_words(40,2);
+    Tensor<string, 2> special_words(40,2);
 
     special_words(0,0) = "skis";        special_words(0,1) = "ski";
     special_words(1,0) = "skies";       special_words(1,1) = "sky";
@@ -1383,18 +1402,18 @@ Tensor<Tensor<string,1>,1> apply_english_stemmer(const Tensor<Tensor<string,1>,1
 
             trim(current_word);
 
-            if( contains(special_words.chip(0,1),current_word))
+            if(contains(special_words.chip(0,1),current_word))
             {
                 auto it = find(special_words.data(), special_words.data() + special_words.size(), current_word);
 
-                Index word_index = it - special_words.data();
+                const Index word_index = it - special_words.data();
 
-                current_document(j) = special_words(word_index,1);
+                current_document(j) = special_words(word_index, 1);
 
                 break;
             }
 
-            if(starts_with(current_word,"'"))
+            if(starts_with(current_word, "'"))
             {
                 current_word = current_word.substr(1);
             }
@@ -2025,11 +2044,11 @@ void TextDataSet::read_txt()
 
     //delete_emails(documents_words);
 
-    //tokens = apply_stemmer(documents_words); deleted recover from git
-
     //delete_numbers(documents_words);
 
     //delete_blanks(documents_words);
+
+    documents_words = stem(documents_words);
 
     print_tokens(documents_words);
 /*
@@ -2139,122 +2158,6 @@ void TextDataSet::read_txt()
     for(Index i = 0; i < get_input_raw_variables_number(); i++)
         set_raw_variable_type(i, RawVariableType::Numeric);
 */
-}
-
-
-void TextDataSet::load_documents()
-{
-    if(data_source_path.empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextDataSet class.\n"
-               << "void load_documents() method.\n"
-               << "Data file name is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    ifstream file(data_source_path.c_str());
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextDataSet class.\n"
-               << "void load_documents() method.\n"
-               << "Cannot open documents file: " << data_source_path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    Index lines_count = 0;
-
-    string line;
-
-    while(file.good())
-    {
-        getline(file, line);
-        trim(line);
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        lines_count++;
-
-        if(file.peek() == EOF) break;
-    }
-
-    file.seekg (0, ios::beg);
-
-    cout << lines_count << endl;
-
-    Tensor<string, 1> documents(lines_count);
-    Tensor<string, 1> targets(lines_count);
-
-    Index tokens_number = 0;
-
-    string delimiter = "";
-    const string separator = get_separator_string();
-
-    Tensor<string, 1> tokens;
-
-    while(file.good())
-    {
-        getline(file, line);
-
-        if(line.empty()) continue;
-
-        if(line[0] == '"')
-        {
-            replace(line, "\"\"", "\"");
-
-            line = "\"" + line;
-
-            delimiter = "\"\"";
-        }
-
-        if(line.find("\"" + separator) != string::npos)
-            replace(line, "\"" + separator, "\"\"" + separator);
-
-        const Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
-
-        tokens_number = tokens.size();
-
-        if(tokens_number == 1)
-        {
-            if(tokens(0).find(delimiter, 0) == 0)
-                documents(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
-            else
-                documents(lines_count) += " " + tokens(0);
-        }
-        else if(tokens_number == 2)
-        {
-            if(tokens(0).empty() && tokens(1).empty()) continue;
-
-            documents(lines_count) += " " + tokens(0);
-
-            targets(lines_count) += tokens(1);
-
-            delimiter = "";
-
-            lines_count++;
-        }
-        else if(tokens_number > 2)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: TextAnalytics class.\n"
-                   << "void load_documents() method.\n"
-                   << "Found more than one separator in line: " << line << "\n";
-
-            throw runtime_error(buffer.str());
-        }
-
-        if(file.peek() == EOF) break;
-    }
-
-    file.close();
 }
 
 }
