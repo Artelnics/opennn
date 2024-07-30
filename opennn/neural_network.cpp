@@ -2444,7 +2444,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
     if(layers_types_element->GetText())
     {
-        layers_types = get_tokens(layers_types_element->GetText(), ' ');
+        layers_types = get_tokens(layers_types_element->GetText(), " ");
     }
 
     // Add layers

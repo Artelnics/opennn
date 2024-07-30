@@ -1994,6 +1994,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
                                                     input_raw_variables_number-kernels_raw_variables_number+1,
                                                     kernels_number,
                                                     images_number});
+
         FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
 
         const Index perceptron_layer_inputs_number = (input_height-kernel_height+1)

@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include <codecvt>
+#include <set>
+#include <regex>
 
 #include "language_data_set.h"
 #include "tensors.h"
@@ -1042,7 +1044,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    raw_variables(i).categories = get_tokens(new_categories, ';');
+                    raw_variables(i).categories = get_tokens(new_categories, ";");
                 }
 
                 // Categories uses
@@ -1062,7 +1064,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
+                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
                 }
             }
         }
@@ -1091,7 +1093,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_rows_labels = rows_labels_element->GetText();
 
-            char separator = ',';
+            string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
                     && new_rows_labels.find(";") != string::npos) {
@@ -1152,7 +1154,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_uses_element->GetText())
     {
-        set_samples_uses(get_tokens(samples_uses_element->GetText(), ' '));
+        set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
     }
 
     // Missing values
@@ -1221,7 +1223,8 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
+            const Tensor<string, 1> new_raw_variables_missing_values_number
+                = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
@@ -1308,7 +1311,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             if(row_element->GetText())
             {
-                data_file_preview(i) = get_tokens(row_element->GetText(), ',');
+                data_file_preview(i) = get_tokens(row_element->GetText(), ",");
             }
         }
     }
@@ -1430,13 +1433,13 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
 struct WordpieceAlgorithmParameters
 {
-    int upper_threshold;
-    int lower_threshold;
-    int interations_number;
-    int max_input_tokens;
-    int max_token_length;
-    int max_unique_characters;
-    int vocabulary_size;
+    Index upper_threshold;
+    Index lower_threshold;
+    Index interations_number;
+    Index max_input_tokens;
+    Index max_token_length;
+    Index max_unique_characters;
+    Index vocabulary_size;
     float slack_ratio;
     bool include_joiner_token;
     string joiner;
@@ -1669,8 +1672,8 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
 
 
 vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int>>& word_counts,
-    int threshold,
-    const WordpieceAlgorithmParameters& parameters)
+                                                   int threshold,
+                                                   const WordpieceAlgorithmParameters& parameters)
 {
     set<char> character_tokens = extract_character_tokens(word_counts);
     set<string> string_tokens;
@@ -1781,41 +1784,41 @@ vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>
 
 
 const Tensor<string, 1> LanguageDataSet::calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens,
-                                                              int vocabulary_size,
+                                                              const Index& vocabulary_size,
                                                               const vector<string>& reserved_tokens,
-                                                              int upper_threshold,
-                                                              int lower_threshold,
-                                                              int interations_number,
-                                                              int max_input_tokens,
-                                                              int max_token_length,
-                                                              int max_unique_characters,
-                                                              float slack_ratio,
-                                                              bool include_joiner_token,
+                                                              const Index& upper_threshold,
+                                                              const Index& lower_threshold,
+                                                              const Index& interations_number,
+                                                              const Index& max_input_tokens,
+                                                              const Index& max_token_length,
+                                                              const Index& max_unique_characters,
+                                                              const float& slack_ratio,
+                                                              const bool& include_joiner_token,
                                                               const string& joiner)
 {
-    Tensor<string, 1> total_tokens = tokens_list(tokens);
+    const Tensor<string, 1> total_tokens = tokens_list(tokens, get_separator_string());
 
     const vector<pair<string, int>> word_counts = count_words(total_tokens);
 
-    WordpieceAlgorithmParameters parameters = { upper_threshold,
-                                               lower_threshold,
-                                               interations_number,
-                                               max_input_tokens,
-                                               max_token_length,
-                                               max_unique_characters,
-                                               vocabulary_size,
-                                               slack_ratio,
-                                               include_joiner_token,
-                                               joiner,
-                                               reserved_tokens };
+    const WordpieceAlgorithmParameters parameters = {upper_threshold,
+                                                     lower_threshold,
+                                                     interations_number,
+                                                     max_input_tokens,
+                                                     max_token_length,
+                                                     max_unique_characters,
+                                                     vocabulary_size,
+                                                     slack_ratio,
+                                                     include_joiner_token,
+                                                     joiner,
+                                                     reserved_tokens};
 
-    auto [upper_search, lower_search] = calculate_thresholds(word_counts, parameters.upper_threshold, parameters.lower_threshold);
+    const auto [upper_search, lower_search] = calculate_thresholds(word_counts, parameters.upper_threshold, parameters.lower_threshold);
 
-    vector<pair<string, int>> trimmed_counts = trim_inputs(word_counts, parameters.reserved_tokens, parameters.max_token_length);
+    const vector<pair<string, int>> trimmed_counts = trim_inputs(word_counts, parameters.reserved_tokens, parameters.max_token_length);
 
-    std::set<char> allowed_characters = get_allowed_characters(trimmed_counts, parameters.max_unique_characters);
+    const std::set<char> allowed_characters = get_allowed_characters(trimmed_counts, parameters.max_unique_characters);
 
-    vector<pair<string, int>> filtered_counts = filter_inputs(trimmed_counts, allowed_characters, parameters.max_input_tokens);
+    const vector<pair<string, int>> filtered_counts = filter_inputs(trimmed_counts, allowed_characters, parameters.max_input_tokens);
 
     const vector<string> vocabulary = calculate_vocabulary_binary_search(filtered_counts, lower_search, upper_search, parameters);
 
@@ -2008,7 +2011,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     const bool is_float = is_same<type, float>::value;
 
-    const char separator_char = get_separator_char();
+    const string separator_string = get_separator_string();
 
     string line;
 
@@ -2055,7 +2058,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
         if(line.empty()) continue;
 
-        fill_tokens(line, separator_char, tokens);
+        fill_tokens(line, separator_string, tokens);
 
         for(Index j = 0; j < raw_variables_number; j++)
         {

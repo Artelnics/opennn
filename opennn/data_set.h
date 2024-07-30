@@ -397,8 +397,8 @@ public:
     Tensor<string, 1> get_testing_rows_label_tensor();
 
     const Separator& get_separator() const;
-    char get_separator_char() const;
     string get_separator_string() const;
+    string get_separator_name() const;
 
     const Codification get_codification() const;
     const string get_codification_string() const;
@@ -788,7 +788,7 @@ public:
 
     void check_input_csv(const string&, const char&) const;
 
-    Tensor<type, 2> read_input_csv(const string&, const char&, const string&, const bool&, const bool&) const;
+    Tensor<type, 2> read_input_csv(const string&, const string&, const string&, const bool&, const bool&) const;
 
     //Virtual functions
 
