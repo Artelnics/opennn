@@ -229,13 +229,54 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
 
     Tensor<string,1> tokens(tokens_number);
 
-    //    string str = s;
-    size_t position = 0;
-    size_t last_position = 0;
-    Index i = 0;
+    // Skip delimiters at beginning.
 
-    while(position = text.find(separator, position) != string::npos)
+    string::size_type last_position = text.find_first_not_of(separator, 0);
+
+    // Find first "non-delimiter"
+
+    Index index = 0;
+    Index old_position = last_position;
+
+    string::size_type position = text.find_first_of(separator, last_position);
+
+    while(string::npos != position || string::npos != last_position)
     {
+        if(last_position - old_position != 1 && index != 0)
+        {
+            index++;
+            old_position++;
+            continue;
+        }
+
+        // Found a token, add it to the vector
+
+        tokens[index] = text.substr(last_position, position - last_position);
+
+        old_position = position;
+
+        // Skip delimiters. Note the "not_of"
+
+        last_position = text.find_first_not_of(separator, position);
+
+        // Find next "non-delimiter"
+
+        position = text.find_first_of(separator, last_position);
+
+        index++;
+    }
+
+/*
+    //    string str = s;
+//    size_t position = 0;
+    size_t last_position = 0;
+    Index index = 0;
+
+    string::size_type position = 0;
+
+    while(text.find(separator, position) != string::npos)
+    {
+
         if(position == 0) // Skip first position
         {
             position += separator.length();
@@ -243,18 +284,18 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
             continue;
         }
 
-        tokens(i) = text.substr(last_position, position - last_position);
+        tokens(index) = text.substr(last_position, position - last_position);
 
         position += separator.length();
         last_position = position;
-        i++;
+        index++;
     }
 
-    if(last_position != text.length()) // Reading last element
+    if(last_position != text.length())
     {
-        tokens(i) = text.substr(last_position, text.length() - last_position);
+        tokens(index) = text.substr(last_position, text.length() - last_position);
     }
-
+*/
     return tokens;
 }
 
@@ -2211,34 +2252,32 @@ void to_lower(Tensor<Tensor<string, 1>, 1>& text)
 }
 
 
-Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents)
+Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents, const string& separator)
 {
     const Index documents_number = documents.size();
 
     Tensor<Tensor<string, 1>, 1> tokens(documents_number);
 
-    #pragma omp parallel for
+    //#pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
- /*
-        tokens(i) = get_tokens(documents(i));
-*/
+        tokens(i) = get_tokens(documents(i), separator);
     }
 
     return tokens;
 }
 
 
-void delete_blanks(Tensor<string, 1>& vector)
+void delete_blanks(Tensor<string, 1>& words)
 {
-    const Index words_number = vector.size();
+    const Index words_number = words.size();
 
-    const Index empty_number = count_empty(vector);
+    const Index empty_number = count_empty(words);
 
-    Tensor<string, 1> vector_copy(vector);
+    Tensor<string, 1> vector_copy(words);
 
-    vector.resize(words_number - empty_number);
+    words.resize(words_number - empty_number);
 
     Index index = 0;
 
@@ -2248,7 +2287,7 @@ void delete_blanks(Tensor<string, 1>& vector)
 
         if(!vector_copy(i).empty())
         {
-            vector(index) = vector_copy(i);
+            words(index) = vector_copy(i);
             index++;
         }
     }
@@ -2268,6 +2307,7 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
 
 Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
 {
+/*
     Tensor<string, 1> documents_copy(documents);
 
     to_lower(documents_copy);
@@ -2281,6 +2321,8 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
     delete_non_alphanumeric(documents_copy);
 
     return get_tokens(documents_copy);
+*/
+    return Tensor<Tensor<string, 1>, 1>();
 }
 
 
@@ -2621,78 +2663,32 @@ void set_separator(const string& new_separator)
 }
 */
 
-void delete_stop_words(Tensor<Tensor<string,1>,1>& tokens)
-{
-//    delete_words(tokens, stop_words);
-}
-
 
 /// Delete short words from the documents
 /// @param minimum_length Minimum length of the words that new documents must have(including herself)
 
-void delete_short_words(Tensor<Tensor<string,1>,1>& documents, const Index& minimum_length)
+void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
+                        const Index& minimum_length,
+                        const Index& maximum_length)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = documents_words.size();
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string,1> document = documents(i);
+        Tensor<string,1> new_document_words;
 
-        for(Index j = 0; j < document.size(); j++)
+        for(Index j = 0; j < documents_words(i).size(); j++)
         {
-            const Index tokens_number = count_tokens(document(j), " ");
-            const Tensor<string, 1> tokens = get_tokens(document(j), " ");
-
-            string result;
-
-            for(Index k = 0; k < tokens_number; k++)
+            if(documents_words(i)(j).length() >= minimum_length
+            && documents_words(i)(j).length() <= maximum_length)
             {
-                if( Index(tokens(k).length()) >= minimum_length )
-                {
-                    result += tokens(k) + " ";
-                }
+                push_back_string(new_document_words, documents_words(i)(j));
             }
-
-            document(j) = result;
         }
 
-        documents(i) = document;
-    }
-}
-
-
-/// Delete short words from the documents
-/// @param maximum_length Maximum length of the words new documents must have(including herself)
-
-void delete_long_words(Tensor<Tensor<string,1>,1>& documents, const Index& maximum_length)
-{
-    const Index documents_number = documents.size();
-
-#pragma omp parallel for
-    for(Index i = 0; i < documents_number; i++)
-    {
-        Tensor<string,1> document = documents(i);
-
-        for(Index j = 0; j < document.size(); j++)
-        {
-            const Index tokens_number = count_tokens(document(j), " ");
-            const Tensor<string, 1> tokens = get_tokens(document(j), " ");
-
-            string result;
-
-            for(Index k = 0; k < tokens_number; k++)
-            {
-                if(Index(tokens(k).length()) <= maximum_length )
-                {
-                    result += tokens(k) + " ";
-                }
-            }
-
-            document(j) = result;
-        }
-
-        documents(i) = document;
+        documents_words(i) = new_document_words;
     }
 }
 
@@ -2740,7 +2736,8 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 {
     const Index documents_number = documents.size();
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index i = 0; i < documents_number; i++)
     {
         Tensor<string, 1> document = documents(i);
@@ -2771,7 +2768,7 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 
 /// Remove the accents of the vowels in the documents.
 
-void replace_accented(Tensor<Tensor<string,1>,1>& documents)
+void replace_accented_words(Tensor<Tensor<string,1>, 1>& documents)
 {
     const Index documents_size = documents.size();
 
@@ -2781,7 +2778,7 @@ void replace_accented(Tensor<Tensor<string,1>,1>& documents)
 
         for(Index j = 0; j < document_size; j++)
         {
-            replace_accented(documents(i)(j));
+            replace_accented_words(documents(i)(j));
         }
     }
 }
@@ -2789,7 +2786,7 @@ void replace_accented(Tensor<Tensor<string,1>,1>& documents)
 
 /// Remove the accents of the vowels of a word.
 
-void replace_accented(string& word)
+void replace_accented_words(string& word)
 {
     replace(word, "á", "a");
     replace(word, "é", "e");
@@ -3091,6 +3088,7 @@ Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& w
 
 Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 {
+/*
     Tensor<string,1> documents_copy(documents);
 
     to_lower(documents_copy);
@@ -3106,12 +3104,10 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
     Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
 
     delete_stop_words(tokens);
-/*
-    delete_short_words(tokens, short_words_length);
 
-    delete_long_words(tokens, long_words_length);
-*/
-    replace_accented(tokens);
+    delete_short_long_words(tokens, short_words_length, long_words_length);
+
+    replace_accented_words(tokens);
 
     delete_emails(tokens);
 
@@ -3122,11 +3118,14 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
     delete_blanks(tokens);
 
     return tokens;
+*/
+    return Tensor<Tensor<string,1>,1>();
 }
 
 
 Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& documents)
 {
+/*
     Tensor<string,1> documents_copy(documents);
 
     to_lower(documents_copy);
@@ -3146,6 +3145,8 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
     delete_blanks(tokens);
 
     return tokens;
+*/
+    return Tensor<Tensor<string,1>, 1>();
 }
 
 
@@ -3604,7 +3605,7 @@ void TextGenerationAlphabet::preprocess()
 {
     TextAnalytics ta;
 
-    ta.replace_accented(text);
+    ta.replace_accented_words(text);
 
     transform(text.begin(), text.end(), text.begin(), ::tolower); // To lower
 }
@@ -3733,6 +3734,20 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
 }
 */
+
+void print_tokens(const Tensor<Tensor<string,1>,1>& tokens)
+{
+    for(Index i = 0; i < tokens.size(); i++)
+    {
+        for(Index j = 0; j < tokens(i).size(); j++)
+        {
+            cout << tokens(i)(j) << " - ";
+        }
+
+        cout << endl;
+    }
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

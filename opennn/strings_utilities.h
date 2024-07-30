@@ -130,7 +130,7 @@ namespace opennn
     void delete_non_printable_chars(Tensor<string, 1>&);
     void delete_extra_spaces(Tensor<string, 1>&);
     void delete_non_alphanumeric(Tensor<string, 1>&);
-    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
+    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&, const string&);
     void delete_blanks(Tensor<string, 1>&);
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
@@ -210,11 +210,7 @@ namespace opennn
 
     void split_punctuation(Tensor<string, 1>&);
 
-    void delete_stop_words(Tensor<Tensor<string, 1>, 1>&);
-
-    void delete_short_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 2);
-
-    void delete_long_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 15);
+    void delete_short_long_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 2, const Index& = 15);
 
     void delete_numbers(Tensor<Tensor<string, 1>, 1>&);
 
@@ -226,9 +222,9 @@ namespace opennn
 
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
-    void replace_accented(Tensor<Tensor<string, 1>, 1>&);
+    void replace_accented_words(Tensor<Tensor<string, 1>, 1>&);
 
-    void replace_accented(string&);
+    void replace_accented_words(string&);
 
     void delete_non_alphanumeric(Tensor<string,1>&);
 
@@ -268,6 +264,8 @@ namespace opennn
 //    Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&, const Index&);
 
 //    Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&);
+
+    void print_tokens(const Tensor<Tensor<string,1>,1>&);
 }
 
 #endif // OPENNNSTRINGS_H
