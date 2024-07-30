@@ -26,7 +26,7 @@ int main()
     try
     {
         cout << "OpenNN. Amazon reviews example." << endl;
-        
+
         srand(static_cast<unsigned>(time(nullptr)));
 
         // DataSet

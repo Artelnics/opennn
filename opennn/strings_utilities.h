@@ -11,21 +11,8 @@
 
 // System includes
 
-#include <math.h>
-#include <regex>
-#include <iostream>
-#include <stdlib.h>
-#include <algorithm>
 #include <string>
-#include <string_view>
-#include <cctype>
-#include <iomanip>
-#include <set>
-#include <unordered_set>
 #include <vector>
-#include <map>
-#include <numeric>
-#include <tuple>
 
 // Eigen includes
 
@@ -75,7 +62,7 @@ namespace opennn
     Tensor<string, 1> fix_write_expression_outputs(const string&, const Tensor<string, 1>&, const string&);
     Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>&, Tensor<string, 1>&, ostringstream&);
 
-    int WordOccurrence(char *sentence, char *word);
+    //int WordOccurrence(char *sentence, char *word);
 
     void trim(string&);
     void erase(string&, const char&);
@@ -134,8 +121,8 @@ namespace opennn
 
     // Preprocess methods
 
-    Index count_tokens(const Tensor<Tensor<string, 1>, 1>&);
-    Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>&);
+    Index count_tokens(const Tensor<Tensor<string, 1>, 1>&, const string&);
+    Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>&, const string&);
     void to_lower(string&);
     void to_lower(Tensor<string, 1>&);
     void to_lower(Tensor<Tensor<string, 1>, 1>&);
@@ -143,7 +130,7 @@ namespace opennn
     void delete_non_printable_chars(Tensor<string, 1>&);
     void delete_extra_spaces(Tensor<string, 1>&);
     void delete_non_alphanumeric(Tensor<string, 1>&);
-    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
+    Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&, const string&);
     void delete_blanks(Tensor<string, 1>&);
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
@@ -223,11 +210,7 @@ namespace opennn
 
     void split_punctuation(Tensor<string, 1>&);
 
-    void delete_stop_words(Tensor<Tensor<string, 1>, 1>&);
-
-    void delete_short_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 2);
-
-    void delete_long_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 15);
+    void delete_short_long_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 2, const Index& = 15);
 
     void delete_numbers(Tensor<Tensor<string, 1>, 1>&);
 
@@ -239,9 +222,9 @@ namespace opennn
 
     void delete_blanks(Tensor<Tensor<string, 1>, 1>&);
 
-    void replace_accented(Tensor<Tensor<string, 1>, 1>&);
+    void replace_accented_words(Tensor<Tensor<string, 1>, 1>&);
 
-    void replace_accented(string&);
+    void replace_accented_words(string&);
 
     void delete_non_alphanumeric(Tensor<string,1>&);
 
@@ -258,17 +241,17 @@ namespace opennn
     /// It is a simplifying representation where a text(such as a sentence or a document) is represented
     /// as the bag(multiset) of its words, disregarding grammar and even word order but keeping multiplicity.
 
-    WordBag calculate_word_bag(const Tensor<Tensor<string, 1>, 1>&);
+    WordBag calculate_word_bag(const Tensor<Tensor<string, 1>, 1>&, const string& separator);
 
-    WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&);
+//    WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&);
 
-    WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string, 1>, 1>&, const double&);
+//    WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string, 1>, 1>&, const double&);
 
-    WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string, 1>, 1>&, const double&);
+//    WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string, 1>, 1>&, const double&);
 
-    WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&);
+//    WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&);
 
-    WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string, 1>, 1>&, const Index&);
+//    WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string, 1>, 1>&, const Index&);
 
     // Algorithms
 
@@ -278,13 +261,11 @@ namespace opennn
 
     Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&);
 
-    Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&, const Index&);
+//    Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&, const Index&);
 
-    Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&);
+//    Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&);
 
-    void set_english_stop_words();
-    void set_spanish_stop_words();
-    void clear_stop_words();
+    void print_tokens(const Tensor<Tensor<string,1>,1>&);
 }
 
 #endif // OPENNNSTRINGS_H
