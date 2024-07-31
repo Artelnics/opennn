@@ -2048,7 +2048,9 @@ void TextDataSet::read_txt()
 
     //delete_blanks(documents_words);
 
+    /*
     documents_words = stem(documents_words);
+    */
 
     print_tokens(documents_words);
 /*
