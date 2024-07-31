@@ -2608,14 +2608,9 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
     {
         for(Index j = 0; j < documents_words(i).size(); j++)
         {
-<<<<<<< HEAD
-            if(static_cast<Index>(documents_words(i)(j).length()) >= minimum_length
-            && static_cast<Index>(documents_words(i)(j).length()) <= maximum_length)
-=======
             const Index length = documents_words(i)(j).length();
 
             if(length >= minimum_length || length <= maximum_length)
->>>>>>> dev
             {
                 documents_words(i)(j).clear();
             }
