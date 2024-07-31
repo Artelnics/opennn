@@ -2176,18 +2176,15 @@ Tensor<type, 2> str_to_input(const string& input_string)
 
 /// Calculate the total number of tokens in the documents.
 
-Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents, const string& separator)
+Index count_tokens(const Tensor<Tensor<string, 1>, 1>& tokens)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = tokens.size();
 
     Index count = 0;
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents(i).size(); j++)
-        {
-            count += count_tokens(documents(i)(j), separator);
-        }
+        count += tokens(i).size();
     }
 
     return count;
@@ -2196,11 +2193,11 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents, const string& 
 
 /// Returns a Tensor with all the words as elements keeping the order.
 
-Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents, const string& separator)
+Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents_tokens)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = documents_tokens.size();
 
-    const Index total_tokens_number = count_tokens(documents, separator);
+    const Index total_tokens_number = count_tokens(documents_tokens);
 
     Tensor<string, 1> total_tokens(total_tokens_number);
 
@@ -2208,16 +2205,11 @@ Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents, con
 
     for(Index i = 0; i < documents_number; i++)
     {
-        //const Index tokens_num
+        copy(documents_tokens(i).data(),
+             documents_tokens(i).data() + documents_tokens(i).size(),
+             total_tokens.data() + position);
 
-        for(Index j = 0; j < documents(i).dimension(0); j++)
-        {
-            const Tensor<string, 1> tokens = get_tokens(documents(i)(j), separator);
-
-            copy(tokens.data(), tokens.data() + tokens.size(), total_tokens.data() + position);
-
-            position += tokens.size();
-        }
+        position += documents_tokens(i).size();
     }
 
     return total_tokens;
@@ -2847,17 +2839,15 @@ string get_rv(const string& word, const Tensor<string,1>& vowels)
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
 
-WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens, const string& separator)
+WordBag calculate_word_bag(const Tensor<string,1>& words)
 {
     WordBag word_bag;
 
-    const Tensor<string, 1> total = tokens_list(tokens, separator);
-
-    const Tensor<Index, 1> count = count_unique(total);
+    const Tensor<Index, 1> count = count_unique(words);
 
     const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
 
-    word_bag.words =  sort_by_rank(get_unique_elements(total), descending_rank);
+    word_bag.words = sort_by_rank(get_unique_elements(words), descending_rank);
 
     word_bag.frequencies = sort_by_rank(count, descending_rank);
 
