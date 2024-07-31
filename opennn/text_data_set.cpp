@@ -2040,17 +2040,15 @@ void TextDataSet::read_txt()
 
     delete_short_long_words(documents_words, short_words_length, long_words_length);
 
-    //replace_accented(documents_words);
+    replace_accented_words(documents_words);
 
-    //delete_emails(documents_words);
+    delete_emails(documents_words);
 
-    //delete_numbers(documents_words);
+    delete_numbers(documents_words);
 
-    //delete_blanks(documents_words);
+    delete_blanks(documents_words);
 
-    /*
-    documents_words = stem(documents_words);
-    */
+    stem(documents_words);
 
     print_tokens(documents_words);
 /*

@@ -2294,13 +2294,30 @@ void delete_blanks(Tensor<string, 1>& words)
 }
 
 
-void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
+void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
 {
-    const Index documents_number = tokens.size();
+    const Index documents_number = documents_tokens.size();
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
-        delete_blanks(tokens(i));
+        const Index new_size = count_not_empty(documents_tokens(i));
+
+        Tensor<string, 1> new_document_tokens(new_size);
+
+        Index index = 0;
+
+        for(Index j = 0; j < documents_tokens(i).size(); j++)
+        {
+            if(!documents_tokens(i)(j).empty())
+            {
+                new_document_tokens(index) = documents_tokens(i)(j);
+                index++;
+            }
+        }
+
+        documents_tokens(i) = new_document_tokens;
     }
 }
 
@@ -2582,13 +2599,30 @@ void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& d
 /// Delete the words we want from the documents
 /// @param delete_words Tensor of words we want to delete
 
-void delete_words(Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>& delete_words) 
+void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<string, 1>& deletion_words)
 {
-    const Index documents_number = tokens.size();
+    const Index documents_number = documents_words.size();
+
+    const Index deletion_words_number = deletion_words.size();
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
-        filter_not_equal_to(tokens(i), delete_words);
+        for(Index j = 0; j < documents_words(i).size(); j++)
+        {
+            const string word = documents_words(i)(j);
+
+            for(Index k = 0; k < deletion_words_number; k++)
+            {
+                if(word == deletion_words(k))
+                {
+                    documents_words(i)(j).clear();
+
+                    continue;
+                }
+            }
+        }
     }
 }
 
@@ -2610,7 +2644,7 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
         {
             const Index length = documents_words(i)(j).length();
 
-            if(length >= minimum_length || length <= maximum_length)
+            if(length <= minimum_length || length >= maximum_length)
             {
                 documents_words(i)(j).clear();
             }
@@ -2621,37 +2655,21 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
 
 /// Delete the numbers of the documents.
 
-void delete_numbers(Tensor<Tensor<string,1>,1>& documents)
+void delete_numbers(Tensor<Tensor<string,1>,1>& documents_words)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = documents_words.size();
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string, 1> document = documents(i);
-
-        const Index document_size = document.size();
-
-        for(Index j = 0; j < document_size; j++)
+        for(Index j = 0; j < documents_words(i).size(); j++)
         {
-/*
-            Tensor<string,1> tokens = get_tokens(document(j));
-
-            string result;
-
-            for(Index k = 0; k < tokens.size(); k++)
+            if(is_numeric_string(documents_words(i)(j)))
             {
-                if(!is_numeric_string(tokens(k)) )
-                {
-                    result += tokens(k) + " ";
-                }
+                documents_words(i)(j).clear();
             }
-
-            document(j) = result;
-*/
         }
-
-        documents(i) = document;
     }
 }
 
@@ -3819,11 +3837,14 @@ void stem(Tensor<string, 1>& words)
 
 void stem(Tensor<Tensor<string, 1>, 1>& words)
 {
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < words.size(); i++)
     {
-        stem(words(i));
+        for(Index j = 0; j < words(i).size(); j++)
+        {
+            stem(words(i)(j));
+        }
     }
 }
 

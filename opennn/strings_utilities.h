@@ -281,6 +281,8 @@ namespace opennn
     void stem(Tensor<string, 1>&);
     void stem(Tensor<Tensor<string, 1>, 1>&);
 
+
+
     void print_tokens(const Tensor<Tensor<string,1>,1>&);
 }
 
