@@ -563,15 +563,15 @@ bool starts_with(const string& word, const string& starting)
 /// @param word Word to check.
 /// @param ending Substring to comparison given word.
 
-bool ends_with(const string& word, const string& ending)
-{
-    if(ending.length() > word.length())
-    {
-        return false;
-    }
+//bool ends_with(const string& word, const string& ending)
+//{
+//    if(ending.length() > word.length())
+//    {
+//        return false;
+//    }
 
-    return(word.substr(word.length() - ending.length()) == ending);
-}
+//    return(word.substr(word.length() - ending.length()) == ending);
+//}
 
 
 /// Returns true if a word ending with a given substring Tensor, and false otherwise.
@@ -2593,77 +2593,6 @@ void delete_words(Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>&
 }
 
 
-
-
-/*
-/// Returns the language selected.
-
-Language get_language()
-{
-    return lang;
-}
-
-
-/// Returns the language selected in string format.
-
-string get_language_string()
-{
-    if(lang == ENG)
-    {
-        return "ENG";
-    }
-    else if(lang == SPA)
-    {
-        return "SPA";
-    }
-    else
-    {
-        return string();
-    }
-}
-
-
-/// Returns the stop words.
-
-Tensor<string, 1> get_stop_words()
-{
-    return stop_words;
-}
-
-
-/// Sets a stop words.
-/// @param new_stop_words String Tensor with the new stop words.
-
-void set_stop_words(const Tensor<string, 1>& new_stop_words)
-{
-    stop_words = new_stop_words;
-}
-
-
-void set_separator(const string& new_separator)
-{
-    if(new_separator == "Semicolon")
-    {
-        separator = ";";
-    }
-    else if(new_separator == "Tab")
-    {
-        separator = "\t";
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextAnalytics class.\n"
-               << "void set_separator(const string&) method.\n"
-               << "Unknown separator: " << new_separator << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
-}
-*/
-
-
 /// Delete short words from the documents
 /// @param minimum_length Minimum length of the words that new documents must have(including herself)
 
@@ -2677,18 +2606,15 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
 
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string,1> new_document_words;
-
         for(Index j = 0; j < documents_words(i).size(); j++)
         {
-            if(documents_words(i)(j).length() >= minimum_length
-            && documents_words(i)(j).length() <= maximum_length)
+            const Index length = documents_words(i)(j).length();
+
+            if(length >= minimum_length || length <= maximum_length)
             {
-                push_back_string(new_document_words, documents_words(i)(j));
+                documents_words(i)(j).clear();
             }
         }
-
-        documents_words(i) = new_document_words;
     }
 }
 
@@ -3745,6 +3671,159 @@ void print_tokens(const Tensor<Tensor<string,1>,1>& tokens)
         }
 
         cout << endl;
+    }
+}
+
+bool is_vowel(char ch)
+{
+    return ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u';
+}
+
+bool ends_with(const string& word, const string& suffix)
+{
+    return word.length() >= suffix.length() && word.compare(word.length() - suffix.length(), suffix.length(), suffix) == 0;
+}
+
+int measure(const string& word)
+{
+    int count = 0;
+    bool vowel_seen = false;
+    for (char ch : word)
+    {
+        if(is_vowel(ch))
+        {
+            vowel_seen = true;
+        } else if(vowel_seen)
+        {
+            count++;
+            vowel_seen = false;
+        }
+    }
+
+    return count;
+}
+
+
+bool contains_vowel(const string& word)
+{
+    for (char ch : word)
+    {
+        if(is_vowel(ch))
+            return true;
+    }
+
+    return false;
+}
+
+
+bool is_double_consonant(const string& word)
+{
+    if(word.length() < 2) return false;
+
+    char last = word[word.length() - 1];
+
+    char second_last = word[word.length() - 2];
+
+    return last == second_last && !is_vowel(last);
+}
+
+
+bool is_consonant_vowel_consonant(const string& word)
+{
+    if(word.length() < 3) return false;
+    char last = word[word.length() - 1];
+    char second_last = word[word.length() - 2];
+    char third_last = word[word.length() - 3];
+    return !is_vowel(last) && is_vowel(second_last) && !is_vowel(third_last) && last != 'w' && last != 'x' && last != 'y';
+}
+
+
+// Porter Stemmer algorithm
+
+string stem(const string& word)
+{
+    string result = word;
+
+    if(result.length() <= 2) return result;
+
+    // Convert to lowercase
+    transform(result.begin(), result.end(), result.begin(), ::tolower);
+
+    // Step 1a
+    if(ends_with(result, "sses"))
+    {
+        result = result.substr(0, result.length() - 2);
+    }
+    else if(ends_with(result, "ies"))
+    {
+        result = result.substr(0, result.length() - 2);
+    }
+    else if(ends_with(result, "ss"))
+    {
+        // Do nothing
+    }
+    else if(ends_with(result, "s"))
+    {
+        result = result.substr(0, result.length() - 1);
+    }
+
+    // Step 1b
+
+    if(ends_with(result, "eed"))
+    {
+        if(measure(result.substr(0, result.length() - 3)) > 0)
+        {
+            result = result.substr(0, result.length() - 1);
+        }
+    }
+    else if((ends_with(result, "ed") || ends_with(result, "ing"))
+             && contains_vowel(result.substr(0, result.length() - 2)))
+    {
+        result = result.substr(0, result.length() - (ends_with(result, "ed") ? 2 : 3));
+        if(ends_with(result, "at") || ends_with(result, "bl") || ends_with(result, "iz"))
+        {
+            result += "e";
+        }
+        else if(is_double_consonant(result))
+        {
+            result = result.substr(0, result.length() - 1);
+        }
+        else if(measure(result) == 1 && is_consonant_vowel_consonant(result))
+        {
+            result += "e";
+        }
+    }
+
+    // Step 1c
+
+    if(ends_with(result, "y") && contains_vowel(result.substr(0, result.length() - 1)))
+    {
+        result[result.length() - 1] = 'i';
+    }
+
+    // Additional steps can be added here following the Porter Stemmer algorithm
+
+    return result;
+}
+
+
+void stem(Tensor<string, 1>& words)
+{
+
+    for(Index i = 0; i < words.size(); i++)
+    {
+        words(i) = stem(words(i));
+    }
+}
+
+
+void stem(Tensor<Tensor<string, 1>, 1>& words)
+{
+#pragma omp parallel for
+
+    for(Index i = 0; i < words.size(); i++)
+    {
+        stem(words(i));
     }
 }
 
