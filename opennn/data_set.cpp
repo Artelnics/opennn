@@ -6381,7 +6381,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
         const Index input_index = input_raw_variables_indices(i);
-
         const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_index, used_samples_indices);
 
         for(Index j = 0; j < target_raw_variables_number; j++)
@@ -6390,7 +6389,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_samples_indices);
 
-            correlations(i,j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            //correlations(i,j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
 

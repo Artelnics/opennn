@@ -1257,9 +1257,9 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_raw_variables_indices.setValues({4});
 
     data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
-/*
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
+    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+/*
     assert_true(input_target_correlations(1,0).r < 1, LOG);
     assert_true(input_target_correlations(1,0).form == Correlation::Form::Logistic, LOG);
 */
