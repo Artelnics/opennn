@@ -52,9 +52,9 @@ public:
 
     void read_txt();
 
-    Tensor<Tensor<string, 1>, 1> apply_english_stemmer(const Tensor<Tensor<string, 1>, 1>&) const;
+    Tensor<Tensor<string, 1>, 1> stem(const Tensor<Tensor<string, 1>, 1>&) const;
 
-    void load_documents();
+
 
 private:
 

@@ -265,6 +265,22 @@ namespace opennn
 
 //    Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&);
 
+    bool is_vowel(char);
+
+    bool ends_with(const string&, const string&);
+
+    int measure(const string&);
+
+    bool contains_vowel(const string&);
+
+    bool is_double_consonant(const string&);
+
+    bool is_consonant_vowel_consonant(const string&);
+
+    string stem(const string&);
+    void stem(Tensor<string, 1>&);
+    void stem(Tensor<Tensor<string, 1>, 1>&);
+
     void print_tokens(const Tensor<Tensor<string,1>,1>&);
 }
 
