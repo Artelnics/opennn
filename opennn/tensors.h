@@ -133,6 +133,7 @@ Index count_NAN(const Tensor<type, 2>&);
 //Index count_true(const Tensor<bool, 1>&);
 
 Index count_empty(const Tensor<string, 1>&);
+Index count_not_empty(const Tensor<string, 1>&);
 
 Index count_less_than(const Tensor<Index, 1>&, const Index&);
 Index count_between(Tensor<type, 1>&, const type&, const type&);
