@@ -52,7 +52,6 @@ public:
 
     void read_txt();
 
-    Tensor<Tensor<string, 1>, 1> stem(const Tensor<Tensor<string, 1>, 1>&) const;
 
 
 
