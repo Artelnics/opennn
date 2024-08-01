@@ -2055,12 +2055,12 @@ void TextDataSet::read_txt()
     delete_emails(documents_words);
 
     delete_numbers(documents_words);
+
     delete_blanks(documents_words);
 
     stem(documents_words);
 
 //    print_tokens(documents_words);
-
 
     cout << "Calculating wordbag..." << endl;
 
@@ -2151,6 +2151,7 @@ void TextDataSet::read_txt()
 
 //    for(Index i = 0; i < get_input_raw_variables_number(); i++)
 //        set_raw_variable_type(i, RawVariableType::Numeric);
+
 }
 
 }
