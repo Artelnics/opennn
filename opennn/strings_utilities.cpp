@@ -2176,18 +2176,15 @@ Tensor<type, 2> str_to_input(const string& input_string)
 
 /// Calculate the total number of tokens in the documents.
 
-Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents, const string& separator)
+Index count_tokens(const Tensor<Tensor<string, 1>, 1>& tokens)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = tokens.size();
 
     Index count = 0;
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents(i).size(); j++)
-        {
-            count += count_tokens(documents(i)(j), separator);
-        }
+        count += tokens(i).size();
     }
 
     return count;
@@ -2196,11 +2193,11 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents, const string& 
 
 /// Returns a Tensor with all the words as elements keeping the order.
 
-Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents, const string& separator)
+Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents_tokens)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = documents_tokens.size();
 
-    const Index total_tokens_number = count_tokens(documents, separator);
+    const Index total_tokens_number = count_tokens(documents_tokens);
 
     Tensor<string, 1> total_tokens(total_tokens_number);
 
@@ -2208,16 +2205,11 @@ Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents, con
 
     for(Index i = 0; i < documents_number; i++)
     {
-        //const Index tokens_num
+        copy(documents_tokens(i).data(),
+             documents_tokens(i).data() + documents_tokens(i).size(),
+             total_tokens.data() + position);
 
-        for(Index j = 0; j < documents(i).dimension(0); j++)
-        {
-            const Tensor<string, 1> tokens = get_tokens(documents(i)(j), separator);
-
-            copy(tokens.data(), tokens.data() + tokens.size(), total_tokens.data() + position);
-
-            position += tokens.size();
-        }
+        position += documents_tokens(i).size();
     }
 
     return total_tokens;
@@ -2294,13 +2286,30 @@ void delete_blanks(Tensor<string, 1>& words)
 }
 
 
-void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
+void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
 {
-    const Index documents_number = tokens.size();
+    const Index documents_number = documents_tokens.size();
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
-        delete_blanks(tokens(i));
+        const Index new_size = count_not_empty(documents_tokens(i));
+
+        Tensor<string, 1> new_document_tokens(new_size);
+
+        Index index = 0;
+
+        for(Index j = 0; j < documents_tokens(i).size(); j++)
+        {
+            if(!documents_tokens(i)(j).empty())
+            {
+                new_document_tokens(index) = documents_tokens(i)(j);
+                index++;
+            }
+        }
+
+        documents_tokens(i) = new_document_tokens;
     }
 }
 
@@ -2582,13 +2591,30 @@ void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& d
 /// Delete the words we want from the documents
 /// @param delete_words Tensor of words we want to delete
 
-void delete_words(Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>& delete_words) 
+void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<string, 1>& deletion_words)
 {
-    const Index documents_number = tokens.size();
+    const Index documents_number = documents_words.size();
+
+    const Index deletion_words_number = deletion_words.size();
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
-        filter_not_equal_to(tokens(i), delete_words);
+        for(Index j = 0; j < documents_words(i).size(); j++)
+        {
+            const string word = documents_words(i)(j);
+
+            for(Index k = 0; k < deletion_words_number; k++)
+            {
+                if(word == deletion_words(k))
+                {
+                    documents_words(i)(j).clear();
+
+                    continue;
+                }
+            }
+        }
     }
 }
 
@@ -2610,7 +2636,7 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
         {
             const Index length = documents_words(i)(j).length();
 
-            if(length >= minimum_length || length <= maximum_length)
+            if(length <= minimum_length || length >= maximum_length)
             {
                 documents_words(i)(j).clear();
             }
@@ -2621,37 +2647,21 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
 
 /// Delete the numbers of the documents.
 
-void delete_numbers(Tensor<Tensor<string,1>,1>& documents)
+void delete_numbers(Tensor<Tensor<string,1>,1>& documents_words)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = documents_words.size();
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string, 1> document = documents(i);
-
-        const Index document_size = document.size();
-
-        for(Index j = 0; j < document_size; j++)
+        for(Index j = 0; j < documents_words(i).size(); j++)
         {
-/*
-            Tensor<string,1> tokens = get_tokens(document(j));
-
-            string result;
-
-            for(Index k = 0; k < tokens.size(); k++)
+            if(is_numeric_string(documents_words(i)(j)))
             {
-                if(!is_numeric_string(tokens(k)) )
-                {
-                    result += tokens(k) + " ";
-                }
+                documents_words(i)(j).clear();
             }
-
-            document(j) = result;
-*/
         }
-
-        documents(i) = document;
     }
 }
 
@@ -2829,17 +2839,15 @@ string get_rv(const string& word, const Tensor<string,1>& vowels)
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
 
-WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens, const string& separator)
+WordBag calculate_word_bag(const Tensor<string,1>& words)
 {
     WordBag word_bag;
 
-    const Tensor<string, 1> total = tokens_list(tokens, separator);
-
-    const Tensor<Index, 1> count = count_unique(total);
+    const Tensor<Index, 1> count = count_unique(words);
 
     const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
 
-    word_bag.words =  sort_by_rank(get_unique_elements(total), descending_rank);
+    word_bag.words = sort_by_rank(get_unique_elements(words), descending_rank);
 
     word_bag.frequencies = sort_by_rank(count, descending_rank);
 
@@ -3819,11 +3827,14 @@ void stem(Tensor<string, 1>& words)
 
 void stem(Tensor<Tensor<string, 1>, 1>& words)
 {
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < words.size(); i++)
     {
-        stem(words(i));
+        for(Index j = 0; j < words(i).size(); j++)
+        {
+            stem(words(i)(j));
+        }
     }
 }
 
