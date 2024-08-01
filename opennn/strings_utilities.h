@@ -121,8 +121,8 @@ namespace opennn
 
     // Preprocess methods
 
-    Index count_tokens(const Tensor<Tensor<string, 1>, 1>&, const string&);
-    Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>&, const string&);
+    Index count_tokens(const Tensor<Tensor<string, 1>, 1>&);
+    Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>&);
     void to_lower(string&);
     void to_lower(Tensor<string, 1>&);
     void to_lower(Tensor<Tensor<string, 1>, 1>&);
@@ -241,7 +241,7 @@ namespace opennn
     /// It is a simplifying representation where a text(such as a sentence or a document) is represented
     /// as the bag(multiset) of its words, disregarding grammar and even word order but keeping multiplicity.
 
-    WordBag calculate_word_bag(const Tensor<Tensor<string, 1>, 1>&, const string& separator);
+    WordBag calculate_word_bag(const Tensor<string, 1>&);
 
 //    WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&);
 
@@ -281,7 +281,9 @@ namespace opennn
     void stem(Tensor<string, 1>&);
     void stem(Tensor<Tensor<string, 1>, 1>&);
 
-    void print_tokens(const Tensor<Tensor<string,1>,1>&);
+
+
+        void print_tokens(const Tensor<Tensor<string,1>,1>&);
 }
 
 #endif // OPENNNSTRINGS_H

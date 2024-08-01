@@ -1673,6 +1673,26 @@ Index count_empty(const Tensor<string, 1>& strings)
 }
 
 
+Index count_not_empty(const Tensor<string, 1>& strings)
+{
+    const Index strings_number = strings.size();
+
+    Index count = 0;
+
+    for( Index i = 0; i < strings_number; i++)
+    {
+        string element = strings(i);
+
+        trim(element);
+
+        if(!element.empty()) count++;
+    }
+
+    return count;
+}
+
+
+
 void check_size(const Tensor<type, 1>& vector, const Index& size, const string& log)
 {
     if(vector.size() != size)
