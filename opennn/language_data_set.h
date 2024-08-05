@@ -84,16 +84,16 @@ public:
     void import_vocabulary(const string&, Tensor<string, 1>&);
 
     const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens,
-                                                 int vocabulary_size,
+                                                 const Index& vocabulary_size,
                                                  const vector<string>& reserved_tokens,
-                                                 int upper_threshold = 10000000,
-                                                 int lower_threshold = 10,
-                                                 int iterations_number = 4,
-                                                 int max_input_tokens = 5000000,
-                                                 int max_token_length = 50,
-                                                 int max_unique_chars = 1000,
-                                                 float slack_ratio = 0.05,
-                                                 bool include_joiner_token = true,
+                                                 const Index& upper_threshold = 10000000,
+                                                 const Index& lower_threshold = 10,
+                                                 const Index& iterations_number = 4,
+                                                 const Index& max_input_tokens = 5000000,
+                                                 const Index& max_token_length = 50,
+                                                 const Index& max_unique_chars = 1000,
+                                                 const float& slack_ratio = 0.05,
+                                                 const bool& include_joiner_token = true,
                                                  const string& joiner = "##");
 
     void load_documents(const string&);

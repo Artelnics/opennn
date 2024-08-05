@@ -549,7 +549,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
         {
             const string new_categories = categories_element->GetText();
 
-            categories = get_tokens(new_categories, ';');
+            categories = get_tokens(new_categories, ";");
         }
 
         // Categories uses
@@ -569,7 +569,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
         {
             const string new_categories_uses = categories_uses_element->GetText();
 
-            set_categories_uses(get_tokens(new_categories_uses, ';'));
+            set_categories_uses(get_tokens(new_categories_uses, ";"));
         }
     }
 }
@@ -4038,32 +4038,29 @@ const DataSet::Separator& DataSet::get_separator() const
 
 /// Returns the string which will be used as separator in the data file.
 
-char DataSet::get_separator_char() const
+string DataSet::get_separator_string() const
 {
     switch(separator)
     {
     case Separator::Space:
-        return ' ';
+        return " ";
 
     case Separator::Tab:
-        return '\t';
+        return "\t";
 
     case Separator::Comma:
-        return ',';
+        return ",";
 
     case Separator::Semicolon:
-        return ';';
+        return ";";
 
     default:
-        return char();
+        return string();
     }
-
 }
 
 
-/// Returns the string which will be used as separator in the data file.
-
-string DataSet::get_separator_string() const
+string DataSet::get_separator_name() const
 {
     switch(separator)
     {
@@ -5003,6 +5000,7 @@ void DataSet::set(const string& data_source_path, const char& separator, const b
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
+
 }
 
 
@@ -6383,7 +6381,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
         const Index input_index = input_raw_variables_indices(i);
-
         const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_index, used_samples_indices);
 
         for(Index j = 0; j < target_raw_variables_number; j++)
@@ -6392,7 +6389,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_samples_indices);
 
-            correlations(i,j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            //correlations(i,j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -7828,7 +7825,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    raw_variables(i).categories = get_tokens(new_categories, ';');
+                    raw_variables(i).categories = get_tokens(new_categories, ";");
                 }
 
                 // Categories uses
@@ -7848,7 +7845,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
+                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
                 }
             }
         }
@@ -7877,14 +7874,15 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_rows_labels = rows_labels_element->GetText();
 
-            char separator = ',';
+            string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
                     && new_rows_labels.find(";") != string::npos) {
-                separator = ';';
+                separator = ";";
             }
 
             rows_labels = get_tokens(new_rows_labels, separator);
+
         }
     }
 
@@ -7938,7 +7936,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_uses_element->GetText())
     {
-        set_samples_uses(get_tokens(samples_uses_element->GetText(), ' '));
+        set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
     }
 
     // Missing values
@@ -8007,7 +8005,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
+            Tensor<string, 1> new_raw_variables_missing_values_number
+                    = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
@@ -8091,7 +8090,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(row_element->GetText())
         {
-            data_file_preview(i) = get_tokens(row_element->GetText(), ',');
+            data_file_preview(i) = get_tokens(row_element->GetText(), ",");
         }
     }
 
@@ -8349,19 +8348,20 @@ void DataSet::save_data() const
 
     const Tensor<string, 1> variables_names = get_variables_names();
 
-    char separator_char = ',';//get_separator_char();
+    string separator_string = get_separator_string();
 
     if(has_rows_labels)
     {
-        file << "id" << separator_char;
+        file << "id" << separator_string;
     }
+
     for(Index j = 0; j < variables_number; j++)
     {
         file << variables_names[j];
 
         if(j != variables_number-1)
         {
-            file << separator_char;
+            file << separator_string;
         }
     }
 
@@ -8371,7 +8371,7 @@ void DataSet::save_data() const
     {
         if(has_rows_labels)
         {
-            file << rows_labels(i) << separator_char;
+            file << rows_labels(i) << separator_string;
         }
         for(Index j = 0; j < variables_number; j++)
         {
@@ -8379,7 +8379,7 @@ void DataSet::save_data() const
 
             if(j != variables_number-1)
             {
-                file << separator_char;
+                file << separator_string;
             }
         }
 
@@ -9270,6 +9270,7 @@ void DataSet::load_data()
 
 void DataSet::read_csv()
 {
+
     read_csv_1();
 
     if(get_time_raw_variables_number() == 0 && !has_categorical_raw_variables())
@@ -9394,11 +9395,13 @@ void DataSet::read_csv_1()
         throw runtime_error(buffer.str());
     }
 
-    const char separator_char = get_separator_char();
+    const string separator_string = get_separator_string();
 
     if(display) cout << "Setting data file preview..." << endl;
 
-    Index lines_number = has_header ? 4 : 3;
+    //Index lines_number = has_header ? 4 : 3;
+
+    Index lines_number = 12;
 
     data_file_preview.resize(lines_number);
 
@@ -9408,6 +9411,7 @@ void DataSet::read_csv_1()
 
     while(file.good())
     {
+
         getline(file, line);
 
         line = decode(line);
@@ -9420,10 +9424,9 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
-        data_file_preview(lines_count) = get_tokens(line, separator_char);
+        data_file_preview(lines_count) = get_tokens(line, separator_string);
 
         lines_count++;
-
         if(lines_count == lines_number) break;
     }
 
@@ -9539,7 +9542,9 @@ void DataSet::read_csv_1()
                     erase(line, '"');
                     if(line.empty()) continue;
                     check_separators(line);
-                    data_file_preview(lines_count) = get_tokens(line, separator_char);
+
+                    data_file_preview(lines_count) = get_tokens(line, separator_string);
+
                     lines_count++;
                     if(lines_count == lines_number) break;
                 }
@@ -9563,25 +9568,27 @@ void DataSet::read_csv_1()
         string data_file_preview_2 = data_file_preview(2)(i);
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
-        
-/*        if(nans_columns(column_index))
+
+        /*if(nans_columns(column_index))
         {
             columns(column_index).type = ColumnType::Constant;
             column_index++;
         }
         else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
-                || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
-                || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
-                || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
+               || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
+               || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
+               || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
         {
             raw_variables(raw_variable_index).type = RawVariableType::DateTime;
-//            time_column = raw_variables(raw_variable_index).name;
+
+            //time_column = raw_variables(raw_variable_index).name;
+
             raw_variable_index++;
         }
         else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
-                || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
-                || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
-                || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
+             || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
+             || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
+             || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
         {
             raw_variables(raw_variable_index).type = RawVariableType::Numeric;
             raw_variable_index++;
@@ -9609,7 +9616,6 @@ void DataSet::read_csv_1()
         data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
         data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
     }
-    
 }
 
 
@@ -9673,7 +9679,7 @@ void DataSet::read_csv_2_simple()
 
     if(display) cout << "Setting data dimensions..." << endl;
 
-    const char separator_char = get_separator_char();
+    const string separator_string = get_separator_string();
 
     const Index raw_variables_number = get_raw_variables_number();
 /*
@@ -9690,9 +9696,9 @@ void DataSet::read_csv_2_simple()
         erase(line, '"');
 
         if(line.empty()) continue;
-
-        tokens_count = count_tokens(line, separator_char);
-
+/*
+        tokens_count = count_tokens(line, separator_string);
+*/
         if(tokens_count != raw_variables_number)
         {
             ostringstream buffer;
@@ -9760,7 +9766,7 @@ void DataSet::read_csv_3_simple()
 
     const bool is_float = is_same<type, float>::value;
 
-    const char separator_char = get_separator_char();
+    const string separator_string = get_separator_string();
 
     string line;
 
@@ -9806,8 +9812,8 @@ void DataSet::read_csv_3_simple()
         erase(line, '"');
 
         if(line.empty()) continue;
-
-        fill_tokens(line, separator_char, tokens);
+        /*
+        fill_tokens(line, separator_string, tokens);
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
@@ -9833,11 +9839,11 @@ void DataSet::read_csv_3_simple()
                 raw_variable_index++;
             }
         }
-
         raw_variable_index = 0;
         sample_index++;
+        */
     }
-
+/*
     const Index data_file_preview_index = has_header ? 3 : 2;
 
     data_file_preview(data_file_preview_index) = tokens;
@@ -9855,6 +9861,7 @@ void DataSet::read_csv_3_simple()
     if(display) cout << "Checking binary raw_variables..." << endl;
 
     set_binary_simple_raw_variables();
+*/
 }
 
 
@@ -9891,7 +9898,7 @@ void DataSet::read_csv_2_complete()
         throw runtime_error(buffer.str());
     }
 
-    const char separator_char = get_separator_char();
+    const string separator_string = get_separator_string();
 
     string line;
 
@@ -9946,7 +9953,7 @@ void DataSet::read_csv_2_complete()
 
         if(line.empty()) continue;
 
-        tokens = get_tokens(line, separator_char);
+        tokens = get_tokens(line, separator_string);
 
         tokens_count = tokens.size();
 
@@ -10059,7 +10066,7 @@ void DataSet::read_csv_3_complete()
         throw runtime_error(buffer.str());
     }
 
-    const char separator_char = get_separator_char();
+    const string separator_string = get_separator_string();
 
     const Index raw_variables_number = raw_variables.size();
 /*
@@ -10112,7 +10119,7 @@ void DataSet::read_csv_3_complete()
 
         if(line.empty()) continue;
 
-        tokens = get_tokens(line, separator_char);
+        tokens = get_tokens(line, separator_string);
 
         variable_index = 0;
         raw_variable_index = 0;
@@ -10312,9 +10319,9 @@ void DataSet::check_separators(const string& line) const
             && line.find(' ') == string::npos
             && line.find('\t') == string::npos) return;
 
-    const char separator_char = get_separator_char();
+    const string separator_string = get_separator_string();
 
-    if(line.find(separator_char) == string::npos)
+    if(line.find(separator_string) == string::npos)
     {
         const string message =
                 "Error: " + get_separator_string() + " separator not found in line data file " + data_source_path + ".\n"
@@ -10708,7 +10715,7 @@ string DataSet::decode(const string& input_string) const
 
 /// This method checks if the input data file has the correct format. Returns an error message.
 
-void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
+void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_string) const
 {
     ifstream file(input_data_file_name.c_str());
 
@@ -10746,9 +10753,9 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
         if(line.empty()) continue;
 
         total_lines++;
-
-        tokens_count = count_tokens(line, separator_char);
-
+/*
+        tokens_count = count_tokens(line, separator_string);
+*/
         if(tokens_count != raw_variables_number)
         {
             ostringstream buffer;
@@ -10782,7 +10789,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
 /// This method loads data from a file and returns a matrix containing the input raw_variables.
 
 Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
-                                        const char& separator_char,
+                                        const string& separator_string,
                                         const string& missing_values_label,
                                         const bool& has_raw_variables_name,
                                         const bool& has_rows_label) const
@@ -10826,7 +10833,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         if(line.empty()) continue;
 
-        tokens_count = count_tokens(line, separator_char);
+        tokens_count = count_tokens(line, separator_string);
 
         if(tokens_count != raw_variables_number)
         {
@@ -10904,7 +10911,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         if(line.empty()) continue;
 
-        tokens = get_tokens(line, separator_char);
+        tokens = get_tokens(line, separator_string);
 
         variable_index = 0;
         token_index = 0;

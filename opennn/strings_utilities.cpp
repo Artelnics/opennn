@@ -6,8 +6,22 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+#include <math.h>
+#include <regex>
+#include <iostream>
+#include <stdlib.h>
+#include <algorithm>
+//#include <string_view>
+#include <cctype>
+#include <iomanip>
+//#include <set>
+//#include <unordered_set>
+//#include <map>
+//#include <numeric>
+//#include <tuple>
+
 #include "strings_utilities.h"
-#include "opennn.h"
+//#include "opennn.h"
 #include "word_bag.h"
 #include "tensors.h"
 
@@ -18,37 +32,37 @@ namespace opennn
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
 
-Index count_tokens(string& text, const char& separator)
-{
-    trim(text);
+//Index count_tokens(string& text, const char& separator)
+//{
+//    trim(text);
 
-    Index tokens_count = 0;
+//    Index tokens_count = 0;
 
     // Skip delimiters at beginning.
 
-    string::size_type last_position = text.find_first_not_of(separator, 0);
+//    string::size_type last_position = text.find_first_not_of(separator, 0);
 
     // Find first "non-delimiter".
 
-    string::size_type position = text.find_first_of(separator, last_position);
+//    string::size_type position = text.find_first_of(separator, last_position);
 
-    while(string::npos != position || string::npos != last_position)
-    {
+//    while(string::npos != position || string::npos != last_position)
+//    {
         // Found a token, add it to the vector
 
-        tokens_count++;
+//        tokens_count++;
 
         // Skip delimiters.  Note the "not_of"
 
-        last_position = text.find_first_not_of(separator, position);
+//        last_position = text.find_first_not_of(separator, position);
 
         // Find next "non-delimiter"
 
-        position = text.find_first_of(separator, last_position);
-    }
+//        position = text.find_first_of(separator, last_position);
+//    }
 
-    return tokens_count;
-}
+//    return tokens_count;
+//}
 
 
 Index count_tokens(const string& text, const char& separator)
@@ -73,59 +87,59 @@ Index count_tokens(const string& text, const char& separator)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-Tensor<string, 1> get_tokens(const string& text, const char& separator)
-{
-    const Index tokens_number = count_tokens(text, separator);
+//Tensor<string, 1> get_tokens(const string& text, const char& separator)
+//{
+//    const Index tokens_number = count_tokens(text, separator);
 
-    Tensor<string, 1> tokens(tokens_number);
+//    Tensor<string, 1> tokens(tokens_number);
 
     // Skip delimiters at beginning.
 
-    string::size_type last_position = text.find_first_not_of(separator, 0);
+//    string::size_type last_position = text.find_first_not_of(separator, 0);
 
     // Find first "non-delimiter"
 
-    Index index = 0;
-    Index old_position = last_position;
+//    Index index = 0;
+//    Index old_position = last_position;
 
-    string::size_type position = text.find_first_of(separator, last_position);
+//    string::size_type position = text.find_first_of(separator, last_position);
 
-    while(string::npos != position || string::npos != last_position)
-    {
-        if(last_position - old_position != 1
-        && index != 0)
-        {
-            index++;
-            old_position++;
-            continue;
-        }
+//    while(string::npos != position || string::npos != last_position)
+//    {
+//        if(last_position - old_position != 1
+//        && index != 0)
+//        {
+//            index++;
+//            old_position++;
+//            continue;
+//        }
 
-        // Found a token, add it to the vector
+// Found a token, add it to the vector
 
-        tokens[index] = text.substr(last_position, position - last_position);
+//        tokens[index] = text.substr(last_position, position - last_position);
 
-        old_position = position;
+//        old_position = position;
 
-        // Skip delimiters. Note the "not_of"
+// Skip delimiters. Note the "not_of"
 
-        last_position = text.find_first_not_of(separator, position);
+//        last_position = text.find_first_not_of(separator, position);
 
-        // Find next "non-delimiter"
+// Find next "non-delimiter"
 
-        position = text.find_first_of(separator, last_position);
+//        position = text.find_first_of(separator, last_position);
 
-        index++;
-    }
+//        index++;
+//    }
 
-    return tokens;
-}
+//    return tokens;
+//}
 
 
 /// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-void fill_tokens(const string& text, const char& separator, Tensor<string, 1>& tokens)
+void fill_tokens(const string& text, const string& separator, Tensor<string, 1>& tokens)
 {
     tokens.setConstant("");
 
@@ -215,13 +229,54 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
 
     Tensor<string,1> tokens(tokens_number);
 
-//    string str = s;
-    size_t position = 0;
-    size_t last_position = 0;
-    Index i = 0;
+    // Skip delimiters at beginning.
 
-    while(position = text.find(separator,position) != string::npos)
+    string::size_type last_position = text.find_first_not_of(separator, 0);
+
+    // Find first "non-delimiter"
+
+    Index index = 0;
+    Index old_position = last_position;
+
+    string::size_type position = text.find_first_of(separator, last_position);
+
+    while(string::npos != position || string::npos != last_position)
     {
+        if(last_position - old_position != 1 && index != 0)
+        {
+            index++;
+            old_position++;
+            continue;
+        }
+
+        // Found a token, add it to the vector
+
+        tokens[index] = text.substr(last_position, position - last_position);
+
+        old_position = position;
+
+        // Skip delimiters. Note the "not_of"
+
+        last_position = text.find_first_not_of(separator, position);
+
+        // Find next "non-delimiter"
+
+        position = text.find_first_of(separator, last_position);
+
+        index++;
+    }
+
+/*
+    //    string str = s;
+//    size_t position = 0;
+    size_t last_position = 0;
+    Index index = 0;
+
+    string::size_type position = 0;
+
+    while(text.find(separator, position) != string::npos)
+    {
+
         if(position == 0) // Skip first position
         {
             position += separator.length();
@@ -229,25 +284,25 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
             continue;
         }
 
-        tokens(i) = text.substr(last_position, position - last_position);
+        tokens(index) = text.substr(last_position, position - last_position);
 
         position += separator.length();
         last_position = position;
-        i++;
+        index++;
     }
 
-    if(last_position != text.length()) // Reading last element
+    if(last_position != text.length())
     {
-        tokens(i) = text.substr(last_position, text.length() - last_position);
+        tokens(index) = text.substr(last_position, text.length() - last_position);
     }
-
+*/
     return tokens;
 }
 
 
 /// Returns a new vector with the elements of this string vector casted to type.
 
-Tensor<type, 1> to_type_vector(const string& text, const char& separator)
+Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 {
     const Tensor<string, 1> tokens = get_tokens(text, separator);
 
@@ -277,8 +332,7 @@ Tensor<type, 1> to_type_vector(const string& text, const char& separator)
 
 /// Returns a new vector with the elements of this string vector casted to type.
 
-
-Tensor<Index, 1> to_index_vector(const string& text, const char& separator)
+Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 {
     const Tensor<string, 1> tokens = get_tokens(text, separator);
 
@@ -318,7 +372,7 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
         }
     }
 
-    return get_tokens(result,' ');
+    return get_tokens(result, " ");
 }
 
 
@@ -509,15 +563,15 @@ bool starts_with(const string& word, const string& starting)
 /// @param word Word to check.
 /// @param ending Substring to comparison given word.
 
-bool ends_with(const string& word, const string& ending)
-{
-    if(ending.length() > word.length())
-    {
-        return false;
-    }
+//bool ends_with(const string& word, const string& ending)
+//{
+//    if(ending.length() > word.length())
+//    {
+//        return false;
+//    }
 
-    return(word.substr(word.length() - ending.length()) == ending);
-}
+//    return(word.substr(word.length() - ending.length()) == ending);
+//}
 
 
 /// Returns true if a word ending with a given substring Tensor, and false otherwise.
@@ -1286,27 +1340,27 @@ vector<string> get_words_in_a_string(string str)
 ///@return
 
 
-int WordOccurrence(char *sentence, char *word)
-{
-    int slen = strlen(sentence);
-    int wordlen = strlen(word);
-    int count = 0;
-    int i, j;
+//int WordOccurrence(char *sentence, char *word)
+//{
+//    int slen = strlen(sentence);
+//    int wordlen = strlen(word);
+//    int count = 0;
+//    int i, j;
 
-    for(i = 0; i<slen; i++)
-    {
-        for(j = 0; j<wordlen; j++)
-        {
-            if(sentence[i+j]!=word[j])
-            break;
-        }
-        if(j==wordlen)
-        {
-            count++;
-        }
-    }
-    return count;
-}
+//    for(i = 0; i<slen; i++)
+//    {
+//        for(j = 0; j<wordlen; j++)
+//        {
+//            if(sentence[i+j]!=word[j])
+//            break;
+//        }
+//        if(j==wordlen)
+//        {
+//            count++;
+//        }
+//    }
+//    return count;
+//}
 
 
 /// Removes whitespaces from the start and the end of the string passed as argument.
@@ -1668,7 +1722,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
         push_back_string(tokens, token);
     }
 
-    for(size_t i = 0; i < tokens.dimension(0); i++)
+    for(Index i = 0; i < tokens.dimension(0); i++)
     {
         string s = tokens(i);
         string word = "";
@@ -1690,9 +1744,9 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 
     if(new_variable != old_variable)
     {
-        int j = found_tokens.size();
+        Index j = found_tokens.size();
 
-        for(int i = dimension; i --> 0;)
+        for(Index i = dimension; i --> 0;)
         {
             j -= 1;
 
@@ -2122,18 +2176,15 @@ Tensor<type, 2> str_to_input(const string& input_string)
 
 /// Calculate the total number of tokens in the documents.
 
-Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
+Index count_tokens(const Tensor<Tensor<string, 1>, 1>& tokens)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = tokens.size();
 
     Index count = 0;
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents(i).size(); j++)
-        {
-            count += count_tokens(documents(i)(j));
-        }
+        count += tokens(i).size();
     }
 
     return count;
@@ -2142,11 +2193,11 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& documents)
 
 /// Returns a Tensor with all the words as elements keeping the order.
 
-Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
+Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents_tokens)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = documents_tokens.size();
 
-    const Index total_tokens_number = count_tokens(documents);
+    const Index total_tokens_number = count_tokens(documents_tokens);
 
     Tensor<string, 1> total_tokens(total_tokens_number);
 
@@ -2154,16 +2205,11 @@ Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents)
 
     for(Index i = 0; i < documents_number; i++)
     {
-        //const Index tokens_num
+        copy(documents_tokens(i).data(),
+             documents_tokens(i).data() + documents_tokens(i).size(),
+             total_tokens.data() + position);
 
-        for(Index j = 0; j < documents(i).dimension(0); j++)
-        {
-            const Tensor<string, 1> tokens = get_tokens(documents(i)(j));
-
-            copy(tokens.data(), tokens.data() + tokens.size(), total_tokens.data() + position);
-
-            position += tokens.size();
-        }
+        position += documents_tokens(i).size();
     }
 
     return total_tokens;
@@ -2198,32 +2244,32 @@ void to_lower(Tensor<Tensor<string, 1>, 1>& text)
 }
 
 
-Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents)
+Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents, const string& separator)
 {
     const Index documents_number = documents.size();
 
     Tensor<Tensor<string, 1>, 1> tokens(documents_number);
 
-    #pragma omp parallel for
+    //#pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
-        tokens(i) = get_tokens(documents(i));
+        tokens(i) = get_tokens(documents(i), separator);
     }
 
     return tokens;
 }
 
 
-void delete_blanks(Tensor<string, 1>& vector)
+void delete_blanks(Tensor<string, 1>& words)
 {
-    const Index words_number = vector.size();
+    const Index words_number = words.size();
 
-    const Index empty_number = count_empty(vector);
+    const Index empty_number = count_empty(words);
 
-    Tensor<string, 1> vector_copy(vector);
+    Tensor<string, 1> vector_copy(words);
 
-    vector.resize(words_number - empty_number);
+    words.resize(words_number - empty_number);
 
     Index index = 0;
 
@@ -2233,26 +2279,44 @@ void delete_blanks(Tensor<string, 1>& vector)
 
         if(!vector_copy(i).empty())
         {
-            vector(index) = vector_copy(i);
+            words(index) = vector_copy(i);
             index++;
         }
     }
 }
 
 
-void delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens)
+void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
 {
-    const Index documents_number = tokens.size();
+    const Index documents_number = documents_tokens.size();
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
-        delete_blanks(tokens(i));
+        const Index new_size = count_not_empty(documents_tokens(i));
+
+        Tensor<string, 1> new_document_tokens(new_size);
+
+        Index index = 0;
+
+        for(Index j = 0; j < documents_tokens(i).size(); j++)
+        {
+            if(!documents_tokens(i)(j).empty())
+            {
+                new_document_tokens(index) = documents_tokens(i)(j);
+                index++;
+            }
+        }
+
+        documents_tokens(i) = new_document_tokens;
     }
 }
 
 
 Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
 {
+/*
     Tensor<string, 1> documents_copy(documents);
 
     to_lower(documents_copy);
@@ -2266,6 +2330,8 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
     delete_non_alphanumeric(documents_copy);
 
     return get_tokens(documents_copy);
+*/
+    return Tensor<Tensor<string, 1>, 1>();
 }
 
 
@@ -2504,8 +2570,8 @@ void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& d
 {
     for(Index i = 0; i < document.size(); i++)
     {
-        const Index tokens_number = count_tokens(document(i), ' ');
-        const Tensor<string, 1> tokens = get_tokens(document(i), ' ');
+        const Index tokens_number = count_tokens(document(i), " ");
+        const Tensor<string, 1> tokens = get_tokens(document(i), " ");
 
         string result;
 
@@ -2525,236 +2591,77 @@ void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& d
 /// Delete the words we want from the documents
 /// @param delete_words Tensor of words we want to delete
 
-void delete_words(Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>& delete_words) 
+void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<string, 1>& deletion_words)
 {
-    const Index documents_number = tokens.size();
+    const Index documents_number = documents_words.size();
+
+    const Index deletion_words_number = deletion_words.size();
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
-        filter_not_equal_to(tokens(i), delete_words);
+        for(Index j = 0; j < documents_words(i).size(); j++)
+        {
+            const string word = documents_words(i)(j);
+
+            for(Index k = 0; k < deletion_words_number; k++)
+            {
+                if(word == deletion_words(k))
+                {
+                    documents_words(i)(j).clear();
+
+                    continue;
+                }
+            }
+        }
     }
-}
-
-
-
-
-/*
-/// Returns the language selected.
-
-Language get_language()
-{
-    return lang;
-}
-
-
-/// Returns the language selected in string format.
-
-string get_language_string()
-{
-    if(lang == ENG)
-    {
-        return "ENG";
-    }
-    else if(lang == SPA)
-    {
-        return "SPA";
-    }
-    else
-    {
-        return string();
-    }
-}
-
-
-/// Returns the stop words.
-
-Tensor<string, 1> get_stop_words()
-{
-    return stop_words;
-}
-
-
-// Set methods
-
-
-/// Sets a language.
-
-void set_language(const Language& new_language)
-{
-    lang = new_language;
-
-    if(lang == ENG)
-    {
-        set_english_stop_words();
-    }
-    else if(lang == SPA)
-    {
-        set_spanish_stop_words();
-    }
-    else
-    {
-        //        clear_stop_words();
-    }
-}
-
-/// Sets a language.
-
-void set_language(const string& new_language_string)
-{
-    if(new_language_string == "ENG")
-    {
-        set_language(ENG);
-    }
-    else if(new_language_string == "SPA")
-    {
-        set_language(SPA);
-    }
-    else
-    {
-        //        clear_stop_words();
-    }
-}
-
-
-/// Sets a stop words.
-/// @param new_stop_words String Tensor with the new stop words.
-
-void set_stop_words(const Tensor<string, 1>& new_stop_words)
-{
-    stop_words = new_stop_words;
-}
-
-
-void set_separator(const string& new_separator)
-{
-    if(new_separator == "Semicolon")
-    {
-        separator = ";";
-    }
-    else if(new_separator == "Tab")
-    {
-        separator = "\t";
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextAnalytics class.\n"
-               << "void set_separator(const string&) method.\n"
-               << "Unknown separator: " << new_separator << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
-}
-*/
-
-void delete_stop_words(Tensor<Tensor<string,1>,1>& tokens)
-{
-//    delete_words(tokens, stop_words);
 }
 
 
 /// Delete short words from the documents
 /// @param minimum_length Minimum length of the words that new documents must have(including herself)
 
-void delete_short_words(Tensor<Tensor<string,1>,1>& documents, const Index& minimum_length)
+void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
+                        const Index& minimum_length,
+                        const Index& maximum_length)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = documents_words.size();
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string,1> document = documents(i);
-
-        for(Index j = 0; j < document.size(); j++)
+        for(Index j = 0; j < documents_words(i).size(); j++)
         {
-            const Index tokens_number = count_tokens(document(j),' ');
-            const Tensor<string, 1> tokens = get_tokens(document(j), ' ');
+            const Index length = documents_words(i)(j).length();
 
-            string result;
-
-            for(Index k = 0; k < tokens_number; k++)
+            if(length <= minimum_length || length >= maximum_length)
             {
-                if( Index(tokens(k).length()) >= minimum_length )
-                {
-                    result += tokens(k) + " ";
-                }
+                documents_words(i)(j).clear();
             }
-
-            document(j) = result;
         }
-
-        documents(i) = document;
-    }
-}
-
-
-/// Delete short words from the documents
-/// @param maximum_length Maximum length of the words new documents must have(including herself)
-
-void delete_long_words(Tensor<Tensor<string,1>,1>& documents, const Index& maximum_length)
-{
-    const Index documents_number = documents.size();
-
-#pragma omp parallel for
-    for(Index i = 0; i < documents_number; i++)
-    {
-        Tensor<string,1> document = documents(i);
-
-        for(Index j = 0; j < document.size(); j++)
-        {
-            const Index tokens_number = count_tokens(document(j),' ');
-            const Tensor<string, 1> tokens = get_tokens(document(j), ' ');
-
-            string result;
-
-            for(Index k = 0; k < tokens_number; k++)
-            {
-                if( Index(tokens(k).length()) <= maximum_length )
-                {
-                    result += tokens(k) + " ";
-                }
-            }
-
-            document(j) = result;
-        }
-
-        documents(i) = document;
     }
 }
 
 
 /// Delete the numbers of the documents.
 
-void delete_numbers(Tensor<Tensor<string,1>,1>& documents)
+void delete_numbers(Tensor<Tensor<string,1>,1>& documents_words)
 {
-    const Index documents_number = documents.size();
+    const Index documents_number = documents_words.size();
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string, 1> document = documents(i);
-
-        const Index document_size = document.size();
-
-        for(Index j = 0; j < document_size; j++)
+        for(Index j = 0; j < documents_words(i).size(); j++)
         {
-            Tensor<string,1> tokens = get_tokens(document(j));
-
-            string result;
-
-            for(Index k = 0; k < tokens.size(); k++)
+            if(is_numeric_string(documents_words(i)(j)))
             {
-                if(!is_numeric_string(tokens(k)) )
-                {
-                    result += tokens(k) + " ";
-                }
+                documents_words(i)(j).clear();
             }
-
-            document(j) = result;
         }
-
-        documents(i) = document;
     }
 }
 
@@ -2765,13 +2672,15 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 {
     const Index documents_number = documents.size();
 
-#pragma omp parallel for
+    #pragma omp parallel for
+
     for(Index i = 0; i < documents_number; i++)
     {
         Tensor<string, 1> document = documents(i);
 
         for(Index j = 0; j < document.size(); j++)
         {
+            /*
             Tensor<string, 1> tokens = get_tokens(document(j));
 
             string result;
@@ -2785,6 +2694,7 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
             }
 
             document(j) = result;
+*/
         }
 
         documents(i) = document;
@@ -2794,7 +2704,7 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 
 /// Remove the accents of the vowels in the documents.
 
-void replace_accented(Tensor<Tensor<string,1>,1>& documents)
+void replace_accented_words(Tensor<Tensor<string,1>, 1>& documents)
 {
     const Index documents_size = documents.size();
 
@@ -2804,7 +2714,7 @@ void replace_accented(Tensor<Tensor<string,1>,1>& documents)
 
         for(Index j = 0; j < document_size; j++)
         {
-            replace_accented(documents(i)(j));
+            replace_accented_words(documents(i)(j));
         }
     }
 }
@@ -2812,7 +2722,7 @@ void replace_accented(Tensor<Tensor<string,1>,1>& documents)
 
 /// Remove the accents of the vowels of a word.
 
-void replace_accented(string& word)
+void replace_accented_words(string& word)
 {
     replace(word, "á", "a");
     replace(word, "é", "e");
@@ -2929,17 +2839,15 @@ string get_rv(const string& word, const Tensor<string,1>& vowels)
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
 
-WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
+WordBag calculate_word_bag(const Tensor<string,1>& words)
 {
     WordBag word_bag;
 
-    const Tensor<string, 1> total = tokens_list(tokens);
-
-    const Tensor<Index, 1> count = count_unique(total);
+    const Tensor<Index, 1> count = count_unique(words);
 
     const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
 
-    word_bag.words =  sort_by_rank(get_unique_elements(total), descending_rank);
+    word_bag.words = sort_by_rank(get_unique_elements(words), descending_rank);
 
     word_bag.frequencies = sort_by_rank(count, descending_rank);
 
@@ -2955,85 +2863,85 @@ WordBag calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens)
 /// of times in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_frequency Minimum frequency that words must have.
 
-WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
-                                             const Index& minimum_frequency)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+//WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+//                                             const Index& minimum_frequency)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    Tensor<string,1> words = word_bag.words;
-    Tensor<Index,1> frequencies = word_bag.frequencies;
-    Tensor<double,1> percentages = word_bag.percentages;
+//     Tensor<string,1> words = word_bag.words;
+//     Tensor<Index,1> frequencies = word_bag.frequencies;
+//     Tensor<double,1> percentages = word_bag.percentages;
 
-    const Tensor<Index,1> indices = get_indices_less_than(frequencies, minimum_frequency);
+//     const Tensor<Index,1> indices = get_indices_less_than(frequencies, minimum_frequency);
 
-    delete_indices(words, indices);
-    delete_indices(frequencies, indices);
-    delete_indices(percentages, indices);
+//     delete_indices(words, indices);
+//     delete_indices(frequencies, indices);
+//     delete_indices(percentages, indices);
 
-    word_bag.words = words;
-    word_bag.frequencies = frequencies;
-    word_bag.percentages = percentages;
+//     word_bag.words = words;
+//     word_bag.frequencies = frequencies;
+//     word_bag.percentages = percentages;
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Create a word bag that contains the unique words that appear a minimum percentage
 /// in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_percentage Minimum percentage of occurrence that words must have.
 
-WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
-                                              const double& minimum_percentage)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+// WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
+//                                               const double& minimum_percentage)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    Tensor<string,1> words = word_bag.words;
-    Tensor<Index,1> frequencies = word_bag.frequencies;
-    Tensor<double,1> percentages = word_bag.percentages;
+//     Tensor<string,1> words = word_bag.words;
+//     Tensor<Index,1> frequencies = word_bag.frequencies;
+//     Tensor<double,1> percentages = word_bag.percentages;
 
-    const Tensor<Index,1> indices = get_indices_less_than(percentages, minimum_percentage);
+//     const Tensor<Index,1> indices = get_indices_less_than(percentages, minimum_percentage);
 
-    delete_indices(words, indices);
-    delete_indices(frequencies, indices);
-    delete_indices(percentages, indices);
+//     delete_indices(words, indices);
+//     delete_indices(frequencies, indices);
+//     delete_indices(percentages, indices);
 
-    word_bag.words = words;
-    word_bag.frequencies = frequencies;
-    word_bag.percentages = percentages;
+//     word_bag.words = words;
+//     word_bag.frequencies = frequencies;
+//     word_bag.percentages = percentages;
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Create a word bag that contains the unique words that appear a minimum ratio
 /// of frequency in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_ratio Minimum ratio of frequency that words must have.
 
-WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
-                                         const double& minimum_ratio)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+// WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
+//                                          const double& minimum_ratio)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    Tensor<string,1> words = word_bag.words;
-    Tensor<Index,1> frequencies = word_bag.frequencies;
-    Tensor<double,1> percentages = word_bag.percentages;
+//     Tensor<string,1> words = word_bag.words;
+//     Tensor<Index,1> frequencies = word_bag.frequencies;
+//     Tensor<double,1> percentages = word_bag.percentages;
 
-    const Tensor<Index,0> frequencies_sum = frequencies.sum();
+//     const Tensor<Index,0> frequencies_sum = frequencies.sum();
 
-    const Tensor<double,1> ratios = frequencies.cast<double>()/double(frequencies_sum(0));
+//     const Tensor<double,1> ratios = frequencies.cast<double>()/double(frequencies_sum(0));
 
-    const Tensor<Index, 1> indices = get_indices_less_than(ratios, minimum_ratio);
+//     const Tensor<Index, 1> indices = get_indices_less_than(ratios, minimum_ratio);
 
-    delete_indices(words, indices);
-    delete_indices(frequencies, indices);
-    delete_indices(percentages, indices);
+//     delete_indices(words, indices);
+//     delete_indices(frequencies, indices);
+//     delete_indices(percentages, indices);
 
-    word_bag.words = words;
-    word_bag.frequencies = frequencies;
-    word_bag.percentages = percentages;
+//     word_bag.words = words;
+//     word_bag.frequencies = frequencies;
+//     word_bag.percentages = percentages;
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Create a word bag that contains the unique most frequent words whose sum
@@ -3041,48 +2949,48 @@ WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& token
 /// and their percentages in descending order.
 /// @param total_frequency Maximum cumulative frequency that words must have.
 
-WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
-                                           const Index& total_frequency)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+// WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+//                                            const Index& total_frequency)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string,1> words = word_bag.words;
-    const Tensor<Index, 1> frequencies = word_bag.frequencies;
+//     const Tensor<string,1> words = word_bag.words;
+//     const Tensor<Index, 1> frequencies = word_bag.frequencies;
 
-    Tensor<Index, 1> cumulative_frequencies = frequencies.cumsum(0);
+//     Tensor<Index, 1> cumulative_frequencies = frequencies.cumsum(0);
 
-    Index i;
+//     Index i;
 
-    for( i = 0; i < frequencies.size(); i++)
-    {
-        if(cumulative_frequencies(i) >= total_frequency)
-            break;
-    }
+//     for( i = 0; i < frequencies.size(); i++)
+//     {
+//         if(cumulative_frequencies(i) >= total_frequency)
+//             break;
+//     }
 
-    word_bag.words = get_first(words, i);
-    word_bag.frequencies = get_first(frequencies, i);
+//     word_bag.words = get_first(words, i);
+//     word_bag.frequencies = get_first(frequencies, i);
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Create a word bag that contains a maximum number of the unique most
 /// frequent words, their frequencies and their percentages in descending order.
 /// @param maximum_size Maximum size of words Tensor.
 
-WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
-                                        const Index& maximum_size)
-{
-    WordBag word_bag = calculate_word_bag(tokens);
+// WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
+//                                         const Index& maximum_size)
+// {
+//     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string, 1> words = word_bag.words;
-    const Tensor<Index ,1> frequencies = word_bag.frequencies;
+//     const Tensor<string, 1> words = word_bag.words;
+//     const Tensor<Index ,1> frequencies = word_bag.frequencies;
 
-    word_bag.words = get_first(words, maximum_size);
-    word_bag.frequencies = get_first(frequencies, maximum_size);
+//     word_bag.words = get_first(words, maximum_size);
+//     word_bag.frequencies = get_first(frequencies, maximum_size);
 
-    return word_bag;
-}
+//     return word_bag;
+// }
 
 
 /// Returns weights.
@@ -3114,6 +3022,7 @@ Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& w
 
 Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 {
+/*
     Tensor<string,1> documents_copy(documents);
 
     to_lower(documents_copy);
@@ -3129,12 +3038,10 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
     Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
 
     delete_stop_words(tokens);
-/*
-    delete_short_words(tokens, short_words_length);
 
-    delete_long_words(tokens, long_words_length);
-*/
-    replace_accented(tokens);
+    delete_short_long_words(tokens, short_words_length, long_words_length);
+
+    replace_accented_words(tokens);
 
     delete_emails(tokens);
 
@@ -3145,11 +3052,14 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
     delete_blanks(tokens);
 
     return tokens;
+*/
+    return Tensor<Tensor<string,1>,1>();
 }
 
 
 Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& documents)
 {
+/*
     Tensor<string,1> documents_copy(documents);
 
     to_lower(documents_copy);
@@ -3169,6 +3079,8 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
     delete_blanks(tokens);
 
     return tokens;
+*/
+    return Tensor<Tensor<string,1>, 1>();
 }
 
 
@@ -3236,7 +3148,7 @@ Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 
 /// This function calculates the frequency of sets of consecutive words in all documents.
 /// @param minimum_frequency Minimum frequency that a word must have to obtain its combinations.
 /// @param combinations_length Words number of the combinations from 2.
-
+/*
 Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
                                                        const Index& minimum_frequency,
                                                        const Index& combinations_length)
@@ -3312,22 +3224,22 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
 //    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words ) ) );
 
 //    Tensor<string, 2> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
-/*
+
     combinated_words_frequency_matrix.chip(0,1) = get_unique_elements(combinated_words),"Combinated words");
     combinated_words_frequency_matrix.chip(1,0) = combinated_words_frequency,"Frequency");
 
     combinated_words_frequency_matrix = combinated_words_frequency_matrix.sort_descending_strings(1);
 
 //    return(combinated_words_frequency_matrix);
-*/
+
     return Tensor<string,2>();
 }
-
+*/
 
 /// Returns the correlations of words that appear a minimum percentage of times
 /// with the targets in descending order.
 /// @param minimum_percentage Minimum percentage of frequency that the word must have.
-
+/*
 Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tokens,
                                          const double& minimum_percentage,
                                          const Tensor<Index, 1>& targets)
@@ -3341,7 +3253,7 @@ Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tok
     }
 
     Tensor<string, 1> new_documents(tokens.size());
-/*
+
     for(size_t i = 0; i < tokens.size(); i++)
     {
       new_documents[i] = tokens[i].Tensor_to_string(';');
@@ -3365,11 +3277,11 @@ Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tok
     top_words_correlations = top_words_correlations.sort_descending_strings(1);
 
     return(top_words_correlations);
-*/
+
 
     return Tensor<string, 2>();
 }
-
+*/
 
 /// Generates a text output based on the neural network and some input letters given by the user.
 /// @param text_generation_alphabet TextGenerationAlphabet object used for the text generation model
@@ -3627,7 +3539,7 @@ void TextGenerationAlphabet::preprocess()
 {
     TextAnalytics ta;
 
-    ta.replace_accented(text);
+    ta.replace_accented_words(text);
 
     transform(text.begin(), text.end(), text.begin(), ::tolower); // To lower
 }
@@ -3756,6 +3668,176 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
 }
 */
+
+void print_tokens(const Tensor<Tensor<string,1>,1>& tokens)
+{
+    for(Index i = 0; i < tokens.size(); i++)
+    {
+        for(Index j = 0; j < tokens(i).size(); j++)
+        {
+            cout << tokens(i)(j) << " - ";
+        }
+
+        cout << endl;
+    }
+}
+
+bool is_vowel(char ch)
+{
+    return ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u';
+}
+
+bool ends_with(const string& word, const string& suffix)
+{
+    return word.length() >= suffix.length() && word.compare(word.length() - suffix.length(), suffix.length(), suffix) == 0;
+}
+
+int measure(const string& word)
+{
+    int count = 0;
+    bool vowel_seen = false;
+    for (char ch : word)
+    {
+        if(is_vowel(ch))
+        {
+            vowel_seen = true;
+        } else if(vowel_seen)
+        {
+            count++;
+            vowel_seen = false;
+        }
+    }
+
+    return count;
+}
+
+
+bool contains_vowel(const string& word)
+{
+    for (char ch : word)
+    {
+        if(is_vowel(ch))
+            return true;
+    }
+
+    return false;
+}
+
+
+bool is_double_consonant(const string& word)
+{
+    if(word.length() < 2) return false;
+
+    char last = word[word.length() - 1];
+
+    char second_last = word[word.length() - 2];
+
+    return last == second_last && !is_vowel(last);
+}
+
+
+bool is_consonant_vowel_consonant(const string& word)
+{
+    if(word.length() < 3) return false;
+    char last = word[word.length() - 1];
+    char second_last = word[word.length() - 2];
+    char third_last = word[word.length() - 3];
+    return !is_vowel(last) && is_vowel(second_last) && !is_vowel(third_last) && last != 'w' && last != 'x' && last != 'y';
+}
+
+
+// Porter Stemmer algorithm
+
+string stem(const string& word)
+{
+    string result = word;
+
+    if(result.length() <= 2) return result;
+
+    // Convert to lowercase
+    transform(result.begin(), result.end(), result.begin(), ::tolower);
+
+    // Step 1a
+    if(ends_with(result, "sses"))
+    {
+        result = result.substr(0, result.length() - 2);
+    }
+    else if(ends_with(result, "ies"))
+    {
+        result = result.substr(0, result.length() - 2);
+    }
+    else if(ends_with(result, "ss"))
+    {
+        // Do nothing
+    }
+    else if(ends_with(result, "s"))
+    {
+        result = result.substr(0, result.length() - 1);
+    }
+
+    // Step 1b
+
+    if(ends_with(result, "eed"))
+    {
+        if(measure(result.substr(0, result.length() - 3)) > 0)
+        {
+            result = result.substr(0, result.length() - 1);
+        }
+    }
+    else if((ends_with(result, "ed") || ends_with(result, "ing"))
+             && contains_vowel(result.substr(0, result.length() - 2)))
+    {
+        result = result.substr(0, result.length() - (ends_with(result, "ed") ? 2 : 3));
+        if(ends_with(result, "at") || ends_with(result, "bl") || ends_with(result, "iz"))
+        {
+            result += "e";
+        }
+        else if(is_double_consonant(result))
+        {
+            result = result.substr(0, result.length() - 1);
+        }
+        else if(measure(result) == 1 && is_consonant_vowel_consonant(result))
+        {
+            result += "e";
+        }
+    }
+
+    // Step 1c
+
+    if(ends_with(result, "y") && contains_vowel(result.substr(0, result.length() - 1)))
+    {
+        result[result.length() - 1] = 'i';
+    }
+
+    // Additional steps can be added here following the Porter Stemmer algorithm
+
+    return result;
+}
+
+
+void stem(Tensor<string, 1>& words)
+{
+
+    for(Index i = 0; i < words.size(); i++)
+    {
+        words(i) = stem(words(i));
+    }
+}
+
+
+void stem(Tensor<Tensor<string, 1>, 1>& words)
+{
+    #pragma omp parallel for
+
+    for(Index i = 0; i < words.size(); i++)
+    {
+        for(Index j = 0; j < words(i).size(); j++)
+        {
+            stem(words(i)(j));
+        }
+    }
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
