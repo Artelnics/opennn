@@ -469,14 +469,24 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                                   LayerBackPropagation* back_propagation) const
 {
 
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first,
+    // Inputs 
+
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
+                                            inputs_pair(0).second[0],
+                                            inputs_pair(0).second[1],
+                                            inputs_pair(0).second[2],
+                                            inputs_pair(0).second[3]);
+
+    const TensorMap<Tensor<type, 4>> deltas(deltas_pair(0).first,
                                             deltas_pair(0).second[0],
-                                            deltas_pair(0).second[1]);
+                                            deltas_pair(0).second[1],
+                                            deltas_pair(0).second[2],
+                                            deltas_pair(0).second[3]);
 
     // Forward propagation
 
-//    const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
-//        static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
+    const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
+          static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
 
     // Back propagation
 
