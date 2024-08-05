@@ -292,7 +292,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives;// = data_set->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
@@ -309,10 +309,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     selection_samples_number < batch_samples_number && selection_samples_number != 0
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
-    
+
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
-    
+
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
     
