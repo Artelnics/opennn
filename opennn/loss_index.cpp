@@ -700,7 +700,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     // Hidden layers
 
-    
+
     calculate_output_delta(batch, forward_propagation, back_propagation);
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)

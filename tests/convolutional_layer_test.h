@@ -50,6 +50,8 @@ public:
 
   //Back propagate
 
+  void test_back_propagate();
+
   void test_calculate_hidden_delta_perceptron_test();
 
   // Utils
@@ -65,6 +67,7 @@ private:
     ConvolutionalLayer convolutional_layer;
 
     ConvolutionalLayerForwardPropagation forward_propagation;
+    ConvolutionalLayerBackPropagation back_propagation;
 
     NumericalDifferentiation numerical_differentiation;
 };
