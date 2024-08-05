@@ -165,8 +165,8 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                1);
 
         convolution.device(*thread_pool_device)
-            = inputs.convolve(kernel, convolutions_dimensions)
-            + biases(kernel_index);
+            = inputs.convolve(kernel, convolutions_dimensions);
+            //+ biases(kernel_index);
     }
 }
 
@@ -450,7 +450,31 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                                             deltas_pair(0).second[1],
                                             deltas_pair(0).second[2],
                                             deltas_pair(0).second[3]);
+    /*
+    cout << "batch_samples_number: " << batch_samples_number << endl;
 
+    cout << "input_height: " << input_height << endl;
+    cout << "input_width: " << input_width << endl;
+    cout << "input_channels: " << input_channels << endl;
+
+    cout << "kernels_number: " << kernels_number << endl;
+    cout << "kernel_height: " << kernel_height << endl;
+    cout << "kernel_width: " << kernel_width << endl;
+    cout << "kernel_channels: " << kernel_channels << endl;
+
+    cout << "output_height: " << output_height << endl;
+    cout << "output_width: " << output_width << endl;
+
+    cout << "inputs_pair(0).second[0]: " << inputs_pair(0).second[0] << endl;
+    cout << "inputs_pair(0).second[1]: " << inputs_pair(0).second[1] << endl;
+    cout << "inputs_pair(0).second[2]: " << inputs_pair(0).second[2] << endl;
+    cout << "inputs_pair(0).second[3]: " << inputs_pair(0).second[3] << endl;
+
+    cout << "deltas_pair(0).second[0]: " << deltas_pair(0).second[0] << endl;
+    cout << "deltas_pair(0).second[1]: " << deltas_pair(0).second[1] << endl;
+    cout << "deltas_pair(0).second[2]: " << deltas_pair(0).second[2] << endl;
+    cout << "deltas_pair(0).second[3]: " << deltas_pair(0).second[3] << endl;
+    */
     // Forward propagation
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
@@ -482,9 +506,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 0> current_sum;
 
-/*
     error_convolutions_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
-*/
+
     // Synaptic weights derivatives
     
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -501,13 +524,12 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
         for(Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
-/*
+
             offsets = {image_index, 0, 0, kernel_index};
 
             extents = {1, output_height, output_width, 1};
 
-            delta_slice
-                = error_convolutions_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
+            delta_slice = error_convolutions_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
 
             offsets = {image_index, 0, 0, 0};
             extents = {1, input_height, input_width, input_channels};
@@ -530,19 +552,20 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
             kernel_synaptic_weights_derivatives.device(*thread_pool_device)
                 += image.convolve(delta_reshape, convolutions_dimensions);
-*/
-        }
 
+        }
+        
         copy(kernel_synaptic_weights_derivatives.data(),
              kernel_synaptic_weights_derivatives.data() + kernel_synaptic_weights_number,
              synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
     }
 
+    
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
     input_derivatives.setZero();
-
     /*
-//    input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
+    // Not needed for 1 convolution layer
+    input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
 
     for(int image_index = 0; image_index < batch_samples_number; image_index++)
     {
@@ -1692,6 +1715,7 @@ ConvolutionalLayerBackPropagation::~ConvolutionalLayerBackPropagation()
 
 void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
+
     batch_samples_number = new_batch_samples_number;
 
     layer = new_layer;
@@ -1702,15 +1726,15 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     const Index input_width = convolutional_layer->get_input_width();
     const Index input_channels = convolutional_layer->get_input_channels();
 
-    const Index kernels_number = convolutional_layer->get_kernels_number();
     const Index kernel_height = convolutional_layer->get_kernel_height();
     const Index kernel_width = convolutional_layer->get_kernel_width();
     const Index kernel_channels = convolutional_layer->get_kernel_channels();
+    const Index kernels_number = convolutional_layer->get_kernels_number();
 
-    error_convolutions_derivatives.resize(kernels_number,
-                                          kernel_height,
-                                          kernel_width,
-                                          kernel_channels);
+    error_convolutions_derivatives.resize(batch_samples_number,
+                                          input_height,
+                                          input_width,
+                                          input_channels);
 
     biases_derivatives.resize(kernels_number);
 

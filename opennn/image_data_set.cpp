@@ -1426,13 +1426,13 @@ void ImageDataSet::read_bmp()
                 }
             }
         }
-
+        /*
         if(display)
         {
             if(i % 1000 == 0)
                 display_progress_bar(i, samples_number - 1000);
         }
-
+        */
     }
 
     if(display)
