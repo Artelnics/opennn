@@ -683,6 +683,120 @@ void ConvolutionalLayerTest::test_forward_propagate()
 }
 
 
+void ConvolutionalLayerTest::test_back_propagate() 
+{
+    cout << "test_back_propagate\n";
+
+    // 2 images , 3 channels
+
+    Tensor<unsigned char, 3> bmp_image_1;
+    Tensor<unsigned char, 3> bmp_image_2;
+
+    const bool is_training = true;
+
+    const Index input_images = 2;
+    const Index kernels_number = 3;
+
+    bmp_image_1 = read_bmp_image("../examples/mnist/data/test/4x4_0.bmp");
+    bmp_image_2 = read_bmp_image("../examples/mnist/data/test/4x4_1.bmp");
+
+    const Index channels = bmp_image_1.dimension(2); // 3
+
+    const Index input_height = bmp_image_1.dimension(0); // 4
+    const Index input_width = bmp_image_1.dimension(1); // 4
+    const Index kernel_height = 3;
+    const Index kernel_width = 3;
+
+    ConvolutionalLayer convolutional_layer;
+
+    dimensions input_dimensions;
+    input_dimensions = { input_height, input_width, channels };
+
+    dimensions kernel_dimensions;
+    kernel_dimensions = { kernel_height, kernel_width, channels, kernels_number };
+
+    Tensor<type, 4> inputs(input_images, input_height, input_width, channels);
+    Tensor<type, 4> kernel(kernel_height, kernel_width, channels, kernels_number);
+    Tensor<type, 1> bias(kernels_number);
+
+    // Copy bmp_image data into inputs
+    for (int h = 0; h < input_height; ++h)
+    {
+        for (int w = 0; w < input_width; ++w)
+        {
+            for (int c = 0; c < channels; ++c)
+            {
+                inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
+            }
+        }
+    }
+
+    // Copy bmp_image_2 data into inputs
+    for (int h = 0; h < input_height; ++h)
+    {
+        for (int w = 0; w < input_width; ++w)
+        {
+            for (int c = 0; c < channels; ++c)
+            {
+                inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
+            }
+        }
+    }
+
+    bias.setValues({ 1,1,1 });
+
+    kernel.setConstant(type(1));
+
+    Tensor<pair<type*, dimensions>, 1> inputs_pair(1);
+    inputs_pair(0).first = inputs.data();
+    inputs_pair(0).second = { input_images, input_height, input_width, channels };
+
+    Tensor<pair<type*, dimensions>, 1> deltas_pair(1);
+    deltas_pair(0).first = inputs.data();
+    deltas_pair(0).second = { input_images, input_height, input_width, channels };
+
+    // bmp_image_1:
+    //    255 255   0   0   255 255   0   0     255 255   0   0
+    //    255 255   0   0   255 255   0   0     255 255   0   0
+    //    255 255   0   0   255 255   0   0     255 255   0   0
+    //    255 255   0   0   255 255   0   0     255 255   0   0
+
+    // bmp_image_2:
+    //    0   0 255 255      0   0 255 255       0   0 255 255
+    //    0   0 255 255      0   0 255 255       0   0 255 255
+    //    0   0   0   0      0   0   0   0       0   0   0   0
+    //    0   0   0   0      0   0   0   0       0   0   0   0
+
+    // kernel x3:
+    //    1  1  1
+    //    1  1  1
+    //    1  1  1
+
+    // Expected outputs: (2,2,2,1)
+    //    4590+1  2295+1
+    //    4590+1  2295+1
+    //    1530+1  3060+1   
+    //    765+1   1530+1     
+
+    // Test
+
+    convolutional_layer.set(input_dimensions, kernel_dimensions);
+
+    convolutional_layer.set_synaptic_weights(kernel);
+    convolutional_layer.set_biases(bias);
+
+    forward_propagation.set(input_images, &convolutional_layer);
+    back_propagation.set(input_images, &convolutional_layer);
+
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
+
+    convolutional_layer.forward_propagate(inputs_pair, &forward_propagation, is_training);
+
+    convolutional_layer.back_propagate(inputs_pair, deltas_pair, &forward_propagation, &back_propagation);
+
+}
+
+
 void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 {
     cout<< "test_calculate_hidden_delta_perceptron_test"<<endl;
@@ -843,6 +957,8 @@ void ConvolutionalLayerTest::run_test_case()
     test_forward_propagate();
 
     // Back_propagate
+
+    test_back_propagate();
 
     //test_calculate_hidden_delta_perceptron_test();
 

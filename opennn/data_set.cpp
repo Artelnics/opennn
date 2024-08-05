@@ -8131,7 +8131,7 @@ void DataSet::print() const
          << "Number of input variables: " << input_variables_number << "\n"
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
-         print_dimensions(input_dimensions); /// @todo not set
+         print_dimensions(input_dimensions);
          cout << "Target variables dimensions: ";
          print_dimensions(target_dimensions);
 }
