@@ -47,9 +47,11 @@ int main()
 
         ImageDataSet image_data_set;
 
-        image_data_set.set_data_source_path("C:/mnist/test");
+        image_data_set.set_data_source_path("C:/training_mnist");
 
         image_data_set.read_bmp();
+        
+        image_data_set.print();
 
         // Neural network
 
@@ -59,10 +61,11 @@ int main()
         neural_network.add_layer(scaling_layer);
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions());
+        convolutional_layer->set_activation_function("Linear");
         neural_network.add_layer(convolutional_layer);
 
         PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer->get_output_dimensions());
-        neural_network.add_layer(pooling_layer);
+        //neural_network.add_layer(pooling_layer);
 
         FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer->get_output_dimensions());
         neural_network.add_layer(flatten_layer);
@@ -74,19 +77,19 @@ int main()
         neural_network.print();
 
         // Training strategy
-
+        
         TrainingStrategy training_strategy(&neural_network, &image_data_set);
-
+        
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(15);
         training_strategy.get_adaptive_moment_estimation()->set_learning_rate(0.02);
-        training_strategy.set_display_period(10);
-
+        training_strategy.set_display_period(1);
+        
         training_strategy.perform_training();
-/*
+
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
@@ -94,7 +97,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-*/
+
         cout << "Bye!" << endl;
         
         return 0;

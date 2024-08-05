@@ -63,7 +63,7 @@ public:
 
     explicit PoolingLayer();
 
-    explicit PoolingLayer(const dimensions&, const dimensions& = {1, 1, 1, 1});
+    explicit PoolingLayer(const dimensions&, const dimensions& = {1, 1});
 
     // Get methods
 
