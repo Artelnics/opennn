@@ -471,6 +471,8 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 
     // Inputs 
 
+    const Index batch_samples_number = inputs_pair(0).second[0];
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],
@@ -488,12 +490,47 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
           static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
 
+    const Tensor<type, 4> outputs = pooling_layer_forward_propagation->outputs;
+
     // Back propagation
 
     PoolingLayerBackPropagation* pooling_layer_back_propagation =
         static_cast<PoolingLayerBackPropagation*>(back_propagation);
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
+
+    input_derivatives.setZero();
+
+    // Max pooling
+    for (int batch_index = 0; batch_index < batch_samples_number; ++batch_index)
+    {
+        for (int height_index = 0; height_index < inputs_pair(0).second[1]; ++height_index)
+        {
+            for (int width_index = 0; width_index < inputs_pair(0).second[2]; ++width_index)
+            {
+                for (int channel_index = 0; channel_index < inputs_pair(0).second[3]; ++channel_index)
+                {
+                    int height_start = height_index * row_stride;
+                    int height_end = min(height_start + pool_height, inputs_pair(0).second[1]);
+                    int width_start = width_index * column_stride;
+                    int width_end = min(width_start + pool_width, inputs_pair(0).second[2]);
+
+                    bool found_max = false;
+                    for (int pixel_height = height_start; pixel_height < height_end && !found_max; ++pixel_height)
+                    {
+                        for (int pixel_width = width_start; pixel_width < width_end && !found_max; ++pixel_width)
+                        {
+                            if (inputs(batch_index, pixel_height, pixel_width, channel_index) == outputs(batch_index, height_index, width_index, channel_index))
+                            {
+                                input_derivatives(batch_index, pixel_height, pixel_width, channel_index) += deltas(batch_index, height_index, width_index, channel_index);
+                                found_max = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /// @todo calculate input derivatives (= deltas for previous layer)
 
