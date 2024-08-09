@@ -1382,7 +1382,7 @@ void ImageDataSet::read_bmp()
     }
 
     Tensor<unsigned char,3> image_data = read_bmp_image(image_path[0].string());
-    
+
     const Index image_height = image_data.dimension(0);
     const Index image_width = image_data.dimension(1);
     const Index image_channels = image_data.dimension(2);
@@ -1390,11 +1390,10 @@ void ImageDataSet::read_bmp()
     const Index pixels_number = image_height * image_width * image_channels;
 
     set(samples_number, image_height, image_width, image_channels, targets_number);
-    
+
     data.setZero();
 
     #pragma omp parallel for
-
     for(Index i = 0; i < samples_number; i++)
     {
         const Tensor<unsigned char,3> image_data = read_bmp_image(image_path[i].string());
