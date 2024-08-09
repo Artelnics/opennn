@@ -158,9 +158,9 @@ protected:
 
     dimensions input_dimensions;
 
-    Index pool_height = 2;
+    Index pool_height = 1;
 
-    Index pool_width = 2;
+    Index pool_width = 1;
 
     Index padding_heigth = 0;
 

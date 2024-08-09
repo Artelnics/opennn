@@ -492,6 +492,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 1>& biases_derivatives = convolutional_layer_back_propagation->biases_derivatives;
 
+    Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
+
     Eigen::array<Index, 4> offsets;
     Eigen::array<Index, 4> extents;
 
@@ -559,23 +561,28 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
              synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
     }
 
-    
-    Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
-    input_derivatives.setZero();
-    /*
-    // Not needed for 1 convolution layer
-    input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
 
-    for(int image_index = 0; image_index < batch_samples_number; image_index++)
+    /// @todo optimize (input_derivatives)
+    input_derivatives.setZero();
+    
+    input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
+    /*
+    for (int image_index = 0; image_index < batch_samples_number; image_index++)
     {
-        for(int d = 0; d < deltas_pair(0).second[2]; ++d)
+        for (int row = 0; row < deltas_pair(0).second[1]; ++row)
         {
-            for(int row = 0; row < deltas_pair(0).second[0]; row++)
+            for (int column = 0; column < deltas_pair(0).second[2]; ++column)
             {
-                for(int column = 0; column < deltas_pair(0).second[1]; column++)
+                for (int channel = 0; channel < deltas_pair(0).second[3]; ++channel)
                 {
-                     input_derivatives.chip(image_index, 0).chip(d, 0).slice(std::array<Index, 2>({row, column}), std::array<Index, 2>({kernel_height, kernel_width})) +=
-                             error_convolutions_derivatives(row, column, d, image_index) * synaptic_weights.chip(d, 0);
+                    input_derivatives.chip(image_index, 0)
+                        .chip(row, 0)
+                        .chip(column, 0)
+                        .slice(std::array<Index, 2>({ row, column }),
+                               std::array<Index, 2>({ kernel_height, kernel_width })) +=
+                        error_convolutions_derivatives(image_index, row, column, channel) *
+                        synaptic_weights.chip(channel, 0);
+
                 }
             }
         }
@@ -1747,9 +1754,9 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                              input_width,
                              input_channels);
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, input_height, input_width, input_channels };
+    //inputs_derivatives.resize(1);
+    //inputs_derivatives(0).first = input_derivatives.data();
+    //inputs_derivatives(0).second = { batch_samples_number, input_height, input_width, input_channels };
 }
 
 void ConvolutionalLayerBackPropagation::print() const
