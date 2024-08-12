@@ -6,8 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "strings_utilities.h"
 #include "convolutional_layer.h"
-#include "tensors.h"
+//#include "tensors.h"
+#include <iostream>
 
 namespace opennn
 {
