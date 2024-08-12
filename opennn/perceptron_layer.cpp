@@ -8,6 +8,9 @@
 
 #include "perceptron_layer.h"
 #include "tensors.h"
+#include "strings_utilities.h"
+
+#include <iostream>
 
 namespace opennn
 {

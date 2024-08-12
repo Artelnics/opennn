@@ -20,6 +20,7 @@
 #include "addition_layer_3d.h"
 #include "perceptron_layer_3d.h"
 #include "probabilistic_layer_3d.h"
+#include "strings_utilities.h"
 
 //#include "batch.h"
 

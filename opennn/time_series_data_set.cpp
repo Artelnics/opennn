@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "time_series_data_set.h"
+#include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
 
@@ -165,7 +166,7 @@ Index TimeSeriesDataSet::get_input_time_series_raw_variables_number() const
 
     for(Index i = 0; i < time_series_raw_variables.size(); i++)
     {
-        if(time_series_raw_variables(i).raw_variable_use == VariableUse::Input)
+        if(time_series_raw_variables(i).use == VariableUse::Input)
         {
             input_raw_variables_number++;
         }
@@ -181,7 +182,7 @@ Index TimeSeriesDataSet::get_target_time_series_raw_variables_number() const
 
     for(Index i = 0; i < time_series_raw_variables.size(); i++)
     {
-        if(time_series_raw_variables(i).raw_variable_use == VariableUse::Target)
+        if(time_series_raw_variables(i).use == VariableUse::Target)
         {
             target_raw_variables_number++;
         }
@@ -212,7 +213,7 @@ Tensor<Index, 1> TimeSeriesDataSet::get_target_time_series_raw_variables_indices
 
     for(Index i = 0; i < time_series_raw_variables.size(); i++)
     {
-        if(time_series_raw_variables(i).raw_variable_use == VariableUse::Target)
+        if(time_series_raw_variables(i).use == VariableUse::Target)
         {
             target_raw_variables_indices(index) = i;
             index++;
@@ -267,7 +268,7 @@ Tensor<Index, 1> TimeSeriesDataSet::get_input_time_series_raw_variables_indices(
 
     for(Index i = 0; i < time_series_raw_variables.size(); i++)
     {
-        if(time_series_raw_variables(i).raw_variable_use == VariableUse::Input)
+        if(time_series_raw_variables(i).use == VariableUse::Input)
         {
             input_raw_variables_indices(index) = i;
             index++;
@@ -2000,7 +2001,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables(i).raw_variable_use != VariableUse::Unused 
+        if(time_series_raw_variables(i).use != VariableUse::Unused
         && time_series_raw_variables(i).type == RawVariableType::Numeric)
         {
             input_i = get_time_series_raw_variable_data(i);
@@ -2114,7 +2115,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables(i).raw_variable_use != VariableUse::Unused 
+        if(time_series_raw_variables(i).use != VariableUse::Unused
         && time_series_raw_variables(i).type == RawVariableType::Numeric)
         {
             input_i = get_time_series_raw_variable_data(i);
@@ -2130,7 +2131,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            if(time_series_raw_variables(j).raw_variable_use != VariableUse::Unused 
+            if(time_series_raw_variables(j).use != VariableUse::Unused
             && time_series_raw_variables(j).type == RawVariableType::Numeric)
             {
                 input_j = get_time_series_raw_variable_data(j);

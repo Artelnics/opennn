@@ -3,23 +3,23 @@
 
 // System includes
 
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <map>
-#include <math.h>
-#include <vector>
-#include <numeric>
+//#include <algorithm>
+//#include <fstream>
+//#include <iostream>
+//#include <limits>
+//#include <map>
+//#include <math.h>
+//#include <vector>
+//#include <numeric>
 #include <stdio.h>
 
 // OpenNN includes
 
 #include "config.h"
-#include "strings_utilities.h"
-#include "statistics.h"
+//#include "strings_utilities.h"
+//#include "statistics.h"
 
-#include "../eigen/unsupported/Eigen/KroneckerProduct"
+//#include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 #include "../eigen/Eigen/Dense"
 
@@ -104,9 +104,9 @@ bool has_NAN(Tensor<type, 2>&);
 bool has_NAN(Tensor<type, 3>&);
 bool has_NAN(Tensor<type, 4>&);
 
-bool is_zero(const Tensor<type, 1>&);
-bool is_zero(const Tensor<type,1>&, const type&);
+bool is_zero(const Tensor<type,1>&, const type& = type(NUMERIC_LIMITS_MIN));
 
+bool is_binary(const Tensor<type, 1>&){return true;}
 bool is_binary(const Tensor<type, 2>&);
 
 bool is_constant(const Tensor<type, 1>&);
@@ -259,6 +259,7 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
     return dimensions;
 }
 
+
 template<class T>
 Tensor<T, 1> tensor_wrapper(T obj)
 {
@@ -267,6 +268,7 @@ Tensor<T, 1> tensor_wrapper(T obj)
 
     return wrapper;
 }
+
 
 template<int rank>
 pair<type*, dimensions> to_pair(Tensor<type, rank>& tensor)
