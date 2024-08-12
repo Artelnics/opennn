@@ -826,7 +826,7 @@ void ScalingLayer2D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 /// @param inputs Set of inputs to the scaling layer.
 
 
-void ScalingLayer2D::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& input_dimensions,
+void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>& input_dimensions,
                                      type* outputs_data, const Tensor<Index, 1>& output_dimensions)
 {
     const Index input_rank = input_dimensions.size();
@@ -838,7 +838,7 @@ void ScalingLayer2D::calculate_outputs(type* inputs_data, const Tensor<Index, 1>
 
         const Tensor<Index, 0> input_size = input_dimensions.prod();
 
-        const TensorMap<Tensor<type, 2>> inputs(inputs_data, input_dimensions(0), input_dimensions(1));
+        const TensorMap<Tensor<type, 2>> inputs(input_data, input_dimensions(0), input_dimensions(1));
         TensorMap<Tensor<type, 2>> outputs(outputs_data, output_dimensions[0], output_dimensions(1));
 
         if(output_dimensions[0] != points_number || output_dimensions(1) != neurons_number)
@@ -931,7 +931,7 @@ void ScalingLayer2D::calculate_outputs(type* inputs_data, const Tensor<Index, 1>
             throw invalid_argument(buffer.str());
         }
 
-        TensorMap<Tensor<type, 4>> input(inputs_data, input_dimensions(0), input_dimensions(1), input_dimensions(2), input_dimensions(3));
+        TensorMap<Tensor<type, 4>> input(input_data, input_dimensions(0), input_dimensions(1), input_dimensions(2), input_dimensions(3));
 
         TensorMap<Tensor<type, 4>> output(outputs_data, input_dimensions(0), input_dimensions(1), input_dimensions(2), input_dimensions(3));
 

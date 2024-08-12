@@ -1353,14 +1353,14 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     }
     else if(input_dimensions.size() == 3)
     {
-        type* inputs_data = inputs.data();
+        type* input_data = inputs.data();
 
         Tensor<type, 4> inputs_4d(samples_number,
                                   input_dimensions[0],
                                   input_dimensions[1],
                                   input_dimensions[2]);
 
-        memcpy(inputs_4d.data(), inputs_data, samples_number * inputs.dimension(1) * sizeof(type));
+        memcpy(inputs_4d.data(), input_data, samples_number * inputs.dimension(1) * sizeof(type));
 
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
 
@@ -2375,7 +2375,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 /// The number of rows of the matrix is the number targets.
-/// The number of raw_variables of the matrix is the number of raw_variables of the target data.
+/// The number of columns of the matrix is the number of raw_variables of the target data.
 
 Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
                                                                                     const Tensor<type, 2>& outputs,
@@ -2385,7 +2385,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
     const Index targets_number = targets.dimension(1);
 
     Tensor< Tensor<Index, 1>, 2> multiple_classification_rates(targets_number, targets_number);
-
+/*
     // Count instances per class
 
     const Tensor<Index, 2> confusion = calculate_confusion_multiple_classification(targets, outputs);
@@ -2415,7 +2415,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
         indices(target_index, output_index)++;
     }
-
+*/
     return multiple_classification_rates;
 }
 

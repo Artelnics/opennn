@@ -448,15 +448,11 @@ void GeneticAlgorithm::initialize_population()
 }
 
 
-/// Generation of a random population
+/// Generation of a random population.
 
 void GeneticAlgorithm::initialize_population_random()
 {
     DataSet* data_set = training_strategy->get_data_set();
-
-    //Initialization of class members
-
-        //Genes and inidivuals number
 
     const Index genes_number = data_set->get_input_and_unused_variables_number();
 
@@ -470,7 +466,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     original_target_raw_variables_indices = data_set->get_target_raw_variables_indices();
 
-    Tensor<DataSet::RawVariable, 1> raw_variables = data_set->get_raw_variables();
+    const Tensor<DataSet::RawVariable, 1> raw_variables = data_set->get_raw_variables();
 
     Index index = 0;
 
@@ -478,7 +474,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     for(Index i = 0; i < raw_variables.size(); i++)
     {
-        if(raw_variables(i).raw_variable_use == DataSet::VariableUse::Unused)
+        if(raw_variables(i).use == DataSet::VariableUse::Unused)
         {
             unused_number++;
         }
@@ -488,7 +484,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     for(Index i = 0; i < raw_variables.size(); i++)
     {
-        if(raw_variables(i).raw_variable_use == DataSet::VariableUse::Unused)
+        if(raw_variables(i).use == DataSet::VariableUse::Unused)
         {
             original_unused_raw_variables_indices(index) = i;
             index++;

@@ -17,6 +17,8 @@
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
 
+#include "strings_utilities.h"
+
 #include "config.h"
 //#include "batch.h"
 #include "layer.h"

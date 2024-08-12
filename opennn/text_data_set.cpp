@@ -1977,7 +1977,7 @@ void TextDataSet::read_txt()
     cout << "Reading .txt file..." << endl;
 
     if(data_source_path.empty())
-        throw runtime_error("Text file is empty");
+        throw runtime_error("Data source path is empty.\n");
 
     ifstream file(data_source_path.c_str());
 
