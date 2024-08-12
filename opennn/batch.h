@@ -46,7 +46,7 @@ struct Batch
 
     Tensor<type, 1> inputs_tensor;
 
-    type* inputs_data = nullptr;
+    type* input_data = nullptr;
 
     dimensions targets_dimensions;
 

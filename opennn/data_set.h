@@ -102,7 +102,6 @@ public:
     explicit DataSet(const Tensor<type, 1>&, const Index&);
 
     void set_default_columns_scalers();
-    void set_indra_columns(const Tensor<string, 1>&);
 
     /// This enumeration represents the data file string codification (utf8, shift_jis)
 
@@ -168,7 +167,7 @@ public:
 
         /// Raw variable use.
 
-        DataSet::VariableUse raw_variable_use = DataSet::VariableUse::Input;
+        DataSet::VariableUse use = DataSet::VariableUse::Input;
 
         /// Raw variable type.
 
@@ -460,8 +459,6 @@ public:
 
     // raw_variables set methods
 
-//    void set_indra_columns(const Tensor<string, 1>&);
-
     void set_raw_variables(const Tensor<RawVariable, 1>&);
     void set_default_raw_variables_uses();
 
@@ -497,13 +494,13 @@ public:
 
     void set_raw_variables_scalers(const Tensor<Scaler, 1>&);
 
-    void set_binary_simple_raw_variables();
+    void set_binary_raw_variables();
 
     // raw_variables other methods
 
-    void check_constant_raw_variables();
+    void set_constant_raw_variables();
 
-    Tensor<type, 2> transform_binary_column(const Tensor<type, 1>&) const;
+    //Tensor<type, 2> transform_binary_column(const Tensor<type, 1>&) const;
 
     // Variables set methods
 
@@ -771,7 +768,7 @@ public:
 
     // Reader
 
-    string decode(const string&) const;
+    void decode(string&) const;
 
     void read_csv();
     void read_csv_1();
@@ -781,6 +778,16 @@ public:
 
     void read_csv_2_complete();
     void read_csv_3_complete();
+
+    void open_file(const string&, ifstream&) const;
+    void open_file(const string&, ofstream&) const;
+
+    void read_data_file_preview(ifstream&);
+
+    void skip_header(ifstream&) const;
+    void check_tokens(ifstream&, const Index&) const;
+
+    Index count_non_empty_rows(ifstream&) const;
 
     void check_separators(const string&) const;
 

@@ -282,7 +282,7 @@ void DataSetTest::test_unuse_constant_raw_variables()
 
     data_set.set_data(data);
     data_set.set_has_header(false);
-    data_set.check_constant_raw_variables();
+    data_set.set_constant_raw_variables();
 
     data_set.unuse_constant_raw_variables();
 

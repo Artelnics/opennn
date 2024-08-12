@@ -6,12 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <codecvt>
+//#include <codecvt>
 #include <set>
-#include <regex>
+#include <map>
+#include <numeric>
 
 #include "language_data_set.h"
 #include "tensors.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -75,10 +77,11 @@ Index LanguageDataSet::get_completion_length() const
 
 Index LanguageDataSet::get_context_variables_number() const
 {
+    const Index raw_variables_number = get_raw_variables_number();
 
     Index context_number = 0;
 
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
         if(raw_variables(i).type == RawVariableType::Categorical)
         {
@@ -90,7 +93,7 @@ Index LanguageDataSet::get_context_variables_number() const
                 }
             }
         }
-        else if(raw_variables(i).raw_variable_use == VariableUse::Context)
+        else if(raw_variables(i).use == VariableUse::Context)
         {
             context_number++;
         }
@@ -110,6 +113,8 @@ const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() cons
 
 Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
 {
+    const Index raw_variables_number = get_raw_variables_number();
+
     const Index context_number = get_context_variables_number();
 
     const Tensor<Index, 1> context_raw_variables_indices = get_context_raw_variables_indices();
@@ -119,7 +124,7 @@ Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
     Index context_index = 0;
     Index context_variable_index = 0;
 
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
         if(raw_variables(i).type == RawVariableType::Categorical)
         {
@@ -136,7 +141,7 @@ Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
                 context_variable_index++;
             }
         }
-        else if(raw_variables(i).raw_variable_use == VariableUse::Context) // Binary, numeric
+        else if(raw_variables(i).use == VariableUse::Context) // Binary, numeric
         {
             context_variables_indices(context_index) = context_variable_index;
             context_index++;
@@ -156,11 +161,13 @@ Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
 
 Index LanguageDataSet::get_context_raw_variables_number() const
 {
+    const Index raw_variables_number = get_raw_variables_number();
+
     Index context_raw_variables_number = 0;
 
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).raw_variable_use == VariableUse::Context)
+        if(raw_variables(i).use == VariableUse::Context)
         {
             context_raw_variables_number++;
         }
@@ -174,15 +181,17 @@ Index LanguageDataSet::get_context_raw_variables_number() const
 
 Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
 {
+    const Index raw_variables_number = get_raw_variables_number();
+
     const Index context_raw_variables_number = get_context_raw_variables_number();
 
     Tensor<Index, 1> context_raw_variables_indices(context_raw_variables_number);
 
     Index index = 0;
 
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).raw_variable_use == VariableUse::Context)
+        if(raw_variables(i).use == VariableUse::Context)
         {
             context_raw_variables_indices(index) = i;
             index++;
@@ -1383,15 +1392,7 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
     ifstream file(path.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextAnalytics class.\n"
-            << "void import_vocabulary() method.\n"
-            << "Cannot open data file: " << path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open data file: " + path + "\n");
 
     Index vocabulary_size = 0;
 
@@ -1849,15 +1850,7 @@ void LanguageDataSet::load_documents(const string& path)
     ifstream file(path.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextAnalytics class.\n"
-                << "void load_documents() method.\n"
-                << "Cannot open data file: " << path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open data file: " + path + "\n");
 
     Tensor<Tensor<string,1>, 1> documents_copy(documents);
 
@@ -1979,35 +1972,9 @@ void LanguageDataSet::load_documents(const string& path)
 
 void LanguageDataSet::read_csv_3_language_model()
 {
-    std::regex accent_regex("[\\xC0-\\xFF]");
     ifstream file;
 
-#ifdef _WIN32
-
-    if(std::regex_search(data_source_path, accent_regex))
-    {
-        file.open(string_to_wide_string(data_source_path));
-
-    }
-    else
-    {
-        file.open(data_source_path.c_str());
-    }
-
-#else
-    file.open(data_source_path.c_str());
-#endif
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-            << "void read_csv_3_simple() method.\n"
-            << "Cannot open data file: " << data_source_path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
+    open_file(data_source_path, file);
 
     const bool is_float = is_same<type, float>::value;
 
@@ -2015,21 +1982,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     string line;
 
-    // Read header
-
-    if(has_header)
-    {
-        while (file.good())
-        {
-            getline(file, line);
-
-            line = decode(line);
-
-            if(line.empty()) continue;
-
-            break;
-        }
-    }
+    skip_header(file);
 
     // Read data
 
@@ -2050,7 +2003,7 @@ void LanguageDataSet::read_csv_3_language_model()
     {
         getline(file, line);
 
-        line = decode(line);
+        decode(line);
 
         trim(line);
 

@@ -6,6 +6,19 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <limits>
+//#include <map>
+#include <math.h>
+//#include <vector>
+#include <numeric>
+#include <stdio.h>
+
+#include "../eigen/unsupported/Eigen/KroneckerProduct"
+
+#include "strings_utilities.h"
 #include "tensors.h"
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
@@ -613,19 +626,6 @@ void substract_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type,
 
         slice.device(*thread_pool_device) = slice - matrix;
     }
-}
-
-
-bool is_zero(const Tensor<type, 1>& tensor)
-{
-    const Index size = tensor.size();
-
-    for(Index i = 0; i < size; i++)
-    {
-        if(abs(tensor[i]) > type(NUMERIC_LIMITS_MIN)) return false;
-    }
-
-    return true;
 }
 
 
