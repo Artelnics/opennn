@@ -23,7 +23,7 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
 {
     const Tensor<type, 2>& data = data_set->get_data();
     
-    fill_tensor_data(data, samples_indices, inputs_indices, inputs_data);
+    fill_tensor_data(data, samples_indices, inputs_indices, input_data);
 
     if(has_context)
     {
@@ -45,7 +45,7 @@ void Batch::perform_augmentation() const
     const Index channels_number = input_dimensions[2];
     const Index input_size = rows_number*columns_number*channels_number;
 
-    TensorMap<Tensor<type, 4>> inputs(inputs_data,
+    TensorMap<Tensor<type, 4>> inputs(input_data,
                                       batch_size,
                                       rows_number,
                                       columns_number,
@@ -62,11 +62,11 @@ void Batch::perform_augmentation() const
     // const type random_vertical_translation_minimum = image_data_set->get_random_vertical_translation_minimum();
     // const type random_vertical_translation_maximum = image_data_set->get_random_vertical_translation_maximum();
 
-    type* inputs_data = inputs.data();
+    type* input_data = inputs.data();
 
     for(Index batch = 0; batch < batch_size; batch++)
     {
-        TensorMap<Tensor<type, 3>> image(inputs_data + batch*input_size,
+        TensorMap<Tensor<type, 3>> image(input_data + batch*input_size,
                                          rows_number,
                                          columns_number,
                                          channels_number);
@@ -159,7 +159,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         inputs_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
 
-    inputs_data = inputs_tensor.data();
+    input_data = inputs_tensor.data();
 
     if(data_set_target_dimensions.size() == 1)
     {
@@ -256,7 +256,7 @@ void Batch::print() const
 
     if(inputs_rank == 4)
     {
-        const TensorMap<Tensor<type, 4>> inputs(inputs_data,
+        const TensorMap<Tensor<type, 4>> inputs(input_data,
                                                 input_dimensions[0],
                                                 input_dimensions[1],
                                                 input_dimensions[2],
@@ -289,14 +289,14 @@ Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
     if(!has_context)
     {
         inputs.resize(1);
-        inputs(0).first = inputs_data;
+        inputs(0).first = input_data;
         inputs(0).second = input_dimensions;
     }
     else
     {
         inputs.resize(2);
 
-        inputs(0).first = inputs_data;
+        inputs(0).first = input_data;
         inputs(0).second = input_dimensions;
 
         inputs(1).first = context_data;

@@ -158,7 +158,7 @@ void ImageDataSet::set(const Index& new_images_number,
     for(Index i = 0; i < inputs_number; i++)
     {
         raw_variables(i).name = "p_" + to_string(i+1);
-        raw_variables(i).raw_variable_use = VariableUse::Input;
+        raw_variables(i).use = VariableUse::Input;
         raw_variables(i).type = RawVariableType::Numeric;
     }
 
@@ -172,7 +172,7 @@ void ImageDataSet::set(const Index& new_images_number,
         categories.setConstant("ABC");
 
         raw_variables(raw_variables_number-1).type = RawVariableType::Categorical;
-        raw_variables(raw_variables_number-1).raw_variable_use = VariableUse::Target;
+        raw_variables(raw_variables_number-1).use = VariableUse::Target;
         raw_variables(raw_variables_number-1).name = "target";
 
         raw_variables(raw_variables_number-1).set_categories(categories);
