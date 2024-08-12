@@ -6,6 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <fstream>
+#include <iostream>
+
 #include "auto_association_data_set.h"
 #include "tensors.h"
 

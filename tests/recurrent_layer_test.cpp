@@ -106,8 +106,8 @@ void RecurrentLayerTest::test_forward_propagate()
 
     recurrent_layer_forward_propagation.set(samples_number, &recurrent_layer);
 
-    Tensor<type*, 1> inputs_data(1);
-    inputs_data(0) = inputs.data();
+    Tensor<type*, 1> input_data(1);
+    input_data(0) = inputs.data();
 
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};

@@ -57,8 +57,8 @@ void FlattenLayerTest::test_forward_propagate()
 
     flatten_layer_forward_propagation.set(images_number, &flatten_layer);
 
-    Tensor<type*, 1> inputs_data(1);
-    inputs_data(0) = inputs.data();
+    Tensor<type*, 1> input_data(1);
+    input_data(0) = inputs.data();
 
     pair<type*, dimensions> inputs_pair(inputs.data(), {{image_height, image_width, image_channels_number, images_number}});
 

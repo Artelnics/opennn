@@ -87,58 +87,6 @@ Index count_tokens(const string& text, const char& separator)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-//Tensor<string, 1> get_tokens(const string& text, const char& separator)
-//{
-//    const Index tokens_number = count_tokens(text, separator);
-
-//    Tensor<string, 1> tokens(tokens_number);
-
-    // Skip delimiters at beginning.
-
-//    string::size_type last_position = text.find_first_not_of(separator, 0);
-
-    // Find first "non-delimiter"
-
-//    Index index = 0;
-//    Index old_position = last_position;
-
-//    string::size_type position = text.find_first_of(separator, last_position);
-
-//    while(string::npos != position || string::npos != last_position)
-//    {
-//        if(last_position - old_position != 1
-//        && index != 0)
-//        {
-//            index++;
-//            old_position++;
-//            continue;
-//        }
-
-// Found a token, add it to the vector
-
-//        tokens[index] = text.substr(last_position, position - last_position);
-
-//        old_position = position;
-
-// Skip delimiters. Note the "not_of"
-
-//        last_position = text.find_first_not_of(separator, position);
-
-// Find next "non-delimiter"
-
-//        position = text.find_first_of(separator, last_position);
-
-//        index++;
-//    }
-
-//    return tokens;
-//}
-
-
-/// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
-/// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
-/// @param str String to be tokenized.
-
 void fill_tokens(const string& text, const string& separator, Tensor<string, 1>& tokens)
 {
     tokens.setConstant("");

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensors.h"
+#include "strings_utilities.h"
 #include "embedding_layer.h"
 
 namespace opennn
@@ -563,6 +564,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
+
         set_parameters(to_type_vector(parameters_string, " "));
     }
 }

@@ -277,15 +277,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     const fs::path path = data_source_path;
 
     if(data_source_path.empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Data file name is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Data source path is empty.\n");
 
     has_header = true;
     has_rows_labels = true;
@@ -408,7 +400,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
             {
                 raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
                 raw_variables(raw_variable_index).type = ColumnType::Numeric;
-                raw_variables(raw_variable_index).raw_variable_use = VariableUse::Input;
+                raw_variables(raw_variable_index).use = VariableUse::Input;
                 raw_variables(raw_variable_index).scaler = Scaler::MinimumMaximum;
                 raw_variable_index++;
             }
@@ -437,7 +429,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         categories(i) = folder_paths[i].filename().string();
     }
 
-    raw_variables(image_size).raw_variable_use = VariableUse::Target;
+    raw_variables(image_size).use = VariableUse::Target;
     raw_variables(image_size).categories = categories;
 
     raw_variables(image_size).categories_uses.resize(classes_number);

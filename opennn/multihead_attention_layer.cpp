@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "strings_utilities.h"
+
 #include "tensors.h"
 #include "multihead_attention_layer.h"
 
