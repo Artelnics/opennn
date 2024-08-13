@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "statistics_test.h"
+#include "strings_utilities.h"
 
 StatisticsTest::StatisticsTest() : UnitTesting()
 {   

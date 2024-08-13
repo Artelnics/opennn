@@ -11,15 +11,7 @@
 
 // System includes
 
-//#include <iostream>
-//#include <fstream>
-//#include <algorithm>
-//#include <functional>
-//#include <limits>
-//#include <cmath>
-//#include <ctime>
-
-// Eigen includes
+// OpenNN includes
 
 #include "config.h"
 

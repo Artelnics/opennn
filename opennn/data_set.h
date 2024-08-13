@@ -24,7 +24,6 @@
 #include "correlation.h"
 #include "scaling.h"
 
-//using namespace std;
 using namespace Eigen;
 
 // Filesystem namespace

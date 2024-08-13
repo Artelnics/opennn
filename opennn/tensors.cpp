@@ -6,15 +6,19 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+// System includes
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <limits>
-//#include <map>
 #include <math.h>
-//#include <vector>
 #include <numeric>
 #include <stdio.h>
+
+// OpenNN includes
+
+#include "../eigen/Eigen/Dense"
 
 #include "../eigen/unsupported/Eigen/KroneckerProduct"
 

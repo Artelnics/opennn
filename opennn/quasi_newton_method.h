@@ -12,29 +12,16 @@
 // System includes
 
 #include <string>
-//#include <sstream>
 #include <iostream>
-//#include <fstream>
-//#include <algorithm>
-//#include <functional>
-//#include <limits>
-//#include <cmath>
-//#include <ctime>
 
 // OpenNN includes
 
 #include "config.h"
-
 #include "loss_index.h"
-
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 
-// Eigen Includes
-
-//#include "../eigen/unsupported/Eigen/KroneckerProduct"
-
-using Eigen::MatrixXd;
+//using Eigen::MatrixXd;
 
 namespace opennn
 {

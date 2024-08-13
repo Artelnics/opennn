@@ -12,13 +12,6 @@
 // System includes
 
 #include <string>
-//#include <cmath>
-//#include <cstdlib>
-//#include <fstream>
-//#include <iostream>
-//#include <sstream>
-//#include <ctype.h>
-//#include <stdexcept>
 
 // OpenNN includes
 
@@ -28,8 +21,6 @@
 #include "layer_back_propagation.h"
 
 #include "config.h"
-//#include "flatten_layer.h"
-//#include "pooling_layer.h"
 
 namespace opennn
 {

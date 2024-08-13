@@ -11,10 +11,6 @@
 
 // System includes
 
-//#include <algorithm>
-//#include <cstdlib>
-//#include <execution>
-//#include <iostream>
 #include <string>
 
 // OpenNN includes
@@ -24,7 +20,6 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 #include "layer_back_propagation_lm.h"
-//#include "probabilistic_layer.h"
 
 namespace opennn
 {
