@@ -69,6 +69,7 @@ Index LanguageDataSet::get_context_length() const
     return max_context_length + 2;
 }
 
+
 Index LanguageDataSet::get_completion_length() const
 {
     return max_completion_length + 1;
@@ -79,27 +80,17 @@ Index LanguageDataSet::get_context_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    Index context_number = 0;
+    Index context_variables_number = 0;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::Categorical)
+        if(raw_variables(i).use == VariableUse::Context)
         {
-            for(Index j = 0; j < raw_variables(i).categories_uses.size(); j++)
-            {
-                if(raw_variables(i).categories_uses(j) == VariableUse::Context)
-                {
-                    context_number++;
-                }
-            }
-        }
-        else if(raw_variables(i).use == VariableUse::Context)
-        {
-            context_number++;
+            context_variables_number += raw_variables(i).get_categories_number();
         }
     }
 
-    return context_number;
+    return context_variables_number;
 }
 
 
@@ -113,14 +104,14 @@ const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() cons
 
 Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
 {
+    const Index context_variables_number = get_context_variables_number();
+
+    Tensor<Index, 1> context_variables_indices(context_variables_number);
+
     const Index raw_variables_number = get_raw_variables_number();
 
-    const Index context_number = get_context_variables_number();
-
     const Tensor<Index, 1> context_raw_variables_indices = get_context_raw_variables_indices();
-
-    Tensor<Index, 1> context_variables_indices(context_number);
-
+/*
     Index context_index = 0;
     Index context_variable_index = 0;
 
@@ -152,7 +143,7 @@ Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
             context_variable_index++;
         }
     }
-
+*/
     return context_variables_indices;
 }
 
@@ -1055,26 +1046,6 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
                     raw_variables(i).categories = get_tokens(new_categories, ";");
                 }
-
-                // Categories uses
-
-                const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
-
-                if(!categories_uses_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Categories uses element is nullptr.\n";
-
-                    throw runtime_error(buffer.str());
-                }
-
-                if(categories_uses_element->GetText())
-                {
-                    const string new_categories_uses = categories_uses_element->GetText();
-
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
-                }
             }
         }
     }
@@ -1953,12 +1924,12 @@ void LanguageDataSet::load_documents(const string& path)
     Tensor<string,1> document_copy(lines_count);
     Tensor<string,1> document_target_copy(lines_count);
 
-    copy(/*execution::par,*/
+    copy(
         document.data(),
         document.data() + lines_count,
         document_copy.data());
 
-    copy(/*execution::par,*/
+    copy(
         document_target.data(),
         document_target.data() + lines_count,
         document_target_copy.data());
@@ -2506,6 +2477,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             else
             {
                 if(token_counter > max_completion_length + 1)    break;
+
                 if(j == line_tokens.size() || (token_counter == max_completion_length + 1 && !line_ended))
                 {
                     completion_row(token_counter) = 3; // end indicator
@@ -2525,8 +2497,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
             file << completion_row(j) << ";";
-        file << completion_row(max_completion_length + 1) << "\n";
-        
+
+        file << completion_row(max_completion_length + 1) << "\n";        
     }
 }
 

@@ -715,16 +715,6 @@ TrainingResults ConjugateGradient::perform_training()
     const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
 
-//    cout << "Training samples number: " << training_samples_number << endl;
-//    cout << "Selection samples number: " << selection_samples_number << endl;
-//    cout << "Has selection: " << (has_selection ? "Yes" : "No") << endl;
-
-//    cout << "Training samples indices: " << training_samples_indices << endl;
-//    cout << "Selection samples indices: " << selection_samples_indices << endl;
-
-//    cout << "Input variables indices: " << input_variables_indices << endl;
-//    cout << "Target variables indices: " << target_variables_indices << endl;
-
     // Neural network
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();

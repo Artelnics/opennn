@@ -139,7 +139,7 @@ Tensor<type, 2> TimeSeriesDataSet::get_time_series_raw_variable_data(const Index
     }
 
     const Eigen::array<Index, 2> extents = {rows_number, raw_variables_number};
-    const Eigen::array<Index, 2> offsets = {0, get_numeric_variable_indices(raw_variable_index)(0)};
+    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(raw_variable_index)(0)};
 
     return time_series_data.slice(offsets, extents);
 }
@@ -371,7 +371,6 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
             /*
             new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_lag_" + to_string(lag_index);
             */
-            new_raw_variables(new_raw_variable_index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Input);
 
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
@@ -387,7 +386,6 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
 
-            new_raw_variables(new_raw_variable_index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Target);
 
             new_raw_variable_index++;            
@@ -400,7 +398,6 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
 
-            new_raw_variables(new_raw_variable_index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Unused);
 
             new_raw_variable_index++;
@@ -453,7 +450,7 @@ void TimeSeriesDataSet::transform_time_series_data()
 
         for(Index i = 0; i < lags_number+steps_ahead; i++)
         {
-            copy(/*execution::par,*/ 
+            copy( 
                 time_series_data.data() + i + j * old_samples_number,
                 time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
                 data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number);
@@ -1293,26 +1290,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
                     raw_variables(i).categories = get_tokens(new_categories, ';');
                 }
-
-                // Categories uses
-
-                const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
-
-                if(!categories_uses_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Categories uses element is nullptr.\n";
-
-                    throw runtime_error(buffer.str());
-                }
-
-                if(categories_uses_element->GetText())
-                {
-                    const string new_categories_uses = categories_uses_element->GetText();
-
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
-                }
             }
         }
     }
@@ -1462,26 +1439,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     const string time_series_new_categories = time_series_categories_element->GetText();
 
                     time_series_raw_variables(i).categories = get_tokens(time_series_new_categories, ';');
-                }
-
-                // Categories uses
-
-                const tinyxml2::XMLElement* time_series_categories_uses_element = time_series_raw_variable_element->FirstChildElement("CategoriesUses");
-
-                if(!time_series_categories_uses_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Time series categories uses element is nullptr.\n";
-
-                    throw runtime_error(buffer.str());
-                }
-
-                if(time_series_categories_uses_element->GetText())
-                {
-                    const string time_series_new_categories_uses = time_series_categories_uses_element->GetText();
-
-                    time_series_raw_variables(i).set_categories_uses(get_tokens(time_series_new_categories_uses, ';'));
                 }
             }
         }

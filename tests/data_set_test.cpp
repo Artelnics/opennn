@@ -467,8 +467,8 @@ void DataSetTest::test_read_csv()
     data = data_set.get_data();
 
     assert_true(data_set.get_header_line(), LOG);
-    assert_true(data_set.get_numeric_variable_name(0) == "x", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
+    assert_true(data_set.get_variable_name(0) == "x", LOG);
+    assert_true(data_set.get_variable_name(1) == "y", LOG);
 
     assert_true(data.dimension(0) == 3, LOG);
     assert_true(data.dimension(1) == 2, LOG);
@@ -495,8 +495,8 @@ void DataSetTest::test_read_csv()
 
     data = data_set.get_data();
 
-    assert_true(data_set.get_numeric_variable_name(0) == "x", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
+    assert_true(data_set.get_variable_name(0) == "x", LOG);
+    assert_true(data_set.get_variable_name(1) == "y", LOG);
 
     assert_true((data(0,0) - 1.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true((data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -520,8 +520,8 @@ void DataSetTest::test_read_csv()
 
     data = data_set.get_data();
 
-    assert_true(data_set.get_numeric_variable_name(0) == "x", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
+    assert_true(data_set.get_variable_name(0) == "x", LOG);
+    assert_true(data_set.get_variable_name(1) == "y", LOG);
 
     assert_true((data(0,0) - 1.0 ) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true((data(0,1) - 2.0 ) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -607,13 +607,13 @@ void DataSetTest::test_read_csv()
     assert_true(data_set.get_input_variables_number() == 4, LOG);
     assert_true(data_set.get_target_variables_number() == 3, LOG);
 
-    assert_true(data_set.get_numeric_variable_name(0) == "sepal length", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "sepal width", LOG);
-    assert_true(data_set.get_numeric_variable_name(2) == "petal length", LOG);
-    assert_true(data_set.get_numeric_variable_name(3) == "petal width", LOG);
-    assert_true(data_set.get_numeric_variable_name(4) == "Iris-setosa", LOG);
-    assert_true(data_set.get_numeric_variable_name(5) == "Iris-versicolor", LOG);
-    assert_true(data_set.get_numeric_variable_name(6) == "Iris-virginica", LOG);
+    assert_true(data_set.get_variable_name(0) == "sepal length", LOG);
+    assert_true(data_set.get_variable_name(1) == "sepal width", LOG);
+    assert_true(data_set.get_variable_name(2) == "petal length", LOG);
+    assert_true(data_set.get_variable_name(3) == "petal width", LOG);
+    assert_true(data_set.get_variable_name(4) == "Iris-setosa", LOG);
+    assert_true(data_set.get_variable_name(5) == "Iris-versicolor", LOG);
+    assert_true(data_set.get_variable_name(6) == "Iris-virginica", LOG);
 
     assert_true(data_set.get_samples_number() == 5, LOG);
 
@@ -646,8 +646,8 @@ void DataSetTest::test_read_csv()
     data_set.save("../data/data_set.xml");
     data_set.load("../data/data_set.xml");
 
-    assert_true(data_set.get_numeric_variable_name(0) == "x", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
+    assert_true(data_set.get_variable_name(0) == "x", LOG);
+    assert_true(data_set.get_variable_name(1) == "y", LOG);
 */
     // Test
 /*

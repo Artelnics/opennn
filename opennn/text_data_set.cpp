@@ -902,27 +902,6 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     const string new_categories = categories_element->GetText();
 
                     raw_variables(i).categories = get_tokens(new_categories, ";");
-
-                }
-
-                // Categories uses
-
-                const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
-
-                if(!categories_uses_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Categories uses element is nullptr.\n";
-
-                    throw runtime_error(buffer.str());
-                }
-
-                if(categories_uses_element->GetText())
-                {
-                    const string new_categories_uses = categories_uses_element->GetText();
-
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
                 }
             }
         }
@@ -2154,8 +2133,6 @@ void TextDataSet::read_txt()
     data_source_path = new_data_source_path;
     separator = Separator::Semicolon;
     has_header = true;
-
-    load_data();
 
 //    for(Index i = 0; i < get_input_raw_variables_number(); i++)
 //        set_raw_variable_type(i, RawVariableType::Numeric);

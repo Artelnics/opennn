@@ -2100,19 +2100,18 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
 }
 
 
-Tensor<type, 2> str_to_input(const string& input_string) 
-{
-    Tensor<type, 2> input_data = multiple_one_hot_encode(input_string);
+//Tensor<type, 2> str_to_input(const string& input_string)
+//{
+//    Tensor<type, 2> input_data = multiple_one_hot_encode(input_string);
 
-    Tensor<type, 2> flatten_input_data(1, input_data.size());
+//    Tensor<type, 2> flatten_input_data(1, input_data.size());
 
-    copy(/*execution::par,*/
-        input_data.data(),
-        input_data.data() + input_data.size(),
-        flatten_input_data.data());
+//    copy(input_data.data(),
+//         input_data.data() + input_data.size(),
+//         flatten_input_data.data());
 
-    return flatten_input_data;
-}
+//    return flatten_input_data;
+//}
 
 
 /// Calculate the total number of tokens in the documents.

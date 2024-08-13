@@ -1208,7 +1208,7 @@ void get_row(Tensor<type, 1>& row, const Tensor<type, 2, RowMajor>& matrix, cons
 {
     const Index columns_number = row.dimension(0);
 
-    copy(/*execution::par,*/
+    copy(
          matrix.data() + row_index * columns_number,
          matrix.data() + (row_index + 1) * columns_number,
          row.data());
@@ -1232,7 +1232,7 @@ void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, c
 {
     const Index columns_number = vector.size();
 
-    copy(/*execution::par,*/
+    copy(
         (type*) vector.data(),
         (type*) vector.data() + columns_number,
         matrix.data() + row_index * columns_number);
@@ -1769,10 +1769,10 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 
     Tensor<Index, 1> data(size);
 
-    copy(/*execution::par,*/ 
+    copy( 
          x.data(), x.data() + x.size(), data.data());
 
-    copy(/*execution::par,*/ 
+    copy( 
          y.data(), y.data() + y.size(), data.data() + x.size());
 
     return data;

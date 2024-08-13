@@ -40,12 +40,12 @@ void AutoAssociationDataSet::transform_associative_data()
 
     for(Index i = 0; i < old_variables_number; i++)
     {
-        copy(/*execution::par,*/ 
+        copy( 
              associative_data.data() + (i - index) * samples_number,
              associative_data.data() + (i + 1 - index) *  samples_number,
              data.data() + (i - index) * samples_number);
 
-        copy(/*execution::par,*/ 
+        copy( 
              associative_data.data() + (i - index) * samples_number,
              associative_data.data() + (i + 1 - index) *  samples_number,
              data.data() + samples_number * old_variables_number + (i - index) * samples_number);
@@ -76,7 +76,6 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
         {
             new_raw_variables(index).name = raw_variables(raw_variable_index).name;
 
-            new_raw_variables(index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
             new_raw_variables(index).set_use(DataSet::VariableUse::Input);
             new_raw_variables(index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
@@ -85,8 +84,6 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
         else
         {
             new_raw_variables(index).name = raw_variables(raw_variable_index).name + "_output";
-
-            new_raw_variables(index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
             new_raw_variables(index).set_use(DataSet::VariableUse::Target);
             new_raw_variables(index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;

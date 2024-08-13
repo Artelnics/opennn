@@ -130,11 +130,10 @@ public:
         /// Values constructor
 
         RawVariable(const string&,
-               const DataSet::VariableUse&,
-               const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
-               const Scaler& = Scaler::MeanStandardDeviation,
-               const Tensor<string, 1>& = Tensor<string, 1>(),
-               const Tensor<DataSet::VariableUse, 1>& = Tensor<DataSet::VariableUse, 1>());
+                    const DataSet::VariableUse&,
+                    const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
+                    const Scaler& = Scaler::MeanStandardDeviation,
+                    const Tensor<string, 1>& = Tensor<string, 1>());
 
         /// Raw variable name.
 
@@ -152,20 +151,11 @@ public:
 
         Tensor<string, 1> categories;
 
-        /// Categories use.
-
-        Tensor<DataSet::VariableUse, 1> categories_uses;
-
         Scaler scaler = Scaler::MeanStandardDeviation;
 
         // Methods
 
-        Index get_variables_number() const;
-
         Index get_categories_number() const;
-        Index get_used_categories_number() const;
-
-        Tensor<string, 1> get_used_variables_names() const;
 
         void set_scaler(const Scaler&);
         void set_scaler(const string&);
@@ -178,8 +168,6 @@ public:
         void add_category(const string&);
 
         void set_categories(const Tensor<string, 1>&);
-        void set_categories_uses(const Tensor<string, 1>&);
-        void set_categories_uses(const DataSet::VariableUse&);
 
         virtual void from_XML(const tinyxml2::XMLDocument&);
         virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -251,7 +239,6 @@ public:
     Tensor<Index, 1> get_target_raw_variables_indices() const;
     Tensor<Index, 1> get_unused_raw_variables_indices() const;
     Tensor<Index, 1> get_used_raw_variables_indices() const;
-    Tensor<Index, 1> get_numeric_input_raw_variables() const;
 
     Tensor<string, 1> get_raw_variables_names() const;
 
@@ -272,30 +259,21 @@ public:
     Index get_target_variables_number() const;
     Index get_unused_variables_number() const;
     Index get_used_variables_number() const;
-    Index get_numerical_input_raw_variables_number() const;
 
-    string get_numeric_variable_name(const Index&) const;
+    string get_variable_name(const Index&) const;
     Tensor<string, 1> get_variables_names() const;
 
     Tensor<string, 1> get_input_variables_names() const;
     Tensor<string, 1> get_target_variables_names() const;
 
-    Index get_variable_index(const string&name) const;
-
-    Tensor<Index, 1> get_numeric_variable_indices(const Index&) const;
-    Tensor<Index, 1> get_categorical_to_indices(const Index&) const;
-    Tensor<Index, 1> get_unused_variables_indices() const;
+    Tensor<Index, 1> get_variable_indices(const Index&) const;
     Tensor<Index, 1> get_used_variables_indices() const;
     Tensor<Index, 1> get_input_variables_indices() const;
-    Tensor<Index, 1> get_numeric_input_variables_indices() const;
     Tensor<Index, 1> get_target_variables_indices() const;
 
-    VariableUse get_numeric_variable_use(const Index&) const;
     Tensor<VariableUse, 1> get_variables_uses() const;
 
     const dimensions& get_input_dimensions() const;
-    Index get_input_variables_rank() const;
-
     const dimensions& get_target_dimensions() const;
 
     // Scalers get methods
@@ -470,12 +448,7 @@ public:
     void set_raw_variables_scalers(const Tensor<Scaler, 1>&);
 
     void set_binary_raw_variables();
-
-    // raw_variables other methods
-
     void set_constant_raw_variables();
-
-    //Tensor<type, 2> transform_binary_column(const Tensor<type, 1>&) const;
 
     // Variables set methods
 
@@ -604,7 +577,6 @@ public:
 
     // Box and whiskers
 
-    //BoxPlot calculate_single_box_plot(Tensor<type,1>&) const;
     Tensor<BoxPlot, 1> calculate_raw_variables_box_plots() const;
     Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
@@ -696,10 +668,6 @@ public:
 
     void load_data_binary();
 
-    // Data load methods
-
-    virtual void load_data();
-
     // Missing values
 
     bool has_nan() const;
@@ -767,8 +735,6 @@ public:
     void check_separators(const string&) const;
 
     void check_special_characters(const string&) const;
-
-    void check_input_csv(const string&, const char&) const;
 
     Tensor<type, 2> read_input_csv(const string&, const string&, const string&, const bool&, const bool&) const;
 

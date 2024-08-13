@@ -116,7 +116,7 @@ namespace opennn
 
     string multiple_one_hot_decode(const Tensor<type, 2>&);
 
-    Tensor<type, 2> str_to_input(const string&);
+    //Tensor<type, 2> str_to_input(const string&);
 
     // Preprocess methods
 
