@@ -8,6 +8,9 @@
 
 #include "training_strategy_test.h"
 
+namespace opennn
+{
+
 TrainingStrategyTest::TrainingStrategyTest() : UnitTesting() 
 {
     training_strategy.set(&neural_network, &data_set);
@@ -181,6 +184,7 @@ void TrainingStrategyTest::run_test_case()
     cout << "End of training strategy test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

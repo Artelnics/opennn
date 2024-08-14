@@ -8,6 +8,9 @@
 
 #include "unscaling_layer_test.h"
 
+namespace opennn
+{
+
 
 UnscalingLayerTest::UnscalingLayerTest() : UnitTesting()
 {
@@ -67,6 +70,7 @@ void UnscalingLayerTest::run_test_case()
     cout << "End of unscaling layer test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

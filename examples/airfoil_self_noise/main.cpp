@@ -26,7 +26,6 @@ int main()
 {
     try
     {
-
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
@@ -35,6 +34,8 @@ int main()
 
         data_set.print();
 
+        data_set.print_data();
+/*
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -87,7 +88,7 @@ int main()
 //      const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

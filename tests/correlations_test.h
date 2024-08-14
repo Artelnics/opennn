@@ -13,6 +13,11 @@
 
 #include "../opennn/unit_testing.h"
 
+#include "../opennn/unit_testing.h"
+
+namespace opennn
+{
+
 class CorrelationsTest : public UnitTesting
 {
 
@@ -50,6 +55,7 @@ public:
 
 };
 
+}
 
 #endif
 

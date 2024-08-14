@@ -12,6 +12,11 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/sum_squared_error.h"
+#include "../opennn/quasi_newton_method.h"
+
+namespace opennn
+{
 
 class QuasiNewtonMethodTest : public UnitTesting 
 {
@@ -62,6 +67,7 @@ private:
 
 };
 
+}
 
 #endif
 

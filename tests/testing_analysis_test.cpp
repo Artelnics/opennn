@@ -8,6 +8,9 @@
 
 #include "testing_analysis_test.h"
 
+namespace opennn
+{
+
 TestingAnalysisTest::TestingAnalysisTest() : UnitTesting() 
 {
     testing_analysis.set_neural_network(&neural_network);
@@ -1227,6 +1230,7 @@ void TestingAnalysisTest::run_test_case()
     cout << "End of testing analysis test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

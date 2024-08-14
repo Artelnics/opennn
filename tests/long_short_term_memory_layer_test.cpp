@@ -6,7 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "../opennn/tensors.h"
+
 #include "long_short_term_memory_layer_test.h"
+
+namespace opennn
+{
 
 LongShortTermMemoryLayerTest::LongShortTermMemoryLayerTest() : UnitTesting()
 {
@@ -118,6 +123,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
     cout << "End of long short-term memory layer test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

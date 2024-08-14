@@ -176,13 +176,6 @@ void ImageDataSet::set(const Index& new_images_number,
         raw_variables(raw_variables_number-1).name = "target";
 
         raw_variables(raw_variables_number-1).set_categories(categories);
-
-        raw_variables(raw_variables_number-1).categories_uses.resize(new_targets_number);
-
-        for (Index k = 0 ; k < new_targets_number ; k++)
-        {
-            raw_variables(raw_variables_number-1).categories_uses(k) = VariableUse::Target;
-        }
     }
 
     // Samples
@@ -937,27 +930,6 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     raw_variables(i).categories = get_tokens(new_categories, ";");
 
                 }
-
-                // Categories uses
-
-                const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
-
-                if(!categories_uses_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Categories uses element is nullptr.\n";
-
-                    throw runtime_error(buffer.str());
-                }
-
-                if(categories_uses_element->GetText())
-                {
-                    const string new_categories_uses = categories_uses_element->GetText();
-
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
-
-                }
             }
         }
     }
@@ -1113,26 +1085,6 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                        const string time_series_new_categories = time_series_categories_element->GetText();
 
 //                        time_series_raw_variables(i).categories = get_tokens(time_series_new_categories, ";);
-//                    }
-
-//                    // Categories uses
-
-//                    const tinyxml2::XMLElement* time_series_categories_uses_element = time_series_raw_variable_element->FirstChildElement("CategoriesUses");
-
-//                    if(!time_series_categories_uses_element)
-//                    {
-//                        buffer << "OpenNN Exception: DataSet class.\n"
-//                               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                               << "Time series categories uses element is nullptr.\n";
-
-//                        throw runtime_error(buffer.str());
-//                    }
-
-//                    if(time_series_categories_uses_element->GetText())
-//                    {
-//                        const string time_series_new_categories_uses = time_series_categories_uses_element->GetText();
-
-//                        time_series_raw_variables(i).set_categories_uses(get_tokens(time_series_new_categories_uses, ';'));
 //                    }
 //                }
 //            }
@@ -1362,10 +1314,9 @@ void ImageDataSet::read_bmp()
     const Index targets_number = directory_path.size();
 
     Tensor<Index, 1> images_number(targets_number + 1);
-    
-    Index samples_number = 0;
-
     images_number.setZero();
+
+    Index samples_number = 0;
 
     for(Index i = 0; i < targets_number; i++)
     {
@@ -1381,7 +1332,7 @@ void ImageDataSet::read_bmp()
         images_number[i+1] = samples_number;
     }
 
-    Tensor<unsigned char,3> image_data = read_bmp_image(image_path[0].string());
+    Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0].string());
 
     const Index image_height = image_data.dimension(0);
     const Index image_width = image_data.dimension(1);
@@ -1396,29 +1347,21 @@ void ImageDataSet::read_bmp()
     #pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
-        const Tensor<unsigned char,3> image_data = read_bmp_image(image_path[i].string());
+        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i].string());
 
         if(pixels_number != image_data.size())
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_bmp() method.\n"
-                   << "Different image sizes.\n";
-
-            throw invalid_argument(buffer.str());
-        }
+            throw runtime_error("Different image sizes.\n");
 
         for(Index j = 0; j < pixels_number; j++)
         {
-            data(i,j) = image_data(j);
+            data(i, j) = image_data(j);
         }
 
         if(targets_number == 2)
         {
             if(i >= images_number[0] && i < images_number[1])
             {
-                data(i,pixels_number) = 1;
+                data(i, pixels_number) = 1;
             }
         }
         else
@@ -1427,22 +1370,21 @@ void ImageDataSet::read_bmp()
             {
                 if(i >= images_number[k] && i < images_number[k+1])
                 {
-                    data(i,k+pixels_number) = 1;
+                    data(i, k+pixels_number) = 1;
                     break;
                 }
             }
         }
-        /*
+
         if(display)
         {
             if(i % 1000 == 0)
                 display_progress_bar(i, samples_number - 1000);
         }
-        */
     }
 
     if(display)
-        cout << endl << "Finished loading data set..." << endl;
+        cout << endl << "Image data set loaded." << endl;
 }
 
 } // opennn namespace

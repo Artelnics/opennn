@@ -8,6 +8,9 @@
 
 #include "image_data_set_test.h"
 
+namespace opennn
+{
+
 ImageDataSetTest::ImageDataSetTest() : UnitTesting()
 {
     data_set.set_display(false);
@@ -92,6 +95,7 @@ void ImageDataSetTest::run_test_case()
     cout << "End of image data set test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

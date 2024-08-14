@@ -8,6 +8,18 @@
 
 #include"unit_testing.h"
 
+//#include <cmath>
+//#include <cstdlib>
+//#include <fstream>
+//#include <iomanip>
+#include <iostream>
+#include <string>
+//#include <sstream>
+//#include <time.h>
+
+namespace opennn
+{
+
 UnitTesting::UnitTesting()
 {
 }
@@ -184,6 +196,7 @@ void UnitTesting::print_results()
     }
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

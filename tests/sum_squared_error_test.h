@@ -14,6 +14,10 @@
 #include "../opennn/unit_testing.h"
 #include "../opennn/neural_network_forward_propagation.h"
 #include "../opennn/back_propagation.h"
+#include "../opennn/sum_squared_error.h"
+
+namespace opennn
+{
 
 class SumSquaredErrorTest : public UnitTesting 
 {
@@ -69,6 +73,8 @@ private:
     Tensor<type, 2> numerical_jacobian;
 
 };
+
+}
 
 #endif
 

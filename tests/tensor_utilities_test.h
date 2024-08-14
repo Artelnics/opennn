@@ -6,21 +6,25 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef TENSORUTILITIESTEST_H
-#define TENSORUTILITIESTEST_H
+#ifndef TensorsTest_H
+#define TensorsTest_H
 
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
 
-class TensorUtilitiesTest : public UnitTesting
+namespace opennn
+{
+
+
+class TensorsTest : public UnitTesting
 {
 
 public:  
 
-    explicit TensorUtilitiesTest();
+    explicit TensorsTest();
 
-    virtual ~TensorUtilitiesTest();
+    virtual ~TensorsTest();
 
     void test_fill_submatrix();
 
@@ -36,9 +40,9 @@ private:
     Tensor<type, 1> vector;
     Tensor<type, 2> matrix;
 
-
 };
 
+}
 
 #endif
 

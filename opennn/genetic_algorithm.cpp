@@ -474,7 +474,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     for(Index i = 0; i < raw_variables.size(); i++)
     {
-        if(raw_variables(i).use == DataSet::VariableUse::Unused)
+        if(raw_variables(i).use == DataSet::VariableUse::None)
         {
             unused_number++;
         }
@@ -484,7 +484,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     for(Index i = 0; i < raw_variables.size(); i++)
     {
-        if(raw_variables(i).use == DataSet::VariableUse::Unused)
+        if(raw_variables(i).use == DataSet::VariableUse::None)
         {
             original_unused_raw_variables_indices(index) = i;
             index++;
@@ -1556,7 +1556,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
         }
     }
 
-    // Unused variables (no set unused initial raw_variables as inputs)
+    // None variables (no set unused initial raw_variables as inputs)
 
     Tensor<bool, 1> individual_raw_variables_to_variables_returned(genes_number);
     individual_raw_variables_to_variables_returned.setConstant(false);

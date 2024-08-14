@@ -6,7 +6,12 @@
 //   Artificial Intelligence Techniques, S.L. (Artelnics)
 //   artelnics@artelnics.com
 
+#include "../opennn/tensors.h"
+
 #include "normalized_squared_error_test.h"
+
+namespace opennn
+{
 
 NormalizedSquaredErrorTest::NormalizedSquaredErrorTest() : UnitTesting()
 {
@@ -553,6 +558,7 @@ void NormalizedSquaredErrorTest::run_test_case()
     cout << "End of normalized squared error test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques SL.

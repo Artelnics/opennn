@@ -8,6 +8,9 @@
 
 #include "levenberg_marquardt_algorithm_test.h"
 
+namespace opennn
+{
+
 
 LevenbergMarquardtAlgorithmTest::LevenbergMarquardtAlgorithmTest() : UnitTesting() 
 {
@@ -169,6 +172,7 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
     cout << "End of Levenberg-Marquardt algorithm test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
