@@ -68,8 +68,6 @@ public:
 
     explicit DataSet(const Tensor<type, 2>&);
 
-    explicit DataSet(const Tensor<type, 2>&, const Index&, const Tensor<string, 1>&, bool&);
-
     explicit DataSet(const Index&, const Index&);
 
     explicit DataSet(const Index&, const Index&, const Index&);
@@ -82,7 +80,7 @@ public:
 
     enum class Codification{UTF8, SHIFT_JIS};
 
-    explicit DataSet(const string&, const char&, const bool&, const Codification& = Codification::UTF8);
+    explicit DataSet(const string&, const char&, const bool& = true, const bool& = false, const Codification& = Codification::UTF8);
 
     // Destructor
 
@@ -285,7 +283,7 @@ public:
 
     // Batches get methods
 
-    Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& buffer_size= 100) const;
+    Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& = 100) const;
 
     // Data get methods
 
@@ -380,7 +378,7 @@ public:
     void set(const tinyxml2::XMLDocument&);
     void set(const string&);
     void set(const string&, const char&, const bool&);
-    void set(const string&, const char&, const bool&, const DataSet::Codification&);
+    void set(const string&, const char&, const bool&, const bool&, const DataSet::Codification&);
     void set(const Tensor<type, 1>&, const Index&);
     void set_default();
 
@@ -475,7 +473,7 @@ public:
     void set_data_source_path(const string&);
 
     void set_has_header(const bool&);
-    void set_has_rows_label(const bool&);
+    void set_has_ids(const bool&);
 
     void set_has_text_data(const bool&);
 
@@ -715,23 +713,17 @@ public:
     void decode(string&) const;
 
     void read_csv();
-    void read_csv_1();
 
-    void read_csv_2_simple();
-    void read_csv_3_simple();
+//    void read_csv_2_simple();
+//    void read_csv_3_simple();
 
-    void read_csv_2_complete();
-    void read_csv_3_complete();
+//    void read_csv_2_complete();
+//    void read_csv_3_complete();
 
     void open_file(const string&, ifstream&) const;
     void open_file(const string&, ofstream&) const;
 
     void read_data_file_preview(ifstream&);
-
-    void skip_header(ifstream&) const;
-    void check_tokens(ifstream&, const Index&) const;
-
-    Index count_non_empty_rows(ifstream&) const;
 
     void check_separators(const string&) const;
 
@@ -771,7 +763,7 @@ protected:
 
     Tensor<SampleUse, 1> samples_uses;
 
-    Tensor<string, 1> rows_labels;
+    Tensor<string, 1> ids;
 
     // Raw variables
 
@@ -803,7 +795,7 @@ protected:
 
     /// Header which contains the rows label.
 
-    bool has_rows_labels = false;
+    bool has_ids = false;
 
     /// Class containing file string codification
 

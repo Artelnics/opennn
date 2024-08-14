@@ -8,23 +8,20 @@
 
 // System includes
 
-#include <stdio.h>
-#include <cstring>
+//#include <stdio.h>
+//#include <cstring>
 #include <iostream>
-#include <fstream>
-#include <sstream>
+//#include <fstream>
+//#include <sstream>
 #include <string>
-#include <time.h>
-#include <chrono>
-#include <algorithm>
-#include <execution>
+//#include <time.h>
+//#include <chrono>
+//#include <algorithm>
+//#include <execution>
 
 // OpenNN includes
 
-#include "../opennn/opennn.h"
-#include <iostream>
-
-// OneDNN
+#include "../opennn/data_set.h"
 
 using namespace std;
 using namespace opennn;
@@ -36,6 +33,12 @@ int main()
    try
    {
         cout << "Blank\n";
+
+        DataSet data_set("C:/Users/rober/Documents/airfoil_self_noise.csv", ';', true, true);
+
+        data_set.print();
+
+        data_set.print_data();
 
         cout << "Bye!" << endl;
 
