@@ -398,7 +398,7 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
 
-            new_raw_variables(new_raw_variable_index).set_use(VariableUse::Unused);
+            new_raw_variables(new_raw_variable_index).set_use(VariableUse::None);
 
             new_raw_variable_index++;
         }
@@ -1754,7 +1754,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
                 if(isnan(data(current_sample_index, current_variable_index)))
                 {
-                    set_sample_use(i, "Unused");
+                    set_sample_use(i, "None");
                 }
             }
         }
@@ -1958,7 +1958,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables(i).use != VariableUse::Unused
+        if(time_series_raw_variables(i).use != VariableUse::None
         && time_series_raw_variables(i).type == RawVariableType::Numeric)
         {
             input_i = get_time_series_raw_variable_data(i);
@@ -2072,7 +2072,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables(i).use != VariableUse::Unused
+        if(time_series_raw_variables(i).use != VariableUse::None
         && time_series_raw_variables(i).type == RawVariableType::Numeric)
         {
             input_i = get_time_series_raw_variable_data(i);
@@ -2088,7 +2088,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            if(time_series_raw_variables(j).use != VariableUse::Unused
+            if(time_series_raw_variables(j).use != VariableUse::None
             && time_series_raw_variables(j).type == RawVariableType::Numeric)
             {
                 input_j = get_time_series_raw_variable_data(j);

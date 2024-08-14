@@ -105,12 +105,12 @@ public:
     /// This enumeration represents the possible uses of an sample
     /// (training, selection, testing or unused).
 
-    enum class SampleUse{Training, Selection, Testing, Unused};
+    enum class SampleUse{Training, Selection, Testing, None};
 
     /// This enumeration represents the possible uses of an variable
     /// (input, target, time or unused).
 
-    enum class VariableUse{Id, Input, Target, Time, Unused, Context};
+    enum class VariableUse{Id, Input, Target, Time, None, Context};
 
     /// This enumeration represents the data type of a raw_variable
     /// (numeric, binary, categorical or time).
@@ -141,7 +141,7 @@ public:
 
         /// Raw variable use.
 
-        DataSet::VariableUse use = DataSet::VariableUse::Unused;
+        DataSet::VariableUse use = DataSet::VariableUse::None;
 
         /// Raw variable type.
 

@@ -231,8 +231,8 @@ void DataSetTest::test_filter_data()
 
     data_set.filter_data(minimums, maximums);
 
-    assert_true(data_set.get_sample_use(0) == DataSet::SampleUse::Unused, LOG);
-    assert_true(data_set.get_sample_use(1) == DataSet::SampleUse::Unused, LOG);
+    assert_true(data_set.get_sample_use(0) == DataSet::SampleUse::None, LOG);
+    assert_true(data_set.get_sample_use(1) == DataSet::SampleUse::None, LOG);
 }
 
 
@@ -1033,7 +1033,7 @@ void DataSetTest::test_scrub_missing_values()
 
     samples_uses = data_set.get_samples_uses();
 
-    assert_true(samples_uses(1) == DataSet::SampleUse::Unused, LOG);
+    assert_true(samples_uses(1) == DataSet::SampleUse::None, LOG);
 */
     // Test
 /*

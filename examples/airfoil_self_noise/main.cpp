@@ -26,18 +26,15 @@ int main()
 {
     try
     {
-
         srand(static_cast<unsigned>(time(nullptr)));
 
-        DataSet::RawVariable raw_variable;
-
-        raw_variable.print();
-
         // Data set
-/*
+
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
 
         data_set.print();
+
+        data_set.print_data();
 /*
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();

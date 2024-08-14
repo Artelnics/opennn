@@ -149,7 +149,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     {
         index = indices(i);
 
-        if(samples_uses(index) != SampleUse::Unused)
+        if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index)= SampleUse::Training;
             count_training++;
@@ -166,7 +166,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     {
         index = indices(i);
 
-        if(samples_uses(index) != SampleUse::Unused)
+        if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index) = SampleUse::Testing;
             count_testing++;
