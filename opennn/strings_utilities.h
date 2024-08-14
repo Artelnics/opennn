@@ -282,7 +282,7 @@ namespace opennn
 
 
 
-        void print_tokens(const Tensor<Tensor<string,1>,1>&);
+    void print_tokens(const Tensor<Tensor<string,1>,1>&);
 }
 
 #endif // OPENNNSTRINGS_H
