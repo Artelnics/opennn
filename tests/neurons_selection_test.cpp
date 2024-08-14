@@ -8,6 +8,10 @@
 
 #include "neurons_selection_test.h"
 
+#include "../opennn/growing_neurons.h"
+
+namespace opennn
+{
 
 NeuronsSelectionTest::NeuronsSelectionTest() : UnitTesting()
 {
@@ -60,6 +64,7 @@ void NeuronsSelectionTest::run_test_case()
     cout << "End of neurons selection algorithm test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

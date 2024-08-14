@@ -8,6 +8,11 @@
 
 #include "transformer_test.h"
 
+#include "../opennn/probabilistic_layer_3d.h"
+
+namespace opennn
+{
+
 TransformerTest::TransformerTest() : UnitTesting()
 {
 }
@@ -559,6 +564,7 @@ void TransformerTest::run_test_case()
     cout << "End of transformer test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

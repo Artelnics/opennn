@@ -8,6 +8,9 @@
 
 #include "inputs_selection_test.h"
 
+namespace opennn
+{
+
 InputsSelectionTest::InputsSelectionTest() : UnitTesting()
 {
     training_strategy.set(&neural_network, &data_set);
@@ -61,6 +64,7 @@ void InputsSelectionTest::run_test_case()
     cout << "End of inputs selection algorithm test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

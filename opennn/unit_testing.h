@@ -11,21 +11,26 @@
 
 // System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
+//#include <cmath>
+//#include <cstdlib>
+//#include <fstream>
+//#include <iomanip>
+//#include <iostream>
 #include <string>
-#include <sstream>
-#include <time.h>
+//#include <sstream>
+//#include <time.h>
 
 
 // OpenNN includes
 
-#include "opennn.h"
+#include "config.h"
 
-using namespace opennn;
+//#include "../../opennn/opennn/opennn.h"
+
+//using namespace opennn;
+
+namespace opennn
+{
 
 class UnitTesting
 {
@@ -99,6 +104,7 @@ protected:
 
 };
 
+}
 #endif
 
 // OpenNN: Open Neural Networks Library.

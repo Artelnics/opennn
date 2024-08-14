@@ -12,6 +12,14 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/data_set.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/sum_squared_error.h"
+#include "../opennn/conjugate_gradient.h"
+
+namespace opennn
+{
+
 class ConjugateGradientTest : public UnitTesting 
 {
 
@@ -58,6 +66,7 @@ private:
    TrainingResults training_results;
 };
 
+}
 
 #endif
 

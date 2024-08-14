@@ -11,24 +11,14 @@
 
 // System includes
 
-//#include <cmath>
-//#include <cstdlib>
-//#include <ctype.h>
-//#include <fstream>
-//#include <iostream>
 #include <string>
-//#include <sstream>
 
 // OpenNN includes
 
 #include "config.h"
-//#include "convolutional_layer.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
-
-//#include "flatten_layer.h"
-
 #include "statistics.h"
 
 namespace opennn

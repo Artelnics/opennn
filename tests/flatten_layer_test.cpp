@@ -8,6 +8,10 @@
 
 #include "flatten_layer_test.h"
 
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
 
 FlattenLayerTest::FlattenLayerTest() : UnitTesting()
 {
@@ -88,6 +92,7 @@ void FlattenLayerTest::run_test_case()
    cout << "End of flatten layer test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

@@ -8,6 +8,8 @@
 
 #include "growing_inputs_test.h"
 
+namespace opennn
+{
 
 GrowingInputsTest::GrowingInputsTest() : UnitTesting()
 {
@@ -106,5 +108,7 @@ void GrowingInputsTest::run_test_case()
     test_perform_inputs_selection();
 
     cout << "End of growing input test case.\n\n";
+
+}
 
 }

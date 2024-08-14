@@ -12,6 +12,10 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/data_set.h"
+
+namespace opennn
+{
 
 class ScalingTest : public UnitTesting
 {
@@ -46,6 +50,7 @@ private:
     Tensor<Descriptives, 1> variables_descriptives;
 };
 
+}
 
 #endif
 

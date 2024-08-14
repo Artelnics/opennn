@@ -7,8 +7,13 @@
 //   artelnics@artelnics.com
 
 #include "learning_rate_algorithm_test.h"
+
 #include "../opennn/neural_network_forward_propagation.h"
 #include "../opennn/back_propagation.h"
+#include "../opennn/learning_rate_algorithm.h"
+
+namespace opennn
+{
 
 LearningRateAlgorithmTest::LearningRateAlgorithmTest() : UnitTesting()
 {
@@ -266,6 +271,7 @@ void LearningRateAlgorithmTest::run_test_case()
     cout << "End of learning rate algorithm test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

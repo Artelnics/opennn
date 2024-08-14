@@ -8,6 +8,10 @@
 
 #include "model_selection_test.h"
 
+#include "../opennn/model_selection.h"
+
+namespace opennn
+{
 
 ModelSelectionTest::ModelSelectionTest() : UnitTesting() 
 {
@@ -131,6 +135,7 @@ void ModelSelectionTest::run_test_case()
     cout << "End of model selection test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

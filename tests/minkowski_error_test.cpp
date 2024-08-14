@@ -7,6 +7,10 @@
 //   artelnics@artelnics.com
 
 #include "minkowski_error_test.h"
+#include "tensors.h"
+
+namespace opennn
+{
 
 MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting() 
 {
@@ -344,7 +348,7 @@ void MinkowskiErrorTest::run_test_case()
    cout << "End of Minkowski error test case.\n\n";
 }
 
-
+}
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //

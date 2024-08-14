@@ -6,7 +6,17 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "../opennn/tensors.h"
+#include "../opennn/probabilistic_layer_3d.h"
+#include "../opennn/embedding_layer.h"
+#include "../opennn/perceptron_layer_3d.h"
+#include "../opennn/language_data_set.h"
+#include "../opennn/transformer.h"
+
 #include "cross_entropy_error_3d_test.h"
+
+namespace opennn
+{
 
 CrossEntropyError3DTest::CrossEntropyError3DTest() : UnitTesting()
 {
@@ -467,9 +477,9 @@ void CrossEntropyError3DTest::run_test_case()
         test_calculate_gradient_transformer();
     
     cout << "End of cross-entropy error test case.\n\n";
-
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

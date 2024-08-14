@@ -9,9 +9,16 @@
 #ifndef TIMESERIESDATASETTEST_H
 #define TIMESERIESDATASETTEST_H
 
+#include <fstream>
+
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/batch.h"
+#include "../opennn/time_series_data_set.h"
+
+namespace opennn
+{
 
 class TimeSeriesDataSetTest : public UnitTesting
 {
@@ -76,9 +83,11 @@ public:
    Tensor<Index, 1> input_variables_indices;
    Tensor<Index, 1> target_variables_indices;
 
-   Batch data_set_batch;
+   Batch batch;
 
 };
+
+}
 
 #endif
 

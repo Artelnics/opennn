@@ -6,7 +6,16 @@
 //   Artificial Intelligence Techniques SL
 //   E-mail: artelnics@artelnics.com
 
+#include <iostream>
+
 #include "correlations_test.h"
+
+#include "../opennn/correlations.h"
+#include "../opennn/tensors.h"
+#include "../opennn/statistics.h"
+
+namespace opennn
+{
 
 CorrelationsTest::CorrelationsTest() : UnitTesting()
 {
@@ -372,6 +381,7 @@ void CorrelationsTest::run_test_case()
     cout << "End of correlation analysis test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C); 2005-2024 Artificial Intelligence Techniques, SL.

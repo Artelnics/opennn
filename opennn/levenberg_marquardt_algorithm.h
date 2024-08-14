@@ -12,19 +12,10 @@
 // System includes
 
 #include <string>
-//#include <sstream>
-//#include <iostream>
-//#include <fstream>
-//#include <algorithm>
-//#include <functional>
-//#include <limits>
-//#include <math.h>
-//#include <time.h>
 
 // OpenNN includes
 
 #include "config.h"
-//#include "tensors.h"
 #include "optimization_algorithm.h"
 
 // Eigen includes

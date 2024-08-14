@@ -6,7 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+
 #include "perceptron_layer_test.h"
+
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
 
 PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
 {
@@ -819,6 +826,7 @@ void PerceptronLayerTest::run_test_case()
     cout << "End of perceptron layer test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

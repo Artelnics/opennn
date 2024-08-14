@@ -12,11 +12,8 @@
 #include <ctime>
 #include <codecvt>
 #include <exception>
-//#include <filesystem>
 #include <fstream>
 #include <iostream>
-//#include <limits.h>
-//#include <list>
 #include <map>
 #include <random>
 #include <regex>
@@ -32,10 +29,6 @@
 #include "tensors.h"
 #include "codification.h"
 #include "strings_utilities.h"
-
-//using namespace opennn;
-//using namespace std;
-
 
 namespace opennn
 {
@@ -159,35 +152,31 @@ const bool& DataSet::get_display() const
 }
 
 
-/// raw_variable default constructor
+/// Raw variable default constructor
 
 DataSet::RawVariable::RawVariable()
 {
     name = "";
-    use = VariableUse::Input;
-    type = RawVariableType::Numeric;
+    use = VariableUse::None;
+    type = RawVariableType::None;
     categories.resize(0);
-    categories_uses.resize(0);
-
-    scaler = Scaler::MeanStandardDeviation;
+    scaler = Scaler::None;
 }
 
 
-/// raw_variable default constructor
+/// Raw variable default constructor
 
 DataSet::RawVariable::RawVariable(const string& new_name,
                         const VariableUse& new_raw_variable_use,
                         const RawVariableType& new_type,
                         const Scaler& new_scaler,
-                        const Tensor<string, 1>& new_categories,
-                        const Tensor<VariableUse, 1>& new_categories_uses)
+                        const Tensor<string, 1>& new_categories)
 {
     name = new_name;
     scaler = new_scaler;
     use = new_raw_variable_use;
     type = new_type;
     categories = new_categories;
-    categories_uses = new_categories_uses;
 }
 
 
@@ -199,9 +188,9 @@ void DataSet::RawVariable::set_scaler(const Scaler& new_scaler)
 
 void DataSet::RawVariable::set_scaler(const string& new_scaler)
 {
-    if(new_scaler == "NoScaling")
+    if(new_scaler == "None")
     {
-        set_scaler(Scaler::NoScaling);
+        set_scaler(Scaler::None);
     }
     else if(new_scaler == "MinimumMaximum")
     {
@@ -238,11 +227,6 @@ void DataSet::RawVariable::set_scaler(const string& new_scaler)
 void DataSet::RawVariable::set_use(const VariableUse& new_raw_variable_use)
 {
     use = new_raw_variable_use;
-
-    for(Index i = 0; i < categories_uses.size(); i++)
-    {
-        categories_uses(i) = new_raw_variable_use;
-    }
 }
 
 
@@ -263,9 +247,9 @@ void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
     {
         set_use(VariableUse::Time);
     }
-    else if(new_raw_variable_use == "Unused")
+    else if(new_raw_variable_use == "None")
     {
-        set_use(VariableUse::Unused);
+        set_use(VariableUse::None);
     }
     else
     {
@@ -328,20 +312,15 @@ void DataSet::RawVariable::add_category(const string & new_category)
     const Index old_categories_number = categories.size();
 
     Tensor<string, 1> old_categories = categories;
-    Tensor<VariableUse, 1> old_categories_uses = categories_uses;
 
     categories.resize(old_categories_number+1);
-    categories_uses.resize(old_categories_number+1);
 
     for(Index category_index = 0; category_index < old_categories_number; category_index++)
     {
         categories(category_index) = old_categories(category_index);
-        categories_uses(category_index) = use;
     }
 
     categories(old_categories_number) = new_category;
-
-    categories_uses(old_categories_number) = use;
 }
 
 
@@ -350,56 +329,6 @@ void DataSet::RawVariable::set_categories(const Tensor<string, 1>& new_categorie
     categories.resize(new_categories.size());
 
     categories = new_categories;
-}
-
-
-/// Sets the categories uses in the data set.
-/// @param new_categories_uses String vector that contains the new categories of the data set.
-
-void DataSet::RawVariable::set_categories_uses(const Tensor<string, 1>& new_categories_uses)
-{
-    const Index new_categories_uses_number = new_categories_uses.size();
-
-    categories_uses.resize(new_categories_uses_number);
-
-    for(Index i = 0; i < new_categories_uses.size(); i++)
-    {
-        if(new_categories_uses(i) == "Input")
-        {
-            categories_uses(i) = VariableUse::Input;
-        }
-        else if(new_categories_uses(i) == "Target")
-        {
-            categories_uses(i) = VariableUse::Target;
-        }
-        else if(new_categories_uses(i) == "Time")
-        {
-            categories_uses(i) = VariableUse::Time;
-        }
-        else if(new_categories_uses(i) == "Unused")
-        {
-            categories_uses(i) = VariableUse::Unused;
-        }
-        else
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void raw_variable::set_categories_uses(const Tensor<string, 1>&) method.\n"
-                   << "Category use not valid (" << new_categories_uses(i) << ").\n";
-
-            throw runtime_error(buffer.str());
-        }
-    }
-}
-
-
-/// Sets the categories uses in the data set.
-/// @param new_categories_use New categories use
-
-void DataSet::RawVariable::set_categories_uses(const VariableUse& new_categories_use)
-{
-    categories_uses.setConstant(new_categories_use);
 }
 
 
@@ -507,26 +436,6 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
 
             categories = get_tokens(new_categories, ";");
         }
-
-        // Categories uses
-
-        const tinyxml2::XMLElement* categories_uses_element = column_document.FirstChildElement("CategoriesUses");
-
-        if(!categories_uses_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Categories uses element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
-
-        if(categories_uses_element->GetText())
-        {
-            const string new_categories_uses = categories_uses_element->GetText();
-
-            set_categories_uses(get_tokens(new_categories_uses, ";"));
-        }
     }
 }
 
@@ -547,7 +456,7 @@ void DataSet::RawVariable::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     switch(scaler)
     {
-    case Scaler::NoScaling: file_stream.PushText("NoScaling"); break;
+    case Scaler::None: file_stream.PushText("None"); break;
 
     case Scaler::MinimumMaximum: file_stream.PushText("MinimumMaximum"); break;
 
@@ -572,7 +481,7 @@ void DataSet::RawVariable::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     case VariableUse::Target: file_stream.PushText("Target"); break;
 
-    case VariableUse::Unused: file_stream.PushText("Unused"); break;
+    case VariableUse::None: file_stream.PushText("None"); break;
 
     case VariableUse::Time: file_stream.PushText("Time"); break;
 
@@ -623,128 +532,22 @@ void DataSet::RawVariable::write_XML(tinyxml2::XMLPrinter& file_stream) const
         }
 
         file_stream.CloseElement();
-
-        // Categories uses
-
-        file_stream.OpenElement("CategoriesUses");
-
-        for(Index i = 0; i < categories_uses.size(); i++)
-        {
-            switch(categories_uses(i))
-            {
-            case VariableUse::Input: file_stream.PushText("Input"); break;
-
-            case VariableUse::Target: file_stream.PushText("Target"); break;
-
-            case VariableUse::Time: file_stream.PushText("Time"); break;
-
-            case VariableUse::Unused: file_stream.PushText("Unused"); break;
-
-            case VariableUse::Id: file_stream.PushText("Id"); break;
-
-            default: break;
-            }
-
-            if(i != categories_uses.size()-1)
-            {
-                file_stream.PushText(";");
-            }
-        }
-
-        file_stream.CloseElement();
     }
 }
 
 
 void DataSet::RawVariable::print() const
 {
+    cout << "Raw variable" << endl;
+
     cout << "Name: " << name << endl;
 
-    cout << "raw_variable use: ";
+    cout << "Use: " << get_raw_variable_use_string(use) << endl;
 
-    switch(use)
-    {
-    case VariableUse::Input:
-        cout << "Input" << endl;
-        break;
+    cout << "Type: " << get_raw_variable_type_string(type) << endl;
 
-    case VariableUse::Target:
-        cout << "Target" << endl;
-        break;
+    cout << "Scaler: " << get_raw_variable_scaler_string(scaler) << endl;
 
-    case VariableUse::Unused:
-        cout << "Unused" << endl;
-        break;
-
-    case VariableUse::Time:
-        cout << "Time" << endl;
-        break;
-
-    case VariableUse::Id:
-        cout << "Id" << endl;
-        break;
-
-    default:
-        break;
-    }
-
-    cout << "raw_variable type: ";
-
-    switch(type)
-    {
-    case RawVariableType::Numeric:
-        cout << "Numeric" << endl;
-        break;
-
-    case RawVariableType::Binary:
-        cout << "Binary" << endl;
-        cout << "Categories: " << categories << endl;
-        break;
-
-    case RawVariableType::Categorical:
-        cout << "Categorical" << endl;
-        cout << "Categories: " << categories << endl;
-        break;
-
-    case RawVariableType::DateTime:
-        cout << "DateTime" << endl;
-        break;
-
-    case RawVariableType::Constant:
-        cout << "Constant" << endl;
-        break;
-
-    default:
-        break;
-    }
-
-    cout << "Scaler: ";
-
-    switch(scaler)
-    {
-    case Scaler::NoScaling:
-        cout << "NoScaling" << endl;
-        break;
-
-    case Scaler::MinimumMaximum:
-        cout << "MinimumMaximum" << endl;
-        break;
-
-    case Scaler::MeanStandardDeviation:
-        cout << "MeanStandardDeviation" << endl;
-        break;
-
-    case Scaler::StandardDeviation:
-        cout << "StandardDeviation" << endl;
-        break;
-
-    case Scaler::Logarithm:
-        cout << "Logarithm" << endl;
-        break;
-
-    default:
-        break;
-    }
 }
 
 
@@ -787,71 +590,11 @@ string DataSet::get_model_type_string(const DataSet::ModelType& new_model_type) 
 }
 
 
-Index DataSet::RawVariable::get_variables_number() const
-{
-    if(type == RawVariableType::Categorical)
-    {
-        return categories.size();
-    }
-    else
-    {
-        return 1;
-    }
-}
-
-
 /// Returns the number of categories.
 
 Index DataSet::RawVariable::get_categories_number() const
 {
     return categories.size();
-}
-
-
-/// Returns the number of used categories.
-
-Index DataSet::RawVariable::get_used_categories_number() const
-{
-    Index used_categories_number = 0;
-
-    for(Index i = 0; i < categories.size(); i++)
-    {
-        if(categories_uses(i) != VariableUse::Unused) used_categories_number++;
-    }
-
-    return used_categories_number;
-}
-
-
-/// Returns a string vector that contains the names of the used variables in the data set.
-
-Tensor<string, 1> DataSet::RawVariable::get_used_variables_names() const
-{
-    Tensor<string, 1> used_variables_names;
-
-    if(type != RawVariableType::Categorical && use != VariableUse::Unused)
-    {
-        used_variables_names.resize(1);
-        used_variables_names.setConstant(name);
-    }
-    else if(type == RawVariableType::Categorical)
-    {
-        used_variables_names.resize(get_used_categories_number());
-
-        Index category_index = 0;
-
-        for(Index i = 0; i < categories.size(); i++)
-        {
-            if(categories_uses(i) != VariableUse::Unused)
-            {
-                used_variables_names(category_index) = categories(i);
-
-                category_index++;
-            }
-        }
-    }
-
-    return used_variables_names;
 }
 
 
@@ -861,7 +604,7 @@ Tensor<string, 1> DataSet::RawVariable::get_used_variables_names() const
 
 bool DataSet::is_sample_used(const Index& index) const
 {
-    if(samples_uses(index) == SampleUse::Unused)
+    if(samples_uses(index) == SampleUse::None)
     {
         return false;
     }
@@ -877,7 +620,7 @@ bool DataSet::is_sample_used(const Index& index) const
 
 bool DataSet::is_sample_unused(const Index& index) const
 {
-    if(samples_uses(index) == SampleUse::Unused)
+    if(samples_uses(index) == SampleUse::None)
     {
         return true;
     }
@@ -1118,7 +861,7 @@ Tensor<Index, 1> DataSet::get_used_samples_indices() const
     for(Index i = 0; i < samples_number; i++)
     {
 
-        if(samples_uses(i) != SampleUse::Unused)
+        if(samples_uses(i) != SampleUse::None)
         {
             used_indices(index) = i;
             index++;
@@ -1143,7 +886,7 @@ Tensor<Index, 1> DataSet::get_unused_samples_indices() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == SampleUse::Unused)
+        if(samples_uses(i) == SampleUse::None)
         {
             unused_indices(count) = i;
             count++;
@@ -1411,7 +1154,7 @@ Index DataSet::get_testing_samples_number() const
 
 
 /// Returns the total number of training, selection and testing samples,
-/// i.e. those which are not "Unused".
+/// i.e. those which are not "None".
 
 Index DataSet::get_used_samples_number() const
 {
@@ -1433,7 +1176,7 @@ Index DataSet::get_unused_samples_number() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == SampleUse::Unused)
+        if(samples_uses(i) == SampleUse::None)
         {
             unused_samples_number++;
         }
@@ -1538,7 +1281,7 @@ void DataSet::set_samples_unused()
 
     for(Index i = 0; i < samples_number; i++)
     {
-        samples_uses(i) = SampleUse::Unused;
+        samples_uses(i) = SampleUse::None;
     }
 }
 
@@ -1552,7 +1295,7 @@ void DataSet::set_samples_unused(const Tensor<Index, 1>& indices)
     {
         const Index index = indices(i);
 
-        samples_uses(index) = SampleUse::Unused;
+        samples_uses(index) = SampleUse::None;
     }
 }
 
@@ -1582,7 +1325,7 @@ void DataSet::set_sample_use(const Index& index, const SampleUse& new_use)
 
 /// Sets the use of a single sample from a string.
 /// @param index Index of sample.
-/// @param new_use String with the use name("Training", "Selection", "Testing" or "Unused")
+/// @param new_use String with the use name("Training", "Selection", "Testing" or "None")
 
 void DataSet::set_sample_use(const Index& index, const string& new_use)
 {
@@ -1598,9 +1341,9 @@ void DataSet::set_sample_use(const Index& index, const string& new_use)
     {
         samples_uses(index) = SampleUse::Testing;
     }
-    else if(new_use == "Unused")
+    else if(new_use == "None")
     {
-        samples_uses(index) = SampleUse::Unused;
+        samples_uses(index) = SampleUse::None;
     }
     else
     {
@@ -1649,7 +1392,7 @@ void DataSet::set_samples_uses(const Tensor<SampleUse, 1>& new_uses)
 
 /// Sets new uses to all the samples from a single vector of strings.
 /// @param new_uses vector of use strings.
-/// Possible values for the elements are "Training", "Selection", "Testing" and "Unused".
+/// Possible values for the elements are "Training", "Selection", "Testing" and "None".
 /// The size of given vector must be equal to the number of samples.
 
 void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
@@ -1687,9 +1430,9 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
         {
             samples_uses(i) = SampleUse::Testing;
         }
-        else if(new_uses(i).compare("Unused") == 0 || new_uses(i).compare("3") == 0)
+        else if(new_uses(i).compare("None") == 0 || new_uses(i).compare("3") == 0)
         {
-            samples_uses(i) = SampleUse::Unused;
+            samples_uses(i) = SampleUse::None;
         }
         else
         {
@@ -1769,7 +1512,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     {
         index = indices(i);
 
-        if(samples_uses(index) != SampleUse::Unused)
+        if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index)= SampleUse::Training;
             count_training++;
@@ -1786,7 +1529,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     {
         index = indices(i);
 
-        if(samples_uses(index) != SampleUse::Unused)
+        if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index) = SampleUse::Selection;
             count_selection++;
@@ -1803,7 +1546,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     {
         index = indices(i);
 
-        if(samples_uses(index) != SampleUse::Unused)
+        if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index) = SampleUse::Testing;
             count_testing++;
@@ -1856,7 +1599,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     while(count_training != training_samples_number)
     {
-        if(samples_uses(i) != SampleUse::Unused)
+        if(samples_uses(i) != SampleUse::None)
         {
             samples_uses(i) = SampleUse::Training;
             count_training++;
@@ -1871,7 +1614,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     while(count_selection != selection_samples_number)
     {
-        if(samples_uses(i) != SampleUse::Unused)
+        if(samples_uses(i) != SampleUse::None)
         {
             samples_uses(i) = SampleUse::Selection;
             count_selection++;
@@ -1886,7 +1629,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     while(count_testing != testing_samples_number)
     {
-        if(samples_uses(i) != SampleUse::Unused)
+        if(samples_uses(i) != SampleUse::None)
         {
             samples_uses(i) = SampleUse::Testing;
             count_testing++;
@@ -1919,7 +1662,7 @@ void DataSet::set_default_raw_variables_uses()
 
     else if(raw_variables_number == 1)
     {
-        raw_variables(0).set_use(VariableUse::Unused);
+        raw_variables(0).set_use(VariableUse::None);
     }
 
     else
@@ -1930,7 +1673,7 @@ void DataSet::set_default_raw_variables_uses()
         {
             if(raw_variables(i).type == RawVariableType::Constant || raw_variables(i).type == RawVariableType::DateTime)
             {
-                raw_variables(i).set_use(VariableUse::Unused);
+                raw_variables(i).set_use(VariableUse::None);
                 continue;
             }
 
@@ -1975,15 +1718,6 @@ void DataSet::set_raw_variable_name(const Index& raw_variable_index, const strin
 }
 
 
-/// Returns the use of a single variable.
-/// @param index Index of variable.
-
-DataSet::VariableUse DataSet::get_numeric_variable_use(const Index& index) const
-{
-    return get_variables_uses()(index);
-}
-
-
 /// Returns a vector containing the use of the raw_variable, without taking into account the categories.
 
 DataSet::VariableUse DataSet::get_raw_variable_use(const Index&  index) const
@@ -2025,10 +1759,6 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
     {
         if(raw_variables(i).type == RawVariableType::Categorical)
         {
-            for(Index i = 0; i < (raw_variables(i).categories_uses).size(); i++)
-            {
-                variables_uses(i + index) = (raw_variables(i).categories_uses)(i);
-            }
             index += raw_variables(i).categories.size();
         }
         else
@@ -2045,7 +1775,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 /// Returns the name of a single variable in the data set.
 /// @param index Index of variable.
 
-string DataSet::get_numeric_variable_name(const Index& variable_index) const
+string DataSet::get_variable_name(const Index& variable_index) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -2127,24 +1857,23 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
 {
     const Index input_variables_number = get_input_variables_number();
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
-
     Tensor<string, 1> input_variables_names(input_variables_number);
+
+    const Index raw_variables_number = get_raw_variables_number();
 
     Index index = 0;
 
-    for(Index i = 0; i < input_raw_variables_indices.size(); i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        Index input_index = input_raw_variables_indices(i);
+        if(raw_variables(i).use != VariableUse::Input) continue;
 
-        const Tensor<string, 1> current_used_variables_names = raw_variables(input_index).get_used_variables_names();
+        const Index categories_number = raw_variables(i).get_categories_number();
 
-        for(Index j = 0; j < current_used_variables_names.size(); j++)
+        for(Index j = 0; j < categories_number; j++)
         {
-            input_variables_names(index + j) = current_used_variables_names(j);
+            input_variables_names(index) = raw_variables(i).categories(j);
+            index++;
         }
-
-        index += current_used_variables_names.size();
     }
 
     return input_variables_names;
@@ -2158,24 +1887,23 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 {
     const Index target_variables_number = get_target_variables_number();
 
-    const Tensor<Index, 1> target_raw_variables_indices = get_target_raw_variables_indices();
-
     Tensor<string, 1> target_variables_names(target_variables_number);
+
+    const Index raw_variables_number = get_raw_variables_number();
 
     Index index = 0;
 
-    for(Index i = 0; i < target_raw_variables_indices.size(); i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        const Index target_index = target_raw_variables_indices(i);
+        if(raw_variables(i).use != VariableUse::Target) continue;
 
-        const Tensor<string, 1> current_used_variables_names = raw_variables(target_index).get_used_variables_names();
+        const Index categories_number = raw_variables(i).get_categories_number();
 
-        for(Index j = 0; j < current_used_variables_names.size(); j++)
+        for(Index j = 0; j < categories_number; j++)
         {
-            target_variables_names(index + j) = current_used_variables_names(j);
+            target_variables_names(index) = raw_variables(i).categories(j);
+            index++;
         }
-
-        index += current_used_variables_names.size();
     }
 
     return target_variables_names;
@@ -2187,12 +1915,6 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 const dimensions& DataSet::get_input_dimensions() const
 {
     return input_dimensions;
-}
-
-
-Index DataSet::get_input_variables_rank() const
-{
-    return input_dimensions.size();
 }
 
 
@@ -2210,7 +1932,7 @@ Index DataSet::get_used_variables_number() const
 
     const Index unused_variables_number = get_unused_variables_number();
 
-    return (variables_number - unused_variables_number);
+    return variables_number - unused_variables_number;
 }
 
 
@@ -2218,11 +1940,11 @@ Index DataSet::get_used_variables_number() const
 
 Tensor<Index, 1> DataSet::get_input_raw_variables_indices() const
 {
-    const Index raw_variables_number = get_raw_variables_number();
-
     const Index input_raw_variables_number = get_input_raw_variables_number();
 
     Tensor<Index, 1> input_raw_variables_indices(input_raw_variables_number);
+
+    const Index raw_variables_number = get_raw_variables_number();
 
     Index index = 0;
 
@@ -2279,7 +2001,7 @@ Tensor<Index, 1> DataSet::get_unused_raw_variables_indices() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use == VariableUse::Unused)
+        if(raw_variables(i).use == VariableUse::None)
         {
             unused_raw_variables_indices(index) = i;
             index++;
@@ -2345,7 +2067,7 @@ Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
-        for(Index j = 0;  j < input_raw_variables(i).get_variables_number(); j++)
+        for(Index j = 0;  j < input_raw_variables(i).get_categories_number(); j++)
         {
             input_variables_scalers(index) = input_raw_variables(i).scaler;
             index++;
@@ -2369,7 +2091,7 @@ Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
 
     for(Index i = 0; i < target_raw_variables_number; i++)
     {
-        for(Index j = 0;  j < target_raw_variables(i).get_variables_number(); j++)
+        for(Index j = 0;  j < target_raw_variables(i).get_categories_number(); j++)
         {
             target_variables_scalers(index) = target_raw_variables(i).scaler;
             index++;
@@ -2461,7 +2183,7 @@ Tensor<string, 1> DataSet::get_used_raw_variables_names() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use != VariableUse::Unused)
+        if(raw_variables(i).use != VariableUse::None)
         {
             names(index) = raw_variables(i).name;
             index++;
@@ -2543,7 +2265,7 @@ Index DataSet::get_unused_raw_variables_number() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use == VariableUse::Unused)
+        if(raw_variables(i).use == VariableUse::None)
         {
             unused_raw_variables_number++;
         }
@@ -2563,7 +2285,7 @@ Index DataSet::get_used_raw_variables_number() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use != VariableUse::Unused)
+        if(raw_variables(i).use != VariableUse::None)
         {
             used_raw_variables_number++;
         }
@@ -2583,11 +2305,11 @@ Index DataSet::get_input_and_unused_variables_number() const
         {
             if(raw_variables(i).use == VariableUse::Input)
             {
-                raw_variables_number += raw_variables(i).categories_uses.size();
+                raw_variables_number += raw_variables(i).categories.size();
             }
-            else if(raw_variables(i).use == VariableUse::Unused)
+            else if(raw_variables(i).use == VariableUse::None)
             {
-                raw_variables_number += raw_variables(i).categories_uses.size();
+                raw_variables_number += raw_variables(i).categories.size();
             }
         }
         else
@@ -2596,7 +2318,7 @@ Index DataSet::get_input_and_unused_variables_number() const
             {
                 raw_variables_number++;
             }
-            else if(raw_variables(i).use == VariableUse::Unused)
+            else if(raw_variables(i).use == VariableUse::None)
             {
                 raw_variables_number ++;
             }
@@ -2856,20 +2578,9 @@ Index DataSet::get_input_variables_number() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            for(Index j = 0; j < raw_variables(i).categories_uses.size(); j++)
-            {
-                if(raw_variables(i).categories_uses(j) == VariableUse::Input)
-                {
-                    inputs_number++;
-                }
-            }
-        }
-        else if(raw_variables(i).use == VariableUse::Input)
-        {
-            inputs_number++;
-        }
+        if(raw_variables(i).use != VariableUse::Input) continue;
+
+        inputs_number += raw_variables(i).get_categories_number();
     }
 
     return inputs_number;
@@ -2886,20 +2597,9 @@ Index DataSet::get_target_variables_number() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            for(Index j = 0; j < raw_variables(i).categories_uses.size(); j++)
-            {
-                if(raw_variables(i).categories_uses(j) == VariableUse::Target)
-                {
-                    targets_number++;
-                }
-            }
-        }
-        else if(raw_variables(i).use == VariableUse::Target)
-        {
-            targets_number++;
-        }
+        if(raw_variables(i).use != VariableUse::Target) continue;
+
+        targets_number += raw_variables(i).get_categories_number();
     }
 
     return targets_number;
@@ -2912,91 +2612,16 @@ Index DataSet::get_unused_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    Index unused_number = 0;
+    Index unused_variables_number = 0;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            for(Index j = 0; j < raw_variables(i).categories_uses.size(); j++)
-            {
-                if(raw_variables(i).categories_uses(j) == VariableUse::Unused) unused_number++;
-            }
+        if(raw_variables(i).use != VariableUse::None) continue;
 
-        }
-        else if(raw_variables(i).use == VariableUse::Unused)
-        {
-            unused_number++;
-        }
+        unused_variables_number += raw_variables(i).get_categories_number();
     }
 
-    return unused_number;
-}
-
-
-/// Returns a variable index in the data set with given name.
-/// @param name Name of variable.
-
-Index DataSet::get_variable_index(const string& name) const
-{
-    const Index variables_number = get_variables_number();
-
-    const Tensor<string, 1> variables_names = get_variables_names();
-
-    for(Index i = 0; i < variables_number; i++)
-    {
-        if(variables_names(i) == name) return i;
-    }
-
-    return 0;
-}
-
-
-/// Returns the indices of the unused variables.
-
-Tensor<Index, 1> DataSet::get_unused_variables_indices() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Index unused_number = get_unused_variables_number();
-
-    const Tensor<Index, 1> unused_raw_variables_indices = get_unused_raw_variables_indices();
-
-    Tensor<Index, 1> unused_indices(unused_number);
-
-    Index unused_index = 0;
-    Index unused_variable_index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            const Index current_categories_number = raw_variables(i).get_categories_number();
-
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                if(raw_variables(i).categories_uses(j) == VariableUse::Unused)
-                {
-                    unused_indices(unused_index) = unused_variable_index;
-                    unused_index++;
-                }
-
-                unused_variable_index++;
-            }
-        }
-        else if(raw_variables(i).use == VariableUse::Unused)
-        {
-            unused_indices(unused_index) = i;
-            unused_index++;
-            unused_variable_index++;
-        }
-        else
-        {
-            unused_variable_index++;
-        }
-    }
-
-    return unused_indices;
+    return unused_variables_number;
 }
 
 
@@ -3004,45 +2629,32 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
 
 Tensor<Index, 1> DataSet::get_used_variables_indices() const
 {
+    const Index used_variables_number = get_used_variables_number();
+    Tensor<Index, 1> used_variables_indices(used_variables_number);
+
     const Index raw_variables_number = get_raw_variables_number();
 
-    const Index used_number = get_used_variables_number();
-
-    Tensor<Index, 1> used_indices(used_number);
-
-    Index used_index = 0;
+    Index variable_index = 0;
     Index used_variable_index = 0;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::Categorical)
+        const Index categories_number = raw_variables(i).get_categories_number();
+
+        if(raw_variables(i).use == VariableUse::None)
         {
-            const Index current_categories_number = raw_variables(i).get_categories_number();
-
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                if(raw_variables(i).categories_uses(j) != VariableUse::Unused)
-                {
-                    used_indices(used_index) = used_variable_index;
-                    used_index++;
-                }
-
-                used_variable_index++;
-            }
+            variable_index += categories_number;
+            continue;
         }
-        else if(raw_variables(i).use != VariableUse::Unused)
+
+        for(Index j = 0; j < categories_number; j++)
         {
-            used_indices(used_index) = used_variable_index;
-            used_index++;
+            used_variables_indices(used_variable_index) = variable_index;
+            variable_index++;
             used_variable_index++;
         }
-        else
-        {
-            used_variable_index++;
-        }
-    }
 
-    return used_indices;
+    }    return used_variables_indices;
 }
 
 
@@ -3050,40 +2662,28 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 
 Tensor<Index, 1> DataSet::get_input_variables_indices() const
 {
+    const Index input_variables_number = get_input_variables_number();
+    Tensor<Index, 1> input_variables_indices(input_variables_number);
+
     const Index raw_variables_number = get_raw_variables_number();
 
-    const Index inputs_number = get_input_variables_number();
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
-    Tensor<Index, 1> input_variables_indices(inputs_number);
-
-    Index input_index = 0;
+    Index variable_index = 0;
     Index input_variable_index = 0;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            const Index current_categories_number = raw_variables(i).get_categories_number();
+        const Index categories_number = raw_variables(i).get_categories_number();
 
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                if(raw_variables(i).categories_uses(j) == VariableUse::Input)
-                {
-                    input_variables_indices(input_index) = input_variable_index;
-                    input_index++;
-                }
+        if(raw_variables(i).use != VariableUse::Input)
+        {
+            variable_index += categories_number;
+            continue;
+        }
 
-                input_variable_index++;
-            }
-        }
-        else if(raw_variables(i).use == VariableUse::Input) // Binary, numeric
+        for(Index j = 0; j < categories_number; j++)
         {
-            input_variables_indices(input_index) = input_variable_index;
-            input_index++;
-            input_variable_index++;
-        }
-        else
-        {
+            input_variables_indices(input_variable_index) = variable_index;
+            variable_index++;
             input_variable_index++;
         }
     }
@@ -3092,136 +2692,32 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 }
 
 
-/// Returns the number of numeric inputs raw_variables
-
-Index DataSet::get_numerical_input_raw_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index numeric_input_raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if((raw_variables(i).type == RawVariableType::Numeric) && (raw_variables(i).use == VariableUse::Input))
-        {
-            numeric_input_raw_variables_number++;
-        }
-    }
-
-    return numeric_input_raw_variables_number;
-}
-
-
-/// Returns the numeric inputs raw_variables indices
-
-Tensor<Index, 1> DataSet::get_numeric_input_raw_variables() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Index numeric_input_raw_variables_number = get_numerical_input_raw_variables_number();
-
-    Tensor<Index, 1> numeric_raw_variables_indices(numeric_input_raw_variables_number);
-
-    Index numeric_raw_variables_index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if((raw_variables(i).type == RawVariableType::Numeric) && (raw_variables(i).use == VariableUse::Input))
-        {
-            numeric_raw_variables_indices(numeric_raw_variables_index) = i;
-            numeric_raw_variables_index++;
-        }
-    }
-
-    return numeric_raw_variables_indices;
-}
-
-
-/// Returns the indices of the numeric input variables.
-
-Tensor<Index, 1> DataSet::get_numeric_input_variables_indices() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Index numeric_input_raw_variables_number = get_numerical_input_raw_variables_number();
-
-    Index numeric_input_index = 0;
-    Index input_variable_index = 0;
-
-    Tensor<Index, 1> numeric_input_variables_indices(numeric_input_raw_variables_number);
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            const Index current_categories_number = raw_variables(i).get_categories_number();
-
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                input_variable_index++;
-            }
-        }
-        else if((raw_variables(i).type == RawVariableType::Binary) && (raw_variables(i).use == VariableUse::Input))
-        {
-            input_variable_index++;
-        }
-        else if((raw_variables(i).type == RawVariableType::Numeric) && (raw_variables(i).use == VariableUse::Input))
-        {
-            numeric_input_variables_indices(numeric_input_index) = input_variable_index;
-
-            numeric_input_index++;
-            input_variable_index++;
-        }
-        else
-        {
-            input_variable_index++;
-        }
-    }
-
-    return numeric_input_variables_indices;
-}
-
-
 /// Returns the indices of the target variables.
 
 Tensor<Index, 1> DataSet::get_target_variables_indices() const
 {
-    const Index targets_number = get_target_variables_number();
+    const Index target_variables_number = get_target_variables_number();
+    Tensor<Index, 1> target_variables_indices(target_variables_number);
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    const Tensor<Index, 1> target_raw_variables_indices = get_target_raw_variables_indices();
-
-    Tensor<Index, 1> target_variables_indices(targets_number);
-
-    Index target_index = 0;
+    Index variable_index = 0;
     Index target_variable_index = 0;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            const Index current_categories_number = raw_variables(i).get_categories_number();
+        const Index categories_number = raw_variables(i).get_categories_number();
 
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                if(raw_variables(i).categories_uses(j) == VariableUse::Target)
-                {
-                    target_variables_indices(target_index) = target_variable_index;
-                    target_index++;
-                }
+        if(raw_variables(i).use != VariableUse::Target)
+        {
+            variable_index += categories_number;
+            continue;
+        }
 
-                target_variable_index++;
-            }
-        }
-        else if(raw_variables(i).use == VariableUse::Target) // Binary, numeric
+        for(Index j = 0; j < categories_number; j++)
         {
-            target_variables_indices(target_index) = target_variable_index;
-            target_index++;
-            target_variable_index++;
-        }
-        else
-        {
+            target_variables_indices(target_variable_index) = variable_index;
+            variable_index++;
             target_variable_index++;
         }
     }
@@ -3304,7 +2800,7 @@ void DataSet::set_raw_variables_unused()
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        set_raw_variable_use(i, VariableUse::Unused);
+        set_raw_variable_use(i, VariableUse::None);
     }
 }
 
@@ -3387,7 +2883,7 @@ void DataSet::set_input_raw_variables_unused()
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use == DataSet::VariableUse::Input) set_raw_variable_use(i, VariableUse::Unused);
+        if(raw_variables(i).use == DataSet::VariableUse::Input) set_raw_variable_use(i, VariableUse::None);
     }
 }
 
@@ -3398,7 +2894,7 @@ void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variable
     for(Index i = 0; i < input_raw_variables_indices.size(); i++)
     {
         if(input_raw_variables_use(i)) set_raw_variable_use(input_raw_variables_indices(i), VariableUse::Input);
-        else set_raw_variable_use(input_raw_variables_indices(i), VariableUse::Unused);
+        else set_raw_variable_use(input_raw_variables_indices(i), VariableUse::None);
     }
 }
 
@@ -3410,11 +2906,6 @@ void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variable
 void DataSet::set_raw_variable_use(const Index& index, const VariableUse& new_use)
 {
     raw_variables(index).use = new_use;
-
-    if(raw_variables(index).type == RawVariableType::Categorical)
-    {
-        raw_variables(index).set_categories_uses(new_use);
-    }
 }
 
 
@@ -3422,7 +2913,7 @@ void DataSet::set_raw_variables_unused(const Tensor<Index, 1>& unused_raw_variab
 {
     for(Index i = 0; i < unused_raw_variables_index.size(); i++)
     {
-        set_raw_variable_use(unused_raw_variables_index(i), VariableUse::Unused);
+        set_raw_variable_use(unused_raw_variables_index(i), VariableUse::None);
     }
 }
 
@@ -3622,7 +3113,7 @@ void DataSet::set_variables_unused()
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        raw_variables(i).set_use(VariableUse::Unused);
+        raw_variables(i).set_use(VariableUse::None);
     }
 }
 
@@ -3696,9 +3187,6 @@ void DataSet::set_binary_raw_variables()
             //if(is_binary())
 
             const VariableUse raw_variable_use = raw_variable.use;
-            raw_variable.categories_uses.resize(2);
-            raw_variable.categories_uses(0) = raw_variable_use;
-            raw_variable.categories_uses(1) = raw_variable_use;
 
             raw_variable.type = RawVariableType::Binary;
             //scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
@@ -3772,14 +3260,14 @@ void DataSet::set_constant_raw_variables()
  //           if(is_constant(data_column))
             {
                 raw_variable.type = RawVariableType::Constant;
-                raw_variable.use = VariableUse::Unused;
+                raw_variable.use = VariableUse::None;
             }
 
             variable_index++;
         }
         else if(raw_variable.type == RawVariableType::DateTime)
         {
-            raw_variable.use = VariableUse::Unused;
+            raw_variable.use = VariableUse::None;
             variable_index++;
         }
         else if(raw_variable.type == RawVariableType::Constant)
@@ -3791,7 +3279,7 @@ void DataSet::set_constant_raw_variables()
             if(raw_variable.get_categories_number() == 1)
             {
                 raw_variable.type = RawVariableType::Constant;
-                raw_variable.use = VariableUse::Unused;
+                raw_variable.use = VariableUse::None;
             }
 
             variable_index++;
@@ -3801,7 +3289,7 @@ void DataSet::set_constant_raw_variables()
             if(raw_variable.get_categories_number() == 1)
             {
                 raw_variable.type = RawVariableType::Constant;
-                raw_variables(raw_variable_index).use = VariableUse::Unused;
+                raw_variables(raw_variable_index).use = VariableUse::None;
             }
 
             variable_index += raw_variable.get_categories_number();        
@@ -3810,34 +3298,6 @@ void DataSet::set_constant_raw_variables()
         raw_variables(raw_variable_index) = raw_variable;
     }
 }
-
-
-//Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type, 1>& raw_variable) const
-//{
-//    const Index rows_number = raw_variable.dimension(0);
-
-//    Tensor<type, 2> new_column(rows_number , 2);
-//    new_column.setZero();
-
-//    for(Index i = 0; i < rows_number; i++)
-//    {
-//        if(abs(raw_variable(i) - type(1)) < type(NUMERIC_LIMITS_MIN))
-//        {
-//            new_column(i,1) = type(1);
-//        }
-//        else if(abs(raw_variable(i)) < type(NUMERIC_LIMITS_MIN))
-//        {
-//            new_column(i,0) = type(1);
-//        }
-//        else
-//        {
-//            new_column(i,0) = type(NAN);
-//            new_column(i,1) = type(NAN);
-//        }
-//    }
-
-//    return new_column;
-//}
 
 
 /// Sets new input dimensions in the data set.
@@ -4044,9 +3504,9 @@ const string& DataSet::get_missing_values_label() const
 
 Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_method)
 {
-    if(scaling_unscaling_method == "NoScaling")
+    if(scaling_unscaling_method == "None")
     {
-        return Scaler::NoScaling;
+        return Scaler::None;
     }
     else if(scaling_unscaling_method == "MinimumMaximum")
     {
@@ -4494,7 +3954,7 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
 /// Note that the number of variables does not have to equal the number of raw_variables in the data set,
 /// because OpenNN recognizes the categorical raw_variables, separating these categories into variables of the data set.
 
-Tensor<Index, 1> DataSet::get_numeric_variable_indices(const Index& raw_variable_index) const
+Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) const
 {
     Index index = 0;
 
@@ -4531,29 +3991,6 @@ Tensor<Index, 1> DataSet::get_numeric_variable_indices(const Index& raw_variable
 }
 
 
-Tensor<Index, 1> DataSet::get_categorical_to_indices(const Index& raw_variable_index) const
-{
-    Tensor<type, 2> one_hot_data = get_raw_variable_data(raw_variable_index);
-
-    Index rows_number = one_hot_data.dimension(0);
-    Index categories_number = one_hot_data.dimension(1);
-
-    Tensor<Index, 1> indices(rows_number);
-
-    for(Index i = 0; i < rows_number; i++) {
-        for(Index j = 0; j < categories_number; ++j) {
-            if(one_hot_data(i, j) == 1)
-            {
-                indices(i) = j + 1;
-                break;
-            }
-        }
-    }
-
-    return indices;
-}
-
-
 /// Returns the data from the data set raw_variable with a given index,
 /// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not(respectively).
 /// @param raw_variable_index Index of the raw_variable.
@@ -4569,7 +4006,7 @@ Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index) 
     }
 
     const Eigen::array<Index, 2> extents = {rows_number, raw_variables_number};
-    const Eigen::array<Index, 2> offsets = {0, get_numeric_variable_indices(raw_variable_index)(0)};
+    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(raw_variable_index)(0)};
 
     return data.slice(offsets, extents);
 }
@@ -4669,9 +4106,9 @@ Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const Tensor<Index, 1>& rows_indices) const
 {
-    Tensor<type, 2> raw_variable_data(rows_indices.size(), get_numeric_variable_indices(raw_variable_index).size());
+    Tensor<type, 2> raw_variable_data(rows_indices.size(), get_variable_indices(raw_variable_index).size());
 
-    fill_tensor_data(data, rows_indices, get_numeric_variable_indices(raw_variable_index), raw_variable_data.data());
+    fill_tensor_data(data, rows_indices, get_variable_indices(raw_variable_index), raw_variable_data.data());
 
     return raw_variable_data;
 
@@ -4920,9 +4357,9 @@ void DataSet::set(const string& data_source_path, const char& separator, const b
 
     read_csv();
 
-    set_default_raw_variables_scalers();
+//    set_default_raw_variables_scalers();
 
-    set_default_raw_variables_uses();
+//    set_default_raw_variables_uses();
 
 }
 
@@ -4945,10 +4382,11 @@ void DataSet::set(const string& data_source_path,
     set_codification(new_codification);
 
     read_csv();
-
+/*
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
+*/
 }
 
 
@@ -5456,7 +4894,7 @@ Tensor<string, 1> DataSet::unuse_constant_raw_variables()
     {
         if(raw_variables(i).type == RawVariableType::Constant)
         {
-            raw_variables(i).set_use(VariableUse::Unused);
+            raw_variables(i).set_use(VariableUse::None);
 
             push_back_string(constant_raw_variables, raw_variables(i).name);
         }
@@ -5501,10 +4939,10 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
         {
             sample_j = get_sample_data(j);
 
-            if(get_sample_use(j) != SampleUse::Unused
+            if(get_sample_use(j) != SampleUse::None
                 && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
             {
-                set_sample_use(j, SampleUse::Unused);
+                set_sample_use(j, SampleUse::None);
 
                 push_back_index(repeated_samples, j);
             }
@@ -5537,9 +4975,9 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
         {
             if(!isnan(correlations(i,j).r)
                 && abs(correlations(i,j).r) < minimum_correlation
-                && raw_variables(input_raw_variable_index).use != VariableUse::Unused)
+                && raw_variables(input_raw_variable_index).use != VariableUse::None)
             {
-                raw_variables(input_raw_variable_index).set_use(VariableUse::Unused);
+                raw_variables(input_raw_variable_index).set_use(VariableUse::None);
 
                 push_back_string(unused_raw_variables, raw_variables(input_raw_variable_index).name);
             }
@@ -5573,9 +5011,9 @@ Tensor<string, 1> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& 
 
         const Index raw_variable_index = get_raw_variable_index(original_raw_variable_index);
 
-        if(!found && raw_variables(raw_variable_index).use != VariableUse::Unused)
+        if(!found && raw_variables(raw_variable_index).use != VariableUse::None)
         {
-            raw_variables(raw_variable_index).set_use(VariableUse::Unused);
+            raw_variables(raw_variable_index).set_use(VariableUse::None);
 
             push_back_string(unused_raw_variables, raw_variables(raw_variable_index).name);
         }
@@ -5607,7 +5045,7 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
     {
         if(raw_variables(i).type == RawVariableType::Numeric)
         {
-            if(raw_variables(i).use == VariableUse::Unused)
+            if(raw_variables(i).use == VariableUse::None)
             {
                 variable_index++;
             }
@@ -5630,7 +5068,7 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
         {
             const Index categories_number = raw_variables(i).get_categories_number();
 
-            if(raw_variables(i).use == VariableUse::Unused)
+            if(raw_variables(i).use == VariableUse::None)
             {
                 variable_index += categories_number;
             }
@@ -5663,7 +5101,7 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
         }
         else if(raw_variables(i).type == RawVariableType::Binary)
         {
-            if(raw_variables(i).use == VariableUse::Unused)
+            if(raw_variables(i).use == VariableUse::None)
             {
                 variable_index++;
             }
@@ -5693,7 +5131,7 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
         {
             // @todo
 
-            if(raw_variables(i).use == VariableUse::Unused)
+            if(raw_variables(i).use == VariableUse::None)
             {
             }
             else
@@ -5768,7 +5206,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_raw_variables_box_plots() const
     {
         if(raw_variables(i).type == RawVariableType::Numeric || raw_variables(i).type == RawVariableType::Binary)
         {
-            if(raw_variables(i).use != VariableUse::Unused)
+            if(raw_variables(i).use != VariableUse::None)
             {
                 box_plots(i) = box_plot(data.chip(variable_index, 1), used_samples_indices);
 
@@ -6188,7 +5626,6 @@ Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 }
 
 
-
 /// Returns a vector containing the maximums of the input variables.
 
 Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
@@ -6398,7 +5835,7 @@ bool DataSet::has_nan() const
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(samples_uses(i) != SampleUse::Unused)
+        if(samples_uses(i) != SampleUse::None)
         {
             if(has_nan_row(i)) return true;
         }
@@ -6412,7 +5849,9 @@ bool DataSet::has_nan() const
 
 bool DataSet::has_nan_row(const Index& row_index) const
 {
-    for(Index j = 0; j < data.dimension(1); j++)
+    const Index variables_number = get_variables_number();
+
+    for(Index j = 0; j < variables_number; j++)
     {
         if(isnan(data(row_index,j))) return true;
     }
@@ -6731,7 +6170,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 
         switch(raw_variables(raw_variable_index).scaler)
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6776,7 +6215,7 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
     {
         switch(raw_variables(i).scaler)
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6827,7 +6266,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
     {
         switch(input_variables_scalers(i))
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6886,7 +6325,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
     {
         switch(target_variables_scalers(i))
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6938,7 +6377,7 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
     {
         switch(input_variables_scalers(i))
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6990,7 +6429,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
     {
         switch(target_variables_scalers(i))
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             break;
 
         case Scaler::MinimumMaximum:
@@ -7750,26 +7189,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
                     raw_variables(i).categories = get_tokens(new_categories, ";");
                 }
-
-                // Categories uses
-
-                const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
-
-                if(!categories_uses_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Categories uses element is nullptr.\n";
-
-                    throw runtime_error(buffer.str());
-                }
-
-                if(categories_uses_element->GetText())
-                {
-                    const string new_categories_uses = categories_uses_element->GetText();
-
-                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ";"));
-                }
             }
         }
     }
@@ -8057,6 +7476,15 @@ void DataSet::print() const
          print_dimensions(input_dimensions);
          cout << "Target variables dimensions: ";
          print_dimensions(target_dimensions);
+
+    Index raw_variables_number = get_raw_variables_number();
+
+
+    for(Index i = 0; i < raw_variables_number; i++)
+    {
+        cout << endl;
+        raw_variables(i).print();
+    }
 }
 
 
@@ -8156,7 +7584,7 @@ void DataSet::print_raw_variables_uses() const
     {
         if(raw_variables(i).use == VariableUse::Input) cout << "Input ";
         else if(raw_variables(i).use == VariableUse::Target) cout << "Target ";
-        else if(raw_variables(i).use == VariableUse::Unused) cout << "Unused ";
+        else if(raw_variables(i).use == VariableUse::None) cout << "None ";
     }
 
     cout << endl;
@@ -8171,8 +7599,8 @@ void DataSet::print_raw_variables_scalers() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(scalers[i] == Scaler::NoScaling)
-            cout << "NoScaling" << endl;
+        if(scalers[i] == Scaler::None)
+            cout << "None" << endl;
         else if(scalers[i] == Scaler::MinimumMaximum)
             cout << "MinimumMaximum" << endl;
         else if(scalers[i] == Scaler::MeanStandardDeviation)
@@ -8336,19 +7764,19 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     streamsize size = sizeof(Index);
 
-    Index raw_variables_number = data.dimension(1);
+    Index columns_number = data.dimension(1);
     Index rows_number = data.dimension(0);
 
     cout << "Saving binary data file..." << endl;
 
-    file.write(reinterpret_cast<char*>(&raw_variables_number), size);
+    file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
     type value;
 
-    for(int i = 0; i < raw_variables_number; i++)
+    for(int i = 0; i < columns_number; i++)
     {
         for(int j = 0; j < rows_number; j++)
         {
@@ -8369,7 +7797,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::load_data_binary()
 {
-
     ifstream file;
 
     open_file(data_source_path, file);
@@ -8445,7 +7872,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 
         for(Index i = 0; i < samples_number; i++)
         {
-            if(get_sample_use(i) != SampleUse::Unused)
+            if(get_sample_use(i) != SampleUse::None)
             {
                 for(Index j = 0; j < targets_number; j++)
                 {
@@ -8489,12 +7916,12 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 #pragma omp parallel for
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use == VariableUse::Unused && raw_variables(i).type == RawVariableType::Categorical)
+        if(raw_variables(i).use == VariableUse::None && raw_variables(i).type == RawVariableType::Categorical)
         {
             variable_index += raw_variables(i).get_categories_number();
             continue;
         }
-        else if(raw_variables(i).use == VariableUse::Unused) // Numeric, Binary or DateTime
+        else if(raw_variables(i).use == VariableUse::None) // Numeric, Binary or DateTime
         {
             variable_index++;
             continue;
@@ -8577,12 +8004,12 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 #pragma omp parallel for
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use == VariableUse::Unused && raw_variables(i).type == RawVariableType::Categorical)
+        if(raw_variables(i).use == VariableUse::None && raw_variables(i).type == RawVariableType::Categorical)
         {
             variable_index += raw_variables(i).get_categories_number();
             continue;
         }
-        else if(raw_variables(i).use == VariableUse::Unused) // Numeric, Binary or DateTime
+        else if(raw_variables(i).use == VariableUse::None) // Numeric, Binary or DateTime
         {
             variable_index++;
             continue;
@@ -8645,7 +8072,7 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 
     const Tensor<Index, 1> outliers_samples = get_elements_greater_than(outliers_indices, 0);
 
-    set_samples_uses(outliers_samples, DataSet::SampleUse::Unused);
+    set_samples_uses(outliers_samples, DataSet::SampleUse::None);
 }
 
 
@@ -8794,32 +8221,6 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 
     const Index used_variables_number = used_variables_indices.size();
 
-#ifdef OPENNN_DEBUG
-
-    if(minimums.size() != used_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Size of minimums(" << minimums.size() << ") is not equal to number of variables(" << used_variables_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if(maximums.size() != used_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Size of maximums(" << maximums.size() << ") is not equal to number of variables(" << used_variables_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     const Index samples_number = get_samples_number();
 
     Tensor<type, 1> filtered_indices(samples_number);
@@ -8843,7 +8244,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 //            }
 //            else
 //            {
-                if(get_sample_use(sample_index) == SampleUse::Unused)
+                if(get_sample_use(sample_index) == SampleUse::None)
                     continue;
 
                 if(isnan(data(sample_index, variable_index)))
@@ -8858,13 +8259,13 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
                     if(data(sample_index, variable_index) != minimums(i))
                     {
                         filtered_indices(sample_index) = type(1);
-                        set_sample_use(sample_index, SampleUse::Unused);
+                        set_sample_use(sample_index, SampleUse::None);
                     }
                 }
                 else if(data(sample_index, variable_index) < minimums(i) || data(sample_index, variable_index) > maximums(i))
                 {
                     filtered_indices(sample_index) = type(1);
-                    set_sample_use(sample_index, SampleUse::Unused);
+                    set_sample_use(sample_index, SampleUse::None);
 //                }
 
             }
@@ -8893,7 +8294,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 }
 
 
-/// Sets all the samples with missing values to "Unused".
+/// Sets all the samples with missing values to "None".
 
 void DataSet::impute_missing_values_unuse()
 {
@@ -8903,7 +8304,7 @@ void DataSet::impute_missing_values_unuse()
 
     for(Index i = 0; i <samples_number; i++)
     {
-        if(has_nan_row(i)) set_sample_use(i, "Unused");
+        if(has_nan_row(i)) set_sample_use(i, "None");
     }
 }
 
@@ -8953,7 +8354,7 @@ void DataSet::impute_missing_values_mean()
 
             if(isnan(data(current_sample, current_variable)))
             {
-                set_sample_use(i, "Unused");
+                set_sample_use(i, "None");
             }
         }
     }
@@ -9005,7 +8406,7 @@ void DataSet::impute_missing_values_median()
 
             if(isnan(data(current_sample, current_variable)))
             {
-                set_sample_use(i, "Unused");
+                set_sample_use(i, "None");
             }
         }
     }
@@ -9090,7 +8491,7 @@ void DataSet::impute_missing_values_interpolate()
 
             if(isnan(data(current_sample, current_variable)))
             {
-                set_sample_use(i, "Unused");
+                set_sample_use(i, "None");
             }
         }
     }
@@ -9132,29 +8533,11 @@ void DataSet::scrub_missing_values()
 }
 
 
-void DataSet::load_data()
-{
-    read_csv_1();
-
-    if(get_time_raw_variables_number() == 0 && !has_categorical_raw_variables())
-    {
-        read_csv_2_simple();
-
-        read_csv_3_simple();
-    }
-    else
-    {
-        read_csv_2_complete();
-
-        read_csv_3_complete();
-    }
-}
-
-
 void DataSet::read_csv()
 {
-    read_csv_1();
 
+    read_csv_1();
+/*
     if(get_time_raw_variables_number() == 0 && !has_categorical_raw_variables())
     {
         read_csv_2_simple();
@@ -9167,6 +8550,7 @@ void DataSet::read_csv()
 
         read_csv_3_complete();
     }
+*/
 }
 
 
@@ -9186,10 +8570,14 @@ Tensor<string, 1> DataSet::get_default_raw_variables_names(const Index& raw_vari
     return raw_variables_names;
 }
 
+
 string DataSet::get_raw_variable_type_string(const RawVariableType& raw_variable_type)
 {
     switch(raw_variable_type)
     {
+    case RawVariableType::None:
+        return "None";
+
     case RawVariableType::Numeric:
         return "Numeric";
 
@@ -9213,7 +8601,6 @@ string DataSet::get_raw_variable_type_string(const RawVariableType& raw_variable
 
 string DataSet::get_raw_variable_use_string(const VariableUse& raw_variable_use)
 {
-
     switch(raw_variable_use)
     {
     case VariableUse::Input:
@@ -9225,8 +8612,34 @@ string DataSet::get_raw_variable_use_string(const VariableUse& raw_variable_use)
     case VariableUse::Time:
         return "Time";
 
-    case VariableUse::Unused:
-        return "Unused";
+    case VariableUse::None:
+        return "None";
+
+    default:
+        return "";
+    }
+}
+
+
+string DataSet::get_raw_variable_scaler_string(const Scaler& scaler)
+{
+    switch(scaler)
+    {
+    case Scaler::None:
+        return "None";
+
+    case Scaler::MinimumMaximum:
+        return "MinimumMaximum";
+
+    case Scaler::MeanStandardDeviation:
+        return "MeanStandardDeviation";
+
+    case Scaler::StandardDeviation:
+        return "StandardDeviation";
+        break;
+
+    case Scaler::Logarithm:
+        return "Logarithm";
 
     default:
         return "";
@@ -9236,18 +8649,44 @@ string DataSet::get_raw_variable_use_string(const VariableUse& raw_variable_use)
 
 void DataSet::read_csv_1()
 {
+
+//    const Index columns_number = data_file_preview(0).size();
+
     if(data_source_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
     ifstream file;
+    file.open(data_source_path.c_str());
 
-    open_file(data_source_path, file);
-
-    read_data_file_preview(file);
+    if(!file.is_open())
+        throw runtime_error("Cannot open file: " + data_source_path + "\n");
 
     const string separator_string = get_separator_string();
+    string line;
 
-    const Index columns_number = data_file_preview(0).size();
+    Tensor<string, 1> tokens;
+
+    Index columns_number = 0;
+
+    // Read first line
+
+    while(file.good())
+    {
+        getline(file, line);
+        decode(line);
+        trim(line);
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        check_separators(line);
+
+        tokens = get_tokens(line, separator_string);
+
+        columns_number = tokens.size();
+
+        if(columns_number != 0) break;
+    }
 
     const Index raw_variables_number = has_rows_labels
             ? columns_number - 1
@@ -9255,28 +8694,143 @@ void DataSet::read_csv_1()
 
     raw_variables.resize(raw_variables_number);
 
-    if(has_header && has_numbers(data_file_preview(0)))
-        throw runtime_error("Some header names are numeric.\n");
-
-    // raw_variables names
-
-    if(display) cout << "Setting raw_variables names..." << endl;
+    Index samples_number = 0;
 
     if(has_header)
     {
-        has_rows_labels ? set_raw_variables_names(data_file_preview(0).slice(Eigen::array<Index, 1>({1}),
-                        Eigen::array<Index, 1>({columns_number-1})))
-                        : set_raw_variables_names(data_file_preview(0));
+        if(has_numbers(tokens))
+            throw runtime_error("Some header names are numeric: " + line + "\n");
+
+        if(!has_rows_labels)
+        {
+            set_raw_variables_names(tokens);
+        }
+        else
+        {
+            /// @todo
+        }
     }
     else
     {
-        set_raw_variables_names(get_default_raw_variables_names(raw_variables_number));
+        samples_number++;
+        set_default_raw_variables_names();
     }
 
-    // Check raw_variables with all missing values
+    // Rest of lines
 
-    string line;
+    while(file.good())
+    {
+        getline(file, line);
+        decode(line);
+        trim(line);
+        erase(line, '"');
+        if(line.empty()) continue;
+        check_separators(line);
 
+        tokens = get_tokens(line, separator_string);
+
+        if(tokens.size() != columns_number)
+            throw runtime_error("Tokens number is not equal to columns number.");      
+
+        for(Index i = 0; i < columns_number; i++)
+        {                      
+            const RawVariableType type = raw_variables(i).type;
+
+            const string token = tokens(i);
+
+            if(is_numeric_string(token))
+            {
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::Numeric;
+            }
+            else if(is_date_time_string(token))
+            {
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::DateTime;
+            }
+            else // is string
+            {
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::Categorical;
+
+
+            }
+        }
+
+        samples_number++;
+    }
+
+    samples_uses.resize(samples_number);
+
+    const Index variables_number = get_variables_number();
+
+    data.resize(samples_number, variables_number);
+
+    // Fill data
+
+    file.clear();
+    file.seekg(0);
+
+    if(has_header)
+    {
+        while(file.good())
+        {
+            getline(file, line);
+            decode(line);
+            trim(line);
+            erase(line, '"');
+            if(line.empty()) continue;
+            break;
+        }
+    }
+
+    samples_number = 0;
+
+    while(file.good())
+    {
+        getline(file, line);
+        decode(line);
+        trim(line);
+        erase(line, '"');
+        if(line.empty()) continue;
+        check_separators(line);
+
+        tokens = get_tokens(line, separator_string);
+
+        for(Index i = 0; i < columns_number; i++)
+        {
+            const RawVariableType type = raw_variables(i).type;
+
+            const string token = tokens(i);
+
+            data(samples_number, i) = 1;
+/*
+            if(is_numeric_string(token))
+            {
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::Numeric;
+            }
+            else if(is_date_time_string(token))
+            {
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::DateTime;
+            }
+            else // is string
+            {
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::Categorical;
+
+
+            }
+*/
+        }
+
+        samples_number++;
+    }
+
+    file.close();
+
+/*
     Index lines_number = 0;
 
     bool has_nans = false;
@@ -9338,6 +8892,7 @@ void DataSet::read_csv_1()
             }
         }
     }while(has_nans);
+*/
 }
 
 
@@ -9503,9 +9058,9 @@ void DataSet::read_csv_2_complete()
     // Read data
 
     if(display) cout << "Setting data dimensions..." << endl;
-/*
-    const Index raw_variables_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
-*/
+
+    const Index columns_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
+
     Index raw_variable_index = 0;
 
     while(file.good())
@@ -9551,6 +9106,8 @@ void DataSet::read_csv_2_complete()
         lines_count++;
     }
 
+    file.close();
+
     if(display) cout << "Setting types..." << endl;
 
     for(Index j = 0; j < raw_variables_number; j++)
@@ -9562,14 +9119,11 @@ void DataSet::read_csv_2_complete()
         }
     }
 
-    file.close();
-
     const Index samples_number = unsigned(lines_count);
 
     const Index variables_number = get_variables_number();
 
-    data.resize(Index(samples_number), variables_number);
-    data.setZero();
+    data.resize(samples_number, variables_number);
 
     if(has_rows_labels) rows_labels.resize(samples_number);
 
@@ -9819,9 +9373,9 @@ void DataSet::read_csv_3_complete()
     const string separator_string = get_separator_string();
 
     const Index raw_variables_number = raw_variables.size();
-/*
-    const Index raw_variables_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
-*/
+
+    const Index columns_number = has_rows_labels ? raw_variables_number + 1 : raw_variables_number;
+
     string line;
 
     Tensor<string, 1> tokens;
@@ -10002,6 +9556,7 @@ void DataSet::read_csv_3_complete()
 
                 variable_index++;
             }
+
             raw_variables(raw_variable_index) = raw_variable;
             raw_variable_index++;
         }
@@ -10048,17 +9603,17 @@ void DataSet::read_csv_3_complete()
 void DataSet::check_separators(const string& line) const
 {
     if(line.find(',') == string::npos
-            && line.find(';') == string::npos
-            && line.find(' ') == string::npos
-            && line.find('\t') == string::npos) return;
+    && line.find(';') == string::npos
+    && line.find(' ') == string::npos
+    && line.find('\t') == string::npos) return;
 
     const string separator_string = get_separator_string();
 
     if(line.find(separator_string) == string::npos)
     {
         const string message =
-                "Error: " + get_separator_string() + " separator not found in line data file " + data_source_path + ".\n"
-                                                                                                                  "Line: '" + line + "'";
+        "Error: " + get_separator_string() + " separator not found in line data file " + data_source_path + ".\n"
+        "Line: '" + line + "'";
 
         throw runtime_error(message);
     }
@@ -10066,68 +9621,36 @@ void DataSet::check_separators(const string& line) const
     if(separator == Separator::Space)
     {
         if(line.find(',') != string::npos)
-        {
-            const string message =
-                    "Error: Found comma (',') in data file " + data_source_path + ", but separator is space (' ').";
+            throw runtime_error("Error: Found comma (',') in data file " + data_source_path + ", but separator is space (' ').");
 
-            throw runtime_error(message);
-        }
         if(line.find(';') != string::npos)
-        {
-            const string message =
-                    "Error: Found semicolon (';') in data file " + data_source_path + ", but separator is space (' ').";
-
-            throw runtime_error(message);
-        }
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_source_path + ", but separator is space (' ').");
     }
     else if(separator == Separator::Tab)
     {
         if(line.find(',') != string::npos)
-        {
-            const string message =
-                    "Error: Found comma (',') in data file " + data_source_path + ", but separator is tab ('   ').";
+            throw runtime_error("Error: Found comma (',') in data file " + data_source_path + ", but separator is tab ('   ').");
 
-            throw runtime_error(message);
-        }
         if(line.find(';') != string::npos)
-        {
-            const string message =
-                    "Error: Found semicolon (';') in data file " + data_source_path + ", but separator is tab ('   ').";
-
-            throw runtime_error(message);
-        }
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_source_path + ", but separator is tab ('   ').");
     }
     else if(separator == Separator::Comma)
     {
         if(line.find(";") != string::npos)
-        {
-            const string message =
-                    "Error: Found semicolon (';') in data file " + data_source_path + ", but separator is comma (',').";
-
-            throw runtime_error(message);
-        }
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_source_path + ", but separator is comma (',').");
     }
     else if(separator == Separator::Semicolon)
     {
         if(line.find(",") != string::npos)
-        {
-            const string message =
-                    "Error: Found comma (',') in data file " + data_source_path + ", but separator is semicolon (';'). " + line;
-
-            throw runtime_error(message);
-        }
+            throw runtime_error("Error: Found comma (',') in data file " + data_source_path + ", but separator is semicolon (';').");
     }
 }
 
 
 void DataSet::check_special_characters(const string & line) const
 {
-    if( line.find_first_of("|@#~€¬^*") != string::npos)
-    {
-        const string message =
-                "Error: found special characters in line: " + line + ". Please, review the file.";
-        throw runtime_error(message);
-    }
+    if(line.find_first_of("|@#~€¬^*") != string::npos)
+        throw runtime_error("Error: found special characters in line: " + line + ". Please, review the file.");
 
     //#ifdef __unix__
     //    if(line.find("\r") != string::npos)
@@ -10137,7 +9660,6 @@ void DataSet::check_special_characters(const string & line) const
     //        throw runtime_error(message);
     //    }
     //#endif
-
 }
 
 
@@ -10185,7 +9707,7 @@ Tensor<Index, 1> DataSet::count_raw_variables_with_nan() const
 
     for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
-        const Index current_variable_index = get_numeric_variable_indices(raw_variable_index)(0);
+        const Index current_variable_index = get_variable_indices(raw_variable_index)(0);
 
         for(Index row_index = 0; row_index < rows_number; row_index++)
         {
@@ -10443,80 +9965,6 @@ void DataSet::decode(string& input_string) const
 }
 
 
-/// This method checks if the input data file has the correct format. Returns an error message.
-/*
-void DataSet::check_input_csv(const string & input_data_file_name, const char& separator_string) const
-{
-    ifstream file(input_data_file_name.c_str());
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void check_input_csv() method.\n"
-               << "Cannot open input data file: " << input_data_file_name << "\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    string line;
-    Index line_number = 0;
-    Index total_lines = 0;
-
-    Index tokens_count;
-
-    Index raw_variables_number = get_raw_variables_number() - get_target_raw_variables_number();
-
-    if(model_type == ModelType::AutoAssociation)
-        raw_variables_number = get_raw_variables_number() - get_target_raw_variables_number() - get_unused_raw_variables_number()/2;
-
-    while(file.good())
-    {
-        line_number++;
-
-        getline(file, line);
-
-        trim(line);
-
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        total_lines++;
-
-        tokens_count = count_tokens(line, separator_string);
-
-        if(tokens_count != raw_variables_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void check_input_csv() method.\n"
-                   << "Line " << line_number << ": Size of tokens in input file ("
-                   << tokens_count << ") is not equal to number of raw_variables("
-                   << raw_variables_number << "). \n"
-                   << "Input csv must contain values for all the variables except the target. \n";
-
-            throw runtime_error(buffer.str());
-        }
-    }
-
-    file.close();
-
-    if(total_lines == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void check_input_csv() method.\n"
-               << "Input data file is empty. \n";
-
-        throw runtime_error(buffer.str());
-    }
-}
-*/
-
 /// This method loads data from a file and returns a matrix containing the input raw_variables.
 
 Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
@@ -10624,7 +10072,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 continue;
             }
 
-            if(raw_variables(i).use == VariableUse::Unused)
+            if(raw_variables(i).use == VariableUse::None)
             {
                 token_index++;
                 continue;

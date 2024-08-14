@@ -6,8 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+
 #include "numerical_differentiation_test.h"
 
+namespace opennn
+{
 
 NumericalDifferentiationTest::NumericalDifferentiationTest() : UnitTesting() 
 {
@@ -504,6 +508,7 @@ void NumericalDifferentiationTest::run_test_case()
     cout << "End of numerical differentiation test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

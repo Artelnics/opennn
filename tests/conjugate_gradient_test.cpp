@@ -8,6 +8,9 @@
 
 #include "conjugate_gradient_test.h"
 
+namespace opennn
+{
+
 ConjugateGradientTest::ConjugateGradientTest() : UnitTesting() 
 {
     sum_squared_error.set(&neural_network, &data_set);
@@ -298,6 +301,7 @@ void ConjugateGradientTest::run_test_case()
     cout << "End of conjugate gradient test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

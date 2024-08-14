@@ -12,15 +12,19 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/scaling_layer_2d.h"
 
-class ScalingLayerTest : public UnitTesting
+namespace opennn
+{
+
+class ScalingLayer2DTest : public UnitTesting
 {
 
 public:  
 
-    explicit ScalingLayerTest();
+    explicit ScalingLayer2DTest();
 
-    virtual ~ScalingLayerTest();
+    virtual ~ScalingLayer2DTest();
 
     // Constructor and destructor methods
 
@@ -55,10 +59,9 @@ private:
     Tensor<Descriptives, 1> descriptives;
 };
 
+}
 
 #endif
-
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

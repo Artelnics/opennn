@@ -8,6 +8,12 @@
 
 #include "scaling_test.h"
 
+#include "../opennn/descriptives.h"
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
+
 
 ScalingTest::ScalingTest() : UnitTesting()
 {
@@ -76,7 +82,7 @@ void ScalingTest::test_scale_data_no_scaling()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::NoScaling);
+    data_set.set_raw_variables_scalers(Scaler::None);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -188,7 +194,7 @@ void ScalingTest::test_unscale_data_no_scaling()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::NoScaling);
+    data_set.set_raw_variables_scalers(Scaler::None);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.unscale_data(variables_descriptives);
@@ -266,6 +272,7 @@ void ScalingTest::run_test_case()
     cout << "End of scaling test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

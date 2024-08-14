@@ -12,6 +12,10 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/flatten_layer.h"
+
+namespace opennn
+{
 
 class FlattenLayerTest : public UnitTesting
 {
@@ -39,6 +43,8 @@ private:
    FlattenLayerForwardPropagation flatten_layer_forward_propagation;
 
 };
+
+}
 
 #endif
 
