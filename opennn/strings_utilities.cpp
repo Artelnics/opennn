@@ -1469,11 +1469,7 @@ bool has_numbers(const Tensor<string, 1>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
     {
-        if(is_numeric_string(string_list[i]))
-        {
-            cout << "The number is: " << string_list[i] << endl;
-            return true;
-        }
+        if(is_numeric_string(string_list[i])) return true;
     }
 
     return false;

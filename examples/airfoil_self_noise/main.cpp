@@ -29,8 +29,12 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Data set
+        DataSet::RawVariable raw_variable;
 
+        raw_variable.print();
+
+        // Data set
+/*
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
 
         data_set.print();

@@ -80,7 +80,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::NoScaling);
+    scaling_layer.set_scalers(Scaler::None);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
@@ -108,7 +108,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::NoScaling);
+    scaling_layer.set_scalers(Scaler::None);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 

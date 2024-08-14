@@ -14,8 +14,6 @@
 #include <exception>
 #include <fstream>
 #include <iostream>
-//#include <limits.h>
-//#include <list>
 #include <map>
 #include <random>
 #include <regex>
@@ -31,10 +29,6 @@
 #include "tensors.h"
 #include "codification.h"
 #include "strings_utilities.h"
-
-//using namespace opennn;
-//using namespace std;
-
 
 namespace opennn
 {
@@ -163,10 +157,10 @@ const bool& DataSet::get_display() const
 DataSet::RawVariable::RawVariable()
 {
     name = "";
-    use = VariableUse::Input;
-    type = RawVariableType::Numeric;
+    use = VariableUse::Unused;
+    type = RawVariableType::None;
     categories.resize(0);
-    scaler = Scaler::MeanStandardDeviation;
+    scaler = Scaler::None;
 }
 
 
@@ -194,9 +188,9 @@ void DataSet::RawVariable::set_scaler(const Scaler& new_scaler)
 
 void DataSet::RawVariable::set_scaler(const string& new_scaler)
 {
-    if(new_scaler == "NoScaling")
+    if(new_scaler == "None")
     {
-        set_scaler(Scaler::NoScaling);
+        set_scaler(Scaler::None);
     }
     else if(new_scaler == "MinimumMaximum")
     {
@@ -462,7 +456,7 @@ void DataSet::RawVariable::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     switch(scaler)
     {
-    case Scaler::NoScaling: file_stream.PushText("NoScaling"); break;
+    case Scaler::None: file_stream.PushText("None"); break;
 
     case Scaler::MinimumMaximum: file_stream.PushText("MinimumMaximum"); break;
 
@@ -544,93 +538,16 @@ void DataSet::RawVariable::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void DataSet::RawVariable::print() const
 {
+    cout << "Raw variable" << endl;
+
     cout << "Name: " << name << endl;
 
-    cout << "raw_variable use: ";
+    cout << "Use: " << get_raw_variable_use_string(use) << endl;
 
-    switch(use)
-    {
-    case VariableUse::Input:
-        cout << "Input" << endl;
-        break;
+    cout << "Type: " << get_raw_variable_type_string(type) << endl;
 
-    case VariableUse::Target:
-        cout << "Target" << endl;
-        break;
+    cout << "Scaler: " << get_raw_variable_scaler_string(scaler) << endl;
 
-    case VariableUse::Unused:
-        cout << "Unused" << endl;
-        break;
-
-    case VariableUse::Time:
-        cout << "Time" << endl;
-        break;
-
-    case VariableUse::Id:
-        cout << "Id" << endl;
-        break;
-
-    default:
-        break;
-    }
-
-    cout << "raw_variable type: ";
-
-    switch(type)
-    {
-    case RawVariableType::Numeric:
-        cout << "Numeric" << endl;
-        break;
-
-    case RawVariableType::Binary:
-        cout << "Binary" << endl;
-        cout << "Categories: " << categories << endl;
-        break;
-
-    case RawVariableType::Categorical:
-        cout << "Categorical" << endl;
-        cout << "Categories: " << categories << endl;
-        break;
-
-    case RawVariableType::DateTime:
-        cout << "DateTime" << endl;
-        break;
-
-    case RawVariableType::Constant:
-        cout << "Constant" << endl;
-        break;
-
-    default:
-        break;
-    }
-
-    cout << "Scaler: ";
-
-    switch(scaler)
-    {
-    case Scaler::NoScaling:
-        cout << "NoScaling" << endl;
-        break;
-
-    case Scaler::MinimumMaximum:
-        cout << "MinimumMaximum" << endl;
-        break;
-
-    case Scaler::MeanStandardDeviation:
-        cout << "MeanStandardDeviation" << endl;
-        break;
-
-    case Scaler::StandardDeviation:
-        cout << "StandardDeviation" << endl;
-        break;
-
-    case Scaler::Logarithm:
-        cout << "Logarithm" << endl;
-        break;
-
-    default:
-        break;
-    }
 }
 
 
@@ -3587,9 +3504,9 @@ const string& DataSet::get_missing_values_label() const
 
 Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_method)
 {
-    if(scaling_unscaling_method == "NoScaling")
+    if(scaling_unscaling_method == "None")
     {
-        return Scaler::NoScaling;
+        return Scaler::None;
     }
     else if(scaling_unscaling_method == "MinimumMaximum")
     {
@@ -4440,9 +4357,9 @@ void DataSet::set(const string& data_source_path, const char& separator, const b
 
     read_csv();
 
-    set_default_raw_variables_scalers();
+//    set_default_raw_variables_scalers();
 
-    set_default_raw_variables_uses();
+//    set_default_raw_variables_uses();
 
 }
 
@@ -4465,10 +4382,11 @@ void DataSet::set(const string& data_source_path,
     set_codification(new_codification);
 
     read_csv();
-
+/*
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
+*/
 }
 
 
@@ -5931,7 +5849,9 @@ bool DataSet::has_nan() const
 
 bool DataSet::has_nan_row(const Index& row_index) const
 {
-    for(Index j = 0; j < data.dimension(1); j++)
+    const Index variables_number = get_variables_number();
+
+    for(Index j = 0; j < variables_number; j++)
     {
         if(isnan(data(row_index,j))) return true;
     }
@@ -6250,7 +6170,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 
         switch(raw_variables(raw_variable_index).scaler)
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6295,7 +6215,7 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
     {
         switch(raw_variables(i).scaler)
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6346,7 +6266,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
     {
         switch(input_variables_scalers(i))
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6405,7 +6325,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
     {
         switch(target_variables_scalers(i))
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6457,7 +6377,7 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
     {
         switch(input_variables_scalers(i))
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             // Do nothing
             break;
 
@@ -6509,7 +6429,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
     {
         switch(target_variables_scalers(i))
         {
-        case Scaler::NoScaling:
+        case Scaler::None:
             break;
 
         case Scaler::MinimumMaximum:
@@ -7556,6 +7476,15 @@ void DataSet::print() const
          print_dimensions(input_dimensions);
          cout << "Target variables dimensions: ";
          print_dimensions(target_dimensions);
+
+    Index raw_variables_number = get_raw_variables_number();
+
+
+    for(Index i = 0; i < raw_variables_number; i++)
+    {
+        cout << endl;
+        raw_variables(i).print();
+    }
 }
 
 
@@ -7670,8 +7599,8 @@ void DataSet::print_raw_variables_scalers() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(scalers[i] == Scaler::NoScaling)
-            cout << "NoScaling" << endl;
+        if(scalers[i] == Scaler::None)
+            cout << "None" << endl;
         else if(scalers[i] == Scaler::MinimumMaximum)
             cout << "MinimumMaximum" << endl;
         else if(scalers[i] == Scaler::MeanStandardDeviation)
@@ -8635,8 +8564,6 @@ Tensor<string, 1> DataSet::get_default_raw_variables_names(const Index& raw_vari
 
         buffer << "column_" << i+1;
 
-
-
         raw_variables_names(i) = buffer.str();
     }
 
@@ -8671,7 +8598,6 @@ string DataSet::get_raw_variable_type_string(const RawVariableType& raw_variable
 
 string DataSet::get_raw_variable_use_string(const VariableUse& raw_variable_use)
 {
-
     switch(raw_variable_use)
     {
     case VariableUse::Input:
@@ -8685,6 +8611,32 @@ string DataSet::get_raw_variable_use_string(const VariableUse& raw_variable_use)
 
     case VariableUse::Unused:
         return "Unused";
+
+    default:
+        return "";
+    }
+}
+
+
+string DataSet::get_raw_variable_scaler_string(const Scaler& scaler)
+{
+    switch(scaler)
+    {
+    case Scaler::None:
+        return "None";
+
+    case Scaler::MinimumMaximum:
+        return "MinimumMaximum";
+
+    case Scaler::MeanStandardDeviation:
+        return "MeanStandardDeviation";
+
+    case Scaler::StandardDeviation:
+        return "StandardDeviation";
+        break;
+
+    case Scaler::Logarithm:
+        return "Logarithm";
 
     default:
         return "";
@@ -8712,7 +8664,6 @@ void DataSet::read_csv_1()
     Tensor<string, 1> tokens;
 
     Index columns_number = 0;
-    Index rows_number = 0;
 
     // Read first line
 
@@ -8722,12 +8673,16 @@ void DataSet::read_csv_1()
         decode(line);
         trim(line);
         erase(line, '"');
+
         if(line.empty()) continue;
+
         check_separators(line);
 
         tokens = get_tokens(line, separator_string);
 
         columns_number = tokens.size();
+
+        if(columns_number != 0) break;
     }
 
     const Index raw_variables_number = has_rows_labels
@@ -8736,18 +8691,25 @@ void DataSet::read_csv_1()
 
     raw_variables.resize(raw_variables_number);
 
+    Index samples_number = 0;
+
     if(has_header)
     {
         if(has_numbers(tokens))
-            throw runtime_error("Some header names are numeric.\n");
+            throw runtime_error("Some header names are numeric: " + line + "\n");
 
-        has_rows_labels ? set_raw_variables_names(data_file_preview(0).slice(Eigen::array<Index, 1>({1}),
-                        Eigen::array<Index, 1>({columns_number-1})))
-                        : set_raw_variables_names(data_file_preview(0));
+        if(!has_rows_labels)
+        {
+            set_raw_variables_names(tokens);
+        }
+        else
+        {
+            /// @todo
+        }
     }
     else
     {
-        rows_number++;
+        samples_number++;
         set_default_raw_variables_names();
     }
 
@@ -8769,25 +8731,37 @@ void DataSet::read_csv_1()
 
         for(Index i = 0; i < columns_number; i++)
         {                      
+            const RawVariableType type = raw_variables(i).type;
 
-            raw_variables(i).type;
+            const string token = tokens(i);
 
-            tokens(i);
-
-            if(is_numeric_string(tokens(i)))
+            if(is_numeric_string(token))
             {
-
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::Numeric;
+            }
+            else if(is_date_time_string(token))
+            {
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::DateTime;
             }
             else
             {
-
+                if(type == RawVariableType::None)
+                    raw_variables(i).type = RawVariableType::Categorical;
             }
         }
 
-        rows_number++;
+        samples_number++;
     }
 
     file.close();
+
+    samples_uses.resize(samples_number);
+
+    const Index variables_number = get_variables_number();
+
+    data.resize(samples_number, variables_number);
 
 /*
     Index lines_number = 0;
@@ -9515,6 +9489,7 @@ void DataSet::read_csv_3_complete()
 
                 variable_index++;
             }
+
             raw_variables(raw_variable_index) = raw_variable;
             raw_variable_index++;
         }

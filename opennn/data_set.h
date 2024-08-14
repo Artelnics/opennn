@@ -141,7 +141,7 @@ public:
 
         /// Raw variable use.
 
-        DataSet::VariableUse use = DataSet::VariableUse::Input;
+        DataSet::VariableUse use = DataSet::VariableUse::Unused;
 
         /// Raw variable type.
 
@@ -151,7 +151,7 @@ public:
 
         Tensor<string, 1> categories;
 
-        Scaler scaler = Scaler::MeanStandardDeviation;
+        Scaler scaler = Scaler::None;
 
         // Methods
 
@@ -360,6 +360,7 @@ public:
     static Tensor<string, 1> get_default_raw_variables_names(const Index&);
     static string get_raw_variable_type_string(const RawVariableType&);
     static string get_raw_variable_use_string(const VariableUse&);
+    static string get_raw_variable_scaler_string(const Scaler&);
 
     static Scaler get_scaling_unscaling_method(const string&);
 

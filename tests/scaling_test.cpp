@@ -82,7 +82,7 @@ void ScalingTest::test_scale_data_no_scaling()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::NoScaling);
+    data_set.set_raw_variables_scalers(Scaler::None);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -194,7 +194,7 @@ void ScalingTest::test_unscale_data_no_scaling()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::NoScaling);
+    data_set.set_raw_variables_scalers(Scaler::None);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.unscale_data(variables_descriptives);
