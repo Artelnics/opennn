@@ -8,6 +8,8 @@
 
 #include "pooling_layer_test.h"
 
+namespace opennn
+{
 
 PoolingLayerTest::PoolingLayerTest() : UnitTesting()
 {
@@ -417,7 +419,7 @@ void PoolingLayerTest::run_test_case()
 
    cout << "End of pooling layer test case.\n\n";
 }
-
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

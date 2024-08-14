@@ -6,7 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+
 #include "convolutional_layer_test.h"
+
+#include "../opennn/images.h"
+
+namespace opennn
+{
 
 ConvolutionalLayerTest::ConvolutionalLayerTest() : UnitTesting()
 {
@@ -915,7 +922,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
             memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
                    tmp_result.data(), output_size_rows_cols*sizeof(type));
 
-            copy(/*execution::par,*/ 
+            copy( 
                 tmp_result.data(),
                 tmp_result.data() + output_size_rows_cols,
                 result.data() + j * output_size_rows_cols + i * output_size_rows_cols * kernel_number);
@@ -969,6 +976,7 @@ void ConvolutionalLayerTest::run_test_case()
     cout << "End of convolutional layer test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

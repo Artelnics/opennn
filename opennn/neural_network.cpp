@@ -218,7 +218,7 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
         return false;
     }
     /*
-    else if(layers_number == 1 && (layer_type == Layer::Type::LongShortTermMemory))
+    else if(layers_number == 1 && layer_type == Layer::Type::LongShortTermMemory)
     {
         const Layer::Type first_layer_type = layers[0]->get_type();
 

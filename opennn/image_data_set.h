@@ -12,19 +12,11 @@
 // System includes
 
 #include <string>
-//#include <sstream>
-//#include <iostream>
-//#include <fstream>
-//#include <limits>
-//#include <math.h>
 
 // OpenNN includes
 
 #include "config.h"
 #include "data_set.h"
-
-// #include <filesystem>
-//#include <experimental/filesystem>
 
 // Filesystem namespace
 

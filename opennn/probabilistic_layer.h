@@ -11,12 +11,8 @@
 
 // System includes
 
-//#include <cmath>
-//#include <cstdlib>
-//#include <fstream>
 #include <iostream>
 #include <string>
-//#include <sstream>
 
 // OpenNN includes
 
@@ -26,7 +22,6 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 #include "layer_back_propagation_lm.h"
-//#include "perceptron_layer.h"
 
 namespace opennn
 {

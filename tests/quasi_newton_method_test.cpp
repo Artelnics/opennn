@@ -8,6 +8,8 @@
 
 #include "quasi_newton_method_test.h"
 
+namespace opennn
+{
 
 QuasiNewtonMethodTest::QuasiNewtonMethodTest() : UnitTesting() 
 {
@@ -256,7 +258,7 @@ void QuasiNewtonMethodTest::run_test_case()
     cout << "End of quasi-Newton method test case.\n\n";
 }
 
-
+}
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //

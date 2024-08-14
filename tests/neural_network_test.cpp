@@ -8,6 +8,11 @@
 
 #include "neural_network_test.h"
 
+#include "../opennn/neural_network.h"
+
+namespace opennn
+{
+
 NeuralNetworkTest::NeuralNetworkTest() : UnitTesting()
 {
 }
@@ -784,6 +789,7 @@ void NeuralNetworkTest::run_test_case()
     cout << "End of neural network test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

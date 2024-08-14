@@ -5,18 +5,8 @@
 // System includes
 
 #include <string>
-//#include <algorithm>
-//#include <fstream>
-//#include <iostream>
-//#include <limits>
-//#include <math.h>
-//#include <vector>
-//#include <numeric>
-//#include <stdio.h>
 
 // OpenNN includes
-
-//#include "config.h"
 
 using namespace std;
 

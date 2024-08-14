@@ -8,6 +8,12 @@
 
 #include "stochastic_gradient_descent_test.h"
 
+#include "../opennn/transformer.h"
+#include "../opennn/cross_entropy_error_3d.h"
+#include "../opennn/language_data_set.h"
+
+namespace opennn
+{
 
 StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 {
@@ -241,6 +247,7 @@ void StochasticGradientDescentTest::run_test_case()
     cout << "End of stochastic gradient descent test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

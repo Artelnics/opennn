@@ -12,6 +12,11 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/probabilistic_layer.h"
+#include "../opennn/numerical_differentiation.h"
+
+namespace opennn
+{
 
 class ProbabilisticLayerTest : public UnitTesting
 {
@@ -74,10 +79,9 @@ private:
     NumericalDifferentiation numerical_differentiation;
 };
 
+}
 
 #endif
-
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

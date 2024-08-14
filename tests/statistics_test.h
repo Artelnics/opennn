@@ -13,6 +13,9 @@
 
 #include "../opennn/unit_testing.h"
 
+namespace opennn
+{
+
 class StatisticsTest : public UnitTesting
 {
 
@@ -90,6 +93,8 @@ public:
    void run_test_case();
 
 };
+
+}
 
 #endif
 

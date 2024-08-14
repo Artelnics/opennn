@@ -105,12 +105,12 @@ Tensor<type, 1> NormalizationLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(gammas.size() + betas.size());
 
-    copy(/*execution::par,*/
+    copy(
         gammas.data(),
         gammas.data() + gammas.size(),
         parameters.data());
 
-    copy(/*execution::par,*/
+    copy(
         betas.data(),
         betas.data() + betas.size(),
         parameters.data() + gammas.size());
@@ -214,12 +214,12 @@ void NormalizationLayer3D::set_betas(const Tensor<type, 1>& new_betas)
 
 void NormalizationLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    copy(/*execution::par,*/
+    copy(
         new_parameters.data() + index,
         new_parameters.data() + index + gammas.size(),
         gammas.data());
 
-    copy(/*execution::par,*/
+    copy(
         new_parameters.data() + index + gammas.size(),
         new_parameters.data() + index + gammas.size() + betas.size(),
         betas.data());
@@ -417,12 +417,12 @@ void NormalizationLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const type* betas_derivatives_data = normalization_layer_3d_back_propagation->betas_derivatives.data();
     type* gradient_data = gradient.data();
 
-    copy(/*execution::par,*/
+    copy(
         gammas_derivatives_data,
         gammas_derivatives_data + gammas_number,
         gradient_data + index);
 
-    copy(/*execution::par,*/
+    copy(
         betas_derivatives_data,
         betas_derivatives_data + betas_number,
         gradient_data + index + gammas_number);

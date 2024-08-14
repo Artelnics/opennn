@@ -12,6 +12,12 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/data_set.h"
+#include "../opennn/batch.h"
+#include "../opennn/neural_network.h"
+
+namespace opennn
+{
 
 class NeuralNetworkTest : public UnitTesting
 {
@@ -73,6 +79,8 @@ private:
 
     NeuralNetwork neural_network;
 };
+
+}
 
 #endif
 

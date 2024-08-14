@@ -3,25 +3,12 @@
 
 // System includes
 
-//#include <algorithm>
-//#include <fstream>
-//#include <iostream>
-//#include <limits>
-//#include <map>
-//#include <math.h>
-//#include <vector>
-//#include <numeric>
 #include <stdio.h>
 
 // OpenNN includes
 
 #include "config.h"
-//#include "strings_utilities.h"
-//#include "statistics.h"
 
-//#include "../eigen/unsupported/Eigen/KroneckerProduct"
-
-#include "../eigen/Eigen/Dense"
 
 using Eigen::MatrixXd;
 
@@ -106,7 +93,7 @@ bool has_NAN(Tensor<type, 4>&);
 
 bool is_zero(const Tensor<type,1>&, const type& = type(NUMERIC_LIMITS_MIN));
 
-bool is_binary(const Tensor<type, 1>&){return true;}
+//bool is_binary(const Tensor<type, 1>&){return true;}
 bool is_binary(const Tensor<type, 2>&);
 
 bool is_constant(const Tensor<type, 1>&);

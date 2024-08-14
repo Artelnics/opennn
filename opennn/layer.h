@@ -19,7 +19,8 @@
 #include "tinyxml2.h"
 //#include "tensors.h"
 
-namespace opennn {
+namespace opennn
+{
 
 class Layer;
 

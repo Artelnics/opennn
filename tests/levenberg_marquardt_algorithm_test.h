@@ -12,6 +12,13 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/data_set.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/sum_squared_error.h"
+#include "../opennn/levenberg_marquardt_algorithm.h"
+
+namespace opennn
+{
 
 class LevenbergMarquardtAlgorithmTest : public UnitTesting 
 {
@@ -46,6 +53,8 @@ private:
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm;
 };
+
+}
 
 #endif
 

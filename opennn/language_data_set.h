@@ -13,16 +13,11 @@
 
 #include <string>
 #include <fstream>
-//#include <sstream>
-//#include <iostream>
-//#include <limits>
-//#include <math.h>
 
 // OpenNN includes
 
 #include "config.h"
 #include "data_set.h"
-//#include "strings_utilities.h"
 
 namespace opennn
 {
