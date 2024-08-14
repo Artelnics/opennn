@@ -10,6 +10,13 @@
 #define MODELSELECTIONTEST_H
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/data_set.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/training_strategy.h"
+#include "../opennn/model_selection.h"
+
+namespace opennn
+{
 
 class ModelSelectionTest : public UnitTesting 
 {
@@ -52,6 +59,8 @@ private:
    ModelSelection model_selection;
 
 };
+
+}
 
 #endif
 

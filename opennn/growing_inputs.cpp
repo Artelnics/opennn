@@ -316,7 +316,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 selection_failures++;
 
-                data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::Unused);
+                data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::None);
 
                 input_raw_variables_number += -1;
             }

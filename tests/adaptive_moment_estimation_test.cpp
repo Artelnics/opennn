@@ -6,7 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "../opennn/transformer.h"
+#include "../opennn/language_data_set.h"
+#include "../opennn/cross_entropy_error_3d.h"
+
 #include "adaptive_moment_estimation_test.h"
+
+namespace opennn
+{
 
 
 AdaptiveMomentEstimationTest::AdaptiveMomentEstimationTest() : UnitTesting()
@@ -203,9 +210,10 @@ void AdaptiveMomentEstimationTest::run_test_case()
 
     test_perform_training();
 
-    cout << "End of gradient descent test case.\n\n";
+    cout << "End of adaptive moment estimation test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

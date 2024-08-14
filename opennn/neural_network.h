@@ -13,31 +13,20 @@
 
 #include <string>
 
-
 // OpenNN includes
 
 #include "config.h"
-//#include "batch.h"
 #include "layer.h"
 #include "perceptron_layer.h"
-//#include "perceptron_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
-//#include "addition_layer_3d.h"
-//#include "normalization_layer_3d.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
-//#include "probabilistic_layer_3d.h"
-//#include "convolutional_layer.h"
 #include "flatten_layer.h"
-//#include "embedding_layer.h"
-//#include "multihead_attention_layer.h"
-
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
-
 
 namespace opennn
 {

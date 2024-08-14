@@ -11,21 +11,12 @@
 
 // System includes
 
-//#include <iostream>
-//#include <fstream>
 #include <string>
-//#include <sstream>
-//#include <cmath>
-//#include <algorithm>
-//#include <cstdlib>
-//#include <stdexcept>
-//#include <ctime>
-//#include <exception>
 
 // OpenNN includes
 
-#include "statistics.h"
-#include "tinyxml2.h"
+//#include "statistics.h"
+//#include "tinyxml2.h"
 #include "config.h"
 
 // System includes

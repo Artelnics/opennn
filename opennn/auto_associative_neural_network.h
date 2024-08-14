@@ -13,7 +13,6 @@
 
 #include <string>
 
-
 // OpenNN includes
 
 #include "neural_network.h"

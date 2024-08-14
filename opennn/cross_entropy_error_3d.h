@@ -11,15 +11,10 @@
 
 // System includes
 
-//#include <iostream>
-//#include <fstream>
-//#include <math.h>
-
 // OpenNN includes
 
 #include "loss_index.h"
 #include "data_set.h"
-//#include "config.h"
 
 namespace opennn
 {

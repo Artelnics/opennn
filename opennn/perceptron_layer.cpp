@@ -141,12 +141,12 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
     const type* biases_data = biases.data();
     type* parameters_data = parameters.data();
 
-    copy(/*execution::par,*/
+    copy(
          synaptic_weights_data,
          synaptic_weights_data + synaptic_weights_number,
          parameters_data);
 
-    copy(/*execution::par,*/
+    copy(
          biases_data,
          biases_data + biases_number,
          parameters_data + synaptic_weights_number);
@@ -328,12 +328,12 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy(/*execution::par,*/ 
+    copy( 
         new_parameters_data + index,
         new_parameters_data + index + synaptic_weights_number,
         synaptic_weights_data);
 
-    copy(/*execution::par,*/ 
+    copy( 
         new_parameters_data + index + synaptic_weights_number,
         new_parameters_data + index + synaptic_weights_number + biases_number,
         biases_data);
@@ -735,12 +735,12 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     type* gradient_data = gradient.data();
 
-    copy(/*execution::par,*/
+    copy(
          synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy(/*execution::par,*/
+    copy(
          biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);
@@ -760,7 +760,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 
     type* squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
-    copy(/*execution::par,*/
+    copy(
         squared_errors_Jacobian_data,
         squared_errors_Jacobian_data + layer_parameters_number * batch_samples_number,
         squared_errors_Jacobian.data() + index);

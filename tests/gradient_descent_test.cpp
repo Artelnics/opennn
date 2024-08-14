@@ -8,6 +8,8 @@
 
 #include "gradient_descent_test.h"
 
+namespace opennn
+{
 
 GradientDescentTest::GradientDescentTest() : UnitTesting()
 {
@@ -153,6 +155,7 @@ void GradientDescentTest::run_test_case()
     cout << "End of gradient descent test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

@@ -8,6 +8,11 @@
 
 #include "probabilistic_layer_test.h"
 
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
+
 ProbabilisticLayerTest::ProbabilisticLayerTest() : UnitTesting()
 {    
 }
@@ -628,6 +633,7 @@ void ProbabilisticLayerTest::run_test_case()
     cout << "End of probabilistic layer test case.\n\n";
 }
 
+}
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //

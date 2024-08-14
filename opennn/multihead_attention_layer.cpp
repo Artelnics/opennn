@@ -160,14 +160,14 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 
     Index parameters_index = 0;
 
-    copy(/*execution::par,*/
+    copy(
         query_weights.data(),
         query_weights.data() + query_weights.size(),
         parameters.data());
 
     parameters_index += query_weights.size();
 
-    copy(/*execution::par,*/
+    copy(
         query_biases.data(),
         query_biases.data() + query_biases.size(),
         parameters.data() + parameters_index);
@@ -175,14 +175,14 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
     parameters_index += query_biases.size();
 
 
-    copy(/*execution::par,*/
+    copy(
         key_weights.data(),
         key_weights.data() + key_weights.size(),
         parameters.data() + parameters_index);
 
     parameters_index += key_weights.size();
 
-    copy(/*execution::par,*/
+    copy(
         key_biases.data(),
         key_biases.data() + key_biases.size(),
         parameters.data() + parameters_index);
@@ -190,28 +190,28 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
     parameters_index += key_biases.size();
 
 
-    copy(/*execution::par,*/
+    copy(
         value_weights.data(),
         value_weights.data() + value_weights.size(),
         parameters.data() + parameters_index);
 
     parameters_index += value_weights.size();
 
-    copy(/*execution::par,*/
+    copy(
         value_biases.data(),
         value_biases.data() + value_biases.size(),
         parameters.data() + parameters_index);
 
     parameters_index += value_biases.size();
 
-    copy(/*execution::par,*/
+    copy(
         projection_weights.data(),
         projection_weights.data() + projection_weights.size(),
         parameters.data() + parameters_index);
 
     parameters_index += projection_weights.size();
 
-    copy(/*execution::par,*/
+    copy(
         projection_biases.data(),
         projection_biases.data() + projection_biases.size(),
         parameters.data() + parameters_index);
@@ -320,14 +320,14 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
 
     Index parameters_index = index;
 
-    copy(/*execution::par,*/
+    copy(
         new_parameters_data + parameters_index,
         new_parameters_data + parameters_index + query_weights.size(),
         query_weights_data);
 
     parameters_index += query_weights.size();
 
-    copy(/*execution::par,*/
+    copy(
         new_parameters_data + parameters_index,
         new_parameters_data + parameters_index + query_biases.size(),
         query_biases_data);
@@ -335,14 +335,14 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
     parameters_index += query_biases.size();
 
     
-    copy(/*execution::par,*/
+    copy(
         new_parameters_data + parameters_index,
         new_parameters_data + parameters_index + key_weights.size(),
         key_weights_data);
 
     parameters_index += key_weights.size();
 
-    copy(/*execution::par,*/
+    copy(
         new_parameters_data + parameters_index,
         new_parameters_data + parameters_index + key_biases.size(),
         key_biases_data);
@@ -350,14 +350,14 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
     parameters_index += key_biases.size();
 
     
-    copy(/*execution::par,*/
+    copy(
         new_parameters_data + parameters_index,
         new_parameters_data + parameters_index + value_weights.size(),
         value_weights_data);
 
     parameters_index += value_weights.size();
 
-    copy(/*execution::par,*/
+    copy(
         new_parameters_data + parameters_index,
         new_parameters_data + parameters_index + value_biases.size(),
         value_biases_data);
@@ -365,14 +365,14 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
     parameters_index += value_biases.size();
 
     
-    copy(/*execution::par,*/
+    copy(
         new_parameters_data + parameters_index,
         new_parameters_data + parameters_index + projection_weights.size(),
         projection_weights_data);
 
     parameters_index += projection_weights.size();
     
-    copy(/*execution::par,*/
+    copy(
         new_parameters_data + parameters_index,
         new_parameters_data + parameters_index + projection_biases.size(),
         projection_biases_data);
@@ -1126,14 +1126,14 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
 
     Index gradient_index = index;
 
-    copy(/*execution::par,*/
+    copy(
         query_weights_derivatives.data(),
         query_weights_derivatives.data() + query_weights_derivatives.size(),
         gradient_data + gradient_index);
 
     gradient_index += query_weights_derivatives.size();
 
-    copy(/*execution::par,*/
+    copy(
         query_biases_derivatives.data(),
         query_biases_derivatives.data() + query_biases_derivatives.size(),
         gradient_data + gradient_index);
@@ -1141,14 +1141,14 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
     gradient_index += query_biases_derivatives.size();
 
 
-    copy(/*execution::par,*/
+    copy(
         key_weights_derivatives.data(),
         key_weights_derivatives.data() + key_weights_derivatives.size(),
         gradient_data + gradient_index);
 
     gradient_index += key_weights_derivatives.size();
 
-    copy(/*execution::par,*/
+    copy(
         key_biases_derivatives.data(),
         key_biases_derivatives.data() + key_biases_derivatives.size(),
         gradient_data + gradient_index);
@@ -1156,14 +1156,14 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
     gradient_index += key_biases_derivatives.size();
 
 
-    copy(/*execution::par,*/
+    copy(
         value_weights_derivatives.data(),
         value_weights_derivatives.data() + value_weights_derivatives.size(),
         gradient_data + gradient_index);
 
     gradient_index += value_weights_derivatives.size();
 
-    copy(/*execution::par,*/
+    copy(
         value_biases_derivatives.data(),
         value_biases_derivatives.data() + value_biases_derivatives.size(),
         gradient_data + gradient_index);
@@ -1171,14 +1171,14 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
     gradient_index += value_biases_derivatives.size();
 
 
-    copy(/*execution::par,*/
+    copy(
         projection_weights_derivatives.data(),
         projection_weights_derivatives.data() + projection_weights_derivatives.size(),
         gradient_data + gradient_index);
 
     gradient_index += projection_weights_derivatives.size();
 
-    copy(/*execution::par,*/
+    copy(
         projection_biases_derivatives.data(),
         projection_biases_derivatives.data() + projection_biases_derivatives.size(),
         gradient_data + gradient_index);

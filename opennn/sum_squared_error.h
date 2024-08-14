@@ -21,7 +21,6 @@
 // OpenNN includes
 
 #include "config.h"
-
 #include "loss_index.h"
 #include "data_set.h"
 

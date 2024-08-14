@@ -174,7 +174,7 @@ int main()
 
       else if(test == "scaling_layer" || test == "sl")
       {
-         ScalingLayerTest scaling_layer_test;
+         ScalingLayer2DTest scaling_layer_test;
          scaling_layer_test.run_test_case();
          tests_count += scaling_layer_test.get_tests_count();
          tests_passed_count += scaling_layer_test.get_tests_passed_count();
@@ -441,7 +441,7 @@ int main()
 
       else if(test == "tensor_utilities" || test == "tu")
       {
-        TensorUtilitiesTest tensor_utilities_test;
+        TensorsTest tensor_utilities_test;
         tensor_utilities_test.run_test_case();
         tests_count += tensor_utilities_test.get_tests_count();
         tests_passed_count += tensor_utilities_test.get_tests_passed_count();
@@ -503,7 +503,7 @@ int main()
 
           // tensor utilities
 
-          TensorUtilitiesTest tensor_utilites_test;
+          TensorsTest tensor_utilites_test;
           tensor_utilites_test.run_test_case();
           tests_count += tensor_utilites_test.get_tests_count();
           tests_passed_count += tensor_utilites_test.get_tests_passed_count();
@@ -573,7 +573,7 @@ int main()
 
           // scaling layer
 
-          ScalingLayerTest scaling_layer_test;
+          ScalingLayer2DTest scaling_layer_test;
           scaling_layer_test.run_test_case();
           tests_count += scaling_layer_test.get_tests_count();
           tests_passed_count += scaling_layer_test.get_tests_passed_count();

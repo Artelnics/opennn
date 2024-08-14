@@ -12,6 +12,11 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/probabilistic_layer_3d.h"
+#include "../opennn/numerical_differentiation.h"
+
+namespace opennn
+{
 
 class ProbabilisticLayer3DTest : public UnitTesting
 {
@@ -56,6 +61,7 @@ private:
     NumericalDifferentiation numerical_differentiation;
 };
 
+}
 
 #endif
 

@@ -14,6 +14,10 @@
 #include "../opennn/unit_testing.h"
 #include "../opennn/neural_network_forward_propagation.h"
 #include "../opennn/back_propagation.h"
+#include "../opennn/cross_entropy_error_3d.h"
+
+namespace opennn
+{
 
 class CrossEntropyError3DTest : public UnitTesting
 {
@@ -71,7 +75,7 @@ private:
     Tensor<type, 2> numerical_jacobian;
 
 };
-
+}
 #endif
 
 

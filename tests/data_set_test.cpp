@@ -8,6 +8,11 @@
 
 #include "data_set_test.h"
 
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
+
 DataSetTest::DataSetTest() : UnitTesting()
 {
     data_set.set_display(false);
@@ -226,8 +231,8 @@ void DataSetTest::test_filter_data()
 
     data_set.filter_data(minimums, maximums);
 
-    assert_true(data_set.get_sample_use(0) == DataSet::SampleUse::Unused, LOG);
-    assert_true(data_set.get_sample_use(1) == DataSet::SampleUse::Unused, LOG);
+    assert_true(data_set.get_sample_use(0) == DataSet::SampleUse::None, LOG);
+    assert_true(data_set.get_sample_use(1) == DataSet::SampleUse::None, LOG);
 }
 
 
@@ -246,7 +251,7 @@ void DataSetTest::test_scale_data()
 
     data_set.set_data(data);
 
-    data_set.set_raw_variables_scalers(Scaler::NoScaling);
+    data_set.set_raw_variables_scalers(Scaler::None);
     data_descriptives = data_set.scale_data();
 
     scaled_data = data_set.get_data();
@@ -467,8 +472,8 @@ void DataSetTest::test_read_csv()
     data = data_set.get_data();
 
     assert_true(data_set.get_header_line(), LOG);
-    assert_true(data_set.get_numeric_variable_name(0) == "x", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
+    assert_true(data_set.get_variable_name(0) == "x", LOG);
+    assert_true(data_set.get_variable_name(1) == "y", LOG);
 
     assert_true(data.dimension(0) == 3, LOG);
     assert_true(data.dimension(1) == 2, LOG);
@@ -495,8 +500,8 @@ void DataSetTest::test_read_csv()
 
     data = data_set.get_data();
 
-    assert_true(data_set.get_numeric_variable_name(0) == "x", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
+    assert_true(data_set.get_variable_name(0) == "x", LOG);
+    assert_true(data_set.get_variable_name(1) == "y", LOG);
 
     assert_true((data(0,0) - 1.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true((data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -520,8 +525,8 @@ void DataSetTest::test_read_csv()
 
     data = data_set.get_data();
 
-    assert_true(data_set.get_numeric_variable_name(0) == "x", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
+    assert_true(data_set.get_variable_name(0) == "x", LOG);
+    assert_true(data_set.get_variable_name(1) == "y", LOG);
 
     assert_true((data(0,0) - 1.0 ) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true((data(0,1) - 2.0 ) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -607,13 +612,13 @@ void DataSetTest::test_read_csv()
     assert_true(data_set.get_input_variables_number() == 4, LOG);
     assert_true(data_set.get_target_variables_number() == 3, LOG);
 
-    assert_true(data_set.get_numeric_variable_name(0) == "sepal length", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "sepal width", LOG);
-    assert_true(data_set.get_numeric_variable_name(2) == "petal length", LOG);
-    assert_true(data_set.get_numeric_variable_name(3) == "petal width", LOG);
-    assert_true(data_set.get_numeric_variable_name(4) == "Iris-setosa", LOG);
-    assert_true(data_set.get_numeric_variable_name(5) == "Iris-versicolor", LOG);
-    assert_true(data_set.get_numeric_variable_name(6) == "Iris-virginica", LOG);
+    assert_true(data_set.get_variable_name(0) == "sepal length", LOG);
+    assert_true(data_set.get_variable_name(1) == "sepal width", LOG);
+    assert_true(data_set.get_variable_name(2) == "petal length", LOG);
+    assert_true(data_set.get_variable_name(3) == "petal width", LOG);
+    assert_true(data_set.get_variable_name(4) == "Iris-setosa", LOG);
+    assert_true(data_set.get_variable_name(5) == "Iris-versicolor", LOG);
+    assert_true(data_set.get_variable_name(6) == "Iris-virginica", LOG);
 
     assert_true(data_set.get_samples_number() == 5, LOG);
 
@@ -646,8 +651,8 @@ void DataSetTest::test_read_csv()
     data_set.save("../data/data_set.xml");
     data_set.load("../data/data_set.xml");
 
-    assert_true(data_set.get_numeric_variable_name(0) == "x", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y", LOG);
+    assert_true(data_set.get_variable_name(0) == "x", LOG);
+    assert_true(data_set.get_variable_name(1) == "y", LOG);
 */
     // Test
 /*
@@ -1028,7 +1033,7 @@ void DataSetTest::test_scrub_missing_values()
 
     samples_uses = data_set.get_samples_uses();
 
-    assert_true(samples_uses(1) == DataSet::SampleUse::Unused, LOG);
+    assert_true(samples_uses(1) == DataSet::SampleUse::None, LOG);
 */
     // Test
 /*
@@ -1994,8 +1999,8 @@ void DataSetTest::test_fill()
     const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 /*
-    data_set_batch.set(training_samples_number, &data_set);
-    data_set_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    batch.set(training_samples_number, &data_set);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     Tensor<type, 2> input_data(3,2);
     input_data.setValues({{1,4},{2,5},{3,6}});
@@ -2003,11 +2008,11 @@ void DataSetTest::test_fill()
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
 
-    const Tensor<pair<type*, dimensions>, 1> inputs_pair = data_set_batch.get_inputs_pair();
+    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
-    const pair<type*, dimensions> targets_pair = data_set_batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
@@ -2089,6 +2094,7 @@ void DataSetTest::run_test_case()
     cout << "End of data set test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

@@ -19,11 +19,9 @@
 
 //#pragma warning(push, 0)
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
-//#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
-//#include <algorithm>
-//#include <execution>
 
 //#define OPENNN_CUDA
+
 #ifdef OPENNN_CUDA
 
 #include "../../opennn_cuda/CudaOpennn/kernel.cuh"
@@ -59,7 +57,6 @@ namespace opennn
         return dynamic_cast<const Base*>(ptr) != nullptr;
     }
 }
-
 
 #endif
 

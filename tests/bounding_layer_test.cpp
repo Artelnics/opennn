@@ -4,9 +4,14 @@
 //   B O U N D I N G   L A Y E R   T E S T   C L A S S                     
 //
 //   Artificial Intelligence Techniques SL
-//   E-mail: artelnics@artelnics.com                                       
+//   E-mail: artelnics@artelnics.com
+
+#include "../opennn/tensors.h"
 
 #include "bounding_layer_test.h"
+
+namespace opennn
+{
 
 
 BoundingLayerTest::BoundingLayerTest() : UnitTesting()
@@ -110,6 +115,7 @@ void BoundingLayerTest::run_test_case()
     cout << "End of bounding layer test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

@@ -12,6 +12,10 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/numerical_differentiation.h"
+
+namespace opennn
+{
 
 class NumericalDifferentiationTest : public UnitTesting
 {
@@ -201,6 +205,7 @@ private:
 
 };
 
+}
 
 #endif
 

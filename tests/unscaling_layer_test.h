@@ -12,6 +12,10 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/unscaling_layer.h"
+
+namespace opennn
+{
 
 class UnscalingLayerTest : public UnitTesting
 {
@@ -55,6 +59,7 @@ private:
     Index inputs_number;
 };
 
+}
 
 #endif
 
