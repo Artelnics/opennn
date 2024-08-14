@@ -115,7 +115,7 @@ public:
     /// This enumeration represents the data type of a raw_variable
     /// (numeric, binary, categorical or time).
 
-    enum class RawVariableType{Numeric, Binary, Categorical, DateTime, Constant};
+    enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
     // Structs
 
@@ -145,7 +145,7 @@ public:
 
         /// Raw variable type.
 
-        DataSet::RawVariableType type = DataSet::RawVariableType::Numeric;
+        DataSet::RawVariableType type = DataSet::RawVariableType::None;
 
         /// Categories within the raw variable.
 

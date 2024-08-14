@@ -12,7 +12,6 @@
 #include <ctime>
 #include <codecvt>
 #include <exception>
-//#include <filesystem>
 #include <fstream>
 #include <iostream>
 //#include <limits.h>
@@ -8769,13 +8768,23 @@ void DataSet::read_csv_1()
             throw runtime_error("Tokens number is not equal to columns number.");
 
         for(Index i = 0; i < columns_number; i++)
-        {
+        {                      
+
+            raw_variables(i).type;
+
+            tokens(i);
+
             if(is_numeric_string(tokens(i)))
-            {}
+            {
+
+            }
+            else
+            {
+
+            }
         }
 
         rows_number++;
-
     }
 
     file.close();

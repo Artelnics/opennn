@@ -10,20 +10,22 @@
 
 // System includes
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
+//#include <iostream>
+//#include <fstream>
+//#include <sstream>
 #include <string>
-#include <cstring>
-#include <time.h>
+//#include <cstring>
+//#include <time.h>
 #include <omp.h>
-#include "config.h"
 
 // OpenNN includes
 
-#include "opennn.h"
+#include "tensors.h"
+#include "config.h"
 
-using namespace opennn;
+//#include "opennn.h"
+
+//using namespace opennn;
 
 namespace opennn
 {

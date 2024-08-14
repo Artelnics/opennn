@@ -8,20 +8,26 @@
 
 #include "scaling_layer_test.h"
 
+#include "../opennn/tensors.h"
+#include "../opennn/descriptives.h"
+#include "../opennn/statistics.h"
 
-ScalingLayerTest::ScalingLayerTest() : UnitTesting()
+namespace opennn
+{
+
+ScalingLayer2DTest::ScalingLayer2DTest() : UnitTesting()
 {
     scaling_layer.set_display(false);
 
 }
 
 
-ScalingLayerTest::~ScalingLayerTest()
+ScalingLayer2DTest::~ScalingLayer2DTest()
 {
 }
 
 
-void ScalingLayerTest::test_constructor()
+void ScalingLayer2DTest::test_constructor()
 {
     cout << "test_constructor\n";
 
@@ -43,7 +49,7 @@ void ScalingLayerTest::test_constructor()
 }
 
 
-void ScalingLayerTest::test_destructor()
+void ScalingLayer2DTest::test_destructor()
 {
     cout << "test_destructor\n";
 
@@ -52,7 +58,7 @@ void ScalingLayerTest::test_destructor()
 }
 
 
-void ScalingLayerTest::test_forward_propagate()
+void ScalingLayer2DTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
@@ -301,7 +307,7 @@ void ScalingLayerTest::test_forward_propagate()
 }
 
 
-void ScalingLayerTest::run_test_case()
+void ScalingLayer2DTest::run_test_case()
 {
     cout << "Running scaling layer test case...\n";
 
@@ -317,6 +323,7 @@ void ScalingLayerTest::run_test_case()
     cout << "End of scaling layer test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

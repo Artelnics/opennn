@@ -8,6 +8,11 @@
 
 #include "data_set_test.h"
 
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
+
 DataSetTest::DataSetTest() : UnitTesting()
 {
     data_set.set_display(false);
@@ -1994,8 +1999,8 @@ void DataSetTest::test_fill()
     const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 /*
-    data_set_batch.set(training_samples_number, &data_set);
-    data_set_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    batch.set(training_samples_number, &data_set);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     Tensor<type, 2> input_data(3,2);
     input_data.setValues({{1,4},{2,5},{3,6}});
@@ -2003,11 +2008,11 @@ void DataSetTest::test_fill()
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
 
-    const Tensor<pair<type*, dimensions>, 1> inputs_pair = data_set_batch.get_inputs_pair();
+    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
-    const pair<type*, dimensions> targets_pair = data_set_batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
@@ -2089,6 +2094,7 @@ void DataSetTest::run_test_case()
     cout << "End of data set test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

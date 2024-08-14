@@ -8,6 +8,11 @@
 
 #include "time_series_data_set_test.h"
 
+#include "../opennn/time_series_data_set.h"
+
+namespace opennn
+{
+
 TimeSeriesDataSetTest::TimeSeriesDataSetTest() : UnitTesting()
 {
     data_set.set_display(false);
@@ -569,6 +574,7 @@ void TimeSeriesDataSetTest::run_test_case()
     cout << "End of time series data set test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

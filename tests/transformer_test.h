@@ -12,6 +12,12 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/transformer.h"
+#include "../opennn/language_data_set.h"
+#include "../opennn/batch.h"
+
+namespace opennn
+{
 
 class TransformerTest : public UnitTesting
 {
@@ -74,6 +80,8 @@ private:
 
     Transformer transformer;
 };
+
+}
 
 #endif
 

@@ -8,6 +8,9 @@
 
 #include "growing_neurons_test.h"
 
+namespace opennn
+{
+
 GrowingNeuronsTest::GrowingNeuronsTest() : UnitTesting()
 {
     training_strategy.set(&neural_network, &data_set);
@@ -169,4 +172,6 @@ void GrowingNeuronsTest::run_test_case()
     test_perform_neurons_selection();
 
     cout << "End of growing neurons test case.\n\n";
+}
+
 }

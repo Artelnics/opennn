@@ -12,6 +12,10 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/data_set.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/sum_squared_error.h"
+#include "../opennn/stochastic_gradient_descent.h"
 
 namespace opennn
 {

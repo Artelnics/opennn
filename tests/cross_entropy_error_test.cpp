@@ -8,6 +8,11 @@
 
 #include "cross_entropy_error_test.h"
 
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
+
 CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting() 
 {
     cross_entropy_error.set(&neural_network, &data_set);
@@ -149,6 +154,7 @@ void CrossEntropyErrorTest::run_test_case()
     cout << "End of cross-entropy error test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

@@ -9,6 +9,12 @@
 #include "statistics_test.h"
 #include "strings_utilities.h"
 
+#include "../opennn/statistics.h"
+#include "../opennn/histogram.h"
+
+namespace opennn
+{
+
 StatisticsTest::StatisticsTest() : UnitTesting()
 {   
 }
@@ -1371,6 +1377,7 @@ void StatisticsTest::run_test_case()
     cout << "End of descriptives test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

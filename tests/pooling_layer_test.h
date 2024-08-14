@@ -12,6 +12,10 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/pooling_layer.h"
+
+namespace opennn
+{
 
 class PoolingLayerTest : public UnitTesting
 {
@@ -40,6 +44,8 @@ private:
    PoolingLayer pooling_layer;
 
 };
+
+}
 
 #endif
 

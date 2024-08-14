@@ -7,7 +7,12 @@
 //   artelnics@artelnics.com
 
 #include "sum_squared_error_test.h"
+
 #include "../opennn/back_propagation.h"
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
 
 SumSquaredErrorTest::SumSquaredErrorTest() : UnitTesting() 
 {
@@ -508,7 +513,7 @@ void SumSquaredErrorTest::run_test_case()
     cout << "End of sum squared error test case.\n\n";
 }
 
-
+}
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //

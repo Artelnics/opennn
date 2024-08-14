@@ -12,6 +12,10 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/bounding_layer.h"
+
+namespace opennn
+{
 
 class BoundingLayerTest : public UnitTesting
 {
@@ -42,6 +46,8 @@ private:
 
    BoundingLayerForwardPropagation bounding_layer_forward_propagation;
 };
+
+}
 
 #endif
 

@@ -8,6 +8,12 @@
 
 #include "scaling_test.h"
 
+#include "../opennn/descriptives.h"
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
+
 
 ScalingTest::ScalingTest() : UnitTesting()
 {
@@ -266,6 +272,7 @@ void ScalingTest::run_test_case()
     cout << "End of scaling test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
