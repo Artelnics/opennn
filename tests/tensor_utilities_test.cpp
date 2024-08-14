@@ -1,24 +1,30 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T E S T I N G   A N A L Y S I S   T E S T   C L A S S                 
+//   T E N S O R S   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+
 #include "tensor_utilities_test.h"
+#include "../opennn/tensors.h"
 
-TensorUtilitiesTest::TensorUtilitiesTest() : UnitTesting()
+namespace opennn
+{
+
+TensorsTest::TensorsTest() : UnitTesting()
 {
 }
 
 
-TensorUtilitiesTest::~TensorUtilitiesTest()
+TensorsTest::~TensorsTest()
 {
 }
 
 
-void TensorUtilitiesTest::test_fill_submatrix()
+void TensorsTest::test_fill_submatrix()
 {
     cout << "test_fill_submatrix\n";
 
@@ -46,7 +52,7 @@ void TensorUtilitiesTest::test_fill_submatrix()
 }
 
 
-void TensorUtilitiesTest::test_calculate_rank()
+void TensorsTest::test_calculate_rank()
 {
     cout << "test_calculate_rank\n";
 
@@ -63,7 +69,7 @@ void TensorUtilitiesTest::test_calculate_rank()
 }
 
 
-void TensorUtilitiesTest::run_test_case()
+void TensorsTest::run_test_case()
 {
     cout << "Running tensor utilities test case...\n";
 
@@ -74,6 +80,7 @@ void TensorUtilitiesTest::run_test_case()
     cout << "End of tensor utilities test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

@@ -12,6 +12,11 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/recurrent_layer.h"
+#include "../opennn/numerical_differentiation.h"
+
+namespace opennn
+{
 
 class RecurrentLayerTest : public UnitTesting
 {
@@ -53,6 +58,7 @@ private:
     NumericalDifferentiation numerical_differentiation;
 };
 
+}
 
 #endif
 

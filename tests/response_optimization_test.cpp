@@ -8,6 +8,8 @@
 
 #include "response_optimization_test.h"
 
+namespace opennn
+{
 
 ResponseOptimizationTest::ResponseOptimizationTest() : UnitTesting()
 {
@@ -192,6 +194,7 @@ void ResponseOptimizationTest::run_test_case()
     cout << "End of response optimization test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

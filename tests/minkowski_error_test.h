@@ -14,6 +14,10 @@
 #include "../opennn/unit_testing.h"
 #include "../opennn/neural_network_forward_propagation.h"
 #include "../opennn/back_propagation.h"
+#include "../opennn/minkowski_error.h"
+
+namespace opennn
+{
 
 class MinkowskiErrorTest : public UnitTesting 
 {
@@ -66,6 +70,7 @@ private:
 
 };
 
+}
 
 #endif
 

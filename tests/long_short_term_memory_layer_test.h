@@ -12,6 +12,10 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/long_short_term_memory_layer.h"
+
+namespace opennn
+{
 
 class LongShortTermMemoryLayerTest : public UnitTesting
 {
@@ -52,6 +56,7 @@ private:
 
 };
 
+}
 
 #endif
 

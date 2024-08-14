@@ -7,8 +7,13 @@
 //   artelnics@artelnics.com
 
 #include "mean_squared_error_test.h"
-#include "../opennn/back_propagation.h"
 
+#include "../opennn/tensors.h"
+#include "../opennn/back_propagation.h"
+#include "../opennn/convolutional_layer.h"
+
+namespace opennn
+{
 
 MeanSquaredErrorTest::MeanSquaredErrorTest() : UnitTesting() 
 {
@@ -2076,6 +2081,7 @@ void MeanSquaredErrorTest::run_test_case()
     cout << "End of mean squared error test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

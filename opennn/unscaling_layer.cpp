@@ -131,7 +131,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scalers(i) == Scaler::NoScaling)
+        if(scalers(i) == Scaler::None)
         {
             buffer << outputs_names(i) << " = " << inputs_names(i) << ";\n";
         }
@@ -199,9 +199,9 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scalers[i] == Scaler::NoScaling)
+        if(scalers[i] == Scaler::None)
         {
-            scaling_methods_strings[i] = "NoScaling";
+            scaling_methods_strings[i] = "None";
         }
         else if(scalers[i] == Scaler::MinimumMaximum)
         {
@@ -246,7 +246,7 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scalers[i] == Scaler::NoScaling)
+        if(scalers[i] == Scaler::None)
         {
             scaling_methods_strings[i] = "no unscaling";
         }
@@ -501,7 +501,7 @@ void UnscalingLayer::set_scalers(const Tensor<Scaler,1>& new_unscaling_method)
 
 
 /// Sets the method to be used for unscaling the outputs from the neural network
-/// The argument is a string containing the name of the method("NoScaling", "MeanStandardDeviation", "MinimumMaximum" or "Logarithm").
+/// The argument is a string containing the name of the method("None", "MeanStandardDeviation", "MinimumMaximum" or "Logarithm").
 /// @param new_unscaling_method New unscaling method for the output variables.
 
 void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
@@ -523,9 +523,9 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 
 #endif
 
-    if(new_scaling_methods_string == "NoScaling")
+    if(new_scaling_methods_string == "None")
     {
-        set_scalers(Scaler::NoScaling);
+        set_scalers(Scaler::None);
     }
     else if(new_scaling_methods_string == "MinimumMaximum")
     {
@@ -556,7 +556,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 
 
 /// Sets the methods to be used for unscaling each variable.
-/// The argument is a vector string containing the name of the methods("NoScaling", "MeanStandardDeviation" or "Logarithm").
+/// The argument is a vector string containing the name of the methods("None", "MeanStandardDeviation" or "Logarithm").
 /// @param new_unscaling_methods_string New unscaling methods for the variables.
 
 void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_string)
@@ -582,9 +582,9 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(new_unscaling_methods_string(i) == "NoScaling")
+        if(new_unscaling_methods_string(i) == "None")
         {
-            new_unscaling_methods(i) = Scaler::NoScaling;
+            new_unscaling_methods(i) = Scaler::None;
         }
         else if(new_unscaling_methods_string(i) == "MeanStandardDeviation")
         {
@@ -744,7 +744,7 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
         }
         else
         {
-            if(scaler == Scaler::NoScaling)
+            if(scaler == Scaler::None)
             {
             }
             else if(scaler == Scaler::MinimumMaximum)
@@ -1043,9 +1043,9 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         const string new_method = unscaling_method_element->GetText();
 
 
-        if(new_method == "NoScaling")
+        if(new_method == "None")
         {
-            scalers[i] = Scaler::NoScaling;
+            scalers[i] = Scaler::None;
         }
         else if(new_method == "MinimumMaximum")
         {

@@ -8,6 +8,11 @@
 
 #include "time_series_data_set_test.h"
 
+#include "../opennn/time_series_data_set.h"
+
+namespace opennn
+{
+
 TimeSeriesDataSetTest::TimeSeriesDataSetTest() : UnitTesting()
 {
     data_set.set_display(false);
@@ -156,10 +161,10 @@ void TimeSeriesDataSetTest::test_transform_time_series()
     assert_true(data_set.get_target_raw_variables_number() == 1, LOG);
     assert_true(data_set.get_unused_variables_number() == 1, LOG);
 
-    assert_true(data_set.get_numeric_variable_name(0) == "x_lag_1", LOG);
-    assert_true(data_set.get_numeric_variable_name(1) == "y_lag_1", LOG);
-    assert_true(data_set.get_numeric_variable_name(2) == "x_lag_0", LOG);
-    assert_true(data_set.get_numeric_variable_name(3) == "y_lag_0", LOG);
+    assert_true(data_set.get_variable_name(0) == "x_lag_1", LOG);
+    assert_true(data_set.get_variable_name(1) == "y_lag_1", LOG);
+    assert_true(data_set.get_variable_name(2) == "x_lag_0", LOG);
+    assert_true(data_set.get_variable_name(3) == "y_lag_0", LOG);
 }
 
 
@@ -569,6 +574,7 @@ void TimeSeriesDataSetTest::run_test_case()
     cout << "End of time series data set test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

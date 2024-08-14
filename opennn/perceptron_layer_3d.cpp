@@ -172,12 +172,12 @@ Tensor<type, 1> PerceptronLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
-    copy(/*execution::par,*/ 
+    copy(
         synaptic_weights.data(),
         synaptic_weights.data() + synaptic_weights.size(),
         parameters.data());
 
-    copy(/*execution::par,*/ 
+    copy(
         biases.data(),
         biases.data() + biases.size(),
         parameters.data() + synaptic_weights.size());
@@ -364,12 +364,12 @@ void PerceptronLayer3D::set_synaptic_weights(const Tensor<type, 2>& new_synaptic
 
 void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    copy(/*execution::par,*/ 
+    copy(
         new_parameters.data() + index,
         new_parameters.data() + index + synaptic_weights.size(),
         synaptic_weights.data());
 
-    copy(/*execution::par,*/ 
+    copy(
         new_parameters.data() + index + synaptic_weights.size(),
         new_parameters.data() + index + synaptic_weights.size() + biases.size(),
         biases.data());
@@ -780,12 +780,12 @@ void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
     const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();
     type* gradient_data = gradient.data();
 
-    copy(/*execution::par,*/ 
+    copy(
         synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy(/*execution::par,*/ 
+    copy(
         biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);

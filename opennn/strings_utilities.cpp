@@ -11,17 +11,10 @@
 #include <iostream>
 #include <stdlib.h>
 #include <algorithm>
-//#include <string_view>
 #include <cctype>
 #include <iomanip>
-//#include <set>
-//#include <unordered_set>
-//#include <map>
-//#include <numeric>
-//#include <tuple>
 
 #include "strings_utilities.h"
-//#include "opennn.h"
 #include "word_bag.h"
 #include "tensors.h"
 
@@ -65,22 +58,22 @@ namespace opennn
 //}
 
 
-Index count_tokens(const string& text, const char& separator)
-{
-    Index tokens_number = count(text.begin(), text.end(), separator);
+// Index count_tokens(const string& text, const char& separator)
+// {
+//     Index tokens_number = count(text.begin(), text.end(), separator);
 
-    if(text[0] == separator)
-    {
-        tokens_number--;
-    }
+//     if(text[0] == separator)
+//     {
+//         tokens_number--;
+//     }
 
-    if(text[text.size() - 1] == separator)
-    {
-        tokens_number--;
-    }
+//     if(text[text.size() - 1] == separator)
+//     {
+//         tokens_number--;
+//     }
 
-    return tokens_number + 1;
-}
+//     return tokens_number + 1;
+// }
 
 
 /// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
@@ -1476,11 +1469,7 @@ bool has_numbers(const Tensor<string, 1>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
     {
-        if(is_numeric_string(string_list[i]))
-        {
-            cout << "The number is: " << string_list[i] << endl;
-            return true;
-        }
+        if(is_numeric_string(string_list[i])) return true;
     }
 
     return false;
@@ -2107,19 +2096,18 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
 }
 
 
-Tensor<type, 2> str_to_input(const string& input_string) 
-{
-    Tensor<type, 2> input_data = multiple_one_hot_encode(input_string);
+//Tensor<type, 2> str_to_input(const string& input_string)
+//{
+//    Tensor<type, 2> input_data = multiple_one_hot_encode(input_string);
 
-    Tensor<type, 2> flatten_input_data(1, input_data.size());
+//    Tensor<type, 2> flatten_input_data(1, input_data.size());
 
-    copy(/*execution::par,*/
-        input_data.data(),
-        input_data.data() + input_data.size(),
-        flatten_input_data.data());
+//    copy(input_data.data(),
+//         input_data.data() + input_data.size(),
+//         flatten_input_data.data());
 
-    return flatten_input_data;
-}
+//    return flatten_input_data;
+//}
 
 
 /// Calculate the total number of tokens in the documents.
@@ -3059,7 +3047,7 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 
     for(Index i = 0; i < documents_number; i++)
     {
-        sentences_number(i) = count_tokens(documents(i), '.');
+        sentences_number(i) = count_tokens(documents(i), ".");
     }
 
     return sentences_number;

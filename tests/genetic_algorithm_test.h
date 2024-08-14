@@ -11,7 +11,14 @@
 
 // Unit testing includes
 
+#include "../opennn/data_set.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/training_strategy.h"
 #include "../opennn/unit_testing.h"
+#include "../opennn/genetic_algorithm.h"
+
+namespace opennn
+{
 
 class GeneticAlgorithmTest : public UnitTesting
 {
@@ -69,5 +76,6 @@ private:
 
 };
 
+}
 
 #endif

@@ -9,9 +9,17 @@
 #ifndef DATASETTEST_H
 #define DATASETTEST_H
 
+#include <fstream>
+
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/data_set.h"
+#include "../opennn/batch.h"
+
+namespace opennn
+{
+
 
 class DataSetTest : public UnitTesting 
 {
@@ -132,9 +140,11 @@ public:
    Tensor<Index, 1> input_variables_indices;
    Tensor<Index, 1> target_variables_indices;
 
-   Batch data_set_batch;
+   Batch batch;
 
 };
+
+}
 
 #endif
 

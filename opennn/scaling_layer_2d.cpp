@@ -177,9 +177,9 @@ Tensor<string, 1> ScalingLayer2D::write_scalers() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scalers[i] == Scaler::NoScaling)
+        if(scalers[i] == Scaler::None)
         {
-            scaling_methods_strings[i] = "NoScaling";
+            scaling_methods_strings[i] = "None";
         }
         else if(scalers[i] == Scaler::MinimumMaximum)
         {
@@ -239,7 +239,7 @@ Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scalers[i] == Scaler::NoScaling)
+        if(scalers[i] == Scaler::None)
         {
             scaling_methods_strings[i] = "no scaling";
         }
@@ -528,7 +528,7 @@ void ScalingLayer2D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
 
 
 /// Sets the methods to be used for scaling each variable.
-/// The argument is a vector string containing the name of the methods("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
+/// The argument is a vector string containing the name of the methods("None", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_methods_string New scaling methods for the variables.
 
 void ScalingLayer2D::set_scalers(const Tensor<string, 1>& new_scaling_methods_string)
@@ -554,9 +554,9 @@ void ScalingLayer2D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(new_scaling_methods_string(i) == "NoScaling")
+        if(new_scaling_methods_string(i) == "None")
         {
-            new_scaling_methods(i) = Scaler::NoScaling;
+            new_scaling_methods(i) = Scaler::None;
         }
         else if(new_scaling_methods_string(i) == "MinimumMaximum")
         {
@@ -597,7 +597,7 @@ void ScalingLayer2D::set_scaler(const Index& variable_index, const Scaler& new_s
 
 
 /// Sets all the methods to be used for scaling with the given method.
-/// The argument is a string containing the name of the method("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
+/// The argument is a string containing the name of the method("None", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_methods_string New scaling methods for the variables.
 
 void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
@@ -623,9 +623,9 @@ void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(new_scaling_methods_string == "NoScaling")
+        if(new_scaling_methods_string == "None")
         {
-            new_scaling_methods(i) = Scaler::NoScaling;
+            new_scaling_methods(i) = Scaler::None;
         }
         else if(new_scaling_methods_string == "MeanStandardDeviation")
         {
@@ -772,7 +772,7 @@ void ScalingLayer2D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
         }
         else
         {
-            if(scaler == Scaler::NoScaling)
+            if(scaler == Scaler::None)
             {
                 output_column = input_column;
             }
@@ -871,7 +871,7 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
             }
             else
             {
-                if(scaler == Scaler::NoScaling)
+                if(scaler == Scaler::None)
                 {
 
                 }
@@ -1050,7 +1050,7 @@ string ScalingLayer2D::write_expression(const Tensor<string, 1>& inputs_names, c
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scalers(i) == Scaler::NoScaling)
+        if(scalers(i) == Scaler::None)
         {
             buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << ";\n";
         }
@@ -1297,9 +1297,9 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 
         const string new_method = scaling_method_element->GetText();
 
-        if(new_method == "NoScaling" || new_method == "No Scaling")
+        if(new_method == "None" || new_method == "No Scaling")
         {
-            scalers[i] = Scaler::NoScaling;
+            scalers[i] = Scaler::None;
         }
         else if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
         {
@@ -1319,7 +1319,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
         }
         else
         {
-            scalers[i] = Scaler::NoScaling;
+            scalers[i] = Scaler::None;
         }
     }
 

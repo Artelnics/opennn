@@ -8,6 +8,10 @@
 
 #include "weighted_squared_error_test.h"
 
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
 
 WeightedSquaredErrorTest::WeightedSquaredErrorTest() : UnitTesting()
 {
@@ -168,6 +172,7 @@ void WeightedSquaredErrorTest::run_test_case()
     cout << "End of weighted squared error test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

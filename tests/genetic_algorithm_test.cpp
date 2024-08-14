@@ -8,6 +8,10 @@
 
 #include "genetic_algorithm_test.h"
 
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
 
 GeneticAlgorithmTest::GeneticAlgorithmTest() : UnitTesting()
 {
@@ -524,4 +528,6 @@ void GeneticAlgorithmTest::run_test_case()
     test_perform_inputs_selection();
 
     cout << "End of genetic algorithm test case.\n\n";
+}
+
 }
