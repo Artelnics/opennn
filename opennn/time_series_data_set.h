@@ -38,6 +38,7 @@ public:
     explicit TimeSeriesDataSet(const string&,
                                const char&,
                                const bool&,
+                               const bool&,
                                const Index& = 3,
                                const Index& = 2,
                                const Codification& = Codification::UTF8);
