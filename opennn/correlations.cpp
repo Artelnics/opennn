@@ -70,7 +70,7 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 {      
     Correlation correlation;
 
-    if(is_constant(x) || is_constant(y))
+    if(is_constant_matrix(x) || is_constant_matrix(y))
     {
         correlation.a = NAN;
         correlation.b = NAN;
@@ -83,8 +83,8 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     const Index x_raw_variables = x.dimension(1);
     const Index y_raw_variables = y.dimension(1);
 
-    const bool  x_binary = is_binary(x);
-    const bool  y_binary = is_binary(y);
+    const bool x_binary = is_binary_matrix(x);
+    const bool y_binary = is_binary_matrix(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
@@ -169,8 +169,8 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     const Index x_raw_variables = x.dimension(1);
     const Index y_raw_variables = y.dimension(1);
 
-    const bool x_binary = is_binary(x);
-    const bool y_binary = is_binary(y);
+    const bool x_binary = is_binary_matrix(x);
+    const bool y_binary = is_binary_matrix(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
@@ -523,7 +523,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     Correlation linear_correlation;
     linear_correlation.form = Correlation::Form::Linear;
 
-    if(is_constant(x) && !is_constant(y))
+    if(is_constant_vector(x) && !is_constant_vector(y))
     {
         cout << "Warning: raw_variable X is constant." << endl;
         linear_correlation.a = type(NAN);
@@ -535,7 +535,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
         return linear_correlation;
     }
-    else if(!is_constant(x) && is_constant(y))
+    else if(!is_constant_vector(x) && is_constant_vector(y))
     {
         cout << "Warning: raw_variable Y is constant." << endl;
 
@@ -548,7 +548,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
         return linear_correlation;
     }
-    else if(is_constant(x) && is_constant(y))
+    else if(is_constant_vector(x) && is_constant_vector(y))
     {
         cout << "Warning: raw_variable X and raw_variable Y are constant." << endl;
 
@@ -802,8 +802,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type,1> y_filtered = filtered_elements.second;
 
     if(x_filtered.size() == 0
-    || is_constant(x_filtered)
-    || is_constant(y_filtered))
+    || is_constant_vector(x_filtered)
+    || is_constant_vector(y_filtered))
     {
         correlation.r = type(NAN);
 
