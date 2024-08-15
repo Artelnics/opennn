@@ -576,20 +576,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
     if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
     {
-
         if(stoi(matchs[1].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
-
             time_structure.tm_year = stoi(matchs[1].str())-1900;
             time_structure.tm_mon = stoi(matchs[2].str())-1;
             time_structure.tm_mday = stoi(matchs[3].str());
@@ -602,13 +594,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[7].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -624,13 +610,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[12].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -646,13 +626,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[17].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -668,13 +642,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[23].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -690,13 +658,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[28].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -712,13 +674,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[29].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -746,13 +702,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[35].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -779,13 +729,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[40].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -812,13 +756,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[45].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -846,13 +784,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     {
         if(stoi(matchs[46].str()) < 1970)
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {
@@ -883,7 +815,8 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         if(matchs[57].str()=="PM"){
             time_structure.tm_hour = stoi(matchs[54].str())+12;
         }
-        else{
+        else
+        {
             time_structure.tm_hour = stoi(matchs[54].str());
         }
     }
@@ -929,15 +862,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         time_structure.tm_min = stoi(matchs[74].str());
         time_structure.tm_sec = 0;
     }
-    else if(is_numeric_string(date)){
+    else if(is_numeric_string(date))
+    {
     }
     else
     {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: DataSet Class.\n"
-               << "time_t date_to_timestamp(const string&) method.\n"
-               << "Date format (" << date << ") is not implemented.\n";
-        throw runtime_error(buffer.str());
+        throw runtime_error("Date format (" + date + ") is not implemented.\n");
     }
 
     if(is_numeric_string(date))
