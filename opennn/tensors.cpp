@@ -675,7 +675,39 @@ Index count_true(const Tensor<bool, 1>& tensor)
 }
 
 
-bool is_binary(const Tensor<type, 2>& matrix)
+bool is_binary_vector(const Tensor<type, 1>& vector)
+{
+    const Index size = vector.size();
+
+    if(size == 0) return false;
+
+    type first_value = vector(0);
+    type second_value = vector(0);
+
+    for(Index i = 0; i < size; i++)
+    {
+        if (vector(i) != first_value)
+        {
+            second_value = vector(i);
+            break;
+        }
+    }
+
+    if(second_value == first_value) return false;
+
+    for(Index i = 0; i < size; i++)
+    {
+        if (vector(i) != first_value && vector(i) != second_value)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+bool is_binary_matrix(const Tensor<type, 2>& matrix)
 {
     const Index size = matrix.size();
 
@@ -688,7 +720,7 @@ bool is_binary(const Tensor<type, 2>& matrix)
 }
 
 
-bool is_constant(const Tensor<type, 1>& vector)
+bool is_constant_vector(const Tensor<type, 1>& vector)
 {
     const Index size = vector.size();
 
@@ -718,7 +750,7 @@ bool is_constant(const Tensor<type, 1>& vector)
 }
 
 
-bool is_constant(const Tensor<type, 2>& matrix)
+bool is_constant_matrix(const Tensor<type, 2>& matrix)
 {
     const Index size = matrix.size();
 

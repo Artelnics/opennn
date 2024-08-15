@@ -37,11 +37,12 @@ TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path, 
                                      const char& separator,
                                      const bool& has_header,
+                                     const bool& has_ids,
                                      const Index& new_lags_number,
                                      const Index& new_steps_ahead,
                                      const Codification& data_codification)
 {
-    set(data_source_path, separator, has_header, data_codification);
+    set(data_source_path, separator, has_header, has_ids, data_codification);
 
     lags_number = new_lags_number;
     steps_ahead = new_steps_ahead;
@@ -567,7 +568,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         buffer.str("");
 
-        buffer << has_rows_labels;
+        buffer << has_ids;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -722,9 +723,9 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Rows labels
 
-    if(has_rows_labels)
+    if(has_ids)
     {
-        const Index rows_labels_number = rows_labels.size();
+        const Index rows_labels_number = ids.size();
 
         file_stream.OpenElement("RowsLabels");
 
@@ -732,7 +733,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < rows_labels_number; i++)
         {
-            buffer << rows_labels(i);
+            buffer << ids(i);
 
             if(i != rows_labels_number-1) buffer << ",";
         }
@@ -1008,7 +1009,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         try
         {
-            set_has_rows_label(new_rows_label_string == "1");
+            set_has_ids(new_rows_label_string == "1");
         }
         catch(const exception& e)
         {
@@ -1446,7 +1447,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    if(has_rows_labels)
+    if(has_ids)
     {
         // Rows labels begin tag
 
@@ -1474,7 +1475,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 separator = ';';
             }
 
-            rows_labels = get_tokens(new_rows_labels, separator);
+            ids = get_tokens(new_rows_labels, separator);
         }
     }
 
