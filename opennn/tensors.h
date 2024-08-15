@@ -93,11 +93,11 @@ bool has_NAN(Tensor<type, 4>&);
 
 bool is_zero(const Tensor<type,1>&, const type& = type(NUMERIC_LIMITS_MIN));
 
-//bool is_binary(const Tensor<type, 1>&){return true;}
-bool is_binary(const Tensor<type, 2>&);
+bool is_binary_vector(const Tensor<type, 1>&);
+bool is_binary_matrix(const Tensor<type, 2>&);
 
-bool is_constant(const Tensor<type, 1>&);
-bool is_constant(const Tensor<type, 2>&);
+bool is_constant_vector(const Tensor<type, 1>&);
+bool is_constant_matrix(const Tensor<type, 2>&);
 
 bool is_false(const Tensor<bool, 1>&);
 

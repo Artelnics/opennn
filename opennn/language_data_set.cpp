@@ -433,7 +433,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         buffer.str("");
 
-        buffer << has_rows_labels;
+        buffer << has_ids;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -503,9 +503,9 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Rows labels
 
-    if(has_rows_labels)
+    if(has_ids)
     {
-        const Index rows_labels_number = rows_labels.size();
+        const Index rows_labels_number = ids.size();
 
         file_stream.OpenElement("RowsLabels");
 
@@ -513,7 +513,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < rows_labels_number; i++)
         {
-            buffer << rows_labels(i);
+            buffer << ids(i);
 
             if(i != rows_labels_number-1) buffer << ",";
         }
@@ -847,7 +847,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         try
         {
-            set_has_rows_label(new_rows_label_string == "1");
+            set_has_ids(new_rows_label_string == "1");
         }
         catch(const exception& e)
         {
@@ -1052,7 +1052,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    if(has_rows_labels)
+    if(has_ids)
     {
         // Rows labels begin tag
 
@@ -1080,7 +1080,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 separator = ';';
             }
 
-            rows_labels = get_tokens(new_rows_labels, separator);
+            ids = get_tokens(new_rows_labels, separator);
         }
     }
 
@@ -1953,17 +1953,17 @@ void LanguageDataSet::read_csv_3_language_model()
 
     string line;
 
-    skip_header(file);
+    //skip_header(file);
 
     // Read data
 
-    const Index raw_variables_number = has_rows_labels ? get_raw_variables_number() + 1 : get_raw_variables_number();
+    const Index raw_variables_number = has_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
 
     Tensor<string, 1> tokens(raw_variables_number);
 
     const Index samples_number = data.dimension(0);
 
-    if(has_rows_labels) rows_labels.resize(samples_number);
+    if(has_ids) ids.resize(samples_number);
 
     if(display) cout << "Reading data..." << endl;
 
@@ -1988,9 +1988,9 @@ void LanguageDataSet::read_csv_3_language_model()
         {
             trim(tokens(j));
 
-            if(has_rows_labels && j == 0)
+            if(has_ids && j == 0)
             {
-                rows_labels(sample_index) = tokens(j);
+                ids(sample_index) = tokens(j);
             }
             else if(tokens(j) == missing_values_label || tokens(j).empty())
             {
@@ -2025,11 +2025,11 @@ void LanguageDataSet::read_csv_3_language_model()
 
 void LanguageDataSet::read_csv_language_model()
 {
-    read_csv_1();
+//    read_csv_1();
 
-    read_csv_2_simple();
+//    read_csv_2_simple();
 
-    read_csv_3_language_model();
+//    read_csv_3_language_model();
 }
 
 

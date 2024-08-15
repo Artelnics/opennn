@@ -280,7 +280,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         throw runtime_error("Data source path is empty.\n");
 
     has_header = true;
-    has_rows_labels = true;
+    has_ids = true;
 
     separator = Separator::None;
 
@@ -342,7 +342,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     copy(execution::par,
     image_data.data(), image_data.data() + images_number * image_size, data.data());
 
-    rows_labels.resize(images_number);
+    ids.resize(images_number);
 
     Index row_index = 0;
 
@@ -380,7 +380,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
                 data(row_index, image_size + i) = 1;
             }
 
-            rows_labels(row_index) = images_paths[j];
+            ids(row_index) = images_paths[j];
 
             row_index++;
         }

@@ -215,7 +215,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         buffer.str("");
 
-        buffer << has_rows_labels;
+        buffer << has_ids;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -329,9 +329,9 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Rows labels
 
-    if(has_rows_labels)
+    if(has_ids)
     {
-        const Index rows_labels_number = rows_labels.size();
+        const Index rows_labels_number = ids.size();
 
         file_stream.OpenElement("RowsLabels");
 
@@ -339,7 +339,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < rows_labels_number; i++)
         {
-            buffer << rows_labels(i);
+            buffer << ids(i);
 
             if(i != rows_labels_number-1) buffer << ",";
         }
@@ -661,7 +661,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         try
         {
-            set_has_rows_label(new_rows_label_string == "1");
+            set_has_ids(new_rows_label_string == "1");
         }
         catch(const exception& e)
         {
@@ -909,7 +909,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    if(has_rows_labels)
+    if(has_ids)
     {
         // Rows labels begin tag
 
@@ -937,7 +937,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 separator = ";";
             }
 
-            rows_labels = get_tokens(new_rows_labels, separator);
+            ids = get_tokens(new_rows_labels, separator);
         }
     }
 
