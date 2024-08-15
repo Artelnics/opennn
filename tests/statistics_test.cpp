@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "statistics_test.h"
-#include "strings_utilities.h"
+#include "../opennn/strings_utilities.h"
 
 #include "../opennn/statistics.h"
 #include "../opennn/histogram.h"

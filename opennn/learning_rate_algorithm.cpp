@@ -8,6 +8,7 @@
 
 #include "learning_rate_algorithm.h"
 #include "back_propagation.h"
+#include "tensors.h"
 
 namespace opennn
 {
