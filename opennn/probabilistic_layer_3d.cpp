@@ -105,13 +105,7 @@ string ProbabilisticLayer3D::write_activation_function() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "string write_activation_function() const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown probabilistic method.\n");
     }
 }
 
@@ -131,13 +125,7 @@ string ProbabilisticLayer3D::write_activation_function_text() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "string write_activation_function_text() const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown probabilistic method.\n");
     }
 }
 

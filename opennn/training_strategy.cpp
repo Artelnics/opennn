@@ -320,13 +320,7 @@ string TrainingStrategy::write_optimization_method() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "string write_optimization_method() const method.\n"
-               << "Unknown main type.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown main type.\n");
     }
 }
 
@@ -362,13 +356,7 @@ string TrainingStrategy::write_optimization_method_text() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "string write_optimization_method_text() const method.\n"
-               << "Unknown main type.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown main type.\n");
     }
 }
 
@@ -902,15 +890,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Training strategy element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Training strategy element is nullptr.\n");
 
     // Loss index
 

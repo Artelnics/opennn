@@ -133,15 +133,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_maximum_epochs_number(const type&) method.\n"
-               << "Maximum epochs number must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Maximum epochs number must be equal or greater than 0.\n");
 
 #endif
 

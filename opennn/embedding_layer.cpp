@@ -450,26 +450,14 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("EmbeddingLayer");
 
     if(!embedding_layer_element)
-    {
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "EmbeddingLayer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("EmbeddingLayer element is nullptr.\n");
 
     // Layer name
 
     const tinyxml2::XMLElement* layer_name_element = embedding_layer_element->FirstChildElement("LayerName");
 
     if(!layer_name_element)
-    {
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "LayerName element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
     {
@@ -481,13 +469,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* input_dimension_element = embedding_layer_element->FirstChildElement("InputDimension");
 
     if(!input_dimension_element)
-    {
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "InputDimension element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputDimension element is nullptr.\n");
 
     if(input_dimension_element->GetText())
     {
@@ -499,13 +481,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* inputs_number_element = embedding_layer_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "InputsNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
     {
@@ -517,13 +493,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* depth_element = embedding_layer_element->FirstChildElement("Depth");
 
     if(!depth_element)
-    {
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "Depth element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Depth element is nullptr.\n");
 
     if(depth_element->GetText())
     {
@@ -535,13 +505,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* positional_encoding_element = embedding_layer_element->FirstChildElement("PositionalEncoding");
 
     if(!positional_encoding_element)
-    {
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "PositionalEncoding element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("PositionalEncoding element is nullptr.\n");
 
     if(positional_encoding_element->GetText())
     {
@@ -553,13 +517,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* parameters_element = embedding_layer_element->FirstChildElement("Parameters");
 
     if(!parameters_element)
-    {
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "Parameters element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
     {
@@ -568,6 +526,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         set_parameters(to_type_vector(parameters_string, " "));
     }
 }
+
 
 void EmbeddingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

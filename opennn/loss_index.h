@@ -72,15 +72,7 @@ public:
         #ifdef OPENNN_DEBUG
 
         if(!neural_network)
-        {
-             ostringstream buffer;
-
-             buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "NeuralNetwork* get_neural_network() const method.\n"
-                    << "Neural network pointer is nullptr.\n";
-
-             throw runtime_error(buffer.str());
-        }
+             throw runtime_error("Neural network pointer is nullptr.\n");
 
         #endif
 
@@ -94,15 +86,7 @@ public:
         #ifdef OPENNN_DEBUG
 
         if(!data_set)
-        {
-             ostringstream buffer;
-
-             buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "DataSet* get_data_set() const method.\n"
-                    << "DataSet pointer is nullptr.\n";
-
-             throw runtime_error(buffer.str());
-        }
+             throw runtime_error("DataSet pointer is nullptr.\n");
 
         #endif
 

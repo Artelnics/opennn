@@ -76,13 +76,7 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
         return "BFGS";
 
     default:
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "string write_inverse_hessian_approximation_method() const method.\n"
-               << "Unknown inverse hessian approximation method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown inverse hessian approximation method.\n");
     }
 }
 
@@ -176,13 +170,7 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& n
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_inverse_hessian_approximation_method(const string&) method.\n"
-               << "Unknown inverse hessian approximation method: " << new_inverse_hessian_approximation_method_name << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown inverse hessian approximation method: " + new_inverse_hessian_approximation_method_name + ".\n");
     }
 }
 
@@ -924,15 +912,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Quasi-Newton method element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Quasi-Newton method element is nullptr.\n");
 
     // Inverse hessian approximation method
     {

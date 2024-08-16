@@ -841,7 +841,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw runtime_error(buffer.str());
+            throw runtime_error("Cannot convert dates below 1970.\n");
         }
         else
         {

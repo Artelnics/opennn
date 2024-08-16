@@ -428,13 +428,7 @@ void PerceptronLayer3D::set_activation_function(const string& new_activation_fun
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
-               << "void set_activation_function(const string&) method.\n"
-               << "Unknown activation function: " << new_activation_function_name << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
     }
 }
 
@@ -801,26 +795,14 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("PerceptronLayer3D");
 
     if(!perceptron_layer_element)
-    {
-        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "PerceptronLayer3D element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("PerceptronLayer3D element is nullptr.\n");
 
     // Layer name
 
     const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("LayerName");
 
     if(!layer_name_element)
-    {
-        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "LayerName element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
     {
@@ -832,13 +814,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "InputsNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
     {
@@ -850,13 +826,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* inputs_depth_element = perceptron_layer_element->FirstChildElement("InputsDepth");
 
     if(!inputs_depth_element)
-    {
-        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "InputsDepth element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputsDepth element is nullptr.\n");
 
     if(inputs_depth_element->GetText())
     {
@@ -868,13 +838,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
 
     if(!neurons_number_element)
-    {
-        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "NeuronsNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("NeuronsNumber element is nullptr.\n");
 
     if(neurons_number_element->GetText())
     {
@@ -886,13 +850,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
 
     if(!activation_function_element)
-    {
-        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "ActivationFunction element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("ActivationFunction element is nullptr.\n");
 
     if(activation_function_element->GetText())
     {
@@ -904,13 +862,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
 
     if(!parameters_element)
-    {
-        buffer << "OpenNN Exception: PerceptronLayer3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Parameters element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
     {

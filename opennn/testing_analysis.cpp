@@ -137,22 +137,10 @@ void TestingAnalysis::check() const
     ostringstream buffer;
 
     if(!neural_network)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "void check() const method.\n"
-               << "Neural network pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neural network pointer is nullptr.\n");
 
     if(!data_set)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "void check() const method.\n"
-               << "Data set pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Data set pointer is nullptr.\n");
 }
 
 
@@ -224,15 +212,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     const Index testing_samples_number = data_set->get_testing_samples_number();
 
     if(testing_samples_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "GoodnessOfFit perform_linear_regression_analysis() const method.\n"
-               << "Number of testing samples is zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of testing samples is zero.\n");
 
     Tensor<type, 2> testing_inputs = data_set->get_testing_input_data();
 

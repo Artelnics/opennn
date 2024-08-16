@@ -65,13 +65,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
     ostringstream buffer;
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_training_direction() const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Loss index pointer is nullptr.\n");
 
     const Index old_gradient_size = old_gradient.size();
 
@@ -596,13 +590,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_training_direction_method(const string&) method.\n"
-               << "Unknown training direction method: " << new_training_direction_method_name << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown training direction method: " + new_training_direction_method_name + ".\n");
     }
 }
 
@@ -1171,15 +1159,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Conjugate gradient element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Conjugate gradient element is nullptr.\n");
 
     // Training direction method
 
