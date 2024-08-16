@@ -65,15 +65,7 @@ LossIndex* OptimizationAlgorithm::get_loss_index() const
 #ifdef OPENNN_DEBUG
 
     if(!loss_index)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "LossIndex* get_loss_index() const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Loss index pointer is nullptr.\n");
 
 #endif
 
@@ -193,21 +185,6 @@ void OptimizationAlgorithm::set_display(const bool& new_display)
 
 void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_display_period(const Index&) method.\n"
-               << "Display period must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     display_period = new_display_period;
 }
 
@@ -218,21 +195,6 @@ void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
 
 void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_save_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_save_period(const Index&) method.\n"
-               << "Save period must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     save_period = new_save_period;
 }
 

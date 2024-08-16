@@ -129,13 +129,7 @@ string ProbabilisticLayer::write_activation_function() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "string write_activation_function() const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown probabilistic method.\n");
     }
 }
 
@@ -444,13 +438,7 @@ void ProbabilisticLayer::set_activation_function(const string& new_activation_fu
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void set_activation_function(const string&) method.\n"
-               << "Unknown probabilistic method: " << new_activation_function << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
     }
 }
 
@@ -561,7 +549,6 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
                                                            Tensor<type, 2>& activations,
                                                            Tensor<type, 2>& activations_derivatives) const
 {
-
     switch(activation_function)
     {
     case ActivationFunction::Logistic:
@@ -693,13 +680,11 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
 
-    copy( 
-         synaptic_weights_derivatives_data,
+    copy(synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient.data() + index);
 
-    copy( 
-         biases_derivatives_data,
+    copy(biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient.data() + index + synaptic_weights_number);
 }
@@ -718,10 +703,9 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationL
 
     type* squared_errors_Jacobian_data = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
-    copy( 
-         probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
-         probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data()+ parameters_number*batch_samples_number,
-         squared_errors_Jacobian.data() + index);
+    copy(squared_errors_Jacobian_data,
+         squared_errors_Jacobian_data + parameters_number*batch_samples_number,
+         squared_errors_Jacobian_data + index);
 }
 
 
@@ -1136,7 +1120,7 @@ ProbabilisticLayerForwardPropagation::~ProbabilisticLayerForwardPropagation()
 }
 
 
-std::pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair() const 
+pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 

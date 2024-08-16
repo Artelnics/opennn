@@ -34,7 +34,7 @@ int main()
    {
         cout << "Blank\n";
 
-        DataSet data_set("C:/Users/rober/Documents/airfoil_self_noise.csv", ';', true, true);
+        DataSet data_set("C:/Users/Roberto Lopez/Documents/dataset.csv", ',', true, false);
 
         data_set.print();
 

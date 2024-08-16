@@ -900,26 +900,14 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("UnscalingLayer");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Unscaling layer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Unscaling layer element is nullptr.\n");
 
     // Unscaling neurons number
 
     const tinyxml2::XMLElement* neurons_number_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
 
     if(!neurons_number_element)
-    {
-        buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Unscaling neurons number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Unscaling neurons number element is nullptr.\n");
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
 

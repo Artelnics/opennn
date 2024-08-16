@@ -203,15 +203,7 @@ void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximu
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_maximum_epochs_number(const type&) method.\n"
-               << "Maximum epochs number must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Maximum epochs number must be equal or greater than 0.\n");
 
 #endif
 
@@ -229,15 +221,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_time < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Maximum time must be equal or greater than 0.\n");
 
 #endif
 
@@ -784,15 +768,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Adaptive moment estimation element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
     // Batch size
 

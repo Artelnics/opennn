@@ -803,13 +803,7 @@ void LongShortTermMemoryLayer::set_activation_function(const string& new_activat
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: neuron class.\n"
-               << "void set_activation_function(const string&) method.\n"
-               << "Unknown activation function: " << new_activation_function_name << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
     }
 }
 
@@ -867,13 +861,7 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: neuron class.\n"
-               << "void set_recurrent_activation_function(const string&) method.\n"
-               << "Unknown activation function: " << new_recurrent_activation_function_name << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown activation function: " + new_recurrent_activation_function_name + ".\n");
     }
 }
 

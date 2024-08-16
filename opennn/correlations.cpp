@@ -225,15 +225,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                                    const Index& maximum_lags_number)
 {
     if(y.size() != x.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "Tensor<type, 1> calculate_cross_correlation(const Tensor<type, 1>&) method.\n"
-               << "Both vectors must have the same size.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Both vectors must have the same size.\n");
 
     Tensor<type, 1> cross_correlation(maximum_lags_number);
 
@@ -270,14 +262,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
     ostringstream buffer;
 
     if(x.size() != y.size())
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "Correlation "
-               "exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Y size must be equal to X size.\n");
 
 #endif
 

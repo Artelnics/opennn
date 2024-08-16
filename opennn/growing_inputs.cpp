@@ -638,15 +638,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("GrowingInputs");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "GrowingInputs element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("GrowingInputs element is nullptr.\n");
 
     // Trials number
     {

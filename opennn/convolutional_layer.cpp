@@ -1025,13 +1025,7 @@ void ConvolutionalLayer::set_activation_function(const string& new_activation_fu
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void set_activation_function(const string&) method.\n"
-               << "Unknown activation function: " << new_activation_function_name << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
     }
 }
 
@@ -1084,13 +1078,7 @@ void ConvolutionalLayer::set_convolution_type(const string& new_convolution_type
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void set_convolution_type(const string&) method.\n"
-               << "Unknown convolution type: " << new_convolution_type << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown convolution type: " + new_convolution_type + ".\n");
     }
 }
 
@@ -1191,13 +1179,7 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
     }
     default:
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "pair<Index, Index> get_padding() const method.\n"
-               << "Unknown convolution type.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown convolution type.\n");
     }
     }
 }
@@ -1453,26 +1435,14 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
 
     if(!convolutional_layer_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional layer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolutional layer element is nullptr.\n");
 
     // Convolutional layer name element
 
     const tinyxml2::XMLElement* convolution_name_element = convolutional_layer_element->FirstChildElement("LayerName");
 
     if(!convolution_name_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolution type element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolution type element is nullptr.\n");
 
     const string convolution_name_string = convolution_name_element->GetText();
 
@@ -1485,13 +1455,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputsVariablesDimensions");
 
     if(!input_variables_dimensions_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional input variables dimensions element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolutional input variables dimensions element is nullptr.\n");
 
     const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
 
@@ -1503,13 +1467,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* outputs_variables_dimensions_element = convolutional_layer_element->FirstChildElement("OutputsVariablesDimensions");
 
     if(!outputs_variables_dimensions_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional outputs variables dimensions element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolutional outputs variables dimensions element is nullptr.\n");
 
     const string outputs_variables_dimensions_string = outputs_variables_dimensions_element->GetText();
 
@@ -1518,13 +1476,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* filters_number_element = convolutional_layer_element->FirstChildElement("FiltersNumber");
 
     if(!filters_number_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional filters number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolutional filters number element is nullptr.\n");
 
     const string filters_number_string = filters_number_element->GetText();
 
@@ -1535,13 +1487,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* filters_size_element = convolutional_layer_element->FirstChildElement("FiltersSize");
 
     if(!filters_size_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional filters size element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolutional filters size element is nullptr.\n");
 
     const string filters_size_string = filters_size_element->GetText();
 
@@ -1552,13 +1498,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* activation_function_element = convolutional_layer_element->FirstChildElement("ActivationFunction");
 
     if(!activation_function_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional activation function element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolutional activation function element is nullptr.\n");
 
     const string activation_function_string = activation_function_element->GetText();
 
@@ -1569,13 +1509,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* stride_element = convolutional_layer_element->FirstChildElement("Stride");
 
     if(!stride_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional stride element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolutional stride element is nullptr.\n");
 
     const string stride_string = stride_element->GetText();
 
@@ -1587,36 +1521,16 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("ConvolutionType");
 
     if(!convolution_type_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional type element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Convolutional type element is nullptr.\n");
 
     const string convolution_type_string = convolution_type_element->GetText();
-
-    cout << " outputs_variables_dimensions_string:" << outputs_variables_dimensions_string << endl;
-    cout << "input_variables_dimensions_string: " << input_variables_dimensions_string << endl;
-    cout << "Activation Function == 0: " << activation_function_string << endl;
-    cout << "Filters Number == 1: " << filters_number_string << endl;
-    cout << "Filters Size == 2: " << filters_number_string << endl;
-    cout << "Convolution Type == 3: " << convolution_type_string << endl;
-    cout << "Stride == 4: " << stride_string << endl;
 
     // Parameters
 
     const tinyxml2::XMLElement* parameters_element = convolutional_layer_element->FirstChildElement("Parameters");
 
     if(!parameters_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Parameters element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
     {
