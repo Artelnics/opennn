@@ -236,13 +236,7 @@ void LossIndex::set_regularization_method(const string& new_regularization_metho
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void set_regularization_method(const string&) const method.\n"
-               << "Unknown regularization method: " << new_regularization_method << ".";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown regularization method: " + new_regularization_method + ".");
     }
 }
 
@@ -308,24 +302,12 @@ void LossIndex::check() const
     ostringstream buffer;
 
     if(!neural_network)
-    {
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void check() const.\n"
-               << "Pointer to neural network is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to neural network is nullptr.\n");
 
     // Data set
 
     if(!data_set)
-    {
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void check() const method.\n"
-               << "Pointer to data set is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to data set is nullptr.\n");
 }
 
 
@@ -798,15 +780,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Regularization");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Regularization tag not found.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Regularization tag not found.\n");
 
     const string new_regularization_method = root_element->Attribute("Type");
 
@@ -888,15 +862,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MeanSquaredError class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Mean squared element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Mean squared element is nullptr.\n");
 
     // Regularization
 

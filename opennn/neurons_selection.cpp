@@ -42,15 +42,7 @@ TrainingStrategy* NeuronsSelection::get_training_strategy() const
 #ifdef OPENNN_DEBUG
 
     if(!training_strategy)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "DataSet* get_training_strategy() const method.\n"
-               << "Training strategy pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Training strategy pointer is nullptr.\n");
 
 #endif
 
@@ -185,26 +177,10 @@ void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neuro
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_neurons <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_neurons_number(const Index&) method.\n"
-               << "maximum_neurons(" << new_maximum_neurons << ") must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be greater than 0.\n");
 
     if(new_maximum_neurons < minimum_neurons)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_neurons_number(const Index&) method.\n"
-               << "maximum_neurons(" << new_maximum_neurons << ") must be equal or greater than minimum_neurons(" << minimum_neurons << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be equal or greater than minimum_neurons(" << to_string(minimum_neurons) + ").\n");
 
 #endif
 
@@ -220,25 +196,10 @@ void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 #ifdef OPENNN_DEBUG
 
     if(new_minimum_neurons <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_minimum_neurons(const Index&) method.\n"
-               << "minimum_neurons(" << new_minimum_neurons << ") must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("minimum_neurons(" + to_string(new_minimum_neurons) + ") must be greater than 0.\n");
 
     if(new_minimum_neurons >= maximum_neurons)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_minimum_neurons(const Index&) method.\n"
-               << "minimum_neurons(" << new_minimum_neurons << ") must be less than maximum_neurons(" << maximum_neurons << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("minimum_neurons(" + to_string(new_minimum_neurons) + ") must be less than maximum_neurons(" + to_string(maximum_neurons) + ").\n");
 
 #endif
 
@@ -251,20 +212,6 @@ void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 
 void NeuronsSelection::set_trials_number(const Index& new_trials_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_trials_number <= 0)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_trials_number(const Index&) method.\n"
-               << "Number of assays must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     trials_number = new_trials_number;
 }
 
@@ -288,15 +235,7 @@ void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_
 #ifdef OPENNN_DEBUG
 
     if(new_selection_error_goal < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_selection_error_goal(const type&) method.\n"
-               << "Selection loss goal must be greater or equal than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Selection loss goal must be greater or equal than 0.\n");
 
 #endif
 
@@ -312,15 +251,7 @@ void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_epochs_number(const Index&) method.\n"
-               << "Maximum epochs number must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Maximum epochs number must be greater than 0.\n");
 
 #endif
 
@@ -336,15 +267,7 @@ void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_time < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Maximum time must be greater than 0.\n");
 
 #endif
 
@@ -386,81 +309,39 @@ void NeuronsSelection::check() const
     ostringstream buffer;
 
     if(!training_strategy)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to training strategy is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to training strategy is nullptr.\n");
 
     // Loss index
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to loss index is nullptr.\n");
 
     // Neural network
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(!neural_network)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to neural network is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to neural network is nullptr.\n");
 
     if(neural_network->is_empty())
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Multilayer Perceptron is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Multilayer Perceptron is empty.\n");
 
     if(neural_network->get_layers_number() == 1)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Number of layers in neural network must be greater than 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of layers in neural network must be greater than 1.\n");
 
     // Data set
 
     const DataSet* data_set = loss_index->get_data_set();
 
     if(!data_set)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to data set is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to data set is nullptr.\n");
 
     const Index selection_samples_number = data_set->get_selection_samples_number();
 
     if(selection_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Number of selection samples is zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of selection samples is zero.\n");
 }
 
 
@@ -471,26 +352,11 @@ string NeuronsSelection::write_time(const type& time) const
 #ifdef OPENNN_DEBUG
 
     if(time > type(3600e5))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_time(const type& time) const method.\n"
-               << "Time must be lower than 10e5 seconds.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Time must be lower than 10e5 seconds.\n");
 
     if(time < type(0))
-    {
-        ostringstream buffer;
+        throw runtime_error("Time must be greater than 0.\n");
 
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_time(const type& time) const method.\n"
-               << "Time must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
 #endif
 
     const int hours = int(time) / 3600;

@@ -197,26 +197,14 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
 
     if(!addition_layer_element)
-    {
-        buffer << "OpenNN Exception: AdditionLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "AdditionLayer3D element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("AdditionLayer3D element is nullptr.\n");
 
     // Layer name
 
     const tinyxml2::XMLElement* layer_name_element = addition_layer_element->FirstChildElement("LayerName");
 
     if(!layer_name_element)
-    {
-        buffer << "OpenNN Exception: AdditionLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "LayerName element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
     {
@@ -228,13 +216,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* inputs_number_element = addition_layer_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: AdditionLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "InputsNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
     {
@@ -246,19 +228,14 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* inputs_depth_element = addition_layer_element->FirstChildElement("InputsDepth");
 
     if(!inputs_depth_element)
-    {
-        buffer << "OpenNN Exception: AdditionLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "InputsDepth element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputsDepth element is nullptr.\n");
 
     if(inputs_depth_element->GetText())
     {
         inputs_depth = Index(stoi(inputs_depth_element->GetText()));
     }
 }
+
 
 void AdditionLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

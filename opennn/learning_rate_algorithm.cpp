@@ -52,15 +52,7 @@ LossIndex* LearningRateAlgorithm::get_loss_index() const
 #ifdef OPENNN_DEBUG
 
     if(!loss_index)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "LossIndex* get_loss_index() const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Loss index pointer is nullptr.\n");
 
 #endif
 
@@ -213,13 +205,7 @@ void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "void set_method(const string&) method.\n"
-               << "Unknown learning rate method: " << new_learning_rate_method << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown learning rate method: " + new_learning_rate_method + ".\n");
     }
 }
 
@@ -232,19 +218,9 @@ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning
 #ifdef OPENNN_DEBUG
 
     if(new_learning_rate_tolerance <= type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "void set_learning_rate_tolerance(const type&) method.\n"
-               << "Tolerance must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Tolerance must be greater than 0.\n");
 
 #endif
-
-    // Set loss tolerance
 
     learning_rate_tolerance = new_learning_rate_tolerance;
 }
@@ -276,37 +252,13 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
 #ifdef OPENNN_DEBUG
 
     if(loss_index == nullptr)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "pair<type, 1> calculate_directional_point() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to loss index is nullptr.\n");
 
     if(neural_network == nullptr)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "Tensor<type, 1> calculate_directional_point() const method.\n"
-               << "Pointer to neural network is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to neural network is nullptr.\n");
 
     if(thread_pool_device == nullptr)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "pair<type, 1> calculate_directional_point() const method.\n"
-               << "Pointer to thread pool device is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to thread pool device is nullptr.\n");
 
 #endif
 
@@ -441,16 +393,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
 #ifdef OPENNN_DEBUG
 
-    ostringstream buffer;
-
     if(loss_index == nullptr)
-    {
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "Triplet calculate_bracketing_triplet() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
+        throw runtime_error("Pointer to loss index is nullptr.\n");
 
-        throw runtime_error(buffer.str());
-    }
 #endif
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -458,39 +403,16 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 #ifdef OPENNN_DEBUG
 
     if(neural_network == nullptr)
-    {
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "Triplet calculate_bracketing_triplet() const method.\n"
-               << "Pointer to neural network is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to neural network is nullptr.\n");
 
     if(thread_pool_device == nullptr)
-    {
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "Triplet calculate_bracketing_triplet() const method.\n"
-               << "Pointer to thread pool device is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to thread pool device is nullptr.\n");
 
     if(is_zero(optimization_data.training_direction))
-    {
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "Triplet calculate_bracketing_triplet() const method.\n"
-               << "Training direction is zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Training direction is zero.\n");
 
     if(optimization_data.initial_learning_rate < type(NUMERIC_LIMITS_MIN))
-    {
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "Triplet calculate_bracketing_triplet() const method.\n"
-               << "Initial learning rate is zero.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Initial learning rate is zero.\n");
     }
 
 #endif

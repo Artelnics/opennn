@@ -200,23 +200,6 @@ void AdaptiveMomentEstimation::set_loss_index(LossIndex* new_loss_index)
 
 void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_epochs_number < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_maximum_epochs_number(const type&) method.\n"
-               << "Maximum epochs number must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set maximum_epochs number
-
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
@@ -226,23 +209,6 @@ void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximu
 
 void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set maximum time
-
     maximum_time = new_maximum_time;
 }
 
@@ -784,15 +750,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Adaptive moment estimation element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
     // Batch size
 
