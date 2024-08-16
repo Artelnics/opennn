@@ -94,21 +94,6 @@ void GrowingInputs::set_default()
 
 void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_inputs_number <= 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void set_maximum_selection_failures(const Index&) method.\n"
-               << "Maximum selection failures must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     const Index inputs_number = training_strategy->get_data_set()->get_input_raw_variables_number();
 
     maximum_inputs_number = min(new_maximum_inputs_number,inputs_number);
@@ -120,21 +105,6 @@ void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
 
 void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_inputs_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void set_minimum_inputs_number(const Index&) method.\n"
-               << "Minimum inputs number must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     minimum_inputs_number = new_minimum_inputs_number;
 }
 
@@ -144,21 +114,6 @@ void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_nu
 
 void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_selection_failures <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void set_maximum_selection_failures(const Index&) method.\n"
-               << "Maximum selection failures must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     maximum_selection_failures = new_maximum_selection_failures;
 }
 
@@ -638,15 +593,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("GrowingInputs");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "GrowingInputs element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("GrowingInputs element is nullptr.\n");
 
     // Trials number
     {
@@ -869,15 +816,7 @@ void GrowingInputs::load(const string& file_name)
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }

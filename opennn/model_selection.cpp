@@ -37,15 +37,7 @@ TrainingStrategy* ModelSelection::get_training_strategy() const
 #ifdef OPENNN_DEBUG
 
     if(!training_strategy)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "TrainingStrategy* get_training_strategy() const method.\n"
-               << "Training strategy pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Training strategy pointer is nullptr.\n");
 
 #endif
 
@@ -163,13 +155,7 @@ void ModelSelection::set_neurons_selection_method(const string& new_neurons_sele
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void set_neurons_selection_method(const string&) method.\n"
-               << "Unknown neurons selection type: " << new_neurons_selection_method << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown neurons selection type: " + new_neurons_selection_method + ".\n");
     }
 }
 
@@ -198,13 +184,7 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void set_inputs_selection_method(const string&) method.\n"
-               << "Unknown inputs selection type: " << new_inputs_selection_method << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown inputs selection type: " + new_inputs_selection_method + ".\n");
     }
 }
 
@@ -237,72 +217,36 @@ void ModelSelection::check() const
     ostringstream buffer;
 
     if(!training_strategy)
-    {
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to training strategy is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to training strategy is nullptr.\n");
 
     // Loss index
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to loss index is nullptr.\n");
 
     // Neural network
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(!neural_network)
-    {
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to neural network is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to neural network is nullptr.\n");
 
     if(neural_network->is_empty())
-    {
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check() const method.\n"
-               << "Multilayer Perceptron is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Multilayer Perceptron is empty.\n");
 
     // Data set
 
     const DataSet* data_set = loss_index->get_data_set();
 
     if(!data_set)
-    {
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to data set is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to data set is nullptr.\n");
 
     const Index selection_samples_number = data_set->get_selection_samples_number();
 
     if(selection_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check() const method.\n"
-               << "Number of selection samples is zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of selection samples is zero.\n");
 }
 
 
@@ -388,15 +332,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ModelSelection");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Model Selection element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Model Selection element is nullptr.\n");
 
     // Neurons Selection
 
@@ -556,7 +492,7 @@ void ModelSelection::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw runtime_error(buffer.str());
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
     }
 
     from_XML(document);

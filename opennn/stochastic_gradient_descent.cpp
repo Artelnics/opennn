@@ -155,23 +155,6 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 
 void StochasticGradientDescent::set_initial_decay(const type& new_decay)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_decay < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_initial_decay(const type&) method.\n"
-               << "new_decay must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set  initial decay
-
     initial_decay = new_decay;
 }
 
@@ -182,23 +165,6 @@ void StochasticGradientDescent::set_initial_decay(const type& new_decay)
 
 void StochasticGradientDescent::set_momentum(const type& new_momentum)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_momentum < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_momentum(const type&) method.\n"
-               << "new_momentum must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set momentum
-
     momentum = new_momentum;
 }
 
@@ -217,23 +183,6 @@ void StochasticGradientDescent::set_nesterov(const bool& new_nesterov_momentum)
 
 void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_epochs_number < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_maximum_epochs_number(const type&) method.\n"
-               << "Maximum epochs number must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set maximum_epochs number
-
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
@@ -253,23 +202,6 @@ void StochasticGradientDescent::set_loss_goal(const type& new_loss_goal)
 
 void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set maximum time
-
     maximum_time = new_maximum_time;
 }
 

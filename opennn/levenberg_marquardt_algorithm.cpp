@@ -179,15 +179,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
 #ifdef OPENNN_DEBUG
 
     if(new_damping_parameter_factor <= type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
-               << "void set_damping_parameter_factor(const type&) method." << endl
-               << "Damping parameter factor must be greater than zero." << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Damping parameter factor must be greater than zero." );
 
 #endif
 
@@ -203,15 +195,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
 #ifdef OPENNN_DEBUG
 
     if(new_minimum_damping_parameter <= type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
-               << "void set_minimum_damping_parameter(const type&) method." << endl
-               << "Minimum damping parameter must be greater than zero." << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Minimum damping parameter must be greater than zero.");
 
 #endif
 
@@ -227,15 +211,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_damping_parameter <= type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
-               << "void set_maximum_damping_parameter(const type&) method." << endl
-               << "Maximum damping parameter must be greater than zero." << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Maximum damping parameter must be greater than zero.");
 
 #endif
 
@@ -287,21 +263,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const Index& new_max
 
 void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     maximum_time = new_maximum_time;
 }
 
@@ -320,35 +281,17 @@ void LevenbergMarquardtAlgorithm::check() const
     ostringstream buffer;
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class.\n"
-               << "void check() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to loss index is nullptr.\n");
 
     const DataSet* data_set = loss_index->get_data_set();
 
     if(!data_set)
-    {
-        buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
-               << "void check() const method.\n"
-               << "The loss funcional has no data set." << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("The loss funcional has no data set.");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(!neural_network)
-    {
-        buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
-               << "void check() const method.\n"
-               << "Pointer to neural network is nullptr." << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to neural network is nullptr.");
 }
 
 
@@ -873,15 +816,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("LevenbergMarquardt");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Levenberg-Marquardt algorithm element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Levenberg-Marquardt algorithm element is nullptr.\n");
 
     // Damping parameter factor
 

@@ -194,39 +194,21 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* flatten_layer_element = document.FirstChildElement("FlattenLayer");
 
     if(!flatten_layer_element)
-    {
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "FlattenLayer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("FlattenLayer element is nullptr.\n");
 
     // Flatten layer input variables dimenison
 
     const tinyxml2::XMLElement* input_variables_dimensions_element = flatten_layer_element->FirstChildElement("InputVariablesDimensions");
 
     if(!input_variables_dimensions_element)
-    {
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "FlattenInputVariablesDimensions element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("FlattenInputVariablesDimensions element is nullptr.\n");
 
     // Input height
 
     const tinyxml2::XMLElement* input_height_element = input_variables_dimensions_element->NextSiblingElement("InputHeight");
 
     if(!input_height_element)
-    {
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "FlattenInputHeight element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("FlattenInputHeight element is nullptr.\n");
 
     const Index input_height = Index(atoi(input_height_element->GetText()));
 
@@ -235,13 +217,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* input_width_element = input_variables_dimensions_element->NextSiblingElement("InputWidth");
 
     if(!input_width_element)
-    {
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "FlattenInputWidth element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("FlattenInputWidth element is nullptr.\n");
 
     const Index input_width = Index(atoi(input_width_element->GetText()));
 
@@ -250,13 +226,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* input_channels_number_element = input_variables_dimensions_element->NextSiblingElement("InputChannels");
 
     if(!input_channels_number_element)
-    {
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "FlattenInputChannelsNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("FlattenInputChannelsNumber element is nullptr.\n");
 
     const Index input_channels = Index(atoi(input_channels_number_element->GetText()));
 

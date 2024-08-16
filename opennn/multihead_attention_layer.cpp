@@ -578,15 +578,10 @@ void MultiheadAttentionLayer::set_dropout_rate(const type& new_dropout_rate)
 void MultiheadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
 {
     if(use_causal_mask && input_size != context_size)
-    {
-        ostringstream buffer;
 
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void set_causal_mask(const bool&) method.\n"
-               << "Causal mask can only be applied to self-attention. In this case, input size (" << input_size << ") should be equal to context size (" << context_size << ").";
-
-        throw runtime_error(buffer.str());
-    }
+    throw runtime_error("Causal mask can only be applied to self-attention. "
+                        "In this case, input size (" + to_string(input_size) + ") "
+                        "should be equal to context size (" + to_string(context_size) + ").");
 
     use_causal_mask = new_use_causal_mask;
 
@@ -1194,26 +1189,14 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttentionLayer");
 
     if(!multihead_attention_layer_element)
-    {
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "MultiheadAttentionLayer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("MultiheadAttentionLayer element is nullptr.\n");
     
     // Layer name
 
     const tinyxml2::XMLElement* layer_name_element = multihead_attention_layer_element->FirstChildElement("LayerName");
 
     if(!layer_name_element)
-    {
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "LayerName element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
     {
@@ -1225,13 +1208,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* input_size_element = multihead_attention_layer_element->FirstChildElement("InputSize");
 
     if(!input_size_element)
-    {
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "InputSize element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputSize element is nullptr.\n");
 
     if(input_size_element->GetText())
     {
@@ -1243,13 +1220,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* context_size_element = multihead_attention_layer_element->FirstChildElement("ContextSize");
 
     if(!context_size_element)
-    {
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "ContextSize element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("ContextSize element is nullptr.\n");
 
     if(context_size_element->GetText())
     {
@@ -1261,13 +1232,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* depth_element = multihead_attention_layer_element->FirstChildElement("Depth");
 
     if(!depth_element)
-    {
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "Depth element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Depth element is nullptr.\n");
 
     if(depth_element->GetText())
     {
@@ -1279,13 +1244,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* heads_number_element = multihead_attention_layer_element->FirstChildElement("HeadsNumber");
 
     if(!heads_number_element)
-    {
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "HeadsNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("HeadsNumber element is nullptr.\n");
 
     if(heads_number_element->GetText())
     {
@@ -1297,13 +1256,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* causal_mask_element = multihead_attention_layer_element->FirstChildElement("CausalMask");
 
     if(!causal_mask_element)
-    {
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "CausalMask element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("CausalMask element is nullptr.\n");
 
     if(causal_mask_element->GetText())
     {
@@ -1315,13 +1268,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* parameters_element = multihead_attention_layer_element->FirstChildElement("Parameters");
 
     if(!parameters_element)
-    {
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "Parameters element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
     {
