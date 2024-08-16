@@ -265,24 +265,12 @@ void OptimizationAlgorithm::check() const
     ostringstream buffer;
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void check() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to loss index is nullptr.\n");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(neural_network == nullptr)
-    {
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void check() const method.\n"
-               << "Pointer to neural network is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to neural network is nullptr.\n");
 
 #endif
 }
@@ -320,15 +308,7 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("OptimizationAlgorithm");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Optimization algorithm element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Optimization algorithm element is nullptr.\n");
 
     // Display
     {
@@ -394,15 +374,7 @@ void OptimizationAlgorithm::load(const string& file_name)
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }
@@ -418,6 +390,7 @@ TrainingResults::TrainingResults(const Index& epochs_number)
     selection_error_history.resize(1 + epochs_number);
     selection_error_history.setConstant(type(-1.0));
 }
+
 
 string TrainingResults::write_stopping_condition() const
 {
@@ -517,26 +490,11 @@ string OptimizationAlgorithm::write_time(const type& time) const
 #ifdef OPENNN_DEBUG
 
     if(time > type(3600e5))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_time(const type& time) const method.\n"
-               << "Time must be lower than 10e5 seconds.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Time must be lower than 10e5 seconds.\n");
 
     if(time < type(0))
-    {
-        ostringstream buffer;
+        throw runtime_error("Time must be greater than 0.\n");
 
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_time(const type& time) const method.\n"
-               << "Time must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
 #endif
 
     const int hours = int(time) / 3600;

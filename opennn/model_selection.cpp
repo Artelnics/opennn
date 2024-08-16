@@ -332,15 +332,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ModelSelection");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Model Selection element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Model Selection element is nullptr.\n");
 
     // Neurons Selection
 
@@ -500,7 +492,7 @@ void ModelSelection::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw runtime_error(buffer.str());
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
     }
 
     from_XML(document);

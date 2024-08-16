@@ -200,15 +200,6 @@ void AdaptiveMomentEstimation::set_loss_index(LossIndex* new_loss_index)
 
 void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_epochs_number < type(0))
-        throw runtime_error("Maximum epochs number must be equal or greater than 0.\n");
-
-#endif
-
-    // Set maximum_epochs number
-
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
@@ -218,15 +209,6 @@ void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximu
 
 void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < type(0))
-        throw runtime_error("Maximum time must be equal or greater than 0.\n");
-
-#endif
-
-    // Set maximum time
-
     maximum_time = new_maximum_time;
 }
 

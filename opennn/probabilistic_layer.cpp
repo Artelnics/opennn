@@ -157,13 +157,7 @@ string ProbabilisticLayer::write_activation_function_text() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "string write_activation_function_text() const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown probabilistic method.\n");
     }
 }
 
@@ -365,48 +359,16 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
     const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 1 && new_activation_function == ActivationFunction::Competitive)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void set_activation_function(const ActivationFunction&) method.\n"
-               << "Activation function cannot be Competitive when the number of neurons is 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Activation function cannot be Competitive when the number of neurons is 1.\n");
 
     if(neurons_number == 1 && new_activation_function == ActivationFunction::Softmax)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void set_activation_function(const ActivationFunction&) method.\n"
-               << "Activation function cannot be Softmax when the number of neurons is 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Activation function cannot be Softmax when the number of neurons is 1.\n");
 
     if(neurons_number != 1 && new_activation_function == ActivationFunction::Binary)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void set_activation_function(const ActivationFunction&) method.\n"
-               << "Activation function cannot be Binary when the number of neurons is greater than 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Activation function cannot be Binary when the number of neurons is greater than 1.\n");
 
     if(neurons_number != 1 && new_activation_function == ActivationFunction::Logistic)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void set_activation_function(const ActivationFunction&) method.\n"
-               << "Activation function cannot be Logistic when the number of neurons is greater than 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Activation function cannot be Logistic when the number of neurons is greater than 1.\n");
 
 #endif
 
@@ -799,26 +761,14 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer");
 
     if(!probabilistic_layer_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Probabilistic layer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Probabilistic layer element is nullptr.\n");
 
     // Inputs number
 
     const tinyxml2::XMLElement* inputs_number_element = probabilistic_layer_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Inputs number element is nullptr.\n");
 
     Index new_inputs_number;
 
@@ -832,13 +782,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
 
     if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Neurons number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neurons number element is nullptr.\n");
 
     Index new_neurons_number;
 
@@ -854,13 +798,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
 
     if(!activation_function_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Activation function element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Activation function element is nullptr.\n");
 
     if(activation_function_element->GetText())
     {
@@ -872,13 +810,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
 
     if(!parameters_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Parameters element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
     {
@@ -892,13 +824,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* decision_threshold_element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
 
     if(!decision_threshold_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Decision threshold element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Decision threshold element is nullptr.\n");
 
     if(decision_threshold_element->GetText())
     {
