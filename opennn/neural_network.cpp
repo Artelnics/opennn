@@ -149,15 +149,9 @@ void NeuralNetwork::add_layer(Layer* layer)
 {
     if(has_bounding_layer())
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "NeuralNetwork::add_layer() method.\n"
-               << "No layers can be added after a bounding layer.\n";
-
         print();
 
-        throw runtime_error(buffer.str());
+        throw runtime_error("No layers can be added after a bounding layer.\n");
     }
     
     const Layer::Type layer_type = layer->get_type();
@@ -192,16 +186,8 @@ void NeuralNetwork::add_layer(Layer* layer)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void add_layer(const Layer*) method.\n"
-               << "Layer type " << layer->get_type_string() << " cannot be added in position " << layers.size()
-               << " in the network architecture.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Layer type " + layer->get_type_string() + " cannot be added in position " + to_string(layers.size()));
     }
-
 }
 
 
@@ -618,13 +604,7 @@ ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "ScalingLayer2D* get_scaling_layer_2d() const method.\n"
-           << "No scaling layer 2d in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No scaling layer 2d in neural network.\n");
 }
 
 
@@ -640,13 +620,7 @@ ScalingLayer4D* NeuralNetwork::get_scaling_layer_4d() const
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "ScalingLayer4D* get_scaling_layer_4d() const method.\n"
-           << "No scaling layer in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No scaling layer in neural network.\n");
 }
 
 
@@ -664,13 +638,7 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer() const
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "UnscalingLayer* get_unscaling_layer() const method.\n"
-           << "No unscaling layer in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No unscaling layer in neural network.\n");
 }
 
 
@@ -688,14 +656,9 @@ BoundingLayer* NeuralNetwork::get_bounding_layer() const
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "BoundingLayer* get_bounding_layer() const method.\n"
-           << "No bounding layer in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No bounding layer in neural network.\n");
 }
+
 
 /// Returns a pointer to the flatten layer object composing this neural network object.
 
@@ -711,13 +674,7 @@ FlattenLayer* NeuralNetwork::get_flatten_layer() const
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "BoundingLayer* get_flatten_layer() const method.\n"
-           << "No flatten layer in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No flatten layer in neural network.\n");
 }
 
 
@@ -733,13 +690,7 @@ FlattenLayer* NeuralNetwork::get_flatten_layer() const
 //        }
 //    }
 //
-//    ostringstream buffer;
-//
-//    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//           << "ConvolutionalLayer* get_convolutional_layer() const method.\n"
-//           << "No convolutional layer in neural network.\n";
-//
-//    throw runtime_error(buffer.str());
+//    throw runtime_error("No convolutional layer in neural network.\n");
 //}
 
 
@@ -755,13 +706,7 @@ PoolingLayer* NeuralNetwork::get_pooling_layer() const
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "PoolingLayer* get_pooling_layer() const method.\n"
-           << "No pooling layer in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No pooling layer in neural network.\n");
 }
 
 
@@ -779,14 +724,9 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer() const
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "ProbabilisticLayer* get_probabilistic_layer() const method.\n"
-           << "No probabilistic layer in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No probabilistic layer in neural network.\n");
 }
+
 
 /// Returns a pointer to the long short-term memory layer of this neural network, if it exits.
 
@@ -802,13 +742,7 @@ LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer() cons
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "LongShortTermMemoryLayer* get_long_short_term_memory_layer() const method.\n"
-           << "No long-short-term memory layer in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No long-short-term memory layer in neural network.\n");
 }
 
 
@@ -826,13 +760,7 @@ RecurrentLayer* NeuralNetwork::get_recurrent_layer() const
         }
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "RecurrentLayer* get_recurrent_layer() const method.\n"
-           << "No recurrent layer in neural network.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("No recurrent layer in neural network.\n");
 }
 
 
@@ -1058,6 +986,7 @@ void NeuralNetwork::set_model_type(const NeuralNetwork::ModelType& new_model_typ
     model_type = new_model_type;
 }
 
+
 void NeuralNetwork::set_model_type_string(const string& new_model_type)
 {
     if(new_model_type == "Approximation")
@@ -1119,21 +1048,6 @@ void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names
 
 void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_inputs_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void set_inputs_number(const Index&) method.\n"
-               << "The number of inputs (" << new_inputs_number << ") must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     inputs_names.resize(new_inputs_number);
 
     if(has_scaling_layer())
@@ -2260,13 +2174,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Neural network element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neural network element is nullptr.\n");
 
     // Inputs
     {
@@ -2339,7 +2247,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-
 }
 
 
@@ -2350,26 +2257,14 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Inputs");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Inputs element is nullptr.\n");
 
     // Inputs number
 
     const tinyxml2::XMLElement* inputs_number_element = root_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Inputs number element is nullptr.\n");
 
     Index new_inputs_number = 0;
 
@@ -2392,13 +2287,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
             start_element = input_element;
 
             if(input_element->Attribute("Index") != to_string(i+1))
-            {
-                buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                       << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Input index number (" << i+1 << ") does not match (" << input_element->Attribute("Item") << ").\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Input index number (" + to_string(i+1) + ") does not match (" + input_element->Attribute("Item") + ").\n");
 
             if(!input_element->GetText())
             {
@@ -2421,26 +2310,14 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Layers");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void layers_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Layers element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Layers element is nullptr.\n");
 
     // Layers types
 
     const tinyxml2::XMLElement* layers_types_element = root_element->FirstChildElement("LayersTypes");
 
     if(!layers_types_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void layers_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Layers types element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Layers types element is nullptr.\n");
 
     Tensor<string, 1> layers_types;
 
@@ -2803,15 +2680,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* layers_inputs_indices_element = root_element->FirstChildElement("LayersInputsIndices");
 
     if(!layers_inputs_indices_element)
-    {
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "LayersInputsIndices element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-
-    }
+        throw runtime_error("LayersInputsIndices element is nullptr.\n");
 
     layers_inputs_indices.resize(layers.size());
 
@@ -2837,26 +2706,14 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Outputs");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Outputs element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Outputs element is nullptr.\n");
 
     // Outputs number
     
     const tinyxml2::XMLElement* outputs_number_element = root_element->FirstChildElement("OutputsNumber");
 
     if(!outputs_number_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Outputs number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Outputs number element is nullptr.\n");
 
     Index new_outputs_number = 0;
 
@@ -2879,13 +2736,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
             start_element = output_element;
             
             if(output_element->Attribute("Index") != to_string(i+1))
-            {
-                buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                       << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Output index number (" << i+1 << ") does not match (" << output_element->Attribute("Item") << ").\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Output index number (" + to_string(i+1) + ") does not match (" + output_element->Attribute("Item") + ").\n");
             
             if(!output_element->GetText())
             {
@@ -2943,15 +2794,7 @@ void NeuralNetwork::save_parameters(const string& file_name) const
     ofstream file(file_name.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void save_parameters(const string&) const method.\n"
-               << "Cannot open parameters data file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open parameters data file.\n");
 
     const Tensor<type, 1> parameters = get_parameters();
 
@@ -2974,16 +2817,7 @@ void NeuralNetwork::load(const string& file_name)
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
-
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }
@@ -3002,15 +2836,7 @@ load_parameters_binary(const string& file_name)
     file.open(file_name.c_str(), ios::binary);
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork template.\n"
-               << "void load_parameters_binary(const string&) method.\n"
-               << "Cannot open binary file: " << file_name << "\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open binary file: " + file_name + "\n");
 
     streamsize size = sizeof(type);
 
@@ -5046,15 +4872,7 @@ void NeuralNetwork::save_expression_c(const string& file_name) const
     ofstream file(file_name.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression(const string&) method.\n"
-               << "Cannot open expression text file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open expression text file.\n");
 
     file << write_expression_c();
 
@@ -5070,15 +4888,7 @@ void NeuralNetwork::save_expression_api(const string& file_name) const
     ofstream file(file_name.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_api(const string&) method.\n"
-               << "Cannot open expression text file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open expression text file.\n");
 
     file << write_expression_api();
 
@@ -5094,15 +4904,7 @@ void NeuralNetwork::save_expression_javascript(const string& file_name) const
     ofstream file(file_name.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_javascript(const string&) method.\n"
-               << "Cannot open expression text file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open expression text file.\n");
 
     file << write_expression_javascript();
 
@@ -5118,15 +4920,7 @@ void NeuralNetwork::save_expression_python(const string& file_name) const
     ofstream file(file_name.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_python(const string&) method.\n"
-               << "Cannot open expression text file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open expression text file.\n");
 
     file << write_expression_python();
 
@@ -5145,15 +4939,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     ofstream file(file_name.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void save_outputs(const string&) method.\n"
-               << "Cannot open " << file_name << " file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open " + file_name + " file.\n");
 
     const Tensor<string, 1> outputs_names = get_outputs_names();
 

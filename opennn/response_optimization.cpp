@@ -166,39 +166,21 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
     case Condition::Minimum:
 
         if(values.size() != 0)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_input_condition() method.\n"
-                   << "For Minimum condition, size of values must be 0.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For Minimum condition, size of values must be 0.\n");
 
         return;
 
     case Condition::Maximum:
 
         if(values.size() != 0)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_input_condition() method.\n"
-                   << "For Maximum condition, size of values must be 0.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For Maximum condition, size of values must be 0.\n");
 
         return;
 
     case Condition::EqualTo:
 
         if(values.size() != 1)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_input_condition() method.\n"
-                   << "For LessEqualTo condition, size of values must be 1.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
         inputs_minimums[index] = values[0];
         inputs_maximums[index] = values[0];
@@ -208,13 +190,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
     case Condition::LessEqualTo:
 
         if(values.size() != 1)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_input_condition() method.\n"
-                   << "For LessEqualTo condition, size of values must be 1.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
         inputs_maximums[index] = values[0];
 
@@ -223,13 +199,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
     case Condition::GreaterEqualTo:
 
         if(values.size() != 1)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_input_condition() method.\n"
-                   << "For LessEqualTo condition, size of values must be 1.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
         inputs_minimums[index] = values[0];
 
@@ -238,18 +208,13 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
     case Condition::Between:
 
         if(values.size() != 2)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_input_condition() method.\n"
-                   << "For Between condition, size of values must be 2.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For Between condition, size of values must be 2.\n");
 
         inputs_minimums[index] = values[0];
         inputs_maximums[index] = values[1];
 
         return;
+
     default:
         return;
     }
@@ -267,47 +232,24 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
     case Condition::Minimum:
 
         if(values.size() != 0)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_output_condition() method.\n"
-                   << "For Minimum condition, size of values must be 0.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For Minimum condition, size of values must be 0.\n");
 
         return;
 
     case Condition::Maximum:
 
         if(values.size() != 0)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_output_condition() method.\n"
-                   << "For Maximum condition, size of values must be 0.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For Maximum condition, size of values must be 0.\n");
 
         return;
 
     case Condition::EqualTo:
 
-        buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_output_condition() method.\n"
-                   << "EqualTo condition is only available for inputs.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("EqualTo condition is only available for inputs.\n");
 
     case Condition::LessEqualTo:
 
-        if(values.size() != 1)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_output_condition() method.\n"
-                   << "For LessEqualTo condition, size of values must be 1.\n";
-
-            throw runtime_error(buffer.str());
-        }
+        throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
         outputs_maximums[index] = values[0];
 
@@ -316,13 +258,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
     case Condition::GreaterEqualTo:
 
         if(values.size() != 1)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_output_condition() method.\n"
-                   << "For GreaterEqualTo condition, size of values must be 1.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For GreaterEqualTo condition, size of values must be 1.\n");
 
         outputs_minimums[index] = values[0];
 
@@ -331,13 +267,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
     case Condition::Between:
 
         if(values.size() != 2)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_output_condition() method.\n"
-                   << "For Between condition, size of values must be 2.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("For Between condition, size of values must be 2.\n");
 
         outputs_minimums[index] = values[0];
         outputs_maximums[index] = values[1];
@@ -710,16 +640,9 @@ void ResponseOptimizationResults::print() const
     const Tensor<string, 1> outputs_names = neural_network->get_outputs_names();
 
     cout << "\nResponse optimization results: " << endl;
+
     if(optimal_variables.size() == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ResponseOptimization class.\n"
-            << "void ResponseOptimizationResults::print() method.\n"
-            << "Optimal variables vector is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Optimal variables vector is empty.\n");
 
     for(Index i = 0; i < inputs_number; i++)
     {

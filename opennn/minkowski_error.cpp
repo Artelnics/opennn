@@ -66,15 +66,7 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
     // Control sentence
 
     if(new_Minkowski_parameter < type(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Error. MinkowskiError class.\n"
-               << "void set_Minkowski_parameter(const type&) method.\n"
-               << "The Minkowski parameter must be greater than 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("The Minkowski parameter must be greater than 1.\n");
 
     // Set Minkowski parameter
 
@@ -204,15 +196,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("MinkowskiError");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MinkowskiError class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Minkowski error element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Minkowski error element is nullptr.\n");
 
     // Minkowski parameter
 

@@ -416,15 +416,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("WeightedSquaredError");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: WeightedSquaredError class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Weighted squared element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Weighted squared element is nullptr.\n");
 
     // Positives weight
 

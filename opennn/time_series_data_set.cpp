@@ -829,7 +829,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         // raw_variables missing values number
         {
-            file_stream.OpenElement("raw_variablesMissingValuesNumber");
+            file_stream.OpenElement("RawVariablesMissingValuesNumber");
 
             const Index raw_variables_number = raw_variables_missing_values_number.size();
 
@@ -1143,7 +1143,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "raw_variables element is nullptr.\n";
+               << "RawVariables element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
@@ -1156,7 +1156,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "raw_variables number element is nullptr.\n";
+               << "RawVariablesNumber element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
@@ -1585,13 +1585,13 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // raw_variables Missing values number
 
-        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("raw_variablesMissingValuesNumber");
+        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
         if(!raw_variables_missing_values_number_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "raw_variables missing values number element is nullptr.\n";
+                   << "RawVariablesMissingValuesNumber element is nullptr.\n";
 
             throw runtime_error(buffer.str());
         }

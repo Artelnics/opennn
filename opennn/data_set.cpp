@@ -214,13 +214,7 @@ void DataSet::RawVariable::set_scaler(const string& new_scaler)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_scaler(const string&) method.\n"
-               << "Unknown scaler: " << new_scaler << "\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown scaler: " + new_scaler + "\n");
     }
 }
 
@@ -257,13 +251,7 @@ void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_use(const string&) method.\n"
-               << "Unknown raw_variable use: " << new_raw_variable_use << "\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown raw_variable use: " + new_raw_variable_use + "\n");
     }
 }
 
@@ -295,14 +283,7 @@ void DataSet::RawVariable::set_type(const string& new_raw_variable_type)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void raw_variable::set_type(const string&) method.\n"
-               << "raw_variable type not valid (" << new_raw_variable_type << ").\n";
-
-        throw runtime_error(buffer.str());
-
+        throw runtime_error("Raw variable type is not valid (" + new_raw_variable_type + ").\n");
     }
 }
 
@@ -345,13 +326,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
     const tinyxml2::XMLElement* name_element = column_document.FirstChildElement("Name");
 
     if(!name_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Name element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Name element is nullptr.\n");
 
     if(name_element->GetText())
     {
@@ -365,13 +340,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
     const tinyxml2::XMLElement* scaler_element = column_document.FirstChildElement("Scaler");
 
     if(!scaler_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Scaler element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Scaler element is nullptr.\n");
 
     if(scaler_element->GetText())
     {
@@ -385,13 +354,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
     const tinyxml2::XMLElement* raw_variable_use_element = column_document.FirstChildElement("RawVariableUse");
 
     if(!raw_variable_use_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "raw_variable use element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("RawVariableUse element is nullptr.\n");
 
     if(raw_variable_use_element->GetText())
     {
@@ -405,13 +368,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
     const tinyxml2::XMLElement* type_element = column_document.FirstChildElement("Type");
 
     if(!type_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Type element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Type element is nullptr.\n");
 
     if(type_element->GetText())
     {
@@ -426,13 +383,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
         const tinyxml2::XMLElement* categories_element = column_document.FirstChildElement("Categories");
 
         if(!categories_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Categories element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Categories element is nullptr.\n");
 
         if(categories_element->GetText())
         {
@@ -1316,15 +1267,7 @@ void DataSet::set_sample_use(const Index& index, const SampleUse& new_use)
     const Index samples_number = get_samples_number();
 
     if(index >= samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_sample_use(const Index&, const SampleUse&) method.\n"
-               << "Index must be less than samples number.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Index must be less than samples number.\n");
 
     samples_uses(index) = new_use;
 }
@@ -1354,13 +1297,7 @@ void DataSet::set_sample_use(const Index& index, const string& new_use)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_sample_use(const string&) method.\n"
-               << "Unknown sample use: " << new_use << "\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown sample use: " + new_use + "\n");
     }
 }
 
@@ -1378,15 +1315,8 @@ void DataSet::set_samples_uses(const Tensor<SampleUse, 1>& new_uses)
     const Index new_uses_size = new_uses.size();
 
     if(new_uses_size != samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_samples_uses(const Tensor<SampleUse, 1>&) method.\n"
-               << "Size of uses(" << new_uses_size << ") must be equal to number of samples(" << samples_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of uses(" + to_string(new_uses_size) + ") "
+                            "must be equal to number of samples(" + to_string(samples_number) + ").\n");
 
 #endif
 
@@ -1413,13 +1343,8 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
     const Index new_uses_size = new_uses.size();
 
     if(new_uses_size != samples_number)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_samples_uses(const Tensor<string, 1>&) method.\n"
-               << "Size of uses(" << new_uses_size << ") must be equal to number of samples(" << samples_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of uses(" + to_string(new_uses_size) + ") "
+                            "must be equal to number of samples(" + to_string(samples_number) + ").\n");
 
 #endif
 
@@ -1443,11 +1368,7 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
         }
         else
         {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void set_samples_uses(const Tensor<string, 1>&) method.\n"
-                   << "Unknown sample use: " << new_uses(i) << ".\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown sample use: " + new_uses(i) + ".\n");
         }
     }
 }
@@ -1490,15 +1411,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     const Index sum_samples_number = training_samples_number + selection_samples_number + testing_samples_number;
 
     if(sum_samples_number != used_samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Warning: DataSet class.\n"
-               << "void split_samples_random(const type&, const type&, const type&) method.\n"
-               << "Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
 
     const Index samples_number = get_samples_number();
 
@@ -1588,15 +1501,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
     const Index sum_samples_number = training_samples_number + selection_samples_number + testing_samples_number;
 
     if(sum_samples_number != used_samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Warning: Samples class.\n"
-               << "void split_samples_sequential(const type&, const type&, const type&) method.\n"
-               << "Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
 
     Index i = 0;
 
@@ -2561,7 +2466,7 @@ Index DataSet::get_variables_number() const
     {
         if(raw_variables(i).type == RawVariableType::Categorical)
         {
-            variables_number += raw_variables(i).categories.size();
+            variables_number += raw_variables(i).get_categories_number();
         }
         else
         {
@@ -2742,17 +2647,8 @@ void DataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_
     const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
 
     if(new_raw_variables_uses_size != raw_variables.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_raw_variables_uses(const Tensor<string, 1>&) method.\n"
-               << "Size of raw_variables uses ("
-               << new_raw_variables_uses_size << ") must be equal to raw_variables size ("
-               << raw_variables.size() << "). \n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
+                            "must be equal to raw_variables size (" + to_string(raw_variables.size()) + "). \n");
 
     for(Index i = 0; i < new_raw_variables_uses.size(); i++)
     {
@@ -2776,15 +2672,8 @@ void DataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_varia
     const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
 
     if(new_raw_variables_uses_size != raw_variables.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_raw_variables_uses(const Tensor<string, 1>&) method.\n"
-               << "Size of raw_variables uses (" << new_raw_variables_uses_size << ") must be equal to raw_variables size (" << raw_variables.size() << "). \n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
+                            "must be equal to raw_variables size (" + to_string(raw_variables.size()) + ").\n");
 
     for(Index i = 0; i < new_raw_variables_uses.size(); i++)
     {
@@ -2818,15 +2707,8 @@ void DataSet::set_raw_variables_types(const Tensor<string, 1>& new_raw_variable_
     const Index new_raw_variable_types_size = new_raw_variable_types.size();
 
     if(new_raw_variable_types_size != raw_variables.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_all_raw_variable_types(const Tensor<ColumnType, 1>&) method.\n"
-               << "Size of raw_variable types (" << new_raw_variable_types_size << ") must be equal to raw_variables size (" << raw_variables.size() << "). \n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of raw_variable types (" + to_string(new_raw_variable_types_size) + ") "
+                            "must be equal to raw_variables size (" + to_string(raw_variables.size()) + "). \n");
 
     for(Index i = 0; i < new_raw_variable_types.size(); i++)
     {
@@ -3067,15 +2949,8 @@ void DataSet::set_raw_variables_names(const Tensor<string, 1>& new_names)
     const Index raw_variables_number = get_raw_variables_number();
 
     if(new_names_size != raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_raw_variables_names(const Tensor<string, 1>&).\n"
-               << "Size of names (" << new_names.size() << ") is not equal to raw_variables number (" << raw_variables_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of names (" + to_string(new_names.size()) + ") "
+                            "is not equal to raw_variables number (" + to_string(raw_variables_number) + ").\n");
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
@@ -3153,15 +3028,8 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
     const Index raw_variables_number = get_raw_variables_number();
 
     if(new_scalers.size() != raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers) method.\n"
-               << "Size of raw_variable scalers(" << new_scalers.size() << ") has to be the same as raw_variables numbers(" << raw_variables_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of raw_variable scalers(" + to_string(new_scalers.size()) + ") "
+                            "has to be the same as raw_variables numbers(" + to_string(raw_variables_number) + ").\n");
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
@@ -3172,7 +3040,7 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
 
 void DataSet::set_binary_raw_variables()
 {
-    if(display) cout << "Checking constant raw_variables..." << endl;
+    if(display) cout << "Checking binary raw_variables..." << endl;
 
     Index variable_index = 0;
 
@@ -3186,13 +3054,16 @@ void DataSet::set_binary_raw_variables()
         {
             const TensorMap<Tensor<type, 1>> data_column = tensor_map(data, variable_index);
 
-            if(is_constant_vector(data_column))
+            if(is_binary_vector(data_column))
             {
-                raw_variable.type = RawVariableType::Constant;
-                raw_variable.use = VariableUse::None;
+                raw_variable.type = RawVariableType::Binary;
             }
 
             variable_index++;
+        }
+        else if(raw_variable.type == RawVariableType::Categorical)
+        {
+            variable_index += raw_variable.get_categories_number();
         }
         else if(raw_variable.type == RawVariableType::DateTime)
         {
@@ -3201,106 +3072,14 @@ void DataSet::set_binary_raw_variables()
         else if(raw_variable.type == RawVariableType::Constant)
         {
             variable_index++;
-        }
+        }       
         else if(raw_variable.type == RawVariableType::Binary)
-        {
-            if(raw_variable.get_categories_number() == 1)
-            {
-                raw_variable.type = RawVariableType::Constant;
-                raw_variable.use = VariableUse::None;
-            }
-
-            variable_index++;
-        }
-        else if(raw_variable.type == RawVariableType::Categorical)
-        {
-            if(raw_variable.get_categories_number() == 1)
-            {
-                raw_variable.type = RawVariableType::Constant;
-                raw_variable.use = VariableUse::None;
-            }
-
-            variable_index += raw_variable.get_categories_number();
-        }
-
-        raw_variables(raw_variable_index) = raw_variable;
-    }
-
-/*
-    bool is_binary = true;
-
-    Index variable_index = 0;
-
-    Index different_values = 0;
-
-    const Index raw_variables_number = raw_variables.size();
-
-    const Index rows_number = data.dimension(0);
-
-    for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
-    {
-        RawVariable raw_variable =  raw_variables(raw_variable_index);
-
-        if(raw_variable.type == RawVariableType::Numeric)
-        {
-            const TensorMap<Tensor<type, 1>> column = tensor_map(data, 0);
-
-
-            //if(is_binary())
-
-            const VariableUse raw_variable_use = raw_variable.use;
-
-            raw_variable.type = RawVariableType::Binary;
-            //scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
-            //raw_variable.categories.resize(2);
-
-            variable_index++;
-        }
-        else if(raw_variable.type == RawVariableType::Binary)
-        {
-            Tensor<string, 1> positive_words(4);
-            Tensor<string, 1> negative_words(4);
-
-            positive_words.setValues({"yes", "positive", "+", "true"});
-            negative_words.setValues({"no", "negative", "-", "false"});
-
-            const string original_first_category = raw_variable.categories(0);
-            string first_category = raw_variable.categories(0);
-            trim(first_category);
-            to_lower(first_category);
-
-            const string original_second_category = raw_variable.categories(1);
-            string second_category = raw_variable.categories(1);
-            trim(second_category);
-            to_lower(second_category);
-
-            if(contains(positive_words, first_category) && contains(negative_words, second_category))
-            {
-                raw_variable.categories(0) = original_first_category;
-                raw_variable.categories(1) = original_second_category;
-            }
-            else if(contains(positive_words, second_category) && contains(negative_words, first_category))
-            {
-                raw_variable.categories(0) = original_second_category;
-                raw_variable.categories(1) = original_first_category;
-            }
-
-            variable_index++;
-        }
-        else if(raw_variable.type == RawVariableType::Categorical)
-        {
-            variable_index += raw_variable.get_categories_number();
-        }
-        else
         {
             variable_index++;
         }
 
         raw_variables(raw_variable_index) = raw_variable;
     }
-
-    if(display) cout << "Binary raw_variables checked " << endl;
-*/
 }
 
 
@@ -3347,7 +3126,7 @@ void DataSet::set_constant_raw_variables()
             variable_index++;
         }
         else if(raw_variable.type == RawVariableType::Categorical)
-        {
+        {           
             if(raw_variable.get_categories_number() == 1)
             {
                 raw_variable.type = RawVariableType::Constant;
@@ -3588,13 +3367,7 @@ Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_met
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-            << "static Scaler get_scaling_unscaling_method(const string).\n"
-            << "Unknown scaling-unscaling method: " << scaling_unscaling_method << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown scaling-unscaling method: " + scaling_unscaling_method + ".\n");
     }
 }
 
@@ -3852,15 +3625,8 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
     const Index samples_number = get_samples_number();
 
     if(index >= samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_sample(const Index&) const method.\n"
-               << "Index of sample (" << index << ") must be less than number of samples (" << samples_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Index of sample (" + to_string(index) + ") "
+                            "must be less than number of samples (" + to_string(samples_number) + ").\n");
 
 #endif
 
@@ -3881,15 +3647,7 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor
     const Index samples_number = get_samples_number();
 
     if(sample_index >= samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_sample(const Index&, const Tensor<Index, 1>&) const method.\n"
-               << "Index of sample must be less than number of \n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Index of sample must be less than number of \n");
 
 #endif
 
@@ -3970,13 +3728,7 @@ Index DataSet::get_raw_variable_index(const string& column_name) const
         if(raw_variables(i).name == column_name) return i;
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: DataSet class.\n"
-           << "Index get_raw_variable_index(const string&) const method.\n"
-           << "Cannot find " << column_name << "\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("Cannot find " + column_name + "\n");
 }
 
 
@@ -4003,14 +3755,9 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
         if((variable_index+1) <= total_variables_number) return i;
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: DataSet class.\n"
-           << "Index get_raw_variable_index(const type&) const method.\n"
-           << "Cannot find variable index: " << variable_index << ".\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("Cannot find variable index: " + to_string(variable_index) + ".\n");
 }
+
 
 /// Returns the indices of a variable in the data set.
 /// Note that the number of variables does not have to equal the number of raw_variables in the data set,
@@ -4231,26 +3978,10 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
     const Index variables_size = variable_index.size();
 
     if(variables_size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_variable(const string&) const method.\n"
-               << "Variable: " << variable_name << " does not exist.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Variable: " + variable_name + " does not exist.\n");
 
     if(variables_size > 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_variable(const string&) const method.\n"
-               << "Variable: " << variable_name << " appears more than once in the data set.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Variable: " + variable_name + " appears more than once in the data set.\n");
 
 #endif
 
@@ -4313,26 +4044,10 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
     const Index variables_size = variable_index.size();
 
     if(variables_size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_variable(const string&) const method.\n"
-               << "Variable: " << variable_name << " does not exist.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Variable: " + variable_name + " does not exist.\n");
 
     if(variables_size > 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_variable(const string&, const Tensor<Index, 1>&) const method.\n"
-               << "Variable: " << variable_name << " appears more than once in the data set.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Variable: " + variable_name + " appears more than once in the data set.\n");
 
 #endif
 
@@ -4447,11 +4162,11 @@ void DataSet::set(const string& data_source_path,
     set_codification(new_codification);
 
     read_csv();
-/*
+
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
-*/
+
 }
 
 
@@ -4761,13 +4476,7 @@ void DataSet::set_separator(const char& new_separator)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_separator(const char&) method.\n"
-               << "Unknown separator: " << new_separator << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown separator: " + to_string(new_separator) + ".\n");
     }
 }
 
@@ -4795,13 +4504,7 @@ void DataSet::set_separator(const string& new_separator_string)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_separator(const string&) method.\n"
-               << "Unknown separator: " << new_separator_string << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown separator: " + new_separator_string + ".\n");
     }
 }
 
@@ -4830,14 +4533,7 @@ void DataSet::set_codification(const string& new_codification_string)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_codification(const string&) method.\n"
-               << "Unknown codification: " << new_codification_string << ".\n"
-               << "Available codifications: UTF-8, SHIFT_JIS.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown codification: " + new_codification_string + ".\n");
     }
 }
 
@@ -4850,15 +4546,7 @@ void DataSet::set_missing_values_label(const string& new_missing_values_label)
 #ifdef OPENNN_DEBUG
 
     if(get_trimmed(new_missing_values_label).empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_missing_values_label(const string&) method.\n"
-               << "Missing values label cannot be empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Missing values label cannot be empty.\n");
 
 #endif
 
@@ -4895,13 +4583,7 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_missing_values_method(const string & method.\n"
-               << "Not known method type.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown method type.\n");
     }
 }
 
@@ -4939,15 +4621,7 @@ Tensor<string, 1> DataSet::unuse_constant_raw_variables()
 #ifdef OPENNN_DEBUG
 
     if(raw_variables_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<string, 1> unuse_constant_raw_variables() method.\n"
-               << "Number of raw_variables is zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of raw_variables is zero.\n");
 
 #endif
 
@@ -4979,15 +4653,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
 #ifdef OPENNN_DEBUG
 
     if(samples_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Index, 1> unuse_repeated_samples() method.\n"
-               << "Number of samples is zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of samples is zero.\n");
 
 #endif
 
@@ -5323,15 +4989,10 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
                 negatives++;
             }
             else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN)
-                    || data(training_index, target_index) < type(0))
+                     || data(training_index, target_index) < type(0))
             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Index calculate_used_negatives(const Index&) const method.\n"
-                       << "Training sample is neither a positive nor a negative: " << training_index << "-" << target_index << "-" << data(training_index, target_index) << endl;
-
-                throw runtime_error(buffer.str());
+                throw runtime_error("Training sample is neither a positive nor a negative: "
+                                    + to_string(training_index) + "-" + to_string(target_index) + "-" + to_string(data(training_index, target_index)));
             }
         }
     }
@@ -5361,13 +5022,8 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
         }
         else if(abs(data(training_index, target_index) - type(1)) > type(1.0e-3))
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_training_negatives(const Index&) const method.\n"
-                   << "Training sample is neither a positive nor a negative: " << data(training_index, target_index) << endl;
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Training sample is neither positive nor negative: "
+                                + to_string(data(training_index, target_index)));
         }
     }
 
@@ -5396,13 +5052,8 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
         }
         else if(abs(data(selection_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_testing_negatives(const Index&) const method.\n"
-                   << "Selection sample is neither a positive nor a negative: " << data(selection_index, target_index) << endl;
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Selection sample is neither a positive nor a negative: "
+                                + to_string(data(selection_index, target_index)));
         }
     }
 
@@ -5940,7 +5591,7 @@ void DataSet::print_missing_values_information() const
 
     const Tensor<Index, 0> raw_variables_with_missing_values = count_raw_variables_with_nan().sum();
 
-    cout << "raw_variables with missing values: " << raw_variables_with_missing_values(0)
+    cout << "Raw variables with missing values: " << raw_variables_with_missing_values(0)
          << " (" << raw_variables_with_missing_values(0)*100/data.dimension(1) << "%)" << endl;
 
     const Index samples_with_missing_values = count_rows_with_nan();
@@ -6256,13 +5907,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_data() method.\n"
-                   << "Unknown scaler: " << int(raw_variables(i).scaler) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaler: " + to_string(int(raw_variables(i).scaler)) + "\n");
         }
         }
     }
@@ -6301,13 +5946,7 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void unscale_data() method.\n"
-                   << "Unknown scaler: " << int(raw_variables(i).scaler) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaler: " + to_string(int(raw_variables(i).scaler)) + "\n");
         }
         }
     }
@@ -6356,13 +5995,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaling and unscaling method: " + to_string(int(input_variables_scalers(i))) + "\n");
         }
         }
     }
@@ -6411,13 +6044,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method: " << int(target_variables_scalers(i)) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaling and unscaling method: " + to_string(int(target_variables_scalers(i))) + "\n");
         }
         }
     }
@@ -6467,13 +6094,7 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void unscale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown unscaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variables_scalers(i))) + "\n");
         }
         }
     }
@@ -6514,13 +6135,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void unscale_targets(const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown unscaling and unscaling method.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown unscaling and unscaling method.\n");
         }
         }
     }
@@ -6872,7 +6487,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         // raw_variables missing values number
         {
-            file_stream.OpenElement("raw_variablesMissingValuesNumber");
+            file_stream.OpenElement("RawVariablesMissingValuesNumber");
 
             const Index raw_variables_number = raw_variables_missing_values_number.size();
 
@@ -6961,41 +6576,21 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Data set element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Data set element is nullptr.\n");
 
     // Data file
 
     const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
 
     if(!data_file_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Data file element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Data file element is nullptr.\n");
 
     // Data file name
 
     const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
 
     if(!data_file_name_element)
-    {
-        cout << "-- inside not(data_file_name_element) --" << endl;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "DataSourcePath element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("DataSourcePath element is nullptr.\n");
 
     if(data_file_name_element->GetText())
     {
@@ -7103,26 +6698,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "raw_variables element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("RawVariables element is nullptr.\n");
 
     // raw_variables number
 
     const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     if(!raw_variables_number_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "raw_variables number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("RawVariablesNumber element is nullptr.\n");
 
     Index new_raw_variables_number = 0;
 
@@ -7145,26 +6728,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             start_element = column_element;
 
             if(column_element->Attribute("Item") != to_string(i+1))
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "raw_variable item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Raw variable item number (" + to_string(i+1) + ") does not match (" + column_element->Attribute("Item") + ").\n");
 
             // Name
 
             const tinyxml2::XMLElement* name_element = column_element->FirstChildElement("Name");
 
             if(!name_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Name element is nullptr.\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Name element is nullptr.\n");
 
             if(name_element->GetText())
             {
@@ -7178,13 +6749,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const tinyxml2::XMLElement* scaler_element = column_element->FirstChildElement("Scaler");
 
             if(!scaler_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Scaler element is nullptr.\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Scaler element is nullptr.\n");
 
             if(scaler_element->GetText())
             {
@@ -7198,13 +6763,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("RawVariableUse");
 
             if(!raw_variable_use_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "raw_variable use element is nullptr.\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("RawVariableUse element is nullptr.\n");
 
             if(raw_variable_use_element->GetText())
             {
@@ -7218,13 +6777,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const tinyxml2::XMLElement* type_element = column_element->FirstChildElement("Type");
 
             if(!type_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Type element is nullptr.\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Type element is nullptr.\n");
 
             if(type_element->GetText())
             {
@@ -7239,13 +6792,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
 
                 if(!categories_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Categories element is nullptr.\n";
-
-                    throw runtime_error(buffer.str());
-                }
+                    throw runtime_error("Categories element is nullptr.\n");
 
                 if(categories_element->GetText())
                 {
@@ -7266,13 +6813,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const tinyxml2::XMLElement* rows_labels_element = data_set_element->FirstChildElement("RowsLabels");
 
         if(!rows_labels_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Rows labels element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Rows labels element is nullptr.\n");
 
         // Rows labels
 
@@ -7297,26 +6838,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
     if(!samples_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Samples element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Samples element is nullptr.\n");
 
     // Samples number
 
     const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
     if(!samples_number_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Samples number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Samples number element is nullptr.\n");
 
     if(samples_number_element->GetText())
     {
@@ -7332,13 +6861,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
     if(!samples_uses_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Samples uses element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Samples uses element is nullptr.\n");
 
     if(samples_uses_element->GetText())
     {
@@ -7350,26 +6873,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
     if(!missing_values_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Missing values element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Missing values element is nullptr.\n");
 
     // Missing values method
 
     const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
     if(!missing_values_method_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Missing values method element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Missing values method element is nullptr.\n");
 
     if(missing_values_method_element->GetText())
     {
@@ -7381,13 +6892,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
 
     if(!missing_values_number_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Missing values number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Missing values number element is nullptr.\n");
 
     if(missing_values_number_element->GetText())
     {
@@ -7398,16 +6903,10 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // raw_variables Missing values number
 
-        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("raw_variablesMissingValuesNumber");
+        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
         if(!raw_variables_missing_values_number_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "raw_variables missing values number element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("RawVariablesMissingValuesNumber element is nullptr.\n");
 
         if(raw_variables_missing_values_number_element->GetText())
         {
@@ -7427,13 +6926,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const tinyxml2::XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
 
         if(!rows_missing_values_number_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Rows missing values number element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Rows missing values number element is nullptr.\n");
 
         if(rows_missing_values_number_element->GetText())
         {
@@ -7446,26 +6939,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
     if(!preview_data_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Preview data element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Preview data element is nullptr.\n");
 
     // Preview size
 
     const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
     if(!preview_size_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Preview size element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Preview size element is nullptr.\n");
 
     Index new_preview_size = 0;
 
@@ -7486,13 +6967,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         start_element = row_element;
 
         if(row_element->Attribute("Item") != to_string(i+1))
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Row item number (" + to_string(i+1) + ") "
+                                "does not match (" + row_element->Attribute("Item") + ").\n");
 
         if(row_element->GetText())
         {
@@ -7595,15 +7071,7 @@ void DataSet::load(const string& file_name)
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }
@@ -7746,15 +7214,7 @@ void DataSet::save_data() const
     ofstream file(data_source_path.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template." << endl
-               << "void save_data() method." << endl
-               << "Cannot open matrix data file: " << data_source_path << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open matrix data file: " + data_source_path + "\n");
 
     file.precision(20);
 
@@ -7763,7 +7223,7 @@ void DataSet::save_data() const
 
     const Tensor<string, 1> variables_names = get_variables_names();
 
-    string separator_string = get_separator_string();
+    const string separator_string = get_separator_string();
 
     if(has_ids)
     {
@@ -7814,15 +7274,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     open_file(binary_data_file_name, file);
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class." << endl
-               << "void save_data_binary() method." << endl
-               << "Cannot open data binary file." << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open data binary file.");
 
     // Write data
 
@@ -8608,12 +8060,18 @@ void DataSet::read_csv()
     file.open(data_source_path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open file: " + data_source_path + "\n");
+        throw runtime_error("Error: Cannot open file " + data_source_path + "\n");
 
     const string separator_string = get_separator_string();
     string line;
 
     Tensor<string, 1> tokens;
+
+    Tensor<string, 1> positive_words(4);
+    positive_words.setValues({"yes", "positive", "+", "true"});
+
+    Tensor<string, 1> negative_words(4);
+    negative_words.setValues({"no", "negative", "-", "false"});
 
     Index columns_number = 0;
 
@@ -8690,9 +8148,9 @@ void DataSet::read_csv()
 
             const string token = has_ids ? tokens(i+1) : tokens(i);
 
-            if(token.empty() || token == missing_values_label) continue;
+            if(token.empty() || token == missing_values_label) continue;            
 
-            if(is_numeric_string(token))
+            else if(is_numeric_string(token))
             {
                 if(type == RawVariableType::None)
                     raw_variables(i).type = RawVariableType::Numeric;
@@ -8713,6 +8171,15 @@ void DataSet::read_csv()
         }
 
         samples_number++;
+    }
+
+    for(Index i = 0; i < raw_variables_number; i++)
+    {
+        if(raw_variables(i).type == RawVariableType::Categorical
+        && raw_variables(i).get_categories_number() == 2)
+        {
+            raw_variables(i).type = RawVariableType::Binary;
+        }
     }
 
     samples_uses.resize(samples_number);
@@ -8777,37 +8244,6 @@ void DataSet::read_csv()
             else if(raw_variable_type == RawVariableType::DateTime)
             {
                 data(samples_number, raw_variable_index) = time_t(date_to_timestamp(tokens(raw_variable_index)));
-                /*
-                time_t current_timestamp = 0;
-
-                if(!(tokens(j) == missing_values_label || tokens(j).empty()))
-                {
-                    current_timestamp = time_t(date_to_timestamp(tokens(j)));
-                }
-
-                while(previous_timestamp != 0 && difftime(current_timestamp, previous_timestamp) > time_step)
-                {
-                    for(Index raw_variables_index = 0; raw_variables_index < raw_variables_number; ++raw_variables_index)
-                    {
-                        data(sample_index, raw_variables_index) = type(NAN);
-                    }
-                    sample_index++;
-
-                    previous_timestamp += time_step;
-                }
-
-                if(tokens(j).empty())
-                {
-                    data(sample_index, variable_index) = type(NAN);
-                }
-                else
-                {
-                    previous_timestamp = current_timestamp;
-                    data(sample_index, variable_index) = type(current_timestamp);
-                }
-
-                variable_index++;
-                */
             }
             else if(raw_variable_type == RawVariableType::Categorical)
             {
@@ -8833,6 +8269,27 @@ void DataSet::read_csv()
                     }
                 }
             }
+            else if(raw_variable_type == RawVariableType::Binary)
+            {
+                if(contains(positive_words, token) || contains(negative_words, token))
+                {
+                    if(contains(positive_words, token))
+                        data(samples_number, variable_indices(0)) = 1;
+                    else
+                        data(samples_number, variable_indices(0)) = 0;
+                }
+                else
+                {
+                    const Tensor<string, 1> categories = raw_variables(raw_variable_index).categories;
+
+                    if(token == categories(0))
+                        data(samples_number, variable_indices(variable_indices(0))) = 1;
+                    else if(token == categories(1))
+                        data(samples_number, variable_indices(variable_indices(0))) = 0;
+                    else
+                        throw runtime_error("Unknown token " + token);
+                }
+            }
         }
 
         samples_number++;
@@ -8841,13 +8298,9 @@ void DataSet::read_csv()
     file.close();
 
     set_constant_raw_variables();
+    set_binary_raw_variables();
 
-
-//    if(display) cout << "Checking binary raw_variables..." << endl;
-//    set_binary_raw_variables();
-
-
-    //    split_samples_random();
+    split_samples_random();
 }
 
 
@@ -8943,207 +8396,6 @@ string DataSet::get_raw_variable_scaler_string(const Scaler& scaler)
     }
 }
 
-/*
-void DataSet::read_csv_3_simple()
-{
-    ifstream file;
-
-    open_file(data_source_path, file);
-
-    const bool is_float = is_same<type, float>::value;
-
-    const string separator_string = get_separator_string();
-
-    string line;
-
-    skip_header(file);
-
-    // Read data
-
-    const Index columns_number = has_ids
-            ? get_raw_variables_number() + 1
-            : get_raw_variables_number();
-
-    Tensor<string, 1> tokens(columns_number);
-
-    const Index samples_number = data.dimension(0);
-
-    if(has_ids) ids.resize(samples_number);
-
-    if(display) cout << "Reading data..." << endl;
-
-    Index sample_index = 0;
-    Index raw_variable_index = 0;
-
-    while(file.good())
-    {
-        getline(file, line);
-
-        decode(line);
-
-        trim(line);
-
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        fill_tokens(line, separator_string, tokens);
-
-        for(Index j = 0; j < columns_number; j++)
-        {
-            trim(tokens(j));
-
-            if(has_ids && j == 0)
-            {
-                ids(sample_index) = tokens(j);
-
-                continue;
-            }
-
-            if(tokens(j) == missing_values_label || tokens(j).empty())
-            {
-                data(sample_index, raw_variable_index) = type(NAN);
-                raw_variable_index++;
-
-                continue;
-            }
-
-            if(is_float)
-            {
-                data(sample_index, raw_variable_index) = type(strtof(tokens(j).data(), nullptr));
-                raw_variable_index++;
-            }
-            else
-            {
-                data(sample_index, raw_variable_index) = type(stof(tokens(j)));
-                raw_variable_index++;
-            }
-        }
-
-        raw_variable_index = 0;
-        sample_index++;
-    }
-
-    file.close();
-
-//    const Index data_file_preview_index = has_header ? 3 : 2;
-
-//    data_file_preview(data_file_preview_index) = tokens;
-
-    if(display) cout << "Data read succesfully..." << endl;
-
-}
-*/
-/*
-void DataSet::read_csv_2_complete()
-{
-    ifstream file;
-
-    open_file(data_source_path, file);
-
-    const string separator_string = get_separator_string();
-
-    string line;
-
-    Tensor<string, 1> tokens;
-
-    Index lines_count = 0;
-    Index tokens_count;
-
-    const Index raw_variables_number = raw_variables.size();
-
-    for(Index j = 0; j < raw_variables_number; j++)
-    {
-        if(raw_variables(j).type != RawVariableType::Categorical)
-        {
-            raw_variables(j).use = VariableUse::Input;
-        }
-    }
-
-    skip_header(file);
-
-    // Read data
-
-    if(display) cout << "Setting data dimensions..." << endl;
-
-    const Index columns_number = has_ids ? raw_variables_number + 1 : raw_variables_number;
-
-    Index raw_variable_index = 0;
-
-    while(file.good())
-    {
-        getline(file, line);
-
-        decode(line);
-
-        trim(line);
-
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        tokens = get_tokens(line, separator_string);
-
-        for(unsigned j = 0; j < raw_variables_number; j++)
-        {
-            if(has_ids && j == 0) continue;
-
-            RawVariable raw_variable =  raw_variables(raw_variable_index);
-
-            if(raw_variable.type == RawVariableType::Categorical
-            && find(raw_variable.categories.data(),
-                    raw_variable.categories.data() + raw_variable.categories.size(), tokens(j))
-                    == (raw_variable.categories.data() + raw_variable.categories.size()))
-            {
-                if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
-                {
-                    raw_variable_index++;
-                    continue;
-                }
-
-                raw_variable.add_category(tokens(j));
-            }
-
-            raw_variables(raw_variable_index) = raw_variable;
-            raw_variable_index++;
-        }
-
-        raw_variable_index = 0;
-
-        lines_count++;
-    }
-
-    file.close();
-
-    if(display) cout << "Setting types..." << endl;
-
-    for(Index j = 0; j < raw_variables_number; j++)
-    {
-        if(raw_variables(j).type == RawVariableType::Categorical
-        && raw_variables(j).categories.size() == 2)
-        {
-            raw_variables(j).type = RawVariableType::Binary;
-        }
-    }
-
-    const Index samples_number = unsigned(lines_count);
-
-    const Index variables_number = get_variables_number();
-
-    data.resize(samples_number, variables_number);
-
-    if(has_ids) ids.resize(samples_number);
-
-    set_default_raw_variables_uses();
-
-    samples_uses.resize(Index(samples_number));
-
-    samples_uses.setConstant(SampleUse::Training);
-
-    split_samples_random();
-}
-*/
-
 
 void DataSet::open_file(const string& data_file_name, ifstream& file) const
 {
@@ -9164,7 +8416,7 @@ void DataSet::open_file(const string& data_file_name, ifstream& file) const
     #endif
 
     if(!file.is_open())
-        throw runtime_error("Cannot open file: " + data_file_name + "\n");
+        throw runtime_error("Error: Cannot open file " + data_file_name + "\n");
 }
 
 
@@ -9292,242 +8544,6 @@ void DataSet::read_data_file_preview(ifstream& file)
     }
 }
 
-/*
-void DataSet::read_csv_3_complete()
-{
-    ifstream file;
-
-    open_file(data_source_path, file);
-
-    const string separator_string = get_separator_string();
-
-    const Index raw_variables_number = raw_variables.size();
-
-    const Index columns_number = has_ids ? raw_variables_number + 1 : raw_variables_number;
-
-    string line;
-
-    Tensor<string, 1> tokens;
-
-    string token;
-
-    Index sample_index = 0;
-    Index variable_index = 0;
-    Index raw_variable_index = 0;
-
-    skip_header(file);
-
-    // Read data
-
-    if(display) cout << "Reading data..." << endl;
-
-    time_t previous_timestamp = 0;
-    double time_step = 60 * 60 * 24;
-
-    while(file.good())
-    {
-        getline(file, line);
-
-        decode(line);
-
-        trim(line);
-
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        tokens = get_tokens(line, separator_string);
-
-        variable_index = 0;
-        raw_variable_index = 0;
-        bool insert_nan_row = false;
-
-        for(Index j = 0; j < raw_variables_number; j++)
-        {
-            trim(tokens(j));
-
-            RawVariable raw_variable =  raw_variables(raw_variable_index);
-
-            if(has_ids && j ==0)
-            {
-                ids(sample_index) = tokens(j);
-                continue;
-            }
-            else if(raw_variable.type == RawVariableType::Numeric)
-            {
-                if(tokens(j) == missing_values_label || tokens(j).empty())
-                {
-                    data(sample_index, variable_index) = type(NAN);
-                    variable_index++;
-                }
-                else
-                {
-                    try
-                    {
-                        data(sample_index, variable_index) = type(stod(tokens(j)));
-                        variable_index++;
-                    }
-                    catch(const exception& e)
-                    {
-                        ostringstream buffer;
-
-                        buffer << "OpenNN Exception: DataSet class.\n"
-                               << "void read_csv_3_complete() method.\n"
-                               << "Sample " << sample_index << "; Invalid number: " << tokens(j) << "\n";
-
-                        throw runtime_error(buffer.str());
-                    }
-                }
-            }
-            else if(raw_variable.type == RawVariableType::DateTime)
-            {
-                time_t current_timestamp = 0;
-
-                if(!(tokens(j) == missing_values_label || tokens(j).empty()))
-                {
-                    current_timestamp = time_t(date_to_timestamp(tokens(j)));
-                }
-
-                while(previous_timestamp != 0 && difftime(current_timestamp, previous_timestamp) > time_step)
-                {
-                    for(Index raw_variables_index = 0; raw_variables_index < raw_variables_number; ++raw_variables_index)
-                    {
-                        data(sample_index, raw_variables_index) = type(NAN);
-                    }
-                    sample_index++;
-
-                    previous_timestamp += time_step;
-                }
-
-                if(tokens(j).empty())
-                {
-                    data(sample_index, variable_index) = type(NAN);
-                }
-                else
-                {
-                    previous_timestamp = current_timestamp;
-                    data(sample_index, variable_index) = type(current_timestamp);
-                }
-
-                variable_index++;
-            }
-            // else if(raw_variables(raw_variable_index).type == RawVariableType::DateTime)
-            // {
-            //     time_t current_timestamp = 0;
-
-            //     if(!(tokens(j) == missing_values_label || tokens(j).empty()))
-            //     {
-            //         current_timestamp = time_t(date_to_timestamp(tokens(j)));
-            //     }
-
-            //     if(previous_timestamp != 0 && difftime(current_timestamp, previous_timestamp) > time_step)
-            //     {
-            //         insert_nan_row = true;
-            //         previous_timestamp += time_step;
-            //         break;
-            //     }
-            //     else
-            //     {
-            //         previous_timestamp = current_timestamp;
-            //         data(sample_index, variable_index) = tokens(j).empty() ? type(NAN) : current_timestamp;
-            //         variable_index++;
-            //     }
-            // }
-            else if(raw_variable.type == RawVariableType::Categorical)
-            {
-                for(Index k = 0; k < raw_variable.get_categories_number(); k++)
-                {
-                    if(tokens(j) == missing_values_label)
-                    {
-                        data(sample_index, variable_index) = type(NAN);
-                    }
-                    else if(tokens(j) == raw_variable.categories(k))
-                    {
-                        data(sample_index, variable_index) = type(1);
-                    }
-
-                    variable_index++;
-                }
-            }
-            else if(raw_variable.type == RawVariableType::Binary)
-            {
-                string lower_case_token = tokens(j);
-
-                trim(lower_case_token);
-                transform(lower_case_token.begin(), lower_case_token.end(), lower_case_token.begin(), ::tolower);
-
-                Tensor<string,1> positive_words(5);
-                Tensor<string,1> negative_words(5);
-
-                positive_words.setValues({"yes", "positive", "+", "true", "si"});
-                negative_words.setValues({"no", "negative", "-", "false", "no"});
-
-                if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
-                {
-                    data(sample_index, variable_index) = type(NAN);
-                }
-                else if( contains(positive_words, lower_case_token) )
-                {
-                    data(sample_index, variable_index) = type(1);
-                }
-                else if( contains(negative_words, lower_case_token) )
-                {
-                    data(sample_index, variable_index) = type(0);
-                }
-                else if(raw_variable.categories.size() > 0 && tokens(j) == raw_variables(raw_variable_index).categories(0))
-                {
-                    data(sample_index, variable_index) = type(1);
-                }
-                else if(tokens(j) == raw_variable.name)
-                {
-                    data(sample_index, variable_index) = type(1);
-                }
-
-                variable_index++;
-            }
-
-            raw_variables(raw_variable_index) = raw_variable;
-            raw_variable_index++;
-        }
-
-        if(insert_nan_row)
-        {
-            for(Index raw_variables_index = 0; raw_variables_index < raw_variables_number; ++raw_variables_index)
-            {
-                data(sample_index, raw_variables_index) = type(NAN);
-            }
-            sample_index++;
-
-            continue;
-        }
-
-        sample_index++;
-    }
-
-    const Index data_file_preview_index = has_header ? 3 : 2;
-
-    data_file_preview(data_file_preview_index) = tokens;
-
-    if(display) cout << "Data read succesfully..." << endl;
-
-    file.close();
-
-    // Check Constant and DateTime to unused
-
-    set_constant_raw_variables();
-
-    // Check binary
-
-    if(display) cout << "Checking binary raw_variables..." << endl;
-
-    ofstream myfile;
-    myfile.open ("/home/artelnics/Escritorio/example.txt");
-    myfile << "data: " << data << endl;
-    myfile.close();
-
-    set_binary_raw_variables();
-}
-*/
 
 void DataSet::check_separators(const string& line) const
 {
@@ -9539,7 +8555,7 @@ void DataSet::check_separators(const string& line) const
     const string separator_string = get_separator_string();
 
     if(line.find(separator_string) == string::npos)
-        throw runtime_error("Error: '" + separator_string + "' separator not found in line " + line + ".\n");
+        throw runtime_error("Error: Separarot '" + separator_string + "' not found in line " + line + ".\n");
 
     if(separator == Separator::Space)
     {
@@ -9931,20 +8947,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
         tokens_count = count_tokens(line, separator_string);
 
         if(tokens_count != input_raw_variables_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_input_csv() method.\n"
-                   << "Line " << line_number << ": Size of tokens("
-                   << tokens_count << ") is not equal to number of raw_variables("
-                   << input_raw_variables_number << ").\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Line " + to_string(line_number) + ": Size of tokens(" + to_string(tokens_count) + ") "
+                                "is not equal to number of raw_variables(" + to_string(input_raw_variables_number) + ").\n");
 
         input_samples_count++;
-            }
+    }
 
     file.close();
 

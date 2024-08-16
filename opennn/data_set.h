@@ -739,12 +739,6 @@ public:
 
     void read_csv();
 
-//    void read_csv_2_simple();
-//    void read_csv_3_simple();
-
-//    void read_csv_2_complete();
-//    void read_csv_3_complete();
-
     void open_file(const string&, ifstream&) const;
     void open_file(const string&, ofstream&) const;
 

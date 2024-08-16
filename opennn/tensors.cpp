@@ -679,28 +679,9 @@ bool is_binary_vector(const Tensor<type, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return false;
-
-    type first_value = vector(0);
-    type second_value = vector(0);
-
     for(Index i = 0; i < size; i++)
     {
-        if (vector(i) != first_value)
-        {
-            second_value = vector(i);
-            break;
-        }
-    }
-
-    if(second_value == first_value) return false;
-
-    for(Index i = 0; i < size; i++)
-    {
-        if (vector(i) != first_value && vector(i) != second_value)
-        {
-            return false;
-        }
+        if(vector(i) != type(0) && vector(i) != type(1) && !isnan(vector(i)) ) return false;
     }
 
     return true;
@@ -713,7 +694,7 @@ bool is_binary_matrix(const Tensor<type, 2>& matrix)
 
     for(Index i = 0; i < size; i++)
     {
-        if(matrix(i) != type(0) && matrix(i) != type(1) && !isnan(matrix(i)) ) return false;
+        if(matrix(i) != type(0) && matrix(i) != type(1) && !isnan(matrix(i))) return false;
     }
 
     return true;
@@ -848,15 +829,7 @@ bool are_equal(const Tensor<bool, 2>& matrix_1, const Tensor<bool, 2>& matrix_2)
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     if(x.size() != y.size() || x.dimension(0) != y.dimension(0) || x.dimension(1) != y.dimension(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Tensor utilities class.\n"
-            << "Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y) method.\n"
-            << "Input vectors must have equal sizes.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Input vectors must have equal sizes.\n");
 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
@@ -876,15 +849,7 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     ofstream file(filename);
 
     if(!file.is_open())
-    {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix template." << endl
-             << "void save_csv(const Tensor<type,2>&, const string&) method." << endl
-             << "Cannot open matrix data file: " << filename << endl;
-
-      throw runtime_error(buffer.str());
-    }
+      throw runtime_error("Cannot open matrix data file: " + filename + "\n");
 
     file.precision(20);
 
@@ -952,15 +917,7 @@ Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index
     const Index tokens_size = tokens.size();
 
     if(tokens_size != rank.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Strings Class.\n"
-               << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
-               << "Tokens and rank size must be the same.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Tokens and rank size must be the same.\n");
 
     Tensor<string,1> sorted_tokens(tokens_size);
 
@@ -980,15 +937,7 @@ Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1
     const Index tokens_size = tokens.size();
 
     if(tokens_size != rank.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Strings Class.\n"
-               << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
-               << "Tokens and rank size must be the same.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Tokens and rank size must be the same.\n");
 
     Tensor<Index,1> sorted_tokens(tokens_size);
 
@@ -1374,14 +1323,7 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
     norm.device(*thread_pool_device) = vector.square().sum().sqrt();
 
     if(isnan(norm(0)))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: l2 norm of vector is not a number."
-               << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("OpenNN Exception: l2 norm of vector is not a number.\n");
 
     return norm(0);
 }

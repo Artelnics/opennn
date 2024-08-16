@@ -320,13 +320,7 @@ string TrainingStrategy::write_optimization_method() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "string write_optimization_method() const method.\n"
-               << "Unknown main type.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown main type.\n");
     }
 }
 
@@ -362,13 +356,7 @@ string TrainingStrategy::write_optimization_method_text() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "string write_optimization_method_text() const method.\n"
-               << "Unknown main type.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown main type.\n");
     }
 }
 
@@ -464,13 +452,7 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void set_loss_method(const string&) method.\n"
-               << "Unknown loss method: " << new_loss_method << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown loss method: " + new_loss_method + ".\n");
     }
 }
 
@@ -527,13 +509,7 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void set_optimization_method(const string&) method.\n"
-               << "Unknown main type: " << new_optimization_method << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown main type: " + new_optimization_method + ".\n");
     }
 }
 
@@ -902,15 +878,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Training strategy element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Training strategy element is nullptr.\n");
 
     // Loss index
 
@@ -1197,13 +1165,7 @@ void TrainingStrategy::load(const string& file_name)
 
     if(document.LoadFile(file_name.c_str()))
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
     }
 
     from_XML(document);

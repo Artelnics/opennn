@@ -169,15 +169,7 @@ void CrossEntropyError3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("CrossEntropyError3D");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: CrossEntropyError3D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Cross entropy error element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cross entropy error element is nullptr.\n");
 
     // Regularization
 
