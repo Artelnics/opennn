@@ -1315,15 +1315,8 @@ void DataSet::set_samples_uses(const Tensor<SampleUse, 1>& new_uses)
     const Index new_uses_size = new_uses.size();
 
     if(new_uses_size != samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_samples_uses(const Tensor<SampleUse, 1>&) method.\n"
-               << "Size of uses(" << new_uses_size << ") must be equal to number of samples(" << samples_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of uses(" + to_string(new_uses_size) + ") "
+                            "must be equal to number of samples(" + to_string(samples_number) + ").\n");
 
 #endif
 
@@ -1350,13 +1343,8 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
     const Index new_uses_size = new_uses.size();
 
     if(new_uses_size != samples_number)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_samples_uses(const Tensor<string, 1>&) method.\n"
-               << "Size of uses(" << new_uses_size << ") must be equal to number of samples(" << samples_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of uses(" + to_string(new_uses_size) + ") "
+                            "must be equal to number of samples(" + to_string(samples_number) + ").\n");
 
 #endif
 
@@ -2659,17 +2647,8 @@ void DataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_
     const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
 
     if(new_raw_variables_uses_size != raw_variables.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_raw_variables_uses(const Tensor<string, 1>&) method.\n"
-               << "Size of raw_variables uses ("
-               << new_raw_variables_uses_size << ") must be equal to raw_variables size ("
-               << raw_variables.size() << "). \n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
+                            "must be equal to raw_variables size (" + to_string(raw_variables.size()) + "). \n");
 
     for(Index i = 0; i < new_raw_variables_uses.size(); i++)
     {
@@ -2693,15 +2672,8 @@ void DataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_varia
     const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
 
     if(new_raw_variables_uses_size != raw_variables.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_raw_variables_uses(const Tensor<string, 1>&) method.\n"
-               << "Size of raw_variables uses (" << new_raw_variables_uses_size << ") must be equal to raw_variables size (" << raw_variables.size() << "). \n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
+                            "must be equal to raw_variables size (" + to_string(raw_variables.size()) + ").\n");
 
     for(Index i = 0; i < new_raw_variables_uses.size(); i++)
     {
@@ -2735,15 +2707,8 @@ void DataSet::set_raw_variables_types(const Tensor<string, 1>& new_raw_variable_
     const Index new_raw_variable_types_size = new_raw_variable_types.size();
 
     if(new_raw_variable_types_size != raw_variables.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_all_raw_variable_types(const Tensor<ColumnType, 1>&) method.\n"
-               << "Size of raw_variable types (" << new_raw_variable_types_size << ") must be equal to raw_variables size (" << raw_variables.size() << "). \n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of raw_variable types (" + to_string(new_raw_variable_types_size) + ") "
+                            "must be equal to raw_variables size (" + to_string(raw_variables.size()) + "). \n");
 
     for(Index i = 0; i < new_raw_variable_types.size(); i++)
     {
@@ -2984,15 +2949,8 @@ void DataSet::set_raw_variables_names(const Tensor<string, 1>& new_names)
     const Index raw_variables_number = get_raw_variables_number();
 
     if(new_names_size != raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_raw_variables_names(const Tensor<string, 1>&).\n"
-               << "Size of names (" << new_names.size() << ") is not equal to raw_variables number (" << raw_variables_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of names (" + to_string(new_names.size()) + ") "
+                            "is not equal to raw_variables number (" + to_string(raw_variables_number) + ").\n");
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
@@ -3070,15 +3028,8 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
     const Index raw_variables_number = get_raw_variables_number();
 
     if(new_scalers.size() != raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers) method.\n"
-               << "Size of raw_variable scalers(" << new_scalers.size() << ") has to be the same as raw_variables numbers(" << raw_variables_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of raw_variable scalers(" + to_string(new_scalers.size()) + ") "
+                            "has to be the same as raw_variables numbers(" + to_string(raw_variables_number) + ").\n");
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
@@ -3674,15 +3625,8 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
     const Index samples_number = get_samples_number();
 
     if(index >= samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_sample(const Index&) const method.\n"
-               << "Index of sample (" << index << ") must be less than number of samples (" << samples_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Index of sample (" + to_string(index) + ") "
+                            "must be less than number of samples (" + to_string(samples_number) + ").\n");
 
 #endif
 
@@ -3784,13 +3728,7 @@ Index DataSet::get_raw_variable_index(const string& column_name) const
         if(raw_variables(i).name == column_name) return i;
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: DataSet class.\n"
-           << "Index get_raw_variable_index(const string&) const method.\n"
-           << "Cannot find " << column_name << "\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("Cannot find " + column_name + "\n");
 }
 
 
@@ -3817,14 +3755,9 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
         if((variable_index+1) <= total_variables_number) return i;
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: DataSet class.\n"
-           << "Index get_raw_variable_index(const type&) const method.\n"
-           << "Cannot find variable index: " << variable_index << ".\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("Cannot find variable index: " + to_string(variable_index) + ".\n");
 }
+
 
 /// Returns the indices of a variable in the data set.
 /// Note that the number of variables does not have to equal the number of raw_variables in the data set,
@@ -4045,26 +3978,10 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
     const Index variables_size = variable_index.size();
 
     if(variables_size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_variable(const string&) const method.\n"
-               << "Variable: " << variable_name << " does not exist.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Variable: " + variable_name + " does not exist.\n");
 
     if(variables_size > 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_variable(const string&) const method.\n"
-               << "Variable: " << variable_name << " appears more than once in the data set.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Variable: " + variable_name + " appears more than once in the data set.\n");
 
 #endif
 
@@ -4559,13 +4476,7 @@ void DataSet::set_separator(const char& new_separator)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_separator(const char&) method.\n"
-               << "Unknown separator: " << new_separator << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown separator: " + to_string(new_separator) + ".\n");
     }
 }
 
@@ -4593,13 +4504,7 @@ void DataSet::set_separator(const string& new_separator_string)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_separator(const string&) method.\n"
-               << "Unknown separator: " << new_separator_string << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown separator: " + new_separator_string + ".\n");
     }
 }
 
@@ -4628,14 +4533,7 @@ void DataSet::set_codification(const string& new_codification_string)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_codification(const string&) method.\n"
-               << "Unknown codification: " << new_codification_string << ".\n"
-               << "Available codifications: UTF-8, SHIFT_JIS.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown codification: " + new_codification_string + ".\n");
     }
 }
 
@@ -5091,15 +4989,10 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
                 negatives++;
             }
             else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN)
-                    || data(training_index, target_index) < type(0))
+                     || data(training_index, target_index) < type(0))
             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Index calculate_used_negatives(const Index&) const method.\n"
-                       << "Training sample is neither a positive nor a negative: " << training_index << "-" << target_index << "-" << data(training_index, target_index) << endl;
-
-                throw runtime_error(buffer.str());
+                throw runtime_error("Training sample is neither a positive nor a negative: "
+                                    + to_string(training_index) + "-" + to_string(target_index) + "-" + to_string(data(training_index, target_index)));
             }
         }
     }
@@ -5129,13 +5022,8 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
         }
         else if(abs(data(training_index, target_index) - type(1)) > type(1.0e-3))
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_training_negatives(const Index&) const method.\n"
-                   << "Training sample is neither a positive nor a negative: " << data(training_index, target_index) << endl;
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Training sample is neither positive nor negative: "
+                                + to_string(data(training_index, target_index)));
         }
     }
 
@@ -5164,13 +5052,8 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
         }
         else if(abs(data(selection_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_testing_negatives(const Index&) const method.\n"
-                   << "Selection sample is neither a positive nor a negative: " << data(selection_index, target_index) << endl;
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Selection sample is neither a positive nor a negative: "
+                                + to_string(data(selection_index, target_index)));
         }
     }
 
@@ -6024,13 +5907,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_data() method.\n"
-                   << "Unknown scaler: " << int(raw_variables(i).scaler) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaler: " + to_string(int(raw_variables(i).scaler)) + "\n");
         }
         }
     }
@@ -6069,13 +5946,7 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void unscale_data() method.\n"
-                   << "Unknown scaler: " << int(raw_variables(i).scaler) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaler: " + to_string(int(raw_variables(i).scaler)) + "\n");
         }
         }
     }
@@ -6124,13 +5995,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaling and unscaling method: " + to_string(int(input_variables_scalers(i))) + "\n");
         }
         }
     }
@@ -6179,13 +6044,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method: " << int(target_variables_scalers(i)) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaling and unscaling method: " + to_string(int(target_variables_scalers(i))) + "\n");
         }
         }
     }
@@ -6235,13 +6094,7 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void unscale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown unscaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variables_scalers(i))) + "\n");
         }
         }
     }
@@ -6282,13 +6135,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
 
         default:
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void unscale_targets(const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown unscaling and unscaling method.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown unscaling and unscaling method.\n");
         }
         }
     }
@@ -6729,41 +6576,21 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Data set element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Data set element is nullptr.\n");
 
     // Data file
 
     const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
 
     if(!data_file_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Data file element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Data file element is nullptr.\n");
 
     // Data file name
 
     const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
 
     if(!data_file_name_element)
-    {
-        cout << "-- inside not(data_file_name_element) --" << endl;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "DataSourcePath element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("DataSourcePath element is nullptr.\n");
 
     if(data_file_name_element->GetText())
     {
@@ -6871,13 +6698,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "RawVariables element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("RawVariables element is nullptr.\n");
 
     // raw_variables number
 
@@ -6907,13 +6728,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             start_element = column_element;
 
             if(column_element->Attribute("Item") != to_string(i+1))
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "raw_variable item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Raw variable item number (" + to_string(i+1) + ") does not match (" + column_element->Attribute("Item") + ").\n");
 
             // Name
 
@@ -7152,13 +6967,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         start_element = row_element;
 
         if(row_element->Attribute("Item") != to_string(i+1))
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Row item number (" + to_string(i+1) + ") "
+                                "does not match (" + row_element->Attribute("Item") + ").\n");
 
         if(row_element->GetText())
         {
@@ -9141,20 +8951,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
         tokens_count = count_tokens(line, separator_string);
 
         if(tokens_count != input_raw_variables_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_input_csv() method.\n"
-                   << "Line " << line_number << ": Size of tokens("
-                   << tokens_count << ") is not equal to number of raw_variables("
-                   << input_raw_variables_number << ").\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Line " + to_string(line_number) + ": Size of tokens(" + to_string(tokens_count) + ") "
+                                "is not equal to number of raw_variables(" + to_string(input_raw_variables_number) + ").\n");
 
         input_samples_count++;
-            }
+    }
 
     file.close();
 

@@ -130,13 +130,6 @@ void GradientDescent::set_default()
 
 void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_epochs_number < type(0))
-        throw runtime_error("Maximum epochs number must be equal or greater than 0.\n");
-
-#endif
-
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
@@ -175,23 +168,6 @@ void GradientDescent::set_maximum_selection_failures(const Index& new_maximum_se
 
 void GradientDescent::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set maximum time
-
     maximum_time = new_maximum_time;
 }
 
@@ -207,13 +183,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
     ostringstream buffer;
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Loss index pointer is nullptr.\n");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -222,14 +192,8 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
     const Index gradient_size = gradient.size();
 
     if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size
-               << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of gradient(" + to_string(gradient_size) + ") "
+                            "is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
 #endif
 
@@ -672,15 +636,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("GradientDescent");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Gradient descent element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Gradient descent element is nullptr.\n");
 
     // Learning rate algorithm
     {

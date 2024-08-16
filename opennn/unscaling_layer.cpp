@@ -170,13 +170,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "string write_expression() const method.\n"
-                   << "Unknown inputs scaling method.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown inputs scaling method.\n");
         }
     }
 
@@ -221,13 +215,7 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "Tensor<string, 1> write_unscaling_method() const.\n"
-                   << "Unknown unscaling method.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown unscaling method.\n");
         }
     }
 
@@ -268,13 +256,7 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "Tensor<string, 1> write_unscaling_method() const.\n"
-                   << "Unknown unscaling method.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown unscaling method.\n");
         }
     }
 
@@ -1020,16 +1002,9 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         const tinyxml2::XMLElement* unscaling_method_element = descriptives_element->FirstChildElement("Scaler");
 
         if(!unscaling_method_element)
-        {
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Unscaling method element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Unscaling method element " + to_string(i+1) + " is nullptr.\n");
 
         const string new_method = unscaling_method_element->GetText();
-
 
         if(new_method == "None")
         {

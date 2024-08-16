@@ -495,13 +495,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     ostringstream buffer;
 
     if(x_size != y.size())
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "Correlation linear_correlation(const Tensor<type, 1>&) const method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Y size must be equal to X size.\n");
 
 #endif
 
@@ -737,15 +731,8 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
     ostringstream buffer;
 
     if(x_size != n)
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "Correlation "
-               "logarithmic_correlation(const Tensor<type, 1>&) const "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
 
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Y size must be equal to X size.\n");
 
 #endif
 
@@ -1155,18 +1142,8 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 {
 #ifdef OPENNN_DEBUG
 
-    ostringstream buffer;
-
     if(x.size() != y.size())
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "Correlation "
-                  "power_correlation(const Tensor<type, 1>&) const "
-                  "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Y size must be equal to X size.\n");
 
 #endif
 

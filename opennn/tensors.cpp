@@ -849,15 +849,7 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     ofstream file(filename);
 
     if(!file.is_open())
-    {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix template." << endl
-             << "void save_csv(const Tensor<type,2>&, const string&) method." << endl
-             << "Cannot open matrix data file: " << filename << endl;
-
-      throw runtime_error(buffer.str());
-    }
+      throw runtime_error("Cannot open matrix data file: " + filename + "\n");
 
     file.precision(20);
 
@@ -945,15 +937,7 @@ Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1
     const Index tokens_size = tokens.size();
 
     if(tokens_size != rank.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Strings Class.\n"
-               << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
-               << "Tokens and rank size must be the same.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Tokens and rank size must be the same.\n");
 
     Tensor<Index,1> sorted_tokens(tokens_size);
 
@@ -1339,14 +1323,7 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
     norm.device(*thread_pool_device) = vector.square().sum().sqrt();
 
     if(isnan(norm(0)))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: l2 norm of vector is not a number."
-               << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("OpenNN Exception: l2 norm of vector is not a number.\n");
 
     return norm(0);
 }

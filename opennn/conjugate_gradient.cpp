@@ -70,36 +70,17 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
     const Index old_gradient_size = old_gradient.size();
 
     if(old_gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_training_direction() const method.\n"
-               << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
     const Index gradient_size = gradient.size();
 
     if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_training_direction() const method.\n"
-               << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of gradient (" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
     const Index old_training_direction_size = old_training_direction.size();
 
     if(old_training_direction_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_training_direction() const method.\n"
-               << "Size of old training direction (" << old_training_direction_size
-               << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of old training direction (" + to_string(old_training_direction_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
 #endif
 
@@ -130,14 +111,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     ostringstream buffer;
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-
-               << "Loss index pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Loss index pointer is nullptr.\n");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -146,24 +120,12 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     const Index old_gradient_size = old_gradient.size();
 
     if(old_gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
     const Index gradient_size = gradient.size();
 
     if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of gradient(" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
 #endif
 
@@ -216,13 +178,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
     ostringstream buffer;
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_FR_training_direction() const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Loss index pointer is nullptr.\n");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -231,37 +187,17 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
     const Index old_gradient_size = old_gradient.size();
 
     if(old_gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_FR_training_direction() const method.\n"
-               << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
     const Index gradient_size = gradient.size();
 
     if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_FR_training_direction() const method.\n"
-               << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of gradient (" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
     const Index old_training_direction_size = old_training_direction.size();
 
     if(old_training_direction_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_FR_training_direction() const method.\n"
-               << "Size of old training direction (" << old_training_direction_size
-               << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
-
+        throw runtime_error("Size of old training direction (" + to_string(old_training_direction_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 #endif
 
     const type FR_parameter = calculate_FR_parameter(old_gradient, gradient);
@@ -291,13 +227,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     ostringstream buffer;
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Loss index pointer is nullptr.\n");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -306,25 +236,12 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     const Index old_gradient_size = old_gradient.size();
 
     if(old_gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
     const Index gradient_size = gradient.size();
 
     if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
-
+        throw runtime_error("Size of gradient(" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 #endif
 
     type PR_parameter = type(0);
@@ -376,13 +293,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
     ostringstream buffer;
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_PR_training_direction() const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Loss index pointer is nullptr.\n");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -391,36 +302,17 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
     const Index old_gradient_size = old_gradient.size();
 
     if(old_gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_PR_training_direction() const method.\n"
-               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
     const Index gradient_size = gradient.size();
 
     if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_PR_training_direction() const method.\n"
-               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of gradient(" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
     const Index old_training_direction_size = old_training_direction.size();
 
     if(old_training_direction_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_PR_training_direction() const method.\n"
-               << "Size of old training direction(" << old_training_direction_size
-               << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of old training direction(" + to_string(old_training_direction_size) +  ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
 
 #endif
 
@@ -628,23 +520,6 @@ void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epoch
 
 void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < type(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set maximum time
-
     maximum_time = new_maximum_time;
 }
 

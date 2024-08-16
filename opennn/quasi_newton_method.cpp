@@ -250,23 +250,6 @@ void QuasiNewtonMethod::set_maximum_epochs_number(const Index& new_maximum_epoch
 
 void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
-    // Set maximum time
-
     maximum_time = new_maximum_time;
 }
 
@@ -291,14 +274,8 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
         return;
 
     default:
-        ostringstream buffer;
 
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "Tensor<type, 1> calculate_inverse_hessian_approximation(const Tensor<type, 1>&, "
-               "const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
-               << "Unknown inverse hessian approximation method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown inverse hessian approximation method.\n");
     }
 }
 

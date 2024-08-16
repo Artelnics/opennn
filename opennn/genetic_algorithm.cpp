@@ -189,49 +189,26 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
     ostringstream buffer;
 
     if(!training_strategy)
-    {
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-            << "void check() const method.\n"
-            << "Pointer to training strategy is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to training strategy is nullptr.\n");
 
     // Loss index
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
     if(!loss_index)
-    {
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-            << "void check() const method.\n"
-            << "Pointer to loss index is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to loss index is nullptr.\n");
 
     // Neural network
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(!neural_network)
-    {
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-            << "void check() const method.\n"
-            << "Pointer to neural network is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Pointer to neural network is nullptr.\n");
 
     if(new_individuals_number != individuals_number)
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void set_population(const Tensor<type, 2>&) method.\n"
-            << "Population rows(" << new_individuals_number << ") must be equal to population size(" << individuals_number << ").\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Population rows (" + to_string(new_individuals_number) + ") "
+                            "must be equal to population size (" + to_string(individuals_number) + ").\n");
     }
 
 #endif
@@ -272,29 +249,13 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
     const Index individuals_number = get_individuals_number();
 
     if(new_fitness.size() != individuals_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void set_fitness(const Tensor<type, 1>&) method.\n"
-            << "Fitness size (" << new_fitness.size()
-            << ") must be equal to population size (" << individuals_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Fitness size (" + to_string(new_fitness.size()) + ") "
+                            "must be equal to population size (" + to_string(individuals_number) + ").\n");
 
     for(Index i = 0; i < individuals_number; i++)
     {
         if(new_fitness[i] < 0)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-                << "void set_fitness(const Tensor<type, 2>&) method.\n"
-                << "Fitness must be greater than 0.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Fitness must be greater than 0.\n");
     }
 
 #endif
@@ -310,15 +271,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 #ifdef OPENNN_DEBUG
 
     if(new_individuals_number < 4)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void set_individuals_number(const Index&) method.\n"
-            << "Population size (" << new_individuals_number << ") must be greater than 4.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Population size (" + to_string(new_individuals_number) + ") must be greater than 4.\n");
 
 #endif
 
@@ -360,15 +313,7 @@ void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
 #ifdef OPENNN_DEBUG
 
     if(new_mutation_rate < 0 || new_mutation_rate > 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void set_mutation_rate(const type&) method.\n"
-            << "Mutation rate must be between 0 and 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Mutation rate must be between 0 and 1.\n");
 
 #endif
 
@@ -386,16 +331,8 @@ void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
     const Index individuals_number = get_individuals_number();
 
     if(new_elitism_size > individuals_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void set_elitism_size(const Index&) method.\n"
-            << "Elitism size(" << new_elitism_size
-            << ") must be lower than the population size(" << individuals_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Elitism size(" + to_string(new_elitism_size) + ") "
+                            "must be lower than population size(" + to_string(individuals_number) + ").\n");
 
 #endif
 
@@ -412,28 +349,12 @@ void GeneticAlgorithm::initialize_population()
     const Index individuals_number = get_individuals_number();
 
     if(individuals_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void initialize_population() method.\n"
-            << "Population size must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Population size must be greater than 0.\n");
 
     const Index genes_number = get_genes_number();
 
     if(individuals_number > pow(2, genes_number))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void initialize_population() method.\n"
-            << "Individuals number must be less than 2 to the power of genes number.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Individuals number must be less than 2 to the power of genes number.\n");
 
 #endif
 
@@ -717,15 +638,7 @@ void GeneticAlgorithm::evaluate_population()
     check();
 
     if(population.size() == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void evaluate_population() method.\n"
-            << "Population size must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Population size must be greater than 0.\n");
 
 #endif
 
@@ -885,26 +798,10 @@ void GeneticAlgorithm::perform_selection()
 #ifdef OPENNN_DEBUG
 
     if(population.size() == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void perform_selection() method.\n"
-            << "Population size must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Population size must be greater than 0.\n");
 
     if(fitness.dimension(0) == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void perform_selection() method.\n"
-            << "No fitness found.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("No fitness found.\n");
 
 #endif
 
@@ -943,20 +840,12 @@ void GeneticAlgorithm::perform_selection()
     for(Index i = 0; i < individuals_number; i++) if(selection(i)) selection_assert++;
 
     if(selection_assert != individuals_number / 2)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void perform_selection() method.\n"
-            << "Number of selected individuals (" << selection_assert << ") must be " << individuals_number / 2 << " .\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of selected individuals (" + to_string(selection_assert) + ") "
+                            "must be " + to_string(individuals_number / 2) + " .\n");
 
 #endif
 }
 
-//Transform selection vector to indexes
 
 Tensor <Index,1> GeneticAlgorithm::get_selected_individuals_indices()
 {
@@ -992,15 +881,13 @@ void GeneticAlgorithm::perform_crossover()
 
     #ifdef OPENNN_DEBUG
             Index count_selected_individuals = 0;
-            for(Index i = 0; i < individuals_number; i++) if(selection(i)) count_selected_individuals++;
+
+    for(Index i = 0; i < individuals_number; i++)
+                if(selection(i))
+                    count_selected_individuals++;
+
             if(individuals_number != count_selected_individuals)
-            {
-                ostringstream buffer;
-                buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-                    << "void perform_crossover() method.\n"
-                    << "Selected individuals number is wrong.\n";
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Selected individuals number is wrong.\n");
     #endif
 
     // Couples generation
@@ -1856,15 +1743,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("GeneticAlgorithm");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "GeneticAlgorithm element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("GeneticAlgorithm element is nullptr.\n");
 
     // Population size
     {
@@ -2079,15 +1958,7 @@ void GeneticAlgorithm::load(const string& file_name)
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-            << "void load(const string&) method.\n"
-            << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }

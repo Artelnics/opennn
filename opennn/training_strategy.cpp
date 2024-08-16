@@ -452,13 +452,7 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void set_loss_method(const string&) method.\n"
-               << "Unknown loss method: " << new_loss_method << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown loss method: " + new_loss_method + ".\n");
     }
 }
 
@@ -515,13 +509,7 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void set_optimization_method(const string&) method.\n"
-               << "Unknown main type: " << new_optimization_method << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown main type: " + new_optimization_method + ".\n");
     }
 }
 
@@ -1177,13 +1165,7 @@ void TrainingStrategy::load(const string& file_name)
 
     if(document.LoadFile(file_name.c_str()))
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
     }
 
     from_XML(document);

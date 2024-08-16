@@ -560,24 +560,12 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
             start_element = item_element;
 
             if(!item_element)
-            {
-                buffer << "OpenNN Exception: BoundingLayer class.\n"
-                       << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                       << "Item " << i+1 << " is nullptr.\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Item " + to_string(i+1) + " is nullptr.\n");
 
             item_element->QueryUnsignedAttribute("Index", &index);
 
             if(index != i+1)
-            {
-                buffer << "OpenNN Exception: BoundingLayer class.\n"
-                       << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                       << "Index " << index << " is not correct.\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Index " + to_string(index) + " is not correct.\n");
 
             // Lower bound
 

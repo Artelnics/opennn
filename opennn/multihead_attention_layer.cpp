@@ -578,15 +578,10 @@ void MultiheadAttentionLayer::set_dropout_rate(const type& new_dropout_rate)
 void MultiheadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
 {
     if(use_causal_mask && input_size != context_size)
-    {
-        ostringstream buffer;
 
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void set_causal_mask(const bool&) method.\n"
-               << "Causal mask can only be applied to self-attention. In this case, input size (" << input_size << ") should be equal to context size (" << context_size << ").";
-
-        throw runtime_error(buffer.str());
-    }
+    throw runtime_error("Causal mask can only be applied to self-attention. "
+                        "In this case, input size (" + to_string(input_size) + ") "
+                        "should be equal to context size (" + to_string(context_size) + ").");
 
     use_causal_mask = new_use_causal_mask;
 
