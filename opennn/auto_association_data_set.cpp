@@ -120,15 +120,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     const Index sum_samples_number = training_samples_number + testing_samples_number;
 
     if(sum_samples_number != used_samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Warning: DataSet class.\n"
-               << "void split_samples_random(const type&, const type&, const type&) method.\n"
-               << "Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
 
     const Index samples_number = get_samples_number();
 
@@ -213,15 +205,7 @@ void AutoAssociationDataSet::save_auto_associative_data_binary(const string& bin
     ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class." << endl
-               << "void save_auto_associative_data_binary(const string) method." << endl
-               << "Cannot open data binary file." << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open data binary file.");
 
     // Write data
 
@@ -278,15 +262,7 @@ void AutoAssociationDataSet::load_auto_associative_data_binary(const string& aut
     file.open(auto_associative_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void load_auto_associative_data_binary(const string&) method.\n"
-               << "Cannot open binary file: " << auto_associative_data_file_name << "\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open binary file: " + auto_associative_data_file_name + "\n");
 
     streamsize size = sizeof(Index);
 

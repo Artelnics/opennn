@@ -160,13 +160,7 @@ dimensions Layer::get_output_dimensions() const
 
 void Layer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&)
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
 
 
@@ -174,49 +168,25 @@ void Layer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerFo
 
 Index Layer::get_inputs_number() const
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "get_inputs_number() const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
 
 
 Index Layer::get_neurons_number() const
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "get_neurons_number() const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
 
 
 void Layer::set_inputs_number(const Index&)
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "set_inputs_number(const Index&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
 
 
 void Layer::set_neurons_number(const Index&)
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "set_neurons_number(const Index&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
 
 

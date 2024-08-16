@@ -13,15 +13,7 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
     FILE* file = fopen(filename.data(), "rb");
 
     if(!file)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ImageDataSet class.\n"
-               << "void read_bmp_image() method.\n"
-               << "Couldn't open the file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Couldn't open the file.\n");
 
     unsigned char info[54];
 
@@ -412,15 +404,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     raw_variables(image_size).name = "class";
 
     if(classes_number == 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Invalid number of categories. The minimum is 2 and you have 1.\n");
 
     Tensor<string, 1> categories(classes_number);
 

@@ -194,26 +194,14 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("BoxPlotDistances");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "BoxPlotDistances element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("BoxPlotDistances element is nullptr.\n");
 
     // Minimum
 
     const tinyxml2::XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
 
     if(!minimum_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Minimum element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Minimum element is nullptr.\n");
 
     type new_minimum = type(0);
 
@@ -228,13 +216,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     const tinyxml2::XMLElement* first_quartile_element = root_element->FirstChildElement("FirstQuartile");
 
     if(!first_quartile_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "FirstQuartile element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("FirstQuartile element is nullptr.\n");
 
     type new_first_quartile = type(0);
 
@@ -249,13 +231,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     const tinyxml2::XMLElement* median_element = root_element->FirstChildElement("Median");
 
     if(!median_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Median element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Median element is nullptr.\n");
 
     type new_median = type(0);
 
@@ -270,13 +246,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     const tinyxml2::XMLElement* third_quartile_element = root_element->FirstChildElement("ThirdQuartile");
 
     if(!third_quartile_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "ThirdQuartile element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("ThirdQuartile element is nullptr.\n");
 
     type new_third_quartile = type(0);
 
@@ -291,13 +261,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     const tinyxml2::XMLElement* maximum_element = root_element->FirstChildElement("Maximum");
 
     if(!maximum_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Maximum element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Maximum element is nullptr.\n");
 
     type new_maximum = type(0);
 
@@ -316,26 +280,14 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("DistancesDescriptives");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "DistancesDescriptives element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("DistancesDescriptives element is nullptr.\n");
 
     // Minimum
 
     const tinyxml2::XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
 
     if(!minimum_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Minimum element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Minimum element is nullptr.\n");
 
     type new_minimum = type(0);
 
@@ -350,13 +302,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
     const tinyxml2::XMLElement* maximum_element = root_element->FirstChildElement("Maximum");
 
     if(!maximum_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Maximum element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Maximum element is nullptr.\n");
 
     type new_maximum = type(0);
 
@@ -370,13 +316,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
     const tinyxml2::XMLElement* mean_element = root_element->FirstChildElement("Mean");
 
     if(!mean_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Mean element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Mean element is nullptr.\n");
 
     type new_mean = type(0);
 
@@ -390,13 +330,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
     const tinyxml2::XMLElement* standard_deviation_element = root_element->FirstChildElement("StandardDeviation");
 
     if(!standard_deviation_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "StandardDeviation element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("StandardDeviation element is nullptr.\n");
 
     type new_standard_deviation = type(0);
 
@@ -418,24 +352,12 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
     const tinyxml2::XMLElement* multivariate_distances_element = document.FirstChildElement("MultivariateDistancesBoxPlot");
 
     if(!multivariate_distances_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Multivariate Distances BoxPlot element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("MultivariateDistancesBoxPlot element is nullptr.\n");
 
     const tinyxml2::XMLElement* variables_number_element = multivariate_distances_element->FirstChildElement("VariablesNumber");
 
     if(!variables_number_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Variables Number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Variables Number element is nullptr.\n");
 
     const Index variables_number = Index(atoi(variables_number_element->GetText()));
 
@@ -450,13 +372,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
         start_element = variable_box_plot_element;
 
         if(!variable_box_plot_element)
-        {
-            buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                   << "void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Variable boxPlot element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Variable boxPlot element is nullptr.\n");
 
         if(variable_box_plot_element->GetText())
         {
@@ -575,26 +491,10 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
     ofstream file(file_name.c_str());
 
     if(distances_vector.size() != types_vector.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_autoassociation_outputs(const string&) method.\n"
-               << "Distances and types vectors must have the same dimensions.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Distances and types vectors must have the same dimensions.\n");
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void save_autoassociation_outputs(const string&) method.\n"
-               << "Cannot open " << file_name << " file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open " + file_name + " file.\n");
 
     const Index samples_number = distances_vector.dimension(0);
 
@@ -902,13 +802,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Neural network element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neural network element is nullptr.\n");
 
     // Inputs
     {

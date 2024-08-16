@@ -105,13 +105,7 @@ string ProbabilisticLayer3D::write_activation_function() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "string write_activation_function() const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown probabilistic method.\n");
     }
 }
 
@@ -131,13 +125,7 @@ string ProbabilisticLayer3D::write_activation_function_text() const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "string write_activation_function_text() const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown probabilistic method.\n");
     }
 }
 
@@ -313,25 +301,10 @@ void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_thres
 #ifdef OPENNN_DEBUG
 
     if(new_decision_threshold <= 0)
-    {
-        ostringstream buffer;
+        throw runtime_error("Decision threshold(" + to_string(new_decision_threshold) + ") must be greater than zero.\n");
 
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void set_decision_threshold(const type&) method.\n"
-               << "Decision threshold(" << decision_threshold << ") must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
-    else if(new_decision_threshold >= 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void set_decision_threshold(const type&) method.\n"
-               << "Decision threshold(" << decision_threshold << ") must be less than one.\n";
-
-        throw runtime_error(buffer.str());
-    }
+    if(new_decision_threshold >= 1)
+        throw runtime_error("Decision threshold(" + to_string(new_decision_threshold) + ") must be less than one.\n");
 
 #endif
 
@@ -385,13 +358,7 @@ void ProbabilisticLayer3D::set_activation_function(const string& new_activation_
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-               << "void set_activation_function(const string&) method.\n"
-               << "Unknown probabilistic method: " << new_activation_function << ".\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
     }
 }
 
@@ -645,26 +612,14 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer3D");
 
     if(!probabilistic_layer_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "ProbabilisticLayer3D element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("ProbabilisticLayer3D element is nullptr.\n");
 
     // Layer name
 
     const tinyxml2::XMLElement* layer_name_element = probabilistic_layer_element->FirstChildElement("LayerName");
 
     if(!layer_name_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "LayerName element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
     {
@@ -676,13 +631,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* inputs_number_element = probabilistic_layer_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "InputsNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
     {
@@ -694,13 +643,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* inputs_depth_element = probabilistic_layer_element->FirstChildElement("InputsDepth");
 
     if(!inputs_depth_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "InputsDepth element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("InputsDepth element is nullptr.\n");
 
     if(inputs_depth_element->GetText())
     {
@@ -712,13 +655,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
 
     if(!neurons_number_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "NeuronsNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("NeuronsNumber element is nullptr.\n");
 
     if(neurons_number_element->GetText())
     {
@@ -730,13 +667,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* decision_threshold_element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
 
     if(!decision_threshold_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "DecisionThreshold element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("DecisionThreshold element is nullptr.\n");
 
     if(decision_threshold_element->GetText())
     {
@@ -748,13 +679,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
 
     if(!activation_function_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "ActivationFunction element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("ActivationFunction element is nullptr.\n");
 
     if(activation_function_element->GetText())
     {
@@ -766,13 +691,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
 
     if(!parameters_element)
-    {
-        buffer << "OpenNN Exception: ProbabilisticLayer3D class.\n"
-            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-            << "Parameters element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
     {

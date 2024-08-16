@@ -70,21 +70,6 @@ void GrowingNeurons::set_default()
 
 void GrowingNeurons::set_neurons_increment(const Index& new_neurons_increment)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_neurons_increment <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void set_neurons_increment(const Index&) method.\n"
-               << "New_step(" << new_neurons_increment << ") must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     neurons_increment = new_neurons_increment;
 }
 
@@ -94,21 +79,6 @@ void GrowingNeurons::set_neurons_increment(const Index& new_neurons_increment)
 
 void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_selection_failures <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void set_maximum_selection_failures(const Index&) method.\n"
-               << "Maximum selection failures must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
-
     maximum_selection_failures = new_maximum_selection_failures;
 }
 
@@ -120,15 +90,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     #ifdef OPENNN_DEBUG
 
     if(!training_strategy)
-    {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: growing_neurons class.\n"
-                << "TrainingStrategy* training_strategy const method.\n"
-                << "training_strategy is nullptr.\n";
-
-         throw runtime_error(buffer.str());
-    }
+         throw runtime_error("training_strategy is nullptr.\n");
 
     #endif
 
@@ -499,15 +461,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("GrowingNeurons");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "GrowingNeurons element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("GrowingNeurons element is nullptr.\n");
 
     // Minimum neurons
     {
@@ -670,15 +624,7 @@ void GrowingNeurons::load(const string& file_name)
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }
