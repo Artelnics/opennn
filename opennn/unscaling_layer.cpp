@@ -405,15 +405,8 @@ void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
     const Index new_descriptives_size = new_descriptives.size();
 
     if(new_descriptives_size != neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
-               << "Size of descriptives (" << new_descriptives_size << ") must be equal to number of unscaling neurons (" << neurons_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of descriptives (" + to_string(new_descriptives_size) + ") "
+                            "must be equal to number of unscaling neurons (" + to_string(neurons_number) + ").\n");
 
 #endif
 
@@ -493,15 +486,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
     const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "set_scalers(const string& new_scaling_methods_string) method.\n"
-               << "Neurons number (" << neurons_number << ")must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
 
 #endif
 
@@ -527,12 +512,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-               << "set_scalers(const string& new_scaling_methods_string) method.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("set_scalers(const string& new_scaling_methods_string) method.\n");
     }
 }
 
@@ -548,15 +528,7 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
 #ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-               << "void set_scalers(const Tensor<string, 1>&) method.\n"
-               << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
 
 #endif
 
@@ -586,13 +558,7 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-                   << "void set_scalers(const Tensor<string, 1>&) method.\n"
-                   << "Unknown scaling method: " << new_unscaling_methods_string(i) << ".\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaling method: " + new_unscaling_methods_string(i) + ".\n");
         }
     }
 
@@ -637,15 +603,7 @@ void UnscalingLayer::check_range(const Tensor<type, 1>& outputs) const
     const Index size = outputs.size();
 
     if(size != neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void check_range(const Tensor<type, 1>&) const method.\n"
-               << "Size of outputs must be equal to number of unscaling neurons.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of outputs must be equal to number of unscaling neurons.\n");
 
 #endif
 
@@ -757,13 +715,7 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
             }
             else
             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: ScalingLayer2D class\n"
-                       << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                       << "Unknown scaling method.\n";
-
-                throw runtime_error(buffer.str());
+                throw runtime_error("Unknown scaling method.\n");
             }
         }
     }
@@ -906,37 +858,19 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         start_element = descriptives_element;
 
         if(!descriptives_element)
-        {
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Descriptives of unscaling neuron " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Descriptives of unscaling neuron " + to_string(i+1) + " is nullptr.\n");
 
         descriptives_element->QueryUnsignedAttribute("Index", &index);
 
         if(index != i+1)
-        {
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Index " << index << " is not correct.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
 
         // Minimum
 
         const tinyxml2::XMLElement* minimum_element = descriptives_element->FirstChildElement("Minimum");
 
         if(!minimum_element)
-        {
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Minimum element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Minimum element " + to_string(i+1) + " is nullptr.\n");
 
         if(minimum_element->GetText())
         {
@@ -948,13 +882,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         const tinyxml2::XMLElement* maximum_element = descriptives_element->FirstChildElement("Maximum");
 
         if(!maximum_element)
-        {
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Maximum element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Maximum element " + to_string(i+1) + " is nullptr.\n");
 
         if(maximum_element->GetText())
         {
@@ -966,13 +894,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         const tinyxml2::XMLElement* mean_element = descriptives_element->FirstChildElement("Mean");
 
         if(!mean_element)
-        {
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Mean element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Mean element " + to_string(i+1) + " is nullptr.\n");
 
         if(mean_element->GetText())
         {
@@ -984,13 +906,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         const tinyxml2::XMLElement* standard_deviation_element = descriptives_element->FirstChildElement("StandardDeviation");
 
         if(!standard_deviation_element)
-        {
-            buffer << "OpenNN Exception: UnscalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Standard deviation element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Standard deviation element " + to_string(i+1) + " is nullptr.\n");
 
         if(standard_deviation_element->GetText())
         {

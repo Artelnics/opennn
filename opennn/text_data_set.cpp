@@ -113,13 +113,7 @@ const Tensor<Index,1>& TextDataSet::get_words_frequencies() const
 //    }
 //    else
 //    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: DataSet class.\n"
-//               << "void set_text_separator(const string&) method.\n"
-//               << "Unknown separator: " << new_separator_string << ".\n";
-
-//        throw runtime_error(buffer.str());
+//        throw runtime_error("Unknown separator: " + new_separator_string + ".\n");
 //    }
 //}
 

@@ -755,13 +755,7 @@ void ScalingLayer2D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
             }
             else
             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: ScalingLayer2D class\n"
-                       << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                       << "Unknown scaling method.\n";
-
-                throw runtime_error(buffer.str());
+                throw runtime_error("Unknown scaling method.\n");
             }
         }
     }
@@ -1144,13 +1138,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("ScalingLayer2D");
 
     if(!scaling_layer_element)
-    {
-        buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Scaling layer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Scaling layer element is nullptr.\n");
 
     // Scaling neurons number
 
@@ -1158,11 +1146,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!neurons_number_element)
     {
-        buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Scaling neurons number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Scaling neurons number element is nullptr.\n");
     }
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
@@ -1179,33 +1163,19 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
         start_element = scaling_neuron_element;
 
         if(!scaling_neuron_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Scaling neuron " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Scaling neuron " + to_string(i+1) + " is nullptr.\n");
 
         scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
 
         if(index != i+1)
-        {
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
-        }
 
         // Descriptives
 
         const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
 
         if(!descriptives_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Descriptives element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Descriptives element " + to_string(i+1) + " is nullptr.\n");
 
         if(descriptives_element->GetText())
         {
@@ -1223,13 +1193,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
         const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
 
         if(!scaling_method_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Scaling method element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Scaling method element " + to_string(i+1) + " is nullptr.\n");
 
         const string new_method = scaling_method_element->GetText();
 
