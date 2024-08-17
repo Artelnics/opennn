@@ -15,22 +15,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a default error term object, with all pointers initialized to nullptr.
-/// It also initializes all the rest of the class members to their default values.
-
 LossIndex::LossIndex()
 {
     set_default();
 }
 
-
-/// Neural network and data set constructor.
-/// It creates a error term object associated with a neural network and to be measured on a data set.
-/// It initializes the rest of pointers to nullptr.
-/// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network Pointer to a neural network object.
-/// @param new_data_set Pointer to a data set object.
 
 LossIndex::LossIndex(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : neural_network(new_neural_network),
@@ -40,8 +29,6 @@ LossIndex::LossIndex(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 }
 
 
-/// Destructor.
-
 LossIndex::~LossIndex()
 {
     delete thread_pool;
@@ -49,25 +36,17 @@ LossIndex::~LossIndex()
 }
 
 
-/// Returns regularization weight.
-
 const type& LossIndex::get_regularization_weight() const
 {
     return regularization_weight;
 }
 
 
-/// Returns true if messages from this class can be displayed on the screen, or false if messages
-/// from this class can't be displayed on the screen.
-
 const bool& LossIndex::get_display() const
 {
     return display;
 }
 
-
-/// Returns true if this error term object has a neural nework class pointer associated,
-/// and false otherwise
 
 bool LossIndex::has_neural_network() const
 {
@@ -82,9 +61,6 @@ bool LossIndex::has_neural_network() const
 }
 
 
-/// Returns true if this error term object has a data set pointer associated,
-/// and false otherwise.
-
 bool LossIndex::has_data_set() const
 {
     if(data_set)
@@ -98,16 +74,11 @@ bool LossIndex::has_data_set() const
 }
 
 
-/// Returns the regularization method
-
 LossIndex::RegularizationMethod LossIndex::get_regularization_method() const
 {
     return regularization_method;
 }
 
-
-/// Sets all the member pointers to nullptr(neural network, data set).
-/// It also initializes all the rest of the class members to their default values.
 
 void LossIndex::set()
 {
@@ -118,10 +89,6 @@ void LossIndex::set()
 }
 
 
-/// Sets all the member pointers to nullptr, but the neural network, which set to a given pointer.
-/// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network Pointer to a neural network object.
-
 void LossIndex::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
@@ -130,10 +97,6 @@ void LossIndex::set(NeuralNetwork* new_neural_network)
     set_default();
 }
 
-
-/// Sets all the member pointers to nullptr, but the data set, which set to a given pointer.
-/// It also initializes all the rest of the class members to their default values.
-/// @param new_data_set Pointer to a data set object.
 
 void LossIndex::set(DataSet* new_data_set)
 {
@@ -144,11 +107,6 @@ void LossIndex::set(DataSet* new_data_set)
 }
 
 
-/// Sets new neural network and data set pointers.
-/// Finally, it initializes all the rest of the class members to their default values.
-/// @param new_neural_network Pointer to a neural network object.
-/// @param new_data_set Pointer to a data set object.
-
 void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
     neural_network = new_neural_network;
@@ -158,9 +116,6 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     set_default();
 }
 
-
-/// Sets to this error term object the members of another error term object.
-/// @param other_error_term Error term to be copied.
 
 void LossIndex::set(const LossIndex& other_error_term)
 {
@@ -184,24 +139,17 @@ void LossIndex::set_threads_number(const int& new_threads_number)
 }
 
 
-/// Sets a pointer to a neural network object which is to be associated with the error term.
-/// @param new_neural_network Pointer to a neural network object to be associated with the error term.
-
 void LossIndex::set_neural_network(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
 }
 
 
-/// Sets a new data set on which the error term is to be measured.
-
 void LossIndex::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
 }
 
-
-/// Sets the members of the error term to their default values:
 
 void LossIndex::set_default()
 {
@@ -216,9 +164,6 @@ void LossIndex::set_default()
     regularization_method = RegularizationMethod::L2;
 }
 
-
-/// Sets the object with the regularization method.
-/// @param new_regularization_method String with method.
 
 void LossIndex::set_regularization_method(const string& new_regularization_method)
 {
@@ -241,17 +186,11 @@ void LossIndex::set_regularization_method(const string& new_regularization_metho
 }
 
 
-/// Sets the object with the regularization method.
-/// @param new_regularization_method String with method.
-
 void LossIndex::set_regularization_method(const LossIndex::RegularizationMethod& new_regularization_method)
 {
     regularization_method = new_regularization_method;
 }
 
-
-/// Sets the object with the regularization weights.
-/// @param new_regularization_method New regularization weight.
 
 void LossIndex::set_regularization_weight(const type& new_regularization_weight)
 {
@@ -259,18 +198,11 @@ void LossIndex::set_regularization_weight(const type& new_regularization_weight)
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void LossIndex::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Returns true if there are selection samples and false otherwise.
 
 bool LossIndex::has_selection() const
 {
@@ -284,6 +216,7 @@ bool LossIndex::has_selection() const
     }
 }
 
+
 Index LossIndex::find_input_index(const Tensor<Index, 1>& layer_inputs_indices, const Index layer_index) const
 {
     for(Index i = 0; i < layer_inputs_indices.size(); i++)
@@ -293,9 +226,6 @@ Index LossIndex::find_input_index(const Tensor<Index, 1>& layer_inputs_indices, 
     return -1;
 }
 
-
-/// Checks whether there is a neural network associated with the error term.
-/// If some of the above conditions is not hold, the method throws an exception.
 
 void LossIndex::check() const
 {
@@ -385,10 +315,6 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 }
 
 
-/// This method calculates the second-order loss.
-/// It is used for optimization of parameters during training.
-/// Returns a second-order terms loss structure, which contains the values and the Hessian of the error terms function.
-
 void LossIndex::back_propagate_lm(const Batch& batch,
                                   ForwardPropagation& forward_propagation,
                                   BackPropagationLM& back_propagation_lm) const
@@ -427,16 +353,6 @@ void LossIndex::back_propagate_lm(const Batch& batch,
     }
 }
 
-
-/// Calculates the <i>Jacobian</i> matrix of the error terms from layers.
-/// Returns the Jacobian of the error terms function, according to the objective type used in the loss index expression.
-/// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
-/// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
-/// The number of rows in the Jacobian matrix are the number of parameters, and the number of raw_variables
-/// the number of terms composing the objective.
-/// @param inputs Tensor with inputs.
-/// @param layers_activations vector of tensors with layers activations.
-/// @param layers_delta vector of tensors with layers delta.
 
 void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
                                                             ForwardPropagation& forward_propagation,
@@ -545,24 +461,17 @@ void LossIndex::calculate_error_gradient_lm(const Batch&,
 }
 
 
-/// Returns a string with the default type of error term, "USER_PERFORMANCE_TERM".
-
 string LossIndex::get_error_type() const
 {
     return "USER_ERROR_TERM";
 }
 
 
-/// Returns a string with the default type of error term in text format, "USER_PERFORMANCE_TERM".
-
 string LossIndex::get_error_type_text() const
 {
     return "USER_ERROR_TERM";
 }
 
-
-/// Returns a string with the regularization information of the error term.
-/// It will be used by the training strategy to monitor the training process.
 
 string LossIndex::write_regularization_method() const
 {
@@ -582,11 +491,6 @@ string LossIndex::write_regularization_method() const
 }
 
 
-/// It calculates the regularization term using through the use of parameters.
-/// Returns the regularization evaluation, according to the respective regularization type used in the
-/// loss index expression.
-/// @param parameters vector with the parameters to get the regularization term.
-
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {   
     switch(regularization_method)
@@ -603,11 +507,6 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
     return type(0);
 }
 
-
-/// Returns the gradient of the regularization, according to the regularization type.
-/// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
-/// The size is thus the number of parameters
-/// @param parameters vector with the parameters to get the regularization term.
 
 void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& regularization_gradient) const
 {
@@ -627,12 +526,6 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
     }
 }
 
-
-/// It calculate the regularization term using the <i>Hessian</i>.
-/// Returns the Hessian of the regularization, according to the regularization type.
-/// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
-/// That matrix is symmetric, with size the number of parameters.
-/// @param parameters vector with the parameters to get the regularization term.
 
 void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
 {
@@ -762,9 +655,6 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 }
 
 
-/// Serializes a default error term object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
-
 void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -854,9 +744,6 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
 }
 
 
-/// Loads a default error term from an XML document.
-/// @param document TinyXML document containing the error term members.
-
 void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
@@ -878,8 +765,6 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
     regularization_from_XML(regularization_document);
 }
 
-
-/// Destructor.
 
 BackPropagation::~BackPropagation()
 {
@@ -1133,9 +1018,6 @@ type LossIndex::calculate_eta() const
     return pow(type(10.0), type(-1.0*precision_digits));
 }
 
-
-/// Calculates a proper step size for computing the derivatives, as a function of the inputs point value.
-/// @param x Input value.
 
 type LossIndex::calculate_h(const type& x) const
 {

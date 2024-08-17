@@ -14,10 +14,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a empty layer object.
-/// This constructor also initializes the rest of the class members to their default values.
-
 MultiheadAttentionLayer::MultiheadAttentionLayer() : Layer()
 {
     set();
@@ -25,11 +21,6 @@ MultiheadAttentionLayer::MultiheadAttentionLayer() : Layer()
     layer_type = Type::MultiheadAttention;
 }
 
-
-/// Layer architecture constructor.
-/// It creates a layer object with given input size, embedding depth and number of attention heads.
-/// It initializes the parameters at random.
-/// This constructor also initializes the rest of the class members to their default values.
 
 MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
                                                  const Index& new_context_size,
@@ -47,15 +38,11 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
 }
 
 
-/// Returns the size of the input to the layer.
-
 Index MultiheadAttentionLayer::get_input_size() const
 {
     return input_size;
 }
 
-
-/// Returns the size of the context to the layer.
 
 Index MultiheadAttentionLayer::get_context_size() const
 {
@@ -63,15 +50,11 @@ Index MultiheadAttentionLayer::get_context_size() const
 }
 
 
-/// Returns the embedding depth used in the layer.
-
 Index MultiheadAttentionLayer::get_depth() const
 {
     return depth;
 }
 
-
-/// Returns the number of attention heads of the layer.
 
 Index MultiheadAttentionLayer::get_heads_number() const
 {
@@ -90,8 +73,6 @@ dimensions MultiheadAttentionLayer::get_output_dimensions() const
     return { input_size, depth };
 }
 
-
-/// Return linear transformation weights and biases
 
 Tensor<type, 3> MultiheadAttentionLayer::get_query_weights() const
 {
@@ -129,20 +110,17 @@ Tensor<type, 2> MultiheadAttentionLayer::get_value_biases() const
 }
 
 
-/// Returns the linear projection weights
-
 Tensor<type, 3> MultiheadAttentionLayer::get_projection_weights() const
 {
     return projection_weights;
 }
+
 
 Tensor<type, 1> MultiheadAttentionLayer::get_projection_biases() const
 {
     return projection_biases;
 }
 
-
-/// Returns the number of parameters of the layer.
 
 Index MultiheadAttentionLayer::get_parameters_number() const
 {
@@ -220,17 +198,11 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 }
 
 
-/// Returns true if messages from this class are displayed on the screen,
-/// or false if messages from this class are not displayed on the screen.
-
 const bool& MultiheadAttentionLayer::get_display() const
 {
     return display;
 }
 
-
-/// Sets an empty layer.
-/// It also sets the rest of the members to their default values.
 
 void MultiheadAttentionLayer::set()
 {
@@ -256,9 +228,6 @@ void MultiheadAttentionLayer::set()
 }
 
 
-/// Sets new input size, embedding depth, number of attention heads and activation function of the layer.
-/// It also sets the rest of the members to their default values.
-
 void MultiheadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_context_size,
                                   const Index& new_depth,
@@ -280,8 +249,6 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 }
 
 
-/// Sets those members not related to the perceptrons to their default value.
-
 void MultiheadAttentionLayer::set_default()
 {
     layer_name = "multihead_attention_layer";
@@ -299,8 +266,6 @@ void MultiheadAttentionLayer::set_name(const string& new_layer_name)
     layer_name = new_layer_name;
 }
 
-
-/// Sets a new input size in the layer.
 
 void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
@@ -385,23 +350,17 @@ void MultiheadAttentionLayer::set_input_size(const Index& new_input_size)
 }
 
 
-/// Sets a new input size in the layer.
-
 void MultiheadAttentionLayer::set_context_size(const Index& new_context_size)
 {
     context_size = new_context_size;
 }
 
 
-/// Sets a new embedding depth in the layer.
-
 void MultiheadAttentionLayer::set_depth(const Index& new_depth)
 {
     depth = new_depth;
 }
 
-
-/// Sets a new number of attention heads in the layer.
 
 void MultiheadAttentionLayer::set_heads_number(const Index& new_heads_number)
 {
@@ -410,8 +369,6 @@ void MultiheadAttentionLayer::set_heads_number(const Index& new_heads_number)
     set_weights();
 }
 
-
-/// Sets the layer's weights according to the parameters.
 
 void MultiheadAttentionLayer::set_weights()
 {
@@ -438,8 +395,8 @@ void MultiheadAttentionLayer::set_parameters_random()
     const type minimum = type(-0.2);
     const type maximum = type(0.2);
 
-    /// @todo in Tensor form
-    /// @todo can we reduce the number of loops for things with the same size?
+    // @todo in Tensor form
+    // @todo can we reduce the number of loops for things with the same size?
 
 #pragma omp parallel for
     for(Index i = 0; i < query_weights.size(); i++)
@@ -589,11 +546,6 @@ void MultiheadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void MultiheadAttentionLayer::set_display(const bool& new_display)
 {
     display = new_display;
@@ -639,7 +591,7 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 }
 
 
-/// @todo Check if we can do this with transposed matrices in contract. 
+// @todo Check if we can do this with transposed matrices in contract. 
 
 void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& input,
                                                        Tensor<type, 4>& transformed_input,
@@ -716,10 +668,6 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
     sum_matrices(thread_pool_device, projection_biases, outputs);
 }
 
-
-/// Computes the attention scores by comparing (via dot product) query and key.
-/// Attention scores must be computed separately for each batch element and each attention head 
-/// (batch matrix multiplication).
 
 void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
                                                        const Tensor<type, 4>& key,

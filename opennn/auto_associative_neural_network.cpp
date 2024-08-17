@@ -780,20 +780,15 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
         file_stream.CloseElement();
     }
 
-    //MultivariateDistancesBoxPlot (end tag)
+    // MultivariateDistancesBoxPlot (end tag)
 
     file_stream.CloseElement();
-
-    // ----------------------------------------------------------------
 
     // Neural network (end tag)
 
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this neural network object.
-/// @param document XML document containing the member data.
 
 void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 {

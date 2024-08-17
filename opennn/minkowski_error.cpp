@@ -13,21 +13,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates Minkowski error term not associated with any neural network and not measured on any data set.
-/// It also initializes all the rest of the class members to their default values.
-
 MinkowskiError::MinkowskiError() : LossIndex()
 {
     set_default();
 }
 
-
-/// Neural network and data set constructor.
-/// It creates a Minkowski error term object associated with a neural network and measured on a data set.
-/// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network Pointer to a neural network object.
-/// @param new_data_set Pointer to a data set object.
 
 MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
@@ -35,19 +25,12 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network, DataSet* new_d
     set_default();
 }
 
-/// Returns the Minkowski exponent value used to calculate the error.
 
 type MinkowskiError::get_Minkowski_parameter() const
 {
     return minkowski_parameter;
 }
 
-
-/// Sets the default values to a Minkowski error object:
-/// <ul>
-/// <li> Minkowski parameter: 1.5.
-/// <li> Display: true.
-/// </ul>
 
 void MinkowskiError::set_default()
 {
@@ -56,10 +39,6 @@ void MinkowskiError::set_default()
     display = true;
 }
 
-
-/// Sets a new Minkowski exponent value to be used to calculate the error.
-/// The Minkowski R-value must be comprised between 1 and 2.
-/// @param new_Minkowski_parameter Minkowski exponent value.
 
 void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter)
 {
@@ -73,11 +52,6 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
     minkowski_parameter = new_Minkowski_parameter;
 }
 
-
-/// \brief MinkowskiError::calculate_error
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
 
 void MinkowskiError::calculate_error(const Batch& batch,
                                      const ForwardPropagation& forward_propagation,
@@ -144,24 +118,17 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 }
 
 
-/// Returns a string with the name of the Minkowski error loss type, "MINKOWSKI_ERROR".
-
 string MinkowskiError::get_error_type() const
 {
     return "MINKOWSKI_ERROR";
 }
 
 
-/// Returns a string with the name of the Minkowski error loss type in text format.
-
 string MinkowskiError::get_error_type_text() const
 {
     return "Minkowski error";
 }
 
-
-/// Serializes the cross-entropy error object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document
 
 void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -187,9 +154,6 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Loads a Minkowski error object from an XML document.
-/// @param document TinyXML document containing the members of the object.
 
 void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 {

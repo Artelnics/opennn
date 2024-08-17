@@ -367,7 +367,7 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
 
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
-    /// @todo do not create tensor
+    // @todo do not create tensor
 
     Tensor<type, 4> pool(1, pool_height, pool_width, 1);
 
@@ -526,7 +526,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
         }
     }
 
-    /// @todo calculate input derivatives (= deltas for previous layer)
+    // @todo calculate input derivatives (= deltas for previous layer)
 
     //input_derivatives.device(*thread_pool_device) = 0;
 
