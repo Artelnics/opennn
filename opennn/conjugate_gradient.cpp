@@ -22,21 +22,12 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a conjugate gradient optimization algorithm object not associated with any loss index object.
-/// It also initializes the class members to their default values.
-
 ConjugateGradient::ConjugateGradient()
     : OptimizationAlgorithm()
 {
     set_default();
 }
 
-
-/// Loss index constructor.
-/// It creates a conjugate gradient optimization algorithm associated with a loss index object.
-/// It also initializes the rest of the class members to their default values.
-/// @param new_loss_index Pointer to a loss index object.
 
 ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
@@ -46,10 +37,6 @@ ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index)
     set_default();
 }
 
-/// Returns the conjugate gradient training direction.
-/// @param old_gradient Gradient vector in the previous iteration.
-/// @param gradient Current gradient vector.
-/// @param old_training_direction Training direction in the previous iteration.
 
 void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Tensor<type, 1>& old_gradient,
                                                                         const Tensor<type, 1>& gradient,
@@ -99,10 +86,6 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
     }
 }
 
-
-/// Returns the Fletcher-Reeves parameter used to calculate the training direction.
-/// @param old_gradient Previous error function gradient.
-/// @param gradient: Current error function gradient.
 
 type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
@@ -163,11 +146,6 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 }
 
 
-/// Returns the training direction using the Fletcher-Reeves update.
-/// @param old_gradient Previous error function gradient.
-/// @param gradient Current error function gradient.
-/// @param old_training_direction Previous training direction vector.
-
 void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& old_gradient,
                                                         const Tensor<type, 1>& gradient,
                                                         const Tensor<type, 1>& old_training_direction,
@@ -206,19 +184,12 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
 }
 
 
-/// Returns the dradient descent training direction.
-/// @param gradient Current error function gradient.
-
 void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
                                                                       Tensor<type, 1>& training_direction) const
 {
     training_direction.device(*thread_pool_device) = -gradient;
 }
 
-
-/// Returns the Polak-Ribiere parameter used to calculate the training direction.
-/// @param old_gradient Previous error function gradient.
-/// @param gradient Current error function gradient.
 
 type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
@@ -278,11 +249,6 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 }
 
 
-/// Returns the training direction using the Polak-Ribiere update.
-/// @param old_gradient Previous error function gradient.
-/// @param gradient Current error function gradient.
-/// @param old_training_direction Previous training direction vector.
-
 void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& old_gradient,
                                                         const Tensor<type, 1>& gradient,
                                                         const Tensor<type, 1>& old_training_direction,
@@ -322,15 +288,11 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
 }
 
 
-/// Returns a constant reference to the learning rate algorithm object inside the conjugate gradient method object.
-
 const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() const
 {
     return learning_rate_algorithm;
 }
 
-
-/// Returns a pointer to the learning rate algorithm object inside the conjugate gradient method object.
 
 LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm()
 {
@@ -338,16 +300,11 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm()
 }
 
 
-/// Returns the goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
-
 const type& ConjugateGradient::get_loss_goal() const
 {
     return training_loss_goal;
 }
 
-
-/// Returns the maximum number of epochs for training.
 
 const Index& ConjugateGradient::get_maximum_epochs_number() const
 {
@@ -355,15 +312,11 @@ const Index& ConjugateGradient::get_maximum_epochs_number() const
 }
 
 
-/// Returns the maximum number of selection error increases during the training process.
-
 const Index& ConjugateGradient::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
 
-
-/// Returns the maximum training time.
 
 const type& ConjugateGradient::get_maximum_time() const
 {
@@ -371,54 +324,17 @@ const type& ConjugateGradient::get_maximum_time() const
 }
 
 
-/// Returns the minimum loss improvement during training.
-
 const type& ConjugateGradient::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
 
 
-/// Returns the conjugate gradient training direction method used for training.
-
 const ConjugateGradient::TrainingDirectionMethod& ConjugateGradient::get_training_direction_method() const
 {
     return training_direction_method;
 }
 
-
-/// Sets the default values into a conjugate gradient object.
-/// Training operators:
-/// <ul>
-/// <li> Training direction method = Polak-Ribiere;
-/// <li> Learning rate method = Brent;
-/// </ul>
-/// Training parameters:
-/// <ul>
-/// <li> First learning rate: 1.0.
-/// <li> Bracketing factor: 2.0.
-/// <li> Learning rate tolerance: 1.0e-3.
-/// </ul>
-/// Stopping criteria:
-/// <ul>
-/// <li> Loss goal: -numeric_limits<type>::max().
-/// <li> Maximum training time: 1.0e6.
-/// <li> Maximum number of epochs: 100.
-/// </ul>
-/// User stuff:
-/// <ul>
-/// <li> Warning learning rate: 1.0e6.
-/// <li> Error learning rate: 1.0e12.
-/// <li> Display: true.
-/// <li> Display period: 10.
-/// <li> Save period: 0.
-/// </ul>
-/// Reserve:
-/// <ul>
-/// <li> Reserve training error history: false.
-/// <li> Reserve training direction norm history: false.
-/// </ul>
-///
 
 void ConjugateGradient::set_default()
 {
@@ -439,10 +355,6 @@ void ConjugateGradient::set_default()
 }
 
 
-/// Sets a pointer to a loss index object to be associated with the conjugate gradient object.
-/// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index Pointer to a loss index object.
-
 void ConjugateGradient::set_loss_index(LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
@@ -451,9 +363,6 @@ void ConjugateGradient::set_loss_index(LossIndex* new_loss_index)
 }
 
 
-/// Sets a new training direction method to be used for training.
-/// @param new_training_direction_method Conjugate gradient training direction method.
-
 void ConjugateGradient::set_training_direction_method
                         (const ConjugateGradient::TrainingDirectionMethod& new_training_direction_method)
 {
@@ -461,20 +370,11 @@ void ConjugateGradient::set_training_direction_method
 }
 
 
-/// Sets a new conjugate gradient training direction from a string representation.
-/// Possible values are:
-/// <ul>
-/// <li> "PR"
-/// <li> "FR"
-/// </ul>
-/// @param new_training_direction_method_name String with the name of the training direction method.
-
 void ConjugateGradient::set_training_direction_method(const string& new_training_direction_method_name)
 {
     if(new_training_direction_method_name == "PR")
     {
         training_direction_method = TrainingDirectionMethod::PR;
-
     }
     else if(new_training_direction_method_name == "FR")
     {
@@ -487,18 +387,11 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 }
 
 
-/// Sets a new goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
-/// @param new_loss_goal Goal value for the loss.
-
 void ConjugateGradient::set_loss_goal(const type& new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
 }
 
-
-/// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_failures Maximum number of epochs in which the selection evalutation increases.
 
 void ConjugateGradient::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
@@ -506,17 +399,11 @@ void ConjugateGradient::set_maximum_selection_failures(const Index& new_maximum_
 }
 
 
-/// Sets a maximum number of epochs for training.
-/// @param new_maximum_iterations_number Maximum number of epochs for training.
-
 void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
-
-/// Sets a new maximum training time.
-/// @param new_maximum_time Maximum training time.
 
 void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 {
@@ -524,17 +411,11 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
-
 void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
-
-/// Trains a neural network with an associated loss index according to the conjugate gradient algorithm.
-/// Training occurs according to the training operators, training parameters and stopping criteria.
 
 TrainingResults ConjugateGradient::perform_training()
 {
@@ -554,8 +435,6 @@ TrainingResults ConjugateGradient::perform_training()
     type elapsed_time = type(0);
 
     // Data set
-
-    //cout << "----- ConjugateGradient ----" << endl;
 
     DataSet* data_set = loss_index->get_data_set();
 
@@ -756,8 +635,6 @@ TrainingResults ConjugateGradient::perform_training()
 }
 
 
-/// Writes a matrix of strings the most representative atributes.
-
 Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(8, 2);
@@ -805,12 +682,6 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
     return labels_values;
 }
 
-
-/// Updates conjugate gradient method parameters
-/// @param batch New batch
-/// @param forward_propagation New neural network forward propagation
-/// @param back_propagation New loss index back propagation
-/// @param optimization_data New conjugate gradient method data.
 
 void ConjugateGradient::update_parameters(
         const Batch& batch,
@@ -908,15 +779,11 @@ void ConjugateGradient::update_parameters(
 }
 
 
-/// Writes a string with best algorithm type for the model.
-
 string ConjugateGradient::write_optimization_algorithm_type() const
 {
     return "CONJUGATE_GRADIENT";
 }
 
-
-/// Returns a string with the name of the training direction method.
 
 string ConjugateGradient::write_training_direction_method() const
 {
@@ -932,9 +799,6 @@ string ConjugateGradient::write_training_direction_method() const
     }
 }
 
-
-/// Serializes the conjugate gradient object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this element.
 
 void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1026,9 +890,6 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Deserializes the conjugate gradient object from an XML document of the TinyXML library.
-/// @param document TinyXML document containing the member data.
-
 void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
@@ -1053,7 +914,6 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             cerr << e.what() << endl;
         }
     }
-
 
     // Learning rate algorithm
 
@@ -1263,15 +1123,10 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Default constructor.
-
 ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
 {
 }
 
-
-/// Loss index constructor.
-/// @param new_conjugate_gradient New conjugate gradient method pointer.
 
 ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) : OptimizationAlgorithmData()
 {

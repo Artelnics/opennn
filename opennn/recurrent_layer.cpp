@@ -849,7 +849,7 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
         if(sample_index % timesteps != 0)
         {
-            /// @todo parallelize
+            // @todo parallelize
 
             for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
             {

@@ -234,7 +234,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number,neurons_number});
     neural_network.set_parameters_constant(type(1));
 
-    /// @todo loss_index.calculate_training_loss not available
+    // @todo loss_index.calculate_training_loss not available
 /*
     Tensor<type, 1> gradient = sum_squared_error.calculate_numerical_gradient();
 

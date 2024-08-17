@@ -14,8 +14,6 @@ namespace opennn
 
 struct LayerForwardPropagation
 {
-    /// Default constructor.
-
     explicit LayerForwardPropagation()
     {
     }

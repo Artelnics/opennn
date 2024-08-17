@@ -27,13 +27,6 @@ namespace opennn
 
 struct LevenbergMarquardtAlgorithmData;
 
-/// Levenberg-Marquardt Algorithm will always compute the approximate Hessian matrix, which has dimensions n-by-n.
-
-/// This concrete class represents the Levenberg-Marquardt (LM) optimization algorithm[1], use to minimize loss function.
-///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
-/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
-
 
 class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 {
@@ -114,42 +107,23 @@ private:
 
    // MEMBERS
 
-   /// Initial Levenberg-Marquardt parameter.
-
    type damping_parameter = type(0);
-
-   /// Minimum Levenberg-Marquardt parameter.
 
    type minimum_damping_parameter = type(0);
 
-   /// Maximum Levenberg-Marquardt parameter.
-
    type maximum_damping_parameter = type(0);
-
-   /// Damping parameter increase/decrease factor.
 
    type damping_parameter_factor = type(0);
 
    // Stopping criteria 
 
-   /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
-
    type minimum_loss_decrease = type(0);
-
-   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal = type(0);
 
-   /// Maximum number of epochs at which the selection error increases.
-   /// This is an early stopping method for improving selection.
-
    Index maximum_selection_failures = 0;
 
-   /// Maximum number of epoch to perform_training. It is a stopping criterion.
-
    Index maximum_epochs_number = 0;
-
-   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time = type(0);
 };
@@ -157,8 +131,6 @@ private:
 
 struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 {
-    /// Default constructor.
-
     explicit LevenbergMarquardtAlgorithmData()
     {
     }

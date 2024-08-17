@@ -11,17 +11,12 @@
 namespace opennn
 {
 
-/// Default constructor.
-
 GrowingNeurons::GrowingNeurons()
     : NeuronsSelection()
 {
     set_default();
 }
 
-
-/// Training strategy constructor.
-/// @param new_training_strategy Pointer to a gradient descent object.
 
 GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
     : NeuronsSelection(new_training_strategy)
@@ -30,23 +25,17 @@ GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
 }
 
 
-/// Returns the number of the hidden perceptrons pointed in each iteration of the growing neurons algorithm.
-
 const Index& GrowingNeurons::get_step() const
 {
     return neurons_increment;
 }
 
 
-/// Returns the maximum number of selection failures in the model neurons selection algorithm.
-
 const Index& GrowingNeurons::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
 
-
-/// Sets the members of the model selection object to their default values:
 
 void GrowingNeurons::set_default()
 {
@@ -64,26 +53,17 @@ void GrowingNeurons::set_default()
 }
 
 
-/// Sets the number of the hidden perceptrons pointed in each iteration of the growing algorithm
-/// in the model neurons selection process.
-/// @param new_step number of hidden perceptrons pointed.
-
 void GrowingNeurons::set_neurons_increment(const Index& new_neurons_increment)
 {
     neurons_increment = new_neurons_increment;
 }
 
 
-/// Sets the maximum selection failures for the growing neurons selection algorithm.
-/// @param new_maximum_selection_failures Maximum number of selection failures in the growing neurons selection algorithm.
-
 void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
     maximum_selection_failures = new_maximum_selection_failures;
 }
 
-
-/// Perform neurons selection with the growing neurons method.
 
 NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 {
@@ -269,8 +249,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 }
 
 
-/// This method writes a matrix of strings the most representative atributes.
-
 Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
     ostringstream buffer;
@@ -362,10 +340,6 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 }
 
 
-/// Serializes the growing neurons object into an XML document of the TinyXML library without
-/// keep the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
-
 void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -452,9 +426,6 @@ void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this growing neurons object.
-/// @param document TinyXML document containing the member data.
 
 void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -598,9 +569,6 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to an XML-type file the members of the growing neurons object.
-/// @param file_name Name of growing neurons XML-type file.
-
 void GrowingNeurons::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
@@ -613,9 +581,6 @@ void GrowingNeurons::save(const string& file_name) const
     }
 }
 
-
-/// Loads a growing neurons object from an XML-type file.
-/// @param file_name Name of growing neurons XML-type file.
 
 void GrowingNeurons::load(const string& file_name)
 {

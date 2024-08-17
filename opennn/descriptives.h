@@ -11,16 +11,6 @@ using namespace Eigen;
 namespace opennn
 {
 
-/// This structure contains the simplest Descriptives for a set, variable, etc. It includes :
-
-///
-/// <ul>
-/// <li> Minimum.
-/// <li> Maximum.
-/// <li> Mean.
-/// <li> Standard Deviation.
-/// </ul>
-
 struct Descriptives {
 
   // Default constructor.
@@ -55,23 +45,13 @@ struct Descriptives {
 
   void print(const string& = "Descriptives:") const;
 
-  /// Name of variable
-
   string name = "Descriptives";
-
-  /// Smallest value of a set, function, etc.
 
   type minimum = type(-1.0);
 
-  /// Biggest value of a set, function, etc.
-
   type maximum = type(1);
 
-  /// Mean value of a set, function, etc.
-
   type mean = type(0);
-
-  /// Standard deviation value of a set, function, etc.
 
   type standard_deviation = type(1);
 

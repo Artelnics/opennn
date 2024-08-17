@@ -207,28 +207,17 @@ void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 }
 
 
-/// Sets the number of times that each different neural network is to be trained.
-/// @param new_trials_number Number of assays for each set of parameters.
-
 void NeuronsSelection::set_trials_number(const Index& new_trials_number)
 {
     trials_number = new_trials_number;
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void NeuronsSelection::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Sets the selection error goal for the neurons selection algorithm.
-/// @param new_selection_error_goal Goal of the selection error.
 
 void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
@@ -243,9 +232,6 @@ void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_
 }
 
 
-/// Sets the maximum epochs number for the neurons selection algorithm.
-/// @param new_maximum_epochs_number Maximum number of epochs.
-
 void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
 #ifdef OPENNN_DEBUG
@@ -258,9 +244,6 @@ void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
-
-/// Sets the maximum time for the neurons selection algorithm.
-/// @param new_maximum_time Maximum time for the algorithm.
 
 void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 {
@@ -275,16 +258,11 @@ void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Return a string with the stopping condition of the training depending on the training method.
-/// @param results Results of the perform_training method.
-
 string NeuronsSelection::write_stopping_condition(const TrainingResults& results) const
 {
     return results.write_stopping_condition();
 }
 
-
-/// Delete the history of the selection error values.
 
 void NeuronsSelection::delete_selection_history()
 {
@@ -292,15 +270,11 @@ void NeuronsSelection::delete_selection_history()
 }
 
 
-/// Delete the history of the loss values.
-
 void NeuronsSelection::delete_training_error_history()
 {
     training_error_history.resize(0);
 }
 
-
-/// Checks that the different pointers needed for performing the neurons selection are not nullptr.
 
 void NeuronsSelection::check() const
 {
@@ -345,8 +319,6 @@ void NeuronsSelection::check() const
 }
 
 
-/// Writes the time from seconds in format HH:mm:ss.
-
 string NeuronsSelection::write_time(const type& time) const
 {
 #ifdef OPENNN_DEBUG
@@ -373,8 +345,6 @@ string NeuronsSelection::write_time(const type& time) const
     return elapsed_time.str();
 }
 
-
-/// Return a string with the stopping condition of the Results
 
 NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_number)
 {

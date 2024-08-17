@@ -30,10 +30,6 @@
 namespace opennn
 {
 
-/// Calculates autocorrelation for a given number of maximum lags.
-/// @param x Vector containing the data.
-/// @param lags_number Maximum lags number.
-
 Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 1>& x,
                                  const Index& lags_number)
@@ -59,10 +55,6 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
     return autocorrelation;
 }
 
-
-/// Calculates the correlation between two vectors.
-/// @param x Vector containing data.
-/// @param y Vector for computing the correlation with this vector.
 
 Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
@@ -214,11 +206,6 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-/// Calculates the cross-correlation between two vectors.
-/// @param x Vector containing data.
-/// @param y Vector for computing the linear correlation with this vector.
-/// @param maximum_lags_number Maximum lags for which cross-correlation is calculated.
-
 Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                                    const Tensor<type, 1>& x,
                                    const Tensor<type, 1>& y,
@@ -248,10 +235,6 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
     return cross_correlation;
 }
 
-
-/// Calculate the coefficients of a exponential regression (a, b) and the correlation among the variables
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
 
 Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
                                     const Tensor<type, 1>& x,
@@ -292,10 +275,6 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-/// Filter the missing values of two vectors.
-/// @param x First vector.
-/// @param y Second vector.
-
 pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const Tensor<type, 1>& x,
                                                                            const Tensor<type, 1>& y)
 {
@@ -331,9 +310,6 @@ pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const
     return make_pair(new_x, new_y);
 }
 
-/// Filter the missing values of two vectors.
-/// @param x First vector.
-/// @param y Second vector.
 
 pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const Tensor<type, 1>& x,
                                                                            const Tensor<type, 2>& y)
@@ -392,10 +368,6 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_matrix_vector(const
     return filter_missing_values_vector_matrix(y,x);
 }
 
-
-/// Filter the missing values of two matrix.
-/// @param x First matrix.
-/// @param y Second matrix.
 
 pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const Tensor<type, 2>& x,
                                                                            const Tensor<type, 2>& y)
@@ -459,9 +431,6 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
 }
 
 
-/// Get correlation values from a Correlation matrix.
-/// @param correlations Correlation matrix.
-
 Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlations)
 {
     const Index rows_number = correlations.dimension(0);
@@ -479,10 +448,6 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
     return values;
 }
 
-
-/// Calculate the coefficients of a goodness-of-fit (a, b) and the correlation among the variables.
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
 
 Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
                                const Tensor<type, 1>& x,
@@ -659,7 +624,7 @@ Tensor<type,1> confidence_interval_z_correlation(const type& z_correlation, cons
 }
 
 
-/// @todo Improve this method to be more similar to the other code. 
+// @todo Improve this method to be more similar to the other code.
 
 Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
 {
@@ -714,10 +679,6 @@ Correlation linear_correlation_spearman(const ThreadPoolDevice* thread_pool_devi
 }
 
 
-/// Calculate the coefficients of a logarithmic regression (a, b) and the correlation among the variables
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
-
 Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
                                     const Tensor<type, 1>& x,
                                     const Tensor<type, 1>& y)
@@ -757,10 +718,6 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
     return logarithmic_correlation;
 }
 
-
-/// Calculate the coefficients of a logistic regression (a, b) and the correlation among the variables
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
 
 Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_pool_device,
                                                const Tensor<type, 1>& x,
@@ -1131,10 +1088,6 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     return correlation;
 }
 
-
-/// Calculate the coefficients of a power regression (a, b) and the correlation among the variables
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
 
 Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
                               const Tensor<type, 1>& x,

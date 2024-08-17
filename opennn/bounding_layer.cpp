@@ -11,9 +11,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a bounding layer object with zero bounding neurons.
-
 BoundingLayer::BoundingLayer() : Layer()
 {
     set();
@@ -21,10 +18,6 @@ BoundingLayer::BoundingLayer() : Layer()
     set_default();
 }
 
-
-/// Bounding neurons number constructor.
-/// It creates a bounding layer with a given size.
-/// @param neurons_number Number of bounding neurons in the layer.
 
 BoundingLayer::BoundingLayer(const Index& neurons_number) : Layer()
 {
@@ -34,24 +27,17 @@ BoundingLayer::BoundingLayer(const Index& neurons_number) : Layer()
 }
 
 
-/// Returns the method used for bounding layer.
-
 const BoundingLayer::BoundingMethod& BoundingLayer::get_bounding_method() const
 {
     return bounding_method;
 }
 
 
-/// Get number of inputs
-
 Index BoundingLayer::get_inputs_number() const
 {
     return lower_bounds.dimension(0);
 }
 
-
-/// Returns the lower bound value of a single bounding neuron.
-/// @param i Index of bounding neuron.
 
 type BoundingLayer::get_lower_bound(const Index& i) const
 {
@@ -68,15 +54,11 @@ type BoundingLayer::get_lower_bound(const Index& i) const
 }
 
 
-/// Returns the lower bounds values of all the bounding neurons in the layer.
-
 const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
 {
     return lower_bounds;
 }
 
-
-/// Return the neurons number in the bounding layer.
 
 Index BoundingLayer::get_neurons_number() const
 {
@@ -91,9 +73,6 @@ dimensions BoundingLayer::get_output_dimensions() const
     return { neurons_number };
 }
 
-
-/// Returns the upper bound value of a single bounding neuron.
-/// @param i Index of bounding neuron.
 
 type BoundingLayer::get_upper_bound(const Index& i) const
 {
@@ -112,15 +91,11 @@ type BoundingLayer::get_upper_bound(const Index& i) const
 }
 
 
-/// Returns the upper bounds values of all the bounding neurons in the layer.
-
 const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 {
     return upper_bounds;
 }
 
-
-/// Returns true if the size of the layer is zero, and false otherwise.
 
 bool BoundingLayer::is_empty() const
 {
@@ -135,9 +110,6 @@ bool BoundingLayer::is_empty() const
 }
 
 
-/// Sets the number of bounding neurons to be zero.
-/// It also sets the rest of memebers to their default values.
-
 void BoundingLayer::set()
 {
     bounding_method = BoundingMethod::Bounding;
@@ -149,10 +121,6 @@ void BoundingLayer::set()
 }
 
 
-/// Resizes the bounding layer.
-/// It also sets the rest of members to their default values.
-/// @param new_neurons_number Size of the bounding layer.
-
 void BoundingLayer::set(const Index& new_neurons_number)
 {
     set_neurons_number(new_neurons_number);
@@ -161,9 +129,6 @@ void BoundingLayer::set(const Index& new_neurons_number)
 }
 
 
-/// Sets the bounding layer members from an XML document.
-/// @param bounding_layer_document Pointer to a TinyXML document containing the member data.
-
 void BoundingLayer::set(const tinyxml2::XMLDocument& bounding_layer_document)
 {
     set_default();
@@ -171,9 +136,6 @@ void BoundingLayer::set(const tinyxml2::XMLDocument& bounding_layer_document)
     from_XML(bounding_layer_document);
 }
 
-
-/// Sets the members of this object to be the members of another object of the same class.
-/// @param other_bounding_layer Object to be copied.
 
 void BoundingLayer::set(const BoundingLayer& other_bounding_layer)
 {
@@ -185,17 +147,11 @@ void BoundingLayer::set(const BoundingLayer& other_bounding_layer)
 }
 
 
-/// Sets a new bounding method.
-/// @param new_method New bounding method.
-
 void BoundingLayer::set_bounding_method(const BoundingMethod& new_method)
 {
     bounding_method = new_method;
 }
 
-
-/// Sets a new bounding method.
-/// @param new_method_string New bounding method string.
 
 void BoundingLayer::set_bounding_method(const string& new_method_string)
 {
@@ -214,8 +170,6 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 }
 
 
-/// Sets the members to their default values:
-
 void BoundingLayer::set_default()
 {
     layer_name = "bounding_layer";
@@ -226,19 +180,11 @@ void BoundingLayer::set_default()
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void BoundingLayer::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Resize the number of inputs.
-/// @param new_inputs_number Size of the inputs array.
 
 void BoundingLayer::set_inputs_number(const Index& new_inputs_number)
 {
@@ -246,11 +192,6 @@ void BoundingLayer::set_inputs_number(const Index& new_inputs_number)
     upper_bounds.resize(new_inputs_number);
 }
 
-
-/// Sets a new lower bound for a single neuron.
-/// This value is used for unscaling that variable so that it is not less than the lower bound.
-/// @param index Index of bounding neuron.
-/// @param new_lower_bound New lower bound for the neuron with index i.
 
 void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bound)
 {
@@ -275,9 +216,6 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
 }
 
 
-/// Sets new lower bounds for all the neurons in the layer.
-/// @param new_lower_bounds New set of lower bounds for the bounding neurons.
-
 void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 {
 #ifdef OPENNN_DEBUG
@@ -295,9 +233,6 @@ void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 }
 
 
-/// Resize the number of bound neurons from the bounding layer.
-/// @param new_neurons_number Number of the neurons from the bounding layer.
-
 void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
 {
     lower_bounds.resize(new_neurons_number);
@@ -308,20 +243,11 @@ void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-/// Sets new upper bounds for all the bounding neurons.
-/// These values are used for unscaling variables so that they are not greater than the upper bounds.
-/// @param new_upper_bounds New set of upper bounds for the layer.
-
 void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 {
     upper_bounds = new_upper_bounds;
 }
 
-
-/// Sets a new upper bound for a single neuron.
-/// This value is used for unscaling that variable so that it is not greater than the upper bound.
-/// @param index Index of bounding neuron.
-/// @param new_upper_bound New upper bound for the bounding neuron with that index.
 
 void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bound)
 {
@@ -383,8 +309,6 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 }
 
 
-/// Returns a string writing if use bounding layer or not.
-
 string BoundingLayer::write_bounding_method() const
 {
     if(bounding_method == BoundingMethod::Bounding)
@@ -401,8 +325,6 @@ string BoundingLayer::write_bounding_method() const
     }
 }
 
-
-/// Returns a string with the expression of the lower and upper bounds functions.
 
 string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
@@ -428,9 +350,6 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
     return buffer.str();
 }
 
-
-/// Serializes the bounding layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -524,9 +443,6 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this bounding layer object.
-/// @param document TinyXML document containing the member data.
 
 void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {

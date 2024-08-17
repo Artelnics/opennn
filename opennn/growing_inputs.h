@@ -19,11 +19,6 @@
 namespace opennn
 {
 
-/// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
-
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
-/// \ref https://www.neuraldesigner.com/blog/model-selection
-
 class GrowingInputs : public InputsSelection
 {
 
@@ -70,15 +65,9 @@ public:
 
 private:
 
-    /// Maximum number of inputs in the neural network.
-
     Index maximum_inputs_number;
 
-    /// Minimum number of inputs in the neural network.
-
     Index minimum_inputs_number = 1;
-
-    /// Maximum number of epochs at which the selection error increases.
 
     Index maximum_selection_failures = 100;
 };

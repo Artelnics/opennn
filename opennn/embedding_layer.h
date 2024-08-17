@@ -31,12 +31,6 @@ struct EmbeddingLayerBackPropagationCuda;
 #endif
 
 
-/// This class represents an Embedding layer.
-
-/// EmbeddingLayer has inputs of a fixed length (inputs_number) and within a fixed set of possible integer values (input_dimensions).
-/// The layer will assign to each possible value a dense vector of fixed length (depth).
-
-
 class EmbeddingLayer : public Layer
 {
 
@@ -46,11 +40,10 @@ public:
 
     explicit EmbeddingLayer();
 
-    explicit EmbeddingLayer(const Index&, /// Input dim
-                            const Index&, /// Input length
-                            const Index&, /// Embedding depth
-                            const bool& = false); /// Add positional encoding or not
-
+    explicit EmbeddingLayer(const Index&,
+                            const Index&,
+                            const Index&,
+                            const bool& = false);
     // Get methods
 
     Index get_input_dimension() const;
@@ -123,7 +116,7 @@ public:
 
     // Serialization methods
 
-    /// @todo
+    // @todo
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void write_XML(tinyxml2::XMLPrinter&) const final;
@@ -136,32 +129,17 @@ protected:
 
     // MEMBERS
 
-    /// Input dimension (i.e. number of values input can take, or vocabulary size)
-    /// @todo change this to something that is not confusing?
-
     Index input_dimensions;
-
-    /// Length of each input entry (assuming equal length)
 
     Index inputs_number;
 
-    /// Embedding depth
-
     Index depth;
-
-    /// Dropout rate
 
     type dropout_rate;
 
-    /// Embedding weights
-
     Tensor<type, 2> embedding_weights;
 
-    /// Whether the layer has to add positional encoding or not
-
     bool positional_encoding;
-
-    /// Display messages to screen.
 
     bool display = true;
 

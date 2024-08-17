@@ -12,20 +12,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a learning rate algorithm object not associated with any loss index object.
-/// It also initializes the class members to their default values.
-
 LearningRateAlgorithm::LearningRateAlgorithm()
 {
     set_default();
 }
 
-
-/// Destructor.
-/// It creates a learning rate algorithm associated with a loss index.
-/// It also initializes the class members to their default values.
-/// @param new_loss_index Pointer to a loss index object.
 
 LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index)
     : loss_index(new_loss_index)
@@ -34,18 +25,12 @@ LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index)
 }
 
 
-/// Destructor.
-
 LearningRateAlgorithm::~LearningRateAlgorithm()
 {
     delete thread_pool;
     delete thread_pool_device;
 }
 
-
-/// Returns a pointer to the loss index object
-/// to which the learning rate algorithm is associated.
-/// If the loss index pointer is nullptr, this method throws an exception.
 
 LossIndex* LearningRateAlgorithm::get_loss_index() const
 {
@@ -60,9 +45,6 @@ LossIndex* LearningRateAlgorithm::get_loss_index() const
 }
 
 
-/// Returns true if this learning rate algorithm has an associated loss index,
-/// and false otherwise.
-
 bool LearningRateAlgorithm::has_loss_index() const
 {
     if(loss_index)
@@ -76,15 +58,11 @@ bool LearningRateAlgorithm::has_loss_index() const
 }
 
 
-/// Returns the learning rate method used for training.
-
 const LearningRateAlgorithm::LearningRateMethod& LearningRateAlgorithm::get_learning_rate_method() const
 {
     return learning_rate_method;
 }
 
-
-/// Returns a string with the name of the learning rate method to be used.
 
 string LearningRateAlgorithm::write_learning_rate_method() const
 {
@@ -107,17 +85,11 @@ const type& LearningRateAlgorithm::get_learning_rate_tolerance() const
 }
 
 
-/// Returns true if messages from this class can be displayed on the screen, or false if messages from
-/// this class can't be displayed on the screen.
-
 const bool& LearningRateAlgorithm::get_display() const
 {
     return display;
 }
 
-
-/// Sets the loss index pointer to nullptr.
-/// It also sets the rest of the members to their default values.
 
 void LearningRateAlgorithm::set()
 {
@@ -127,10 +99,6 @@ void LearningRateAlgorithm::set()
 }
 
 
-/// Sets a new loss index pointer.
-/// It also sets the rest of the members to their default values.
-/// @param new_loss_index Pointer to a loss index object.
-
 void LearningRateAlgorithm::set(LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
@@ -138,8 +106,6 @@ void LearningRateAlgorithm::set(LossIndex* new_loss_index)
     set_default();
 }
 
-
-/// Sets the members of the learning rate algorithm to their default values.
 
 void LearningRateAlgorithm::set_default()
 {
@@ -161,9 +127,6 @@ void LearningRateAlgorithm::set_default()
 }
 
 
-/// Sets a pointer to a loss index object to be associated with the optimization algorithm.
-/// @param new_loss_index Pointer to a loss index object.
-
 void LearningRateAlgorithm::set_loss_index(LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
@@ -180,18 +143,12 @@ void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
 }
 
 
-/// Sets a new learning rate method to be used for training.
-/// @param new_learning_rate_method Learning rate method.
-
 void LearningRateAlgorithm::set_learning_rate_method(
         const LearningRateAlgorithm::LearningRateMethod& new_learning_rate_method)
 {
     learning_rate_method = new_learning_rate_method;
 }
 
-
-/// Sets the method for obtaining the learning rate from a string with the name of the method.
-/// @param new_learning_rate_method Name of learning rate method("Fixed", "GoldenSection", "BrentMethod").
 
 void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_rate_method)
 {
@@ -210,9 +167,6 @@ void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_
 }
 
 
-/// Sets a new tolerance value to be used in line minimization.
-/// @param new_learning_rate_tolerance Tolerance value in line minimization.
-
 void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning_rate_tolerance)
 {
 #ifdef OPENNN_DEBUG
@@ -226,20 +180,11 @@ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void LearningRateAlgorithm::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Returns a vector with two elements:
-/// (i) the learning rate calculated by means of the corresponding algorithm, and
-/// (ii) the loss for that learning rate.
 
 pair<type, type> LearningRateAlgorithm::calculate_directional_point(
     const Batch& batch,
@@ -361,7 +306,7 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
                    << "U = (" << triplet.U.first << "," << triplet.U.second << ")\n"
                    << "V = (" << V.first << "," << V.second << ")\n";
 
-            throw runtime_error(buffer.str());
+            throw(buffer.str());
         }
 
         // Check triplet
@@ -379,9 +324,6 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
     return triplet.U;
 }
 
-
-/// Returns bracketing triplet.
-/// This algorithm is used by line minimization algorithms.
 
 LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_triplet(
     const Batch& batch,
@@ -537,9 +479,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 }
 
 
-/// Calculates the golden section point within a minimum interval defined by three points.
-/// @param triplet Triplet containing a minimum.
-
 type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet& triplet) const
 {
     type learning_rate;
@@ -566,7 +505,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
                << "Learning rate(" << learning_rate << ") is less than left point("
                << triplet.A.first << ").\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     if(learning_rate > triplet.B.first)
@@ -578,7 +517,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
                << "Learning rate(" << learning_rate << ") is greater than right point("
                << triplet.B.first << ").\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
 #endif
@@ -586,9 +525,6 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
     return learning_rate;
 }
 
-
-/// Returns the minimimal learning rate of a parabola defined by three directional points.
-/// @param triplet Triplet containing a minimum.
 
 type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& triplet) const
 { 
@@ -607,10 +543,6 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
     return u - type(0.5)*numerator/denominator;
 }
 
-
-/// Serializes the learning rate algorithm object into an XML document of the TinyXML library
-/// without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -645,10 +577,6 @@ void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Loads a learning rate algorithm object from an XML-type file.
-/// Please mind about the file format, wich is specified in the manual.
-/// @param document TinyXML document with the learning rate algorithm members.
-
 void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("LearningRateAlgorithm");
@@ -661,7 +589,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Learning rate algorithm element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     // Learning rate method

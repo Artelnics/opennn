@@ -13,21 +13,12 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a Levenberg-Marquardt optimization algorithm object not associated with any loss index object.
-/// It also initializes the class members to their default values.
-
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
     : OptimizationAlgorithm()
 {
     set_default();
 }
 
-
-/// Loss index constructor.
-/// It creates a Levenberg-Marquardt optimization algorithm object associated associated with a given loss index object.
-/// It also initializes the class members to their default values.
-/// @param new_loss_index Pointer to an external loss index object.
 
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
@@ -36,16 +27,11 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_ind
 }
 
 
-/// Returns the minimum loss improvement during training.
-
 const type& LevenbergMarquardtAlgorithm::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
 
-
-/// Returns the goal value for the loss.
-/// This is used as a stopping criterion when training a neural network.
 
 const type& LevenbergMarquardtAlgorithm::get_loss_goal() const
 {
@@ -53,15 +39,11 @@ const type& LevenbergMarquardtAlgorithm::get_loss_goal() const
 }
 
 
-/// Returns the maximum number of selection failures during the training process.
-
 const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
 
-
-/// Returns the maximum number of iterations for training.
 
 const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
 {
@@ -69,15 +51,11 @@ const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
 }
 
 
-/// Returns the maximum training time.
-
 const type& LevenbergMarquardtAlgorithm::get_maximum_time() const
 {
     return maximum_time;
 }
 
-
-/// Returns the damping parameter for the hessian approximation.
 
 const type& LevenbergMarquardtAlgorithm::get_damping_parameter() const
 {
@@ -85,15 +63,11 @@ const type& LevenbergMarquardtAlgorithm::get_damping_parameter() const
 }
 
 
-/// Returns the damping parameter factor(beta in the User's Guide) for the hessian approximation.
-
 const type& LevenbergMarquardtAlgorithm::get_damping_parameter_factor() const
 {
     return damping_parameter_factor;
 }
 
-
-/// Returns the minimum damping parameter allowed in the algorithm.
 
 const type& LevenbergMarquardtAlgorithm::get_minimum_damping_parameter() const
 {
@@ -101,29 +75,11 @@ const type& LevenbergMarquardtAlgorithm::get_minimum_damping_parameter() const
 }
 
 
-/// Returns the maximum damping parameter allowed in the algorithm.
-
 const type& LevenbergMarquardtAlgorithm::get_maximum_damping_parameter() const
 {
     return maximum_damping_parameter;
 }
 
-
-/// Sets the following default values for the Levenberg-Marquardt algorithm:
-/// Training parameters:
-/// <ul>
-/// <li> Levenberg-Marquardt parameter: 0.001.
-/// </ul>
-/// Stopping criteria:
-/// <ul>
-/// <li> Loss goal: 1.0e-6.
-/// <li> Maximum training time: 1000 secondata_set.
-/// <li> Maximum number of epochs: 1000.
-/// </ul>
-/// User stuff:
-/// <ul>
-/// <li> Iterations between showing progress: 10.
-/// </ul>
 
 void LevenbergMarquardtAlgorithm::set_default()
 {
@@ -151,9 +107,6 @@ void LevenbergMarquardtAlgorithm::set_default()
 }
 
 
-/// Sets a new damping parameter(lambda in the User's Guide) for the hessian approximation.
-/// @param new_damping_parameter Damping parameter value.
-
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const type& new_damping_parameter)
 {
     if(new_damping_parameter <= minimum_damping_parameter)
@@ -171,9 +124,6 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter(const type& new_damping_
 }
 
 
-/// Sets a new damping parameter factor(beta in the User's Guide) for the hessian approximation.
-/// @param new_damping_parameter_factor Damping parameter factor value.
-
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_damping_parameter_factor)
 {
 #ifdef OPENNN_DEBUG
@@ -186,9 +136,6 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
     damping_parameter_factor = new_damping_parameter_factor;
 }
 
-
-/// Sets a new minimum damping parameter allowed in the algorithm.
-/// @param new_minimum_damping_parameter Minimum damping parameter value.
 
 void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_minimum_damping_parameter)
 {
@@ -203,9 +150,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
 }
 
 
-/// Sets a new maximum damping parameter allowed in the algorithm.
-/// @param new_maximum_damping_parameter Maximum damping parameter value.
-
 void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_maximum_damping_parameter)
 {
 #ifdef OPENNN_DEBUG
@@ -219,28 +163,17 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 }
 
 
-/// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
-
 void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
 
-/// Sets a new goal value for the loss.
-/// This is used as a stopping criterion when training a neural network.
-/// @param new_loss_goal Goal value for the loss.
-
 void LevenbergMarquardtAlgorithm::set_loss_goal(const type& new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
 }
 
-
-/// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_failures Maximum number of epochs in which the
-/// selection evalutation increases.
 
 void LevenbergMarquardtAlgorithm::set_maximum_selection_failures(
         const Index& new_maximum_selection_failures)
@@ -249,32 +182,17 @@ void LevenbergMarquardtAlgorithm::set_maximum_selection_failures(
 }
 
 
-/// Sets a maximum number of iterations for training.
-/// @param new_maximum_epochs_number Maximum number of epochs for training.
-
 void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
 
-/// Sets a new maximum training time.
-/// @param new_maximum_time Maximum training time.
-
 void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 {
     maximum_time = new_maximum_time;
 }
 
-
-/// Checks that the Levenberg-Marquard object is ok for training.
-/// In particular, it checks that:
-/// <ul>
-/// <li> The loss index pointer associated with the optimization algorithm is not nullptr,
-/// <li> The neural network associated with that loss index is neither nullptr.
-/// <li> The data set associated with that loss index is neither nullptr.
-/// </ul>
-/// If that checkings are not hold, an exception is thrown.
 
 void LevenbergMarquardtAlgorithm::check() const
 {
@@ -295,12 +213,8 @@ void LevenbergMarquardtAlgorithm::check() const
 }
 
 
-/// Trains a neural network with an associated loss index according to the Levenberg-Marquardt algorithm.
-/// Training occurs according to the training parameters.
-
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
-
     if(loss_index->get_error_type() == "MINKOWSKI_ERROR")
     {
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
@@ -553,13 +467,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 }
 
 
-/// \brief LevenbergMarquardtAlgorithm::update_parameters
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
-/// \param back_propagation_lm
-/// \param optimization_data
-
 void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     ForwardPropagation& forward_propagation,
                                                     BackPropagationLM& back_propagation_lm,
@@ -668,15 +575,11 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 }
 
 
-/// Writes the optimization algorithm type.
-
 string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 {
     return "LEVENBERG_MARQUARDT_ALGORITHM";
 }
 
-
-/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
@@ -715,10 +618,6 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
     return labels_values;
 }
 
-
-/// Serializes the Levenberg Marquardt algorithm object into an XML document of the TinyXML library
-/// without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -806,10 +705,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.CloseElement();
 }
 
-
-/// Loads a Levenberg-Marquardt method object from an XML document.
-/// Please mind about the format, wich is specified in the OpenNN manual.
-/// @param document TinyXML document containint the object data.
 
 void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {

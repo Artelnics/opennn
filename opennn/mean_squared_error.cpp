@@ -15,33 +15,17 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a mean squared error term not associated with any
-/// neural network and not measured on any data set.
-/// It also initializes all the rest of the class members to their default values.
 
 MeanSquaredError::MeanSquaredError() : LossIndex()
 {
 }
 
 
-/// Neural network and data set constructor.
-/// It creates a mean squared error term object associated with a
-/// neural network and measured on a data set.
-/// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network Pointer to a neural network object.
-/// @param new_data_set Pointer to a data set object.
-
 MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
 }
 
-
-/// \brief MeanSquaredError::calculate_error
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
 
 void MeanSquaredError::calculate_error(const Batch& batch,
                                        const ForwardPropagation& forward_propagation,
@@ -185,24 +169,17 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 }
 
 
-/// Returns a string with the name of the mean squared error loss type, "MEAN_SQUARED_ERROR".
-
 string MeanSquaredError::get_error_type() const
 {
     return "MEAN_SQUARED_ERROR";
 }
 
 
-/// Returns a string with the name of the mean squared error loss type in text format.
-
 string MeanSquaredError::get_error_type_text() const
 {
     return "Mean squared error";
 }
 
-
-/// Serializes the cross-entropy error object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document
 
 void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

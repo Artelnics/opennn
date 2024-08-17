@@ -21,13 +21,6 @@
 namespace opennn
 {
 
-/// This class represents the mean squared error term.
-
-///
-/// The mean squared error measures the difference between the outputs from a neural network and the targets in a data set. 
-/// This functional is used in data modeling problems, such as function regression, 
-/// classification and time series prediction.
-
 class MeanSquaredError : public LossIndex
 {
 
