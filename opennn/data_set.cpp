@@ -33,10 +33,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a data set object with zero samples and zero inputs and target variables.
-/// It also initializes the rest of class members to their default values.
-
 DataSet::DataSet()
 {
     set();
@@ -44,10 +40,6 @@ DataSet::DataSet()
     set_default();
 }
 
-
-/// Default constructor. It creates a data set object from data Eigen Matrix.
-/// It also initializes the rest of class members to their default values.
-/// @param data Data Tensor<type, 2>.
 
 DataSet::DataSet(const Tensor<type, 2>& data)
 {
@@ -82,13 +74,6 @@ void DataSet::set_default_columns_scalers()
 }
 
 
-/// Samples and variables number constructor.
-/// It creates a data set object with given samples and variables numbers.
-/// All the variables are set as inputs.
-/// It also initializes the rest of class members to their default values.
-/// @param new_samples_number Number of samples in the data set.
-/// @param new_variables_number Number of variables.
-
 DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_number)
 {
     set(new_samples_number, new_variables_number);
@@ -96,13 +81,6 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_num
     set_default();
 }
 
-
-/// Samples number, input variables number and target variables number constructor.
-/// It creates a data set object with given samples and inputs and target variables numbers.
-/// It also initializes the rest of class members to their default values.
-/// @param new_samples_number Number of samples in the data set.
-/// @param new_inputs_number Number of input variables.
-/// @param new_targets_number Number of target variables.
 
 DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number, const Index& new_targets_number)
 {
@@ -120,14 +98,6 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 }
 
 
-/// File and separator constructor. It creates a data set object by loading the object members from a data file.
-/// It also sets a separator.
-/// Please mind about the file format. This is specified in the User's Guide.
-/// @param data_source_path Data file name.
-/// @param separator Data file separator between raw_variables.
-/// @param has_header True if data file contains a row with raw_variables names, False otherwise.
-/// @param data_codification String codification of the input file
-
 DataSet::DataSet(const string& data_source_path,
                  const char& separator,
                  const bool& has_header,
@@ -138,8 +108,6 @@ DataSet::DataSet(const string& data_source_path,
 }
 
 
-/// Destructor.
-
 DataSet::~DataSet()
 {
     delete thread_pool;
@@ -147,16 +115,11 @@ DataSet::~DataSet()
 }
 
 
-/// Returns true if messages from this class can be displayed on the screen,
-/// or false if messages from this class can't be displayed on the screen.
-
 const bool& DataSet::get_display() const
 {
     return display;
 }
 
-
-/// Raw variable default constructor
 
 DataSet::RawVariable::RawVariable()
 {
@@ -167,8 +130,6 @@ DataSet::RawVariable::RawVariable()
     scaler = Scaler::None;
 }
 
-
-/// Raw variable default constructor
 
 DataSet::RawVariable::RawVariable(const string& new_name,
                         const VariableUse& new_raw_variable_use,
@@ -219,17 +180,11 @@ void DataSet::RawVariable::set_scaler(const string& new_scaler)
 }
 
 
-/// Sets the use of the raw_variable and of the categories.
-/// @param new_raw_variable_use New use of the raw_variable.
-
 void DataSet::RawVariable::set_use(const VariableUse& new_raw_variable_use)
 {
     use = new_raw_variable_use;
 }
 
-
-/// Sets the use of the raw_variable and of the categories.
-/// @param new_raw_variable_use New use of the raw_variable in string format.
 
 void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
 {
@@ -255,9 +210,6 @@ void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
     }
 }
 
-
-/// Sets the raw_variable type.
-/// @param new_raw_variable_type raw_variable type in string format.
 
 void DataSet::RawVariable::set_type(const string& new_raw_variable_type)
 {
@@ -287,10 +239,6 @@ void DataSet::RawVariable::set_type(const string& new_raw_variable_type)
     }
 }
 
-
-/// Adds a category to the categories vector of this raw_variable.
-/// It also adds a default use for the category
-/// @param new_category String that contains the name of the new category
 
 void DataSet::RawVariable::add_category(const string & new_category)
 {
@@ -504,8 +452,6 @@ void DataSet::RawVariable::print() const
     cout << "Scaler: " << get_raw_variable_scaler_string(scaler) << endl;
 
     cout << "Categories: " << categories << endl;
-
-
 }
 
 
@@ -548,17 +494,11 @@ string DataSet::get_model_type_string(const DataSet::ModelType& new_model_type) 
 }
 
 
-/// Returns the number of categories.
-
 Index DataSet::RawVariable::get_categories_number() const
 {
     return categories.size();
 }
 
-
-/// Returns true if a given sample is to be used for training, selection or testing,
-/// and false if it is to be unused.
-/// @param index Sample index.
 
 bool DataSet::is_sample_used(const Index& index) const
 {
@@ -573,9 +513,6 @@ bool DataSet::is_sample_used(const Index& index) const
 }
 
 
-/// Returns true if a given sample is to be unused and false in other case.
-/// @param index Sample index.
-
 bool DataSet::is_sample_unused(const Index& index) const
 {
     if(samples_uses(index) == SampleUse::None)
@@ -588,10 +525,6 @@ bool DataSet::is_sample_unused(const Index& index) const
     }
 }
 
-
-/// Returns a vector with the number of training, selection, testing
-/// and unused samples.
-/// The size of that vector is therefore four.
 
 Tensor<Index, 1> DataSet::get_samples_uses_numbers() const
 {
@@ -623,10 +556,6 @@ Tensor<Index, 1> DataSet::get_samples_uses_numbers() const
 }
 
 
-/// Returns a vector with the uses of the samples in percentages of the data set.
-/// Uses: training, selection, testing and unused samples.
-/// Note that the vector size is four.
-
 Tensor<type, 1> DataSet::get_samples_uses_percentages() const
 {
     const Index samples_number = get_samples_number();
@@ -650,11 +579,6 @@ Tensor<type, 1> DataSet::get_samples_uses_percentages() const
     return samples_uses_percentage;
 }
 
-
-/// Returns a string with the values of the sample corresponding to the given index.
-/// The values will be separated by the given separator char.
-/// @param sample_index Index of the sample.
-/// @param separator Separator.
 
 string DataSet::get_sample_string(const Index& sample_index, const string& separator) const
 {
@@ -729,8 +653,6 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 }
 
 
-/// Returns the indices of the samples which will be used for training.
-
 Tensor<Index, 1> DataSet::get_training_samples_indices() const
 {
     const Index samples_number = get_samples_number();
@@ -753,8 +675,6 @@ Tensor<Index, 1> DataSet::get_training_samples_indices() const
     return training_indices;
 }
 
-
-/// Returns the indices of the samples which will be used for selection.
 
 Tensor<Index, 1> DataSet::get_selection_samples_indices() const
 {
@@ -779,8 +699,6 @@ Tensor<Index, 1> DataSet::get_selection_samples_indices() const
 }
 
 
-/// Returns the indices of the samples which will be used for testing.
-
 Tensor<Index, 1> DataSet::get_testing_samples_indices() const
 {
     const Index samples_number = get_samples_number();
@@ -803,8 +721,6 @@ Tensor<Index, 1> DataSet::get_testing_samples_indices() const
     return testing_indices;
 }
 
-
-/// Returns the indices of the used samples(those which are not set unused).
 
 Tensor<Index, 1> DataSet::get_used_samples_indices() const
 {
@@ -830,8 +746,6 @@ Tensor<Index, 1> DataSet::get_used_samples_indices() const
 }
 
 
-/// Returns the indices of the samples set unused.
-
 Tensor<Index, 1> DataSet::get_unused_samples_indices() const
 {
     const Index samples_number = get_samples_number();
@@ -855,26 +769,17 @@ Tensor<Index, 1> DataSet::get_unused_samples_indices() const
 }
 
 
-/// Returns the use of a single sample.
-/// @param index Sample index.
-
 DataSet::SampleUse DataSet::get_sample_use(const Index& index) const
 {
     return samples_uses(index);
 }
 
 
-/// Returns the use of every sample (training, selection, testing or unused) in a vector.
-
 const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
 {
     return samples_uses;
 }
 
-
-/// Returns a vector, where each element is a vector that contains the indices of the different batches of the training samples.
-/// @param shuffle Is a boleean.
-/// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 
 Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                                       const Index& batch_samples_number,
@@ -1051,8 +956,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 }
 
 
-/// Returns the number of samples in the data set which will be used for training.
-
 Index DataSet::get_training_samples_number() const
 {
     const Index samples_number = get_samples_number();
@@ -1070,8 +973,6 @@ Index DataSet::get_training_samples_number() const
     return training_samples_number;
 }
 
-
-/// Returns the number of samples in the data set which will be used for selection.
 
 Index DataSet::get_selection_samples_number() const
 {
@@ -1091,8 +992,6 @@ Index DataSet::get_selection_samples_number() const
 }
 
 
-/// Returns the number of samples in the data set which will be used for testing.
-
 Index DataSet::get_testing_samples_number() const
 {
     const Index samples_number = get_samples_number();
@@ -1111,9 +1010,6 @@ Index DataSet::get_testing_samples_number() const
 }
 
 
-/// Returns the total number of training, selection and testing samples,
-/// i.e. those which are not "None".
-
 Index DataSet::get_used_samples_number() const
 {
     const Index samples_number = get_samples_number();
@@ -1122,9 +1018,6 @@ Index DataSet::get_used_samples_number() const
     return (samples_number - unused_samples_number);
 }
 
-
-/// Returns the number of samples in the data set which will neither be used
-/// for training, selection or testing.
 
 Index DataSet::get_unused_samples_number() const
 {
@@ -1144,8 +1037,6 @@ Index DataSet::get_unused_samples_number() const
 }
 
 
-/// Sets all the samples in the data set for training.
-
 void DataSet::set_training()
 {
     const Index samples_number = get_samples_number();
@@ -1156,8 +1047,6 @@ void DataSet::set_training()
     }
 }
 
-
-/// Sets all the samples in the data set for selection.
 
 void DataSet::set_selection()
 {
@@ -1170,8 +1059,6 @@ void DataSet::set_selection()
 }
 
 
-/// Sets all the samples in the data set for testing.
-
 void DataSet::set_testing()
 {
     const Index samples_number = get_samples_number();
@@ -1182,9 +1069,6 @@ void DataSet::set_testing()
     }
 }
 
-
-/// Sets samples with given indices in the data set for training.
-/// @param indices Indices vector with the index of samples in the data set for training.
 
 void DataSet::set_training(const Tensor<Index, 1>& indices)
 {
@@ -1199,9 +1083,6 @@ void DataSet::set_training(const Tensor<Index, 1>& indices)
 }
 
 
-/// Sets samples with given indices in the data set for selection.
-/// @param indices Indices vector with the index of samples in the data set for selection.
-
 void DataSet::set_selection(const Tensor<Index, 1>& indices)
 {
     Index index = 0;
@@ -1214,9 +1095,6 @@ void DataSet::set_selection(const Tensor<Index, 1>& indices)
     }
 }
 
-
-/// Sets samples with given indices in the data set for testing.
-/// @param indices Indices vector with the index of samples in the data set for testing.
 
 void DataSet::set_testing(const Tensor<Index, 1>& indices)
 {
@@ -1231,8 +1109,6 @@ void DataSet::set_testing(const Tensor<Index, 1>& indices)
 }
 
 
-/// Sets all the samples in the data set for unused.
-
 void DataSet::set_samples_unused()
 {
     const Index samples_number = get_samples_number();
@@ -1243,9 +1119,6 @@ void DataSet::set_samples_unused()
     }
 }
 
-
-/// Sets samples with given indices in the data set for unused.
-/// @param indices Indices vector with the index of samples in the data set for unused.
 
 void DataSet::set_samples_unused(const Tensor<Index, 1>& indices)
 {
@@ -1258,10 +1131,6 @@ void DataSet::set_samples_unused(const Tensor<Index, 1>& indices)
 }
 
 
-/// Sets the use of a single sample.
-/// @param index Index of sample.
-/// @param new_use Use for that sample.
-
 void DataSet::set_sample_use(const Index& index, const SampleUse& new_use)
 {
     const Index samples_number = get_samples_number();
@@ -1272,10 +1141,6 @@ void DataSet::set_sample_use(const Index& index, const SampleUse& new_use)
     samples_uses(index) = new_use;
 }
 
-
-/// Sets the use of a single sample from a string.
-/// @param index Index of sample.
-/// @param new_use String with the use name("Training", "Selection", "Testing" or "None")
 
 void DataSet::set_sample_use(const Index& index, const string& new_use)
 {
@@ -1302,10 +1167,6 @@ void DataSet::set_sample_use(const Index& index, const string& new_use)
 }
 
 
-/// Sets new uses to all the samples from a single vector.
-/// @param new_uses vector of use structures.
-/// The size of given vector must be equal to the number of samples.
-
 void DataSet::set_samples_uses(const Tensor<SampleUse, 1>& new_uses)
 {
     const Index samples_number = get_samples_number();
@@ -1326,11 +1187,6 @@ void DataSet::set_samples_uses(const Tensor<SampleUse, 1>& new_uses)
     }
 }
 
-
-/// Sets new uses to all the samples from a single vector of strings.
-/// @param new_uses vector of use strings.
-/// Possible values for the elements are "Training", "Selection", "Testing" and "None".
-/// The size of given vector must be equal to the number of samples.
 
 void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
 {
@@ -1382,11 +1238,6 @@ void DataSet::set_samples_uses(const Tensor<Index, 1>& indices, const SampleUse 
     }
 }
 
-
-/// Creates new training, selection and testing indices at random.
-/// @param training_samples_ratio Ratio of training samples in the data set.
-/// @param selection_samples_ratio Ratio of selection samples in the data set.
-/// @param testing_samples_ratio Ratio of testing samples in the data set.
 
 void DataSet::split_samples_random(const type& training_samples_ratio,
                                    const type& selection_samples_ratio,
@@ -1477,11 +1328,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 }
 
 
-/// Creates new training, selection and testing indices with sequential indices.
-/// @param training_samples_ratio Ratio of training samples in the data set.
-/// @param selection_samples_ratio Ratio of selection samples in the data set.
-/// @param testing_samples_ratio Ratio of testing samples in the data set.
-
 void DataSet::split_samples_sequential(const type& training_samples_ratio,
                                        const type& selection_samples_ratio,
                                        const type& testing_samples_ratio)
@@ -1558,9 +1404,6 @@ void DataSet::set_raw_variables(const Tensor<RawVariable, 1>& new_raw_variables)
 }
 
 
-/// This method sets the n raw_variables of the data_set by default,
-/// i.e. until raw_variable n-1 are Input and raw_variable n is Target.
-
 void DataSet::set_default_raw_variables_uses()
 {
     const Index raw_variables_number = raw_variables.size();
@@ -1605,10 +1448,6 @@ void DataSet::set_default_raw_variables_uses()
 }
 
 
-/// This method puts the names of the raw_variables in the data_set.
-/// This is used when the data_set does not have a header,
-/// the default names are: column_0, column_1, ..., column_n.
-
 void DataSet::set_default_raw_variables_names()
 {
     const Index raw_variables_number = raw_variables.size();
@@ -1620,25 +1459,17 @@ void DataSet::set_default_raw_variables_names()
 }
 
 
-/// Sets the name of a single raw_variable.
-/// @param index Index of raw_variable.
-/// @param new_use Use for that raw_variable.
-
 void DataSet::set_raw_variable_name(const Index& raw_variable_index, const string& new_name)
 {
     raw_variables(raw_variable_index).name = new_name;
 }
 
 
-/// Returns a vector containing the use of the raw_variable, without taking into account the categories.
-
 DataSet::VariableUse DataSet::get_raw_variable_use(const Index&  index) const
 {
     return raw_variables(index).use;
 }
 
-
-/// Returns the uses of each raw_variables of the data set.
 
 Tensor<DataSet::VariableUse, 1> DataSet::get_raw_variables_uses() const
 {
@@ -1654,9 +1485,6 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_raw_variables_uses() const
     return raw_variables_uses;
 }
 
-
-/// Returns a vector containing the use of each raw_variable, including the categories.
-/// The size of the vector is equal to the number of variables.
 
 Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 {
@@ -1683,9 +1511,6 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
     return variables_uses;
 }
 
-
-/// Returns the name of a single variable in the data set.
-/// @param index Index of variable.
 
 string DataSet::get_variable_name(const Index& variable_index) const
 {
@@ -1726,9 +1551,6 @@ string DataSet::get_variable_name(const Index& variable_index) const
 }
 
 
-/// Returns a string vector with the names of all the variables in the data set.
-/// The size of the vector is the number of variables.
-
 Tensor<string, 1> DataSet::get_variables_names() const
 {    
     const Index raw_variables_number = get_raw_variables_number();
@@ -1762,9 +1584,6 @@ Tensor<string, 1> DataSet::get_variables_names() const
 }
 
 
-/// Returns the names of the input variables in the data set.
-/// The size of the vector is the number of input variables.
-
 Tensor<string, 1> DataSet::get_input_variables_names() const
 {
     const Index input_variables_number = get_input_variables_number();
@@ -1791,9 +1610,6 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
     return input_variables_names;
 }
 
-
-/// Returns the names of the target variables in the data set.
-/// The size of the vector is the number of target variables.
 
 Tensor<string, 1> DataSet::get_target_variables_names() const
 {
@@ -1822,8 +1638,6 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 }
 
 
-/// Returns the dimensions of the input variables.
-
 const dimensions& DataSet::get_input_dimensions() const
 {
     return input_dimensions;
@@ -1836,8 +1650,6 @@ const dimensions& DataSet::get_target_dimensions() const
 }
 
 
-/// Returns the number of variables which are either input nor target.
-
 Index DataSet::get_used_variables_number() const
 {
     const Index variables_number = get_variables_number();
@@ -1847,8 +1659,6 @@ Index DataSet::get_used_variables_number() const
     return variables_number - unused_variables_number;
 }
 
-
-/// Returns a indices vector with the positions of the inputs.
 
 Tensor<Index, 1> DataSet::get_input_raw_variables_indices() const
 {
@@ -1873,8 +1683,6 @@ Tensor<Index, 1> DataSet::get_input_raw_variables_indices() const
 }
 
 
-/// Returns a indices vector with the positions of the targets.
-
 Tensor<Index, 1> DataSet::get_target_raw_variables_indices() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -1898,9 +1706,6 @@ Tensor<Index, 1> DataSet::get_target_raw_variables_indices() const
 }
 
 
-
-/// Returns a indices vector with the positions of the unused raw_variables.
-
 Tensor<Index, 1> DataSet::get_unused_raw_variables_indices() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -1923,8 +1728,6 @@ Tensor<Index, 1> DataSet::get_unused_raw_variables_indices() const
     return unused_raw_variables_indices;
 }
 
-
-/// Returns a indices vector with the positions of the used raw_variables.
 
 Tensor<Index, 1> DataSet::get_used_raw_variables_indices() const
 {
@@ -2014,8 +1817,6 @@ Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
 }
 
 
-/// Returns a string vector that contains the names of the raw_variables.
-
 Tensor<string, 1> DataSet::get_raw_variables_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2030,9 +1831,6 @@ Tensor<string, 1> DataSet::get_raw_variables_names() const
     return raw_variables_names;
 }
 
-
-
-/// Returns a string vector that contains the names of the raw_variables whose uses are Input.
 
 Tensor<string, 1> DataSet::get_input_raw_variables_names() const
 {
@@ -2057,8 +1855,6 @@ Tensor<string, 1> DataSet::get_input_raw_variables_names() const
 }
 
 
-/// Returns a string vector which contains the names of the raw_variables whose uses are Target.
-
 Tensor<string, 1> DataSet::get_target_raw_variables_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2082,8 +1878,6 @@ Tensor<string, 1> DataSet::get_target_raw_variables_names() const
 }
 
 
-/// Returns a string vector which contains the names of the raw_variables used whether Input, Target or Time.
-
 Tensor<string, 1> DataSet::get_used_raw_variables_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2106,8 +1900,6 @@ Tensor<string, 1> DataSet::get_used_raw_variables_names() const
 }
 
 
-/// Returns the number of raw_variables whose uses are Input.
-
 Index DataSet::get_input_raw_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2125,8 +1917,6 @@ Index DataSet::get_input_raw_variables_number() const
     return input_raw_variables_number;
 }
 
-
-/// Returns the number of raw_variables whose uses are Target.
 
 Index DataSet::get_target_raw_variables_number() const
 {
@@ -2146,9 +1936,6 @@ Index DataSet::get_target_raw_variables_number() const
 }
 
 
-
-/// Returns the number of raw_variables whose uses are Time
-
 Index DataSet::get_time_raw_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2167,8 +1954,6 @@ Index DataSet::get_time_raw_variables_number() const
 }
 
 
-/// Returns the number of raw_variables that are not used.
-
 Index DataSet::get_unused_raw_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2186,8 +1971,6 @@ Index DataSet::get_unused_raw_variables_number() const
     return unused_raw_variables_number;
 }
 
-
-/// Returns the number of raw_variables that are used.
 
 Index DataSet::get_used_raw_variables_number() const
 {
@@ -2333,15 +2116,11 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(const Histogram& histogram, con
 }
 
 
-/// Returns the raw_variables of the data set.
-
 Tensor<DataSet::RawVariable, 1> DataSet::get_raw_variables() const
 {
     return raw_variables;
 }
 
-
-/// Returns the input raw_variables of the data set.
 
 Tensor<DataSet::RawVariable, 1> DataSet::get_input_raw_variables() const
 {
@@ -2365,8 +2144,6 @@ Tensor<DataSet::RawVariable, 1> DataSet::get_input_raw_variables() const
 }
 
 
-/// Returns the input raw_variables of the data set.
-
 //Tensor<bool, 1> DataSet::get_input_raw_variables_binary() const
 //{
 //    const Index raw_variables_number = get_raw_variables_number();
@@ -2384,8 +2161,6 @@ Tensor<DataSet::RawVariable, 1> DataSet::get_input_raw_variables() const
 //     return input_raw_variables_binary;
 // }
 
-
-/// Returns the target raw_variables of the data set.
 
 Tensor<DataSet::RawVariable, 1> DataSet::get_target_raw_variables() const
 {
@@ -2409,8 +2184,6 @@ Tensor<DataSet::RawVariable, 1> DataSet::get_target_raw_variables() const
 }
 
 
-/// Returns the used raw_variables of the data set.
-
 Tensor<DataSet::RawVariable, 1> DataSet::get_used_raw_variables() const
 {
     const Index used_raw_variables_number = get_used_raw_variables_number();
@@ -2428,15 +2201,11 @@ Tensor<DataSet::RawVariable, 1> DataSet::get_used_raw_variables() const
 }
 
 
-/// Returns the number of raw_variables in the data set.
-
 Index DataSet::get_raw_variables_number() const
 {
     return raw_variables.size();
 }
 
-
-/// Returns the number of constant raw_variables in the data set.
 
 Index DataSet::get_constant_raw_variables_number() const
 {
@@ -2453,8 +2222,6 @@ Index DataSet::get_constant_raw_variables_number() const
     return constant_number;
 }
 
-
-/// Returns the number of variables in the data set.
 
 Index DataSet::get_variables_number() const
 {
@@ -2478,10 +2245,6 @@ Index DataSet::get_variables_number() const
 }
 
 
-/// Returns the number of input variables of the data set.
-/// Note that the number of variables does not have to equal the number of raw_variables in the data set,
-/// because OpenNN recognizes the categorical raw_variables, separating these categories into variables of the data set.
-
 Index DataSet::get_input_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2498,8 +2261,6 @@ Index DataSet::get_input_variables_number() const
     return inputs_number;
 }
 
-
-/// Returns the number of target variables of the data set.
 
 Index DataSet::get_target_variables_number() const
 {
@@ -2518,8 +2279,6 @@ Index DataSet::get_target_variables_number() const
 }
 
 
-/// Returns the number of variables which will neither be used as input nor as target.
-
 Index DataSet::get_unused_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2536,8 +2295,6 @@ Index DataSet::get_unused_variables_number() const
     return unused_variables_number;
 }
 
-
-/// Returns the indices of the used variables.
 
 Tensor<Index, 1> DataSet::get_used_variables_indices() const
 {
@@ -2569,8 +2326,6 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
     }    return used_variables_indices;
 }
 
-
-/// Returns the indices of the input variables.
 
 Tensor<Index, 1> DataSet::get_input_variables_indices() const
 {
@@ -2604,8 +2359,6 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 }
 
 
-/// Returns the indices of the target variables.
-
 Tensor<Index, 1> DataSet::get_target_variables_indices() const
 {
     const Index target_variables_number = get_target_variables_number();
@@ -2638,10 +2391,6 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
 }
 
 
-/// Sets the uses of the data set raw_variables.
-/// @param new_raw_variables_uses String vector that contains the new uses to be set,
-/// note that this vector needs to be the size of the number of raw_variables in the data set.
-
 void DataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses)
 {
     const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
@@ -2662,10 +2411,6 @@ void DataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_
     target_dimensions = {get_target_variables_number()};
 }
 
-
-/// Sets the uses of the data set raw_variables.
-/// @param new_raw_variables_uses DataSet::VariableUse vector that contains the new uses to be set,
-/// note that this vector needs to be the size of the number of raw_variables in the data set.
 
 void DataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses)
 {
@@ -2688,8 +2433,6 @@ void DataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_varia
 }
 
 
-/// Sets all raw_variables in the data_set as unused raw_variables.
-
 void DataSet::set_raw_variables_unused()
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2699,7 +2442,6 @@ void DataSet::set_raw_variables_unused()
         set_raw_variable_use(i, VariableUse::None);
     }
 }
-
 
 
 void DataSet::set_raw_variables_types(const Tensor<string, 1>& new_raw_variable_types)
@@ -2714,8 +2456,8 @@ void DataSet::set_raw_variables_types(const Tensor<string, 1>& new_raw_variable_
     {
         raw_variables(i).set_type(new_raw_variable_types(i));
     }
-
 }
+
 
 Tensor<string, 1> DataSet::get_raw_variables_types() const
 {
@@ -2730,7 +2472,6 @@ Tensor<string, 1> DataSet::get_raw_variables_types() const
 
     return column_types;
 }
-
 
 
 void DataSet::set_input_target_raw_variables(const Tensor<Index, 1>& input_raw_variables, const Tensor<Index, 1>& target_raw_variables)
@@ -2748,6 +2489,7 @@ void DataSet::set_input_target_raw_variables(const Tensor<Index, 1>& input_raw_v
     }
 }
 
+
 void DataSet::set_input_target_raw_variables(const Tensor<string, 1>& input_raw_variables, const Tensor<string, 1>& target_raw_variables)
 {
     set_raw_variables_unused();
@@ -2764,8 +2506,6 @@ void DataSet::set_input_target_raw_variables(const Tensor<string, 1>& input_raw_
 }
 
 
-/// Sets all input raw_variables in the data_set as unused raw_variables.
-
 void DataSet::set_input_raw_variables_unused()
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2777,7 +2517,6 @@ void DataSet::set_input_raw_variables_unused()
 }
 
 
-
 void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variables_indices, const Tensor<bool, 1>& input_raw_variables_use)
 {
     for(Index i = 0; i < input_raw_variables_indices.size(); i++)
@@ -2787,10 +2526,6 @@ void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variable
     }
 }
 
-
-/// Sets the use of a single raw_variable.
-/// @param index Index of raw_variable.
-/// @param new_use Use for that raw_variable.
 
 void DataSet::set_raw_variable_use(const Index& index, const VariableUse& new_use)
 {
@@ -2806,9 +2541,6 @@ void DataSet::set_raw_variables_unused(const Tensor<Index, 1>& unused_raw_variab
     }
 }
 
-/// Sets the use of a single raw_variable.
-/// @param name Name of raw_variable.
-/// @param new_use Use for that raw_variable.
 
 void DataSet::set_raw_variable_use(const string& name, const VariableUse& new_use)
 {
@@ -2816,6 +2548,7 @@ void DataSet::set_raw_variable_use(const string& name, const VariableUse& new_us
 
     set_raw_variable_use(index, new_use);
 }
+
 
 void DataSet::set_raw_variable_type(const Index& index, const RawVariableType& new_type)
 {
@@ -2837,10 +2570,6 @@ void DataSet::set_all_raw_variables_type(const RawVariableType& new_type)
         raw_variables[i].type = new_type;
 }
 
-
-/// This method set the name of a single variable.
-/// @param index Index of variable.
-/// @param new_name Name of variable.
 
 void DataSet::set_variable_name(const Index& variable_index, const string& new_variable_name)
 {
@@ -2880,10 +2609,6 @@ void DataSet::set_variable_name(const Index& variable_index, const string& new_v
     }
 }
 
-
-/// Sets new names for the variables in the data set from a vector of strings.
-/// The size of that vector must be equal to the total number of variables.
-/// @param new_names Name of variables.
 
 void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 {
@@ -2939,10 +2664,6 @@ void DataSet::set_variables_names_from_raw_variables(const Tensor<string, 1>& ne
 }
 
 
-/// Sets new names for the raw_variables in the data set from a vector of strings.
-/// The size of that vector must be equal to the total number of variables.
-/// @param new_names Name of variables.
-
 void DataSet::set_raw_variables_names(const Tensor<string, 1>& new_names)
 {
     const Index new_names_size = new_names.size();
@@ -2959,8 +2680,6 @@ void DataSet::set_raw_variables_names(const Tensor<string, 1>& new_names)
 }
 
 
-/// Sets all the variables in the data set as input variables.
-
 void DataSet::set_input()
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2974,8 +2693,6 @@ void DataSet::set_input()
 }
 
 
-/// Sets all the variables in the data set as target variables.
-
 void DataSet::set_target()
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2987,8 +2704,6 @@ void DataSet::set_target()
 }
 
 
-/// Sets all the variables in the data set as unused variables.
-
 void DataSet::set_variables_unused()
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2999,10 +2714,6 @@ void DataSet::set_variables_unused()
     }
 }
 
-
-/// Sets a new number of variables in the variables object.
-/// All variables are set as inputs but the last one, which is set as targets.
-/// @param new_raw_variables_number Number of variables.
 
 void DataSet::set_raw_variables_number(const Index& new_raw_variables_number)
 {
@@ -3141,8 +2852,6 @@ void DataSet::set_constant_raw_variables()
 }
 
 
-/// Sets new input dimensions in the data set.
-
 void DataSet::set_input_variables_dimensions(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
@@ -3155,8 +2864,6 @@ void DataSet::set_target_dimensions(const dimensions& new_targets_dimensions)
 }
 
 
-/// Returns true if the data matrix is empty, and false otherwise.
-
 bool DataSet::is_empty() const
 {
     if(data.dimension(0) == 0 || data.dimension(1) == 0)
@@ -3167,10 +2874,6 @@ bool DataSet::is_empty() const
     return false;
 }
 
-
-/// Returns a reference to the data matrix in the data set.
-/// The number of rows is equal to the number of samples.
-/// The number of raw_variables is equal to the number of variables.
 
 const Tensor<type, 2>& DataSet::get_data() const
 {
@@ -3184,15 +2887,11 @@ Tensor<type, 2>* DataSet::get_data_p()
 }
 
 
-/// Returns a string with the method used.
-
 DataSet::MissingValuesMethod DataSet::get_missing_values_method() const
 {
     return missing_values_method;
 }
 
-
-/// Returns the name of the data file.
 
 const string& DataSet::get_data_source_path() const
 {
@@ -3200,15 +2899,11 @@ const string& DataSet::get_data_source_path() const
 }
 
 
-/// Returns true if the first line of the data file has a header with the names of the variables, and false otherwise.
-
 const bool& DataSet::get_header_line() const
 {
     return has_header;
 }
 
-
-/// Returns true if the data file has rows label, and false otherwise.
 
 const bool& DataSet::get_rows_label() const
 {
@@ -3252,15 +2947,11 @@ Tensor<string, 1> DataSet::get_selection_rows_label_tensor()
 }
 
 
-/// Returns the separator to be used in the data file.
-
 const DataSet::Separator& DataSet::get_separator() const
 {
     return separator;
 }
 
-
-/// Returns the string which will be used as separator in the data file.
 
 string DataSet::get_separator_string() const
 {
@@ -3306,15 +2997,11 @@ string DataSet::get_separator_name() const
 }
 
 
-/// Returns the string codification used in the data file.
-
 const DataSet::Codification DataSet::get_codification() const
 {
     return codification;
 }
 
-
-/// Returns a string that contains the string codification used in the data file.
 
 const string DataSet::get_codification_string() const
 {
@@ -3332,16 +3019,11 @@ const string DataSet::get_codification_string() const
 }
 
 
-/// Returns the string which will be used as label for the missing values in the data file.
-
 const string& DataSet::get_missing_values_label() const
 {
     return missing_values_label;
 }
 
-
-/// Returns a value of the scaling-unscaling method enumeration from a string containing the name of that method.
-/// @param scaling_unscaling_method String with the name of the scaling and unscaling method.
 
 Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_method)
 {
@@ -3372,10 +3054,6 @@ Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_met
 }
 
 
-/// Returns a matrix with the training samples in the data set.
-/// The number of rows is the number of training
-/// The number of raw_variables is the number of variables.
-
 Tensor<type, 2> DataSet::get_training_data() const
 {
     const Tensor<Index, 1> variables_indices = get_used_variables_indices();
@@ -3389,10 +3067,6 @@ Tensor<type, 2> DataSet::get_training_data() const
     return training_data;
 }
 
-
-/// Returns a matrix with the selection samples in the data set.
-/// The number of rows is the number of selection
-/// The number of raw_variables is the number of variables.
 
 Tensor<type, 2> DataSet::get_selection_data() const
 {
@@ -3411,10 +3085,6 @@ Tensor<type, 2> DataSet::get_selection_data() const
 }
 
 
-/// Returns a matrix with the testing samples in the data set.
-/// The number of rows is the number of testing
-/// The number of raw_variables is the number of variables.
-
 Tensor<type, 2> DataSet::get_testing_data() const
 {
     const Index variables_number = get_variables_number();
@@ -3429,13 +3099,8 @@ Tensor<type, 2> DataSet::get_testing_data() const
     fill_tensor_data(data, testing_indices, variables_indices, testing_data.data());
 
     return testing_data;
-
 }
 
-
-/// Returns a matrix with the input variables in the data set.
-/// The number of rows is the number of
-/// The number of raw_variables is the number of input variables.
 
 Tensor<type, 2> DataSet::get_input_data() const
 {
@@ -3454,10 +3119,6 @@ Tensor<type, 2> DataSet::get_input_data() const
 }
 
 
-/// Returns a matrix with the target variables in the data set.
-/// The number of rows is the number of
-/// The number of raw_variables is the number of target variables.
-
 Tensor<type, 2> DataSet::get_target_data() const
 {
     const Tensor<Index, 1> indices = get_used_samples_indices();
@@ -3472,10 +3133,6 @@ Tensor<type, 2> DataSet::get_target_data() const
 }
 
 
-/// Returns a tensor with the input variables in the data set.
-/// The number of rows is the number of
-/// The number of raw_variables is the number of input variables.
-
 Tensor<type, 2> DataSet::get_input_data(const Tensor<Index, 1>& samples_indices) const
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
@@ -3487,10 +3144,6 @@ Tensor<type, 2> DataSet::get_input_data(const Tensor<Index, 1>& samples_indices)
     return input_data;
 }
 
-
-/// Returns a tensor with the target variables in the data set.
-/// The number of rows is the number of
-/// The number of raw_variables is the number of input variables.
 
 Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& samples_indices) const
 {
@@ -3506,10 +3159,6 @@ Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& samples_indices
 }
 
 
-/// Returns a matrix with training samples and input variables.
-/// The number of rows is the number of training
-/// The number of raw_variables is the number of input variables.
-
 Tensor<type, 2> DataSet::get_training_input_data() const
 {
     const Tensor<Index, 1> training_indices = get_training_samples_indices();
@@ -3523,10 +3172,6 @@ Tensor<type, 2> DataSet::get_training_input_data() const
     return training_input_data;
 }
 
-
-/// Returns a tensor with training samples and target variables.
-/// The number of rows is the number of training
-/// The number of raw_variables is the number of target variables.
 
 Tensor<type, 2> DataSet::get_training_target_data() const
 {
@@ -3542,10 +3187,6 @@ Tensor<type, 2> DataSet::get_training_target_data() const
 }
 
 
-/// Returns a tensor with selection samples and input variables.
-/// The number of rows is the number of selection
-/// The number of raw_variables is the number of input variables.
-
 Tensor<type, 2> DataSet::get_selection_input_data() const
 {
     const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
@@ -3559,10 +3200,6 @@ Tensor<type, 2> DataSet::get_selection_input_data() const
     return selection_input_data;
 }
 
-
-/// Returns a tensor with selection samples and target variables.
-/// The number of rows is the number of selection
-/// The number of raw_variables is the number of target variables.
 
 Tensor<type, 2> DataSet::get_selection_target_data() const
 {
@@ -3578,10 +3215,6 @@ Tensor<type, 2> DataSet::get_selection_target_data() const
 }
 
 
-/// Returns a tensor with testing samples and input variables.
-/// The number of rows is the number of testing
-/// The number of raw_variables is the number of input variables.
-
 Tensor<type, 2> DataSet::get_testing_input_data() const
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
@@ -3596,10 +3229,6 @@ Tensor<type, 2> DataSet::get_testing_input_data() const
 }
 
 
-/// Returns a tensor with testing samples and target variables.
-/// The number of rows is the number of testing
-/// The number of raw_variables is the number of target variables.
-
 Tensor<type, 2> DataSet::get_testing_target_data() const
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
@@ -3613,9 +3242,6 @@ Tensor<type, 2> DataSet::get_testing_target_data() const
     return testing_target_data;
 }
 
-
-/// Returns the inputs and target values of a single sample in the data set.
-/// @param index Index of the sample.
 
 Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
 {
@@ -3635,10 +3261,6 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
     return data.chip(index,0);
 }
 
-
-/// Returns the inputs and target values of a single sample in the data set.
-/// @param sample_index Index of the sample.
-/// @param variables_indices Indices of the variables.
 
 Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor<Index, 1>& variables_indices) const
 {
@@ -3666,9 +3288,6 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor
 }
 
 
-/// Returns the inputs values of a single sample in the data set.
-/// @param sample_index Index of the sample.
-
 Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
 {
     const Index input_variables_number = get_input_variables_number();
@@ -3686,9 +3305,6 @@ Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
 }
 
 
-/// Returns the target values of a single sample in the data set.
-/// @param sample_index Index of the sample.
-
 Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) const
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
@@ -3700,9 +3316,6 @@ Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) cons
     return sample_target_data;
 }
 
-
-/// Returns the index from the raw_variable with a given name,
-/// @param raw_variables_names Names of the raw_variables we want to know the index.
 
 Tensor<Index, 1> DataSet::get_raw_variables_index(const Tensor<string, 1>& raw_variables_names) const
 {
@@ -3716,8 +3329,6 @@ Tensor<Index, 1> DataSet::get_raw_variables_index(const Tensor<string, 1>& raw_v
     return raw_variables_index;
 }
 
-/// Returns the index of the raw_variable with the given name.
-/// @param column_name Name of the raw_variable to be found.
 
 Index DataSet::get_raw_variable_index(const string& column_name) const
 {
@@ -3731,9 +3342,6 @@ Index DataSet::get_raw_variable_index(const string& column_name) const
     throw runtime_error("Cannot find " + column_name + "\n");
 }
 
-
-/// Returns the index of the raw_variable to which a variable index belongs.
-/// @param variable_index Index of the variable to be found.
 
 Index DataSet::get_raw_variable_index(const Index& variable_index) const
 {
@@ -3758,10 +3366,6 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
     throw runtime_error("Cannot find variable index: " + to_string(variable_index) + ".\n");
 }
 
-
-/// Returns the indices of a variable in the data set.
-/// Note that the number of variables does not have to equal the number of raw_variables in the data set,
-/// because OpenNN recognizes the categorical raw_variables, separating these categories into variables of the data set.
 
 Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) const
 {
@@ -3799,10 +3403,6 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) 
     }
 }
 
-
-/// Returns the data from the data set raw_variable with a given index,
-/// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not(respectively).
-/// @param raw_variable_index Index of the raw_variable.
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index) const
 {
@@ -3882,10 +3482,6 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
 }
 
 
-/// Returns the data from the data set raw_variable with a given index,
-/// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not, respectively.
-/// @param raw_variable_index Index of the raw_variable.
-
 Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected_raw_variable_indices) const
 {
     const Index raw_variables_number = selected_raw_variable_indices.size();
@@ -3908,11 +3504,6 @@ Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected
 }
 
 
-/// Returns the data from the data set raw_variable with a given index,
-/// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not(respectively).
-/// @param raw_variable_index Index of the raw_variable.
-/// @param rows_indices Rows of the indices.
-
 Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const Tensor<Index, 1>& rows_indices) const
 {
     Tensor<type, 2> raw_variable_data(rows_indices.size(), get_variable_indices(raw_variable_index).size());
@@ -3920,13 +3511,8 @@ Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, 
     fill_tensor_data(data, rows_indices, get_variable_indices(raw_variable_index), raw_variable_data.data());
 
     return raw_variable_data;
-
 }
 
-
-/// Returns the data from the data set raw_variable with a given name,
-/// these data can be stored in a matrix or a vector depending on whether the raw_variable is categorical or not(respectively).
-/// @param column_name Name of the raw_variable.
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const string& column_name) const
 {
@@ -3936,17 +3522,11 @@ Tensor<type, 2> DataSet::get_raw_variable_data(const string& column_name) const
 }
 
 
-/// Returns all the samples of a single variable in the data set.
-/// @param index Index of the variable.
-
 Tensor<type, 1> DataSet::get_variable_data(const Index& index) const
 {
     return data.chip(index, 1);
 }
 
-
-/// Returns all the samples of a single variable in the data set.
-/// @param variable_name Name of the variable.
 
 Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 {
@@ -3989,10 +3569,6 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 }
 
 
-/// Returns a given set of samples of a single variable in the data set.
-/// @param variable_index Index of the variable.
-/// @param samples_indices Indices of the
-
 Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Tensor<Index, 1>& samples_indices) const
 {
     const Index samples_indices_size = samples_indices.size();
@@ -4009,10 +3585,6 @@ Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Te
     return raw_variable;
 }
 
-
-/// Returns a given set of samples of a single variable in the data set.
-/// @param variable_name Name of the variable.
-/// @param samples_indices Indices of the
 
 Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Tensor<Index, 1>& samples_indices) const
 {
@@ -4071,8 +3643,6 @@ Tensor<Tensor<string, 1>, 1> DataSet::get_data_file_preview() const
     return data_file_preview;
 }
 
-
-/// Sets zero samples and zero variables in the data set.
 
 void DataSet::set()
 {
@@ -4170,9 +3740,6 @@ void DataSet::set(const string& data_source_path,
 }
 
 
-/// Sets all variables from a data matrix.
-/// @param new_data Data matrix.
-
 void DataSet::set(const Tensor<type, 2>& new_data)
 {
     data_source_path = "";
@@ -4187,11 +3754,6 @@ void DataSet::set(const Tensor<type, 2>& new_data)
     set_default_raw_variables_uses();
 }
 
-
-/// Sets new numbers of samples and variables in the inputs targets data set.
-/// All the variables are set as inputs.
-/// @param new_samples_number Number of
-/// @param new_variables_number Number of variables.
 
 void DataSet::set(const Index& new_samples_number, const Index& new_variables_number)
 {
@@ -4216,12 +3778,6 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
     split_samples_random();
 }
 
-
-/// Sets new numbers of samples and inputs and target variables in the data set.
-/// The variables in the data set are the number of inputs plus the number of targets.
-/// @param new_samples_number Number of
-/// @param new_inputs_number Number of input variables.
-/// @param new_targets_number Number of target variables.
 
 void DataSet::set(const Index& new_samples_number,
                   const Index& new_inputs_number,
@@ -4263,9 +3819,6 @@ void DataSet::set(const Index& new_samples_number,
 }
 
 
-/// Sets the members of this data set object with those from another data set object.
-/// @param other_data_set Data set object to be copied.
-
 void DataSet::set(const DataSet& other_data_set)
 {
     data_source_path = other_data_set.data_source_path;
@@ -4284,9 +3837,6 @@ void DataSet::set(const DataSet& other_data_set)
 }
 
 
-/// Sets the data set members from a XML document.
-/// @param data_set_document TinyXML document containing the member data.
-
 void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
 {
     if(thread_pool != nullptr) delete thread_pool;
@@ -4298,31 +3848,17 @@ void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-/// Sets the data set members by loading them from a XML file.
-/// @param file_name Data set XML file_name.
-
 void DataSet::set(const string& file_name)
 {
     load(file_name);
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are to be displayed on the screen;
-/// if it is set to false messages from this class are not to be displayed on the screen.
-/// @param new_display Display value.
-
 void DataSet::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-
-/// Sets the default member values:
-/// <ul>
-/// <li> Display: True.
-/// </ul>
 
 void DataSet::set_default()
 {
@@ -4347,7 +3883,6 @@ void DataSet::set_default()
     target_dimensions.resize(1);
 
     target_dimensions = {get_target_variables_number()};
-
 }
 
 
@@ -4384,7 +3919,7 @@ void DataSet::set_model_type_string(const string& new_model_type)
             "void set_model_type_string(const string&)\n"
             "Unknown project type: " + new_model_type + "\n";
 
-        throw runtime_error(message);
+        throw(message);
     }
 }
 
@@ -4394,12 +3929,6 @@ void DataSet::set_model_type(const DataSet::ModelType& new_model_type)
     model_type = new_model_type;
 }
 
-
-/// Sets a new data matrix.
-/// The number of rows must be equal to the number of
-/// The number of raw_variables must be equal to the number of variables.
-/// Indices of all training, selection and testing samples and inputs and target variables do not change.
-/// @param new_data Data matrix.
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
@@ -4411,16 +3940,12 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
     data = new_data;
 }
 
+
 void DataSet::set_data(const Tensor<type, 2>& new_data, const bool& new_samples)
 {
     data = new_data;
 }
 
-
-/// Sets the name of the data file.
-/// It also loads the data from that file.
-/// Moreover, it sets the variables and samples objects.
-/// @param new_data_file_name Name of the file containing the data.
 
 void DataSet::set_data_source_path(const string& new_data_file_name)
 {
@@ -4428,15 +3953,11 @@ void DataSet::set_data_source_path(const string& new_data_file_name)
 }
 
 
-/// Sets if the data file contains a header with the names of the raw_variables.
-
 void DataSet::set_has_header(const bool& new_has_header)
 {
     has_header = new_has_header;
 }
 
-
-/// Sets if the data file contains rows label.
 
 void DataSet::set_has_ids(const bool& new_has_ids)
 {
@@ -4444,17 +3965,11 @@ void DataSet::set_has_ids(const bool& new_has_ids)
 }
 
 
-/// Sets a new separator.
-/// @param new_separator Separator value.
-
 void DataSet::set_separator(const Separator& new_separator)
 {
     separator = new_separator;
 }
 
-
-/// Sets a new separator from a char.
-/// @param new_separator Char with the separator value.
 
 void DataSet::set_separator(const char& new_separator)
 {
@@ -4481,9 +3996,6 @@ void DataSet::set_separator(const char& new_separator)
 }
 
 
-/// Sets a new separator from a string.
-/// @param new_separator Char with the separator value.
-
 void DataSet::set_separator(const string& new_separator_string)
 {
     if(new_separator_string == "Space")
@@ -4509,17 +4021,11 @@ void DataSet::set_separator(const string& new_separator_string)
 }
 
 
-/// Sets a new string codification for the dataset.
-/// @param new_codification String codification for the dataset.
-
 void DataSet::set_codification(const DataSet::Codification& new_codification)
 {
     codification = new_codification;
 }
 
-
-/// Sets a new string codification for the dataset.
-/// @param new_codification String codification for the dataset.
 
 void DataSet::set_codification(const string& new_codification_string)
 {
@@ -4538,9 +4044,6 @@ void DataSet::set_codification(const string& new_codification_string)
 }
 
 
-/// Sets a new label for the missing values.
-/// @param new_missing_values_label Label for the missing values.
-
 void DataSet::set_missing_values_label(const string& new_missing_values_label)
 {
 #ifdef OPENNN_DEBUG
@@ -4553,9 +4056,6 @@ void DataSet::set_missing_values_label(const string& new_missing_values_label)
     missing_values_label = new_missing_values_label;
 }
 
-
-/// Sets a new method for the missing values.
-/// @param new_missing_values_method Method for the missing values.
 
 void DataSet::set_missing_values_method(const DataSet::MissingValuesMethod& new_missing_values_method)
 {
@@ -4598,11 +4098,6 @@ void DataSet::set_threads_number(const int& new_threads_number)
 }
 
 
-/// Sets a new number of samples in the data set.
-/// All samples are also set for training.
-/// The indices of the inputs and target variables do not change.
-/// @param new_samples_number Number of samples.
-
 void DataSet::set_samples_number(const Index& new_samples_number)
 {
     const Index variables_number = get_variables_number();
@@ -4610,9 +4105,6 @@ void DataSet::set_samples_number(const Index& new_samples_number)
     set(new_samples_number,variables_number);
 }
 
-
-/// Removes the input of target indices of that variables with zero standard deviation.
-/// It might change the size of the vectors containing the inputs and targets indices.
 
 Tensor<string, 1> DataSet::unuse_constant_raw_variables()
 {
@@ -4642,9 +4134,6 @@ Tensor<string, 1> DataSet::unuse_constant_raw_variables()
     return constant_raw_variables;
 }
 
-
-/// Removes the training, selection and testing indices of that samples which are repeated in the data matrix.
-/// It might change the size of the vectors containing the training, selection and testing indices.
 
 Tensor<Index, 1> DataSet::unuse_repeated_samples()
 {
@@ -4683,9 +4172,6 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
     return repeated_samples;
 }
 
-
-/// Return unused variables without correlation.
-/// @param minimum_correlation Minimum correlation between variables.
 
 Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_correlation)
 {
@@ -4753,12 +4239,6 @@ Tensor<string, 1> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& 
     return unused_raw_variables;
 }
 
-
-/// Returns the distribution of each of the raw_variables. In the case of numeric raw_variables, it returns a
-/// histogram, for the case of categorical raw_variables, it returns the frequencies of each category and for the
-/// binary raw_variables it returns the frequencies of the positives and negatives.
-/// The default number of bins is 10.
-/// @param bins_number Number of bins.
 
 Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& bins_number) const
 {
@@ -4881,21 +4361,6 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
 }
 
 
-//BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1>& values) const
-//{
-//    const Index n = values.size();
-
-//    Tensor<Index, 1> indices(n);
-
-//    for(Index i = 0; i < n; i++)
-//    {
-//        indices(i) = i;
-//    }
-
-//    return box_plot(values, indices);
-//}
-
-
 Tensor<BoxPlot, 1> DataSet::calculate_data_raw_variables_box_plot(Tensor<type,2>& data) const
 {
     const Index raw_variables_number = data.dimension(1);
@@ -4910,17 +4375,6 @@ Tensor<BoxPlot, 1> DataSet::calculate_data_raw_variables_box_plot(Tensor<type,2>
     return box_plots;
 }
 
-
-/// Returns a vector of subvectors with the values of a box and whiskers plot.
-/// The size of the vector is equal to the number of used variables.
-/// The size of the subvectors is 5 and they consist on:
-/// <ul>
-/// <li> Minimum
-/// <li> First quartile
-/// <li> Second quartile
-/// <li> Third quartile
-/// <li> Maximum
-/// </ul>
 
 Tensor<BoxPlot, 1> DataSet::calculate_raw_variables_box_plots() const
 {
@@ -4967,9 +4421,6 @@ Tensor<BoxPlot, 1> DataSet::calculate_raw_variables_box_plots() const
 }
 
 
-/// Counts the number of used negatives of the selected target.
-/// @param target_index Index of the target to evaluate.
-
 Index DataSet::calculate_used_negatives(const Index& target_index)
 {
     Index negatives = 0;
@@ -5001,9 +4452,6 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
 }
 
 
-/// Counts the number of negatives of the selected target in the training data.
-/// @param target_index Index of the target to evaluate.
-
 Index DataSet::calculate_training_negatives(const Index& target_index) const
 {
     Index negatives = 0;
@@ -5030,9 +4478,6 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
     return negatives;
 }
 
-
-/// Counts the number of negatives of the selected target in the selection data.
-/// @param target_index Index of the target to evaluate.
 
 Index DataSet::calculate_selection_negatives(const Index& target_index) const
 {
@@ -5061,9 +4506,6 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
 }
 
 
-/// Counts the number of negatives of the selected target in the testing data.
-/// @param target_index Index of the target to evaluate.
-
 Index DataSet::calculate_testing_negatives(const Index& target_index) const
 {
     Index negatives = 0;
@@ -5086,29 +4528,11 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 }
 
 
-/// Returns a vector of vectors containing some basic descriptives of all the variables in the data set.
-/// The size of this vector is four. The subvectors are:
-/// <ul>
-/// <li> Minimum.
-/// <li> Maximum.
-/// <li> Mean.
-/// <li> Standard deviation.
-/// </ul>
-
 Tensor<Descriptives, 1> DataSet::calculate_variables_descriptives() const
 {
     return descriptives(data);
 }
 
-
-/// Returns a vector of vectors containing some basic descriptives of the used variables and samples
-/// The size of this vector is four. The subvectors are:
-/// <ul>
-/// <li> Minimum.
-/// <li> Maximum.
-/// <li> Mean.
-/// <li> Standard deviation.
-/// </ul>
 
 Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
 {
@@ -5118,8 +4542,6 @@ Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
     return descriptives(data, used_samples_indices, used_variables_indices);
 }
 
-
-/// Calculate the descriptives of the samples with positive targets in binary classification problems.
 
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_positive_samples() const
 {
@@ -5161,8 +4583,6 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_positive_s
 }
 
 
-/// Calculate the descriptives of the samples with neagtive targets in binary classification problems.
-
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_negative_samples() const
 {
     const Index target_index = get_target_variables_indices()(0);
@@ -5203,9 +4623,6 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_negative_s
 }
 
 
-/// Returns a matrix with the data set descriptive statistics.
-/// @param class_index Data set index number to make the descriptive statistics.
-
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_categories(const Index& class_index) const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
@@ -5245,15 +4662,6 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_categories
 }
 
 
-/// Returns a vector of vectors containing some basic descriptives of all variables on the training
-/// The size of this vector is two. The subvectors are:
-/// <ul>
-/// <li> Training data minimum.
-/// <li> Training data maximum.
-/// <li> Training data mean.
-/// <li> Training data standard deviation.
-/// </ul>
-
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_training_samples() const
 {
     const Tensor<Index, 1> training_indices = get_training_samples_indices();
@@ -5263,15 +4671,6 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_training_s
     return descriptives(data, training_indices, used_indices);
 }
 
-
-/// Returns a vector of vectors containing some basic descriptives of all variables on the selection
-/// The size of this vector is two. The subvectors are:
-/// <ul>
-/// <li> Selection data minimum.
-/// <li> Selection data maximum.
-/// <li> Selection data mean.
-/// <li> Selection data standard deviation.
-/// </ul>
 
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_selection_samples() const
 {
@@ -5283,10 +4682,6 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_selection_
 }
 
 
-/// Returns a vector of Descriptives structures with some basic statistics of the input variables on the used
-/// This includes the minimum, maximum, mean and standard deviation.
-/// The size of this vector is the number of inputs.
-
 Tensor<Descriptives, 1> DataSet::calculate_input_variables_descriptives() const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
@@ -5296,15 +4691,6 @@ Tensor<Descriptives, 1> DataSet::calculate_input_variables_descriptives() const
     return descriptives(data, used_samples_indices, input_variables_indices);
 }
 
-
-/// Returns a vector of vectors with some basic descriptives of the target variables on all
-/// The size of this vector is four. The subvectors are:
-/// <ul>
-/// <li> Target variables minimum.
-/// <li> Target variables maximum.
-/// <li> Target variables mean.
-/// <li> Target variables standard deviation.
-/// </ul>
 
 Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
 {
@@ -5326,15 +4712,11 @@ Tensor<Descriptives, 1> DataSet::calculate_testing_target_variables_descriptives
 }
 
 
-/// Returns a vector containing the minimums of the input variables.
-
 Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
 {
     return columns_minimums(data, get_used_samples_indices(), get_input_variables_indices());
 }
 
-
-/// Returns a vector containing the minimums of the target variables.
 
 Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 {
@@ -5342,15 +4724,11 @@ Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 }
 
 
-/// Returns a vector containing the maximums of the input variables.
-
 Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
 {
     return columns_maximums(data, get_used_samples_indices(), get_input_variables_indices());
 }
 
-
-/// Returns a vector containing the maximums of the target variables.
 
 Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 {
@@ -5358,16 +4736,11 @@ Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 }
 
 
-/// Returns a vector containing the maximum of the used variables.
-
 Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
 {
     return columns_minimums(data, get_used_samples_indices(), get_used_variables_indices());
 }
 
-
-/// Returns a vector containing the means of a set of given variables.
-/// @param variables_indices Indices of the variables.
 
 Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& variables_indices) const
 {
@@ -5401,8 +4774,6 @@ Tensor<type, 1> DataSet::calculate_used_targets_mean() const
 }
 
 
-/// Returns the mean values of the target variables on the selection
-
 Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 {
     const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
@@ -5413,28 +4784,17 @@ Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 }
 
 
-/// Returns the value of the gmt that has the data set, by default it is 0.
-/// This is recommended to use in forecasting problems.
-
 Index DataSet::get_gmt() const
 {
     return gmt;
 }
 
 
-/// Sets the value of the gmt, by default it is 0.
-/// This is recommended to use in forecasting problems.
-
 void DataSet::set_gmt(Index& new_gmt)
 {
     gmt = new_gmt;
 }
 
-
-/// Calculates the correlations between all outputs and all inputs.
-/// It returns a matrix with the data stored in CorrelationsResults format, where the number of rows is the input number
-/// and number of raw_variables is the target number.
-/// Each element contains the correlation between a single input and a single target.
 
 Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlations() const
 {
@@ -5543,8 +4903,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 }
 
 
-/// Returns true if the data contain missing values.
-
 bool DataSet::has_nan() const
 {
     const Index rows_number = data.dimension(0);
@@ -5561,8 +4919,6 @@ bool DataSet::has_nan() const
 }
 
 
-/// Returns true if the given row contains missing values.
-
 bool DataSet::has_nan_row(const Index& row_index) const
 {
     const Index variables_number = get_variables_number();
@@ -5575,13 +4931,6 @@ bool DataSet::has_nan_row(const Index& row_index) const
     return false;
 }
 
-
-/// Print on screen the information about the missing values in the data set.
-/// <ul>
-/// <li> Total number of missing values.
-/// <li> Number of variables with missing values.
-/// <li> Number of samples with missing values.
-/// </ul>
 
 void DataSet::print_missing_values_information() const
 {
@@ -5600,8 +4949,6 @@ void DataSet::print_missing_values_information() const
          << samples_with_missing_values << " (" << samples_with_missing_values*100/data.dimension(0) << "%)" << endl;
 }
 
-
-/// Print on screen the correlation between targets and inputs.
 
 void DataSet::print_input_target_raw_variables_correlations() const
 {
@@ -5622,9 +4969,6 @@ void DataSet::print_input_target_raw_variables_correlations() const
     }
 }
 
-
-/// This method print on screen the corretaliont between inputs and targets.
-/// @param number Number of variables to be printed.
 
 void DataSet::print_top_input_target_raw_variables_correlations() const
 {
@@ -5658,9 +5002,6 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     }
 }
 
-
-/// Calculate the correlation between each input in the data set.
-/// Returns a matrix with the correlation values between variables in the data set.
 
 Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correlations(const bool& calculate_pearson_correlations,
                                                                                       const bool& calculate_spearman_correlations) const
@@ -5728,7 +5069,6 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
             }
             else
             {
-
                 const Index current_input_index_j = input_raw_variables_indices(j);
 
                 const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
@@ -5782,8 +5122,6 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
 }
 
 
-/// Print on screen the correlation between variables in the data set.
-
 void DataSet::print_inputs_correlations() const
 {
     const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_raw_variables_correlations()(0));
@@ -5807,9 +5145,6 @@ void DataSet::print_data_file_preview() const
     }
 }
 
-
-/// This method print on screen the corretaliont between variables.
-/// @param number Number of variables to be printed.
 
 void DataSet::print_top_inputs_correlations() const
 {
@@ -5843,8 +5178,6 @@ void DataSet::print_top_inputs_correlations() const
     }
 }
 
-
-/// Returns a vector of strings containing the scaling method that best fits each of the input variables.
 
 void DataSet::set_default_raw_variables_scalers()
 {
@@ -5953,9 +5286,6 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
 }
 
 
-/// It scales every input variable with the given method.
-/// The method to be used is that in the scaling and unscaling method variable.
-
 Tensor<Descriptives, 1> DataSet::scale_input_variables()
 {
     const Index input_variables_number = get_input_variables_number();
@@ -6004,11 +5334,6 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 }
 
 
-/// Calculates the input and target variables descriptives.
-/// Then it scales the target variables with those values.
-/// The method to be used is that in the scaling and unscaling method variable.
-/// Finally, it returns the descriptives.
-
 Tensor<Descriptives, 1> DataSet::scale_target_variables()
 {
     const Index target_variables_number = get_target_variables_number();
@@ -6052,9 +5377,6 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
     return target_variables_descriptives;
 }
 
-
-/// It unscales every input variable with the given method.
-/// The method to be used is that in the scaling and unscaling method variable.
 
 void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_variables_descriptives)
 {
@@ -6101,9 +5423,6 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
 }
 
 
-/// It unscales the input variables with that values.
-/// The method to be used is that in the scaling and unscaling method variable.
-
 void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Index target_variables_number = get_target_variables_number();
@@ -6142,9 +5461,6 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
 }
 
 
-/// Initializes the data matrix with a given value.
-/// @param new_value Initialization value.
-
 void DataSet::set_data_constant(const type& new_value)
 {
     data.setConstant(new_value);
@@ -6177,6 +5493,9 @@ Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const in
     return matrix_rounded;
 }
 
+
+// @todo delete or move to tensors
+
 Tensor<type, 1> DataSet::round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision)
 {
     Tensor<type, 1> tensor_rounded(tensor.size());
@@ -6192,17 +5511,11 @@ Tensor<type, 1> DataSet::round_to_precision_tensor(Tensor<type, 1> tensor, const
 }
 
 
-/// Initializes the data matrix with random values chosen from a uniform distribution
-/// with given minimum and maximum.
-
 void DataSet::set_data_random()
 {
     data.setRandom();
 }
 
-
-/// Initializes the data matrix with random values chosen from a uniform distribution
-/// with given minimum and maximum. The targets will be binary randoms.
 
 void DataSet::set_data_binary_random()
 {
@@ -6233,8 +5546,6 @@ void DataSet::set_data_binary_random()
     }
 }
 
-
-/// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -6996,8 +6307,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-/// Prints to the screen in text format the main numbers from the data set object.
-
 void DataSet::print() const
 {
     if(!display) return;
@@ -7028,9 +6337,6 @@ void DataSet::print() const
 }
 
 
-/// Saves the members of a data set object to a XML-type file in an XML-type format.
-/// @param file_name Name of data set XML-type file.
-
 void DataSet::save(const string& file_name) const
 {
     FILE* pFile = fopen(file_name.c_str(), "w");
@@ -7042,29 +6348,6 @@ void DataSet::save(const string& file_name) const
     fclose(pFile);
 }
 
-
-/// Loads the members of a data set object from a XML-type file:
-/// <ul>
-/// <li> Samples number.
-/// <li> Training samples number.
-/// <li> Training samples indices.
-/// <li> Selection samples number.
-/// <li> Selection samples indices.
-/// <li> Testing samples number.
-/// <li> Testing samples indices.
-/// <li> Input variables number.
-/// <li> Input variables indices.
-/// <li> Target variables number.
-/// <li> Target variables indices.
-/// <li> Input variables name.
-/// <li> Target variables name.
-/// <li> Input variables description.
-/// <li> Target variables description.
-/// <li> Display.
-/// <li> Data.
-/// </ul>
-/// Please mind about the file format. This is specified in the User's Guide.
-/// @param file_name Name of data set XML-type file.
 
 void DataSet::load(const string& file_name)
 {
@@ -7147,15 +6430,11 @@ void DataSet::print_raw_variables_scalers() const
 }
 
 
-/// Prints to the screen the values of the data matrix.
-
 void DataSet::print_data() const
 {
     if(display) cout << data << endl;
 }
 
-
-/// Prints to the screen a preview of the data matrix, i.e. the first, second and last samples.
 
 void DataSet::print_data_preview() const
 {
@@ -7206,8 +6485,6 @@ void DataSet::print_data_preview() const
     }
 }
 
-
-/// Saves to the data file the values of the data matrix.
 
 void DataSet::save_data() const
 {
@@ -7265,8 +6542,6 @@ void DataSet::save_data() const
 }
 
 
-/// Saves to the data file the values of the data matrix in binary format.
-
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
     ofstream file;
@@ -7308,9 +6583,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 }
 
 
-/// This method loads the data from a binary data file.
-/// @todo Can load block of data instead of element by element?
-
 void DataSet::load_data_binary()
 {
     ifstream file;
@@ -7340,10 +6612,6 @@ void DataSet::load_data_binary()
     file.close();
 }
 
-
-/// Returns a vector containing the number of samples of each class in the data set.
-/// If the number of target variables is one then the number of classes is two.
-/// If the number of target variables is greater than one then the number of classes is equal to the number of target variables.
 
 Tensor<Index, 1> DataSet::calculate_target_distribution() const
 {
@@ -7403,9 +6671,6 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
     return class_distribution;
 }
 
-
-/// Calculate the outliers from the data set using Tukey's test.
-/// @param cleaning_parameter Parameter used to detect outliers.
 
 Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleaning_parameter) const
 {
@@ -7491,9 +6756,6 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
     return return_values;
 }
 
-
-/// Calculate the outliers from the data set using Tukey's test and sets in samples object.
-/// @param cleaning_parameter Parameter used to detect outliers
 
 Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
 {
@@ -7592,11 +6854,6 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 }
 
 
-/// Generates an artificial data_set with a given number of samples and number of variables
-/// by constant data.
-/// @param samples_number Number of samples in the data_set.
-/// @param variables_number Number of variables in the data_set.
-
 void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number, const type& value)
 {
     set(samples_number, variables_number);
@@ -7607,11 +6864,6 @@ void DataSet::generate_constant_data(const Index& samples_number, const Index& v
 }
 
 
-/// Generates an artificial data_set with a given number of samples and number of variables
-/// using random data.
-/// @param samples_number Number of samples in the data_set.
-/// @param variables_number Number of variables in the data_set.
-
 void DataSet::generate_random_data(const Index& samples_number, const Index& variables_number)
 {
     set(samples_number, variables_number);
@@ -7619,11 +6871,6 @@ void DataSet::generate_random_data(const Index& samples_number, const Index& var
     data.setRandom();
 }
 
-
-/// Generates an artificial data_set with a given number of samples and number of variables
-/// using a sequential data.
-/// @param samples_number Number of samples in the data_set.
-/// @param variables_number Number of variables in the data_set.
 
 void DataSet::generate_sequential_data(const Index& samples_number, const Index& variables_number)
 {
@@ -7638,11 +6885,6 @@ void DataSet::generate_sequential_data(const Index& samples_number, const Index&
     }
 }
 
-
-/// Generates an artificial data_set with a given number of samples and number of variables
-/// using the Rosenbrock function.
-/// @param samples_number Number of samples in the data_set.
-/// @param variables_number Number of variables in the data_set.
 
 void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index& variables_number)
 {
@@ -7672,11 +6914,6 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
     set_default_raw_variables_uses();    
 }
 
-
-/// Generates an artifical data_set with a given number of samples, a number of features and a number of classes.
-/// @param samples_numer Number of samples in the data_set.
-/// @param variables_number Number of features to take into account in the classification problem.
-/// @param classes_number Number of classes in the data_set.
 
 void DataSet::generate_classification_data(const Index& samples_number, const Index& variables_number, const Index& classes_number)
 {
@@ -7724,12 +6961,6 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
     set(data);
 }
 
-
-/// Unuses those samples with values outside a defined range.
-/// @param minimums vector of minimum values in the range.
-/// The size must be equal to the number of variables.
-/// @param maximums vector of maximum values in the range.
-/// The size must be equal to the number of variables.
 
 Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
 {
@@ -7810,8 +7041,6 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 }
 
 
-/// Sets all the samples with missing values to "None".
-
 void DataSet::impute_missing_values_unuse()
 {
     const Index samples_number = get_samples_number();
@@ -7824,8 +7053,6 @@ void DataSet::impute_missing_values_unuse()
     }
 }
 
-
-/// Substitutes all the missing values by the mean of the corresponding variable.
 
 void DataSet::impute_missing_values_mean()
 {
@@ -7879,8 +7106,6 @@ void DataSet::impute_missing_values_mean()
 }
 
 
-/// Substitutes all the missing values by the median of the corresponding variable.
-
 void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
@@ -7930,8 +7155,6 @@ void DataSet::impute_missing_values_median()
     }
 }
 
-
-/// Substitutes all the missing values by the interpolation of the corresponding variable.
 
 void DataSet::impute_missing_values_interpolate()
 {
@@ -8015,10 +7238,6 @@ void DataSet::impute_missing_values_interpolate()
     }
 }
 
-
-/// General method for dealing with missing values.
-/// It switches among the different scrubbing methods available,
-/// according to the corresponding value in the missing values object.
 
 void DataSet::scrub_missing_values()
 {
@@ -8596,7 +7815,7 @@ void DataSet::check_special_characters(const string & line) const
     //    {
     //        const string message =
     //                "Error: mixed break line characters in line: " + line + ". Please, review the file.";
-    //        throw runtime_error(message);
+    //        throw(message);
     //    }
     //#endif
 }
@@ -8884,9 +8103,6 @@ bool DataSet::get_has_rows_labels() const
 }
 
 
-/// This method parses a string decoded in non UTF8 decodification to UTF8
-/// @param input_string String to be parsed
-
 void DataSet::decode(string& input_string) const
 {
     switch(codification)
@@ -8903,8 +8119,6 @@ void DataSet::decode(string& input_string) const
     }
 }
 
-
-/// This method loads data from a file and returns a matrix containing the input raw_variables.
 
 Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const string& separator_string,

@@ -14,11 +14,6 @@ using namespace Eigen;
 namespace opennn
 {
 
-///
-/// This structure is a necessary tool in text analytics, the word bag is similar a notebook
-/// where you store the words and statistical processing is done to obtain relevant information.
-/// Return various list with words, repetition frequencies and percentages.
-
 struct WordBag
 {
     /// Default constructor.

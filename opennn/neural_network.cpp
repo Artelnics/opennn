@@ -40,24 +40,12 @@
 
 namespace opennn
 {
-
-/// Default constructor.
-/// It creates an empty neural network object.
-/// It also initializes all pointers in the object to nullptr.
-/// Finally, it initializes the rest of the members to their default values.
     
 NeuralNetwork::NeuralNetwork()
 {
     set();
 }
 
-
-/// Type of model and architecture of the Neural Network constructor.
-/// It creates a neural network object with the given model type and architecture.
-/// It initializes the rest of the members to their default values.
-/// @param model_type Type of problem to be solved with the neural network
-/// (Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation).
-/// @param architecture Architecture of the neural network({inputs_number, hidden_neurons_number, outputs_number}).
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, const Tensor<Index, 1>& architecture)
 {
@@ -74,10 +62,6 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, const i
 }
 
 
-/// (Convolutional layer) constructor.
-/// It creates a neural network object with the given parameters.
-/// Note that this method is only valid when our problem presents convolutional layers.
-
 NeuralNetwork::NeuralNetwork(const dimensions& new_input_dimensions,
                              const Index& new_blocks_number,
                              const Tensor<Index, 1>& new_filters_dimensions,
@@ -87,29 +71,17 @@ NeuralNetwork::NeuralNetwork(const dimensions& new_input_dimensions,
 }
 
 
-/// File constructor.
-/// It creates a neural network object by loading its members from an XML-type file.
-/// @param file_name Name of neural network file.
-
 NeuralNetwork::NeuralNetwork(const string& file_name)
 {
     load(file_name);
 }
 
 
-/// XML constructor.
-/// It creates a neural network object by loading its members from an XML document.
-/// @param document TinyXML document containing the neural network data.
-
 NeuralNetwork::NeuralNetwork(const tinyxml2::XMLDocument& document)
 {
     from_XML(document);
 }
 
-
-/// Layers constructor.
-/// It creates a neural network object by
-/// It also sets the rest of the members to their default values.
 
 NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers)
 {
@@ -118,8 +90,6 @@ NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers)
     layers = new_layers;
 }
 
-
-/// Destructor.
 
 NeuralNetwork::~NeuralNetwork()
 {
@@ -141,9 +111,6 @@ void NeuralNetwork::delete_layers()
     layers.resize(0);
 }
 
-
-/// Add a new layer to the Neural Network model.
-/// @param layer The layer that will be added.
 
 void NeuralNetwork::add_layer(Layer* layer)
 {
@@ -191,10 +158,6 @@ void NeuralNetwork::add_layer(Layer* layer)
 }
 
 
-/// Check if a given layer type can be added to the structure of the neural network.
-/// LSTM and Recurrent layers can only be added at the beginning.
-/// @param layer_type Type of new layer to be added.
-
 bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
 {
     const Index layers_number = layers.size();
@@ -216,9 +179,6 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
     return true;
 }
 
-
-/// Returns true if the neural network object has a scaling layer object inside,
-/// and false otherwise.
 
 bool NeuralNetwork::has_scaling_layer() const
 {
@@ -1020,7 +980,7 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
                 "void set_model_type_string(const string&)\n"
                 "Unknown project type: " + new_model_type + "\n";
 
-        throw runtime_error(message);
+        throw(message);
     }
 }
 
@@ -1365,7 +1325,7 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
     {
         const Tensor<type, 1> layer_parameters = trainable_layers(i)->get_parameters();
 
-        /// @todo use memcpy
+        // @todo use memcpy
 
         for(Index j = 0; j < layer_parameters.size(); j++)
         {

@@ -25,14 +25,6 @@ namespace opennn
 
 struct InputsSelectionResults;
 
-/// This abstract class represents the concept of inputs selection algorithm for a ModelSelection[1].
-
-///
-/// Any derived class must implement the perform_inputs_selection() method.
-///
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
-/// \ref https://www.neuraldesigner.com/blog/model-selection
-
 class InputsSelection
 {
 public:
@@ -44,8 +36,6 @@ public:
     explicit InputsSelection(TrainingStrategy*);
 
     // Enumerations
-
-    /// Enumeration of all possible conditions of stop for the algorithms.
 
     enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
                            MaximumSelectionFailures, CorrelationGoal};
@@ -95,59 +85,36 @@ public:
 
     Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&) const;
 
-    /// Performs the inputs selection for a neural network.
-
     virtual InputsSelectionResults perform_inputs_selection() = 0;
-
-    /// Writes the time from seconds in format HH:mm:ss.
 
     string write_time(const type&) const;
 
 protected:
-
-    /// Pointer to a training strategy object.
 
     TrainingStrategy* training_strategy = nullptr;
 
     Tensor<Index, 1> original_input_raw_variables_indices;
     Tensor<Index, 1> original_target_raw_variables_indices;
 
-    /// Number of trials for each neural network.
-
     Index trials_number = 1;
-
-    /// Display messages to screen.
 
     bool display = true;
    
-
     // Stopping criteria
-
-    /// Goal value for the selection error. It is a stopping criterion.
 
     type selection_error_goal;
 
-    /// Maximum number of epochs to perform_inputs_selection. It is a stopping criterion.
-
     Index maximum_epochs_number;
-
-    /// Maximum value for the correlations.
 
     type maximum_correlation;
 
-    /// Minimum value for the correlations.
-
     type minimum_correlation;
-
-    /// Maximum selection algorithm time. It is a stopping criterion.
 
     type maximum_time;
 
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 };
 
-
-/// This structure contains the results from the inputs selection.
 
 struct InputsSelectionResults
 {
@@ -193,17 +160,11 @@ struct InputsSelectionResults
 
    // Neural network
 
-   /// Vector of parameters for the neural network with minimum selection error.
-
    Tensor<type, 1> optimal_parameters;
 
    // Loss index
 
-   /// Final training errors of the different neural networks.
-
    Tensor<type, 1> training_error_history;
-
-   /// Final selection errors of the different neural networks.
 
    Tensor<type, 1> selection_error_history;
 
@@ -215,15 +176,9 @@ struct InputsSelectionResults
 
    Tensor < type, 1 >  mean_training_error_history;
 
-   /// Value of training for the neural network with minimum selection error.
-
    type optimum_training_error = numeric_limits<type>::max();
 
-   /// Value of minimum selection error.
-
    type optimum_selection_error = numeric_limits<type>::max();
-
-   /// Inputs of the neural network with minimum selection error.
 
    Tensor<string, 1> optimal_input_raw_variables_names;
 
@@ -233,11 +188,7 @@ struct InputsSelectionResults
 
    // Model selection
 
-   /// Stopping condition of the algorithm.
-
    InputsSelection::StoppingCondition stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
-
-   /// Elapsed time during the loss of the algortihm.
 
    string elapsed_time;
 };

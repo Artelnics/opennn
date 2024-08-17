@@ -101,8 +101,6 @@ public:
 
     void set_default_columns_scalers();
 
-    /// This enumeration represents the data file string codification (utf8, shift_jis)
-
     enum class Codification{UTF8, SHIFT_JIS};
 
     explicit DataSet(const string&, const char&, const bool& = true, const bool& = false, const Codification& = Codification::UTF8);
@@ -113,44 +111,23 @@ public:
 
     // Enumerations
 
-    /// Enumeration of available separators for the data file.
-
     enum class Separator{None, Space, Tab, Comma, Semicolon};
-
-    /// Enumeration of available methods for missing values in the data.
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
-    /// Enumeration of the learning tasks.
-
     enum class ModelType{Approximation, Classification, Forecasting, AutoAssociation, TextClassification, ImageClassification};
-
-    /// This enumeration represents the possible uses of an sample
-    /// (training, selection, testing or unused).
 
     enum class SampleUse{Training, Selection, Testing, None};
 
-    /// This enumeration represents the possible uses of an variable
-    /// (input, target, time or unused).
-
     enum class VariableUse{Id, Input, Target, Time, None, Context};
-
-    /// This enumeration represents the data type of a raw_variable
-    /// (numeric, binary, categorical or time).
 
     enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
     // Structs
 
-    /// This structure represents the raw variables of the DataSet.
-
     struct RawVariable
     {
-        /// Default constructor.
-
         RawVariable();
-
-        /// Values constructor
 
         RawVariable(const string&,
                     const DataSet::VariableUse&,
@@ -158,19 +135,11 @@ public:
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const Tensor<string, 1>& = Tensor<string, 1>());
 
-        /// Raw variable name.
-
         string name = "";
-
-        /// Raw variable use.
 
         DataSet::VariableUse use = DataSet::VariableUse::None;
 
-        /// Raw variable type.
-
         DataSet::RawVariableType type = DataSet::RawVariableType::None;
-
-        /// Categories within the raw variable.
 
         Tensor<string, 1> categories;
 
@@ -772,10 +741,6 @@ protected:
 
     // DATA
 
-    /// Data Matrix.
-    /// The number of rows is the number of samples.
-    /// The number of raw_variables is the number of variables.
-
     Tensor<type, 2> data;
 
     // Samples
@@ -794,29 +759,17 @@ protected:
 
     // DATA FILE
 
-    /// Data file name.
-
     string data_source_path;
 
-    /// Separator character.
-
     Separator separator = Separator::Comma;
-
-    /// Missing values label.
 
     string missing_values_label = "NA";
 
     Tensor<bool, 1> nans_raw_variables;
 
-    /// Header which contains variables name.
-
     bool has_header = false;
 
-    /// Header which contains the rows label.
-
     bool has_ids = false;
-
-    /// Class containing file string codification
 
     Codification codification = Codification::UTF8;
 
@@ -826,11 +779,7 @@ protected:
 
     // MISSING VALUES
 
-    /// Missing values method.
-
     MissingValuesMethod missing_values_method = MissingValuesMethod::Unuse;
-
-    /// Missing values
 
     Index missing_values_number;
 
@@ -839,8 +788,6 @@ protected:
     Index rows_missing_values_number;
 
     bool augmentation = false;
-
-    /// Display messages to screen.        
 
     bool display = true;     
 };

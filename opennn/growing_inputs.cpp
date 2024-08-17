@@ -13,17 +13,12 @@
 namespace opennn
 {
 
-/// Default constructor.
-
 GrowingInputs::GrowingInputs()
     : InputsSelection()
 {
     set_default();
 }
 
-
-/// Training strategy constructor.
-/// @param new_training_strategy Pointer to a training strategy object.
 
 GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
@@ -32,15 +27,11 @@ GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
 }
 
 
-/// Returns the maximum number of inputs in the growing inputs selection algorithm.
-
 const Index& GrowingInputs::get_maximum_inputs_number() const
 {
     return maximum_inputs_number;
 }
 
-
-/// Returns the minimum number of inputs in the growing inputs selection algorithm.
 
 const Index& GrowingInputs::get_minimum_inputs_number() const
 {
@@ -48,15 +39,11 @@ const Index& GrowingInputs::get_minimum_inputs_number() const
 }
 
 
-/// Returns the maximum number of selection failures in the growing inputs selection algorithm.
-
 const Index& GrowingInputs::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
 
-
-/// Sets the members of the growing inputs object to their default values.
 
 void GrowingInputs::set_default()
 {
@@ -89,9 +76,6 @@ void GrowingInputs::set_default()
 }
 
 
-/// Sets the maximum inputs number for the growing inputs selection algorithm.
-/// @param new_maximum_inputs_number Maximum inputs number in the growing inputs selection algorithm.
-
 void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
     const Index inputs_number = training_strategy->get_data_set()->get_input_raw_variables_number();
@@ -100,25 +84,17 @@ void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
 }
 
 
-/// Sets the minimum inputs number for the growing inputs selection algorithm.
-/// @param new_minimum_inputs_number Minimum inputs number in the growing inputs selection algorithm.
-
 void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
 {
     minimum_inputs_number = new_minimum_inputs_number;
 }
 
 
-/// Sets the maximum selection failures for the growing inputs selection algorithm.
-/// @param new_maximum_selection_failures Maximum number of selection failures in the growing inputs selection algorithm.
-
 void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
     maximum_selection_failures = new_maximum_selection_failures;
 }
 
-
-/// Perform inputs selection with the growing inputs method.
 
 InputsSelectionResults GrowingInputs::perform_inputs_selection()
 {
@@ -380,8 +356,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 }
 
 
-/// This method writes a matrix of strings the most representative atributes.
-
 Tensor<string, 2> GrowingInputs::to_string_matrix() const
 {
     ostringstream buffer;
@@ -472,9 +446,6 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
     return string_matrix;
 }
 
-
-/// Serializes the growing inputs object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -584,9 +555,6 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this growing inputs object.
-/// @param document TinyXML document containing the member data.
 
 void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -790,9 +758,6 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to an XML-type file the members of the growing inputs object.
-/// @param file_name Name of growing inputs XML-type file.
-
 void GrowingInputs::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
@@ -805,9 +770,6 @@ void GrowingInputs::save(const string& file_name) const
     }
 }
 
-
-/// Loads a growing inputs object from an XML-type file.
-/// @param file_name Name of growing inputs XML-type file.
 
 void GrowingInputs::load(const string& file_name)
 {

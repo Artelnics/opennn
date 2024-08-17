@@ -26,23 +26,12 @@ namespace opennn
 
 struct ConjugateGradientData;
 
-/// In the conjugate gradient algorithms a search is performed along conjugate directions,
-/// which produces generally faster convergence than a search along the steepest descent directions.
-
-/// This concrete class represents a conjugate gradient optimization algorithm.
-///
-/// \cite 1 \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
-///
-/// \cite 2 D.P. O'Leary "The Block Conjugate Gradient Algorithm and Related Methods."
-
 class ConjugateGradient : public OptimizationAlgorithm
 {
 
 public:
 
    // Enumerations
-
-   /// Enumeration of the available training operators for obtaining the training direction.
 
    enum class TrainingDirectionMethod{PR, FR};
 
@@ -132,34 +121,19 @@ private:
 
    type first_learning_rate = type(0.01);
 
-   /// Applied method for calculating the conjugate gradient direction.
-
    TrainingDirectionMethod training_direction_method = ConjugateGradient::TrainingDirectionMethod::FR;
-
-   /// Learning rate algorithm object for one-dimensional minimization. 
 
    LearningRateAlgorithm learning_rate_algorithm;
 
    // Stopping criteria
 
-   /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
-
    type minimum_loss_decrease = type(0);
-
-   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal = type(0);
 
-   /// Maximum number of epochs at which the selection error increases.
-   /// This is an early stopping method for improving selection.
-
    Index maximum_selection_failures;
 
-   /// Maximum number of epochs to perform_training. It is a stopping criterion.
-
    Index maximum_epochs_number;
-
-   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time;
 };
@@ -167,8 +141,6 @@ private:
 
 struct ConjugateGradientData : public OptimizationAlgorithmData
 {
-    /// Default constructor.
-
     explicit ConjugateGradientData();
 
     explicit ConjugateGradientData(ConjugateGradient*);

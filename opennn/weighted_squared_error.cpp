@@ -13,23 +13,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a weighted squared error term not associated with any
-/// neural network and not measured on any data set.
-/// It also initializes all the rest of the class members to their default values.
-
 WeightedSquaredError::WeightedSquaredError() : LossIndex()
 {
     set_default();
 }
 
-
-/// Neural network and data set constructor.
-/// It creates a weighted squared error term object associated with a
-/// neural network and measured on a data set.
-/// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network Pointer to a neural network object.
-/// @param new_data_set Pointer to a data set object.
 
 WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
@@ -38,15 +26,11 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, Da
 }
 
 
-/// Returns the weight of the positives.
-
 type WeightedSquaredError::get_positives_weight() const
 {
     return positives_weight;
 }
 
-
-/// Returns the weight of the negatives.
 
 type WeightedSquaredError::get_negatives_weight() const
 {
@@ -59,8 +43,6 @@ type WeightedSquaredError::get_normalizaton_coefficient() const
     return normalization_coefficient;
 }
 
-
-/// Set the default values for the object.
 
 void WeightedSquaredError::set_default()
 {
@@ -80,27 +62,17 @@ void WeightedSquaredError::set_default()
 }
 
 
-/// Set a new weight for the positives values.
-/// @param new_positives_weight New weight for the positives.
-
 void WeightedSquaredError::set_positives_weight(const type& new_positives_weight)
 {
     positives_weight = new_positives_weight;
 }
 
 
-/// Set a new weight for the negatives values.
-/// @param new_negatives_weight New weight for the negatives.
-
 void WeightedSquaredError::set_negatives_weight(const type& new_negatives_weight)
 {
     negatives_weight = new_negatives_weight;
 }
 
-
-/// Set new weights for the positives and negatives values.
-/// @param new_positives_weight New weight for the positives.
-/// @param new_negatives_weight New weight for the negatives.
 
 void WeightedSquaredError::set_weights(const type& new_positives_weight, const type& new_negatives_weight)
 {
@@ -245,7 +217,7 @@ void WeightedSquaredError::calculate_error_lm(const Batch& batch,
                                               BackPropagationLM &back_propagation) const
 {
 
-    /// @todo This is working???
+    // @todo This is working???
 
     // Data set
 
@@ -301,7 +273,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 }
 
 
-/// @todo Add gradient and hessian weighted squared error code (insted of normalized squared error)
+// @todo Add gradient and hessian weighted squared error code (insted of normalized squared error)
 
 void WeightedSquaredError::calculate_error_gradient_lm(const Batch& batch,
                                                        BackPropagationLM& back_propagation_lm) const
@@ -485,7 +457,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
 
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
-    /// @todo
+    // @todo
 
     //squared_errors.device(*thread_pool_device) = 0;
 }

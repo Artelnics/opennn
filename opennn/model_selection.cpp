@@ -11,16 +11,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-
 ModelSelection::ModelSelection()
 {
     set_default();
 }
 
-
-/// Training strategy constructor.
-/// @param new_training_strategy Pointer to a training strategy object.
 
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 {
@@ -29,8 +24,6 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-
-/// Returns a pointer to the training strategy object.
 
 TrainingStrategy* ModelSelection::get_training_strategy() const
 {
@@ -45,9 +38,6 @@ TrainingStrategy* ModelSelection::get_training_strategy() const
 }
 
 
-/// Returns true if this model selection has a training strategy associated,
-/// and false otherwise.
-
 bool ModelSelection::has_training_strategy() const
 {   
     if(training_strategy)
@@ -61,15 +51,11 @@ bool ModelSelection::has_training_strategy() const
 }
 
 
-/// Returns the type of algorithm for the neurons selection.
-
 const ModelSelection::NeuronsSelectionMethod& ModelSelection::get_neurons_selection_method() const
 {
     return neurons_selection_method;
 }
 
-
-/// Returns the type of algorithm for the inputs selection.
 
 const ModelSelection::InputsSelectionMethod& ModelSelection::get_inputs_selection_method() const
 {
@@ -77,15 +63,11 @@ const ModelSelection::InputsSelectionMethod& ModelSelection::get_inputs_selectio
 }
 
 
-/// Returns a pointer to the growing neurons selection algorithm.
-
 GrowingNeurons* ModelSelection::get_growing_neurons()
 {
     return &growing_neurons;
 }
 
-
-/// Returns a pointer to the growing inputs selection algorithm.
 
 GrowingInputs* ModelSelection::get_growing_inputs()
 {
@@ -93,15 +75,11 @@ GrowingInputs* ModelSelection::get_growing_inputs()
 }
 
 
-/// Returns a pointer to the genetic inputs selection algorithm.
-
 GeneticAlgorithm* ModelSelection::get_genetic_algorithm()
 {
     return &genetic_algorithm;
 }
 
-
-/// Sets the members of the model selection object to their default values.
 
 void ModelSelection::set_default()
 {
@@ -112,11 +90,6 @@ void ModelSelection::set_default()
     display = true;
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void ModelSelection::set_display(const bool& new_display)
 {
@@ -135,17 +108,11 @@ void ModelSelection::set_display(const bool& new_display)
 }
 
 
-/// Sets a new method for selecting the order which have more impact on the targets.
-/// @param new_neurons_selection_method Method for selecting the order(NO_NEURONS_SELECTION, growing_neurons, GOLDEN_SECTION, SIMULATED_ANNEALING).
-
 void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsSelectionMethod& new_neurons_selection_method)
 {
     neurons_selection_method = new_neurons_selection_method;
 }
 
-
-/// Sets a new neurons selection algorithm from a string.
-/// @param new_neurons_selection_method String with the neurons selection type.
 
 void ModelSelection::set_neurons_selection_method(const string& new_neurons_selection_method)
 {
@@ -160,17 +127,11 @@ void ModelSelection::set_neurons_selection_method(const string& new_neurons_sele
 }
 
 
-/// Sets a new method for selecting the inputs which have more impact on the targets.
-/// @param new_inputs_selection_method Method for selecting the inputs(GROWING_INPUTS, GENETIC_ALGORITHM).
-
 void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSelectionMethod& new_inputs_selection_method)
 {
     inputs_selection_method = new_inputs_selection_method;
 }
 
-
-/// Sets a new inputs selection algorithm from a string.
-/// @param new_inputs_selection_method String with the inputs selection type.
 
 void ModelSelection::set_inputs_selection_method(const string& new_inputs_selection_method)
 {
@@ -189,9 +150,6 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
 }
 
 
-/// Sets a new training strategy pointer.
-/// @param new_training_strategy Pointer to a training strategy object.
-
 void ModelSelection::set(TrainingStrategy* new_training_strategy)
 {
     training_strategy = new_training_strategy;
@@ -206,8 +164,6 @@ void ModelSelection::set(TrainingStrategy* new_training_strategy)
     genetic_algorithm.set(new_training_strategy);
 }
 
-
-/// Checks that the different pointers needed for performing the model selection are not nullptr.
 
 void ModelSelection::check() const
 {
@@ -250,9 +206,6 @@ void ModelSelection::check() const
 }
 
 
-/// Perform the neurons selection, returns a structure with the results of the neurons selection.
-/// It also set the neural network of the training strategy pointer with the optimum parameters.
-
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
     if(neurons_selection_method == NeuronsSelectionMethod::GROWING_NEURONS)
@@ -265,9 +218,6 @@ NeuronsSelectionResults ModelSelection::perform_neurons_selection()
     }
 }
 
-
-/// Perform the inputs selection, returns a structure with the results of the inputs selection.
-/// It also set the neural network of the training strategy pointer with the optimum parameters.
 
 InputsSelectionResults ModelSelection::perform_inputs_selection()
 {
@@ -283,9 +233,6 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
     return InputsSelectionResults();
 }
 
-
-/// Serializes the model selection object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -323,9 +270,6 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Loads the members of this model selection object from an XML document.
-/// @param document XML document of the TinyXML library.
 
 void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -453,16 +397,11 @@ string ModelSelection::write_inputs_selection_method() const
 }
 
 
-/// Prints to the screen the XML representation of this model selection object.
-
 void ModelSelection::print() const
 {
 //    cout << to_string();
 }
 
-
-/// Saves the model selection members to an XML file.
-/// @param file_name Name of model selection XML file.
 
 void ModelSelection::save(const string& file_name) const
 {
@@ -476,9 +415,6 @@ void ModelSelection::save(const string& file_name) const
     }
 }
 
-
-/// Loads the model selection members from an XML file.
-/// @param file_name Name of model selection XML file.
 
 void ModelSelection::load(const string& file_name)
 {

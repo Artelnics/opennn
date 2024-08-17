@@ -11,13 +11,9 @@ namespace opennn
 
 struct Batch
 {
-    /// Default constructor.
-
     Batch() {}
 
     Batch(const Index&, DataSet*);
-
-    /// Destructor.
 
     virtual ~Batch();
 

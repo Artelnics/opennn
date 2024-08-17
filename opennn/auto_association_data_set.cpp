@@ -53,8 +53,6 @@ void AutoAssociationDataSet::transform_associative_data()
 }
 
 
-/// This method duplicates the raw_variables for association problems.
-
 void AutoAssociationDataSet::transform_associative_raw_variables()
 {
     cout << "Transforming associative raw variables..." << endl;
@@ -94,8 +92,6 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
     raw_variables = new_raw_variables;
 }
 
-
-/// Sets the samples' uses in the auto associative data set.
 
 void AutoAssociationDataSet::set_auto_associative_samples_uses()
 {
@@ -168,6 +164,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     }
 }
 
+
 Tensor<DataSet::RawVariable, 1> AutoAssociationDataSet::get_associative_raw_variables() const
 {
     return associative_raw_variables;
@@ -197,8 +194,6 @@ void AutoAssociationDataSet::set_associative_raw_variables_number(const Index& n
     associative_raw_variables.resize(new_variables_number);
 }
 
-
-/// Saves to the data file the values of the auto associative data matrix in binary format.
 
 void AutoAssociationDataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
 {
@@ -239,8 +234,6 @@ void AutoAssociationDataSet::save_auto_associative_data_binary(const string& bin
 }
 
 
-/// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
-
 void AutoAssociationDataSet::transform_associative_dataset()
 {
     transform_associative_data();
@@ -252,8 +245,6 @@ void AutoAssociationDataSet::transform_associative_dataset()
     set_auto_associative_samples_uses();
 }
 
-
-/// This method loads associative data from a binary data file.
 
 void AutoAssociationDataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
 {

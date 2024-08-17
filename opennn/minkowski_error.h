@@ -22,13 +22,6 @@
 namespace opennn
 {
 
-/// This class represents the Minkowski error term. 
-
-///
-/// The Minkowski error measures the difference between the outputs of a neural network and the targets in a data set. 
-/// This error term is used in data modeling problems.
-/// It can be more useful when the data set presents outliers. 
-
 class MinkowskiError : public LossIndex
 {
 
@@ -70,8 +63,6 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
-
-   /// Minkowski exponent value.
 
    type minkowski_parameter;
 
