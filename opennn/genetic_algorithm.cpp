@@ -29,17 +29,12 @@
 namespace opennn
 {
 
-/// Default constructor.
-
 GeneticAlgorithm::GeneticAlgorithm()
     : InputsSelection()
 {
     set_default();
 }
 
-
-/// Training strategy constructor.
-/// @param new_training_strategy Pointer to a training strategy object.
 
 GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
@@ -49,24 +44,24 @@ GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-/// Returns the population matrix.
 
 const Tensor<bool, 2>& GeneticAlgorithm::get_population() const
 {
     return population;
 }
 
+
 const Tensor<type, 1>& GeneticAlgorithm::get_training_errors() const
 {
     return training_errors;
 }
+
 
 const Tensor<type, 1>& GeneticAlgorithm::get_selection_errors() const
 {
     return selection_errors;
 }
 
-/// Returns the fitness of the population.
 
 const Tensor<type, 1>& GeneticAlgorithm::get_fitness() const
 {
@@ -80,8 +75,6 @@ const Tensor<bool, 1>& GeneticAlgorithm::get_selection() const
 }
 
 
-/// Returns the size of the population.
-
 Index GeneticAlgorithm::get_individuals_number() const
 {
     return population.dimension(0);
@@ -94,15 +87,11 @@ Index GeneticAlgorithm::get_genes_number() const
 }
 
 
-/// Returns the rate used in the mutation.
-
 const type& GeneticAlgorithm::get_mutation_rate() const
 {
     return mutation_rate;
 }
 
-
-/// Returns the size of the elite in the selection.
 
 const Index& GeneticAlgorithm::get_elitism_size() const
 {
@@ -110,22 +99,17 @@ const Index& GeneticAlgorithm::get_elitism_size() const
 }
 
 
-/// Returns the method used for initalizating the population
-
 const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
 {
     return initialization_method;
 }
 
-///Returns the unused raw_variables at the begining of the algorithm
-///
+
 Tensor<Index, 1> GeneticAlgorithm::get_original_unused_raw_variables()
 {
     return original_unused_raw_variables_indices;
 }
 
-
-/// Sets the members of the genetic algorithm object to their default values.
 
 void GeneticAlgorithm::set_default()
 {
@@ -174,9 +158,6 @@ void GeneticAlgorithm::set_default()
 }
 
 
-/// Sets a new popualtion.
-/// @param new_population New population matrix.
-
 void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 {
 #ifdef OPENNN_DEBUG
@@ -215,10 +196,13 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
     population = new_population;
 }
+
+
 void GeneticAlgorithm::set_genes_number(const Index& new_genes_number)
 {
     genes_number = new_genes_number;
 }
+
 
 void GeneticAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
@@ -232,15 +216,11 @@ void GeneticAlgorithm::set_training_errors(const Tensor<type, 1>& new_training_e
 }
 
 
-
 void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection_errors)
 {
     selection_errors = new_selection_errors;
 }
 
-
-/// Sets a new fitness for the population.
-/// @param new_fitness New fitness values.
 
 void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 {
@@ -263,8 +243,6 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
     fitness = new_fitness;
 }
 
-/// Sets a new population size. It must be greater than 4.
-/// @param new_population_size Size of the population
 
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
@@ -295,18 +273,11 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 }
 
 
-/// Sets a new initalization method.
-/// @param new_initializatio_method New initalization method (Random or WeigthedCorrelations).
-
 void GeneticAlgorithm::set_initialization_method(const GeneticAlgorithm::InitializationMethod& new_initialization_method)
 {
     initialization_method = new_initialization_method;
 }
 
-
-/// Sets a new rate used in the mutation.
-/// It is a number between 0 and 1.
-/// @param new_mutation_rate Rate used for the mutation.
 
 void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
 {
@@ -320,9 +291,6 @@ void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
     mutation_rate = new_mutation_rate;
 }
 
-
-/// Sets the number of individuals with the greatest fitness selected.
-/// @param new_elitism_size Size of the elitism.
 
 void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
 {
@@ -339,8 +307,6 @@ void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
     elitism_size = new_elitism_size;
 }
 
-
-/// Initialize the population depending on the intialization method.
 
 void GeneticAlgorithm::initialize_population()
 {
@@ -368,8 +334,6 @@ void GeneticAlgorithm::initialize_population()
     }
 }
 
-
-/// Generation of a random population.
 
 void GeneticAlgorithm::initialize_population_random()
 {
@@ -620,16 +584,12 @@ type GeneticAlgorithm::generate_random_between_0_and_1()
     return type(rand()) / type(RAND_MAX);
 }
 
-/// Set original_input_raw_variables_indices
 
 void GeneticAlgorithm::set_initial_raw_variables_indices(const Tensor<Index ,1>& new_initial_raw_variables_indices)
 {
     initial_raw_variables_indices = new_initial_raw_variables_indices;
 }
 
-
-/// Evaluate the population loss.
-/// Training all the neural networks in the population and calculate their fitness.
 
 void GeneticAlgorithm::evaluate_population()
 {
@@ -749,7 +709,6 @@ void GeneticAlgorithm::evaluate_population()
 
 }
 
-/// Calculate the fitness with the errors depending on the fitness assignment method.
 
 void GeneticAlgorithm::perform_fitness_assignment()
 {
@@ -790,8 +749,6 @@ Tensor <type, 1> GeneticAlgorithm::calculate_selection_probabilities()
     return probabilities;
 }
 
-
-/// Selects for crossover some individuals from the population.
 
 void GeneticAlgorithm::perform_selection()
 {
@@ -863,10 +820,8 @@ Tensor <Index,1> GeneticAlgorithm::get_selected_individuals_indices()
     }
 
     return selection_indexes;
-
 }
 
-/// Perform the crossover depending on the crossover method.
 
 void GeneticAlgorithm::perform_crossover()
 {
@@ -980,8 +935,6 @@ void GeneticAlgorithm::perform_crossover()
 }
 
 
-/// Perform the mutation of the individuals generated in the crossover.
-
 void GeneticAlgorithm::perform_mutation()
 {
     const Index individuals_number = get_individuals_number();
@@ -1045,7 +998,6 @@ void GeneticAlgorithm::perform_mutation()
     }
 }
 
-/// Select the inputs with the best generalization properties using the genetic algorithm.
 
 InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 {
@@ -1545,8 +1497,6 @@ Tensor <bool, 1> GeneticAlgorithm::get_individual_variables_to_indexes(Tensor <b
 }
 
 
-/// This method writes a matrix of strings the most representative atributes.
-
 Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {
     const Index individuals_number = get_individuals_number();
@@ -1653,10 +1603,6 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
 }
 
 
-/// Serializes the genetic algorithm object into an XML document of the TinyXML library without keeping the DOM
-/// tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
-
 void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     const Index individuals_number = get_individuals_number();
@@ -1734,9 +1680,6 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this genetic algorithm object.
-/// @param document TinyXML document containing the member data.
 
 void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -1926,9 +1869,6 @@ void GeneticAlgorithm::print() const
 }
 
 
-/// Saves to an XML-type file the members of the genetic algorithm object.
-/// @param file_name Name of genetic algorithm XML-type file.
-
 void GeneticAlgorithm::save(const string& file_name) const
 {
     try {
@@ -1941,15 +1881,12 @@ void GeneticAlgorithm::save(const string& file_name) const
             fclose(file);
         }
 
-    } catch (exception e) {
+    } catch (exception e)
+    {
         cout<< e.what();
     }
-
 }
 
-
-/// Loads a genetic algorithm object from an XML-type file.
-/// @param file_name Name of genetic algorithm XML-type file.
 
 void GeneticAlgorithm::load(const string& file_name)
 {

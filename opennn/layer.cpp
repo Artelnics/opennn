@@ -36,17 +36,11 @@ string Layer::get_name() const
 }
 
 
-/// Default constructor.
-/// It creates a layer object with zero parameters.
-/// It also initializes the rest of the class members to their default values.
-
 Layer::Type Layer::get_type () const
 {
     return layer_type;
 }
 
-
-/// Takes the type of layer used by the model.
 
 string Layer::get_type_string() const
 {
@@ -163,8 +157,6 @@ void Layer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerFo
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
 
-
-/// Returns the number of inputs
 
 Index Layer::get_inputs_number() const
 {
@@ -302,8 +294,6 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
                                          .broadcast(expand_softmax_dim);
 }
 
-
-/// Assumes all rank 3 tensors have same 
 
 void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax, 
                                              const Tensor<type, 3>& tensor, 

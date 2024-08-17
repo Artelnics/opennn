@@ -10,13 +10,8 @@ using namespace Eigen;
 namespace opennn
 {
 
-/// Set of loss value and gradient vector of the loss index.
-/// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
-
 struct BackPropagation
 {
-    /// Default constructor.
-
     explicit BackPropagation() {}
 
     explicit BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index)

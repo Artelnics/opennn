@@ -31,18 +31,6 @@ struct BackPropagationLM;
 struct BackPropagationCuda;
 #endif
 
-/// This abstract class represents the concept of loss index composed of an error term and a regularization term.
-
-///
-/// The error term could be:
-/// <ul>
-/// <li> Cross Entropy Error.
-/// <li> Mean Squared Error.
-/// <li> Minkowski Error.
-/// <li> Normalized Squared Error.
-/// <li> Sum Squared Error.
-/// <li> Weighted Squared Error.
-/// </ul>
 
 class LossIndex
 {
@@ -61,11 +49,7 @@ public:
 
    // Methods
 
-   /// Enumeration of the available regularization methods.
-
    enum class RegularizationMethod{L1, L2, NoRegularization};
-
-   /// Returns a pointer to the neural network object associated with the error term.
 
    inline NeuralNetwork* get_neural_network() const 
    {
@@ -79,7 +63,6 @@ public:
       return neural_network;
    }
 
-   /// Returns a pointer to the data set object associated with the error term.
 
    inline DataSet* get_data_set() const 
    {
@@ -236,23 +219,13 @@ protected:
 
    ThreadPoolDevice* thread_pool_device = nullptr;
 
-   /// Pointer to a neural network object.
-
    NeuralNetwork* neural_network = nullptr;
-
-   /// Pointer to a data set object.
 
    DataSet* data_set = nullptr;
 
-   /// Pointer to a regularization method object.
-
    RegularizationMethod regularization_method = RegularizationMethod::L2;
 
-   /// Regularization weight value.
-
    type regularization_weight = type(0.01);
-
-   /// Display messages to screen. 
 
    bool display = true;
 
@@ -266,22 +239,12 @@ protected:
 };
 
 
-/// A loss index composed of several terms, this structure represent the First Order for this function.
-
-/// This structure contains second-order information about the loss function (loss, gradient and Hessian).
-/// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
-/// A method returning this structure might be implemented more efficiently than the loss,
-/// gradient and <i>Hessian</i> methods separately.
-
-
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/loss_index_back_propagation_cuda.h"
 #endif
 
 struct BackPropagationLM
 {
-    /// Default constructor.
-
     BackPropagationLM();
 
     explicit BackPropagationLM(const Index&, LossIndex*);

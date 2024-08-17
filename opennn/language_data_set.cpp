@@ -25,8 +25,6 @@ LanguageDataSet::LanguageDataSet() : DataSet()
 }
 
 
-/// Returns the string which will be used as separator in the data file for Text Classification.
-
 string LanguageDataSet::get_text_separator_string() const
 {
     switch(text_separator)
@@ -100,8 +98,6 @@ const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() cons
 }
 
 
-/// Returns the indices of the input variables.
-
 Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
 {
     const Index context_variables_number = get_context_variables_number();
@@ -148,8 +144,6 @@ Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
 }
 
 
-/// Returns the number of raw_variables whose uses are Input.
-
 Index LanguageDataSet::get_context_raw_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -167,8 +161,6 @@ Index LanguageDataSet::get_context_raw_variables_number() const
     return context_raw_variables_number;
 }
 
-
-/// Returns a indices vector with the positions of the inputs.
 
 Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
 {
@@ -267,17 +259,11 @@ void LanguageDataSet::set_context_variables_dimensions(const Tensor<Index, 1>& n
 }
 
 
-/// Sets a new separator.
-/// @param new_separator Separator value.
-
 void LanguageDataSet::set_text_separator(const Separator& new_separator)
 {
     separator = new_separator;
 }
 
-
-/// Sets a new separator from a string.
-/// @param new_separator Char with the separator value.
 
 void LanguageDataSet::set_text_separator(const string& new_separator_string)
 {
@@ -297,7 +283,7 @@ void LanguageDataSet::set_text_separator(const string& new_separator_string)
                << "void set_text_separator(const string&) method.\n"
                << "Unknown separator: " << new_separator_string << ".\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 }
 
@@ -358,8 +344,6 @@ Tensor<string, 2> LanguageDataSet::get_text_data_file_preview() const
     return text_data_file_preview;
 }
 
-
-/// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 
 void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -883,7 +867,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "RawVariables element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     // raw_variables number
@@ -896,7 +880,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "RawVariablesNumber element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     Index new_raw_variables_number = 0;
@@ -925,7 +909,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "raw_variable item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             // Name
@@ -938,7 +922,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Name element is nullptr.\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             if(name_element->GetText())
@@ -958,7 +942,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Scaler element is nullptr.\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             if(scaler_element->GetText())
@@ -978,7 +962,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "raw_variable use element is nullptr.\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             if(raw_variable_use_element->GetText())
@@ -998,7 +982,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Type element is nullptr.\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             if(type_element->GetText())
@@ -1019,7 +1003,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                            << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories element is nullptr.\n";
 
-                    throw runtime_error(buffer.str());
+                    throw(buffer.str());
                 }
 
                 if(categories_element->GetText())
@@ -1046,7 +1030,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows labels element is nullptr.\n";
 
-            throw runtime_error(buffer.str());
+            throw(buffer.str());
         }
 
         // Rows labels
@@ -1076,7 +1060,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     // Samples number
@@ -1089,7 +1073,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples number element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     if(samples_number_element->GetText())
@@ -1111,7 +1095,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples uses element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     if(samples_uses_element->GetText())
@@ -1129,7 +1113,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     // Missing values method
@@ -1142,7 +1126,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values method element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     if(missing_values_method_element->GetText())
@@ -1160,7 +1144,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values number element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     if(missing_values_number_element->GetText())
@@ -1180,7 +1164,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "RawVariablesMissingValuesNumber element is nullptr.\n";
 
-            throw runtime_error(buffer.str());
+            throw(buffer.str());
         }
 
         if(raw_variables_missing_values_number_element->GetText())
@@ -1206,7 +1190,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows missing values number element is nullptr.\n";
 
-            throw runtime_error(buffer.str());
+            throw(buffer.str());
         }
 
         if(rows_missing_values_number_element->GetText())
@@ -1225,7 +1209,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Preview data element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     // Preview size
@@ -1238,7 +1222,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Preview size element is nullptr.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     Index new_preview_size = 0;
@@ -1268,7 +1252,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1290,7 +1274,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1310,7 +1294,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Target item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1382,8 +1366,6 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
     }
 }
 
-
-/// Member attributes and functions of calculate_vocabulary()
 
 struct WordpieceAlgorithmParameters
 {
@@ -1797,7 +1779,7 @@ void LanguageDataSet::load_documents(const string& path)
                 << "void load_documents() method.\n"
                 << "Data file name is empty.\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     ifstream file(path.c_str());
@@ -1889,7 +1871,7 @@ void LanguageDataSet::load_documents(const string& path)
                         << "void load_documents() method.\n"
                         << "Found more than one separator in line: " << line << "\n";
 
-                throw runtime_error(buffer.str());
+                throw(buffer.str());
             }
 
             if(tokens(0).empty() && tokens(1).empty())  continue;
@@ -2039,7 +2021,7 @@ void LanguageDataSet::read_txt_language_model()
             << "void read_txt_language_model() method.\n"
             << "Context number of entries (" << entry_number << ") not equal to completion number of entries (" << completion_entry_number << ").\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 
     Tensor<string, 1> context(entry_number);

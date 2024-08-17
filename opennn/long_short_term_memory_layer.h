@@ -28,15 +28,10 @@ namespace opennn
 struct LongShortTermMemoryLayerForwardPropagation;
 struct LongShortTermMemoryLayerBackPropagation;
 
-/// This class represents a layer of neurons.
-/// Layers of neurons will be used to construct multilayer neurons.
-
 class LongShortTermMemoryLayer : public Layer
 {
 
 public:
-
-    /// Enumeration of the available activation functions for the long-short-term memory layer.
 
     enum class ActivationFunction{Logistic, 
                                   HyperbolicTangent,
@@ -266,12 +261,8 @@ protected:
    Tensor<type, 2> state_recurrent_weights;
    Tensor<type, 2> output_recurrent_weights;
 
-   /// Activation function variable.
-
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
    ActivationFunction recurrent_activation_function = ActivationFunction::HardSigmoid;
-
-   /// Display messages to screen.
 
    bool display = true;
 

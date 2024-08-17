@@ -24,9 +24,6 @@
 namespace opennn
 {
 
-/// This class represents a layer of bounding neurons. 
-/// A bounding layer ensures that the output variables never fall below or above given values.
-
 class BoundingLayer : public Layer
 {
 
@@ -39,8 +36,6 @@ public:
    explicit BoundingLayer(const Index&);
 
    // Enumerations
-
-   /// Enumeration of the available methods for bounding the output variables.
 
    enum class BoundingMethod{NoBounding, Bounding};
 
@@ -108,19 +103,11 @@ private:
 
    // MEMBERS
 
-   /// Method used to bound the values.
-
    BoundingMethod bounding_method = BoundingMethod::Bounding;
-
-   /// Lower bounds of output variables
 
    Tensor<type, 1> lower_bounds;
 
-   /// Upper bounds of output variables
-
    Tensor<type, 1> upper_bounds;
-
-   /// Display messages to screen. 
 
    bool display = true;
 };

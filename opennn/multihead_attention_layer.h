@@ -32,13 +32,6 @@ struct MultiheadAttentionLayerBackPropagationLM;
     struct MultiheadAttentionLayerBackPropagationCuda;
 #endif
 
-
-/// This class represents a layer of Multihead Attention.
-
-/// MultiheadAttentionLayer has 2 types of input: Context and Input. Output has the shape of Input
-///
-/// Layers of Multihead Attention will be used to construct Transformer models .
-
 class MultiheadAttentionLayer : public Layer
 {
 
@@ -148,7 +141,7 @@ public:
 
     // Serialization methods
 
-    /// @todo
+    // @todo
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void write_XML(tinyxml2::XMLPrinter&) const final;

@@ -1766,7 +1766,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 }
 
 
-/// @todo clean this method Clang-tidy gives warnings.
+// @todo clean this method Clang-tidy gives warnings.
 
 Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
 {
@@ -3132,7 +3132,7 @@ string calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet,
 }
 
 
-/// @todo TEXT GENERATION
+// @todo TEXT GENERATION
 
 string generate_word(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
@@ -3179,7 +3179,7 @@ string generate_word(TextGenerationAlphabet& text_generation_alphabet, const str
 }
 
 
-/// @todo TEXT GENERATION
+// @todo TEXT GENERATION
 
 string generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
@@ -3215,7 +3215,7 @@ string generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const s
 }
 
 
-/// @todo TEXT GENERATION Explain.
+// @todo TEXT GENERATION Explain.
 
 TextGenerationAlphabet::TextGenerationAlphabet()
 {
