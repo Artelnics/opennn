@@ -26,21 +26,12 @@
 namespace opennn
 {
 
-/// A learning rate that is adjusted according to an algorithm during training to minimize training time.
-
-///
-/// This class is used by many different optimization algorithms to calculate the learning rate given a training direction.
-///
-/// It implements the golden section method and the Brent's method.
-
 class LearningRateAlgorithm
 {
 
 public:
 
    // Enumerations
-
-   /// Available training operators for obtaining the perform_training rate.
 
    enum class LearningRateMethod{GoldenSection, BrentMethod};
 
@@ -54,12 +45,8 @@ public:
 
    virtual ~LearningRateAlgorithm();
 
-   /// Defines a set of three points (A, U, B) for bracketing a directional minimum.
-
    struct Triplet
    {
-       /// Default constructor.
-
        Triplet()
        {
            A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
@@ -67,16 +54,11 @@ public:
            B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
        }
 
-       /// Destructor.
 
        virtual ~Triplet()
        {
        }
 
-       /// Equal to operator.
-       /// It compares this triplet with another triplet.
-       /// It returns true if both triplets have the same points A, U and B, and false otherwise.
-       /// @ param other_triplet Triplet to be compared with.
 
        inline bool operator == (const Triplet& other_triplet) const
        {
@@ -111,7 +93,6 @@ public:
            else return B;
        }
 
-       /// Writes a string with the values of A, U and B.
 
        inline string struct_to_string() const
        {
@@ -124,7 +105,6 @@ public:
            return buffer.str();
        }
 
-       /// Prints the triplet points to the standard output.
 
        inline void print() const
        {
@@ -132,9 +112,6 @@ public:
            cout << "Lenght: " << get_length() << endl;
        }
 
-       /// Checks that the points A, U and B define a minimum.
-       /// That is, a < u < b, fa > fu and fu < fb.
-       /// If some of that conditions is not satisfied, an exception is thrown.
 
        inline void check() const
        {
@@ -147,7 +124,7 @@ public:
                      << "U is less than A:\n"
                      << struct_to_string();
 
-              throw runtime_error(buffer.str());
+              throw(buffer.str());
            }
 
            if(U.first > B.first)
@@ -157,7 +134,7 @@ public:
                      << "U is greater than B:\n"
                      << struct_to_string();
 
-              throw runtime_error(buffer.str());
+              throw(buffer.str());
            }
 
            if(U.second >= A.second)
@@ -167,7 +144,7 @@ public:
                      << "fU is equal or greater than fA:\n"
                      << struct_to_string();
 
-              throw runtime_error(buffer.str());
+              throw(buffer.str());
            }
 
            if(U.second >= B.second)
@@ -177,19 +154,13 @@ public:
                      << "fU is equal or greater than fB:\n"
                      << struct_to_string();
 
-              throw runtime_error(buffer.str());
+              throw(buffer.str());
            }
        }
 
-       /// Left point of the triplet.
-
        pair<type, type> A;
 
-       /// Interior point of the triplet.
-
        pair<type, type> U;
-
-       /// Right point of the triplet.
 
        pair<type, type> B;
    };
@@ -261,25 +232,17 @@ protected:
 
    // FIELDS
 
-   /// Pointer to an external loss index object.
-
    LossIndex* loss_index = nullptr;
 
    // TRAINING OPERATORS
 
-   /// Variable containing the actual method used to obtain a suitable perform_training rate. 
-
    LearningRateMethod learning_rate_method;
-
-   /// Maximum interval length for the learning rate.
 
    type learning_rate_tolerance;
 
    type loss_tolerance;
 
    // UTILITIES
-
-   /// Display messages to screen.
 
    bool display = true;
 

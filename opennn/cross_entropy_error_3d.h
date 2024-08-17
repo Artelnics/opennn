@@ -19,11 +19,6 @@
 namespace opennn
 {
 
-/// This class represents the cross-entropy error term, used for predicting probabilities.
-
-///
-/// This functional is used in classification problems.
-
 class CrossEntropyError3D : public LossIndex
 {
 
@@ -61,8 +56,6 @@ public:
     #endif
 
 protected:
-
-   /// Small number to prevent any division by zero
 
 //   type epsilon = type(1.e-8);
 };

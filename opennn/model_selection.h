@@ -23,13 +23,6 @@
 namespace opennn
 {
 
-/// This class represents the concept of model selection[1] algorithm in OpenNN.
-
-///
-/// It is used for finding a network architecture with maximum generalization capabilities.
-///
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
-
 class ModelSelection
 {
 
@@ -41,11 +34,7 @@ public:
 
     explicit ModelSelection(TrainingStrategy*);
 
-    /// Enumeration of all the available neurons selection algorithms.
-
     enum class NeuronsSelectionMethod{GROWING_NEURONS};
-
-    /// Enumeration of all the available inputs selection algorithms.
 
     enum class InputsSelectionMethod{GROWING_INPUTS, GENETIC_ALGORITHM};
 
@@ -99,31 +88,17 @@ public:
 
 private: 
 
-    /// Pointer to a training strategy object.
-
     TrainingStrategy* training_strategy = nullptr;
-
-    /// Growing neurons object to be used for neurons selection.
 
     GrowingNeurons growing_neurons;
 
-    /// Growing inputs object to be used for inputs selection.
-
     GrowingInputs growing_inputs;
-
-    /// Genetic algorithm object to be used for inputs selection.
 
     GeneticAlgorithm genetic_algorithm;
 
-    /// Type of neurons selection algorithm.
-
     NeuronsSelectionMethod neurons_selection_method;
 
-    /// Type of inputs selection algorithm.
-
     InputsSelectionMethod inputs_selection_method;
-
-    /// Display messages to screen.
 
     bool display = true;
 };

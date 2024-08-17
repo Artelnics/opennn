@@ -17,16 +17,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-
 InputsSelection::InputsSelection()
 {
     set_default();
 }
 
-
-/// Training strategy constructor.
-/// @param new_training_strategy Pointer to a trainig strategy object.
 
 InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     : training_strategy(new_training_strategy)
@@ -34,8 +29,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-
-/// Returns a pointer to the training strategy object.
 
 TrainingStrategy* InputsSelection::get_training_strategy() const
 {
@@ -50,8 +43,6 @@ TrainingStrategy* InputsSelection::get_training_strategy() const
 }
 
 
-/// Returns true if this inputs selection algorithm has a training strategy associated, and false otherwise.
-
 bool InputsSelection::has_training_strategy() const
 {
     if(training_strategy)
@@ -65,16 +56,11 @@ bool InputsSelection::has_training_strategy() const
 }
 
 
-/// Returns the number of trials for each network architecture.
-
 const Index& InputsSelection::get_trials_number() const
 {
     return trials_number;
 }
 
-
-/// Returns true if messages from this class can be displayed on the screen,
-/// or false if messages from this class can't be displayed on the screen.
 
 const bool& InputsSelection::get_display() const
 {
@@ -82,15 +68,11 @@ const bool& InputsSelection::get_display() const
 }
 
 
-/// Returns the goal for the selection error in the inputs selection algorithm.
-
 const type& InputsSelection::get_selection_error_goal() const
 {
     return selection_error_goal;
 }
 
-
-/// Returns the maximum number of iterations in the inputs selection algorithm.
 
 const Index& InputsSelection::get_maximum_iterations_number() const
 {
@@ -98,15 +80,11 @@ const Index& InputsSelection::get_maximum_iterations_number() const
 }
 
 
-/// Returns the maximum time in the inputs selection algorithm.
-
 const type& InputsSelection::get_maximum_time() const
 {
     return maximum_time;
 }
 
-
-/// Return the maximum correlation for the algorithm.
 
 const type& InputsSelection::get_maximum_correlation() const
 {
@@ -114,24 +92,17 @@ const type& InputsSelection::get_maximum_correlation() const
 }
 
 
-/// Return the minimum correlation for the algorithm.
-
 const type& InputsSelection::get_minimum_correlation() const
 {
     return minimum_correlation;
 }
 
 
-/// Sets a new training strategy pointer.
-/// @param new_training_strategy Pointer to a training strategy object.
-
 void InputsSelection::set(TrainingStrategy* new_training_strategy)
 {
     training_strategy = new_training_strategy;     
 }
 
-
-/// Sets the members of the inputs selection object to their default values.
 
 void InputsSelection::set_default()
 {
@@ -150,28 +121,17 @@ void InputsSelection::set_default()
 }
 
 
-/// Sets the number of times that each different neural network is to be trained.
-/// @param new_trials_number Number of trials for each set of parameters.
-
 void InputsSelection::set_trials_number(const Index& new_trials_number)
 {
     trials_number = new_trials_number;
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void InputsSelection::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Sets the selection error goal for the inputs selection algorithm.
-/// @param new_selection_error_goal Goal of the selection error.
 
 void InputsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
@@ -186,18 +146,12 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
 }
 
 
-/// Sets the maximum iterations number for the inputs selection algorithm.
-/// @param new_maximum_iterations_number Maximum number of epochs.
-
 void InputsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
     maximum_epochs_number = new_maximum_epochs_number;
     
 }
 
-
-/// Sets the maximum time for the inputs selection algorithm.
-/// @param new_maximum_time Maximum time for the algorithm.
 
 void InputsSelection::set_maximum_time(const type& new_maximum_time)
 {
@@ -212,9 +166,6 @@ void InputsSelection::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Sets the maximum value for the correlations in the inputs selection algorithm.
-/// @param new_maximum_correlation Maximum value of the correlations.
-
 void InputsSelection::set_maximum_correlation(const type& new_maximum_correlation)
 {
 #ifdef OPENNN_DEBUG
@@ -227,9 +178,6 @@ void InputsSelection::set_maximum_correlation(const type& new_maximum_correlatio
     maximum_correlation = new_maximum_correlation;
 }
 
-
-/// Sets the minimum value for the correlations in the inputs selection algorithm.
-/// @param new_minimum_correlation Minimum value of the correlations.
 
 void InputsSelection::set_minimum_correlation(const type& new_minimum_correlation)
 {
@@ -244,16 +192,11 @@ void InputsSelection::set_minimum_correlation(const type& new_minimum_correlatio
 }
 
 
-/// Return a string with the stopping condition of the training depending on the training method.
-/// @param results Results of the perform_training method.
-
 string InputsSelection::write_stopping_condition(const TrainingResults& results) const
 {
     return results.write_stopping_condition();
 }
 
-
-/// Checks that the different pointers needed for performing the inputs selection are not nullptr.
 
 void InputsSelection::check() const
 {
@@ -290,12 +233,11 @@ void InputsSelection::check() const
 }
 
 
-/// Return a string with the stopping condition of the Results
-
 Index InputsSelectionResults::get_epochs_number() const
 {
     return training_error_history.size();
 }
+
 
 void InputsSelectionResults::set(const Index& maximum_epochs_number)
 {
@@ -365,8 +307,6 @@ void InputsSelectionResults::resize_history(const Index& new_size)
 }
 
 
-/// Writes the time from seconds in format HH:mm:ss.
-
 string InputsSelection::write_time(const type& time) const
 {
 
@@ -395,10 +335,6 @@ string InputsSelection::write_time(const type& time) const
 }
 
 
-/// Return the index of uses where is the(inputs_number)-th input.
-/// @param uses Vector of the uses of the variables.
-/// @param inputs_number Index of the input to find.
-
 Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number) const
 {
 #ifdef OPENNN_DEBUG
@@ -411,7 +347,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
                << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
                << "Size of uses vector("<< uses.size() <<") must be greater than " <<  inputs_number << ".\n";
 
-        throw runtime_error(buffer.str());
+        throw(buffer.str());
     }
 #endif
 

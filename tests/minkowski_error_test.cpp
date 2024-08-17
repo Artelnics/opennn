@@ -240,7 +240,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        /// @todo
+        // @todo
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 

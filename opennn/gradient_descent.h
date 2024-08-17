@@ -27,15 +27,6 @@ namespace opennn
 
 struct GradientDescentData;
 
-/// The process of making changes to weights and biases,
-/// where the changes are propotyional to derivatives of network error with respect to those weights and biases.
-/// This is done to minimize network error.
-
-/// This concrete class represents the gradient descent optimization algorithm[1], used to minimize loss function.
-///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
-/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
-
 class GradientDescent : public OptimizationAlgorithm
 {
 
@@ -103,32 +94,19 @@ private:
 
    // TRAINING OPERATORS
 
-   /// Learning rate algorithm object for one-dimensional minimization. 
-
    LearningRateAlgorithm learning_rate_algorithm;
 
    const type first_learning_rate = type(0.01);
 
    // Stopping criteria 
 
-   /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
-
    type minimum_loss_decrease;
-
-   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal;
 
-   /// Maximum number of epochs at which the selection error increases.
-   /// This is an early stopping method for improving selection.
-
    Index maximum_selection_failures;
 
-   /// Maximum epochs number
-
    Index maximum_epochs_number;
-
-   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time;
 
@@ -137,7 +115,6 @@ private:
 
 struct GradientDescentData : public OptimizationAlgorithmData
 {
-    /// Default constructor.
 
     explicit GradientDescentData()
     {
@@ -149,7 +126,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
         set(new_gradient_descent);
     }
 
-    /// Destructor
 
     virtual ~GradientDescentData() {}
 

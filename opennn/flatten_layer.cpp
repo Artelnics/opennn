@@ -11,10 +11,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a flatten layer.
-/// This constructor also initializes the rest of the class members to their default values.
-
 FlattenLayer::FlattenLayer() : Layer()
 {
     layer_type = Layer::Type::Flatten;
@@ -40,9 +36,6 @@ void FlattenLayer::set_name(const string& new_layer_name)
     layer_name = new_layer_name;
 }
 
-
-/// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
-/// Batch,Height,Width,Channels
 
 Index FlattenLayer::get_outputs_number() const
 {
@@ -80,16 +73,11 @@ Index FlattenLayer::get_input_channels() const
 }
 
 
-/// Returns the number of neurons
-
 Index FlattenLayer::get_neurons_number() const
 {
     return input_dimensions[0]* input_dimensions[1] * input_dimensions[2];
 }
 
-
-/// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
-/// @param new_input_dimensions A vector containing the desired inputs' dimensions (number of images (batch), number of channels, width, height).
 
 void FlattenLayer::set(const dimensions& new_input_dimensions)
 {
@@ -146,9 +134,6 @@ void FlattenLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 }
 
 
-/// Serializes the flatten layer object into an XML document of the TinyXML.
-/// See the OpenNN manual for more information about the format of this document.
-
 void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -183,9 +168,6 @@ void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this flatten layer object.
-/// @param document TinyXML document containing the member data.
 
 void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 {

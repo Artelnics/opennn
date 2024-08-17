@@ -1205,13 +1205,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: TestingAnalysis class.\n"
-                   << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
-                   << "Unknown case.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("calculate_confusion_binary_classification Unknown case.\n");
         }
     }
 
@@ -1236,7 +1230,8 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
                << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
                << "Number of elements in confusion matrix (" << confusion_sum << ") must be equal to number of testing samples (" << testing_samples_number << ").\n";
 
-        throw runtime_error(buffer.str());
+        throw ("Number of elements in confusion matrix (" + to_string(confusion_sum) + ") "
+               "must be equal to number of testing samples (" + to_string(testing_samples_number) + ").\n");
     }
 
     return confusion;
@@ -1253,15 +1248,8 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
     const Index targets_number = targets.dimension(1);
 
     if(targets_number != outputs.dimension(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
-               << "Number of targets (" << targets_number << ") must be equal to number of outputs (" << outputs.dimension(1) << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of targets (" + to_string(targets_number) + ") "
+                            "must be equal to number of outputs (" + to_string(outputs.dimension(1)) + ").\n");
 
     Tensor<Index, 2> confusion(targets_number + 1, targets_number + 1);
     confusion.setZero();
@@ -1449,26 +1437,10 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     const Index total_negatives = positives_negatives_rate(1);
 
     if(total_positives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
-               << "Number of positive samples ("<< total_positives <<") must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of positive samples (" + to_string(total_positives) + ") must be greater than zero.\n");
 
     if(total_negatives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
-               << "Number of negative samples ("<< total_negatives <<") must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of negative samples (" + to_string(total_negatives) + ") must be greater than zero.\n");
 
     const Index maximum_points_number = 200;
 
@@ -1477,28 +1449,10 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     points_number = maximum_points_number;
 
    if(targets.dimension(1) != 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
-               << "Number of of target variables ("<< targets.dimension(1) <<") must be one.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of of target variables (" +  to_string(targets.dimension(1)) + ") must be one.\n");
 
     if(outputs.dimension(1) != 1)
-    {
-        ostringstream buffer;
-
-
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
-               << "Number of of output variables ("<< targets.dimension(1) <<") must be one.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of of output variables (" + to_string(targets.dimension(1)) + ") must be one.\n");
 
     // Sort by ascending values of outputs vector
 
@@ -1606,26 +1560,10 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
     const Index total_negatives = positives_negatives_rate[1];
 
     if(total_positives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> calculate_roc_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
-               << "Number of positive samples("<< total_positives <<") must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of positive samples(" + to_string(total_positives) + ") must be greater than zero.\n");
 
     if(total_negatives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> calculate_roc_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
-               << "Number of negative samples("<< total_negatives <<") must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of negative samples(" + to_string(total_negatives) + ") must be greater than zero.\n");
 
     const Tensor<type, 2> roc_curve = calculate_roc_curve(targets, outputs);
 
@@ -1700,15 +1638,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
     const Index total_positives = calculate_positives_negatives_rate(targets, outputs)[0];
 
     if(total_positives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> calculate_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
-               << "Number of positive samples(" << total_positives << ") must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of positive samples(" + to_string(total_positives) + ") must be greater than zero.\n");
 
     const Index testing_samples_number = targets.dimension(0);
 
@@ -1776,15 +1706,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
     const Index total_negatives = calculate_positives_negatives_rate(targets, outputs)[1];
 
     if(total_negatives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> calculate_negative_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
-               << "Number of negative samples(" << total_negatives << ") must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of negative samples(" + to_string(total_negatives) + ") must be greater than zero.\n");
 
     const Index testing_samples_number = targets.dimension(0);
 
@@ -3184,13 +3106,7 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
 
     if(!root_element)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Testing analysis element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Testing analysis element is nullptr.\n");
 
     // Display
 
@@ -3240,15 +3156,7 @@ void TestingAnalysis::load(const string& file_name)
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Testing analysis class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }

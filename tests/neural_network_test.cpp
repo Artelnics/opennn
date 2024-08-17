@@ -68,7 +68,7 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_3.get_layer(2)->get_type() == Layer::Type::Perceptron, LOG);
     assert_true(neural_network_3.get_layer(3)->get_type() == Layer::Type::Unscaling, LOG);
 */
-    ///@todo ImageClassification Project Type
+    //@todo ImageClassification Project Type
 
     // ImageClassification
 

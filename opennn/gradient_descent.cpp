@@ -13,21 +13,12 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a gradient descent optimization algorithm not associated with any loss index object.
-/// It also initializes the class members to their default values.
-
 GradientDescent::GradientDescent()
     : OptimizationAlgorithm()
 {
     set_default();
 }
 
-
-/// Loss index constructor.
-/// It creates a gradient descent optimization algorithm associated with a loss index.
-/// It also initializes the class members to their default values.
-/// @param new_loss_index Pointer to a loss index object.
 
 GradientDescent::GradientDescent(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
@@ -38,15 +29,11 @@ GradientDescent::GradientDescent(LossIndex* new_loss_index)
 }
 
 
-/// Returns a constant reference to the learning rate algorithm object inside the gradient descent object.
-
 const LearningRateAlgorithm& GradientDescent::get_learning_rate_algorithm() const
 {
     return learning_rate_algorithm;
 }
 
-
-/// Returns a pointer to the learning rate algorithm object inside the gradient descent object.
 
 LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm()
 {
@@ -54,16 +41,11 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm()
 }
 
 
-/// Returns the minimum loss improvement during training.
-
 const type& GradientDescent::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
 
-
-/// Returns the goal value for the loss.
-/// This is used as a stopping criterion when training a neural network.
 
 const type& GradientDescent::get_loss_goal() const
 {
@@ -71,15 +53,11 @@ const type& GradientDescent::get_loss_goal() const
 }
 
 
-/// Returns the maximum number of selection error increases during the training process.
-
 const Index& GradientDescent::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
 
-
-/// Returns the maximum number of iterations for training.
 
 const Index& GradientDescent::get_maximum_epochs_number() const
 {
@@ -87,17 +65,11 @@ const Index& GradientDescent::get_maximum_epochs_number() const
 }
 
 
-/// Returns the maximum training time.
-
 const type& GradientDescent::get_maximum_time() const
 {
     return maximum_time;
 }
 
-
-/// Sets a pointer to a loss index object to be associated with the gradient descent object.
-/// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index Pointer to a loss index object.
 
 void GradientDescent::set_loss_index(LossIndex* new_loss_index)
 {
@@ -125,17 +97,11 @@ void GradientDescent::set_default()
 }
 
 
-/// Set the a new maximum for the epochs number.
-/// @param new_maximum_epochs number New maximum epochs number.
-
 void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
-
-/// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
 
 void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
@@ -143,19 +109,11 @@ void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_dec
 }
 
 
-/// Sets a new goal value for the loss.
-/// This is used as a stopping criterion when training a neural network.
-/// @param new_loss_goal Goal value for the loss.
-
 void GradientDescent::set_loss_goal(const type& new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
 }
 
-
-/// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_failures Maximum number of epochs in which the selection evalutation
-/// increases.
 
 void GradientDescent::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
@@ -163,18 +121,11 @@ void GradientDescent::set_maximum_selection_failures(const Index& new_maximum_se
 }
 
 
-/// Sets a new maximum training time.
-/// @param new_maximum_time Maximum training time.
-
 void GradientDescent::set_maximum_time(const type& new_maximum_time)
 {
     maximum_time = new_maximum_time;
 }
 
-
-/// Returns the gradient descent training direction,
-/// which is the negative of the normalized gradient.
-/// @param gradient Loss index gradient.
 
 void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradient, Tensor<type, 1>& training_direction) const
 {
@@ -200,12 +151,6 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
     training_direction.device(*thread_pool_device) = -gradient;
 }
 
-
-/// \brief GradientDescent::update_parameters
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
-/// \param optimization_data
 
 void GradientDescent::update_parameters(
         const Batch& batch,
@@ -267,11 +212,6 @@ void GradientDescent::update_parameters(
     forward_propagation.neural_network->set_parameters(back_propagation.parameters);
 }
 
-
-/// Trains a neural network with an associated loss index,
-/// according to the gradient descent method.
-/// Training occurs according to the training parameters and stopping criteria.
-/// It returns a results structure with the history and the final values of the reserved variables.
 
 TrainingResults GradientDescent::perform_training()
 {
@@ -502,8 +442,6 @@ string GradientDescent::write_optimization_algorithm_type() const
 }
 
 
-/// This method writes a matrix of strings the most representative atributes.
-
 Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(7, 2);
@@ -546,10 +484,6 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
     return labels_values;
 }
 
-
-/// Serializes the gradient descent object into an XML document of the TinyXML library
-/// without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

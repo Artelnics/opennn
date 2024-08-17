@@ -13,10 +13,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a empty layer object.
-/// This constructor also initializes the rest of the class members to their default values.
-
 
 AdditionLayer3D::AdditionLayer3D() : Layer()
 {
@@ -25,13 +21,6 @@ AdditionLayer3D::AdditionLayer3D() : Layer()
     layer_type = Type::Addition3D;
 }
 
-
-/// Layer architecture constructor.
-/// It creates a layer object with given numbers of inputs and perceptrons.
-/// It initializes the parameters at random.
-/// This constructor also initializes the rest of the class members to their default values.
-/// @param new_inputs_number Number of inputs in the layer.
-/// @param new_neurons_number Number of perceptrons in the layer.
 
 AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth) : Layer()
 {
@@ -42,8 +31,6 @@ AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& ne
     layer_name = "addition_layer_3d";
 }
 
-
-/// Returns the number of inputs to the layer.
 
 Index AdditionLayer3D::get_inputs_number() const
 {
@@ -63,28 +50,17 @@ dimensions AdditionLayer3D::get_output_dimensions() const
 }
 
 
-/// Returns true if messages from this class are displayed on the screen,
-/// or false if messages from this class are not displayed on the screen.
-
 const bool& AdditionLayer3D::get_display() const
 {
     return display;
 }
 
 
-/// Sets an empty layer, wihtout any perceptron.
-/// It also sets the rest of the members to their default values.
-
 void AdditionLayer3D::set()
 {
     set_default();
 }
 
-
-/// Sets new numbers of inputs and perceptrons in the layer.
-/// It also sets the rest of the members to their default values.
-/// @param new_inputs_number Number of inputs.
-/// @param new_neurons_number Number of perceptron neurons.
 
 void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
@@ -95,13 +71,6 @@ void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_input
     set_default();
 }
 
-
-/// Sets those members not related to the vector of perceptrons to their default value.
-/// <ul>
-/// <li> Display: True.
-/// <li> layer_type: Perceptron_Layer.
-/// <li> trainable: True.
-/// </ul>
 
 void AdditionLayer3D::set_default()
 {
@@ -119,20 +88,11 @@ void AdditionLayer3D::set_name(const string& new_layer_name)
 }
 
 
-/// Sets a new number of inputs in the layer.
-/// It also initializes the new synaptic weights at random.
-/// @param new_inputs_number Number of layer inputs.
-
 void AdditionLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
     inputs_depth = new_inputs_depth;
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void AdditionLayer3D::set_display(const bool& new_display)
 {

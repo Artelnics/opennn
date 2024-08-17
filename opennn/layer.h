@@ -34,16 +34,10 @@ struct LayerBackPropagationCuda;
 #endif
 
 
-/// This abstract class represents the concept of layer of neurons in OpenNN.
-
-/// A layer is a group of neurons having connections to the same inputs and sending outputs to the same destinations.
-
 class Layer
 {
 
 public:
-
-    /// This enumeration represents the possible types of layers.
 
     enum class Type{Scaling2D,
                     Scaling4D,
@@ -161,22 +155,15 @@ protected:
     ThreadPool* thread_pool = nullptr;
     ThreadPoolDevice* thread_pool_device = nullptr;
 
-    /// Layer name.
-
     string layer_name = "layer";
 
-    /// Layer type.
-
     Type layer_type;
-
-    /// Activation functions
 
     template <int rank>
     void linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
         y.device(*thread_pool_device) = x;
     }
-
 
     template <int rank>
     void binary(const Tensor<type, rank>& x, Tensor<type, rank>& y) const

@@ -14,22 +14,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a normalized squared error term object not associated with any
-/// neural network and not measured on any data set.
-/// It also initializes all the rest of the class members to their default values.
-
 NormalizedSquaredError::NormalizedSquaredError() : LossIndex()
 {
     set_default();
 }
 
-
-/// Neural network and data set constructor.
-/// It creates a normalized squared error term associated with a neural network and measured on a data set.
-/// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network Pointer to a neural network object.
-/// @param new_data_set Pointer to a data set object.
 
 NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
@@ -38,25 +27,17 @@ NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network
 }
 
 
-/// Returns the normalization coefficient.
-
 type NormalizedSquaredError::get_normalization_coefficient() const
 {
     return normalization_coefficient;
 }
 
 
-/// Returns the selection normalization coefficient.
-
 type NormalizedSquaredError::get_selection_normalization_coefficient() const
 {
     return selection_normalization_coefficient;
 }
 
-
-///
-/// \brief set_data_set
-/// \param new_data_set
 
 void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 {
@@ -72,9 +53,6 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
     }
 }
 
-
-/// Sets the normalization coefficient from training samples.
-/// This method calculates the normalization coefficient of the data_set.
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
@@ -120,8 +98,6 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
              targets_t.data() + targets_t.dimension(0) * i);
     }
 
-    //Normalization coefficient
-
     normalization_coefficient = calculate_time_series_normalization_coefficient(targets_t_1, targets_t);
 }
 
@@ -134,7 +110,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
     type normalization_coefficient = type(0);
 
-    /// @todo add pragma 
+    // @todo add pragma 
 
     for(Index i = 0; i < target_samples_number; i++)
     {
@@ -148,17 +124,11 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 }
 
 
-/// Sets the normalization coefficient.
-/// @param new_normalization_coefficient New normalization coefficient to be set.
-
 void NormalizedSquaredError::set_normalization_coefficient(const type& new_normalization_coefficient)
 {
     normalization_coefficient = new_normalization_coefficient;
 }
 
-
-/// Sets the normalization coefficient from selection samples.
-/// This method calculates the normalization coefficient of the data_set.
 
 void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
@@ -180,16 +150,11 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 }
 
 
-/// Sets the normalization coefficient from selection samples.
-/// @param new_normalization_coefficient New normalization coefficient to be set.
-
 void NormalizedSquaredError::set_selection_normalization_coefficient(const type& new_selection_normalization_coefficient)
 {
     selection_normalization_coefficient = new_selection_normalization_coefficient;
 }
 
-
-/// Sets the default values.
 
 void NormalizedSquaredError::set_default()
 {
@@ -205,11 +170,6 @@ void NormalizedSquaredError::set_default()
     }
 }
 
-
-/// Returns the normalization coefficient to be used for the loss of the error.
-/// This is measured on the training samples of the data set.
-/// @param targets Matrix with the targets values from data_set.
-/// @param targets_mean Vector with the means of the given targets.
 
 type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets,
                                                                  const Tensor<type, 1>& targets_mean) const
@@ -232,11 +192,6 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
     return normalization_coefficient;
 }
 
-
-/// \brief NormalizedSquaredError::calculate_error
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const Batch& batch,
                                              const ForwardPropagation& forward_propagation,
