@@ -13,8 +13,6 @@ namespace opennn
 
 struct LayerBackPropagation
 {
-    /// Default constructor.
-
     explicit LayerBackPropagation() {}
 
     virtual ~LayerBackPropagation() {}

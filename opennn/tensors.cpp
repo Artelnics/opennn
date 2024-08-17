@@ -1255,15 +1255,7 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, const Index
     }
 
     if(!check_conditions)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TensorUtilities class.\n"
-               << "Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&,const Index&,const type&,const type&) method.\n"
-               << "Invalid conditions\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Invalid conditions\n");
 
     return new_matrix;
 }
@@ -1362,15 +1354,7 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>
 type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 {
     if(x.size() != y.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Tensor utilites.\n"
-               << "type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&)\n"
-               << "x and y vector must  have the same dimensions.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("x and y vector must  have the same dimensions.\n");
 
     Tensor<type, 0> distance;
 
@@ -1674,66 +1658,35 @@ Index count_not_empty(const Tensor<string, 1>& strings)
 void check_size(const Tensor<type, 1>& vector, const Index& size, const string& log)
 {
     if(vector.size() != size)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << log <<  endl
-               << "Size of vector is " << vector.size() << ", but must be " << size << "." << endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of vector is " + to_string(vector.size()) + ", but must be " + to_string(size) + ".\n");
 }
 
 
 void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, const Index& raw_variables_number, const string& log)
 {
     if(matrix.dimension(0) != rows_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << log <<  endl
-               << "Number of rows in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << "." <<  endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of rows in matrix is " + to_string(matrix.dimension(0)) + ", "
+                            "but must be " + to_string(rows_number) + ".\n");
 
     if(matrix.dimension(1) != raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << log <<  endl
-               << "Number of raw_variables in matrix is " << matrix.dimension(0) << ", but must be " << raw_variables_number << "." <<  endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of raw_variables in matrix is " + to_string(matrix.dimension(0)) + ", "
+                            "but must be " + to_string(raw_variables_number) + ".\n");
 }
 
 
 void check_raw_variables_number(const Tensor<type, 2>& matrix, const Index& raw_variables_number, const string& log)
 {
     if(matrix.dimension(1) != raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << log <<  endl
-               << "Number of raw_variables in matrix is " << matrix.dimension(0) << ", but must be " << raw_variables_number << "." <<  endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of raw_variables in matrix is " + to_string(matrix.dimension(0)) + ", "
+                            "but must be " + to_string(raw_variables_number) + ".\n");
 }
 
 
 void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, const string& log)
 {
     if(matrix.dimension(1) != rows_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << log <<  endl
-               << "Number of raw_variables in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << "." <<  endl;
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of raw_variables in matrix is " + to_string(matrix.dimension(0)) + ", "
+                            "but must be " + to_string(rows_number) + ".\n");
 }
 
 
@@ -1874,15 +1827,7 @@ string string_tensor_to_string(const Tensor<string,1>&x, const string& separator
     const Index size = x.size();
 
     if(x.size() == 0)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: Tensor utilites.\n"
-              << "Mstring to_string(Tensor<string,1>&x,string& separator).\n"
-              << "Input vector must have dimension greater than 0.\n";
-
-       throw runtime_error(buffer.str());
-    }
+       throw runtime_error("Input vector must have dimension greater than 0.\n");
 
     string line = x(0);
 
@@ -1903,24 +1848,11 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
 
    if(row_index > rows_number)
    {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix Template.\n"
-             << "Matrix<T> delete_row(const size_t&) const.\n"
-             << "Index of row must be less than number of rows.\n"
-             << "row index: " << row_index << "rows_number" << rows_number << "\n";
-
-      throw runtime_error(buffer.str());
+      throw runtime_error("row index: " + to_string(row_index) + "rows_number" + to_string(rows_number) + "\n");
    }
    else if(rows_number < 2)
    {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix Template.\n"
-             << "Matrix<T> delete_row(const size_t&) const.\n"
-             << "Number of rows must be equal or greater than two.\n";
-
-      throw runtime_error(buffer.str());
+      throw runtime_error("Number of rows must be equal or greater than two.\n");
    }
 
    #endif

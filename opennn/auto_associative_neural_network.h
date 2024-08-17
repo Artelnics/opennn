@@ -74,8 +74,6 @@ public:
 
 private:
 
-    /// AANN distances box plot
-
     BoxPlot auto_associative_distances_box_plot = BoxPlot();
 
     Tensor<BoxPlot, 1> multivariate_distances_box_plot;

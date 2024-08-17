@@ -29,16 +29,6 @@ struct AdaptiveMomentEstimationData;
 struct ADAMOptimizationDataCuda;
 #endif
 
-/// This concrete class represents the adaptive moment estimation(Adam) optimization algorithm.
-/// This algorithm is based on adaptive estimates of lower-order moments.
-///
-/// For more information visit:
-///
-/// \cite 1 C. Barranquero "High performance optimization algorithms for neural networks."
-/// \ref https://www.opennn.net/files/high_performance_optimization_algorithms_for_neural_networks.pdf .
-///
-/// \cite 2 D. P. Kingma and J. L. Ba, "Adam: A Method for Stochastic Optimization." arXiv preprint arXiv:1412.6980v8 (2014).
-
 class AdaptiveMomentEstimation : public OptimizationAlgorithm
 {
     
@@ -98,8 +88,6 @@ public:
 
    TrainingResults perform_training() final;
 
-   /// Return the algorithm optimum for your model.
-
    string write_optimization_algorithm_type() const final;
 
    // Serialization methods
@@ -116,56 +104,31 @@ private:
 
    // TRAINING OPERATORS
 
-   /// Initial learning rate
-
    type learning_rate = type(0.001);
-
-   /// Custom learning rate
 
    bool use_custom_learning_rate = false;
 
-   /// Learning rate decay over each update.
-
    type initial_decay = type(0);
-
-   /// Exponential decay over gradient estimates.
 
    type beta_1 = type(0.9);
 
-   /// Exponential decay over square gradient estimates.
-
    type beta_2 = type(0.999);
-
-   /// Small number to prevent any division by zero
 
    type epsilon = type(1.e-6);
 
     // Stopping criteria
 
-   /// Goal value for the loss. It a stopping criterion.
-
    type training_loss_goal = type(0);
    
-   /// Goal value for the accuracy. It a stopping criterion.
-
    type training_accuracy_goal = type(1);
-
-   /// Maximum epochs number.
 
    Index maximum_epochs_number = 10000;
 
-   /// Maximum number of times when selection error increases.
-
    Index maximum_selection_failures = numeric_limits<Index>::max();
-
-   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time = type(3600);
 
-   /// Training and selection batch size.
-
    Index batch_samples_number = 1000;
-
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
@@ -176,8 +139,6 @@ private:
 
 struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 {
-    /// Default constructor.
-
     explicit AdaptiveMomentEstimationData();
 
     explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation*);

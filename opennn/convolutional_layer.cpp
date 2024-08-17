@@ -14,21 +14,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates an empty ConvolutionalLayer object.
-
 ConvolutionalLayer::ConvolutionalLayer() : Layer()
 {
     layer_type = Layer::Type::Convolutional;
 }
 
-
-/// Inputs' dimensions modifier constructor.
-/// After setting new dimensions for the inputs, it creates and initializes a ConvolutionalLayer object
-/// with a number of kernels of a given size.
-/// The initialization values are random values from a normal distribution.
-/// @param new_input_dimensions A vector containing the new inputs' dimensions.
-/// @param kernels_dimensions A vector containing the number, kernel rows, columns and channels.
 
 ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_kernel_dimensions) : Layer()
@@ -38,8 +28,6 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
     set(new_input_dimensions, new_kernel_dimensions);
 }
 
-
-/// Returns a boolean, true if convolutional layer is empty and false otherwise.
 
 bool ConvolutionalLayer::is_empty() const
 {
@@ -52,15 +40,11 @@ bool ConvolutionalLayer::is_empty() const
 }
 
 
-/// Returns the layer's biases.
-
 const Tensor<type, 1>& ConvolutionalLayer::get_biases() const
 {
     return biases;
 }
 
-
-/// Returns the layer's synaptic weights.
 
 const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
 {
@@ -73,10 +57,6 @@ bool ConvolutionalLayer::get_batch_normalization() const
     return batch_normalization;
 }
 
-
-/// Inserts padding to the input tensor.
-/// @param input Tensor containing the inputs.
-/// @param padded_output input tensor padded.
 
 // void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output) const
 // {
@@ -128,8 +108,6 @@ void ConvolutionalLayer::preprocess_inputs(const Tensor<type, 4>& inputs,
     }
 }
 
-
-/// Calculate convolutions
 
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 Tensor<type, 4>& convolutions) const
@@ -264,8 +242,6 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
 }
 
 
-/// Calculate activations
-
 void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& convolutions,
                                                Tensor<type, 4>& activations) const
 {
@@ -293,8 +269,6 @@ void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& convolutio
     }
 }
 
-
-/// Calculates activations derivatives
 
 void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>& convolutions,
                                                            Tensor<type, 4>& activations,
@@ -564,7 +538,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     }
 
 
-    /// @todo optimize (input_derivatives)
+    // @todo optimize (input_derivatives)
     input_derivatives.setZero();
     
     input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
@@ -627,16 +601,11 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
-/// Returns the convolutional layer's activation function.
-
 ConvolutionalLayer::ActivationFunction ConvolutionalLayer::get_activation_function() const
 {
     return activation_function;
 }
 
-
-/// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string ConvolutionalLayer::write_activation_function() const
 {
@@ -674,8 +643,6 @@ string ConvolutionalLayer::write_activation_function() const
 }
 
 
-/// Returns the number of rows the result of applying the layer's kernels to an image will have.
-
 Index ConvolutionalLayer::get_output_height() const
 {
     const Index input_height = get_input_height();
@@ -687,8 +654,6 @@ Index ConvolutionalLayer::get_output_height() const
     return floor((input_height - kernel_height + 2*padding.first)/strides) + 1;
 }
 
-
-/// Returns the number of columns the result of applying the layer's kernels to an image will have.
 
 Index ConvolutionalLayer::get_output_width() const
 {
@@ -702,15 +667,11 @@ Index ConvolutionalLayer::get_output_width() const
 }
 
 
-/// Returns the dimension of the input variables
-
 dimensions ConvolutionalLayer::get_inputs_dimensions() const
 {
     return input_dimensions;
 }
 
-
-/// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
 
 dimensions ConvolutionalLayer::get_output_dimensions() const
 {
@@ -722,16 +683,11 @@ dimensions ConvolutionalLayer::get_output_dimensions() const
 }
 
 
-/// Returns the padding option.
-
 ConvolutionalLayer::ConvolutionType ConvolutionalLayer::get_convolution_type() const
 {
     return convolution_type;
 }
 
-
-/// Returns a string with the name of the convolution type.
-/// This can be Valid and Same.
 
 string ConvolutionalLayer::write_convolution_type() const
 {
@@ -748,15 +704,11 @@ string ConvolutionalLayer::write_convolution_type() const
 }
 
 
-/// Returns the raw_variable stride.
-
 Index ConvolutionalLayer::get_column_stride() const
 {
     return column_stride;
 }
 
-
-/// Returns the row stride.
 
 Index ConvolutionalLayer::get_row_stride() const
 {
@@ -764,15 +716,11 @@ Index ConvolutionalLayer::get_row_stride() const
 }
 
 
-/// Returns the number of rows of the layer's kernels.
-
 Index  ConvolutionalLayer::get_kernel_height() const
 {
     return synaptic_weights.dimension(0);
 }
 
-
-/// Returns the number of columns of the layer's kernels.
 
 Index ConvolutionalLayer::get_kernel_width() const
 {
@@ -780,23 +728,17 @@ Index ConvolutionalLayer::get_kernel_width() const
 }
 
 
-/// Returns the number of channels of the layer's kernels.
-
 Index ConvolutionalLayer::get_kernel_channels() const
 {
     return synaptic_weights.dimension(2);
 }
 
 
-///Returns the number of kernels of the layer.
-
 Index ConvolutionalLayer::get_kernels_number() const
 {
     return synaptic_weights.dimension(3);
 }
 
-
-/// Returns the total number of columns of zeroes to be added to an image before applying a kernel, which depends on the padding option set.
 
 Index ConvolutionalLayer::get_padding_width() const
 {
@@ -817,8 +759,6 @@ Index ConvolutionalLayer::get_padding_width() const
 }
 
 
-/// Returns the total number of rows of zeros to be added to an image before applying a kernel, which depends on the padding option set.
-
 Index ConvolutionalLayer::get_padding_height() const
 {
     switch(convolution_type)
@@ -838,15 +778,11 @@ Index ConvolutionalLayer::get_padding_height() const
 }
 
 
-/// Returns the number of inputs
-
 Index ConvolutionalLayer::get_inputs_number() const
 {
     return get_input_channels() * get_input_height() * get_input_width();
 }
 
-
-/// Returns the number of neurons
 
 Index ConvolutionalLayer::get_neurons_number() const
 {
@@ -857,8 +793,6 @@ Index ConvolutionalLayer::get_neurons_number() const
     return kernels_number * kernel_height * kernel_width;
 }
 
-
-/// Returns the layer's parameters in the form of a vector.
 
 Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
@@ -874,24 +808,17 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
          biases.data() + biases.size(),
          parameters.data() + synaptic_weights.size());
 
-/// @todo add scales and offsets
+// @todo add scales and offsets
 
     return parameters;
 }
 
-
-/// Returns the number of parameters of the layer.
 
 Index ConvolutionalLayer::get_parameters_number() const
 {
     return synaptic_weights.size() + biases.size();
 }
 
-
-/// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
-/// The initialization values are random values from a normal distribution.
-/// @param new_input_dimensions A vector containing the desired inputs' dimensions (number of images, number of channels, rows number, columns number).
-/// @param new_kernel_dimensions A vector containing the desired kernels' dimensions (number of kernels, number of channels, rows number, columns number).
 
 void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions)
@@ -933,26 +860,17 @@ void ConvolutionalLayer::set_name(const string& new_layer_name)
 }
 
 
-/// Initializes the layer's biases to a given value.
-/// @param value The desired value.
-
 void ConvolutionalLayer::set_biases_constant(const type& value)
 {
     biases.setConstant(value);
 }
 
 
-/// Initializes the layer's synaptic weights to a given value.
-/// @param value The desired value.
-
 void ConvolutionalLayer::set_synaptic_weights_constant(const type& value)
 {
     synaptic_weights.setConstant(value);
 }
 
-
-/// Initializes the layer's parameters to a given value.
-/// @param value The desired value.
 
 void ConvolutionalLayer::set_parameters_constant(const type& value)
 {
@@ -962,8 +880,6 @@ void ConvolutionalLayer::set_parameters_constant(const type& value)
 }
 
 
-/// Sets the parameters to random numbers using Eigen's setRandom.
-
 void ConvolutionalLayer::set_parameters_random()
 {
     biases.setRandom();
@@ -972,18 +888,11 @@ void ConvolutionalLayer::set_parameters_random()
 }
 
 
-/// Sets the layer's activation function.
-/// @param new_activation_function The desired activation function.
-
 void ConvolutionalLayer::set_activation_function(const ConvolutionalLayer::ActivationFunction& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
-
-/// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
-/// @param new_activation_function Activation function for that layer.
 
 void ConvolutionalLayer::set_activation_function(const string& new_activation_function_name)
 {
@@ -1030,17 +939,11 @@ void ConvolutionalLayer::set_activation_function(const string& new_activation_fu
 }
 
 
-/// Sets the layer's biases.
-/// @param new_biases The desired biases.
-
 void ConvolutionalLayer::set_biases(const Tensor<type, 1>& new_biases)
 {
     biases = new_biases;
 }
 
-
-/// Sets the layer's synaptic weights.
-/// @param new_synaptic_weights The desired synaptic weights.
 
 void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 4>& new_synaptic_weights)
 {
@@ -1054,17 +957,11 @@ void ConvolutionalLayer::set_batch_normalization(const bool& new_batch_normaliza
 }
 
 
-/// Sets the padding option.
-/// @param new_convolution_type The desired convolution type.
-
 void ConvolutionalLayer::set_convolution_type(const ConvolutionalLayer::ConvolutionType& new_convolution_type)
 {
     convolution_type = new_convolution_type;
 }
 
-
-/// Sets the padding option.
-/// @param new_convolution_type The desired convolution type.
 
 void ConvolutionalLayer::set_convolution_type(const string& new_convolution_type)
 {
@@ -1082,8 +979,6 @@ void ConvolutionalLayer::set_convolution_type(const string& new_convolution_type
     }
 }
 
-/// Sets the kernels' row stride.
-/// @param new_stride_row The desired row stride.
 
 void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 {
@@ -1095,9 +990,6 @@ void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
     row_stride = new_stride_row;
 }
 
-
-/// Sets the kernels' raw_variable stride.
-/// @param new_stride_row The desired raw_variable stride.
 
 void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 {
@@ -1115,9 +1007,6 @@ void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_input_dimen
     input_dimensions = new_input_dimensions;
 }
 
-
-/// Sets the synaptic weights and biases to the given values.
-/// @param new_parameters A vector containing the synaptic weights and biases, in this order.
 
 void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
@@ -1144,8 +1033,6 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
          biases.data());
 }
 
-
-/// Returns the number of biases in the layer.
 
 Index ConvolutionalLayer::get_biases_number() const
 {
@@ -1207,15 +1094,11 @@ Eigen::array<ptrdiff_t, 4> ConvolutionalLayer::get_strides() const
 }
 
 
-/// Returns the number of synaptic weights in the layer.
-
 Index ConvolutionalLayer::get_synaptic_weights_number() const
 {
     return synaptic_weights.size();
 }
 
-
-/// Returns the number of rows of the input.
 
 Index ConvolutionalLayer::get_input_height() const
 {
@@ -1223,15 +1106,11 @@ Index ConvolutionalLayer::get_input_height() const
 }
 
 
-/// Returns the number of columns of the input.
-
 Index ConvolutionalLayer::get_input_width() const
 {
     return input_dimensions[1];
 }
 
-
-/// Returns the number of channels of the input.
 
 Index ConvolutionalLayer::get_input_channels() const
 {
@@ -1292,9 +1171,6 @@ void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training
     }
 }
 */
-
-/// Serializes the convolutional layer object into an XML document of the TinyXML.
-/// See the OpenNN manual for more information about the format of this document.
 
 void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1423,9 +1299,6 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Deserializes a TinyXML document into this convolutional layer object.
-/// @param document TinyXML document containing the member data.
-
 void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
@@ -1461,8 +1334,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     //    set_input_variables_dimenisons(Index(stoi(input_variables_dimensions_string));
 
-
-    //Outputs variables dimensions element
+    // Outputs variables dimensions element
 
     const tinyxml2::XMLElement* outputs_variables_dimensions_element = convolutional_layer_element->FirstChildElement("OutputsVariablesDimensions");
 

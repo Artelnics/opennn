@@ -1766,7 +1766,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 }
 
 
-/// @todo clean this method Clang-tidy gives warnings.
+// @todo clean this method Clang-tidy gives warnings.
 
 Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
 {
@@ -1975,15 +1975,7 @@ string one_hot_decode(const Tensor<type, 1>& tensor)
     const Index length = alphabet.size();
 
     if(tensor.size() != length)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextGenerationAlphabet class.\n"
-            << "string one_hot_decode(Tensor<type, 1>& tensor).\n"
-            << "Tensor length must be equal to alphabet length.";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Tensor length must be equal to alphabet length.");
 
     auto index = max_element(tensor.data(), tensor.data() + tensor.size()) - tensor.data();
 
@@ -1999,15 +1991,7 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
     const Index length = alphabet.size();
 
     if(tensor.dimension(1) != length)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextGenerationAlphabet class.\n"
-            << "string one_hot_decode(Tensor<type, 1>& tensor).\n"
-            << "Tensor length must be equal to alphabet length.";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Tensor length must be equal to alphabet length.");
 
     string result = "";
 
@@ -3025,30 +3009,10 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
     const Tensor<string, 1> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextAnalytics class.\n"
-               << "Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,"
-                  "const Index& minimum_frequency,"
-                  "const Index& combinations_length)  method."
-               << "Words number must be greater than 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Words number must be greater than 1.\n");
 
     if(combinations_length < 2)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextAnalytics class.\n"
-               << "Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,"
-                  "const Index& minimum_frequency,"
-                  "const Index& combinations_length) method."
-               << "Length of combinations not valid, must be greater than 1";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Length of combinations not valid, must be greater than 1");
 
     Index combinated_words_size = 0;
 
@@ -3168,17 +3132,11 @@ string calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet,
 }
 
 
-/// @todo TEXT GENERATION
+// @todo TEXT GENERATION
 
 string generate_word(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
-           << "This method is not implemented yet.\n";
-
-    throw runtime_error(buffer.str());
+    throw runtime_error("This method is not implemented yet.\n");
 
     return string();
 
@@ -3187,16 +3145,7 @@ string generate_word(TextGenerationAlphabet& text_generation_alphabet, const str
     //    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
 
     //    if(first_letters.length()*alphabet_length != get_inputs_number())
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
-    //               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
-
-    //        throw runtime_error(buffer.str());
-    //    }
-
+    //        throw runtime_error("Input string length must be equal to " + to_string(int(get_inputs_number()/alphabet_length)) + "\n");
 
     //    string result = first_letters;
 
@@ -3230,22 +3179,14 @@ string generate_word(TextGenerationAlphabet& text_generation_alphabet, const str
 }
 
 
-/// @todo TEXT GENERATION
+// @todo TEXT GENERATION
 
 string generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
     const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
 
     if(first_letters.length()*alphabet_length != get_inputs_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
-               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Input string length must be equal to " + to_string(int(get_inputs_number()/alphabet_length)) + "\n");
 
     string result = first_letters;
 
@@ -3274,7 +3215,7 @@ string generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const s
 }
 
 
-/// @todo TEXT GENERATION Explain.
+// @todo TEXT GENERATION Explain.
 
 TextGenerationAlphabet::TextGenerationAlphabet()
 {
@@ -3472,15 +3413,7 @@ string TextGenerationAlphabet::one_hot_decode(const Tensor<type, 1>& tensor)
     const Index length = alphabet.size();
 
     if(tensor.size() != length)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextGenerationAlphabet class.\n"
-               << "string one_hot_decode(Tensor<type, 1>& tensor).\n"
-               << "Tensor length must be equal to alphabet length.";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Tensor length must be equal to alphabet length.");
 
     auto index = max_element(tensor.data(), tensor.data() + tensor.size()) - tensor.data();
 
@@ -3493,15 +3426,7 @@ string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& te
     const Index length = alphabet.size();
 
     if(tensor.dimension(1) != length)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TextGenerationAlphabet class.\n"
-               << "string one_hot_decode(Tensor<type, 1>& tensor).\n"
-               << "Tensor length must be equal to alphabet length.";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Tensor length must be equal to alphabet length.");
 
     string result = "";
 

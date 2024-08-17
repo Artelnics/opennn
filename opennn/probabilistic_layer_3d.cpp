@@ -564,7 +564,7 @@ void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor
     const Index batch_samples_number = outputs.dimension(0);
     const Index outputs_number = outputs.dimension(1);
 
-    /// @todo Can we simplify this? For instance put the division in the last line somewhere else. 
+    // @todo Can we simplify this? For instance put the division in the last line somewhere else. 
 
     error_combinations_derivatives.device(*thread_pool_device) = outputs;
 

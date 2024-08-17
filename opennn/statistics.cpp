@@ -39,16 +39,7 @@ Descriptives::Descriptives(const Tensor<type, 1>&x)
 #ifdef OPENNN_DEBUG
 
     if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type descriptives(const Tensor<type, 1>&, "
-                  "const Tensor<Index, 1>&).\n"
-               << "Size must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size must be greater than zero.\n");
 
 #endif
 
@@ -233,15 +224,7 @@ void Descriptives::save(const string &file_name) const
     ofstream file(file_name.c_str());
 
     if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "void save(const string&) const method.\n"
-               << "Cannot open descriptives data file.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Cannot open descriptives data file.\n");
 
     // Write file
 
@@ -559,13 +542,7 @@ Index Histogram::calculate_bin(const type& value) const
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "Index Histogram::calculate_bin(const type&) const.\n"
-               << "Unknown return value.\n";
-
-        throw runtime_error(buffer.str());
+        throw runtime_error("Unknown return value.\n");
     }
 }
 
@@ -834,15 +811,7 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 #ifdef OPENNN_DEBUG
 
     if(begin > end)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end) \n"
-               << "Begin must be less or equal than end.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Begin must be less or equal than end.\n");
 
 #endif
 
@@ -871,16 +840,7 @@ type mean(const Tensor<type, 1>& vector)
 #ifdef OPENNN_DEBUG
 
     if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end) "
-                  "const method.\n"
-               << "Size must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size must be greater than zero.\n");
 
 #endif
 
@@ -913,16 +873,7 @@ type variance(const Tensor<type, 1>& vector)
 #ifdef OPENNN_DEBUG
 
     if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type variance(const Tensor<type, 1>& vector) "
-                  "const method.\n"
-               << "Size must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size must be greater than zero.\n");
 
 #endif
 
@@ -961,16 +912,7 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 #ifdef OPENNN_DEBUG
 
     if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type variance(const Tensor<type, 1>&, const Tensor<Index, 1>&) "
-                  "const method.\n"
-               << "Indeces size must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Indices size must be greater than zero.\n");
 
 #endif
 
@@ -1013,15 +955,7 @@ type standard_deviation(const Tensor<type, 1>& vector)
     const Index size = vector.dimension(0);
 
     if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type standard_deviation(const Tensor<type, 1>&) const method.\n"
-               << "Size must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size must be greater than zero.\n");
 
 #endif
 
@@ -1041,15 +975,7 @@ type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& i
     const Index size = vector.dimension(0);
 
     if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type standard_deviation(const Tensor<type, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "Size must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size must be greater than zero.\n");
 
 #endif
 
@@ -1103,15 +1029,7 @@ type asymmetry(const Tensor<type, 1>& vector)
 #ifdef OPENNN_DEBUG
 
     if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type asymmetry(const Tensor<type, 1>& vector) const method.\n"
-               << "Size must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size must be greater than zero.\n");
 
 #endif
 
@@ -1159,15 +1077,7 @@ type kurtosis(const Tensor<type, 1>& vector)
 #ifdef OPENNN_DEBUG
 
     if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type kurtosis(const Tensor<type, 1>& vector) const method.\n"
-               << "Size must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size must be greater than zero.\n");
 
 #endif
 
@@ -1506,16 +1416,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 #ifdef OPENNN_DEBUG
 
     if(bins_number < 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "Histogram histogram(const Tensor<type, 1>&, "
-                  "const Index&) const method.\n"
-               << "Number of bins is less than one.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of bins is less than one.\n");
 
 #endif
 
@@ -1648,16 +1549,7 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 #ifdef OPENNN_DEBUG
 
     if(bins_number < 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "Histogram histogram_centered(const Tensor<type, 1>&, "
-                  "const type&, const Index&) const method.\n"
-               << "Number of bins is less than one.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of bins is less than one.\n");
 
 #endif
 
@@ -1839,16 +1731,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 #ifdef OPENNN_DEBUG
 
     if(rows_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&) "
-                  "const method.\n"
-               << "Number of rows must be greater than one.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of rows must be greater than one.\n");
 
 #endif
 
@@ -1901,7 +1784,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     squared_sums.setZero();
     count.setZero();
 
-    /// @todo optimize this loop
+    // @todo optimize this loop
     for(Index i = 0; i < row_indices_size; i++)
     {
         row_index = row_indices(i);
@@ -2197,15 +2080,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
 #ifdef OPENNN_DEBUG
 
     if(rows_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<type, 1> mean(const Tensor<type, 2>&) const method.\n"
-               << "Number of rows must be greater than one.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of rows must be greater than one.\n");
 
 #endif
 
@@ -2285,71 +2160,26 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
     // Rows check
 
     if(row_indices_size > rows_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<type, 1> mean(const Tensor<type, 2>& matrix, "
-                  "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "Size of row indices(" << row_indices_size << ") is greater than number of rows(" << rows_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of row indices(" + to_string(row_indices_size) + ") is greater than number of rows(" + to_string(rows_number) + ").\n");
 
     for(Index i = 0; i < row_indices_size; i++)
     {
         if(row_indices(i) >= rows_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: Statistics class.\n"
-                   << "Tensor<type, 1> mean(const Tensor<type, 2>& matrix, "
-                      "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-                   << "Row index " << i << " must be less than rows number.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Row index " + i + " must be less than rows number.\n");
     }
 
     if(row_indices_size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<type, 1> mean(const Tensor<type, 2>& matrix, "
-                  "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "Size of row indices must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of row indices must be greater than zero.\n");
 
     // raw_variables check
 
     if(raw_variables_indices_size > raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<type, 1> mean(const Tensor<type, 2>& matrix, "
-                  "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "raw_variable indices size must be equal or less than raw_variables number.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("raw_variable indices size must be equal or less than raw_variables number.\n");
 
     for(Index i = 0; i < raw_variables_indices_size; i++)
     {
         if(raw_variables_indices(i) >= raw_variables_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: Statistics class.\n"
-                   << "Tensor<type, 1> mean(const Tensor<type, 2>& matrix, "
-                      "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-                   << "raw_variable index " << i << " must be less than raw_variables number.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("raw_variable index " + to_string(i) + " must be less than raw_variables number.\n");
     }
 
 #endif
@@ -2401,26 +2231,10 @@ type mean(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 #ifdef OPENNN_DEBUG
 
     if(rows_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "type mean(const Tensor<type, 2>&, const Index&) const method.\n"
-               << "Number of rows must be greater than one.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Number of rows must be greater than one.\n");
 
     if(raw_variable_index >= raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "type mean(const Tensor<type, 2>&, const Index&) const method.\n"
-               << "Index of raw_variable must be less than number of raw_variables.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Index of raw_variable must be less than number of raw_variables.\n");
 
 #endif
 
@@ -2603,66 +2417,26 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
     // Rows check
 
     if(row_indices_size > rows_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template.\n"
-               << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "Size of row indices(" << row_indices_size << ") is greater than number of rows(" << rows_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of row indices(" + to_string(row_indices_size) + ") is greater than number of rows(" + to_string(rows_number) + ").\n");
 
     for(Index i = 0; i < row_indices_size; i++)
     {
         if(row_indices(i) >= rows_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: Matrix template.\n"
-                   << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-                   << "Row index " << i << " must be less than rows number.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Row index " + to_string(i) + " must be less than rows number.\n");
     }
 
     if(row_indices_size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template.\n"
-               << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "Size of row indices must be greater than zero.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of row indices must be greater than zero.\n");
 
     // raw_variables check
 
     if(raw_variables_indices_size > raw_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template.\n"
-               << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "raw_variable indices size must be equal or less than raw_variables number.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("raw_variable indices size must be equal or less than raw_variables number.\n");
 
     for(Index i = 0; i < raw_variables_indices_size; i++)
     {
         if(raw_variables_indices(i) >= raw_variables_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: Matrix template.\n"
-                   << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-                   << "raw_variable index " << i << " must be less than raw_variables number.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("raw_variable index " + to_string(i) + " must be less than raw_variables number.\n");
     }
 
 #endif
@@ -2955,15 +2729,8 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
 #ifdef OPENNN_DEBUG
 
     if(number > size)
-    {
-        ostringstream buffer;
+        throw runtime_error("Number of minimal indices to be computed must be lower (or equal) than the size of the imput vector.\n");
 
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index&) \n"
-               << "Number of minimal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
-
-        throw runtime_error(buffer.str());
-    }
 #endif
 
     for(Index j = 0; j < number; j++)
@@ -3003,15 +2770,8 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
 #ifdef OPENNN_DEBUG
 
     if(number > size)
-    {
-        ostringstream buffer;
+        throw runtime_error("Number of maximal indices to be computed must be lower (or equal) than the size of the imput vector.\n");
 
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<Index, 1> maximal_indices(Tensor<type, 1>& , const Index&) \n"
-               << "Number of maximal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
-
-        throw runtime_error(buffer.str());
-    }
 #endif
 
     for(Index j = 0; j < number; j++)
@@ -3142,15 +2902,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 #ifdef OPENNN_DEBUG
 
     if(size < 10)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics.\n"
-               << "Tensor<type, 1> percentiles(const Tensor<type, 1>& vector) method.\n"
-               << "Size must be greater or equal than 10.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size must be greater or equal than 10.\n");
 
 #endif
 

@@ -256,11 +256,6 @@ void PerceptronLayer3D::set()
 }
 
 
-/// Sets new numbers of inputs and perceptrons in the layer.
-/// It also sets the rest of the members to their default values.
-/// @param new_inputs_number Number of inputs.
-/// @param new_neurons_number Number of perceptron neurons.
-
 void PerceptronLayer3D::set(const Index& new_inputs_number, 
                             const Index& new_inputs_depth, 
                             const Index& new_neurons_number,

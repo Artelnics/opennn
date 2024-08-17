@@ -13,10 +13,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a empty layer object.
-/// This constructor also initializes the rest of the class members to their default values.
-
 EmbeddingLayer::EmbeddingLayer() : Layer()
 {
     set();
@@ -24,11 +20,6 @@ EmbeddingLayer::EmbeddingLayer() : Layer()
     layer_type = Type::Embedding;
 }
 
-
-/// Layer architecture constructor.
-/// It creates a layer object with given input dimension, input length and embedding depth.
-/// It initializes the parameters at random.
-/// This constructor also initializes the rest of the class members to their default values.
 
 EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
                                const Index& new_inputs_number,
@@ -43,15 +34,11 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
 }
 
 
-/// Returns the dimension (maximum value) of the input to the layer.
-
 Index EmbeddingLayer::get_input_dimension() const
 {
     return input_dimensions;
 }
 
-
-/// Returns the length of the input to the layer.
 
 Index EmbeddingLayer::get_inputs_number() const
 {
@@ -59,12 +46,11 @@ Index EmbeddingLayer::get_inputs_number() const
 }
 
 
-/// Returns the embedding depth to be used in the layer.
-
 Index EmbeddingLayer::get_depth() const
 {
     return depth;
 }
+
 
 bool EmbeddingLayer::get_positional_encoding() const
 {
@@ -83,8 +69,6 @@ Tensor<type, 2> EmbeddingLayer::get_embedding_weights() const
     return embedding_weights;
 }
 
-
-/// Returns the number of parameters of the layer.
 
 Index EmbeddingLayer::get_parameters_number() const
 {
@@ -111,17 +95,11 @@ Index EmbeddingLayer::get_neurons_number() const
 }
 
 
-/// Returns true if messages from this class are displayed on the screen,
-/// or false if messages from this class are not displayed on the screen.
-
 const bool& EmbeddingLayer::get_display() const
 {
     return display;
 }
 
-
-/// Sets an empty layer.
-/// It also sets the rest of the members to their default values.
 
 void EmbeddingLayer::set()
 {
@@ -138,9 +116,6 @@ void EmbeddingLayer::set()
     set_default();
 }
 
-
-/// Sets new input dimension, input length, embedding depth and activation function of the layer.
-/// It also sets the rest of the members to their default values.
 
 void EmbeddingLayer::set(const Index& new_inputs_dimension,
                          const Index& new_inputs_number,
@@ -161,8 +136,6 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 }
 
 
-/// Sets those members not related to the perceptrons to their default value.
-
 void EmbeddingLayer::set_default()
 {
     layer_name = "embedding_layer";
@@ -179,8 +152,6 @@ void EmbeddingLayer::set_name(const string& new_layer_name)
 }
 
 
-/// Sets a new input dim in the layer.
-
 void EmbeddingLayer::set_input_dim(const Index& new_inputs_dimension)
 {
     input_dimensions = new_inputs_dimension;
@@ -189,15 +160,11 @@ void EmbeddingLayer::set_input_dim(const Index& new_inputs_dimension)
 }
 
 
-/// Sets a new input length in the layer.
-
 void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number = new_inputs_number;
 }
 
-
-/// Sets a new embedding depth in the layer.
 
 void EmbeddingLayer::set_depth(const Index& new_depth)
 {
@@ -206,13 +173,12 @@ void EmbeddingLayer::set_depth(const Index& new_depth)
     set_embedding_weights();
 }
 
+
 void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
 }
 
-
-/// Sets the lookup table and randomizes its parameters.
 
 void EmbeddingLayer::set_embedding_weights()
 {
@@ -233,7 +199,7 @@ void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const
 
 void EmbeddingLayer::set_parameters_random()
 {
-    /// @todo Avoid loops
+    // @todo Avoid loops
 
     const type minimum = type(-0.05);
     const type maximum = type(0.05);
@@ -257,16 +223,12 @@ void EmbeddingLayer::set_parameters_random()
     }
 }
 
+
 void EmbeddingLayer::set_parameters_constant(const type& value)
 {
     embedding_weights.setConstant(value);
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void EmbeddingLayer::set_display(const bool& new_display)
 {
@@ -291,9 +253,6 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs)
 
 
 /*
-/// Calculates one-hot encoding, of dimension = input_dimensions, of an input row (assuming all input values are integers)
-/// @return Matrix of one-hot encodings of all values in input_row
-
 Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_row)
 {
     Tensor<type, 2> one_hot_encoded_input_row(inputs_number, input_dimensions);

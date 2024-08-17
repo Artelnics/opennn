@@ -32,12 +32,6 @@ struct FlattenLayerForwardPropagationCuda;
 struct FlattenLayerBackPropagationCuda;
 #endif
 
-/// This class represents a flatten layer.
-
-/// Flatten layers are included in the definition of a neural network.
-/// They are used to resize the input data to make it usable for the
-/// perceptron layer.
-
 class FlattenLayer : public Layer
 {
 
@@ -107,8 +101,6 @@ public:
 protected:
 
     dimensions input_dimensions;
-
-    /// Display warning messages to screen.
 
     bool display = true;
 };

@@ -200,13 +200,7 @@ Tensor<string, 1> ScalingLayer4D::write_scalers() const
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "Tensor<string, 1> write_scalers() const method.\n"
-                   << "Unknown " << i << " scaling method.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
         }
     }
 
@@ -224,15 +218,7 @@ Tensor<string, 1> ScalingLayer4D::write_scalers_text() const
 #ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-               << "Tensor<string, 1> write_scalers() const method.\n"
-               << "Neurons number must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neurons number must be greater than 0.\n");
 
 #endif
 
@@ -262,20 +248,13 @@ Tensor<string, 1> ScalingLayer4D::write_scalers_text() const
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "Tensor<string, 1> write_scalers_text() const method.\n"
-                   << "Unknown " << i << " scaling method.\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
         }
     }
 
     return scaling_methods_strings;
 }
 
-// const bool& get_display() const method
 
 /// Returns true if messages from this class are displayed on the screen, or false if messages
 /// from this class are not displayed on the screen.
@@ -434,15 +413,7 @@ void ScalingLayer4D::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
     const Index neurons_number = get_neurons_number();
 
     if(new_descriptives_size != neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-               << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
-               << "Size of descriptives (" << new_descriptives_size << ") is not equal to number of scaling neurons (" << neurons_number << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Size of descriptives (" + to_string(new_descriptives_size) + ") is not equal to number of scaling neurons (" + to_string(neurons_number) + ").\n");
 
 #endif
 
@@ -510,15 +481,7 @@ void ScalingLayer4D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
     const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-               << "void set_scalers(const Tensor<Scaler, 1>&) method.\n"
-               << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
 
 #endif
 
@@ -537,15 +500,7 @@ void ScalingLayer4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
 #ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-               << "void set_scalers(const Tensor<string, 1>&) method.\n"
-               << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
 
 #endif
 
@@ -575,13 +530,7 @@ void ScalingLayer4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "void set_scalers(const Tensor<string, 1>&) method.\n"
-                   << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaling method: " + new_scaling_methods_string[i] + ".\n");
         }
     }
 
@@ -606,15 +555,7 @@ void ScalingLayer4D::set_scalers(const string& new_scaling_methods_string)
 #ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-               << "void set_scalers(const Tensor<string, 1>&) method.\n"
-               << "Neurons number (" << neurons_number << ")must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
 
 #endif
 
@@ -644,13 +585,7 @@ void ScalingLayer4D::set_scalers(const string& new_scaling_methods_string)
         }
         else
         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "void set_scalers(const Tensor<string, 1>&) method.\n"
-                   << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
-
-            throw runtime_error(buffer.str());
+            throw runtime_error("Unknown scaling method: " + to_string(new_scaling_methods_string[i]) + ".\n");
         }
     }
 
@@ -863,26 +798,14 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("ScalingLayer4D");
 
     if(!scaling_layer_element)
-    {
-        buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Scaling layer element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Scaling layer element is nullptr.\n");
 
     // Scaling neurons number
 
     const tinyxml2::XMLElement* neurons_number_element = scaling_layer_element->FirstChildElement("ScalingNeuronsNumber");
 
     if(!neurons_number_element)
-    {
-        buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Scaling neurons number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Scaling neurons number element is nullptr.\n");
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
 
@@ -898,37 +821,19 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
         start_element = scaling_neuron_element;
 
         if(!scaling_neuron_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Scaling neuron " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Scaling neuron " + to_string(i+1) + " is nullptr.\n");
 
         scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
 
         if(index != i+1)
-        {
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Index " << index << " is not correct.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
 
         // Descriptives
 
         const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
 
         if(!descriptives_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Descriptives element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Descriptives element " + to_string(i+1) + " is nullptr.\n");
 
         if(descriptives_element->GetText())
         {
@@ -945,13 +850,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
         const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
 
         if(!scaling_method_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer4D class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Scaling method element " << i+1 << " is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Scaling method element " + to_string(i+1) + " is nullptr.\n");
 
         const string new_method = scaling_method_element->GetText();
 

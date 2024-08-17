@@ -12,13 +12,9 @@ using namespace Eigen;
 namespace opennn
 {
 
-/// This structure provides the results obtained from the regression analysis.
-
 struct Correlation
 {
     enum class Method{Pearson, Spearman};
-
-    /// This enumeration represents the different regression methods provided by OpenNN.
 
     enum class Form{Linear, Logistic, Logarithmic, Exponential, Power};
 
@@ -49,26 +45,17 @@ struct Correlation
         cout << "Upper confidence: " << upper_confidence << endl;
     }
 
-    /// Independent coefficient of the regression function.
-
     type a = type(NAN);
 
-    /// x coefficient of the regression function.
-
     type b = type(NAN);
-
-    /// Correlation coefficient of the regression.
 
     type r = type(NAN);
 
     type lower_confidence = type(NAN);
     type upper_confidence = type(NAN);
 
-    /// Regression method type
-
     Method method = Method::Pearson;
     Form form = Form::Linear;
-
 };
 
 }

@@ -39,8 +39,6 @@ class ConvolutionalLayer : public Layer
 
 public:
 
-    /// Enumeration of the available activation functions for the convolutional layer.
-
     enum class ActivationFunction{Logistic,
                                   HyperbolicTangent,
                                   Linear,
@@ -200,12 +198,7 @@ public:
 
 protected:
 
-   /// This tensor containing conection strengths from a layer's inputs to its neurons.
-
    Tensor<type, 4> synaptic_weights;
-
-   /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
-   /// and passed through the neuron's transfer function to generate the neuron's output.
 
    Tensor<type, 1> biases;
 

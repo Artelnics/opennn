@@ -11,8 +11,6 @@
 namespace opennn
 {
 
-/// This method parses a string codificated by shift_jis codification to UTF-8.
-/// @param input_string String to be parsed.
 
 string sj2utf8(const string &input_string)
 {

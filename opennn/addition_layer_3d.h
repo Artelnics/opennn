@@ -95,18 +95,11 @@ namespace opennn
 
         // MEMBERS
 
-        /// Inputs number
-
         Index inputs_number = 0;
-
-        /// Inputs size
 
         Index inputs_depth = 0;
 
-        /// Display messages to screen.
-
         bool display = true;
-
     };
 
 

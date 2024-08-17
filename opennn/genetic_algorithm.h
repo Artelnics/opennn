@@ -17,16 +17,6 @@
 
 namespace opennn
 {
-/// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation,
-/// crossover and selection.
-
-///
-/// This algorithm are commonly used in optimization and search problems. if the data_set has many inputs,
-/// but we do not know how they affect the target,
-/// then this algorithm provides the best possible combination of variables to optimize the problem.
-///
-/// \cite 1 Neural Designer "Genetic Algorithms for Feature Selection."
-/// \ref https://www.neuraldesigner.com/blog/genetic_algorithms_for_feature_selection
 
 class GeneticAlgorithm : public InputsSelection
 {
@@ -161,21 +151,13 @@ public:
 
 private:
     
-    /// Initial inputs raw_variables
-
     Tensor <Index, 1> initial_raw_variables_indices;
     Tensor <bool, 1> original_input_raw_variables;
 
-    /// Initial raw_variables unused
-
     Tensor <Index, 1> original_unused_raw_variables_indices;
     Tensor<bool, 1> original_unused_raw_variables;
-
-    /// Activation probabilities.
     
     Tensor <type, 1> inputs_activation_probabilities;
-
-    /// Population matrix.
 
     Tensor <bool, 2> population;
 
@@ -183,15 +165,9 @@ private:
 
     Tensor <type, 1> selection_errors;
 
-
-    /// Fitness of population.
-
     Tensor<type, 1> fitness;
 
     Tensor<bool, 1> selection;
-
-
-    /// Performance of population.
 
     type mean_training_error;
 
@@ -207,20 +183,11 @@ private:
 
     Index genes_number;
 
-    /// Mutation rate.
-    /// The mutation rate value must be between 0 and 1.
-    /// This is a parameter of the mutation operator.
-
     type mutation_rate;
-
-    /// Elitism size.
-    /// It represents the number of individuals which will always be selected for recombination.
-    /// This is a parameter of the selection operator.
 
     Index elitism_size;
 
     InitializationMethod initialization_method;
-
 };
 
 }

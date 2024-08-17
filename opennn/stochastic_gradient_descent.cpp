@@ -132,19 +132,9 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 #ifdef OPENNN_DEBUG
 
     if(new_learning_rate <= type(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_initial_learning_rate(const type&) method.\n"
-               << "initial_learning_rate must be greater than 0.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("initial_learning_rate must be greater than 0.\n");
 
 #endif
-
-    // Set learning rate
 
     initial_learning_rate = new_learning_rate;
 }
@@ -697,15 +687,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("StochasticGradientDescent");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Stochastic gradient descent element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Stochastic gradient descent element is nullptr.\n");
 
     // Batch size
 

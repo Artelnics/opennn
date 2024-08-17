@@ -13,32 +13,16 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a default cross-entropy error term object,
-/// which is not associated with any neural network and not measured on any data set.
-/// It also initializes all the rest of the class members to their default values.
-
 CrossEntropyError::CrossEntropyError() : LossIndex()
 {
 }
 
-
-/// Neural network and data set constructor.
-/// It creates a cross-entropy error term object associated with a neural network and measured on a data set.
-/// It also initializes all the rest of the class members to their default values:
-/// @param new_neural_network: Pointer to a neural network object.
-/// @param new_data_set: Pointer to a data set object.
 
 CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
 }
 
-
-/// \brief CrossEntropyError::calculate_error.
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
 
 void CrossEntropyError::calculate_error(const Batch& batch,
                      const ForwardPropagation& forward_propagation,
@@ -206,24 +190,17 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 }
 
 
-/// Returns a string with the name of the cross-entropy error loss type, "CROSS_ENTROPY_ERROR".
-
 string CrossEntropyError::get_error_type() const
 {
     return "CROSS_ENTROPY_ERROR";
 }
 
 
-/// Returns a string with the name of the cross-entropy error loss type in text format.
-
 string CrossEntropyError::get_error_type_text() const
 {
     return "Cross entropy error";
 }
 
-
-/// Serializes the cross-entropy error object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document
 
 void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -234,9 +211,6 @@ void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this cross-entropy object.
-/// @param document TinyXML document containing the member data.
 
 void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 {

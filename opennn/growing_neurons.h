@@ -21,11 +21,6 @@ namespace opennn
 
 struct GrowingNeuronsResults;
 
-/// This concrete class represents an growing neurons algorithm for the NeuronsSelection as part of the ModelSelection[1] class.
-
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
-/// \ref https://www.neuraldesigner.com/blog/model-selection
-
 class GrowingNeurons : public NeuronsSelection
 {
 
@@ -68,11 +63,7 @@ public:
 
 private:
 
-   /// Number of neurons added at each iteration.
-
    Index neurons_increment;
-
-   /// Maximum number of epochs at which the selection error increases.
 
    Index maximum_selection_failures;
 
