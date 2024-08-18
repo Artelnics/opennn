@@ -354,7 +354,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     if(is_zero(optimization_data.training_direction))
         throw runtime_error("Training direction is zero.\n");
 
-    if(optimization_data.initial_learning_rate < type(NUMERIC_LIMITS_MIN))
+    if(optimization_data.initial_learning_rate < type(NUMERIC_LIMITS_MIN)) {
         throw runtime_error("Initial learning rate is zero.\n");
     }
 

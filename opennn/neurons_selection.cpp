@@ -180,7 +180,7 @@ void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neuro
         throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be greater than 0.\n");
 
     if(new_maximum_neurons < minimum_neurons)
-        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be equal or greater than minimum_neurons(" << to_string(minimum_neurons) + ").\n");
+        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be equal or greater than minimum_neurons(" + to_string(minimum_neurons) + ").\n");
 
 #endif
 
