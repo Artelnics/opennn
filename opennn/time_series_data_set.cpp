@@ -26,14 +26,6 @@ TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 }
 
 
-/// File and separator constructor. It creates a data set object by loading the object members from a data file.
-/// It also sets a separator.
-/// Please mind about the file format. This is specified in the User's Guide.
-/// @param data_source_path Data file name.
-/// @param separator Data file separator between raw_variables.
-/// @param has_header True if data file contains a row with raw_variables names, False otherwise.
-/// @param data_codification String codification of the input file
-
 TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path, 
                                      const char& separator,
                                      const bool& has_header,
@@ -51,8 +43,6 @@ TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path,
 }
 
 
-/// Returns the number of raw_variables in the time series.
-
 Index TimeSeriesDataSet::get_time_series_raw_variables_number() const
 {
     return time_series_raw_variables.size();
@@ -65,7 +55,6 @@ Tensor<DataSet::RawVariable, 1> TimeSeriesDataSet::get_time_series_raw_variables
 }
 
 /*
-/// Returns the indices of the time variables in the data set.
 
 const string& TimeSeriesDataSet::get_time_column() const
 {
@@ -78,8 +67,6 @@ const string& TimeSeriesDataSet::get_group_by_column() const
     return group_by_column;
 }
 */
-
-/// Returns the number of variables in the time series data.
 
 Index TimeSeriesDataSet::get_time_series_variables_number() const
 {
@@ -103,15 +90,11 @@ Index TimeSeriesDataSet::get_time_series_variables_number() const
 }
 
 
-/// Returns the number of lags to be used in a time series prediction application.
-
 const Index& TimeSeriesDataSet::get_lags_number() const
 {
     return lags_number;
 }
 
-
-/// Returns the number of steps ahead to be used in a time series prediction application.
 
 const Index& TimeSeriesDataSet::get_steps_ahead() const
 {
@@ -124,9 +107,6 @@ Index TimeSeriesDataSet::get_time_series_data_rows_number() const
     return time_series_data.dimension(0);
 }
 
-
-/// Returns the data from the time series raw_variable with a given index,
-/// @param raw_variable_index Index of the raw_variable.
 
 Tensor<type, 2> TimeSeriesDataSet::get_time_series_raw_variable_data(const Index& raw_variable_index) const
 {
@@ -225,10 +205,6 @@ Tensor<Index, 1> TimeSeriesDataSet::get_target_time_series_raw_variables_indices
 }
 
 
-
-/// Returns a string vector with the names of all the variables in the time series data.
-/// The size of the vector is the number of variables.
-
 Tensor<string, 1> TimeSeriesDataSet::get_time_series_variables_names() const
 {
     const Index variables_number = get_time_series_variables_number();
@@ -280,19 +256,11 @@ Tensor<Index, 1> TimeSeriesDataSet::get_input_time_series_raw_variables_indices(
 }
 
 
-/// Sets a new number of lags to be defined for a time series prediction application.
-/// When loading the data file, the time series data will be modified according to this number.
-/// @param new_lags_number Number of lags(x-1, ..., x-l) to be used.
-
 void TimeSeriesDataSet::set_lags_number(const Index& new_lags_number)
 {
     lags_number = new_lags_number;
 }
 
-
-/// Sets a new number of steps ahead to be defined for a time series prediction application.
-/// When loading the data file, the time series data will be modified according to this number.
-/// @param new_steps_ahead_number Number of steps ahead to be used.
 
 void TimeSeriesDataSet::set_steps_ahead_number(const Index& new_steps_ahead_number)
 {
@@ -312,8 +280,6 @@ void TimeSeriesDataSet::set_time_series_data(const Tensor<type, 2>& new_data)
 }
 
 
-/// Sets the new position where the time data is located in the data set.
-/// @param new_time_index Position where the time data is located.
 /*
 void TimeSeriesDataSet::set_time_column(const string& new_time_column)
 {
@@ -326,8 +292,6 @@ void TimeSeriesDataSet::set_group_by_column(const string& new_group_by_column)
     group_by_column = new_group_by_column;
 }
 */
-
-/// This method transforms the raw_variables into time series for forecasting problems.
 
 void TimeSeriesDataSet::transform_time_series_raw_variables()
 {
@@ -451,10 +415,9 @@ void TimeSeriesDataSet::transform_time_series_data()
 
         for(Index i = 0; i < lags_number+steps_ahead; i++)
         {
-            copy( 
-                time_series_data.data() + i + j * old_samples_number,
-                time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
-                data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number);
+            copy(time_series_data.data() + i + j * old_samples_number,
+                 time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
+                 data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number);
         }
     }
 
@@ -463,8 +426,6 @@ void TimeSeriesDataSet::transform_time_series_data()
     split_samples_random();
 }
 
-
-/// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
 
 void TimeSeriesDataSet::transform_time_series()
 {
@@ -507,9 +468,6 @@ void TimeSeriesDataSet::print() const
 }
 
 /*
-/// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
-///
-
 void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -1706,8 +1664,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 */
 
-/// Substitutes all the missing values by the mean of the corresponding variable.
-
 void TimeSeriesDataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
@@ -1874,11 +1830,6 @@ void TimeSeriesDataSet::fill_gaps()
 }
 
 
-/// Returns a matrix with the values of autocorrelation for every variable in the data set.
-/// The number of rows is equal to the number of
-/// The number of raw_variables is the maximum lags number.
-/// @param maximum_lags_number Maximum lags number for which autocorrelation is calculated.
-
 Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_number) const
 {
     const Index samples_number = time_series_data.dimension(0);
@@ -1985,8 +1936,6 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
     return autocorrelations;
 }
 
-
-/// Calculates the cross-correlation between all the variables in the data set.
 
 Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lags_number) const
 {
@@ -2121,8 +2070,6 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 }
 
 
-/// This method loads time series data from a binary data file.
-
 void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
     ifstream file;
@@ -2164,8 +2111,6 @@ void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_d
     file.close();
 }
 
-
-/// Saves to the data file the values of the time series data matrix in binary format.
 
 void TimeSeriesDataSet::save_time_series_data_binary(const string& binary_data_file_name) const
 {

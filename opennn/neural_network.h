@@ -40,9 +40,6 @@ struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
 
-/// This class represents the concept of neural network in the OpenNN library.
-///
-/// This neural network spans a function space for the problem at hand.
 
 class NeuralNetwork
 {
@@ -264,8 +261,6 @@ public:
    void save_expression_javascript(const string&) const;
    void save_outputs(Tensor<type, 2>&, const string&);
 
-   /// Calculate forward propagation in neural network
-   
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
                           ForwardPropagation&, 
                           const bool& = false) const;
@@ -284,15 +279,9 @@ protected:
 
    NeuralNetwork::ModelType model_type;
 
-   /// Names of inputs
-
    Tensor<string, 1> inputs_names;
 
-   /// Names of ouputs
-
    Tensor<string, 1> outputs_names;
-
-   /// Layers
 
    Tensor<Layer*, 1> layers;
 
@@ -300,8 +289,6 @@ protected:
 
    ThreadPool* thread_pool;
    ThreadPoolDevice* thread_pool_device;
-
-   /// Display messages to screen.
 
    bool display = true;
 

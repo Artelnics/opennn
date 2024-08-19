@@ -21,9 +21,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a optimization algorithm object not associated with any loss index object.
-
 OptimizationAlgorithm::OptimizationAlgorithm()
 {
     const int n = omp_get_max_threads();
@@ -33,9 +30,6 @@ OptimizationAlgorithm::OptimizationAlgorithm()
     set_default();
 }
 
-
-/// It creates a optimization algorithm object associated with a loss index object.
-/// @param new_loss_index Pointer to a loss index object.
 
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
     : loss_index(new_loss_index)
@@ -48,17 +42,12 @@ OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
 }
 
 
-/// Destructor.
-
 OptimizationAlgorithm::~OptimizationAlgorithm()
 {
     delete thread_pool;
     delete thread_pool_device;
 }
 
-
-/// Returns a pointer to the loss index object to which the optimization algorithm is
-/// associated.
 
 LossIndex* OptimizationAlgorithm::get_loss_index() const
 {
@@ -73,24 +62,17 @@ LossIndex* OptimizationAlgorithm::get_loss_index() const
 }
 
 
-/// Returns the hardware used. Default: Multi-core
-
 string OptimizationAlgorithm::get_hardware_use() const
 {
     return hardware_use;
 }
 
 
-/// Set hardware to use. Default: Multi-core.
-
 void OptimizationAlgorithm::set_hardware_use(const string& new_hardware_use)
 {
     hardware_use = new_hardware_use;
 }
 
-
-/// Returns true if this optimization algorithm object has an associated loss index object,
-/// and false otherwise.
 
 bool OptimizationAlgorithm::has_loss_index() const
 {
@@ -105,16 +87,11 @@ bool OptimizationAlgorithm::has_loss_index() const
 }
 
 
-/// Returns true if messages from this class can be displayed on the screen, or false if messages from
-/// this class can't be displayed on the screen.
-
 const bool& OptimizationAlgorithm::get_display() const
 {
     return display;
 }
 
-
-/// Returns the number of iterations between the training showing progress.
 
 const Index& OptimizationAlgorithm::get_display_period() const
 {
@@ -122,24 +99,17 @@ const Index& OptimizationAlgorithm::get_display_period() const
 }
 
 
-/// Returns the number of iterations between the training saving progress.
-
 const Index& OptimizationAlgorithm::get_save_period() const
 {
     return save_period;
 }
 
 
-/// Returns the filename where the neural network will be saved.
-
 const string& OptimizationAlgorithm::get_neural_network_file_name() const
 {
     return neural_network_file_name;
 }
 
-
-/// Sets the loss index pointer to nullptr.
-/// It also sets the rest of the members to their default values.
 
 void OptimizationAlgorithm::set()
 {
@@ -159,19 +129,11 @@ void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 }
 
 
-/// Sets a pointer to a loss index object to be associated with the optimization algorithm.
-/// @param new_loss_index Pointer to a loss index object.
-
 void OptimizationAlgorithm::set_loss_index(LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void OptimizationAlgorithm::set_display(const bool& new_display)
 {
@@ -179,29 +141,17 @@ void OptimizationAlgorithm::set_display(const bool& new_display)
 }
 
 
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
 void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
 {
     display_period = new_display_period;
 }
 
 
-/// Sets a new number of iterations between the training saving progress.
-/// @param new_save_period
-/// Number of iterations between the training saving progress.
-
 void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
 {
     save_period = new_save_period;
 }
 
-
-/// Sets a new filename where the neural network will be saved.
-/// @param new_neural_network_file_name
-/// filename for the neural network object.
 
 void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neural_network_file_name)
 {
@@ -239,8 +189,6 @@ BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_d
 }
 
 
-/// Sets the members of the optimization algorithm object to their default values.
-
 void OptimizationAlgorithm::set_default()
 {
     display = true;
@@ -252,11 +200,6 @@ void OptimizationAlgorithm::set_default()
     neural_network_file_name = "neural_network.xml";
 }
 
-
-/// Performs a default checking for optimization algorithms.
-/// In particular, it checks that the loss index pointer associated with the optimization algorithm is not nullptr,
-/// and that the neural network associated with that loss index is neither nullptr.
-/// If that checkings are not hold, an exception is thrown.
 
 void OptimizationAlgorithm::check() const
 {
@@ -275,9 +218,6 @@ void OptimizationAlgorithm::check() const
 #endif
 }
 
-
-/// Serializes the optimization algorithm object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -299,9 +239,6 @@ void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Loads a default optimization algorithm from an XML document.
-/// @param document TinyXML document containing the error term members.
 
 void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -331,24 +268,16 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Returns a default(empty) string matrix containing the members
-/// of the optimization algorithm object.
-
 Tensor<string, 2> OptimizationAlgorithm::to_string_matrix() const
 {
     return Tensor<string, 2>();
 }
 
 
-/// Prints to the screen the XML-type representation of the optimization algorithm object.
-
 void OptimizationAlgorithm::print() const
 {
 }
 
-
-/// Saves to an XML-type file the members of the optimization algorithm object.
-/// @param file_name Name of optimization algorithm XML-type file.
 
 void OptimizationAlgorithm::save(const string& file_name) const
 {
@@ -363,10 +292,6 @@ void OptimizationAlgorithm::save(const string& file_name) const
 }
 
 
-/// Loads a gradient descent object from an XML-type file.
-/// Please mind about the file format, wich is specified in the User's Guide.
-/// @param file_name Name of optimization algorithm XML-type file.
-
 void OptimizationAlgorithm::load(const string& file_name)
 {
     set_default();
@@ -379,8 +304,6 @@ void OptimizationAlgorithm::load(const string& file_name)
     from_XML(document);
 }
 
-
-/// Return a string with the stopping condition of the Results
 
 TrainingResults::TrainingResults(const Index& epochs_number)
 {
@@ -416,12 +339,14 @@ string TrainingResults::write_stopping_condition() const
     }
 }
 
+
 type TrainingResults::get_training_error()
 {
     const Index size = training_error_history.size();
 
     return training_error_history(size - 1);
 }
+
 
 type TrainingResults::get_selection_error() const
 {
@@ -430,14 +355,12 @@ type TrainingResults::get_selection_error() const
     return selection_error_history(size - 1);
 }
 
+
 Index TrainingResults::get_epochs_number() const
 {
     return training_error_history.size() - 1;
 }
 
-
-/// Resizes the training error history keeping the values.
-/// @param new_size Size of training history variables.
 
 void TrainingResults::resize_training_error_history(const Index& new_size)
 {
@@ -459,9 +382,6 @@ void TrainingResults::resize_training_error_history(const Index& new_size)
 }
 
 
-/// Resizes the training error history keeping the values.
-/// @param new_size Size of training history variables.
-
 void TrainingResults::resize_selection_error_history(const Index& new_size)
 {
     if(selection_error_history.size() == 0)
@@ -481,8 +401,6 @@ void TrainingResults::resize_selection_error_history(const Index& new_size)
     }
 }
 
-
-/// Writes the time from seconds in format HH:mm:ss.
 
 string OptimizationAlgorithm::write_time(const type& time) const
 {
@@ -511,9 +429,6 @@ string OptimizationAlgorithm::write_time(const type& time) const
     return elapsed_time.str();
 }
 
-
-/// Saves the training results into a CSV document
-/// @param file_name Path to the output file.
 
 void TrainingResults::save(const string& file_name) const
 {

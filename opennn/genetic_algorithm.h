@@ -33,15 +33,15 @@ public:
 
     // Get methods
 
-    const Tensor <bool, 2>& get_population() const;
+    const Tensor<bool, 2>& get_population() const;
 
-    const Tensor <type, 1>& get_training_errors() const;
+    const Tensor<type, 1>& get_training_errors() const;
 
-    const Tensor <type, 1>& get_selection_errors() const;
+    const Tensor<type, 1>& get_selection_errors() const;
 
-    const Tensor <type, 1>& get_fitness() const;
+    const Tensor<type, 1>& get_fitness() const;
 
-    const Tensor <bool, 1>& get_selection() const;
+    const Tensor<bool, 1>& get_selection() const;
 
     Index get_individuals_number() const;
 
@@ -77,7 +77,7 @@ public:
 
     void set_maximum_epochs_number(const Index&);
 
-    void set_initial_raw_variables_indices(const Tensor<Index ,1>&);
+//    void set_initial_raw_variables_indices(const Tensor<Index ,1>&);
 
     // GENETIC OPERATORS METHODS
 
@@ -117,15 +117,15 @@ public:
 
     void check_categorical_raw_variables();
 
-    Tensor <bool, 1> get_individual_variables_to_indexes (Tensor <bool, 1>&);
+//    Tensor<bool, 1> get_individual_variables_to_indexes (Tensor<bool, 1>&);
 
-    Tensor <bool, 1> get_individual_raw_variables(Tensor <bool, 1>&);
+    Tensor<bool, 1> get_individual_raw_variables(Tensor<bool, 1>&);
 
-    Tensor <bool, 1> get_individual_variables(Tensor <bool,1>&);
+    Tensor<bool, 1> get_individual_variables(Tensor<bool,1>&);
 
-    Tensor <Index, 1> get_selected_individuals_indices ();
+    Tensor<Index, 1> get_selected_individuals_indices ();
 
-    Tensor <Index, 1> get_individual_as_raw_variables_indexes_from_variables( Tensor <bool, 1>&);
+    Tensor<Index, 1> get_individual_as_raw_variables_indexes_from_variables( Tensor<bool, 1>&);
 
     void set_unused_raw_variables(Tensor<Index, 1>&);
 
@@ -147,23 +147,23 @@ public:
 
     void load(const string&);
 
-    Tensor <Tensor<type, 1>, 1> parameters;
+    Tensor<Tensor<type, 1>, 1> parameters;
 
 private:
     
-    Tensor <Index, 1> initial_raw_variables_indices;
-    Tensor <bool, 1> original_input_raw_variables;
+    Tensor<Index, 1> initial_raw_variables_indices;
+    Tensor<bool, 1> original_input_raw_variables;
 
-    Tensor <Index, 1> original_unused_raw_variables_indices;
+    Tensor<Index, 1> original_unused_raw_variables_indices;
     Tensor<bool, 1> original_unused_raw_variables;
     
-    Tensor <type, 1> inputs_activation_probabilities;
+    Tensor<type, 1> inputs_activation_probabilities;
 
-    Tensor <bool, 2> population;
+    Tensor<bool, 2> population;
 
-    Tensor <type, 1> training_errors;
+    Tensor<type, 1> training_errors;
 
-    Tensor <type, 1> selection_errors;
+    Tensor<type, 1> selection_errors;
 
     Tensor<type, 1> fitness;
 
@@ -175,11 +175,11 @@ private:
 
     type mean_inputs_number;
     
-    Tensor <bool, 2> optimal_individuals_history;
+    Tensor<bool, 2> optimal_individuals_history;
 
-    Tensor <Index, 1> original_input_raw_variables_indices;
+    Tensor<Index, 1> original_input_raw_variables_indices;
 
-    Tensor <Index, 1> original_target_raw_variables_indices;
+    Tensor<Index, 1> original_target_raw_variables_indices;
 
     Index genes_number;
 

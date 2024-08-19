@@ -922,10 +922,9 @@ void ConvolutionalLayerTest::test_memcpy_approach()
             memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
                    tmp_result.data(), output_size_rows_cols*sizeof(type));
 
-            copy( 
-                tmp_result.data(),
-                tmp_result.data() + output_size_rows_cols,
-                result.data() + j * output_size_rows_cols + i * output_size_rows_cols * kernel_number);
+            copy(tmp_result.data(),
+                 tmp_result.data() + output_size_rows_cols,
+                 result.data() + j * output_size_rows_cols + i * output_size_rows_cols * kernel_number);
          }
     }
 

@@ -33,20 +33,10 @@ struct PerceptronLayer3DBackPropagationCuda;
 #endif
 
 
-/// This class represents a layer of perceptrons.
-
-/// PerceptronLayer is a single-layer network with a hard-limit transfer function.
-/// This network is often trained with the perceptron learning rule.
-///
-/// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
-
-
 class PerceptronLayer3D : public Layer
 {
 
 public:
-
-    /// Enumeration of the available activation functions for the perceptron neuron model.
 
     enum class ActivationFunction{HyperbolicTangent,
                                   Linear,
@@ -186,26 +176,15 @@ protected:
 
    Index inputs_number;
 
-   /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
-   /// and passed through the neuron's transfer function to generate the neuron's output.
-
    Tensor<type, 1> biases;
 
-   /// This matrix contains conection strengths from a layer's inputs to its neurons.
-
    Tensor<type, 2> synaptic_weights;
-
-   /// Activation function variable.
 
    ActivationFunction activation_function;
 
    type dropout_rate = type(0);
 
-   /// Display messages to screen.
-
    bool display = true;
-
-
 };
 
 

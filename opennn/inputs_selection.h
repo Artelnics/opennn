@@ -170,11 +170,11 @@ struct InputsSelectionResults
 
     // Mean Selection Error of different neural networks
 
-   Tensor < type, 1 >  mean_selection_error_history;
+   Tensor< type, 1 >  mean_selection_error_history;
 
     // Mean Training Error of different neural networks
 
-   Tensor < type, 1 >  mean_training_error_history;
+   Tensor< type, 1 >  mean_training_error_history;
 
    type optimum_training_error = numeric_limits<type>::max();
 

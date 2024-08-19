@@ -17,16 +17,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-
 NeuronsSelection::NeuronsSelection()
 {
     set_default();
 }
 
-
-/// Training strategy constructor.
-/// @param new_training_strategy Pointer to a training strategy object.
 
 NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy)
     : training_strategy(new_training_strategy)
@@ -34,8 +29,6 @@ NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-
-/// Returns a pointer to the training strategy object.
 
 TrainingStrategy* NeuronsSelection::get_training_strategy() const
 {
@@ -50,8 +43,6 @@ TrainingStrategy* NeuronsSelection::get_training_strategy() const
 }
 
 
-/// Returns true if this neurons selection algorithm has a training strategy associated, and false otherwise.
-
 bool NeuronsSelection::has_training_strategy() const
 {
     if(training_strategy != nullptr)
@@ -65,15 +56,11 @@ bool NeuronsSelection::has_training_strategy() const
 }
 
 
-/// Returns the maximum of the hidden perceptrons number used in the neurons selection.
-
 const Index& NeuronsSelection::get_maximum_neurons() const
 {
     return maximum_neurons;
 }
 
-
-/// Returns the minimum of the hidden perceptrons number used in the neurons selection.
 
 const Index& NeuronsSelection::get_minimum_neurons() const
 {
@@ -81,16 +68,11 @@ const Index& NeuronsSelection::get_minimum_neurons() const
 }
 
 
-/// Returns the number of trials for each network architecture.
-
 const Index& NeuronsSelection::get_trials_number() const
 {
     return trials_number;
 }
 
-
-/// Returns true if messages from this class can be displayed on the screen,
-/// or false if messages from this class can't be displayed on the screen.
 
 const bool& NeuronsSelection::get_display() const
 {
@@ -98,15 +80,11 @@ const bool& NeuronsSelection::get_display() const
 }
 
 
-/// Returns the goal for the selection error in the neurons selection algorithm.
-
 const type& NeuronsSelection::get_selection_error_goal() const
 {
     return selection_error_goal;
 }
 
-
-/// Returns the maximum number of epochs in the neurons selection algorithm.
 
 const Index& NeuronsSelection::get_maximum_epochs_number() const
 {
@@ -114,24 +92,17 @@ const Index& NeuronsSelection::get_maximum_epochs_number() const
 }
 
 
-/// Returns the maximum time in the neurons selection algorithm.
-
 const type& NeuronsSelection::get_maximum_time() const
 {
     return maximum_time;
 }
 
 
-/// Sets a new training strategy pointer.
-/// @param new_training_strategy Pointer to a training strategy object.
-
 void NeuronsSelection::set_training_strategy(TrainingStrategy* new_training_strategy)
 {
     training_strategy = new_training_strategy;
 }
 
-
-/// Sets the members of the neurons selection object to their default values.
 
 void NeuronsSelection::set_default()
 {
@@ -169,9 +140,6 @@ void NeuronsSelection::set_default()
 }
 
 
-/// Sets the number of the maximum hidden perceptrons for the neurons selection algorithm.
-/// @param new_maximum_neurons Maximum number of hidden perceptrons.
-
 void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neurons)
 {
 #ifdef OPENNN_DEBUG
@@ -187,9 +155,6 @@ void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neuro
     maximum_neurons = new_maximum_neurons;
 }
 
-
-/// Sets the number of the minimum hidden perceptrons for the neurons selection algorithm.
-/// @param new_minimum_neurons Minimum number of hidden perceptrons.
 
 void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 {

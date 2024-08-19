@@ -23,13 +23,6 @@
 namespace opennn
 {
 
-/// This class represents the normalized squared error term. 
-
-///
-/// This error term is used in data modeling problems.
-/// If it has a value of unity then the neural network is predicting the data "in the mean",
-/// A value of zero means perfect prediction of data.
-
 class NormalizedSquaredError : public LossIndex
 {
 
@@ -102,8 +95,6 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
-
-   /// Coefficient of normalization for the calculation of the training error.
 
    type normalization_coefficient = type(NAN);
 

@@ -441,7 +441,7 @@ public:
     void set_raw_variables_scalers(const Tensor<Scaler, 1>&);
 
     void set_binary_raw_variables();
-    void set_constant_raw_variables();
+    void unuse_constant_raw_variables();
 
     // Variables set methods
 
@@ -511,8 +511,6 @@ public:
                               const type& testing_ratio = type(0.2));
 
     // Unusing methods
-
-    Tensor<string, 1> unuse_constant_raw_variables();
 
     Tensor<Index, 1> unuse_repeated_samples();
     Tensor<string, 1> get_raw_variables_types() const;
