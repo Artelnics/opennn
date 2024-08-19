@@ -19,10 +19,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a empty layer object, with no neurons.
-/// This constructor also initializes the rest of the class members to their default values.
-
 RecurrentLayer::RecurrentLayer() : Layer()
 {
     set();
@@ -30,13 +26,6 @@ RecurrentLayer::RecurrentLayer() : Layer()
     layer_type = Type::Recurrent;
 }
 
-
-/// Layer architecture constructor.
-/// It creates a layer object with given numbers of inputs and neurons.
-/// It also initializes the parameters at random.
-/// This constructor also initializes the rest of the class members to their default values.
-/// @param new_inputs_number Number of inputs in the layer.
-/// @param new_neurons_number Number of neurons in the layer.
 
 RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps) : Layer()
 {
@@ -46,15 +35,11 @@ RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_
 }
 
 
-/// Returns the number of inputs to the layer.
-
 Index RecurrentLayer::get_inputs_number() const
 {
     return input_weights.dimension(0);
 }
 
-
-/// Returns the size of the neurons vector.
 
 Index RecurrentLayer::get_neurons_number() const
 {
@@ -70,15 +55,11 @@ dimensions RecurrentLayer::get_output_dimensions() const
 }
 
 
-/// Returns the hidden states of the layer.
-
 const Tensor<type, 1>& RecurrentLayer::get_hidden_states() const
 {
     return hidden_states;
 }
 
-
-/// Returns the number of parameters (biases and weights) of the layer.
 
 Index RecurrentLayer::get_parameters_number() const
 {
@@ -95,31 +76,17 @@ Index RecurrentLayer::get_timesteps() const
 }
 
 
-/// Returns the biases from all the recurrent neurons in the layer.
-/// The format is a vector of real values.
-/// The size of this vector is the number of neurons in the layer.
-
 Tensor<type, 1> RecurrentLayer::get_biases() const
 {
     return biases;
 }
 
 
-/// Returns the weights from the recurrent layer.
-/// The format is a matrix of real values.
-/// The number of rows is the number of neurons in the layer.
-/// The number of raw_variables is the number of inputs to the layer.
-
 const Tensor<type, 2>& RecurrentLayer::get_input_weights() const
 {
     return input_weights;
 }
 
-
-/// Returns the recurrent weights from the recurrent layer.
-/// The format is a matrix of real values.
-/// The number of rows is the number of neurons in the layer.
-/// The number of raw_variables is the number of neurons to the layer.
 
 const Tensor<type, 2>& RecurrentLayer::get_recurrent_weights() const
 {
@@ -145,28 +112,21 @@ Index RecurrentLayer::get_recurrent_weights_number() const
 }
 
 
-/// Returns a single vector with all the layer parameters.
-/// The format is a vector of real values.
-/// The size is the number of parameters in the layer.
-
 Tensor<type, 1> RecurrentLayer::get_parameters() const
 {
     const Index parameters_number = get_parameters_number();
 
     Tensor<type, 1> parameters(parameters_number);
 
-    copy( 
-        biases.data(),
+    copy(biases.data(),
          biases.data() + biases.size(),
          parameters.data());
 
-    copy( 
-        input_weights.data(),
+    copy(input_weights.data(),
          input_weights.data() + input_weights.size(),
          parameters.data() + biases.size());
 
-    copy( 
-        recurrent_weights.data(),
+    copy(recurrent_weights.data(),
          recurrent_weights.data() + recurrent_weights.size(),
          parameters.data() + biases.size() + input_weights.size());
 
@@ -174,17 +134,11 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
 }
 
 
-/// Returns the activation function of the layer.
-
 const RecurrentLayer::ActivationFunction& RecurrentLayer::get_activation_function() const
 {
     return activation_function;
 }
 
-
-/// Returns the biases from all the recurrent in the layer.
-/// The format is a vector of real values.
-/// The size of this vector is the number of neurons in the layer.
 
 Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) const
 {
@@ -201,11 +155,6 @@ Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) co
 }
 
 
-/// Returns the weights from the recurrent layer.
-/// The format is a matrix of real values.
-/// The number of rows is the number of inputs in the layer.
-/// The number of raw_variables is the number of neurons to the layer.
-
 Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& parameters) const
 {
     const Index inputs_number = get_inputs_number();
@@ -220,11 +169,6 @@ Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& paramet
     return new_inputs_weights.reshape(two_dim);
 }
 
-
-/// Returns the recurrent weights from the recurrent layer.
-/// The format is a matrix of real values.
-/// The number of rows is the number of neurons in the layer.
-/// The number of raw_variables is the number of neurons to the layer.
 
 Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& parameters) const
 {
@@ -243,9 +187,6 @@ Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& par
     return new_synaptic_weights.reshape(two_dim);
 }
 
-
-/// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string RecurrentLayer::write_activation_function() const
 {
@@ -275,28 +216,17 @@ string RecurrentLayer::write_activation_function() const
 }
 
 
-/// Returns true if messages from this class are displayed on the screen,
-/// or false if messages from this class are not displayed on the screen.
-
 const bool& RecurrentLayer::get_display() const
 {
     return display;
 }
 
 
-/// Sets an empty layer, wihtout any neuron.
-/// It also sets the rest of the members to their default values.
-
 void RecurrentLayer::set()
 {
     set_default();
 }
 
-
-/// Sets new numbers of inputs and neurons in the layer.
-/// It also sets the rest of the members to their default values.
-/// @param new_inputs_number Number of inputs.
-/// @param new_neurons_number Number of neuron.
 
 void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
 {
@@ -318,9 +248,6 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 }
 
 
-/// Sets the members of this neuron layer object with those from other neuron layer object.
-/// @param other_neuron_layer RecurrentLayer object to be copied.
-
 void RecurrentLayer::set(const RecurrentLayer& other_neuron_layer)
 {
     activation_function = other_neuron_layer.activation_function;
@@ -331,13 +258,6 @@ void RecurrentLayer::set(const RecurrentLayer& other_neuron_layer)
 }
 
 
-/// Sets those members not related to the vector of neurons to their default value.
-/// <ul>
-/// <li> Display: True.
-/// <li> layer_type: neuron_Layer.
-/// <li> trainable: True.
-/// </ul>
-
 void RecurrentLayer::set_default()
 {
     layer_name = "recurrent_layer";
@@ -347,10 +267,6 @@ void RecurrentLayer::set_default()
     layer_type = Type::Recurrent;
 }
 
-
-/// Sets a new number of inputs in the layer.
-/// It also initilializes the new synaptic weights at random.
-/// @param new_inputs_number Number of layer inputs.
 
 void RecurrentLayer::set_inputs_number(const Index& new_inputs_number)
 {
@@ -367,10 +283,6 @@ void RecurrentLayer::set_input_shape(const Tensor<Index, 1>& size)
     set_inputs_number(new_size);
 }
 
-
-/// Sets a new number neurons in the layer.
-/// All the parameters are also initialized at random.
-/// @param new_neurons_number New number of neurons in the layer.
 
 void RecurrentLayer::set_neurons_number(const Index& new_neurons_number)
 {
@@ -408,9 +320,6 @@ void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_
 }
 
 
-/// Sets the parameters of this layer.
-/// @param new_parameters Parameters vector for that layer.
-
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
 #ifdef OPENNN_DEBUG
@@ -421,35 +330,25 @@ check_size(new_parameters, get_parameters_number(), LOG);
     const Index inputs_weights_number = get_input_weights_number();
     const Index recurrent_weights_number = get_recurrent_weights_number();
 
-    copy( 
-         new_parameters.data() + index,
+    copy(new_parameters.data() + index,
          new_parameters.data() + index + biases_number,
          biases.data());
 
-    copy( 
-         new_parameters.data() + index + biases_number,
+    copy(new_parameters.data() + index + biases_number,
          new_parameters.data() + index + biases_number + inputs_weights_number,
          input_weights.data());
 
-    copy( 
-         new_parameters.data() + biases_number + inputs_weights_number + index,
+    copy(new_parameters.data() + biases_number + inputs_weights_number + index,
          new_parameters.data() + biases_number + inputs_weights_number + index + recurrent_weights_number,
          recurrent_weights.data());
 }
 
-
-/// This class sets a new activation(or transfer) function in a single layer.
-/// @param new_activation_function Activation function for the layer.
 
 void RecurrentLayer::set_activation_function(const RecurrentLayer::ActivationFunction& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
-
-/// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
-/// @param new_activation_function Activation function for that layer.
 
 void RecurrentLayer::set_activation_function(const string& new_activation_function_name)
 {
@@ -496,19 +395,11 @@ void RecurrentLayer::set_activation_function(const string& new_activation_functi
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void RecurrentLayer::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Initializes the hidden states of in the layer of neurons with a given value.
-/// @param value Hidden states initialization value.
 
 void RecurrentLayer::set_hidden_states_constant(const type& value)
 {
@@ -516,17 +407,11 @@ void RecurrentLayer::set_hidden_states_constant(const type& value)
 }
 
 
-/// Initializes the biases of all the neurons in the layer of neurons with a given value.
-/// @param value Biases initialization value.
-
 void RecurrentLayer::set_biases_constant(const type& value)
 {
     biases.setConstant(value);
 }
 
-
-/// Initializes the input weights of all the neurons in the layer of neurons neuron with a given value.
-/// @param value Input weights initialization value.
 
 void RecurrentLayer::set_input_weights_constant(const type& value)
 {
@@ -534,16 +419,11 @@ void RecurrentLayer::set_input_weights_constant(const type& value)
 }
 
 
-/// Initializes the recurrent weights of all the neurons in the layer of neurons neuron with a given value.
-/// @param value Synaptic weights initialization value.
-
 void RecurrentLayer::set_recurrent_weights_constant(const type& value)
 {
     recurrent_weights.setConstant(value);
 }
 
-
-/// Initializes the input weights of all the neurons in the layer of neurons neuron random.
 
 void RecurrentLayer::set_input_weights_random()
 {
@@ -551,16 +431,11 @@ void RecurrentLayer::set_input_weights_random()
 }
 
 
-/// Initializes the recurrent weights of all the neurons in the layer of neurons neuron random.
-
 void RecurrentLayer::set_recurrent_weights_random()
 {
     recurrent_weights.setRandom();
 }
 
-
-/// Initializes all the biases, input weights and recurrent weights in the neural newtork with a given value.
-/// @param value Parameters initialization value.
 
 void RecurrentLayer::set_parameters_constant(const type& value)
 {
@@ -573,9 +448,6 @@ void RecurrentLayer::set_parameters_constant(const type& value)
     hidden_states.setZero();
 }
 
-
-/// Initializes all the biases and input weights in the layer of neurons at random with values
-/// comprised between -1 and 1 values.
 
 void RecurrentLayer::set_parameters_random()
 {
@@ -891,30 +763,23 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     // Biases
 
-    copy(
-        recurrent_layer_back_propagation->biases_derivatives.data(),
+    copy(recurrent_layer_back_propagation->biases_derivatives.data(),
         recurrent_layer_back_propagation->biases_derivatives.data() + neurons_number,
         gradient_data + index);
 
     // Input weights
 
-    copy(
-        recurrent_layer_back_propagation->input_weights_derivatives.data(),
+    copy(recurrent_layer_back_propagation->input_weights_derivatives.data(),
         recurrent_layer_back_propagation->input_weights_derivatives.data() + inputs_number * neurons_number,
         gradient_data + index + neurons_number);
 
     // Recurrent weights
 
-    copy(
-        recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
+    copy(recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
         recurrent_layer_back_propagation->recurrent_weights_derivatives.data() + neurons_number * neurons_number,
         gradient_data + index + neurons_number + inputs_number * neurons_number);
 }
 
-
-/// Returns a string with the expression of the inputs-outputs relationship of the layer.
-/// @param inputs_names Vector of strings with the name of the layer inputs.
-/// @param outputs_names Vector of strings with the name of the layer outputs.
 
 string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names,
                                         const Tensor<string, 1>& outputs_names) const

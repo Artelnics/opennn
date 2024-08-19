@@ -15,11 +15,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a empty layer object, with no perceptrons.
-/// This constructor also initializes the rest of the class members to their default values.
-
-
 PerceptronLayer::PerceptronLayer() : Layer()
 {
     set();
@@ -27,13 +22,6 @@ PerceptronLayer::PerceptronLayer() : Layer()
     layer_type = Type::Perceptron;
 }
 
-
-/// Layer architecture constructor.
-/// It creates a layer object with given numbers of inputs and perceptrons.
-/// It initializes the parameters at random.
-/// This constructor also initializes the rest of the class members to their default values.
-/// @param new_inputs_number Number of inputs in the layer.
-/// @param new_neurons_number Number of perceptrons in the layer.
 
 PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& new_neurons_number,
                                  const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
@@ -45,8 +33,6 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
     layer_name = "perceptron_layer";
 }
 
-
-/// Returns the number of inputs to the layer.
 
 Index PerceptronLayer::get_inputs_number() const
 {
@@ -60,8 +46,6 @@ void PerceptronLayer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-/// Returns the number of neurons in the layer.
-
 Index PerceptronLayer::get_neurons_number() const
 {
     return biases.size();
@@ -74,15 +58,11 @@ Index PerceptronLayer::get_biases_number() const
 }
 
 
-/// Returns the number of layer's synaptic weights
-
 Index PerceptronLayer::get_synaptic_weights_number() const
 {
     return synaptic_weights.size();
 }
 
-
-/// Returns the number of parameters (biases and synaptic weights) of the layer.
 
 Index PerceptronLayer::get_parameters_number() const
 {
@@ -104,31 +84,17 @@ dimensions PerceptronLayer::get_output_dimensions() const
 }
 
 
-/// Returns the biases from all the perceptrons in the layer.
-/// The format is a vector of real values.
-/// The size of this vector is the number of neurons in the layer.
-
 const Tensor<type, 1>& PerceptronLayer::get_biases() const
 {
     return biases;
 }
 
 
-
-/// Returns the synaptic weights from the perceptrons.
-/// The format is a matrix of real values.
-/// The number of rows is the number of neurons in the layer.
-/// The number of raw_variables is the number of inputs to the layer.
-
 const Tensor<type, 2>& PerceptronLayer::get_synaptic_weights() const
 {
     return synaptic_weights;
 }
 
-
-/// Returns a single vector with all the layer parameters.
-/// The format is a vector of real values.
-/// The size is the number of parameters in the layer.
 
 Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
@@ -141,13 +107,11 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
     const type* biases_data = biases.data();
     type* parameters_data = parameters.data();
 
-    copy(
-         synaptic_weights_data,
+    copy(synaptic_weights_data,
          synaptic_weights_data + synaptic_weights_number,
          parameters_data);
 
-    copy(
-         biases_data,
+    copy(biases_data,
          biases_data + biases_number,
          parameters_data + synaptic_weights_number);
 
@@ -155,17 +119,11 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
 }
 
 
-/// Returns the activation function of the layer.
-/// The activation function of a layer is the activation function of all perceptrons in it.
-
 const PerceptronLayer::ActivationFunction& PerceptronLayer::get_activation_function() const
 {
     return activation_function;
 }
 
-
-/// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string PerceptronLayer::write_activation_function() const
 {
@@ -203,17 +161,11 @@ string PerceptronLayer::write_activation_function() const
 }
 
 
-/// Returns true if messages from this class are displayed on the screen,
-/// or false if messages from this class are not displayed on the screen.
-
 const bool& PerceptronLayer::get_display() const
 {
     return display;
 }
 
-
-/// Sets an empty layer, wihtout any perceptron.
-/// It also sets the rest of the members to their default values.
 
 void PerceptronLayer::set()
 {
@@ -224,11 +176,6 @@ void PerceptronLayer::set()
     set_default();
 }
 
-
-/// Sets new numbers of inputs and perceptrons in the layer.
-/// It also sets the rest of the members to their default values.
-/// @param new_inputs_number Number of inputs.
-/// @param new_neurons_number Number of perceptron neurons.
 
 void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neurons_number,
                           const PerceptronLayer::ActivationFunction& new_activation_function)
@@ -244,12 +191,6 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
     set_default();
 }
 
-/// Sets those members not related to the vector of perceptrons to their default value.
-/// <ul>
-/// <li> Display: True.
-/// <li> layer_type: Perceptron_Layer.
-/// <li> trainable: True.
-/// </ul>
 
 void PerceptronLayer::set_default()
 {
@@ -267,10 +208,6 @@ void PerceptronLayer::set_name(const string& new_layer_name)
 }
 
 
-/// Sets a new number of inputs in the layer.
-/// It also initializes the new synaptic weights at random.
-/// @param new_inputs_number Number of layer inputs.
-
 void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
@@ -280,10 +217,6 @@ void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
     synaptic_weights.resize(new_inputs_number, neurons_number);
 }
 
-
-/// Sets a new number perceptrons in the layer.
-/// All the parameters are also initialized at random.
-/// @param new_neurons_number New number of neurons in the layer.
 
 void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 {
@@ -295,28 +228,17 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-/// Sets the biases of all perceptrons in the layer from a single vector.
-/// @param new_biases New set of biases in the layer.
-
 void PerceptronLayer::set_biases(const Tensor<type, 1>& new_biases)
 {
     biases = new_biases;
 }
 
 
-/// Sets the synaptic weights of this perceptron layer from a single matrix.
-/// The format is a matrix of real numbers.
-/// The number of rows is the number of neurons in the corresponding layer.
-/// The number of raw_variables is the number of inputs to the corresponding layer.
-/// @param new_synaptic_weights New set of synaptic weights in that layer.
-
 void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
 {
     synaptic_weights = new_synaptic_weights;
 }
 
-
-/// Sets the parameters of this layer.
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {   
@@ -328,29 +250,21 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy( 
-        new_parameters_data + index,
+    copy(new_parameters_data + index,
         new_parameters_data + index + synaptic_weights_number,
         synaptic_weights_data);
 
-    copy( 
-        new_parameters_data + index + synaptic_weights_number,
+    copy(new_parameters_data + index + synaptic_weights_number,
         new_parameters_data + index + synaptic_weights_number + biases_number,
         biases_data);
 }
 
-
-/// This class sets a new activation(or transfer) function in a single layer.
-/// @param new_activation_function Activation function for the layer.
 
 void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationFunction& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
-/// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", etc).
-/// @param new_activation_function Activation function for that layer.
 
 void PerceptronLayer::set_activation_function(const string& new_activation_function_name)
 {
@@ -397,19 +311,11 @@ void PerceptronLayer::set_activation_function(const string& new_activation_funct
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void PerceptronLayer::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Initializes the biases of all the perceptrons in the layer of perceptrons with a given value.
-/// @param value Biases initialization value.
 
 void PerceptronLayer::set_biases_constant(const type& value)
 {
@@ -417,17 +323,11 @@ void PerceptronLayer::set_biases_constant(const type& value)
 }
 
 
-/// Initializes the synaptic weights of all the perceptrons in the layer of perceptrons with a given value.
-/// @param value Synaptic weights initialization value.
-
 void PerceptronLayer::set_synaptic_weights_constant(const type& value)
 {
     synaptic_weights.setConstant(value);
 }
 
-
-/// Initializes all the biases and synaptic weights in the neural newtork with a given value.
-/// @param value Parameters initialization value.
 
 void PerceptronLayer::set_parameters_constant(const type& value)
 {
@@ -436,9 +336,6 @@ void PerceptronLayer::set_parameters_constant(const type& value)
     synaptic_weights.setConstant(value);
 }
 
-
-/// Initializes all the biases and synaptic weights in the neural newtork at random with values comprised
-/// between -1 and +1.
 
 void PerceptronLayer::set_parameters_random()
 {
@@ -729,13 +626,11 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     type* gradient_data = gradient.data();
 
-    copy(
-         synaptic_weights_derivatives_data,
+    copy(synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy(
-         biases_derivatives_data,
+    copy(biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);
 }
@@ -754,16 +649,11 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 
     type* squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
-    copy(
-        squared_errors_Jacobian_data,
-        squared_errors_Jacobian_data + layer_parameters_number * batch_samples_number,
-        squared_errors_Jacobian.data() + index);
+    copy(squared_errors_Jacobian_data,
+         squared_errors_Jacobian_data + layer_parameters_number * batch_samples_number,
+         squared_errors_Jacobian_data + index);
 }
 
-
-/// Returns a string with the expression of the inputs-outputs relationship of the layer.
-/// @param inputs_names vector of strings with the name of the layer inputs.
-/// @param outputs_names vector of strings with the name of the layer outputs.
 
 string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names,
                                          const Tensor<string, 1>& outputs_names) const

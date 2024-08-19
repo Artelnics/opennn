@@ -140,10 +140,7 @@ namespace opennn
 
         Tensor<type, 1> betas;
 
-        /// Display messages to screen.
-
         bool display = true;
-
     };
 
 

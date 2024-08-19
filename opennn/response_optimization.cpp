@@ -12,9 +12,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a scaling layer object with no scaling neurons.
-
 ResponseOptimization::ResponseOptimization()
 {
 }

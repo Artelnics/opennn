@@ -13,16 +13,12 @@ namespace opennn
 
 struct ForwardPropagation
 {
-    /// Default constructor.
-
     ForwardPropagation() {}
 
     ForwardPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
     {
         set(new_batch_samples_number, new_neural_network);
     }
-
-    /// Destructor.
 
     virtual ~ForwardPropagation()
     {

@@ -589,13 +589,11 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     // Copy from back propagation to gradient
 
-    copy( 
-         synaptic_weights_derivatives_data,
+    copy(synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy( 
-         biases_derivatives_data,
+    copy(biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);
 }
@@ -798,13 +796,11 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    copy( 
-         synaptic_weights.data(),
+    copy(synaptic_weights.data(),
          synaptic_weights.data() + synaptic_weights.size(),
          parameters.data());
 
-    copy( 
-         biases.data(),
+    copy(biases.data(),
          biases.data() + biases.size(),
          parameters.data() + synaptic_weights.size());
 
@@ -1022,13 +1018,11 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
     biases.resize(kernels_number);
 
-    copy( 
-         new_parameters.data() + index, 
+    copy(new_parameters.data() + index,
          new_parameters.data() + index + synaptic_weights.size(), 
          synaptic_weights.data());
 
-    copy( 
-         new_parameters.data() + index + synaptic_weights.size(),
+    copy(new_parameters.data() + index + synaptic_weights.size(),
          new_parameters.data() + index + synaptic_weights.size() + biases.size(),
          biases.data());
 }

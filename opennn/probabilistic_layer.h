@@ -135,9 +135,6 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 #endif
 
 
-/// This class represents a layer of probabilistic neurons.
-/// The neural network defined in OpenNN includes a probabilistic layer for those problems when the outptus are to be interpreted as probabilities.
-
 class ProbabilisticLayer : public Layer
 {
 
@@ -151,8 +148,6 @@ public:
     explicit ProbabilisticLayer(const dimensions&, const dimensions&);
 
     // Enumerations
-
-    /// Enumeration of the available methods for interpreting variables as probabilities.
 
     enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
 
@@ -276,30 +271,19 @@ public:
 
 protected:
 
-    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
-    /// and passed through the neuron's trabsfer function to generate the neuron's output.
-
     Tensor<type, 1> biases;
 
-    /// This matrix contains conection strengths from a layer's inputs to its neurons.
-
     Tensor<type, 2> synaptic_weights;
-
-    /// Activation function variable.
 
     ActivationFunction activation_function = ActivationFunction::Logistic;
 
     type decision_threshold;
 
-    /// Display messages to screen.
-
     bool display = true;
-
 
 #ifdef OPENNN_CUDA
 #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
 #endif
-
 
 };
 

@@ -84,16 +84,14 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
 
     for(Index i = 0; i < raw_variables; i++)
     {
-        copy( 
-             targets.data() + targets.dimension(0) * i,
+        copy(targets.data() + targets.dimension(0) * i,
              targets.data() + targets.dimension(0) * i + rows,
              targets_t_1.data() + targets_t_1.dimension(0) * i);
     }
 
     for(Index i = 0; i < raw_variables; i++)
     {
-        copy( 
-             targets.data() + targets.dimension(0) * i + 1,
+        copy(targets.data() + targets.dimension(0) * i + 1,
              targets.data() + targets.dimension(0) * i + 1 + rows,
              targets_t.data() + targets_t.dimension(0) * i);
     }
@@ -352,24 +350,17 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 }
 
 
-/// Returns a string with the name of the normalized squared error loss type, "NORMALIZED_SQUARED_ERROR".
-
 string NormalizedSquaredError::get_error_type() const
 {
     return "NORMALIZED_SQUARED_ERROR";
 }
 
 
-/// Returns a string with the name of the normalized squared error loss type in text format.
-
 string NormalizedSquaredError::get_error_type_text() const
 {
     return "Normalized squared error";
 }
 
-
-/// Serializes the cross-entropy error object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document
 
 void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -380,9 +371,6 @@ void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Loads a root mean squared error object from an XML document.
-/// @param document Pointer to a TinyXML document with the object data.
 
 void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document) const
 {

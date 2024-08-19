@@ -12,19 +12,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a scaling layer object with no scaling neurons.
-
 ScalingLayer2D::ScalingLayer2D() : Layer()
 {
     set();
 }
 
-
-/// Scaling neurons number constructor.
-/// This constructor creates a scaling layer with a given size.
-/// It initializes the members of this object with the default values.
-/// @param new_neurons_number Number of scaling neurons in the layer.
 
 ScalingLayer2D::ScalingLayer2D(const Index& new_neurons_number) : Layer()
 {
@@ -38,11 +30,6 @@ ScalingLayer2D::ScalingLayer2D(const Tensor<Index, 1>& new_input_dimensions) : L
 }
 
 
-/// Descriptives constructor.
-/// This constructor creates a scaling layer with given minimums, maximums, means, and standard deviations.
-/// It also initializes the rest of the members of this object with the default values.
-/// @param new_descriptives Vector of vectors with the variables descriptives.
-
 ScalingLayer2D::ScalingLayer2D(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
 {
     set(new_descriptives);
@@ -51,7 +38,7 @@ ScalingLayer2D::ScalingLayer2D(const Tensor<Descriptives, 1>& new_descriptives) 
 
 dimensions ScalingLayer2D::get_output_dimensions() const
 {
-    return { input_dimensions(0) , input_dimensions(1) , input_dimensions(2) };
+    return { input_dimensions(0), input_dimensions(1), input_dimensions(2) };
 }
 
 
@@ -63,7 +50,7 @@ Index ScalingLayer2D::get_inputs_number() const
 
 dimensions ScalingLayer2D::get_inputs_dimensions() const
 {
-    return { input_dimensions(0) , input_dimensions(1) , input_dimensions(2) };
+    return { input_dimensions(0), input_dimensions(1), input_dimensions(2) };
 }
 
 
@@ -73,25 +60,17 @@ Index ScalingLayer2D::get_neurons_number() const
 }
 
 
-/// Returns all the scaling layer descriptives.
-/// The format is a vector of descriptives structures of size the number of scaling neurons.
-
 Tensor<Descriptives, 1> ScalingLayer2D::get_descriptives() const
 {
     return descriptives;
 }
 
 
-/// Returns the descriptives structure of a single scaling neuron.
-/// @param index Neuron index.
-
 Descriptives ScalingLayer2D::get_descriptives(const Index& index) const
 {
     return descriptives(index);
 }
 
-
-/// Returns a single matrix with the minimums of all scaling neurons.
 
 Tensor<type, 1> ScalingLayer2D::get_minimums() const
 {
@@ -108,8 +87,6 @@ Tensor<type, 1> ScalingLayer2D::get_minimums() const
 }
 
 
-/// Returns a single matrix with the maximums of all scaling neurons.
-
 Tensor<type, 1> ScalingLayer2D::get_maximums() const
 {
     const Index neurons_number = get_neurons_number();
@@ -124,8 +101,6 @@ Tensor<type, 1> ScalingLayer2D::get_maximums() const
     return maximums;
 }
 
-
-/// Returns a single matrix with the means of all scaling neurons.
 
 Tensor<type, 1> ScalingLayer2D::get_means() const
 {
@@ -142,8 +117,6 @@ Tensor<type, 1> ScalingLayer2D::get_means() const
 }
 
 
-/// Returns a single matrix with the standard deviations of all scaling neurons.
-
 Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
 {
     const Index neurons_number = get_neurons_number();
@@ -159,15 +132,11 @@ Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
 }
 
 
-/// Returns the methods used for scaling.
-
 Tensor<Scaler, 1> ScalingLayer2D::get_scaling_methods() const
 {
     return scalers;
 }
 
-
-/// Returns a vector of strings with the name of the method used for each scaling neuron.
 
 Tensor<string, 1> ScalingLayer2D::write_scalers() const
 {
@@ -206,9 +175,6 @@ Tensor<string, 1> ScalingLayer2D::write_scalers() const
     return scaling_methods_strings;
 }
 
-
-/// Returns a vector of strings with the name of the methods used for scaling,
-/// as paragaph text.
 
 Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
 {
@@ -255,16 +221,11 @@ Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
 }
 
 
-/// Returns true if messages from this class are displayed on the screen, or false if messages
-/// from this class are not displayed on the screen.
-
 const bool& ScalingLayer2D::get_display() const
 {
     return display;
 }
 
-
-/// Sets the scaling layer to be empty.
 
 void ScalingLayer2D::set()
 {
@@ -275,9 +236,6 @@ void ScalingLayer2D::set()
     set_default();
 }
 
-
-/// Sets a new size in the scaling layer.
-/// It also sets the members to their default values.
 
 void ScalingLayer2D::set(const Index& new_inputs_number)
 {
@@ -308,11 +266,6 @@ void ScalingLayer2D::set(const Tensor<Index, 1>& new_input_dimensions)
 }
 
 
-/// Sets the size of the scaling layer and the descriptives values.
-/// @param new_descriptives Vector of vectors containing the minimums, maximums, means, and standard deviations for the scaling layer.
-/// The size of this vector must be 4.
-/// The size of each subvector will be the size of the scaling layer.
-
 void ScalingLayer2D::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
     descriptives = new_descriptives;
@@ -334,9 +287,6 @@ void ScalingLayer2D::set(const Tensor<Descriptives, 1>& new_descriptives, const 
     scalers = new_scalers;
 }
 
-
-/// Sets the scaling layer members from an XML document.
-/// @param new_scaling_layer_document Pointer to a TinyXML document containing the member data.
 
 void ScalingLayer2D::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
 {
@@ -366,16 +316,6 @@ void ScalingLayer2D::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-/// Sets the members to their default value:
-/// <ul>
-/// <li> Minimus: -1 for all unscaling neurons.
-/// <li> Maximums: 1 for all unscaling neurons.
-/// <li> Means: 0 for all unscaling neurons.
-/// <li> Standard deviations 1 for all unscaling neurons.
-/// <li> Scaling method: Minimum and maximum.
-/// <li> Display: True.
-/// </ul>
-
 void ScalingLayer2D::set_default()
 {
     layer_name = "scaling_layer";
@@ -390,19 +330,12 @@ void ScalingLayer2D::set_default()
 }
 
 
-/// Sets max and min scaling range for minmaxscaling.
-/// @param min and max for scaling range.
-
 void ScalingLayer2D::set_min_max_range(const type& min, const type& max)
 {
     min_range = min;
     max_range = max;
 }
 
-
-/// Sets all the scaling layer descriptives from a vector descriptives structures.
-/// The size of the vector must be equal to the number of scaling neurons in the layer.
-/// @param new_descriptives Scaling layer descriptives.
 
 void ScalingLayer2D::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
@@ -430,19 +363,11 @@ void ScalingLayer2D::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
 }
 
 
-/// Sets the descriptives of a single scaling neuron.
-/// @param i Index of neuron.
-/// @param item_descriptives Descriptives structure for that neuron.
-
 void ScalingLayer2D::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
     descriptives(i) = item_descriptives;
 }
 
-
-/// Sets the minimum value of a given scaling neuron.
-/// @param i Index of scaling neuron.
-/// @param new_minimum Minimum value.
 
 void ScalingLayer2D::set_minimum(const Index& i, const type& new_minimum)
 {
@@ -450,19 +375,11 @@ void ScalingLayer2D::set_minimum(const Index& i, const type& new_minimum)
 }
 
 
-/// Sets the maximum value of a given scaling neuron.
-/// @param i Index of scaling neuron.
-/// @param new_maximum Maximum value.
-
 void ScalingLayer2D::set_maximum(const Index& i, const type& new_maximum)
 {
     descriptives(i).set_maximum(new_maximum);
 }
 
-
-/// Sets the mean value of a given scaling neuron.
-/// @param i Index of scaling neuron.
-/// @param new_mean Mean value.
 
 void ScalingLayer2D::set_mean(const Index& i, const type& new_mean)
 {
@@ -470,18 +387,11 @@ void ScalingLayer2D::set_mean(const Index& i, const type& new_mean)
 }
 
 
-/// Sets the standard deviation value of a given scaling neuron.
-/// @param i Index of scaling neuron.
-/// @param new_standard_deviation Standard deviation value.
-
 void ScalingLayer2D::set_standard_deviation(const Index& i, const type& new_standard_deviation)
 {
     descriptives(i).set_standard_deviation(new_standard_deviation);
 }
 
-
-/// Sets the methods to be used for scaling each variable.
-/// @param new_scaling_methods New scaling methods for the variables.
 
 void ScalingLayer2D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
 {
@@ -499,10 +409,6 @@ void ScalingLayer2D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
     scalers = new_scaling_methods;
 }
 
-
-/// Sets the methods to be used for scaling each variable.
-/// The argument is a vector string containing the name of the methods("None", "MeanStandardDeviation" or "MinimumMaximum").
-/// @param new_scaling_methods_string New scaling methods for the variables.
 
 void ScalingLayer2D::set_scalers(const Tensor<string, 1>& new_scaling_methods_string)
 {
@@ -555,10 +461,6 @@ void ScalingLayer2D::set_scaler(const Index& variable_index, const Scaler& new_s
 }
 
 
-/// Sets all the methods to be used for scaling with the given method.
-/// The argument is a string containing the name of the method("None", "MeanStandardDeviation" or "MinimumMaximum").
-/// @param new_scaling_methods_string New scaling methods for the variables.
-
 void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
@@ -606,9 +508,6 @@ void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 }
 
 
-/// Sets the method to be used for scaling the variables.
-/// @param new_scaling_method New scaling method for the variables.
-
 void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
 {
     const Index neurons_number = get_neurons_number();
@@ -620,18 +519,11 @@ void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void ScalingLayer2D::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Returns true if the number of scaling neurons is zero, and false otherwise.
 
 bool ScalingLayer2D::is_empty() const
 {
@@ -647,12 +539,6 @@ bool ScalingLayer2D::is_empty() const
     }
 }
 
-
-/// This method chechs whether the inputs to the scaling layer have the right size.
-/// If not, it displays an error message and exits the program.
-/// It also checks whether the input values are inside the range defined by the minimums and maximum values, and
-/// displays a v fg warning message if they are outside.
-/// @param inputs Set of inputs to the scaling layer.
 
 void ScalingLayer2D::check_range(const Tensor<type, 1>& inputs) const
 {
@@ -760,11 +646,6 @@ void ScalingLayer2D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
         }
     }
 }
-
-
-
-/// Scales some values to produce some scaled values.
-/// @param inputs Set of inputs to the scaling layer.
 
 
 void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>& input_dimensions,
@@ -894,11 +775,6 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
 }
 
 
-
-/// Returns a string with the expression of the scaling process when the none method is used.
-/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-
 string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const Index inputs_number = get_neurons_number();
@@ -915,10 +791,6 @@ string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inpu
     return buffer.str();
 }
 
-
-/// Returns a string with the expression of the scaling process with the minimum and maximum method.
-/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
 
 string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
@@ -937,10 +809,6 @@ string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>&
 }
 
 
-/// Returns a string with the expression of the scaling process with the mean and standard deviation method.
-/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-
 string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const Index inputs_number = get_neurons_number();
@@ -958,10 +826,6 @@ string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<str
 }
 
 
-/// Returns a string with the expression of the scaling process with the standard deviation method.
-/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-
 string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const Index inputs_number = get_neurons_number();
@@ -978,8 +842,6 @@ string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 
     return buffer.str();
 }
 
-
-/// Returns a string with the expression of the inputs scaling process.
 
 string ScalingLayer2D::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>&) const
 {
@@ -1047,10 +909,6 @@ void ScalingLayer2D::print() const
     }
 }
 
-
-
-/// Serializes the scaling layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void ScalingLayer2D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1127,9 +985,6 @@ void ScalingLayer2D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this scaling layer object.
-/// @param document XML document containing the member data.
 
 void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 {

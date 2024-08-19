@@ -14,21 +14,12 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a quasi-Newton method optimization algorithm not associated with any loss index.
-/// It also initializes the class members to their default values.
-
 QuasiNewtonMethod::QuasiNewtonMethod()
     : OptimizationAlgorithm()
 {
     set_default();
 }
 
-
-/// Loss index constructor.
-/// It creates a quasi-Newton method optimization algorithm associated with a loss index.
-/// It also initializes the class members to their default values.
-/// @param new_loss_index Pointer to a loss index object.
 
 QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
@@ -39,15 +30,11 @@ QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
 }
 
 
-/// Returns a constant reference to the learning rate algorithm object inside the quasi-Newton method object.
-
 const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
 {
     return learning_rate_algorithm;
 }
 
-
-/// Returns a pointer to the learning rate algorithm object inside the quasi-Newton method object.
 
 LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm()
 {
@@ -55,15 +42,11 @@ LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm()
 }
 
 
-/// Returns the method for approximating the inverse hessian matrix to be used when training.
-
 const QuasiNewtonMethod::InverseHessianApproximationMethod& QuasiNewtonMethod::get_inverse_hessian_approximation_method() const
 {
     return inverse_hessian_approximation_method;
 }
 
-
-/// Returns the name of the method for the approximation of the inverse hessian.
 
 string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
 {
@@ -87,16 +70,11 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
-/// Returns the minimum loss improvement during training.
-
 const type& QuasiNewtonMethod::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
 
-
-/// Returns the goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
 
 const type& QuasiNewtonMethod::get_loss_goal() const
 {
@@ -104,15 +82,11 @@ const type& QuasiNewtonMethod::get_loss_goal() const
 }
 
 
-/// Returns the maximum number of selection error increases during the training process.
-
 const Index& QuasiNewtonMethod::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
 
-
-/// Returns the maximum number of epochs for training.
 
 const Index& QuasiNewtonMethod::get_maximum_epochs_number() const
 {
@@ -120,17 +94,11 @@ const Index& QuasiNewtonMethod::get_maximum_epochs_number() const
 }
 
 
-/// Returns the maximum training time.
-
 const type& QuasiNewtonMethod::get_maximum_time() const
 {
     return maximum_time;
 }
 
-
-/// Sets a pointer to a loss index object to be associated with the quasi-Newton method object.
-/// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index Pointer to a loss index object.
 
 void QuasiNewtonMethod::set_loss_index(LossIndex* new_loss_index)
 {
@@ -140,23 +108,12 @@ void QuasiNewtonMethod::set_loss_index(LossIndex* new_loss_index)
 }
 
 
-/// Sets a new inverse hessian approximatation method value.
-/// @param new_inverse_hessian_approximation_method Inverse hessian approximation method value.
-
 void QuasiNewtonMethod::set_inverse_hessian_approximation_method(
     const QuasiNewtonMethod::InverseHessianApproximationMethod& new_inverse_hessian_approximation_method)
 {
     inverse_hessian_approximation_method = new_inverse_hessian_approximation_method;
 }
 
-
-/// Sets a new method for approximating the inverse of the hessian matrix from a string containing the name.
-/// Possible values are:
-/// <ul>
-/// <li> "DFP"
-/// <li> "BFGS"
-/// </ul>
-/// @param new_inverse_hessian_approximation_method_name Name of inverse hessian approximation method.
 
 void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& new_inverse_hessian_approximation_method_name)
 {
@@ -174,11 +131,6 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& n
     }
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void QuasiNewtonMethod::set_display(const bool& new_display)
 {
@@ -208,18 +160,11 @@ void QuasiNewtonMethod::set_default()
 }
 
 
-/// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_decrease Minimum improvement in the loss between two epochs.
-
 void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
-
-/// Sets a new goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
-/// @param new_loss_goal Goal value for the loss.
 
 void QuasiNewtonMethod::set_loss_goal(const type& new_loss_goal)
 {
@@ -227,17 +172,11 @@ void QuasiNewtonMethod::set_loss_goal(const type& new_loss_goal)
 }
 
 
-/// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_failures Maximum number of epochs in which the selection evalutation increases.
-
 void QuasiNewtonMethod::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
     maximum_selection_failures = new_maximum_selection_failures;
 }
 
-
-/// Sets a new maximum number of epochs number.
-/// @param new_maximum_epochs_number Maximum number of epochs in which the selection evalutation decreases.
 
 void QuasiNewtonMethod::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
@@ -245,21 +184,11 @@ void QuasiNewtonMethod::set_maximum_epochs_number(const Index& new_maximum_epoch
 }
 
 
-/// Sets a new maximum training time.
-/// @param new_maximum_time Maximum training time.
-
 void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 {
     maximum_time = new_maximum_time;
 }
 
-
-/// Calculates an approximation of the inverse hessian, accoring to the method used.
-/// @param old_parameters Another point of the error function.
-/// @param parameters Current point of the error function
-/// @param old_gradient Gradient at the other point.
-/// @param gradient Gradient at the current point.
-/// @param old_inverse_hessian Inverse hessian at the other point of the error function.
 
 void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehtodData& optimization_data) const
 {
@@ -279,14 +208,6 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
     }
 }
 
-
-/// Returns an approximation of the inverse hessian matrix according to the Davidon-Fletcher-Powel
-/// (DFP) algorithm.
-/// @param old_parameters A previous set of parameters.
-/// @param old_gradient The gradient of the error function for that previous set of parameters.
-/// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
-/// @param parameters Actual set of parameters.
-/// @param gradient The gradient of the error function for the actual set of parameters.
 
 void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {
@@ -326,14 +247,6 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
             / gradient_dot_hessian_dot_gradient(0);
 }
 
-
-/// Returns an approximation of the inverse hessian matrix according to the
-/// Broyden-Fletcher-Goldfarb-Shanno(BGFS) algorithm.
-/// @param old_parameters A previous set of parameters.
-/// @param old_gradient The gradient of the error function for that previous set of parameters.
-/// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
-/// @param parameters Actual set of parameters.
-/// @param gradient The gradient of the error function for the actual set of parameters.
 
 void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {
@@ -379,12 +292,6 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
         += self_kronecker_product(thread_pool_device, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
 }
 
-
-/// \brief QuasiNewtonMethod::update_parameters
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
-/// \param optimization_data
 
 void QuasiNewtonMethod::update_parameters(
         const Batch& batch,
@@ -506,9 +413,6 @@ void QuasiNewtonMethod::update_parameters(
     neural_network->set_parameters(parameters);
 }
 
-
-/// Trains a neural network with an associated loss index according to the quasi-Newton method.
-/// Training occurs according to the training operators, training parameters and stopping criteria.
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
@@ -743,9 +647,6 @@ string QuasiNewtonMethod::write_optimization_algorithm_type() const
 }
 
 
-/// Serializes the quasi Newton method object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
-
 void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -833,8 +734,6 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {

@@ -34,12 +34,6 @@
 namespace opennn
 {
 
-/// This class contains tools for testing neural networks in different learning tasks.
-
-///
-/// In particular, it can be used for testing function regression, classification
-/// or time series prediction problems.
-
 class TestingAnalysis
 {
 
@@ -55,12 +49,8 @@ public:
 
    virtual ~TestingAnalysis();
 
-    /// Structure with the results from a goodness-of-fit analysis.
-
     struct GoodnessOfFitAnalysis
     {
-       /// Target data from data set and output data from neural network.
-
        type determination = type(0);
 
        Tensor<type, 1> targets;
@@ -73,67 +63,38 @@ public:
            cout << "Goodness-of-fit analysis" << endl;
            cout << "Determination: " << determination << endl;
        }
-
     };
 
 
-    /// Structure with the results from a roc curve analysis.
-
     struct RocAnalysisResults
     {
-        /// Matrix containing the data of a ROC curve.
-
         Tensor<type, 2> roc_curve;
-
-        /// Area under a ROC curve.
 
         type area_under_curve;
 
-        /// Confidence limit
-
         type confidence_limit;
-
-        /// Optimal threshold of a ROC curve.
 
         type optimal_threshold;
     };
 
 
-    /// Structure with the results from Kolmogorov-Smirnov analysis.
-
     struct KolmogorovSmirnovResults
     {
-        /// Matrix containing the data of a positive cumulative gain
-
         Tensor<type, 2> positive_cumulative_gain;
 
-        /// Matrix containing the data of a negative cumulative gain.
-
         Tensor<type, 2> negative_cumulative_gain;
-
-        /// Maximum gain of the cumulative gain analysis
 
         Tensor<type, 1> maximum_gain;
     };
 
 
-    /// Structure with the binary classification rates
-
     struct BinaryClassificationRates
     {
-        /// Vector with the indices of the samples which are true positive.
-
         Tensor<Index, 1> true_positives_indices;
-
-        /// Vector with the indices of the samples which are false positive.
 
         Tensor<Index, 1> false_positives_indices;
 
-        /// Vector with the indices of the samples which are false negative.
-
         Tensor<Index, 1> false_negatives_indices;
-
-        /// Vector with the indices of the samples which are true negative.
 
         Tensor<Index, 1> true_negatives_indices;
     };
@@ -226,7 +187,7 @@ public:
 
    Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
    Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&, Index) const;
+   Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&) const;
 
    Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
@@ -338,16 +299,10 @@ private:
    ThreadPool* thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
-   /// Pointer to the neural network object to be tested. 
-
    NeuralNetwork* neural_network = nullptr;
-
-   /// Pointer to a data set object.
 
    DataSet* data_set = nullptr;
 
-   /// Display messages to screen.
-   
    bool display = true;
 
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
