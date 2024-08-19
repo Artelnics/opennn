@@ -24,13 +24,6 @@ namespace opennn
 
 struct NeuronsSelectionResults;
 
-/// This abstract class represents the concept of neurons selection algorithm for a ModelSelection[1].
-
-///
-/// Any derived class must implement the perform_neurons_selection() method.
-///
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
-
 class NeuronsSelection
 {
 public:
@@ -42,8 +35,6 @@ public:
     explicit NeuronsSelection(TrainingStrategy*);
 
     // Enumerators
-
-    /// Enumeration of all possible conditions of stop for the algorithms.
 
     enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons};
 
@@ -91,63 +82,35 @@ public:
 
     // Utilities
 
-    /// Performs the neurons selection for a neural network.
-
     virtual NeuronsSelectionResults perform_neurons_selection() = 0;
-
-    /// Writes the time from seconds in format HH:mm:ss.
 
     string write_time(const type&) const;
 
 protected:
 
-    /// Pointer to a training strategy object.
-
     TrainingStrategy* training_strategy = nullptr;
-
-    /// Neurons of all the neural networks trained.
 
     Tensor<Index, 1> neurons_history;
 
-    /// Selection loss of all the neural networks trained.
-
     Tensor<type, 1> selection_error_history;
-
-    /// Error of all the neural networks trained.
 
     Tensor<type, 1> training_error_history;
 
-    /// Minimum number of hidden neurons.
-
     Index minimum_neurons;
-
-    /// Maximum number of hidden neurons.
 
     Index maximum_neurons;
 
-    /// Number of trials for each neural network.
-
     Index trials_number = 1;
-
-    /// Display messages to screen.
 
     bool display = true;
 
-    /// Goal value for the selection error. It is a stopping criterion.
-
     type selection_error_goal;
 
-    /// Maximum number of epochs to perform neurons selection. It is a stopping criterion.
-
     Index maximum_epochs_number;
-
-    /// Maximum selection algorithm time. It is a stopping criterion.
 
     type maximum_time;
 };
 
-
-/// This structure contains the results from the neurons selection.
 
 struct NeuronsSelectionResults
 {
@@ -180,45 +143,25 @@ struct NeuronsSelectionResults
 
    // Neural network
 
-   /// Neurons of the diferent neural networks.
-
    Tensor<Index, 1> neurons_number_history;
 
-   /// Neurons of the neural network with minimum selection error.
-
    Index optimal_neurons_number = 1;
-
-   /// Vector of parameters for the neural network with minimum selection error.
 
    Tensor<type, 1> optimal_parameters;
 
    // Loss index
 
-   /// Performance of the different neural networks.
-
    Tensor<type, 1> training_error_history;
-
-   /// Selection loss of the different neural networks.
 
    Tensor<type, 1> selection_error_history;
 
-   /// Value of loss for the neural network with minimum selection error.
-
-//   int FLT_MAX=10;
-
    type optimum_training_error = type(10);
-
-   /// Value of minimum selection error.
 
    type optimum_selection_error = type(10);
 
    // Model selection
 
-   /// Stopping condition of the algorithm.
-
    NeuronsSelection::StoppingCondition stopping_condition = NeuronsSelection::StoppingCondition::MaximumTime;
-
-   /// Elapsed time during the loss of the algortihm.
 
    string elapsed_time;
 };

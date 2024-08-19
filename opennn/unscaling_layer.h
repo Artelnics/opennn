@@ -11,12 +11,8 @@
 
 // System includes
 
-//#include <cmath>
-//#include <cstdlib>
-//#include <fstream>
 #include <iostream>
 #include <string>
-//#include <sstream>
 
 // OpenNN includes
 
@@ -27,14 +23,6 @@
 
 namespace opennn
 {
-
-//struct UnscalingLayerForwardPropagation;
-
-/// This class represents a layer of unscaling neurons.
-
-///
-/// Unscaling layers are included in the definition of a neural network.
-/// They are used to unnormalize variables so they are in the original range after computer processing.
 
 class UnscalingLayer : public Layer
 {
@@ -129,20 +117,12 @@ protected:
 
    // MEMBERS
 
-   /// Descriptives of output variables.
-
    Tensor<Descriptives, 1> descriptives;
-
-   /// Unscaling method for the output variables.
 
    Tensor<Scaler, 1> scalers;
 
-   /// min and max range for unscaling
-
    type min_range;
    type max_range;
-
-   /// Display warning messages to screen. 
 
    bool display = true;
 };

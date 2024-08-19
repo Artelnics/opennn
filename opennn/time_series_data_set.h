@@ -101,23 +101,13 @@ public:
 
 private:
 
-    /// Number of lags.
-
     Index lags_number = 0;
 
-    /// Number of steps ahead.
-
     Index steps_ahead = 0;
-
-    /// Time series data matrix.
-    /// The number of rows is the number of samples before time series transformation.
-    /// The number of raw_variables is the number of variables before time series transformation.
 
     Tensor<type, 2> time_series_data;
 
     Tensor<RawVariable, 1> time_series_raw_variables;
-
-    /// Index where time variable is located for forecasting applications.
 
     Index time_raw_variable_index = 0;
 };

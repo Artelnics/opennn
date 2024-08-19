@@ -1888,13 +1888,11 @@ void LanguageDataSet::load_documents(const string& path)
     Tensor<string,1> document_copy(lines_count);
     Tensor<string,1> document_target_copy(lines_count);
 
-    copy(
-        document.data(),
+    copy(document.data(),
         document.data() + lines_count,
         document_copy.data());
 
-    copy(
-        document_target.data(),
+    copy(document_target.data(),
         document_target.data() + lines_count,
         document_target_copy.data());
 

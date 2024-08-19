@@ -70,31 +70,19 @@ public:
    
    // Test case methods
 
-   /// This method runs all the methods contained in the test case.
-
    virtual void run_test_case() = 0;
 
    void print_results();
 
 protected:
 
-   /// Number of performed tests.
-
    Index tests_count = 0;
 
-   /// Number of tests which have passed the test case.
- 
    Index tests_passed_count = 0;
-
-   /// Number of tests which have failed the test case.
 
    Index tests_failed_count = 0;
 
-   /// Number of iterations in random tests loops.
-
    Index random_tests_number = 0;
-
-   /// True if messages from this class are displayed and false otherwise.
 
    bool display = true;
 

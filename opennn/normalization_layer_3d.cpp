@@ -14,11 +14,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a empty layer object.
-/// This constructor also initializes the rest of the class members to their default values.
-
-
 NormalizationLayer3D::NormalizationLayer3D() : Layer()
 {
     set();
@@ -26,13 +21,6 @@ NormalizationLayer3D::NormalizationLayer3D() : Layer()
     layer_type = Type::Normalization3D;
 }
 
-
-/// Layer architecture constructor.
-/// It creates a layer object with given numbers of inputs and perceptrons.
-/// It initializes the parameters at random.
-/// This constructor also initializes the rest of the class members to their default values.
-/// @param new_inputs_number Number of inputs in the layer.
-/// @param new_neurons_number Number of perceptrons in the layer.
 
 NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
                                             const Index& new_inputs_depth) : Layer()
@@ -44,8 +32,6 @@ NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
     layer_name = "normalization_layer_3d";
 }
 
-
-/// Returns the number of inputs to the layer.
 
 Index NormalizationLayer3D::get_inputs_number() const
 {
@@ -89,38 +75,27 @@ Index NormalizationLayer3D::get_betas_number() const
 }
 
 
-/// Returns the number of parameters of the layer.
-
 Index NormalizationLayer3D::get_parameters_number() const
 {
     return gammas.size() + betas.size();
 }
 
 
-/// Returns a single vector with all the layer parameters.
-/// The format is a vector of real values.
-/// The size is the number of parameters in the layer.
-
 Tensor<type, 1> NormalizationLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(gammas.size() + betas.size());
 
-    copy(
-        gammas.data(),
-        gammas.data() + gammas.size(),
-        parameters.data());
+    copy(gammas.data(),
+         gammas.data() + gammas.size(),
+         parameters.data());
 
-    copy(
-        betas.data(),
-        betas.data() + betas.size(),
-        parameters.data() + gammas.size());
+    copy(betas.data(),
+         betas.data() + betas.size(),
+         parameters.data() + gammas.size());
 
     return parameters;
 }
 
-
-/// Returns true if messages from this class are displayed on the screen,
-/// or false if messages from this class are not displayed on the screen.
 
 const bool& NormalizationLayer3D::get_display() const
 {
@@ -128,19 +103,11 @@ const bool& NormalizationLayer3D::get_display() const
 }
 
 
-/// Sets an empty layer, wihtout any perceptron.
-/// It also sets the rest of the members to their default values.
-
 void NormalizationLayer3D::set()
 {
     set_default();
 }
 
-
-/// Sets new numbers of inputs and perceptrons in the layer.
-/// It also sets the rest of the members to their default values.
-/// @param new_inputs_number Number of inputs.
-/// @param new_neurons_number Number of perceptron neurons.
 
 void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
@@ -154,13 +121,6 @@ void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_
     set_default();
 }
 
-
-/// Sets those members not related to the vector of perceptrons to their default value.
-/// <ul>
-/// <li> Display: True.
-/// <li> layer_type: Perceptron_Layer.
-/// <li> trainable: True.
-/// </ul>
 
 void NormalizationLayer3D::set_default()
 {
@@ -179,9 +139,6 @@ void NormalizationLayer3D::set_name(const string& new_layer_name)
     layer_name = new_layer_name;
 }
 
-
-/// Sets a new number of inputs in the layer.
-/// @param new_inputs_number Number of layer inputs.
 
 void NormalizationLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
@@ -210,26 +167,17 @@ void NormalizationLayer3D::set_betas(const Tensor<type, 1>& new_betas)
 }
 
 
-/// Sets the parameters of this layer.
-
 void NormalizationLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    copy(
-        new_parameters.data() + index,
-        new_parameters.data() + index + gammas.size(),
-        gammas.data());
+    copy(new_parameters.data() + index,
+         new_parameters.data() + index + gammas.size(),
+         gammas.data());
 
-    copy(
-        new_parameters.data() + index + gammas.size(),
-        new_parameters.data() + index + gammas.size() + betas.size(),
-        betas.data());
+    copy(new_parameters.data() + index + gammas.size(),
+         new_parameters.data() + index + gammas.size() + betas.size(),
+         betas.data());
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void NormalizationLayer3D::set_display(const bool& new_display)
 {
@@ -417,15 +365,13 @@ void NormalizationLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const type* betas_derivatives_data = normalization_layer_3d_back_propagation->betas_derivatives.data();
     type* gradient_data = gradient.data();
 
-    copy(
-        gammas_derivatives_data,
-        gammas_derivatives_data + gammas_number,
-        gradient_data + index);
+    copy(gammas_derivatives_data,
+         gammas_derivatives_data + gammas_number,
+         gradient_data + index);
 
-    copy(
-        betas_derivatives_data,
-        betas_derivatives_data + betas_number,
-        gradient_data + index + gammas_number);
+    copy(betas_derivatives_data,
+         betas_derivatives_data + betas_number,
+         gradient_data + index + gammas_number);
 }
 
 

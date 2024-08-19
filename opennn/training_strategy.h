@@ -44,15 +44,6 @@
 namespace opennn
 {
 
-/// This class represents the concept of training strategy for a neural network in OpenNN.
-
-///
-/// A training strategy is composed of two objects:
-/// <ul>
-/// <li> Loss index.
-/// <li> Optimization algorithm.
-/// </ul> 
-
 class TrainingStrategy
 {
 
@@ -66,8 +57,6 @@ public:
 
     // Enumerations
 
-    /// Enumeration of the available error terms in OpenNN.
-
     enum class LossMethod
     {
         SUM_SQUARED_ERROR,
@@ -78,8 +67,6 @@ public:
         CROSS_ENTROPY_ERROR,
         CROSS_ENTROPY_ERROR_3D
     };
-
-    /// Enumeration of all the available types of optimization algorithms.
 
     enum class OptimizationMethod
     {
@@ -188,69 +175,37 @@ private:
 
     // Loss index
 
-    /// Pointer to the sum squared error object wich can be used as the error term.
-
     SumSquaredError sum_squared_error;
-
-    /// Pointer to the mean squared error object wich can be used as the error term.
 
     MeanSquaredError mean_squared_error;
 
-    /// Pointer to the normalized squared error object wich can be used as the error term.
-
     NormalizedSquaredError normalized_squared_error;
-
-    /// Pointer to the Mikowski error object wich can be used as the error term.
 
     MinkowskiError Minkowski_error;
 
-    /// Pointer to the cross-entropy error object wich can be used as the error term.
-
     CrossEntropyError cross_entropy_error;
-
-    /// Pointer to the cross-entropy error 3d object wich can be used as the error term.
 
     CrossEntropyError3D cross_entropy_error_3d;
 
-    /// Pointer to the weighted squared error object wich can be used as the error term.
-
     WeightedSquaredError weighted_squared_error;
-
-    /// Type of loss method.
 
     LossMethod loss_method;
 
     // Optimization algorithm
 
-    /// Gradient descent object to be used as a main optimization algorithm.
-
     GradientDescent gradient_descent;
-
-    /// Conjugate gradient object to be used as a main optimization algorithm.
 
     ConjugateGradient conjugate_gradient;
 
-    /// Quasi-Newton method object to be used as a main optimization algorithm.
-
     QuasiNewtonMethod quasi_Newton_method;
-
-    /// Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
 
     LevenbergMarquardtAlgorithm Levenberg_Marquardt_algorithm;
 
-    /// Stochastic gradient descent algorithm object to be used as a main optimization algorithm.
-
     StochasticGradientDescent stochastic_gradient_descent;
-
-    /// Adaptive moment estimation algorithm object to be used as a main optimization algorithm.
 
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    /// Type of main optimization algorithm.
-
     OptimizationMethod optimization_method;
-
-    /// Display messages to screen.
 
     bool display = true;
 

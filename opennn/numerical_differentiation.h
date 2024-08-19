@@ -18,9 +18,6 @@
 namespace opennn
 {
 
-/// This class contains methods for numerical differentiation of functions.
-/// In particular it implements the forward and central differences methods for derivatives, Jacobians, hessians or hessian forms.
-
 class NumericalDifferentiation
 {
 
@@ -29,8 +26,6 @@ public:
     // Constructors
 
     explicit NumericalDifferentiation();
-
-    /// Enumeration of the available methods for numerical differentiation.
 
     const Index& get_precision_digits() const;
 
@@ -65,11 +60,6 @@ public:
         return d;
     }
 
-
-    /// Returns the derivatives of a vector function using the central differences method.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 1> calculate_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const,
@@ -130,13 +120,6 @@ public:
         return d;
     }
 
-
-    /// Returns the derivatives of a vector function using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy integer for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 1> calculate_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
@@ -232,11 +215,6 @@ public:
     }
 
 
-    /// Returns the second derivative of a function using the central differences method.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param x: Differentiation point.
-
     template<class T>
     type calculate_second_derivatives(const T& t, type(T::*f)(const type&) const , const type& x) const
     {
@@ -266,11 +244,6 @@ public:
     }
 
 
-    /// Returns the second derivative of a vector function using the central differences method.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param x: Input vector.
-
     template<class T>
     Tensor<type, 1> calculate_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
     {
@@ -293,13 +266,6 @@ public:
         return ((y_forward_2*type(-1) + y_forward*type(16) + y*type(-30) + y_backward*type(16) + y_backward_2*type(-1))/(h*h*type(12)));
     }
 
-
-    /// Returns the second derivatives of a vector function using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy integer for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 1> calculate_second_derivatives(const T& t,
@@ -325,12 +291,6 @@ public:
         return (y_forward_2*type(-1) + y_forward*type(16) + y*type(-30) + y_backward*type(16) + y_backward_2*type(-1))/(h*h*type(12));
     }
 
-
-    /// Returns the gradient of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Tensor<type, 1>&) const.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 1> calculate_gradient(const T& t, type (T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
@@ -369,11 +329,6 @@ public:
         return g;
     }
 
-    /// Returns the gradient of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Tensor<type, 1>&) const.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 1> calculate_gradient(const T& t, type(T::*f)(const Tensor<type, 1>&), const Tensor<type, 1>& x) const
@@ -408,13 +363,6 @@ public:
         return g;
     }
 
-    /// Returns the gradient of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// The first vector argument is dummy, differentiation is performed with respect to the second vector argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy vector for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 1> calculate_gradient(const T& t, type(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
@@ -449,13 +397,6 @@ public:
         return g;
     }
 
-    /// Returns the gradient of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Index&, const Tensor<type, 1>&) const.
-    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy integer for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 1> calculate_gradient(const T& t, type(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
@@ -491,14 +432,6 @@ public:
     }
 
 
-    /// Returns the gradient of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Index&, const Tensor<type, 1>&) const.
-    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy integer for the method prototype.
-    /// @param x: Input vector.
-
     template<class T>
     Tensor<type, 1> calculate_gradient(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 2>&) const, const Index& dummy, const Tensor<type, 2>& x) const
     {
@@ -532,14 +465,6 @@ public:
         return g;
     }
 
-
-    /// Returns the gradient of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Index&, const Tensor<type, 1>&) const.
-    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy integer for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 1> calculate_gradient(const T& t, type(T::*f)(const Tensor<Index, 1>&, const Tensor<type, 1>&) const, const Tensor<Index, 1>& dummy, const Tensor<type, 1>& x) const
@@ -610,12 +535,6 @@ public:
         return gradient;
     }
 
-
-    /// Returns the hessian matrix of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Tensor<type, 1>&) const.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 2> calculate_hessian(const T& t, type(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
@@ -719,14 +638,6 @@ public:
     }
 
 
-    /// Returns the hessian matrix of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// The first vector argument is dummy, differentiation is performed with respect to the second vector argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy vector for the method prototype.
-    /// @param x: Input vector.
-
     template<class T>
     Tensor<type, 2> calculate_hessian(const T& t, type(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
     {
@@ -828,13 +739,6 @@ public:
         return H;
     }
 
-    /// Returns the hessian matrix of a function of several dimensions using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Index&, const Tensor<type, 1>&) const.
-    /// The first integer argument is dummy, differentiation is performed with respect to the second vector argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy integer for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 2> calculate_hessian(const T& t, type(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
@@ -937,11 +841,6 @@ public:
         return H;
     }
 
-    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 2> calculate_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
@@ -983,13 +882,6 @@ public:
     }
 
 
-    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy vector for the method prototype.
-    /// @param x: Input vector.
-
     template<class T>
     Tensor<type, 2> calculate_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
     {
@@ -1029,13 +921,6 @@ public:
         return J;
     }
 
-    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Index&, const Tensor<type, 1>&) const.
-    /// The first integer argument is dummy, differentiation is performed with respect to the second vector argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy integer for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 2> calculate_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
@@ -1076,14 +961,6 @@ public:
         return J;
     }
 
-    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy_int: Dummy integer for the method prototype.
-    /// @param dummy_vector: Dummy vector for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 2> calculate_Jacobian
@@ -1125,14 +1002,6 @@ public:
         return J;
     }
 
-    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: type f(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy_int_1: Dummy integer for the method prototype.
-    /// @param dummy_int_2: Dummy integer for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<type, 2> calculate_Jacobian
@@ -1174,11 +1043,6 @@ public:
         return J;
     }
 
-    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&) const.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<Tensor<type, 2>, 1> calculate_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
@@ -1287,14 +1151,6 @@ public:
         return H;
     }
 
-
-    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy_vector: Dummy vector for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<Tensor<type, 2>, 1> calculate_hessian
@@ -1405,13 +1261,6 @@ public:
         return H;
     }
 
-    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const.
-    /// The first argument is dummy, differentiation is performed with respect to the second argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy: Dummy integer for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<Tensor<type, 2>, 1> calculate_hessian(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
@@ -1520,14 +1369,6 @@ public:
         return H;
     }
 
-    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy_int: Dummy integer for the method prototype.
-    /// @param dummy_vector: Dummy vector for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor<Tensor<type, 2>, 1> calculate_hessian
@@ -1637,14 +1478,6 @@ public:
         return H;
     }
 
-    /// Returns the hessian matrices, as a matrix of matrices, of a function of many inputs and many outputs using the central differences method.
-    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const.
-    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.
-    /// @param t : Object constructor containing the member method to differentiate.
-    /// @param f: Pointer to the member method.
-    /// @param dummy_int: Dummy integer for the method prototype.
-    /// @param dummy_vector: Dummy vector for the method prototype.
-    /// @param x: Input vector.
 
     template<class T>
     Tensor< Tensor<type, 2>, 2> calculate_hessian_matrices
@@ -1761,11 +1594,7 @@ public:
 
 private:
 
-    /// Number of precision digits.
-
     Index precision_digits;
-
-    /// Flag for displaying warning messages from this class.
 
     bool display = true;
 

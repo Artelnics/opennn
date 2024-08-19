@@ -28,21 +28,12 @@ namespace opennn
 
 struct QuasiNewtonMehtodData;
 
-/// This concrete class represents a quasi-Newton optimization algorithm[1], used to minimize loss function.
-/// Class of optimization algorithm based on Newton's method.
-/// An approximate Hessian matrix is computed at each iteration of the algorithm based on the gradients.
-///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
-/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
-
 class QuasiNewtonMethod : public OptimizationAlgorithm
 {
 
 public:
 
    // Enumerations
-
-   /// Enumeration of the available training operators for obtaining the approximation to the inverse hessian.
 
    enum class InverseHessianApproximationMethod{DFP, BFGS};
 
@@ -117,12 +108,7 @@ public:
 
 private: 
 
-   /// Learning rate algorithm object.
-   /// It calculates the step for a given training direction.
-
    LearningRateAlgorithm learning_rate_algorithm;
-
-   /// Variable containing the actual method used to obtain a suitable learning rate.
 
    InverseHessianApproximationMethod inverse_hessian_approximation_method;
 
@@ -130,24 +116,13 @@ private:
 
    // Stopping criteria
 
-   /// Minimum loss improvement between two successive epochs. It is a stopping criterion.
-
    type minimum_loss_decrease = NUMERIC_LIMITS_MIN;
-
-   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal;
 
-   /// Maximum number of epochs at which the selection error increases.
-   /// This is an early stopping method for improving selection.
-
    Index maximum_selection_failures;
 
-   /// Maximum number of epochs to perform_training. It is a stopping criterion.
-
    Index maximum_epochs_number;
-
-   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time;
 };
@@ -155,7 +130,6 @@ private:
 
 struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 {
-    /// Default constructor.
 
     explicit QuasiNewtonMehtodData()
     {

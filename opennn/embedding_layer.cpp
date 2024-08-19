@@ -80,8 +80,7 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    copy(
-        embedding_weights.data(),
+    copy(embedding_weights.data(),
         embedding_weights.data() + embedding_weights.size(),
         parameters.data());
 
@@ -190,8 +189,7 @@ void EmbeddingLayer::set_embedding_weights()
 
 void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    copy(
-        new_parameters.data() + index,
+    copy(new_parameters.data() + index,
         new_parameters.data() + index + embedding_weights.size(),
         embedding_weights.data());
 }
@@ -393,8 +391,7 @@ void EmbeddingLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     type* gradient_data = gradient.data();
 
-    copy(
-        embedding_weights_derivatives_data,
+    copy(embedding_weights_derivatives_data,
         embedding_weights_derivatives_data + embedding_weights_number,
         gradient_data + index);
 }

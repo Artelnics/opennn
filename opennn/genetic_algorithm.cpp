@@ -11,11 +11,8 @@
 #include <algorithm>
 #include <cmath>
 #include <ctime>
-//#include <fstream>
-//#include <functional>
 #include <iostream>
 #include <limits>
-//#include <numeric>
 #include <stdio.h>
 #include <random>
 
