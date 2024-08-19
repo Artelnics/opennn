@@ -69,8 +69,6 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
     type old_error = numeric_limits<float>::max();
 
-    TrainingResults training_results;
-
     Index samples_number;
     Index inputs_number;
     Index outputs_number;
@@ -160,12 +158,12 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
 {
     cout << "Running Levenberg-Marquardt algorithm test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Training methods
+    // Training
 
     test_perform_training();
 

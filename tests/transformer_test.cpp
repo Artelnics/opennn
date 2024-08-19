@@ -542,7 +542,7 @@ void TransformerTest::run_test_case()
 {
     cout << "Running transformer test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
     test_constructor();
 
     test_destructor();

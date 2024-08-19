@@ -68,8 +68,6 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_3.get_layer(2)->get_type() == Layer::Type::Perceptron, LOG);
     assert_true(neural_network_3.get_layer(3)->get_type() == Layer::Type::Unscaling, LOG);
 */
-    //@todo ImageClassification Project Type
-
     // ImageClassification
 
     // Inputs variables dimension = (channels, width, height)
@@ -756,7 +754,7 @@ void NeuralNetworkTest::run_test_case()
 {
     cout << "Running neural network test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     
@@ -780,7 +778,7 @@ void NeuralNetworkTest::run_test_case()
 
     test_forward_propagate();
 
-    // Serialization methods
+    // Serialization
 
     test_save();
 

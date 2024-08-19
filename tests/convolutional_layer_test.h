@@ -29,7 +29,7 @@ public:
 
    void test_eigen_convolution();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
    void test_destructor();
@@ -57,13 +57,11 @@ public:
 
   void test_back_propagate();
 
-  void test_calculate_hidden_delta_perceptron_test();
-
   // Utils
 
   void test_memcpy_approach();
 
-  // Unit testing methods
+  // Unit testing
 
   void run_test_case();
 

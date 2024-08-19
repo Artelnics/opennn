@@ -26,7 +26,7 @@ public:
 
     virtual ~NumericalDifferentiationTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
@@ -34,21 +34,21 @@ public:
 
     void test_calculate_methods();
 
-    // Derivative methods
+    // Derivative
 
     void test_calculate_derivatives();
 
-    // Second derivative methods
+    // Second derivative
 
     void test_calculate_second_derivatives();
 
-    // Gradient methods
+    // Gradient
 
     void test_calculate_gradient();
 
     void test_calculate_gradient_matrix();
 
-    // hessian methods
+    // hessian
 
     void test_calculate_hessian();
 
@@ -56,11 +56,11 @@ public:
 
     void test_calculate_hessian_matrices();
 
-    // Jacobian methods
+    // Jacobian
 
     void test_calculate_Jacobian();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 
@@ -68,7 +68,7 @@ private:
 
     NumericalDifferentiation numerical_differentiation;
 
-    // Constant methods
+    // Constant
 
     type f1(const type& var_x) const
     {

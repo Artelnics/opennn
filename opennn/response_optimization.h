@@ -42,7 +42,7 @@ public:
 
    enum class Condition{None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
 
-   // Get methods
+   // Get
 
    Tensor<Condition, 1> get_inputs_conditions() const;
    Tensor<Condition, 1> get_outputs_conditions() const;
@@ -53,7 +53,7 @@ public:
    Tensor<type, 1> get_outputs_minimums() const;
    Tensor<type, 1> get_outputs_maximums() const;
 
-   // Set methods
+   // Set
 
    void set(NeuralNetwork*);
 

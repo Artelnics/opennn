@@ -84,11 +84,11 @@ public:
 
    bool has_data_set() const;
 
-   // Get methods
+   // Get
 
    RegularizationMethod get_regularization_method() const;
 
-   // Set methods
+   // Set
 
    void set();
    void set(NeuralNetwork*);
@@ -180,14 +180,14 @@ public:
                           ForwardPropagation&,
                           BackPropagationLM&) const;
 
-   // Regularization methods
+   // Regularization
 
    type calculate_regularization(const Tensor<type, 1>&) const;
 
    void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
    void calculate_regularization_hessian(Tensor<type, 1>&, Tensor<type, 2>&) const;
 
-   // Serialization methods
+   // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -201,7 +201,7 @@ public:
 
    string write_regularization_method() const;
 
-   // Checking methods
+   // Checking
 
    void check() const;
 

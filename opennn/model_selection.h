@@ -38,7 +38,7 @@ public:
 
     enum class InputsSelectionMethod{GROWING_INPUTS, GENETIC_ALGORITHM};
 
-    // Get methods
+    // Get
 
     TrainingStrategy* get_training_strategy() const;
     bool has_training_strategy() const;
@@ -51,7 +51,7 @@ public:
     GrowingInputs* get_growing_inputs();
     GeneticAlgorithm* get_genetic_algorithm();
 
-    // Set methods
+    // Set
 
     void set(TrainingStrategy*);
 
@@ -65,7 +65,7 @@ public:
     void set_inputs_selection_method(const InputsSelectionMethod&);
     void set_inputs_selection_method(const string&);
 
-    // Model selection methods
+    // Model selection
 
     void check() const;
 
@@ -73,7 +73,7 @@ public:
 
     InputsSelectionResults perform_inputs_selection();
 
-    // Serialization methods
+    // Serialization
     
     void from_XML(const tinyxml2::XMLDocument&);
 

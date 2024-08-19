@@ -472,28 +472,28 @@ void NumericalDifferentiationTest::run_test_case()
 {
     cout << "Running numerical differentiation test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
     test_calculate_methods();
 
-    // Derivative methods
+    // Derivative
 
     test_calculate_derivatives();
 
-    // Second derivative methods
+    // Second derivative
 
     test_calculate_second_derivatives();
 
-    // Gradient methods
+    // Gradient
 
     test_calculate_gradient();
 
     test_calculate_gradient_matrix();
 
-    // hessian methods
+    // hessian
 
     test_calculate_hessian();
 
@@ -501,7 +501,7 @@ void NumericalDifferentiationTest::run_test_case()
 
     test_calculate_hessian_matrices();
 
-    // Jacobian methods
+    // Jacobian
 
     test_calculate_Jacobian();
 

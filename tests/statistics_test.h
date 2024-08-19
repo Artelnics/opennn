@@ -88,7 +88,7 @@ public:
    // Percentiles
    void test_percentiles();
 
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 

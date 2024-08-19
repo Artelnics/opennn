@@ -151,7 +151,7 @@ public:
 
     enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
 
-    // Get methods
+    // Get
 
     Index get_inputs_number() const final;
     Index get_neurons_number() const final;
@@ -169,7 +169,7 @@ public:
 
     const bool& get_display() const;
 
-    // Set methods
+    // Set
 
     void set();
     void set(const Index&, const Index&);
@@ -203,7 +203,7 @@ public:
 
     void set_display(const bool&);
 
-    // Parameters initialization methods
+    // Parameters initialization
 
     void set_biases_constant(const type&);
     void set_synaptic_weights_constant(const type&);
@@ -218,15 +218,15 @@ public:
     // Forward propagation
 
     void calculate_combinations(const Tensor<type, 2>&,
-        Tensor<type, 2>&) const;
+                                Tensor<type, 2>&) const;
 
     void calculate_activations(const Tensor<type, 2>&,
-        Tensor<type, 2>&,
-        Tensor<type, 1>&) const;
+                               Tensor<type, 2>&,
+                               Tensor<type, 1>&) const;
 
     void calculate_activations_derivatives(const Tensor<type, 2>&,
-        Tensor<type, 2>&,
-        Tensor<type, 2>&) const;
+                                           Tensor<type, 2>&,
+                                           Tensor<type, 2>&) const;
 
     // Outputs
 
@@ -234,7 +234,7 @@ public:
         LayerForwardPropagation*,
         const bool&) final;
 
-    // Gradient methods
+    // Gradient
 
     void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
         const Tensor<pair<type*, dimensions>, 1>&,
@@ -245,13 +245,13 @@ public:
         const Index&,
         Tensor<type, 1>&) const final;
 
-    // Squared errors methods
+    // Squared errors
 
     void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
         const Index&,
         Tensor<type, 2>&) const final;
 
-    // Expression methods
+    // Expression
 
     string write_binary_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
     string write_logistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
@@ -262,7 +262,7 @@ public:
     string write_combinations(const Tensor<string, 1>&) const;
     string write_activations(const Tensor<string, 1>&) const;
 
-    // Serialization methods
+    // Serialization
 
     void from_XML(const tinyxml2::XMLDocument&) final;
 

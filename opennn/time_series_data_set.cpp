@@ -332,10 +332,9 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
         if(time_series_raw_variables(raw_variable_index).type == RawVariableType::DateTime) continue;
 
         if(i < lags_number*raw_variables_number)
-        {
-            /*
+        {            
             new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_lag_" + to_string(lag_index);
-            */
+
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Input);
 
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
@@ -344,10 +343,9 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
             new_raw_variable_index++;
         }
         else if(i == raw_variables_number*(lags_number+steps_ahead) - 1)
-        {
-            /*
+        {            
             new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_ahead_" + to_string(ahead_index);
-            */
+
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
 
@@ -357,9 +355,9 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
         }
         else
         {
-            /*
+
             new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_ahead_" + to_string(ahead_index);
-            */
+
             new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
 
@@ -440,7 +438,6 @@ void TimeSeriesDataSet::transform_time_series()
     split_samples_sequential();
 
     unuse_constant_raw_variables();
-
 }
 
 

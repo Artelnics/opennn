@@ -30,7 +30,7 @@ public:
 
     explicit GrowingInputs(TrainingStrategy*);
 
-    // Get methods
+    // Get
 
     const Index& get_maximum_inputs_number() const;
 
@@ -38,7 +38,7 @@ public:
 
     const Index& get_maximum_selection_failures() const;
 
-    // Set methods
+    // Set
 
     virtual void set_default() final;
 
@@ -48,11 +48,11 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    // Neurons selection methods
+    // Neurons selection
 
     InputsSelectionResults perform_inputs_selection() final;
 
-    // Serialization methods
+    // Serialization
 
     Tensor<string, 2> to_string_matrix() const;
 

@@ -27,9 +27,9 @@ CorrelationsTest::~CorrelationsTest()
 }
 
 
-void CorrelationsTest::test_spearman_linear_correlation()
+void CorrelationsTest::test_spearman_correlation()
 {
-    cout << "test_spearman_linear_correlation\n";
+    cout << "test_spearman_correlation\n";
 
     Index size;
 
@@ -358,11 +358,11 @@ void CorrelationsTest::run_test_case()
 {
     cout << "Running correlation analysis test case...\n";
 
-    // Correlation methods
+    // Correlation
 
     test_linear_correlation();
 
-    test_spearman_linear_correlation();
+    test_spearman_correlation();
 
     test_logistic_correlation();
 
@@ -372,7 +372,7 @@ void CorrelationsTest::run_test_case()
 
     test_power_correlation();
 
-    // Time series correlation methods
+    // Time series correlation
 
     test_autocorrelations();
 

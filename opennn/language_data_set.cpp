@@ -1335,7 +1335,7 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
     string line;
 
-    while (file.good())
+    while(file.good())
     {
         getline(file, line);
 
@@ -1353,7 +1353,7 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
     Index counter = 0;
 
-    while (file.good())
+    while(file.good())
     {
         getline(file, line);
 
@@ -1434,11 +1434,11 @@ vector<int> get_split_indices(const string& word,
     vector<int> indices;
     int start = 0;
 
-    while (start < word.size())
+    while(start < word.size())
     {
         size_t end = word.size();
 
-        while (end > start)
+        while(end > start)
         {
             string subtoken = word.substr(start, end - start);
 
@@ -1932,7 +1932,7 @@ void LanguageDataSet::read_csv_3_language_model()
     Index sample_index = 0;
     Index raw_variable_index = 0;
 
-    while (file.good())
+    while(file.good())
     {
         getline(file, line);
 

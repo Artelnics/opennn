@@ -2059,11 +2059,11 @@ void MeanSquaredErrorTest::run_test_case()
     test_constructor();
     test_destructor();
 
-    // Convolutional network methods
+    // Convolutional network
 
     //test_calculate_gradient_convolutional_network();
 
-    // Back propagate methods
+    // Back propagate
 
     test_back_propagate_perceptron();
     test_back_propagate_probabilistic(); /*Probabilistic only works with CrossEntropyError*/

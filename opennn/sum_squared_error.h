@@ -64,7 +64,7 @@ public:
    void calculate_error_hessian_lm(const Batch&,
                                         BackPropagationLM&) const final;
 
-   // Serialization methods
+   // Serialization
 
    string get_error_type() const final;
    string get_error_type_text() const final;

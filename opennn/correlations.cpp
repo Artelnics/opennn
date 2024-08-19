@@ -584,9 +584,9 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
             linear_correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
         }
 
-        linear_correlation.r = clamp(linear_correlation.r, type(-1), type(1));
-        linear_correlation.lower_confidence = clamp(linear_correlation.lower_confidence, type(-1), type(1));
-        linear_correlation.upper_confidence = clamp(linear_correlation.upper_confidence, type(-1), type(1));
+        linear_correlation.r = bound(linear_correlation.r, type(-1), type(1));
+        linear_correlation.lower_confidence = bound(linear_correlation.lower_confidence, type(-1), type(1));
+        linear_correlation.upper_confidence = bound(linear_correlation.upper_confidence, type(-1), type(1));
     }
 
     return linear_correlation;
@@ -647,9 +647,9 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
     {
         size_t repeated = 1U;
 
-        for(size_t j = i + 1U; j < sorted_vector.size() && sorted_vector[j].first == sorted_vector[i].first;++j,++repeated);
+        for(size_t j = i + 1U; j < sorted_vector.size() && sorted_vector[j].first == sorted_vector[i].first; j++, repeated++);
 
-        for(size_t k = 0; k < repeated;++k)
+        for(size_t k = 0; k < repeated; k++)
         {
             x_rank_vector[sorted_vector[i + k].second] = rank + type(repeated - 1) / type(2);
         }
@@ -916,7 +916,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     DataSet data_set(data);
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     data_set.set_training();
 
@@ -1035,7 +1035,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     DataSet data_set(data);
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     data_set.set_training();
 

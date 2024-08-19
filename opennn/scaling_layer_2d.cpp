@@ -500,7 +500,7 @@ void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
         }
         else
         {
-            throw runtime_error("Unknown scaling method: " /*+ new_scaling_methods_string[i] +*/ ".\n");
+            throw runtime_error("Unknown scaling method: " + to_string(new_scaling_methods_string[i]) + ".\n");
         }
     }
 
