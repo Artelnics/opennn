@@ -282,7 +282,6 @@ namespace opennn
 
 /*
 
-
 class TextGenerationAlphabet
 {
 public:
