@@ -102,7 +102,7 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
         assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
 
-        assert_true(is_zero(back_propagation.gradient) , LOG);
+        assert_true(is_zero(back_propagation.gradient), LOG);
     }
 
     // Test approximation all random
