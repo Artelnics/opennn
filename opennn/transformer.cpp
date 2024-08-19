@@ -418,7 +418,7 @@ void Transformer::tokenize_whitespace(const Tensor<string, 1>& context_tokens, T
         {
             if(j == context_tokens.size() || (j == context_length - 2 && !line_ended))
             {
-                context(j + 1) = 2; /// end indicator
+                context(j + 1) = 2; // end indicator
                 line_ended = true;
             }
             else

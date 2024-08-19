@@ -27,13 +27,6 @@
 namespace opennn
 {
 
-/// This class represents the weighted squared error term.
-
-///
-/// The weighted squared error measures the difference between the outputs from a neural network and the targets in a data set.
-/// This functional is used in data modeling problems, such as function regression, 
-/// classification and time series prediction.
-
 class WeightedSquaredError : public LossIndex
 {
 
@@ -105,15 +98,9 @@ public:
 
 private:
 
-   /// Weight for the positives for the calculation of the error.
-
    type positives_weight = type(NAN);
 
-   /// Weight for the negatives for the calculation of the error.
-
    type negatives_weight = type(NAN);
-
-   /// Coefficient of normalization
 
    type normalization_coefficient;
 

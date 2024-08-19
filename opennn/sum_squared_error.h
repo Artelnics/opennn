@@ -11,25 +11,21 @@
 
 // System includes
 
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include <sstream>
+//#include <iostream>
+//#include <fstream>
+//#include <cmath>
+//#include <sstream>
 #include <string>
-#include <limits>
+//#include <limits>
 
 // OpenNN includes
 
-#include "config.h"
+//#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 
 namespace opennn
 {
-
-/// This class represents the sum squared error functional. 
-///
-/// This is used as the error term in data modeling problems, such as function regression, classification or time series prediction.
 
 class SumSquaredError : public LossIndex
 {

@@ -137,8 +137,6 @@ namespace opennn
 
     vector<pair<string, int>> count_words(const Tensor<string, 1>&);
 
-    /// Enumeration of available languages.
-
     enum Language {ENG, SPA};
 
     // Get methods
@@ -229,16 +227,11 @@ namespace opennn
 
     // Stemming methods
 
-    /// Reduces inflected(or sometimes derived) words to their word stem, base or root form
-
     string get_rv(const string&, const Tensor<string, 1>&);
 
     Tensor<string, 1> get_r1_r2(const string&, const Tensor<string, 1>&);
 
     // Word bag
-
-    /// It is a simplifying representation where a text(such as a sentence or a document) is represented
-    /// as the bag(multiset) of its words, disregarding grammar and even word order but keeping multiplicity.
 
     WordBag calculate_word_bag(const Tensor<string, 1>&);
 

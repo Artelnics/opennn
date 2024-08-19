@@ -8,14 +8,8 @@
 
 #include"unit_testing.h"
 
-//#include <cmath>
-//#include <cstdlib>
-//#include <fstream>
-//#include <iomanip>
 #include <iostream>
 #include <string>
-//#include <sstream>
-//#include <time.h>
 
 namespace opennn
 {
@@ -24,7 +18,6 @@ UnitTesting::UnitTesting()
 {
 }
 
-/// Destructor.
 
 UnitTesting::~UnitTesting()
 {
@@ -32,7 +25,6 @@ UnitTesting::~UnitTesting()
     delete thread_pool_device;
 }
 
-/// Returns the number of tests which have been performed by the test case.
 
 Index UnitTesting::get_tests_count() const
 {
@@ -40,15 +32,11 @@ Index UnitTesting::get_tests_count() const
 }
 
 
-/// Returns the number of tests which have passed the test case.
-
 Index UnitTesting::get_tests_passed_count() const
 {
     return tests_passed_count;
 }
 
-
-/// Returns the number of tests which have failed the test case.
 
 Index UnitTesting::get_tests_failed_count() const
 {
@@ -56,15 +44,11 @@ Index UnitTesting::get_tests_failed_count() const
 }
 
 
-/// Returns the number of iterations for loops of random tests.
-
 Index UnitTesting::get_random_tests_number() const
 {
     return random_tests_number;
 }
 
-
-/// Returns the display messages to the screen value of this object.
 
 const bool& UnitTesting::get_display() const
 {
@@ -72,17 +56,11 @@ const bool& UnitTesting::get_display() const
 }
 
 
-/// Sets a new value for the number of tests performed by the test case.
-/// @param new_tests_count Number of tests performed.
-
 void UnitTesting::set_tests_count(const Index& new_tests_count)
 {
     tests_count = new_tests_count;
 }
 
-
-/// Sets a new value for the number of tests which have passed the test case.
-/// @param new_tests_passed_count Number of tests passed.
 
 void UnitTesting::set_tests_passed_count(const Index& new_tests_passed_count)
 {
@@ -90,17 +68,11 @@ void UnitTesting::set_tests_passed_count(const Index& new_tests_passed_count)
 }
 
 
-/// Sets a new value for the number of tests which have failed the test case.
-/// @param new_tests_failed_count Number of tests failed.
-
 void UnitTesting::set_tests_failed_count(const Index& new_tests_failed_count)
 {
     tests_failed_count = new_tests_failed_count;
 }
 
-
-/// Sets a new value for the number of iterations in loops of random tests.
-/// @param new_random_tests_number Number of random tests in each loop.
 
 void UnitTesting::set_random_tests_number(const Index& new_random_tests_number)
 {
@@ -108,23 +80,11 @@ void UnitTesting::set_random_tests_number(const Index& new_random_tests_number)
 }
 
 
-/// Sets a new display value to this object.
-/// @param new_display Display value.
-
 void UnitTesting::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Checks that a condition is true.
-/// It increases the number of tests by one.
-/// It increases the number of tests passed by one if the condition is true.
-/// It increases the number of tests failed by one if the condition is false.
-/// It appends to the information message an error message is the condition is not satisfied.
-/// @param condition Expression of the condition to be tested.
-/// @param error_message Error message to be appended to the information message,
-/// typically the filename and the line where the condition has been tested.
 
 void UnitTesting::assert_true(const bool& condition, const string& error_message)
 {
@@ -143,15 +103,6 @@ void UnitTesting::assert_true(const bool& condition, const string& error_message
 }
 
 
-/// Checks that a condition is false.
-/// It increases the number of tests by one.
-/// It increases the number of tests passed by one if the condition is false.
-/// It increases the number of tests failed by one if the condition is true.
-/// It appends to the information message an error message is the condition is not satisfied.
-/// @param condition Expression of the condition to be tested.
-/// @param error_message Error message to be appended to the information message,
-/// typically the filename and the line where the condition has been tested.
-
 void UnitTesting::assert_false(const bool& condition, const string& error_message)
 {
     tests_count++;
@@ -168,15 +119,6 @@ void UnitTesting::assert_false(const bool& condition, const string& error_messag
     }
 }
 
-
-/// Prints the test case results to the screen:
-/// <ul>
-/// <li> Information message.
-/// <li> Number of tests performed.
-/// <li> Number of tests passed.
-/// <li> Number of tests failed.
-/// <li> Concluding remarks.
-/// </ul>
 
 void UnitTesting::print_results()
 {

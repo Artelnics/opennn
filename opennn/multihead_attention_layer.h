@@ -41,11 +41,11 @@ public:
 
     explicit MultiheadAttentionLayer();
 
-    explicit MultiheadAttentionLayer(const Index&, /// Input size
-                                     const Index&, /// Context size
-                                     const Index&, /// Embedding depth
-                                     const Index&, /// Number of attention heads
-                                     const bool & = false); /// Apply causal mask
+    explicit MultiheadAttentionLayer(const Index&,
+                                     const Index&,
+                                     const Index&,
+                                     const Index&,
+                                     const bool & = false);
 
     // Get methods
 
@@ -154,31 +154,17 @@ protected:
 
     // MEMBERS
 
-    /// Input size
-
     Index input_size;
-
-    /// Context size
 
     Index context_size;
 
-    /// Embedding depth
-
     Index depth;
-
-    /// Number of attention heads
 
     Index heads_number;
 
-    /// Depth used in attention computation
-
     Index hidden_depth;
 
-    // Scaling factor used for attention computation in each head
-
     type scaling_factor = 1;
-
-    /// Linear transformation weights and biases
 
     Tensor<type, 3> query_weights;
     Tensor<type, 2> query_biases;
@@ -189,28 +175,16 @@ protected:
     Tensor<type, 3> value_weights;
     Tensor<type, 2> value_biases;
 
-    /// Linear projection weights
-
     Tensor<type, 3> projection_weights;
     Tensor<type, 1> projection_biases;
 
-    /// Use causal mask or not
-
     bool use_causal_mask = false;
-
-    // Causal mask matrix
 
     Tensor<type, 2> causal_mask;
 
-    /// Dropout rate
-
     type dropout_rate = type(0);
 
-    /// Display messages to screen.
-
     bool display = true;
-
-    // Operation indices
 
     const Eigen::array<Index, 1> projection_sum_index = Eigen::array<Index, 1>({ 3 });
     const Eigen::array<Index, 2> biases_derivatives_sum_indices = Eigen::array<Index, 2>({ 0, 2 });

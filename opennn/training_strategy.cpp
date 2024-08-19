@@ -12,10 +12,6 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a training strategy object not associated with any loss index object.
-/// It also constructs the main optimization algorithm object.
-
 TrainingStrategy::TrainingStrategy()
 {
     set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
@@ -30,10 +26,6 @@ TrainingStrategy::TrainingStrategy()
 
 }
 
-
-/// Pointer constuctor.
-/// It creates a training strategy object not associated with any loss index object.
-/// It also loads the members of this object from NeuralNetwork and DataSet class.
 
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     :  data_set(new_data_set),
@@ -52,23 +44,17 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* n
 }
 
 
-/// Returns a pointer to the DataSet class.
-
 DataSet* TrainingStrategy::get_data_set()
 {
     return data_set;
 }
 
 
-/// Returns a pointer to the NeuralNetwork class.
-
 NeuralNetwork* TrainingStrategy::get_neural_network() const
 {
     return neural_network;
 }
 
-
-/// Returns a pointer to the LossIndex class.
 
 LossIndex* TrainingStrategy::get_loss_index()
 {
@@ -92,8 +78,6 @@ LossIndex* TrainingStrategy::get_loss_index()
     }
 }
 
-
-/// Returns a pointer to the OptimizationAlgorithm class.
 
 OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
 {
@@ -132,17 +116,11 @@ bool TrainingStrategy::has_data_set() const
 }
 
 
-/// Returns a pointer to the gradient descent main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
 GradientDescent* TrainingStrategy::get_gradient_descent()
 {
     return &gradient_descent;
 }
 
-
-/// Returns a pointer to the conjugate gradient main algorithm.
-/// It also throws an exception if that pointer is nullptr.
 
 ConjugateGradient* TrainingStrategy::get_conjugate_gradient()
 {
@@ -150,17 +128,11 @@ ConjugateGradient* TrainingStrategy::get_conjugate_gradient()
 }
 
 
-/// Returns a pointer to the Newton method main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
 QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method()
 {
     return &quasi_Newton_method;
 }
 
-
-/// Returns a pointer to the Levenberg-Marquardt main algorithm.
-/// It also throws an exception if that pointer is nullptr.
 
 LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm()
 {
@@ -168,17 +140,11 @@ LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm
 }
 
 
-/// Returns a pointer to the stochastic gradient descent main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
 StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent()
 {
     return &stochastic_gradient_descent;
 }
 
-
-/// Returns a pointer to the adaptive moment estimation main algorithm.
-/// It also throws an exception if that pointer is nullptr.
 
 AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation()
 {
@@ -186,26 +152,17 @@ AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation()
 }
 
 
-/// Returns a pointer to the sum squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
 SumSquaredError* TrainingStrategy::get_sum_squared_error()
 {
     return &sum_squared_error;
 }
 
 
-/// Returns a pointer to the mean squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
 MeanSquaredError* TrainingStrategy::get_mean_squared_error()
 {
     return &mean_squared_error;
 }
 
-
-/// Returns a pointer to the normalized squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
 
 NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error()
 {
@@ -214,19 +171,11 @@ NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error()
 }
 
 
-
-/// Returns a pointer to the Minkowski error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
 MinkowskiError* TrainingStrategy::get_Minkowski_error()
 {
-
     return &Minkowski_error;
 }
 
-
-/// Returns a pointer to the cross-entropy error which is used as error.
-/// If that object does not exists, an exception is thrown.
 
 CrossEntropyError* TrainingStrategy::get_cross_entropy_error()
 {
@@ -234,16 +183,11 @@ CrossEntropyError* TrainingStrategy::get_cross_entropy_error()
 }
 
 
-/// Returns a pointer to the weighted squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
 WeightedSquaredError* TrainingStrategy::get_weighted_squared_error()
 {
     return &weighted_squared_error;
 }
 
-
-/// Returns the type of the main loss algorithm composing this training strategy object.
 
 const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
 {
@@ -251,15 +195,11 @@ const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
 }
 
 
-/// Returns the type of the main optimization algorithm composing this training strategy object.
-
 const TrainingStrategy::OptimizationMethod& TrainingStrategy::get_optimization_method() const
 {
     return optimization_method;
 }
 
-
-/// Returns a string with the type of the main loss algorithm composing this training strategy object.
 
 string TrainingStrategy::write_loss_method() const
 {
@@ -288,9 +228,6 @@ string TrainingStrategy::write_loss_method() const
     }
 }
 
-
-/// Returns a string with the type of the main optimization algorithm composing this training strategy object.
-/// If that object does not exists, an exception is thrown.
 
 string TrainingStrategy::write_optimization_method() const
 {
@@ -325,9 +262,6 @@ string TrainingStrategy::write_optimization_method() const
 }
 
 
-/// Returns a string with the main type in text format.
-/// If that object does not exists, an exception is thrown.
-
 string TrainingStrategy::write_optimization_method_text() const
 {
     if(optimization_method == OptimizationMethod::GRADIENT_DESCENT)
@@ -361,8 +295,6 @@ string TrainingStrategy::write_optimization_method_text() const
 }
 
 
-/// Returns a string with the main loss method type in text format.
-
 string TrainingStrategy::write_loss_method_text() const
 {
     switch(loss_method)
@@ -391,18 +323,11 @@ string TrainingStrategy::write_loss_method_text() const
 }
 
 
-/// Returns true if messages from this class can be displayed on the screen, or false if messages from
-/// this class can't be displayed on the screen.
-
 const bool& TrainingStrategy::get_display() const
 {
     return display;
 }
 
-
-/// Sets the loss index pointer to nullptr.
-/// It also destructs the loss index and the optimization algorithm.
-/// Finally, it sets the rest of the members to their default values.
 
 void TrainingStrategy::set()
 {
@@ -419,10 +344,6 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
     set_data_set(new_data_set);
 }
 
-
-/// Sets the loss index method.
-/// If that object does not exists, an exception is thrown.
-/// @param new_loss_method String with the name of the new method.
 
 void TrainingStrategy::set_loss_method(const string& new_loss_method)
 {
@@ -457,10 +378,6 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
 }
 
 
-/// Sets the loss index method.
-/// If that object does not exists, an exception is thrown.
-/// @param new_loss_method New method type.
-
 void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
 {
     loss_method = new_loss_method;
@@ -469,17 +386,11 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
 }
 
 
-/// Sets a new type of main optimization algorithm.
-/// @param new_optimization_method Type of main optimization algorithm.
-
 void TrainingStrategy::set_optimization_method(const OptimizationMethod& new_optimization_method)
 {
     optimization_method = new_optimization_method;
 }
 
-
-/// Sets a new main optimization algorithm from a string containing the type.
-/// @param new_optimization_method String with the type of main optimization algorithm.
 
 void TrainingStrategy::set_optimization_method(const string& new_optimization_method)
 {
@@ -560,9 +471,6 @@ void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_
 }
 
 
-/// Sets a pointer to a loss index object to be associated with the training strategy.
-/// @param new_loss_index Pointer to a loss index object.
-
 void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 {
     gradient_descent.set_loss_index(new_loss_index);
@@ -597,11 +505,6 @@ void TrainingStrategy::set_loss_index_neural_network(NeuralNetwork* new_neural_n
     Minkowski_error.set_neural_network(new_neural_network);
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void TrainingStrategy::set_display(const bool& new_display)
 {
@@ -673,19 +576,10 @@ void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 }
 
 
-/// Sets the members of the training strategy object to their default values:
-/// <ul>
-/// <li> Display: true.
-/// </ul>
-
 void TrainingStrategy::set_default() const
 {
 }
 
-
-/// This is the most important method of this class.
-/// It optimizes the loss index of a neural network.
-/// This method also returns a structure with the results from training.
 
 TrainingResults TrainingStrategy::perform_training()
 {
@@ -745,10 +639,6 @@ TrainingResults TrainingStrategy::perform_training()
 }
 
 
-/// Check the time steps and the batch size in forecasting problems.
-/// The batch size must be multiple of the time step.
-/// If they are not multiples, then the batch size is changed to a multiple (the first multiple that is lower than the batch size).
-
 void TrainingStrategy::fix_forecasting()
 {
     Index timesteps = 0;
@@ -801,8 +691,6 @@ void TrainingStrategy::fix_forecasting()
 }
 
 
-/// Prints to the screen the string representation of the training strategy object.
-
 void TrainingStrategy::print() const
 {
     cout << "Training strategy object" << endl;
@@ -810,9 +698,6 @@ void TrainingStrategy::print() const
     cout << "Optimization algorithm: " << write_optimization_method() << endl;
 }
 
-
-/// Serializes the training strategy object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -869,9 +754,6 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Loads the members of this training strategy object from an XML document.
-/// @param document XML document of the TinyXML library.
 
 void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -1137,9 +1019,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to an XML-type file the members of the optimization algorithm object.
-/// @param file_name Name of optimization algorithm XML-type file.
-
 void TrainingStrategy::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
@@ -1152,10 +1031,6 @@ void TrainingStrategy::save(const string& file_name) const
     }
 }
 
-
-/// Loads a gradient descent object from an XML-type file.
-/// Please mind about the file format, wich is specified in the User's Guide.
-/// @param file_name Name of optimization algorithm XML-type file.
 
 void TrainingStrategy::load(const string& file_name)
 {

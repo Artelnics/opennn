@@ -37,15 +37,10 @@ struct PoolingLayerBackPropagationCuda;
 #endif
 
 
-/// This class represents the Pooling Layer in Convolutional Neural Network(CNN).
-/// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
-
 class PoolingLayer : public Layer
 {
 
 public:
-
-    /// Enumeration of the available methods for pooling data.
 
     enum class PoolingMethod{NoPooling, MaxPooling, AveragePooling};
 

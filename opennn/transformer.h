@@ -66,43 +66,23 @@ protected:
 
     string name = "transformer";
 
-    /// Length of input entries
-
     Index input_length;
-
-    /// Length of context entries
 
     Index context_length;
 
-    /// Maximum value in input
-
     Index input_dimensions;
-
-    /// Maximum value in context
 
     Index context_dimension;
 
-    /// Embedding depth for each EmbeddingLayer
-
     Index embedding_depth;
-
-    /// Depth of internal perceptron layers
 
     Index perceptron_depth;
 
-    /// Number of attention heads per MultiheadAttentionLayer
-
     Index heads_number;
-
-    /// Number of encoder and decoder layers
 
     Index layers_number;
 
-    /// Dropout rate
-
     type dropout_rate = 0;
-
-    /// Vocabularies
 
     Tensor<string, 1> input_vocabulary;
     Tensor<string, 1> context_vocabulary;

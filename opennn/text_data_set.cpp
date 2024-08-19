@@ -71,53 +71,6 @@ const Tensor<Index,1>& TextDataSet::get_words_frequencies() const
 }
 
 
-/// Returns the string which will be used as separator in the data file for Text Classification.
-
-//string TextDataSet::get_text_separator_string() const
-//{
-//    switch(text_separator)
-//    {
-//    case Separator::Tab:
-//        return "Tab";
-
-//    case Separator::Semicolon:
-//        return "Semicolon";
-
-//    default:
-//        return string();
-//    }
-//}
-
-
-// Sets a new separator.
-// @param new_separator Separator value.
-
-//void TextDataSet::set_text_separator(const Separator& new_separator)
-//{
-//    separator = new_separator;
-//}
-
-
-// Sets a new separator from a string.
-// @param new_separator Char with the separator value.
-
-//void TextDataSet::set_text_separator(const string& new_separator_string)
-//{
-//    if(new_separator_string == "Tab")
-//    {
-//        text_separator = Separator::Tab;
-//    }
-//    else if(new_separator_string == "Semicolon")
-//    {
-//        text_separator = Separator::Semicolon;
-//    }
-//    else
-//    {
-//        throw runtime_error("Unknown separator: " + new_separator_string + ".\n");
-//    }
-//}
-
-
 Tensor<string, 2> TextDataSet::get_text_data_file_preview() const
 {
     return text_data_file_preview;
@@ -141,8 +94,6 @@ void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 //    words_frequencies = new_words_frequencies;
 //}
 
-
-/// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 
 void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1191,9 +1142,6 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-/// Transforms a sentence to Tensor, according to dataset raw_variables.
-/// @param sentence Sentence that we will transform
-
 Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 {
 /*
@@ -1230,8 +1178,6 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 }
 
 /*
-/// Reduces inflected (or sometimes derived) words to their word stem, base or root form (english language).
-/// @param tokens
 
 Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
 {

@@ -142,16 +142,16 @@ void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& te
 }
 
 
-/// Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
-/// The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
-/// By default contraction axes are (1, 0)
-
 void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
                                  const TensorMap<Tensor<type, 3>>& A,
                                  TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
                                  const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
+    // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
+    // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
+    // By default contraction axes are (1, 0)
+
     const Index A_rows = A.dimension(0);
     const Index A_columns = A.dimension(1);
     const Index B_rows = B.dimension(0);
@@ -1164,11 +1164,6 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 }
 
 
-/// Returns the number of elements which are equal or greater than a minimum given value
-/// and equal or less than a maximum given value.
-/// @param minimum Minimum value.
-/// @param maximum Maximum value.
-
 Index count_between(const Tensor<type,1>& vector,const type& minimum, const type& maximum)
 {
     const Index size = vector.size();
@@ -1189,8 +1184,7 @@ void get_row(Tensor<type, 1>& row, const Tensor<type, 2, RowMajor>& matrix, cons
 {
     const Index columns_number = row.dimension(0);
 
-    copy(
-         matrix.data() + row_index * columns_number,
+    copy(matrix.data() + row_index * columns_number,
          matrix.data() + (row_index + 1) * columns_number,
          row.data());
 }
@@ -1213,9 +1207,8 @@ void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, c
 {
     const Index columns_number = vector.size();
 
-    copy(
-        (type*) vector.data(),
-        (type*) vector.data() + columns_number,
+    copy((type*)vector.data(),
+        (type*)vector.data() + columns_number,
         matrix.data() + row_index * columns_number);
 }
 
@@ -1305,8 +1298,6 @@ void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<typ
     hessian.setZero();
 }
 
-
-/// Returns the l2 norm of a vector.
 
 type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
 {
@@ -1453,8 +1444,6 @@ void substract_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
         matrix(i, i) -= values(i);
 }
 
-
-/// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b)
 {
@@ -1696,11 +1685,9 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 
     Tensor<Index, 1> data(size);
 
-    copy( 
-         x.data(), x.data() + x.size(), data.data());
+    copy(x.data(), x.data() + x.size(), data.data());
 
-    copy( 
-         y.data(), y.data() + y.size(), data.data() + x.size());
+    copy(y.data(), y.data() + y.size(), data.data() + x.size());
 
     return data;
 }
@@ -1882,8 +1869,6 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
    return new_matrix;
 }
 
-
-/// Returns true if any value is less or equal than a given value, and false otherwise.
 
 bool is_less_than(const Tensor<type, 1>& raw_variable, const type& value)
 {
