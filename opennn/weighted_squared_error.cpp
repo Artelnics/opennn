@@ -81,8 +81,6 @@ void WeightedSquaredError::set_weights(const type& new_positives_weight, const t
 }
 
 
-/// Calculates of the weights for the positives and negatives values with the data of the data set.
-
 void WeightedSquaredError::set_weights()
 {
     if(data_set->get_target_variables_number() == 0)
@@ -113,8 +111,6 @@ void WeightedSquaredError::set_weights()
 }
 
 
-/// Calculates of the normalization coefficient with the data of the data set.
-
 void WeightedSquaredError::set_normalization_coefficient()
 {
     if(data_set->get_target_raw_variables().size()==0)
@@ -137,9 +133,6 @@ void WeightedSquaredError::set_normalization_coefficient()
     }
 }
 
-
-/// \brief set_data_set
-/// \param new_data_set
 
 void WeightedSquaredError::set_data_set(DataSet* new_data_set)
 {
@@ -324,25 +317,17 @@ void WeightedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 }
 
 
-/// Returns a string with the name of the weighted squared error loss type, "WEIGHTED_SQUARED_ERROR".
-
 string WeightedSquaredError::get_error_type() const
 {
     return "WEIGHTED_SQUARED_ERROR";
 }
 
 
-/// Returns a string with the name of the weighted squared error loss type in text format.
-
 string WeightedSquaredError::get_error_type_text() const
 {
     return "Weighted squared error";
 }
 
-
-/// Serializes the cross-entropy error object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
-/// @param file_stream
 
 void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -379,9 +364,6 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Loads a weighted squared error object from an XML document.
-/// @param document Pointer to a TinyXML document with the object data.
 
 void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 {

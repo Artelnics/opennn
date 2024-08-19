@@ -12,21 +12,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a testing analysis object neither associated with a neural network nor to a mathematical model or a data set.
-/// By default, it constructs the function regression testing object.
-
 TestingAnalysis::TestingAnalysis()
 {
     set_default();
 }
 
-
-/// Neural network and data set constructor.
-/// It creates a testing analysis object associated with a neural network and to a data set.
-/// By default, it constructs the function regression testing object.
-/// @param new_neural_network Pointer to a neural network object.
-/// @param new_data_set Pointer to a data set object.
 
 TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : neural_network(new_neural_network),
@@ -36,9 +26,6 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
 }
 
 
-/// Destructor.
-/// It deletes the function regression testing, classification testing, time series prediction testing and inverse problem testing objects.
-
 TestingAnalysis::~TestingAnalysis()
 {
     delete thread_pool;
@@ -46,15 +33,11 @@ TestingAnalysis::~TestingAnalysis()
 }
 
 
-/// Returns a pointer to the neural network object which is to be tested.
-
 NeuralNetwork* TestingAnalysis::get_neural_network() const
 {
     return neural_network;
 }
 
-
-/// Returns a pointer to the data set object on which the neural network is tested.
 
 DataSet* TestingAnalysis::get_data_set() const
 {
@@ -62,19 +45,11 @@ DataSet* TestingAnalysis::get_data_set() const
 }
 
 
-/// Returns true if messages from this class can be displayed on the screen,
-/// or false if messages from this class can't be displayed on the screen.
-
 const bool& TestingAnalysis::get_display() const
 {
     return display;
 }
 
-
-/// Sets some default values to the testing analysis object:
-/// <ul>
-/// <li> Display: True.
-/// </ul>
 
 void TestingAnalysis::set_default()
 {
@@ -97,17 +72,11 @@ void TestingAnalysis::set_threads_number(const int& new_threads_number)
 }
 
 
-/// Sets a new neural network object to be tested.
-/// @param new_neural_network Pointer to a neural network object.
-
 void TestingAnalysis::set_neural_network(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
 }
 
-
-/// Sets a new data set to be used for validating the quality of a trained neural network.
-/// @param new_data_set Pointer to a data set object.
 
 void TestingAnalysis::set_data_set(DataSet* new_data_set)
 {
@@ -115,22 +84,11 @@ void TestingAnalysis::set_data_set(DataSet* new_data_set)
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void TestingAnalysis::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Checks that:
-/// <ul>
-/// <li> The neural network pointer is not nullptr.
-/// <li> The data set pointer is not nullptr.
-/// </ul>
 
 void TestingAnalysis::check() const
 {
@@ -143,13 +101,6 @@ void TestingAnalysis::check() const
         throw runtime_error("Data set pointer is nullptr.\n");
 }
 
-
-/// Performs a goodness-of-fit analysis between the testing samples in the data set and
-/// the corresponding neural network outputs.
-/// It returns all the provided parameters in a vector of vectors.
-/// The number of elements in the vector is equal to the number of output variables.
-/// The size of each element is equal to the number of regression parameters(2).
-/// In this way, each subvector contains the regression parameters intercept and slope of an output variable.
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 {
@@ -195,13 +146,6 @@ void TestingAnalysis::print_linear_regression_correlations() const
     }
 }
 
-
-/// Performs a goodness of fit analysis of a neural network on the testing indices of a data set.
-/// It returns a goodness of fit analysis results structure, which consists of:
-/// <ul>
-/// <li> Goodness of fit parameters.
-/// <li> Scaled target and output data.
-/// </ul>
 
 Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodness_of_fit_analysis() const
 {
@@ -254,16 +198,6 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
 }
 
 
-/// Calculates the errors between the outputs from a neural network and the testing samples in a data set.
-/// It returns a vector of tree matrices:
-/// <ul>
-/// <li> Absolute error.
-/// <li> Relative error.
-/// <li> Percentage error.
-/// </ul>
-/// The number of rows in each matrix is the number of testing samples in the data set.
-/// The number of raw_variables is the number of outputs in the neural network.
-
 Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
     const Index testing_samples_number = data_set->get_testing_samples_number();
@@ -309,9 +243,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     return error_data;
 }
 
-
-/// Calculates the percentege errors between the outputs from a neural network and the testing samples in a data set.
-/// The number of rows in each matrix is the number of testing samples in the data set.
 
 Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 {
@@ -408,14 +339,6 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 }
 
 
-/// Calculates the basic descriptives on the error data.
-/// <ul>
-/// <li> Minimum.
-/// <li> Maximum.
-/// <li> Mean.
-/// <li> Standard deviation
-/// </ul>
-
 Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_descriptives() const
 {
     // Neural network
@@ -472,10 +395,6 @@ void TestingAnalysis::print_error_data_descriptives() const
 }
 
 
-/// Calculates histograms for the relative errors of all the output variables.
-/// The number of bins is set by the user.
-/// @param bins_number Number of bins in the histograms.
-
 Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Index& bins_number) const
 {
     const Tensor<type, 2> error_data = calculate_percentage_error_data();
@@ -492,9 +411,6 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Inde
     return histograms;
 }
 
-
-/// Returns a vector with the indices of the samples which have the greatest error.
-/// @param samples_number Number of maximal indices to be computed.
 
 Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Index& samples_number) const
 {
@@ -519,9 +435,6 @@ Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Inde
     return maximal_errors;
 }
 
-
-/// This method calculates the training, selection and testing errors.
-/// Returns a matrix with the differents errors.
 
 Tensor<type, 2> TestingAnalysis::calculate_errors() const
 {
@@ -691,6 +604,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
     return errors;
 }
 
+
 Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_errors() const
 {
     // Data set
@@ -810,15 +724,6 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
 }
 
 
-/// Returns a vector containing the values of the errors between the outputs of the neural network
-/// and the targets. The vector consists of:
-/// <ul>
-/// <li> Sum squared error.
-/// <li> Mean squared error.
-/// <li> Root mean squared error.
-/// <li> Normalized squared error.
-/// </ul>
-
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_testing_errors() const
 {
     Tensor<Tensor<type, 1>, 1> testing_errors(2);
@@ -868,17 +773,6 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_testing_errors() const
 }
 
 
-/// Returns a vector containing the values of the errors between the outputs of the neural network
-/// and the targets for a binary classification problem. The vector consists of:
-/// <ul>
-/// <li> Sum squared error.
-/// <li> Mean squared error.
-/// <li> Root mean squared error.
-/// <li> Normalized squared error.
-/// <li> Cross-entropy error.
-/// <li> Weighted squared error.
-/// </ul>
-
 Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors() const
 {
     // Data set
@@ -910,16 +804,6 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
 }
 
 
-/// Returns a vector containing the values of the errors between the outputs of the neural network
-/// and the targets for a multiple classification problem. The vector consists of:
-/// <ul>
-/// <li> Sum squared error.
-/// <li> Mean squared error.
-/// <li> Root mean squared error.
-/// <li> Normalized squared error.
-/// <li> Cross-entropy error.
-/// </ul>
-
 Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_errors() const
 {
     // Data set
@@ -949,10 +833,6 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 }
 
 
-/// Returns the normalized squared error between the targets and the outputs of the neural network.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-
 type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
     const Index samples_number = targets.dimension(0);
@@ -975,11 +855,6 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
     return sum_squared_error()/normalization_coefficient;
 }
 
-
-/// Returns the cross-entropy error between the targets and the outputs of the neural network.
-/// It can only be computed for classification problems.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
 
 type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targets,
         const Tensor<type, 2>& outputs) const
@@ -1018,6 +893,7 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
     return cross_entropy_error/type(testing_samples_number);
 }
 
+
 type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets) const
 {
     const Index batch_samples_number = outputs.dimension(0);
@@ -1047,12 +923,6 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
     return cross_entropy_error(0) / mask_sum(0);
 }
 
-
-/// Returns the weighted squared error between the targets and the outputs of the neural network. It can only be computed for
-/// binary classification problems.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-/// @param weights Weights of the postitives and negatives to evaluate.
 
 type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& targets,
                                                        const Tensor<type, 2>& outputs,
@@ -1116,6 +986,7 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets, 
     return Minkoski_error();
 }
 
+
 type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets) const
 {
     const Index batch_samples_number = outputs.dimension(0);
@@ -1160,11 +1031,6 @@ type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& 
 
 }
 
-
-/// Returns the confusion matrix for a binary classification problem.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-/// @param decision_threshold Decision threshold.
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(const Tensor<type, 2>& targets,
                                                                             const Tensor<type, 2>& outputs,
@@ -1238,11 +1104,8 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 }
 
 
-/// Returns the confusion matrix for a binary classification problem.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-
-Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(const Tensor<type, 2>& targets,
+                                                                              const Tensor<type, 2>& outputs) const
 {
     const Index samples_number = targets.dimension(0);
     const Index targets_number = targets.dimension(1);
@@ -1272,14 +1135,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
 }
 
 
-/// Returns a vector containing the number of total positives and the number of total negatives
-/// samples of a data set.
-/// The size of the vector is two and consists of:
-/// <ul>
-/// <li> Total positives.
-/// <li> Total negatives.
-/// </ul>
-
 Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
     const Tensor<Index, 2> confusion = calculate_confusion_binary_classification(targets, outputs, type(0.5));
@@ -1291,10 +1146,6 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
     return positives_negatives_rate;
 }
 
-
-/// Returns the confusion matrix of a neural network on the testing samples of a data set.
-/// If the number of outputs is one, the size of the confusion matrix is two.
-/// If the number of outputs is greater than one, the size of the confusion matrix is the number of outputs.
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
@@ -1339,7 +1190,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 }
 
 
-Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets, Index outputs_number) const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs,
+                                                      const Tensor<type, 2>& targets,
+                                                      const Index& outputs_number) const
 {
     if(outputs_number == 1)
     {
@@ -1362,13 +1215,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
     }
 }
 
-/// Performs a ROC curve analysis.
-/// It returns a ROC curve analysis results structure, which consists of:
-/// <ul>
-/// <li> ROC curve
-/// <li> Area under the ROC curve
-/// <li> Optimal threshold
-/// </ul>
 
 TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() const
 {
@@ -1400,11 +1246,6 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
 }
 
 
-/// Calculates the Wilcoxon parameter, which is used for calculating the area under a ROC curve.
-/// Returns 1 if first value is greater than second one, 0 if second value is greater than first one or 0.5 in other case.
-/// @param x Target data value.
-/// @param y Target data value.
-
 type TestingAnalysis::calculate_Wilcoxon_parameter(const type& x, const type& y) const
 {
     if(x > y)
@@ -1421,13 +1262,6 @@ type TestingAnalysis::calculate_Wilcoxon_parameter(const type& x, const type& y)
     }
 }
 
-
-/// Returns a matrix with the values of a ROC curve for a binary classification problem.
-/// The number of raw_variables is three. The third raw_variable contains the decision threshold.
-/// The number of rows is one more than the number of outputs if the number of outputs is lower than 100
-/// or 50 in other case.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
 
 Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
@@ -1532,9 +1366,6 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 }
 
 
-/// Returns the area under a ROC curve using trapezoidal integration.
-/// @param roc_curve ROC curve.
-
 type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& roc_curve) const
 {
     type area_under_curve = type(0);
@@ -1547,10 +1378,6 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& roc_curv
     return area_under_curve/ type(2);
 }
 
-
-/// Returns the confidence limit for the area under a roc curve.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
 
 type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
@@ -1580,11 +1407,6 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
 }
 
 
-/// Returns the point of optimal classification accuracy, which is the nearest ROC curve point to the upper left corner(0,1).
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-/// @param roc_curve ROC curve.
-
 type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& roc_curve) const
 {
     const Index points_number = roc_curve.dimension(0);
@@ -1611,27 +1433,19 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& roc_cur
 }
 
 
-/// Performs a cumulative gain analysis.
-/// Returns a matrix with the values of a cumulative gain chart.
-
 Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
 {
-    Tensor<type, 2> inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set->get_testing_target_data();
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
 
     return cumulative_gain;
 }
 
-
-/// Returns a matrix with the values of a cumulative gain chart.
-/// The number of raw_variables is two, the number of rows is 20.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
 
 Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
@@ -1696,11 +1510,6 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
 }
 
 
-/// Returns a matrix with the values of a cumulative gain chart for the negative samples.
-/// The number of raw_variables is two, the number of rows is 20.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-
 Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
     const Index total_negatives = calculate_positives_negatives_rate(targets, outputs)[1];
@@ -1763,9 +1572,6 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
 }
 
 
-/// Performs a lift chart analysis.
-/// Returns a matrix with the values of a lift chart.
-
 Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
 {
     Tensor<type, 2> inputs = data_set->get_testing_input_data();
@@ -1780,10 +1586,6 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
     return lift_chart;
 }
 
-
-/// Returns a matrix with the values of lift chart for a given cumulative gain chart.
-/// Size is the same as the cumulative lift chart one.
-/// @param cumulative_gain A cumulative gain chart.
 
 Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cumulative_gain) const
 {
@@ -1807,15 +1609,6 @@ Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cum
 }
 
 
-/// Performs a Kolmogorov-Smirnov analysis, which consists of the cumulative gain for the positive samples and the cumulative
-/// gain for the negative samples.
-/// It returns a Kolmogorov-Smirnov results structure, which consists of:
-/// <ul>
-/// <li> Positive cumulative gain
-/// <li> Negative cumulative gain
-/// <li> Maximum gain
-/// </ul>
-
 TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Smirnov_analysis() const
 {
     Tensor<type, 2> inputs = data_set->get_testing_input_data();
@@ -1833,18 +1626,15 @@ TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Sm
         = calculate_negative_cumulative_gain(targets, outputs);
 
     Kolmogorov_Smirnov_results.maximum_gain =
-        calculate_maximum_gain(Kolmogorov_Smirnov_results.positive_cumulative_gain,Kolmogorov_Smirnov_results.negative_cumulative_gain);
+        calculate_maximum_gain(Kolmogorov_Smirnov_results.positive_cumulative_gain,
+                               Kolmogorov_Smirnov_results.negative_cumulative_gain);
 
     return Kolmogorov_Smirnov_results;
 }
 
 
-/// Returns the score of the the maximum gain, which is the point of major separation between the positive and
-/// the negative cumulative gain charts, and the samples ratio for which it occurs.
-/// @param positive_cumulative_gain Cumulative gain fo the positive samples.
-/// @param negative_cumulative_gain Cumulative gain fo the negative samples.
-
-Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& positive_cumulative_gain, const Tensor<type, 2>& negative_cumulative_gain) const
+Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& positive_cumulative_gain,
+                                                        const Tensor<type, 2>& negative_cumulative_gain) const
 {
     const Index points_number = positive_cumulative_gain.dimension(0);
 
@@ -1870,8 +1660,6 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
 }
 
 
-/// Performs a calibration plot analysis.
-
 Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
 {
     Tensor<type, 2> inputs = data_set->get_testing_input_data();
@@ -1885,11 +1673,6 @@ Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
     return calibration_plot;
 }
 
-
-/// Returns a matix with the values of a calibration plot.
-/// Number of raw_variables is two. Number of rows varies depending on the distribution of positive targets.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
 
 Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
@@ -1974,10 +1757,6 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 }
 
 
-/// Returns the histogram of the outputs.
-/// @param outputs Testing output data.
-/// @param bins_number Number of bins of the histogram.
-
 Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<type, 2>& outputs, const Index& bins_number) const
 {
     Tensor<Histogram, 1> output_histogram(1);
@@ -1989,14 +1768,6 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<ty
     return output_histogram;
 }
 
-
-/// Returns a structure with the binary classification rates, which has the indices of the true positive, false negative, false positive and true negative samples.
-/// <ul>
-/// <li> True positive samples
-/// <li> False positive samples
-/// <li> False negative samples
-/// <li> True negative samples
-/// </ul>
 
 TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates() const
 {
@@ -2030,13 +1801,6 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 }
 
 
-/// Returns a vector with the indices of the true positive samples.
-/// The size of the vector is the number of true positive samples.
-/// @param targets Testing target data.
-/// @param outputs Testing outputs.
-/// @param testing_indices Indices of testing data.
-/// @param decision_threshold Decision threshold.
-
 Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
         const Tensor<Index, 1>& testing_indices, const type& decision_threshold) const
 {
@@ -2058,20 +1822,13 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
 
     Tensor<Index, 1> true_positives_indices(index);
 
-    copy( true_positives_indices_copy.data(),
-          true_positives_indices_copy.data() + index,
-          true_positives_indices.data());
+    copy(true_positives_indices_copy.data(),
+         true_positives_indices_copy.data() + index,
+         true_positives_indices.data());
 
     return true_positives_indices;
 }
 
-
-/// Returns a vector with the indices of the false positive samples.
-/// The size of the vector is the number of false positive samples.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-/// @param testing_indices Indices of the testing data
-/// @param decision_threshold Decision threshold.
 
 Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
         const Tensor<Index, 1>& testing_indices, const type& decision_threshold) const
@@ -2101,15 +1858,10 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<
 }
 
 
-/// Returns a vector with the indices of the false negative samples.
-/// The size of the vector is the number of false negative samples.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-/// @param testing_indices Indices of the testing data
-/// @param decision_threshold Decision threshold.
-
-Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
-        const Tensor<Index, 1>& testing_indices, const type& decision_threshold) const
+Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<type, 2>& targets,
+                                                                   const Tensor<type, 2>& outputs,
+                                                                   const Tensor<Index, 1>& testing_indices,
+                                                                   const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
@@ -2136,15 +1888,10 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<
 }
 
 
-/// Returns a vector with the indices of the true negative samples.
-/// The size of the vector is the number of true negative samples.
-/// @param targets Testing target data.
-/// @param outputs Testinga output data.
-/// @param testing_indices Indices of the testing data
-/// @param decision_threshold Decision threshold.
-
-Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
-        const Tensor<Index, 1>& testing_indices, const type& decision_threshold) const
+Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<type, 2>& targets,
+                                                                  const Tensor<type, 2>& outputs,
+                                                                  const Tensor<Index, 1>& testing_indices,
+                                                                  const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
@@ -2259,8 +2006,6 @@ void TestingAnalysis::save_multiple_classification_tests(const string& classific
 }
 
 
-/// Returns a matrix of subvectors which have the rates for a multiple classification problem.
-
 Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {
     Tensor<type, 2> inputs = data_set->get_testing_input_data();
@@ -2274,10 +2019,6 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
     return calculate_multiple_classification_rates(targets, outputs, testing_indices);
 }
 
-
-/// Returns a matrix of subvectors which have the rates for a multiple classification problem.
-/// The number of rows of the matrix is the number targets.
-/// The number of columns of the matrix is the number of raw_variables of the target data.
 
 Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
                                                                                     const Tensor<type, 2>& outputs,
@@ -2594,12 +2335,6 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
 }
 
 
-/// Calculates error autocorrelation across varying lags.
-/// Returns a vector of subvectors.
-/// The size of the vector is the number of targets.
-/// The size of the subvectors is the number of lags for which autocorrelation is calculated.
-/// @param maximum_lags_number Number of lags for which error autocorrelation is to be calculated.
-
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(const Index& maximum_lags_number) const
 {
     Tensor<type, 2> inputs = data_set->get_testing_input_data();
@@ -2623,12 +2358,6 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 }
 
 
-/// Calculates the correlation between input and error.
-/// Returns a vector of subvectors.
-/// The size of the vector is the number of targets.
-/// The size of the subvectors is the number of lags for which cross-correlation is calculated.
-/// @param maximum_lags_number Number of lags for which cross-correlation is calculated.
-
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index& lags_number) const
 {
     const Index targets_number = data_set->get_target_variables_number();
@@ -2651,6 +2380,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     return inputs_errors_cross_correlation;
 }
 
+
 pair<type, type> TestingAnalysis::test_transformer() const
 {
     cout << "Testing transformer..." << endl;
@@ -2658,50 +2388,36 @@ pair<type, type> TestingAnalysis::test_transformer() const
     Transformer* transformer = static_cast<Transformer*>(neural_network);
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
-    Tensor<type, 2> input = language_data_set->get_testing_input_data();
-    Tensor<type, 2> context = language_data_set->get_testing_context_data();
-    Tensor<type, 2> target = language_data_set->get_testing_target_data();
+    const Tensor<type, 2> input = language_data_set->get_testing_input_data();
+    const Tensor<type, 2> context = language_data_set->get_testing_context_data();
+    const Tensor<type, 2> target = language_data_set->get_testing_target_data();
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
 
     Tensor<type, 2> testing_input(testing_batch_size, input.dimension(1));
-    for(Index i = 0; i < testing_batch_size; i++)    testing_input.chip(i, 0) = input.chip(i, 0);
+
+    for(Index i = 0; i < testing_batch_size; i++)
+        testing_input.chip(i, 0) = input.chip(i, 0);
 
     Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
-    for(Index i = 0; i < testing_batch_size; i++)    testing_context.chip(i, 0) = context.chip(i, 0);
+
+    for(Index i = 0; i < testing_batch_size; i++)
+        testing_context.chip(i, 0) = context.chip(i, 0);
 
     Tensor<type, 2> testing_target(testing_batch_size, target.dimension(1));
-    for(Index i = 0; i < testing_batch_size; i++)    testing_target.chip(i, 0) = target.chip(i, 0);
+
+    for(Index i = 0; i < testing_batch_size; i++)
+        testing_target.chip(i, 0) = target.chip(i, 0);
 
     Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 
-    type error = calculate_cross_entropy_error_3d(outputs, testing_target);
-    type accuracy = calculate_masked_accuracy(outputs, testing_target);
+    const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
+
+    const type accuracy = calculate_masked_accuracy(outputs, testing_target);
 
     return pair<type, type>(error, accuracy);
 }
 
-
-/// Returns the results of a binary classification test in a single vector.
-/// The size of that vector is fifteen.
-/// The elements are:
-/// <ul>
-/// <li> Classification accuracy
-/// <li> Error rate
-/// <li> Sensitivity
-/// <li> Specificity
-/// <li> Precision
-/// <li> Positive likelihood
-/// <li> Negative likelihood
-/// <li> F1 score
-/// <li> False positive rate
-/// <li> False discovery rate
-/// <li> False negative rate
-/// <li> Negative predictive value
-/// <li> Matthews correlation coefficient
-/// <li> Informedness
-/// <li> Markedness
-/// </ul>
 
 Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 {
@@ -2945,16 +2661,6 @@ void TestingAnalysis::print_binary_classification_tests() const
 }
 
 
-/// Returns the results of a multiple classification test in a single matrix.
-/// The size of that vector is 3 *(number of target variables + 2).
-/// The raw_variables are:
-/// <ul>
-/// <li> Precision
-/// <li> Recall
-/// <li> F1-score
-/// </ul>
-/// The 2 lasts row represents the normal and weighted average of each test.
-
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 {
     //const Index inputs_number = neural_network->get_inputs_number();
@@ -3049,8 +2755,6 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 }
 
 
-/// Returns the logloss for a binary classification problem.
-
 type TestingAnalysis::calculate_logloss() const
 {
     Tensor<type, 2> inputs = data_set->get_testing_input_data();
@@ -3072,9 +2776,6 @@ type TestingAnalysis::calculate_logloss() const
 }
 
 
-/// Serializes the testing analysis object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
-
 void TestingAnalysis::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -3095,9 +2796,6 @@ void TestingAnalysis::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this testing analysis object.
-/// @param document XML document containing the member data.
 
 void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -3128,9 +2826,6 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to an XML file the members of this testing analysis object.
-/// @param file_name Name of testing analysis XML file.
-
 void TestingAnalysis::save(const string& file_name) const
 {
     FILE *pFile;
@@ -3145,9 +2840,6 @@ void TestingAnalysis::save(const string& file_name) const
     }
 }
 
-
-/// Loads from an XML file the members for this testing analysis object.
-/// @param file_name Name of testing analysis XML file.
 
 void TestingAnalysis::load(const string& file_name)
 {

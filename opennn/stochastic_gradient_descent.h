@@ -33,13 +33,6 @@ namespace opennn
 
 struct StochasticGradientDescentData;
 
-/// This concrete class represents the stochastic gradient descent optimization algorithm[1] for a loss index of a neural network.
-
-/// It supports momentum, learning rate decay, and Nesterov momentum.
-///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
-/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
-
 class StochasticGradientDescent : public OptimizationAlgorithm
 {
 
@@ -112,41 +105,23 @@ private:
 
    // Training operators
 
-   /// Initial learning rate
-
    type initial_learning_rate;
-
-   /// Learning rate decay over each update.
 
    type initial_decay;
 
-   /// Parameter that accelerates SGD in the relevant direction and dampens oscillations.
-
    type momentum = type(0);
 
-   /// Boolean. Whether to apply Nesterov momentum.
-
    bool nesterov = false;
-
-   /// Number of samples per training batch.
 
    Index batch_samples_number = 1000;
 
    // Stopping criteria
 
-   /// Goal value for the loss. It is a stopping criterion.
-
    type training_loss_goal = type(0);
-
-   /// Maximum selection error allowed
 
    Index maximum_selection_failures = numeric_limits<Index>::max();
 
-   /// Maximum epochs number
-
    Index maximum_epochs_number = 10000;
-
-   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time = type(3600);
 
@@ -159,8 +134,6 @@ private:
 
 struct StochasticGradientDescentData : public OptimizationAlgorithmData
 {
-    /// Default constructor.
-
     explicit StochasticGradientDescentData()
     {
     }

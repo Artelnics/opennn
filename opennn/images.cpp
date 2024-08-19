@@ -77,15 +77,13 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 
     for(int i = 0; i <rows_number; i++)
     {
-        copy( 
-            original.data() + columns_number * rows_number - (i + 1) * columns_number,
+        copy(original.data() + columns_number * rows_number - (i + 1) * columns_number,
             original.data() + columns_number * rows_number - i * columns_number,
             aux_row);
 
         // reverse(aux_row, aux_row + raw_variables_number); //uncomment this if the lower right corner px should be in the upper left corner.
 
-        copy( 
-             aux_row, aux_row + columns_number,
+        copy(aux_row, aux_row + columns_number,
              sorted.data() + columns_number * i);
     }
 }
@@ -225,8 +223,7 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
 
     if(rows_number % 4 == 0)
     {
-        copy( 
-             image_data,
+        copy(image_data,
              image_data + columns_number * channels * rows_number,
              data_without_padding.data());
     }
@@ -236,14 +233,12 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
         {
             if(i == 0)
             {
-                copy( 
-                     image_data,
+                copy(image_data,
                      image_data + columns_number * channels, data_without_padding.data());
             }
             else
             {
-                copy( 
-                    image_data + channels * columns_number * i + padding * i,
+                copy(image_data + channels * columns_number * i + padding * i,
                     image_data + channels * columns_number * (i + 1) + padding * i,
                     data_without_padding.data() + channels * columns_number * i);
             }

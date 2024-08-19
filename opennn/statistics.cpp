@@ -12,14 +12,10 @@
 namespace opennn
 {
 
-/// Default constructor.
-
 Descriptives::Descriptives()
 {
 }
 
-
-/// Values constructor.
 
 Descriptives::Descriptives(const type& new_minimum, const type& new_maximum,
                            const type& new_mean, const type& new_standard_deviation)
@@ -93,17 +89,11 @@ void Descriptives::set(const type& new_minimum, const type& new_maximum,
 }
 
 
-/// Sets a new minimum value in the descriptives structure.
-/// @param new_minimum Minimum value.
-
 void Descriptives::set_minimum(const type& new_minimum)
 {
     minimum = new_minimum;
 }
 
-
-/// Sets a new maximum value in the descriptives structure.
-/// @param new_maximum Maximum value.
 
 void Descriptives::set_maximum(const type& new_maximum)
 {
@@ -111,28 +101,17 @@ void Descriptives::set_maximum(const type& new_maximum)
 }
 
 
-/// Sets a new mean value in the descriptives structure.
-/// @param new_mean Mean value.
-
 void Descriptives::set_mean(const type& new_mean)
 {
     mean = new_mean;
 }
 
 
-/// Sets a new standard deviation value in the descriptives structure.
-/// @param new_standard_deviation Standard deviation value.
-
 void Descriptives::set_standard_deviation(const type& new_standard_deviation)
 {
     standard_deviation = new_standard_deviation;
 }
 
-
-/// Returns all the statistical parameters contained in a single vector.
-/// The size of that vector is four.
-/// The elements correspond to the minimum, maximum, mean and standard deviation
-/// values respectively.
 
 Tensor<type, 1> Descriptives::to_vector() const
 {
@@ -146,9 +125,6 @@ Tensor<type, 1> Descriptives::to_vector() const
 }
 
 
-/// Returns true if the minimum value is -1 and the maximum value is +1,
-/// and false otherwise.
-
 bool Descriptives::has_minimum_minus_one_maximum_one()
 {
     if(abs(minimum + type(1)) < type(NUMERIC_LIMITS_MIN) && abs(maximum - type(1)) < type(NUMERIC_LIMITS_MIN))
@@ -159,9 +135,6 @@ bool Descriptives::has_minimum_minus_one_maximum_one()
     return false;
 }
 
-
-/// Returns true if the mean value is 0 and the standard deviation value is 1,
-/// and false otherwise.
 
 bool Descriptives::has_mean_zero_standard_deviation_one()
 {
@@ -176,8 +149,6 @@ bool Descriptives::has_mean_zero_standard_deviation_one()
 }
 
 
-/// Print the tittle of descriptives structure
-
 void Descriptives::print(const string& title) const
 {
     cout << title << endl
@@ -186,6 +157,7 @@ void Descriptives::print(const string& title) const
          << "Mean: " << mean << endl
          << "Standard deviation: " << standard_deviation << endl;
 }
+
 
 BoxPlot::BoxPlot(const type& new_minimum,
                  const type& new_first_cuartile,
@@ -215,10 +187,6 @@ void BoxPlot::set(const type& new_minimum,
 }
 
 
-/// Saves to a file the minimum, maximum, mean and standard deviation
-/// of the descriptives structure.
-/// @param file_name Name of descriptives data file.
-
 void Descriptives::save(const string &file_name) const
 {
     ofstream file(file_name.c_str());
@@ -245,19 +213,12 @@ Histogram::Histogram() {
 }
 
 
-/// Bins number constructor.
-/// @param bins_number Number of bins in the histogram.
-
 Histogram::Histogram(const Index& bins_number)
 {
     centers.resize(bins_number);
     frequencies.resize(bins_number);
 }
 
-
-/// Values constructor.
-/// @param new_centers Center values for the bins.
-/// @param new_frequencies Number of variates in each bin.
 
 Histogram::Histogram(const Tensor<type, 1>&new_centers,
                      const Tensor<Index, 1>&new_frequencies)
@@ -266,10 +227,6 @@ Histogram::Histogram(const Tensor<type, 1>&new_centers,
     frequencies = new_frequencies;
 }
 
-
-/// Values constructor.
-/// @param new_centers Center values for the bins.
-/// @param new_frequencies Number of variates in each bin.
 
 Histogram::Histogram(const Tensor<Index, 1>& new_frequencies,
                      const Tensor<type, 1>& new_centers,
@@ -282,10 +239,6 @@ Histogram::Histogram(const Tensor<Index, 1>& new_frequencies,
     maximums = new_maximums;
 }
 
-
-/// Data constructor
-/// @param data Numerical data.
-/// @param number_of_bins Number of bins.
 
 Histogram::Histogram(const Tensor<type, 1>& data,
                      const Index& number_of_bins)
@@ -324,9 +277,6 @@ Histogram::Histogram(const Tensor<type, 1>& data,
     frequencies = new_frequencies;
 }
 
-
-/// Probabilities constructor
-/// @param data Numerical probabilities data.
 
 Histogram::Histogram(const Tensor<type, 1>& probability_data)
 {
@@ -371,15 +321,11 @@ Histogram::Histogram(const Tensor<type, 1>& probability_data)
 }
 
 
-/// Returns the number of bins in the histogram.
-
 Index Histogram::get_bins_number() const
 {
     return centers.size();
 }
 
-
-/// Returns the number of bins with zero variates.
 
 Index Histogram::count_empty_bins() const
 {
@@ -396,23 +342,17 @@ Index Histogram::count_empty_bins() const
 }
 
 
-/// Returns the number of variates in the less populated bin.
-
 Index Histogram::calculate_minimum_frequency() const
 {
     return minimum(frequencies);
 }
 
 
-/// Returns the number of variates in the most populated bin.
-
 Index Histogram::calculate_maximum_frequency() const
 {
     return maximum(frequencies);
 }
 
-
-/// Retuns the index of the most populated bin.
 
 Index Histogram::calculate_most_populated_bin() const
 {
@@ -426,8 +366,6 @@ Index Histogram::calculate_most_populated_bin() const
     return 0;
 }
 
-
-/// Returns a vector with the centers of the less populated bins.
 
 Tensor<type, 1> Histogram::calculate_minimal_centers() const
 {
@@ -468,8 +406,6 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
 }
 
 
-/// Returns a vector with the centers of the most populated bins.
-
 Tensor<type, 1> Histogram::calculate_maximal_centers() const
 {
     const Index maximum_frequency = calculate_maximum_frequency();
@@ -509,9 +445,6 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
 }
 
 
-/// Returns the number of the bin to which a given value belongs to.
-/// @param value Value for which we want to get the bin.
-
 Index Histogram::calculate_bin(const type& value) const
 {
     const Index bins_number = get_bins_number();
@@ -547,9 +480,6 @@ Index Histogram::calculate_bin(const type& value) const
 }
 
 
-/// Returns the frequency of the bin to which a given value belongs to.
-/// @param value Value for which we want to get the frequency.
-
 Index Histogram::calculate_frequency(const type&value) const
 {
     const Index bins_number = get_bins_number();
@@ -580,9 +510,6 @@ void Histogram::save(const string& histogram_file_name) const
 }
 
 
-/// Returns the smallest element of a type vector.
-/// @param vector Vector to obtain the minimum value.
-
 type minimum(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
@@ -603,9 +530,6 @@ type minimum(const Tensor<type, 1>& vector)
 }
 
 
-/// Returns the smallest element of a index vector.
-/// @param vector Vector to obtain the minimum value.
-
 Index minimum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
@@ -625,10 +549,6 @@ Index minimum(const Tensor<Index, 1>& vector)
     return minimum;
 }
 
-
-/// Returns the smallest element of a type vector.
-/// @param vector Vector to obtain the minimum value.
-/// @param indices Vector of used indices.
 
 type minimum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
@@ -654,9 +574,6 @@ type minimum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 }
 
 
-/// Returns the largest element in the vector.
-/// @param vector Vector to obtain the maximum value.
-
 type maximum(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
@@ -676,10 +593,6 @@ type maximum(const Tensor<type, 1>& vector)
     return maximum;
 }
 
-
-/// Returns the largest element in the vector.
-/// @param vector Vector to obtain the maximum value.
-/// @param indices Vector of used indices.
 
 type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
@@ -704,8 +617,6 @@ type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
     return maximum;
 }
 
-/// Returns the largest element of a index vector.
-/// @param vector Vector to obtain the maximum value.
 
 Index maximum(const Tensor<Index, 1>& vector)
 {
@@ -726,13 +637,6 @@ Index maximum(const Tensor<Index, 1>& vector)
     return maximum;
 }
 
-
-/// Returns the maximums values of given raw_variables.
-/// The format is a vector of type values.
-/// The size of that vector is equal to the number of given raw_variables.
-/// @param matrix Used matrix.
-/// @param rows_indices Indices of the rows for which the maximums are to be computed.
-/// @param raw_variables_indices Indices of the raw_variables for which the maximums are to be computed.
 
 Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
                                  const Tensor<Index, 1>& rows_indices,
@@ -801,11 +705,6 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
 }
 
 
-/// Returns the mean of the subvector defined by a start and end elements.
-/// @param vector Vector to be evaluated.
-/// @param begin Start element.
-/// @param end End element.
-
 type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 {
 #ifdef OPENNN_DEBUG
@@ -827,9 +726,6 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
     return type(sum/(end-begin+1));
 }
 
-
-/// Returns the mean of the elements in the vector.
-/// @param vector Vector to be evaluated.
 
 type mean(const Tensor<type, 1>& vector)
 {
@@ -862,9 +758,6 @@ type mean(const Tensor<type, 1>& vector)
     return mean;
 }
 
-
-/// Returns the variance of the elements in the vector.
-/// @param vector Vector to be evaluated.
 
 type variance(const Tensor<type, 1>& vector)
 {
@@ -901,9 +794,6 @@ type variance(const Tensor<type, 1>& vector)
     return variance;
 }
 
-
-/// Returns the variance of the elements in the vector.
-/// @param vector Vector to be evaluated.
 
 type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
@@ -945,9 +835,6 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 }
 
 
-/// Returns the standard deviation of the elements in the vector.
-/// @param vector Vector to be evaluated.
-
 type standard_deviation(const Tensor<type, 1>& vector)
 {
 #ifdef OPENNN_DEBUG
@@ -964,9 +851,6 @@ type standard_deviation(const Tensor<type, 1>& vector)
     return sqrt(variance(vector));
 }
 
-
-/// Returns the standard deviation of the elements in the vector.
-/// @param vector Vector to be evaluated.
 
 type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
@@ -1019,9 +903,6 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
 }
 
 
-/// Returns the asymmetry of the elements in the vector.
-/// @param vector Vector to be evaluated.
-
 type asymmetry(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
@@ -1068,8 +949,6 @@ type asymmetry(const Tensor<type, 1>& vector)
 
 }
 
-/// Returns the kurtosis of the elements in the vector.
-/// @param vector Vector to be evaluated.
 
 type kurtosis(const Tensor<type, 1>& vector)
 {
@@ -1115,9 +994,6 @@ type kurtosis(const Tensor<type, 1>& vector)
     return numerator/denominator - type(3);
 }
 
-
-/// Returns the median of the elements in the vector
-/// @param vector Vector to be evaluated.
 
 type median(const Tensor<type, 1>& vector)
 {
@@ -1167,9 +1043,6 @@ type median(const Tensor<type, 1>& vector)
     }
 }
 
-
-/// Returns the quartiles of the elements in the vector.
-/// @param vector Vector to be evaluated.
 
 Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 {
@@ -1253,10 +1126,6 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
     return quartiles;
 }
 
-
-/// Returns the quartiles of the elements of the vector that correspond to the given indices.
-/// @param vector Vector to be evaluated.
-/// @param indices Indices of the elements of the vector to be evaluated.
 
 Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
@@ -1350,10 +1219,6 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
 }
 
 
-
-/// Returns the box and whispers for a vector.
-/// @param vector Vector to be evaluated.
-
 BoxPlot box_plot(const Tensor<type, 1>& vector)
 {
     BoxPlot box_plot;
@@ -1380,10 +1245,6 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 }
 
 
-/// Returns the box and whispers for the elements of the vector that correspond to the given indices.
-/// @param vector Vector to be evaluated.
-/// @param indices Indices of the elements of the vector to be evaluated.
-
 BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
     BoxPlot box_plot;
@@ -1401,15 +1262,6 @@ BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
     return box_plot;
 }
 
-
-/// This method bins the elements of the vector into a given number of equally
-/// spaced containers.
-/// It returns a vector of two vectors.
-/// The size of both subvectors is the number of bins.
-/// The first subvector contains the frequency of the bins.
-/// The second subvector contains the center of the bins.
-/// @param vector Vector to obtain the histogram.
-/// @param bins_number Number of bins to split the histogram.
 
 Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 {
@@ -1534,16 +1386,6 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 }
 
 
-/// This method bins the elements of the vector into a given number of equally
-/// spaced containers.
-/// It returns a vector of two vectors.
-/// The size of both subvectors is the number of bins.
-/// The first subvector contains the frequency of the bins.
-/// The second subvector contains the center of the bins.
-/// @param vector
-/// @param center
-/// @param bins_number
-
 Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index&  bins_number)
 {
 #ifdef OPENNN_DEBUG
@@ -1628,13 +1470,6 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 }
 
 
-/// This method bins the elements of the vector into a given number of equally
-/// spaced containers.
-/// It returns a vector of two vectors.
-/// The size of both subvectors is the number of bins.
-/// The first subvector contains the frequency of the bins.
-/// The second subvector contains the center of the bins.
-
 Histogram histogram(const Tensor<bool, 1>& v)
 {
     Tensor<type, 1> minimums(2);
@@ -1672,10 +1507,6 @@ Histogram histogram(const Tensor<bool, 1>& v)
 }
 
 
-/// Returns a vector containing the sum of the frequencies of the bins to which
-/// this vector belongs.
-/// @param histograms Used histograms.
-
 Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
 {
     const Index histograms_number = histograms.size();
@@ -1690,13 +1521,6 @@ Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
     return total_frequencies;
 }
 
-
-/// Calculates a histogram for each raw_variable, each having a given number of bins.
-/// It returns a vector of vectors.
-/// The size of the main vector is the number of raw_variables.
-/// Each subvector contains the frequencies and centers of that colums.
-/// @param matrix Data to calculate histograms
-/// @param bins_number Number of bins for each histogram.
 
 Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
 {
@@ -1717,11 +1541,6 @@ Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins
     return histograms;
 }
 
-
-/// Returns the basic descriptives of the raw_variables.
-/// The format is a vector of descriptives structures.
-/// The size of that vector is equal to the number of raw_variables in this matrix.
-/// @param matrix Used matrix.
 
 Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 {
@@ -1751,12 +1570,6 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
     return descriptives;
 }
 
-
-/// Returns the basic descriptives of given raw_variables for given rows.
-/// The format is a vector of descriptives structures.
-/// The size of that vector is equal to the number of given raw_variables.
-/// @param row_indices Indices of the rows for which the descriptives are to be computed.
-/// @param raw_variables_indices Indices of the raw_variables for which the descriptives are to be computed.
 
 Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
                                      const Tensor<Index, 1>& row_indices,
@@ -1845,13 +1658,6 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 }
 
 
-/// Returns the minimums values of given raw_variables.
-/// The format is a vector of type values.
-/// The size of that vector is equal to the number of given raw_variables.
-/// @param matrix Used matrix.
-/// @param rows_indices Indices of the rows for which the minimums are to be computed.
-/// @param raw_variables_indices Indices of the raw_variables for which the minimums are to be computed.
-
 Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>& raw_variables_indices)
 {
     const Index rows_number = matrix.dimension(0);
@@ -1917,12 +1723,6 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
 }
 
 
-/// Returns the maximums values of given raw_variables.
-/// The format is a vector of type values.
-/// The size of that vector is equal to the number of given raw_variables.
-/// @param matrix Used matrix.
-/// @param raw_variables_indices Indices of the raw_variables for which the descriptives are to be computed.
-
 Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& raw_variables_indices)
 {
     const Index rows_number = matrix.dimension(0);
@@ -1968,9 +1768,6 @@ type range(const Tensor<type, 1>& vector)
 }
 
 
-/// Returns the minimum, maximum, mean and standard deviation of the elements in the vector.
-/// @param vector Vector to be evaluated.
-
 Descriptives descriptives(const Tensor<type, 1>& vector)
 {
     Descriptives descriptives(vector);
@@ -1978,11 +1775,6 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
     return descriptives;
 }
 
-
-/// Calculates the distance between the empirical distribution of the vector and
-/// the normal, half-normal and uniform cumulative distribution. It returns 0, 1
-/// or 2 if the closest distribution is the normal, half-normal or the uniform,
-/// respectively.
 
 Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 {
@@ -2068,10 +1860,6 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 }
 
 
-/// Returns a vector with the mean values of all the matrix raw_variables.
-/// The size is equal to the number of raw_variables in the matrix.
-/// @param matrix Matrix used.
-
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
@@ -2106,10 +1894,6 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
 }
 
 
-/// Returns a vector with the mean values of given raw_variables.
-/// The size of the vector is equal to the size of the raw_variable indices vector.
-/// @param raw_variables_indices Indices of raw_variables.
-
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& raw_variables_indices)
 {
     const Index rows_number = matrix.dimension(0);
@@ -2138,12 +1922,6 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& raw_
     return mean;
 }
 
-
-/// Returns a vector with the mean values of given raw_variables for given rows.
-/// The size of the vector is equal to the size of the raw_variable indices vector.
-/// @param matrix Matrix used.
-/// @param row_indices Indices of rows.
-/// @param raw_variables_indices Indices of raw_variables.
 
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& raw_variables_indices)
 {
@@ -2218,9 +1996,6 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 }
 
 
-/// Returns a vector with the mean values of all the matrix raw_variables.
-/// The size is equal to the number of raw_variables in the matrix.
-
 type mean(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
     const Index rows_number = matrix.dimension(0);
@@ -2260,9 +2035,6 @@ type mean(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
     return mean;
 }
 
-
-/// Returns a vector with the median values of all the matrix raw_variables.
-/// The size is equal to the number of raw_variables in the matrix.
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 {
@@ -2306,9 +2078,6 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 }
 
 
-/// Returns a vector with the median values of all the matrix raw_variables.
-/// The size is equal to the number of raw_variables in the matrix.
-
 type median(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
     // median
@@ -2349,10 +2118,6 @@ type median(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
     return median;
 }
 
-
-/// Returns a vector with the median values of given raw_variables.
-/// The size of the vector is equal to the size of the raw_variable indices vector.
-/// @param raw_variables_indices Indices of raw_variables.
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& raw_variables_indices)
 {
@@ -2397,11 +2162,6 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ra
     return median;
 }
 
-
-/// Returns a vector with the median values of given raw_variables for given rows.
-/// The size of the vector is equal to the size of the raw_variable indices vector.
-/// @param row_indices Indices of rows.
-/// @param raw_variables_indices Indices of raw_variables.
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& raw_variables_indices)
 {
@@ -2481,10 +2241,6 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 }
 
 
-/// Calculates the distance between the empirical distribution of the vector and the
-/// normal distribution.
-/// @param vector Vector to be evaluated.
-
 type normal_distribution_distance(const Tensor<type, 1>& vector)
 {
     type normal_distribution_distance = type(0);
@@ -2529,10 +2285,6 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 }
 
 
-/// Calculates the distance between the empirical distribution of the vector and the
-/// half normal distribution.
-/// @param vector Vector to be evaluated.
-
 type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 {
     type half_normal_distribution_distance = type(0);
@@ -2576,10 +2328,6 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
     return half_normal_distribution_distance;
 }
 
-
-/// Calculates the distance between the empirical distribution of the vector and the
-/// uniform distribution.
-/// @param vector Vector to be evaluated.
 
 type uniform_distribution_distance(const Tensor<type, 1>& vector)
 {
@@ -2643,8 +2391,6 @@ Tensor<type, 1> variation_percentage(const Tensor<type, 1>& vector)
 }
 
 
-/// Returns the index of the smallest element in the vector.
-
 Index minimal_index(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
@@ -2666,8 +2412,6 @@ Index minimal_index(const Tensor<type, 1>& vector)
     return minimal_index;
 }
 
-
-/// Returns the index of the largest element in the vector.
 
 Index maximal_index(const Tensor<type, 1>& vector)
 {
@@ -2691,8 +2435,6 @@ Index maximal_index(const Tensor<type, 1>& vector)
 }
 
 
-/// Returns the index of the largest element in the vector.
-
 Index maximal_index_from_indices(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
     const Index size = vector.dimension(0);
@@ -2714,9 +2456,6 @@ Index maximal_index_from_indices(const Tensor<type, 1>& vector, const Tensor<Ind
     return maximal_index;
 }
 
-
-/// Returns the indices of the smallest elements in the vector.
-/// @param number Number of minimal indices to be computed.
 
 Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
@@ -2753,9 +2492,6 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
     return minimal_indices;
 }
 
-
-/// Returns the indices of the largest elements in the vector.
-/// @param number Number of maximal indices to be computed.
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
@@ -2796,8 +2532,6 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
 }
 
 
-/// Returns the row and raw_variable indices corresponding to the entry with minimum value.
-
 Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
@@ -2825,8 +2559,6 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
 }
 
 
-/// Returns the row and raw_variable indices corresponding to the entry with maximum value.
-
 Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
@@ -2853,9 +2585,6 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
     return maximal_indices;
 }
 
-
-/// Returns a matrix in which each of the raw_variables contain the maximal indices of each of the raw_variables of the
-/// original matrix.
 
 Tensor<Index, 2> maximal_raw_variables_indices(const Tensor<type, 2>& matrix, const Index& maximum_number)
 {
@@ -2940,9 +2669,6 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
     sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
-    /// Aempirical
-    ///
-
     Tensor<type, 1> percentiles(10);
 
     for(Index i = 0; i < 9; i++)
@@ -2953,14 +2679,12 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
         else
             percentiles[i] = type(sorted_vector[new_size * (i + 1) / 10]);
     }
+
     percentiles[9] = maximum(new_vector);
 
     return percentiles;
 }
 
-
-/// Returns the number of nans in the vector.
-/// @param vector Vector to count the NANs
 
 Index count_nan(const Tensor<type, 1>& vector)
 {

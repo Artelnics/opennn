@@ -13,19 +13,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a probabilistic layer object with zero probabilistic neurons.
-/// It does not has Synaptic weights or Biases
-
 ProbabilisticLayer3D::ProbabilisticLayer3D()
 {
     set();
 }
 
-
-/// Probabilistic neurons number constructor.
-/// It creates a probabilistic layer with a given size.
-/// @param new_neurons_number Number of neurons in the layer.
 
 ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
 {
@@ -65,15 +57,11 @@ Index ProbabilisticLayer3D::get_biases_number() const
 }
 
 
-/// Returns the number of layer's synaptic weights
-
 Index ProbabilisticLayer3D::get_synaptic_weights_number() const
 {
     return synaptic_weights.size();
 }
 
-
-/// Returns the decision threshold.
 
 const type& ProbabilisticLayer3D::get_decision_threshold() const
 {
@@ -81,17 +69,11 @@ const type& ProbabilisticLayer3D::get_decision_threshold() const
 }
 
 
-/// Returns the method to be used for interpreting the outputs as probabilistic values.
-/// The methods available for that are Binary, Probability, Competitive and Softmax.
-
 const ProbabilisticLayer3D::ActivationFunction& ProbabilisticLayer3D::get_activation_function() const
 {
     return activation_function;
 }
 
-
-/// Returns a string with the probabilistic method for the outputs
-/// ("Competitive", "Softmax" or "NoProbabilistic").
 
 string ProbabilisticLayer3D::write_activation_function() const
 {
@@ -110,9 +92,6 @@ string ProbabilisticLayer3D::write_activation_function() const
 }
 
 
-/// Returns a string with the probabilistic method for the outputs to be included in some text
-/// ("competitive", "softmax").
-
 string ProbabilisticLayer3D::write_activation_function_text() const
 {
     if(activation_function == ActivationFunction::Competitive)
@@ -130,16 +109,11 @@ string ProbabilisticLayer3D::write_activation_function_text() const
 }
 
 
-/// Returns true if messages from this class are displayed on the screen, or false if messages
-/// from this class are not displayed on the screen.
-
 const bool& ProbabilisticLayer3D::get_display() const
 {
     return display;
 }
 
-
-/// Returns the biases of the layer.
 
 const Tensor<type, 1>& ProbabilisticLayer3D::get_biases() const
 {
@@ -147,15 +121,11 @@ const Tensor<type, 1>& ProbabilisticLayer3D::get_biases() const
 }
 
 
-/// Returns the synaptic weights of the layer.
-
 const Tensor<type, 2>& ProbabilisticLayer3D::get_synaptic_weights() const
 {
     return synaptic_weights;
 }
 
-
-/// Returns the number of parameters (biases and synaptic weights) of the layer.
 
 Index ProbabilisticLayer3D::get_parameters_number() const
 {
@@ -163,30 +133,21 @@ Index ProbabilisticLayer3D::get_parameters_number() const
 }
 
 
-/// Returns a single vector with all the layer parameters.
-/// The format is a vector of real values.
-/// The size is the number of parameters in the layer.
-
 Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
-    copy( 
-        synaptic_weights.data(),
-        synaptic_weights.data() + synaptic_weights.size(),
-        parameters.data());
+    copy(synaptic_weights.data(),
+         synaptic_weights.data() + synaptic_weights.size(),
+         parameters.data());
 
-    copy( 
-        biases.data(),
-        biases.data() + biases.size(),
-        parameters.data() + synaptic_weights.size());
+    copy(biases.data(),
+         biases.data() + biases.size(),
+         parameters.data() + synaptic_weights.size());
 
     return parameters;
 }
 
-
-/// Sets a probabilistic layer with zero probabilistic neurons.
-/// It also sets the rest of the members to their default values.
 
 void ProbabilisticLayer3D::set()
 {
@@ -199,10 +160,6 @@ void ProbabilisticLayer3D::set()
     set_default();
 }
 
-
-/// Resizes the size of the probabilistic layer.
-/// It also sets the rest of the class members to their default values.
-/// @param new_neurons_number New size for the probabilistic layer.
 
 void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
 {
@@ -218,9 +175,6 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_
 }
 
 
-/// Sets this object to be equal to another object of the same class.
-/// @param other_probabilistic_layer Probabilistic layer object to be copied.
-
 void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_layer)
 {
     set_default();
@@ -231,6 +185,7 @@ void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_l
 
     display = other_probabilistic_layer.display;
 }
+
 
 void ProbabilisticLayer3D::set_name(const string& new_layer_name)
 {
@@ -281,20 +236,15 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
 
-    copy( 
-        new_parameters.data() + index,
-        new_parameters.data() + index + synaptic_weights_number,
-        synaptic_weights.data());
+    copy(new_parameters.data() + index,
+         new_parameters.data() + index + synaptic_weights_number,
+         synaptic_weights.data());
 
-    copy( 
-        new_parameters.data() + index + synaptic_weights_number,
-        new_parameters.data() + index + synaptic_weights_number + biases_number,
-        biases.data());
+    copy(new_parameters.data() + index + synaptic_weights_number,
+         new_parameters.data() + index + synaptic_weights_number + biases_number,
+         biases.data());
 }
 
-
-/// Sets a new threshold value for discriminating between two classes.
-/// @param new_decision_threshold New discriminating value. It must be comprised between 0 and 1.
 
 void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_threshold)
 {
@@ -312,12 +262,6 @@ void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_thres
 }
 
 
-/// Sets the members to their default values:
-/// <ul>
-/// <li> Probabilistic method: Softmax.
-/// <li> Display: True.
-/// </ul>
-
 void ProbabilisticLayer3D::set_default()
 {
     layer_name = "probabilistic_layer_3d";
@@ -332,19 +276,11 @@ void ProbabilisticLayer3D::set_default()
 }
 
 
-/// Sets the chosen method for probabilistic postprocessing.
-/// Current probabilistic methods include Binary, Probability, Competitive and Softmax.
-/// @param new_activation_function Method for interpreting the outputs as probabilistic values.
-
 void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
-
-/// Sets a new method for probabilistic processing from a string with the name.
-/// Current probabilistic methods include Competitive and Softmax.
-/// @param new_activation_function Method for interpreting the outputs as probabilistic values.
 
 void ProbabilisticLayer3D::set_activation_function(const string& new_activation_function)
 {
@@ -363,28 +299,17 @@ void ProbabilisticLayer3D::set_activation_function(const string& new_activation_
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void ProbabilisticLayer3D::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
 
-/// Initializes the biases of all the neurons in the probabilistic layer with a given value.
-/// @param value Biases initialization value.
-
 void ProbabilisticLayer3D::set_biases_constant(const type& value)
 {
     biases.setConstant(value);
 }
 
-
-/// Initializes the synaptic weights of all the neurons in the probabilistic layer with a given value.
-/// @param value Synaptic weights initialization value.
 
 void ProbabilisticLayer3D::set_synaptic_weights_constant(const type& value)
 {
@@ -398,9 +323,6 @@ void ProbabilisticLayer3D::set_synaptic_weights_constant_Glorot()
 }
 
 
-/// Initializes all the biases and synaptic weights in the neural newtork with a given value.
-/// @param value Parameters initialization value.
-
 void ProbabilisticLayer3D::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
@@ -409,9 +331,6 @@ void ProbabilisticLayer3D::set_parameters_constant(const type& value)
 }
 
 
-/// Initializes all the biases and synaptic weights in the neural newtork at random with values comprised
-/// between -1 and +1.
-
 void ProbabilisticLayer3D::set_parameters_random()
 {
     biases.setRandom();
@@ -419,8 +338,6 @@ void ProbabilisticLayer3D::set_parameters_random()
     synaptic_weights.setRandom();
 }
 
-
-/// Initializes the biases to zeroes and the synaptic weights with the Glorot Uniform initializer
 
 void ProbabilisticLayer3D::set_parameters_glorot()
 {
@@ -447,13 +364,11 @@ void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, 
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy( 
-        parameters.data(),
+    copy(parameters.data(),
          parameters.data() + biases_number,
          biases.data());
 
-    copy( 
-        parameters.data() + biases_number,
+    copy(parameters.data() + biases_number,
          parameters.data() + biases_number + synaptic_weights_number,
          synaptic_weights.data());
 }
@@ -591,13 +506,11 @@ void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const type* synaptic_weights_derivatives_data = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_3d_back_propagation->biases_derivatives.data();
 
-    copy( 
-         synaptic_weights_derivatives_data,
+    copy(synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient.data() + index);
 
-    copy( 
-         biases_derivatives_data,
+    copy(biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient.data() + index + synaptic_weights_number);
 }
