@@ -30,15 +30,10 @@ struct RecurrentLayerBackPropagation;
         #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
 
-/// This class represents a layer of neurons.
-/// Layers of neurons will be used to construct multilayer neurons.
-
 class RecurrentLayer : public Layer
 {
 
 public:
-
-    /// Enumeration of the available activation functions for the recurrent layer.
 
     enum class ActivationFunction{Logistic, 
                                   HyperbolicTangent,
@@ -190,24 +185,15 @@ protected:
 
    Index timesteps = 1;
 
-   /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
-   /// and passed through the neuron's trabsfer function to generate the neuron's output.
-
    Tensor<type, 1> biases;
 
    Tensor<type, 2> input_weights;
 
-   /// This matrix contains conection strengths from a recurrent layer inputs to its neurons.
-
    Tensor<type, 2> recurrent_weights;
-
-   /// Activation function variable.
 
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
    Tensor<type, 1> hidden_states;
-
-   /// Display messages to screen.
 
    bool display = true;
 

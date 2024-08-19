@@ -11,19 +11,10 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates an empty PoolingLayer object.
-
 PoolingLayer::PoolingLayer() : Layer()
 {
     set_default();
 }
-
-
-/// Input size setter constructor.
-/// After setting new dimensions for the input, it creates an empty PoolingLayer object.
-/// @param new_input_dimensions A vector containing the desired number of rows and columns for the input.
-/// @param pool_dimensions A vector containing the desired number of rows and columns for the pool.
 
 
 PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions, const dimensions& new_pool_dimensions) : Layer()
@@ -39,15 +30,11 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions, const dimensi
 }
 
 
-/// Returns the number of neurons the layer applies to an image.
-
 Index PoolingLayer::get_neurons_number() const
 {
     return get_output_height() * get_output_width() * get_channels_number();
 }
 
-
-/// Returns the layer's outputs dimensions.
 
 dimensions PoolingLayer::get_output_dimensions() const
 {
@@ -59,16 +46,11 @@ dimensions PoolingLayer::get_output_dimensions() const
 }
 
 
-/// Returns the number of inputs of the layer.
-
 Index PoolingLayer::get_inputs_number() const
 {
     return input_dimensions.size();
 }
 
-
-
-/// Returns the number of rows of the layer's input.
 
 Index PoolingLayer::get_input_height() const
 {
@@ -76,23 +58,17 @@ Index PoolingLayer::get_input_height() const
 }
 
 
-/// Returns the number of columns of the layer's input.
-
 Index PoolingLayer::get_input_width() const
 {
     return input_dimensions[1];
 }
 
 
-/// Returns the number of channels of the layers' input.
-
 Index PoolingLayer::get_channels_number() const
 {
     return input_dimensions[2];
 }
 
-
-/// Returns the number of rows of the layer's output.
 
 Index PoolingLayer::get_output_height() const
 {
@@ -104,8 +80,6 @@ Index PoolingLayer::get_output_height() const
 }
 
 
-/// Returns the number of columns of the layer's output.
-
 Index PoolingLayer::get_output_width() const
 {
     type padding = type(0);
@@ -116,15 +90,11 @@ Index PoolingLayer::get_output_width() const
 }
 
 
-/// Returns the padding heigth.
-
 Index PoolingLayer::get_padding_heigth() const
 {
     return padding_heigth;
 }
 
-
-/// Returns the padding width.
 
 Index PoolingLayer::get_padding_width() const
 {
@@ -132,15 +102,11 @@ Index PoolingLayer::get_padding_width() const
 }
 
 
-/// Returns the pooling filter's row stride.
-
 Index PoolingLayer::get_row_stride() const
 {
     return row_stride;
 }
 
-
-/// Returns the pooling filter's raw_variable stride.
 
 Index PoolingLayer::get_column_stride() const
 {
@@ -148,15 +114,11 @@ Index PoolingLayer::get_column_stride() const
 }
 
 
-/// Returns the number of rows of the pooling filter.
-
 Index PoolingLayer::get_pool_height() const
 {
     return pool_height;
 }
 
-
-/// Returns the number of columns of the pooling filter.
 
 Index PoolingLayer::get_pool_width() const
 {
@@ -164,24 +126,17 @@ Index PoolingLayer::get_pool_width() const
 }
 
 
-/// Returns the pooling method.
-
 PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 {
     return pooling_method;
 }
 
 
-/// Returns the input_dimensions.
-
 dimensions PoolingLayer::get_inputs_dimensions() const
 {
     return input_dimensions;
 }
 
-
-/// Returns a string with the name of the pooling layer method.
-/// This can be NoPooling, MaxPooling and AveragePooling.
 
 string PoolingLayer::write_pooling_method() const
 {
@@ -224,17 +179,11 @@ void PoolingLayer::set_name(const string& new_layer_name)
 }
 
 
-/// Sets the number of rows of the layer's input.
-/// @param new_input_rows_number The desired rows number.
-
 void PoolingLayer::set_inputs_dimensions(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 }
 
-
-/// Sets the padding heigth.
-/// @param new_padding_heigth The desired heigth.
 
 void PoolingLayer::set_padding_heigth(const Index& new_padding_heigth)
 {
@@ -242,17 +191,11 @@ void PoolingLayer::set_padding_heigth(const Index& new_padding_heigth)
 }
 
 
-/// Sets the padding width.
-/// @param new_padding_width The desired width.
-
 void PoolingLayer::set_padding_width(const Index& new_padding_width)
 {
     padding_width = new_padding_width;
 }
 
-
-/// Sets the pooling filter's row stride.
-/// @param new_row_stride The desired row stride.
 
 void PoolingLayer::set_row_stride(const Index& new_row_stride)
 {
@@ -260,18 +203,11 @@ void PoolingLayer::set_row_stride(const Index& new_row_stride)
 }
 
 
-/// Sets the pooling filter's raw_variable stride.
-/// @param new_raw_variable_stride The desired raw_variable stride.
-
 void PoolingLayer::set_column_stride(const Index& new_column_stride)
 {
     column_stride = new_column_stride;
 }
 
-
-/// Sets the pooling filter's dimensions.
-/// @param new_pool_rows_number The desired number of rows.
-/// @param new_pool_columns_number The desired number of columns.
 
 void PoolingLayer::set_pool_size(const Index& new_pool_rows_number,
                                  const Index& new_pool_columns_number)
@@ -281,9 +217,6 @@ void PoolingLayer::set_pool_size(const Index& new_pool_rows_number,
     pool_width = new_pool_columns_number;
 }
 
-
-/// Sets the layer's pooling method.
-/// @param new_pooling_method The desired method.
 
 void PoolingLayer::set_pooling_method(const PoolingMethod& new_pooling_method)
 {
@@ -311,8 +244,6 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
     }
 }
 
-
-/// Sets the layer type to Layer::Pooling.
 
 void PoolingLayer::set_default()
 {
@@ -353,9 +284,6 @@ void PoolingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 }
 
 
-/// Returns the result of applying average pooling to a batch of images.
-/// @param inputs The batch of images.
-
 void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
                                                      LayerForwardPropagation* layer_forward_propagation,
                                                      const bool& is_training) const
@@ -377,9 +305,6 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
 }
 
 
-/// Returns the result of applying no pooling to a batch of images.
-/// @param inputs The batch of images.
-
 void PoolingLayer::forward_propagate_no_pooling(const Tensor<type, 4>& inputs,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
@@ -392,8 +317,6 @@ void PoolingLayer::forward_propagate_no_pooling(const Tensor<type, 4>& inputs,
     outputs.device(*thread_pool_device) = inputs;
 }
 
-
-/// Returns the result of applying max pooling to a batch of images.
 
 void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  LayerForwardPropagation* layer_forward_propagation,
@@ -558,9 +481,6 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_p
 }
 
 
-/// Serializes the convolutional layer object into an XML document of the TinyXML.
-/// See the OpenNN manual for more information about the format of this document.
-
 void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -699,9 +619,6 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-/// Deserializes a TinyXML document into this convolutional layer object.
-/// @param document TinyXML document containing the member data.
 
 void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {

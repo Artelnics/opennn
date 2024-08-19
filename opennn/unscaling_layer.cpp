@@ -12,15 +12,11 @@
 namespace opennn
 {
 
-/// Default constructor.
-
 UnscalingLayer::UnscalingLayer() : Layer()
 {
     set();
 }
 
-
-/// Outputs number constructor.
 
 UnscalingLayer::UnscalingLayer(const Index& new_neurons_number) : Layer()
 {
@@ -28,23 +24,17 @@ UnscalingLayer::UnscalingLayer(const Index& new_neurons_number) : Layer()
 }
 
 
-/// Outputs descriptives constructor.
-
 UnscalingLayer::UnscalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
 {
     set(new_descriptives);
 }
 
 
-/// Returns the number of inputs
-
 Index UnscalingLayer::get_inputs_number() const
 {
     return descriptives.size();
 }
 
-
-/// Returns the number of unscaling neurons in this layer.
 
 Index UnscalingLayer::get_neurons_number() const
 {
@@ -60,22 +50,11 @@ dimensions UnscalingLayer::get_output_dimensions() const
 }
 
 
-/// Returns all the available descriptives of the inputs and output variables.
-/// The format is a vector of pointers to vectors of size ten:
-/// <ul>
-/// <li> Mean of variables.
-/// <li> Standard deviation of variables.
-/// <li> Minimum of variables.
-/// <li> Maximum of variables.
-/// </ul>
-
 Tensor<Descriptives, 1> UnscalingLayer::get_descriptives() const
 {
     return descriptives;
 }
 
-/// Returns a vector with the minimum values of all unscaling neurons.
-/// The size is the number of neurons in the layer.
 
 Tensor<type, 1> UnscalingLayer::get_minimums() const
 {
@@ -92,9 +71,6 @@ Tensor<type, 1> UnscalingLayer::get_minimums() const
 }
 
 
-/// Returns a vector with the maximum values of all unscaling neurons.
-/// The size is the number of neurons in the layer.
-
 Tensor<type, 1> UnscalingLayer::get_maximums() const
 {
     const Index neurons_number = get_neurons_number();
@@ -110,16 +86,11 @@ Tensor<type, 1> UnscalingLayer::get_maximums() const
 }
 
 
-/// Returns the method used for unscaling
-/// (no unscaling, minimum and maximum or mean and standard deviation).
-
 Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 {
     return scalers;
 }
 
-
-/// Returns a string with the expression of the inputs scaling process.
 
 string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
@@ -183,8 +154,6 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 }
 
 
-/// Returns a vector of strings with the name of the method used for each unscaling neuron.
-
 Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 {
     const Index neurons_number = get_neurons_number();
@@ -222,9 +191,6 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
     return scaling_methods_strings;
 }
 
-
-/// Returns a string with the name of the method used for unscaling,
-/// as paragraph text.
 
 Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
 {
@@ -264,16 +230,11 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
 }
 
 
-/// Returns true if messages from this class are displayed on the screen, or false if messages
-/// from this class are not displayed on the screen.
-
 const bool& UnscalingLayer::get_display() const
 {
     return display;
 }
 
-
-/// Sets the unscaling layer to be empty.
 
 void UnscalingLayer::set()
 {
@@ -297,9 +258,6 @@ void UnscalingLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-/// Sets a new size in the unscaling layer.
-/// It also sets the members to their default values.
-
 void UnscalingLayer::set(const Index& new_neurons_number)
 {
     descriptives.resize(new_neurons_number);
@@ -311,11 +269,6 @@ void UnscalingLayer::set(const Index& new_neurons_number)
     set_default();
 }
 
-
-/// Sets the size of the unscaling layer and the descriptives values.
-/// @param new_descriptives Vector of vectors containing the minimums, maximums, means, and standard deviations for the unscaling layer.
-/// The size of this vector must be 4.
-/// The size of each subvector will be the size of the unscaling layer.
 
 void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
@@ -337,9 +290,6 @@ void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const 
 }
 
 
-/// Sets the unscaling layer members from an XML document.
-/// @param new_unscaling_layer_document Pointer to a TinyXML document containing the member data.
-
 void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_document)
 {
     set_default();
@@ -347,8 +297,6 @@ void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_docume
     from_XML(new_unscaling_layer_document);
 }
 
-
-/// Sets the members of this object to be the members of another object of the same class.
 
 void UnscalingLayer::set(const UnscalingLayer& new_unscaling_layer)
 {
@@ -359,16 +307,6 @@ void UnscalingLayer::set(const UnscalingLayer& new_unscaling_layer)
     display = new_unscaling_layer.display;
 }
 
-
-/// This member sets the default values for the unscaling layer:
-/// <ul>
-/// <li> Minimus: -1 for all unscaling neurons.
-/// <li> Maximums: 1 for al unscaling neurons.
-/// <li> Means: 0 for all unscaling neurons.
-/// <li> Standard deviations 1 for all unscaling neurons.
-/// <li> Unscaling method: Minimum and maximum.
-/// <li> Display: True.
-/// </ul>
 
 void UnscalingLayer::set_default()
 {
@@ -383,8 +321,6 @@ void UnscalingLayer::set_default()
     layer_type = Type::Unscaling;
 }
 
-/// Sets max and min scaling range for minmaxscaling.
-/// @param min and max for scaling range.
 
 void UnscalingLayer::set_min_max_range(const type min, const type max)
 {
@@ -392,9 +328,6 @@ void UnscalingLayer::set_min_max_range(const type min, const type max)
     max_range = max;
 }
 
-/// Sets the descriptives for all the neurons in the unscaling layer from a vector.
-/// The size of this vector must be equal to the number of unscaling neurons.
-/// @param new_descriptives Unscaling neurons descriptives.
 
 void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
@@ -416,19 +349,11 @@ void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
 }
 
 
-/// Sets the minimum, maximum, mean and standard deviation values of a single unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param item_descriptives  Descriptives values for that neuron.
-
 void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
     descriptives[i] = item_descriptives;
 }
 
-
-/// Sets the minimum value of a given unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param new_minimum Minimum value.
 
 void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
 {
@@ -436,19 +361,11 @@ void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
 }
 
 
-/// Sets the maximum value of a given unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param new_maximum Maximum value.
-
 void UnscalingLayer::set_maximum(const Index& i, const type& new_maximum)
 {
     descriptives[i].set_maximum(new_maximum);
 }
 
-
-/// Sets the mean value of a given unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param new_mean Mean value.
 
 void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
 {
@@ -456,28 +373,17 @@ void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
 }
 
 
-/// Sets the standard deviation value of a given unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param new_standard_deviation Standard deviation value.
-
 void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
 {
     descriptives[i].set_standard_deviation(new_standard_deviation);
 }
 
 
-/// Sets the method to be used for unscaling the outputs from the neural network
-/// @param new_unscaling_method New unscaling method for the output variables.
-
 void UnscalingLayer::set_scalers(const Tensor<Scaler,1>& new_unscaling_method)
 {
     scalers = new_unscaling_method;
 }
 
-
-/// Sets the method to be used for unscaling the outputs from the neural network
-/// The argument is a string containing the name of the method("None", "MeanStandardDeviation", "MinimumMaximum" or "Logarithm").
-/// @param new_unscaling_method New unscaling method for the output variables.
 
 void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 {
@@ -516,10 +422,6 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
     }
 }
 
-
-/// Sets the methods to be used for unscaling each variable.
-/// The argument is a vector string containing the name of the methods("None", "MeanStandardDeviation" or "Logarithm").
-/// @param new_unscaling_methods_string New unscaling methods for the variables.
 
 void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_string)
 {
@@ -566,9 +468,6 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
 }
 
 
-/// Sets the method to be used for unscaling the variables.
-/// @param new_unscaling_method New unscaling method for the variables.
-
 void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
 {
     const Index neurons_number = get_neurons_number();
@@ -579,20 +478,11 @@ void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
 void UnscalingLayer::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
-
-/// Checks whether the outptus from the unscaling layer are inside the range defined by the minimums and maximum values.
-/// It displays a warning message if they are outside.
-/// @param outputs Set of outptus from the unscaling layer.
 
 void UnscalingLayer::check_range(const Tensor<type, 1>& outputs) const
 {
@@ -630,8 +520,6 @@ void UnscalingLayer::check_range(const Tensor<type, 1>& outputs) const
     }
 }
 
-
-/// Returns true if the number of unscaling neurons is zero, and false otherwise.
 
 bool UnscalingLayer::is_empty() const
 {
@@ -721,9 +609,6 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     }
 }
 
-
-/// Serializes the unscaling layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -821,11 +706,6 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-// void from_XML(const tinyxml2::XMLDocument&) method
-
-/// Deserializes a TinyXML document into this unscaling layer object.
-/// @param document XML document containing the member data.
 
 void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {

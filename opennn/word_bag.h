@@ -16,11 +16,7 @@ namespace opennn
 
 struct WordBag
 {
-    /// Default constructor.
-
     explicit WordBag() {}
-
-    /// Destructor.
 
     virtual ~WordBag() {}
 

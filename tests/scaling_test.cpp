@@ -67,8 +67,8 @@ void ScalingTest::test_scale_data_minimum_maximum()
     scaled_matrix = data_set.get_data();
     matrix_descriptives = data_set.calculate_variables_descriptives();
 
-    assert_true(abs(matrix_descriptives(0).minimum + type(1)) < type(NUMERIC_LIMITS_MIN) , LOG);
-    assert_true(abs(matrix_descriptives(0).maximum - type(1)) < type(NUMERIC_LIMITS_MIN) , LOG);
+    assert_true(abs(matrix_descriptives(0).minimum + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(matrix_descriptives(0).maximum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -87,7 +87,7 @@ void ScalingTest::test_scale_data_no_scaling()
 
     scaled_matrix = data_set.get_data();
 
-    assert_true(are_equal(matrix, scaled_matrix,type(NUMERIC_LIMITS_MIN)) , LOG);
+    assert_true(are_equal(matrix, scaled_matrix,type(NUMERIC_LIMITS_MIN)), LOG);
 }
 
 
@@ -109,7 +109,7 @@ void ScalingTest::test_scale_data_standard_deviation()
     scaled_matrix = data_set.get_data();
     matrix_descriptives = data_set.calculate_variables_descriptives();
 
-    assert_true(abs(matrix_descriptives(0).standard_deviation - type(1)) < type(NUMERIC_LIMITS_MIN) , LOG);
+    assert_true(abs(matrix_descriptives(0).standard_deviation - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -135,7 +135,7 @@ void ScalingTest::test_scale_data_logarithmic()
         solution_matrix(i) = log(matrix(i));
     }
 
-    assert_true(are_equal(scaled_matrix, solution_matrix, type(NUMERIC_LIMITS_MIN)) , LOG);
+    assert_true(are_equal(scaled_matrix, solution_matrix, type(NUMERIC_LIMITS_MIN)), LOG);
 }
 
 
@@ -201,7 +201,7 @@ void ScalingTest::test_unscale_data_no_scaling()
 
     scaled_matrix = data_set.get_data();
 
-    assert_true(are_equal(matrix, scaled_matrix,type(NUMERIC_LIMITS_MIN)) , LOG);
+    assert_true(are_equal(matrix, scaled_matrix,type(NUMERIC_LIMITS_MIN)), LOG);
 }
 
 

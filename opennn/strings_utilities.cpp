@@ -21,10 +21,6 @@
 namespace opennn
 {
 
-/// Returns the number of strings delimited by separator.
-/// If separator does not match anywhere in the string, this method returns 0.
-/// @param str String to be tokenized.
-
 //Index count_tokens(string& text, const char& separator)
 //{
 //    trim(text);
@@ -76,10 +72,6 @@ namespace opennn
 // }
 
 
-/// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
-/// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
-/// @param str String to be tokenized.
-
 void fill_tokens(const string& text, const string& separator, Tensor<string, 1>& tokens)
 {
     tokens.setConstant("");
@@ -129,10 +121,6 @@ void fill_tokens(const string& text, const string& separator, Tensor<string, 1>&
 }
 
 
-/// Returns the number of strings delimited by separator.
-/// If separator does not match anywhere in the string, this method returns 0.
-/// @param str String to be tokenized.
-
 Index count_tokens(const string& text, const string& separator)
 {
     Index tokens_number = 0;
@@ -159,10 +147,6 @@ Index count_tokens(const string& text, const string& separator)
     return tokens_number + 1;
 }
 
-
-/// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
-/// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
-/// @param str String to be tokenized.
 
 Tensor<string, 1> get_tokens(const string& text, const string& separator)
 {
@@ -241,8 +225,6 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
 }
 
 
-/// Returns a new vector with the elements of this string vector casted to type.
-
 Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 {
     const Tensor<string, 1> tokens = get_tokens(text, separator);
@@ -270,8 +252,6 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
     return type_vector;
 }
 
-
-/// Returns a new vector with the elements of this string vector casted to type.
 
 Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 {
@@ -334,10 +314,6 @@ Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
 }
 
 
-
-/// Returns true if the string passed as argument represents a number, and false otherwise.
-/// @param str String to be checked.
-
 bool is_numeric_string(const string& text)
 {
     string::size_type index;
@@ -371,9 +347,6 @@ bool is_numeric_string(const string& text)
 }
 
 
-/// Returns true if given string vector is constant and false otherwise.
-/// @param str vector to be checked.
-///
 bool is_constant_string(const Tensor<string, 1>& string_list)
 {
     const string str0 = string_list[0];
@@ -392,9 +365,6 @@ bool is_constant_string(const Tensor<string, 1>& string_list)
 }
 
 
-/// Returns true if given numeric vector is constant and false otherwise.
-/// @param str vector to be checked.
-
 bool is_constant_numeric(const Tensor<type, 1>& str)
 {
     const type a0 = str[0];
@@ -407,9 +377,6 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
     return true;
 }
 
-
-/// Returns true if given string is a date and false otherwise.
-/// @param str String to be checked.
 
 bool is_date_time_string(const string& text)
 {
@@ -463,9 +430,6 @@ bool is_date_time_string(const string& text)
 }
 
 
-/// Return true if word is a email, and false otherwise.
-/// @param word Word to check.
-
 bool is_email(const string& word)
 {
     // define a regular expression
@@ -476,18 +440,11 @@ bool is_email(const string& word)
 }
 
 
-/// Return true if word contains a number, and false otherwise.
-/// @param word Word to check.
-
 bool contains_number(const string& word)
 {
     return(find_if(word.begin(), word.end(), ::isdigit) != word.end());
 }
 
-
-/// Returns true if a word starting with a given substring, and false otherwise.
-/// @param word Word to check.
-/// @param starting Substring to comparison given word.
 
 bool starts_with(const string& word, const string& starting)
 {
@@ -500,10 +457,6 @@ bool starts_with(const string& word, const string& starting)
 }
 
 
-/// Returns true if a word ending with a given substring, and false otherwise.
-/// @param word Word to check.
-/// @param ending Substring to comparison given word.
-
 //bool ends_with(const string& word, const string& ending)
 //{
 //    if(ending.length() > word.length())
@@ -515,29 +468,21 @@ bool starts_with(const string& word, const string& starting)
 //}
 
 
-/// Returns true if a word ending with a given substring Tensor, and false otherwise.
-/// @param word Word to check.
-/// @param ending Substring Tensor with possibles endings words.
+// bool ends_with(const string& word, const Tensor<string,1>& endings)
+// {
+//     const Index endings_size = endings.size();
 
-bool ends_with(const string& word, const Tensor<string,1>& endings)
-{
-    const Index endings_size = endings.size();
+//     for(Index i = 0; i < endings_size; i++)
+//     {
+//         if(ends_with(word, endings[i]))
+//         {
+//             return true;
+//         }
+//     }
 
-    for(Index i = 0; i < endings_size; i++)
-    {
-        if(ends_with(word, endings[i]))
-        {
-            return true;
-        }
-    }
+//     return false;
+// }
 
-    return false;
-}
-
-
-/// Transforms human date into timestamp.
-/// @param date Date in string fortmat to be converted.
-/// @param gmt Greenwich Mean Time.
 
 time_t date_to_timestamp(const string& date, const Index& gmt)
 {
@@ -882,10 +827,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 }
 
 
-/// Returns true if the string contains the given substring and false otherwise.
-/// @param str String.
-/// @param sub_string Substring to search.
-
 bool contains_substring(const string& text, const string& sub_string)
 {
     if(text.find(sub_string) != string::npos)
@@ -897,19 +838,17 @@ bool contains_substring(const string& text, const string& sub_string)
 }
 
 
-///Replaces all apprearances of a substring with another string
-///@param s
-///@param to_replace
-///@param replace_with
-
 void replace_all_word_appearances(string& text, const string& to_replace, const string& replace_with)
 {
+    // @todo translate comments
+
     string buffer;
     size_t position = 0;
     size_t previous_position;
     const string underscore = "_";
 
     // Reserva una estimación aproximada del tamaño final de la cadena.
+
     buffer.reserve(text.size());
 
     while (true)
@@ -950,19 +889,14 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
 }
 
 
-
- ///Replaces all apprearances of a substring with another string
- ///@param s
- ///@param to_replace
- ///@param replace_with
-
 void replace_all_appearances(string& text, string const& to_replace, string const& replace_with)
 {
     string buffer;
     size_t position = 0;
     size_t previous_position;
 
-    // Reserves rough estimate of final size of string.
+    // Reserves rough estimate of final size of string
+
     buffer.reserve(text.size());
 
     while(true)
@@ -993,11 +927,6 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
     text.swap(buffer);
 }
 
-
-/// Replaces all apprearances non allowed programming characters of a substring with allowed characters
-/// \brief replace_non_allowed_programming_characters
-/// \param s
-/// \return
 
 string replace_non_allowed_programming_expressions(string& s)
 {
@@ -1204,13 +1133,6 @@ vector<string> get_words_in_a_string(string str)
 }
 
 
-///Returns the number of apprearances of a substring
-///@brief WordOccurrence
-///@param sentence
-///@param word
-///@return
-
-
 //int WordOccurrence(char *sentence, char *word)
 //{
 //    int slen = strlen(sentence);
@@ -1233,10 +1155,6 @@ vector<string> get_words_in_a_string(string str)
 //    return count;
 //}
 
-
-/// Removes whitespaces from the start and the end of the string passed as argument.
-/// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
-/// @param str String to be checked.
 
 void trim(string& text)
 {
@@ -1336,10 +1254,6 @@ void erase(string& text, const char& character)
 }
 
 
-/// Returns a string that has whitespace removed from the start and the end.
-/// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
-/// @param str String to be checked.
-
 string get_trimmed(const string& text)
 {
     string output(text);
@@ -1367,10 +1281,6 @@ string get_trimmed(const string& text)
 }
 
 
-/// Prepends the string pre to the beginning of the string str and returns the whole string.
-/// @param pre String to be prepended.
-/// @param str original string.
-
 string prepend(const string& pre, const string& text)
 {
     ostringstream buffer;
@@ -1380,9 +1290,6 @@ string prepend(const string& pre, const string& text)
     return buffer.str();
 }
 
-
-/// Returns true if all the elements in a string list are numeric, and false otherwise.
-/// @param v String list to be checked.
 
 bool is_numeric_string_vector(const Tensor<string, 1>& string_list)
 {
@@ -1416,8 +1323,6 @@ bool has_strings(const Tensor<string, 1>& string_list)
     return false;
 }
 
-/// Returns true if none element in a string list is numeric, and false otherwise.
-/// @param v String list to be checked.
 
 bool is_not_numeric(const Tensor<string, 1>& string_list)
 {
@@ -1429,9 +1334,6 @@ bool is_not_numeric(const Tensor<string, 1>& string_list)
     return true;
 }
 
-
-/// Returns true if some the elements in a string list are numeric and some others are not numeric.
-/// @param v String list to be checked.
 
 bool is_mixed(const Tensor<string, 1>& string_list)
 {
@@ -1461,9 +1363,6 @@ bool is_mixed(const Tensor<string, 1>& string_list)
 }
 
 
-/// Checks if a string is valid encoded in UTF-8 or not
-/// @param string String to be checked.
-
 void delete_non_printable_chars(string& text)
 {
     typedef ctype<wchar_t> ctype;
@@ -1476,10 +1375,6 @@ void delete_non_printable_chars(string& text)
                          text.end()) ;
 }
 
-
-/// Replaces a substring by another one in each element of this vector.
-/// @param find_what String to be replaced.
-/// @param replace_with String to be put instead.
 
 void replace_substring(Tensor<string, 1>& vector, const string& find_what, const string& replace_with)
 {
@@ -1799,11 +1694,6 @@ Tensor<string,1> concatenate_string_tensors(const Tensor<string, 1>& tensor_1, c
 }
 
 
-/// changes the first apparition of all tokens found in the espression by adding the keyword before each of them.
-/// @param input_string String whre changes will be done.
-/// @param token_to_replace String to be put modyfied.
-/// @param new_token String to be put instead.
-
 void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression, const string& keyword)
 {
     string::size_type previous_pos = 0;
@@ -2024,8 +1914,6 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
 //}
 
 
-/// Calculate the total number of tokens in the documents.
-
 Index count_tokens(const Tensor<Tensor<string, 1>, 1>& tokens)
 {
     const Index documents_number = tokens.size();
@@ -2040,8 +1928,6 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& tokens)
     return count;
 }
 
-
-/// Returns a Tensor with all the words as elements keeping the order.
 
 Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents_tokens)
 {
@@ -2071,8 +1957,6 @@ void to_lower(string& text)
     transform(text.begin(), text.end(), text.begin(), ::tolower);
 }
 
-
-/// Transforms all the letters of the documents into lower case.
 
 void to_lower(Tensor<string, 1>& documents)
 {
@@ -2207,8 +2091,6 @@ vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
 }
 
 
-/// Deletes punctuation in documents.
-
 void delete_punctuation(Tensor<string, 1>& documents) 
 {
     replace_substring(documents, "�", " ");
@@ -2267,9 +2149,6 @@ void delete_punctuation(Tensor<string, 1>& documents)
 }
 
 
-/// Deletes consecutive extra spaces in documents.
-/// @param documents Document to be proccesed.
-
 void delete_extra_spaces(Tensor<string, 1>& documents) 
 {
     Tensor<string, 1> new_documents(documents);
@@ -2286,9 +2165,6 @@ void delete_extra_spaces(Tensor<string, 1>& documents)
 }
 
 
-/// Deletes line breaks and tabulations
-/// @param documents Document to be proccesed.
-
 void delete_breaks_and_tabs(Tensor<string, 1>& documents) 
 {
     for(Index i = 0; i < documents.size(); i++)
@@ -2301,16 +2177,12 @@ void delete_breaks_and_tabs(Tensor<string, 1>& documents)
 }
 
 
-/// Deletes unicode non printable characters
-
 void delete_non_printable_chars(Tensor<string, 1>& documents) 
 {
     for(Index i = 0; i < documents.size(); i++) 
         delete_non_printable_chars(documents(i));
 }
 
-
-/// Splits punctuation symbols in documents.
 
 void split_punctuation(Tensor<string, 1>& documents) 
 {
@@ -2383,23 +2255,18 @@ void delete_non_alphanumeric(Tensor<string, 1>& documents)
 }
 
 
-/// Joins a string tensor into a string
-/// @param token String tensor we will join
-
 string to_string(Tensor<string, 1> token) 
 {
     string word;
 
     for(Index i = 0; i < token.size() - 1; i++)
         word += token(i) + " ";
+
     word += token(token.size() - 1);
 
     return word;
 }
 
-
-/// Join the words Tensors into strings documents
-/// @param tokens Tensor of Tensor of words we want to join
 
 Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>& tokens)
 {
@@ -2438,9 +2305,6 @@ void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& d
 }
 
 
-/// Delete the words we want from the documents
-/// @param delete_words Tensor of words we want to delete
-
 void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<string, 1>& deletion_words)
 {
     const Index documents_number = documents_words.size();
@@ -2469,9 +2333,6 @@ void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<st
 }
 
 
-/// Delete short words from the documents
-/// @param minimum_length Minimum length of the words that new documents must have(including herself)
-
 void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
                         const Index& minimum_length,
                         const Index& maximum_length)
@@ -2495,8 +2356,6 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
 }
 
 
-/// Delete the numbers of the documents.
-
 void delete_numbers(Tensor<Tensor<string,1>,1>& documents_words)
 {
     const Index documents_number = documents_words.size();
@@ -2515,8 +2374,6 @@ void delete_numbers(Tensor<Tensor<string,1>,1>& documents_words)
     }
 }
 
-
-/// Remove emails from documents.
 
 void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 {
@@ -2552,8 +2409,6 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 }
 
 
-/// Remove the accents of the vowels in the documents.
-
 void replace_accented_words(Tensor<Tensor<string,1>, 1>& documents)
 {
     const Index documents_size = documents.size();
@@ -2569,8 +2424,6 @@ void replace_accented_words(Tensor<Tensor<string,1>, 1>& documents)
     }
 }
 
-
-/// Remove the accents of the vowels of a word.
 
 void replace_accented_words(string& word)
 {
@@ -2686,9 +2539,6 @@ string get_rv(const string& word, const Tensor<string,1>& vowels)
 }
 
 
-/// Create a word bag that contains all the unique words of the documents,
-/// their frequencies and their percentages in descending order
-
 WordBag calculate_word_bag(const Tensor<string,1>& words)
 {
     WordBag word_bag;
@@ -2708,10 +2558,6 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
     return word_bag;
 }
 
-
-/// Create a word bag that contains the unique words that appear a minimum number
-/// of times in the documents, their frequencies and their percentages in descending order.
-/// @param minimum_frequency Minimum frequency that words must have.
 
 //WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
 //                                             const Index& minimum_frequency)
@@ -2736,10 +2582,6 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-/// Create a word bag that contains the unique words that appear a minimum percentage
-/// in the documents, their frequencies and their percentages in descending order.
-/// @param minimum_percentage Minimum percentage of occurrence that words must have.
-
 // WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
 //                                               const double& minimum_percentage)
 // {
@@ -2762,10 +2604,6 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 //     return word_bag;
 // }
 
-
-/// Create a word bag that contains the unique words that appear a minimum ratio
-/// of frequency in the documents, their frequencies and their percentages in descending order.
-/// @param minimum_ratio Minimum ratio of frequency that words must have.
 
 // WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
 //                                          const double& minimum_ratio)
@@ -2794,11 +2632,6 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-/// Create a word bag that contains the unique most frequent words whose sum
-/// of frequencies is less than the specified number, their frequencies
-/// and their percentages in descending order.
-/// @param total_frequency Maximum cumulative frequency that words must have.
-
 // WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
 //                                            const Index& total_frequency)
 // {
@@ -2824,10 +2657,6 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-/// Create a word bag that contains a maximum number of the unique most
-/// frequent words, their frequencies and their percentages in descending order.
-/// @param maximum_size Maximum size of words Tensor.
-
 // WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
 //                                         const Index& maximum_size)
 // {
@@ -2842,8 +2671,6 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 //     return word_bag;
 // }
 
-
-/// Returns weights.
 
 Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag)
 {
@@ -2867,8 +2694,6 @@ Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& w
     return weight;
 }
 
-
-/// Returns the documents easier to work with them
 
 Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 {
@@ -2934,8 +2759,6 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
 }
 
 
-/// Returns a Tensor with the number of words that each document contains.
-
 Tensor<Index, 1> get_words_number(const Tensor<Tensor<string,1>,1>& tokens)
 {
     const Index documents_number = tokens.size();
@@ -2951,8 +2774,6 @@ Tensor<Index, 1> get_words_number(const Tensor<Tensor<string,1>,1>& tokens)
 }
 
 
-/// Returns a Tensor with the number of sentences that each document contains.
-
 Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 {
     const Index documents_number = documents.size();
@@ -2967,9 +2788,6 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
     return sentences_number;
 }
 
-
-/// Returns a Tensor with the percentage of presence in the documents with respect to all.
-/// @param words_name Tensor of words from which you want to know the percentage of presence.
 
 Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>& tokens,
                                                 const Tensor<string, 1>& words_name)
@@ -2995,9 +2813,6 @@ Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 
 }
 
 
-/// This function calculates the frequency of sets of consecutive words in all documents.
-/// @param minimum_frequency Minimum frequency that a word must have to obtain its combinations.
-/// @param combinations_length Words number of the combinations from 2.
 /*
 Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
                                                        const Index& minimum_frequency,
@@ -3066,9 +2881,6 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
 }
 */
 
-/// Returns the correlations of words that appear a minimum percentage of times
-/// with the targets in descending order.
-/// @param minimum_percentage Minimum percentage of frequency that the word must have.
 /*
 Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tokens,
                                          const double& minimum_percentage,
@@ -3113,11 +2925,6 @@ Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tok
 }
 */
 
-/// Generates a text output based on the neural network and some input letters given by the user.
-/// @param text_generation_alphabet TextGenerationAlphabet object used for the text generation model
-/// @param input_string Input string given by the user
-/// @param max_length Maximum length of the returned string
-/// @param one_word Boolean, if true returns just one word, if false returns a phrase
 /*
 string calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet,
                               const string& input_string,

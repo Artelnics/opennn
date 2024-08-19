@@ -25,9 +25,6 @@ namespace opennn
 
 struct TrainingResults;
 
-/// This abstract class represents the concept of optimization algorithm for a neural network in the OpenNN library.
-/// Any derived class must implement the perform_training() method.
-
 class OptimizationAlgorithm
 {
 
@@ -39,8 +36,6 @@ public:
 
    virtual ~OptimizationAlgorithm();
 
-    /// Enumeration of all possible conditions of stop for the algorithms.
-
     enum class StoppingCondition{MinimumLossDecrease, LossGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
 
@@ -48,8 +43,8 @@ public:
 
    LossIndex* get_loss_index() const;
 
-   /// Hardware use.
    string get_hardware_use() const;
+
    void set_hardware_use(const string&);
 
    bool has_loss_index() const;
@@ -63,8 +58,6 @@ public:
    const Index& get_save_period() const;
 
    const string& get_neural_network_file_name() const;
-
-   /// Writes the time from seconds in format HH:mm:ss.
 
    string write_time(const type&) const;
 
@@ -93,8 +86,6 @@ public:
 
    virtual void check() const;
 
-   /// Trains a neural network which has a loss index associated.
-
    virtual TrainingResults perform_training() = 0;
 
    virtual string write_optimization_algorithm_type() const {return string();}
@@ -117,37 +108,21 @@ protected:
    ThreadPool* thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device;
 
-   /// Pointer to a loss index for a neural network object.
-
    LossIndex* loss_index = nullptr;
-
-   /// Number of training epochs in the neural network.
 
    Index epochs_number = 10000;
 
    // UTILITIES
 
-   /// Create an histogram for distances in autoassociative NN
-
    BoxPlot auto_association_box_plot;
-
-   ///Hardware use
 
    string hardware_use = "Multi-core";
 
-   /// Number of iterations between the training showing progress.
-
    Index display_period = 10;
-
-   /// Number of iterations between the training saving progress.
 
    Index save_period = numeric_limits<Index>::max();
 
-   /// Path where the neural network is saved.
-
    string neural_network_file_name = "neural_network.xml";
-
-   /// Display messages to screen.
 
    bool display = true;
 
@@ -191,19 +166,13 @@ struct OptimizationAlgorithmData
 };
 
 
-/// This structure contains the optimization algorithm results.
-
 struct TrainingResults
 {
-    /// Default constructor.
-
     explicit TrainingResults()
     {
     }
 
     explicit TrainingResults(const Index& epochs_number);
-
-    /// Destructor.
 
     virtual ~TrainingResults() {}
 
@@ -213,11 +182,7 @@ struct TrainingResults
 
     type get_selection_error() const;
 
-
     Index get_epochs_number() const;
-
-
-    /// Returns a string representation of the results structure.
 
     void save(const string&) const;
 
@@ -238,33 +203,19 @@ struct TrainingResults
         cout << "Stopping condition: " << write_stopping_condition() << endl;
     }
 
-    /// Stopping condition of the algorithm.
-
     OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumTime;
-
-    /// Writes final results of the training.
 
     Tensor<string, 2> write_final_results(const Index& = 3) const;
 
-    /// Resizes the training error history keeping the values.
-
     void resize_training_error_history(const Index&);
-
-    /// Resizes the selection error history keeping the values.
 
     void resize_selection_error_history(const Index&);
 
     // Training history
 
-    /// History of the loss function over the training iterations.
-
     Tensor<type, 1> training_error_history;
 
-    /// History of the selection error over the training iterations.
-
     Tensor<type, 1> selection_error_history;
-
-    /// Elapsed time of the training process.
 
     string elapsed_time;
 

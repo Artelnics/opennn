@@ -362,11 +362,11 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
 }
 
 
-pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_matrix_vector(const Tensor<type, 2>&x,
-                                                                           const Tensor<type, 1>y)
-{
-    return filter_missing_values_vector_matrix(y,x);
-}
+// pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_matrix_vector(const Tensor<type, 2>&x,
+//                                                                            const Tensor<type, 1>y)
+// {
+//     return filter_missing_values_vector_matrix(y,x);
+// }
 
 
 pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const Tensor<type, 2>& x,

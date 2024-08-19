@@ -24,10 +24,6 @@
 namespace opennn
 {
 
-/// This class represents a layer of scaling neurons.
-/// Scaling layers are included in the definition of a neural network.
-/// They are used to normalize variables so they are in an appropriate range for computer processing.
-
 class ScalingLayer4D : public Layer
 {
 
@@ -130,20 +126,12 @@ protected:
 
    dimensions input_dimensions;
 
-   /// Descriptives of input variables.
-
    Tensor<Descriptives, 1> descriptives;
-
-   /// Vector of scaling methods for each variable.
 
    Tensor<Scaler, 1> scalers;
 
-   /// Min and max range for minmaxscaling
-
    type min_range;
    type max_range;
-
-   /// Display warning messages to screen.
 
    bool display = true;
 

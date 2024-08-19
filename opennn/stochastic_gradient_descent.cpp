@@ -14,21 +14,12 @@
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a stochastic gradient descent optimization algorithm not associated with any loss index object.
-/// It also initializes the class members to their default values.
-
 StochasticGradientDescent::StochasticGradientDescent()
     :OptimizationAlgorithm()
 {
     set_default();
 }
 
-
-/// Loss index constructor.
-/// It creates a stochastic gradient descent optimization algorithm associated with a loss index.
-/// It also initializes the class members to their default values.
-/// @param new_loss_index Pointer to a loss index object.
 
 StochasticGradientDescent::StochasticGradientDescent(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
@@ -37,15 +28,11 @@ StochasticGradientDescent::StochasticGradientDescent(LossIndex* new_loss_index)
 }
 
 
-/// Returns the initial learning rate.
-
 const type& StochasticGradientDescent::get_initial_learning_rate() const
 {
     return initial_learning_rate;
 }
 
-
-/// Returns the initial decay.
 
 const type& StochasticGradientDescent::get_initial_decay() const
 {
@@ -53,15 +40,11 @@ const type& StochasticGradientDescent::get_initial_decay() const
 }
 
 
-/// Returns the momentum.
-
 const type& StochasticGradientDescent::get_momentum() const
 {
     return momentum;
 }
 
-
-///Returns true if nesterov is active, and false otherwise.
 
 const bool& StochasticGradientDescent::get_nesterov() const
 {
@@ -69,26 +52,17 @@ const bool& StochasticGradientDescent::get_nesterov() const
 }
 
 
-/// Returns the goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
-
 const type& StochasticGradientDescent::get_loss_goal() const
 {
     return training_loss_goal;
 }
 
 
-/// Returns the maximum training time.
-
 const type& StochasticGradientDescent::get_maximum_time() const
 {
     return maximum_time;
 }
 
-
-/// Sets a pointer to a loss index object to be associated with the gradient descent object.
-/// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index Pointer to a loss index object.
 
 void StochasticGradientDescent::set_loss_index(LossIndex* new_loss_index)
 {
@@ -123,10 +97,6 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 }
 
 
-/// Set the initial value for the learning rate. If decay is not active learning rate will be constant
-/// otherwise learning rate will decay over each update.
-/// @param new_initial_learning_rate initial learning rate value.
-
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
 {
 #ifdef OPENNN_DEBUG
@@ -140,18 +110,11 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 }
 
 
-/// Set the initial value for the decay.
-/// @param new_initial_learning_rate initial value for the decay.
-
 void StochasticGradientDescent::set_initial_decay(const type& new_decay)
 {
     initial_decay = new_decay;
 }
 
-
-/// Set a new value for momentum, this parameter accelerates SGD in the relevant direction
-/// and dampens oscillations.
-/// @param new_momentum initial value for the mometum.
 
 void StochasticGradientDescent::set_momentum(const type& new_momentum)
 {
@@ -159,17 +122,11 @@ void StochasticGradientDescent::set_momentum(const type& new_momentum)
 }
 
 
-/// Set nesterov, boolean. Whether to apply Nesterov momentum.
-/// @param new_momentum initial value for the mometum.
-
 void StochasticGradientDescent::set_nesterov(const bool& new_nesterov_momentum)
 {
     nesterov = new_nesterov_momentum;
 }
 
-
-/// Set the a new maximum for the epochs number.
-/// @param new_maximum_epochs number New maximum epochs number.
 
 void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
@@ -177,18 +134,11 @@ void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maxim
 }
 
 
-/// Sets a new goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
-/// @param new_loss_goal Goal value for the loss.
-
 void StochasticGradientDescent::set_loss_goal(const type& new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
 }
 
-
-/// Sets a new maximum training time.
-/// @param new_maximum_time Maximum training time.
 
 void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 {
@@ -242,11 +192,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     neural_network->set_parameters(parameters);
 }
 
-
-/// Trains a neural network with an associated loss index,
-/// according to the stochastic gradient descent method.
-/// Training occurs according to the training parameters and stopping criteria.
-/// It returns a results structure with the history and the final values of the reserved variables.
 
 TrainingResults StochasticGradientDescent::perform_training()
 {
@@ -556,8 +501,6 @@ string StochasticGradientDescent::write_optimization_algorithm_type() const
 }
 
 
-/// This method writes a matrix of strings the most representative atributes.
-
 Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(7, 2);
@@ -600,9 +543,6 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
     return labels_values;
 }
 
-
-/// Serializes the gradient descent object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
 
 void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
