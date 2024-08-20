@@ -47,21 +47,12 @@ int main()
 
         ImageDataSet image_data_set;
 
-        //        image_data_set.set_data_source_path("C:/training_mnist");
-        image_data_set.set_data_source_path("C:/mnist/test");
+        image_data_set.set_data_source_path("../data");
 
         image_data_set.read_bmp();
 
         image_data_set.print();
 
-        const Tensor<Index, 1> indices = image_data_set.get_used_samples_indices();
-
-        const Tensor<Index, 1> target_variables_indices = image_data_set.get_target_variables_indices();
-
-        //cout << image_data_set.get_input_data() << endl;
-        //cout << image_data_set.get_selection_data() << endl;
-        cout << image_data_set.get_target_data() << endl;
-/*
         const Index kernel_height = 1;
         const Index kernel_width = 1;
         const Index kernel_channels = 1;
@@ -113,7 +104,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-*/
+
         cout << "Bye!" << endl;
         
         return 0;
