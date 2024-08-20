@@ -50,7 +50,7 @@ public:
 
     explicit PoolingLayer(const dimensions&, const dimensions& = {1, 1});
 
-    // Get methods
+    // Get
 
     dimensions get_inputs_dimensions() const;
 
@@ -80,7 +80,7 @@ public:
 
     string write_pooling_method() const;
 
-    // Set methods
+    // Set
 
     void set(const dimensions&, const dimensions&);
 
@@ -130,7 +130,7 @@ public:
                         LayerForwardPropagation*,
                         LayerBackPropagation*) const final;
 
-    // Serialization methods
+    // Serialization
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void write_XML(tinyxml2::XMLPrinter&) const final;

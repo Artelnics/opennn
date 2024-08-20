@@ -55,7 +55,7 @@ void InputsSelectionTest::run_test_case()
 {
     cout << "Running inputs selection algorithm test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
 

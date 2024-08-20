@@ -118,16 +118,16 @@ void ModelSelectionTest::run_test_case()
 {
     cout << "Running model selection test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Model selection methods
+    // Model selection
 
     test_perform_neurons_selection();
 
-    // Serialization methods
+    // Serialization
 
     test_save();
     test_load();

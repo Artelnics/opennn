@@ -465,7 +465,7 @@ void CrossEntropyError3DTest::run_test_case()
     test_constructor();
     test_destructor();
     
-    // Back-propagation methods
+    // Back-propagation
     
     test_back_propagate();
     

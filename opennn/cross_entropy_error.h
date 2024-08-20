@@ -35,7 +35,7 @@ public:
 
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
 
-   // Error methods
+   // Error
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,
@@ -49,7 +49,7 @@ public:
                         const ForwardPropagation&,
                         BackPropagation&) const;
 
-   // Gradient methods
+   // Gradient
 
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
@@ -66,7 +66,7 @@ public:
    string get_error_type() const final;
    string get_error_type_text() const final;
 
-   // Serialization methods
+   // Serialization
       
    virtual void from_XML(const tinyxml2::XMLDocument&);
 

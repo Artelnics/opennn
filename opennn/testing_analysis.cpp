@@ -6,8 +6,16 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <fstream>
+#include <sstream>
+#include <cmath>
+#include <numeric>
+
 #include "testing_analysis.h"
 #include "tensors.h"
+#include "correlations.h"
+#include "language_data_set.h"
+#include "transformer.h"
 
 namespace opennn
 {

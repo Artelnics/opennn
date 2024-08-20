@@ -39,11 +39,11 @@ public:
 
    enum class BoundingMethod{NoBounding, Bounding};
 
-   // Check methods
+   // Check
 
    bool is_empty() const;
 
-   // Get methods
+   // Get
 
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
@@ -89,11 +89,11 @@ public:
                           LayerForwardPropagation*, 
                           const bool&) final;
 
-   // Expression methods
+   // Expression
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-   // Serialization methods
+   // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&) final;
 

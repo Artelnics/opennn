@@ -35,7 +35,8 @@ void TimeSeriesDataSetTest::test_constructor()
     assert_true(data_set_1.get_variables_number() == 0, LOG);
     assert_true(data_set_1.get_samples_number() == 0, LOG);
 
-    /*// Samples and variables number constructor
+    /*
+    // Samples and variables number constructor
 
     TimeSeriesDataSet data_set_2(1, 2);
 
@@ -49,7 +50,8 @@ void TimeSeriesDataSetTest::test_constructor()
     assert_true(data_set_3.get_variables_number() == 2, LOG);
     assert_true(data_set_3.get_samples_number() == 1, LOG);
     assert_true(data_set_3.get_target_variables_number() == 1,LOG);
-    assert_true(data_set_3.get_input_variables_number() == 1,LOG);*/
+    assert_true(data_set_3.get_input_variables_number() == 1,LOG);
+*/
 }
 
 
@@ -113,14 +115,12 @@ void TimeSeriesDataSetTest::test_calculate_cross_correlations()
 
     data.resize(6, 3);
 
-    data.setValues({
-                   {type(5),type(2),type(8)},
-                   {type(7),type(8),type(7)},
-                   {type(3),type(6),type(4)},
-                   {type(8),type(1),type(6)},
-                   {type(5),type(8),type(6)},
-                   {type(6),type(3),type(4)}});
-
+    data.setValues({{type(5),type(2),type(8)},
+                    {type(7),type(8),type(7)},
+                    {type(3),type(6),type(4)},
+                    {type(8),type(1),type(6)},
+                    {type(5),type(8),type(6)},
+                    {type(6),type(3),type(4)}});
 
     data_set.set_data(data);
     data_set.set_lags_number(lags_number);
@@ -140,7 +140,16 @@ void TimeSeriesDataSetTest::test_transform_time_series()
     cout << "test_transform_time_series\n";
 
     data.resize(9, 2);
-    data.setValues({{1,10}, {2, 20}, {3, 30}, {4, 40}, {5, 50}, {6, 60}, {7, 70}, {8, 80}, {9, 90}});
+
+    data.setValues({{1,10},
+                    {2, 20},
+                    {3, 30},
+                    {4, 40},
+                    {5, 50},
+                    {6, 60},
+                    {7, 70},
+                    {8, 80},
+                    {9, 90}});
 
     data_set.set_data(data);
 
@@ -296,7 +305,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     Tensor<Index, 1> target_raw_variables_indices(1);
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     Tensor<Correlation, 2> input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -319,7 +328,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     target_raw_variables_indices.resize(2);
     target_raw_variables_indices.setValues({2,3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -341,7 +350,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -368,7 +377,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -394,7 +403,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 //    target_raw_variables_indices.resize(1);
 //    target_raw_variables_indices.setValues({4});
 
-//    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+//    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
 //    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -409,7 +418,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -431,7 +440,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -446,7 +455,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -471,7 +480,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     target_raw_variables_indices.resize(1);
     target_raw_variables_indices.setValues({4});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -489,7 +498,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -510,7 +519,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -525,7 +534,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -546,7 +555,7 @@ void TimeSeriesDataSetTest::run_test_case()
 {
     cout << "Running time series data set test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
@@ -556,7 +565,7 @@ void TimeSeriesDataSetTest::run_test_case()
     test_calculate_autocorrelations();
     test_calculate_cross_correlations();
 
-    // Transform methods
+    // Transform
 
     test_transform_time_series();
 
@@ -566,7 +575,7 @@ void TimeSeriesDataSetTest::run_test_case()
     test_set_steps_ahead_number();
     test_set_lags_number();
 
-    // Saving methods
+    // Saving
 
     test_save_time_series_data_binary();
     //test_has_time_raw_variables();

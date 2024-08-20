@@ -541,7 +541,7 @@ void NormalizedSquaredErrorTest::run_test_case()
 {
     cout << "Running normalized squared error test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
 
@@ -549,7 +549,7 @@ void NormalizedSquaredErrorTest::run_test_case()
 
     test_calculate_normalization_coefficient();
 
-    // Back-propagation methods
+    // Back-propagation
 
     test_back_propagate();
 

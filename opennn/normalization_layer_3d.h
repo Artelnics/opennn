@@ -43,7 +43,7 @@ namespace opennn
 
         explicit NormalizationLayer3D(const Index&, const Index&);
 
-        // Get methods
+        // Get
 
         Index get_inputs_number() const final;
         Index get_inputs_depth() const;
@@ -64,7 +64,7 @@ namespace opennn
 
         const bool& get_display() const;
 
-        // Set methods
+        // Set
 
         void set();
         void set(const Index&, const Index&);
@@ -88,7 +88,7 @@ namespace opennn
 
         void set_display(const bool&);
 
-        // Parameters initialization methods
+        // Parameters initialization
 
         void set_gammas_constant(const type&);
         void set_betas_constant(const type&);
@@ -103,7 +103,7 @@ namespace opennn
                                LayerForwardPropagation*,
                                const bool&) final;
 
-        // Gradient methods
+        // Gradient
 
         void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                                       const Tensor<pair<type*, dimensions>, 1>&,
@@ -116,7 +116,7 @@ namespace opennn
                              const Index&,
                              Tensor<type, 1>&) const final;
 
-        // Serialization methods
+        // Serialization
 
         void from_XML(const tinyxml2::XMLDocument&) final;
         void write_XML(tinyxml2::XMLPrinter&) const final;

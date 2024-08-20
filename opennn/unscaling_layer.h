@@ -37,7 +37,7 @@ public:
 
    explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
 
-   // Get methods  
+   // Get  
 
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
@@ -56,7 +56,7 @@ public:
 
    const bool& get_display() const;
 
-   // Set methods
+   // Set
 
    void set();
    void set(const Index&);
@@ -94,22 +94,22 @@ public:
 
    void set_display(const bool&);
 
-   // Check methods
+   // Check
 
    bool is_empty() const;
 
    void check_range(const Tensor<type, 1>&) const;
 
-   // Forward propagation methods
+   // Forward propagation
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
 
-   // Serialization methods
+   // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
-   // Expression methods
+   // Expression
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 

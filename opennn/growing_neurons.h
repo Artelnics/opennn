@@ -32,13 +32,13 @@ public:
 
     explicit GrowingNeurons(TrainingStrategy*);
 
-    // Get methods
+    // Get
 
     const Index& get_step() const;
 
     const Index& get_maximum_selection_failures() const;
 
-    // Set methods
+    // Set
 
     void set_default();
 
@@ -46,11 +46,11 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    // Neurons selection methods
+    // Neurons selection
 
     NeuronsSelectionResults perform_neurons_selection() final;
 
-    // Serialization methods
+    // Serialization
 
     Tensor<string, 2> to_string_matrix() const;
     

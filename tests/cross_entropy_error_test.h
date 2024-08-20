@@ -32,11 +32,11 @@ public:
 
     void test_destructor();
 
-    // Back-propagation methods
+    // Back-propagation
 
     void test_back_propagate();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

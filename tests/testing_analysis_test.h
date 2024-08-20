@@ -29,13 +29,13 @@ public:
 
     virtual ~TestingAnalysisTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
     void test_destructor();
 
-    // Error data methods
+    // Error data
 
     void test_calculate_error_data();
     void test_calculate_percentage_error_data();
@@ -46,28 +46,28 @@ public:
     void test_calculate_error_data_histograms();
     void test_calculate_maximal_errors();
 
-    // Linear regression parameters methods
+    // Linear regression parameters
 
     void test_linear_regression();
     void test_save();
     void test_perform_linear_regression();
 
-    // Binary classification test methods
+    // Binary classification test
 
     void test_calculate_binary_classification_test();
 
-    // Confusion matrix methods
+    // Confusion matrix
 
     void test_calculate_confusion();
 
-    // ROC curve methods
+    // ROC curve
 
     void test_calculate_Wilcoxon_parameter();
     void test_calculate_roc_curve();
     void test_calculate_area_under_curve();
     void test_calculate_optimal_threshold ();
 
-    // Lift chart methods
+    // Lift chart
 
     void test_calculate_cumulative_gain();
     void test_calculate_lift_chart();
@@ -87,7 +87,7 @@ public:
 
     void test_calculate_multiple_classification_rates();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 
