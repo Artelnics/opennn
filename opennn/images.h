@@ -24,10 +24,6 @@ namespace opennn
 
     Tensor<unsigned char, 3> read_bmp_image(const string&);
     
-    // Unsigned char
-
-    void sort_channel(Tensor<unsigned char, 1>&, Tensor<unsigned char, 1>&, const int&);
-
     // Type
 
     void reflect_image_x(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&);

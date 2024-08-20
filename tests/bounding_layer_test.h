@@ -26,17 +26,17 @@ public:
 
    virtual ~BoundingLayerTest();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
 
    void test_destructor();
 
-   // Output methods
+   // Output
 
    void test_forward_propagate();
 
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 

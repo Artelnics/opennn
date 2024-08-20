@@ -31,7 +31,7 @@ public:
 
     enum class InitializationMethod{Random,Correlations};
 
-    // Get methods
+    // Get
 
     const Tensor<bool, 2>& get_population() const;
 
@@ -53,7 +53,7 @@ public:
 
     const InitializationMethod& get_initialization_method() const;
 
-    // Set methods
+    // Set
 
     virtual void set_default() final;
 
@@ -81,7 +81,7 @@ public:
 
     // GENETIC OPERATORS METHODS
 
-    // Population methods
+    // Population
 
     void initialize_population();
 
@@ -99,21 +99,21 @@ public:
 
     Tensor<type, 1> calculate_selection_probabilities();
 
-    // Selection methods
+    // Selection
 
     void perform_selection();
 
     Index weighted_random(const Tensor<type, 1>&);
 
-    // Crossover methods
+    // Crossover
 
     void perform_crossover();
 
-    // Mutation methods
+    // Mutation
 
     void perform_mutation();
 
-    // Check  methods
+    // Check 
 
     void check_categorical_raw_variables();
 

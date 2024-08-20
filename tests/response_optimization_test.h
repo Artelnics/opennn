@@ -27,19 +27,19 @@ public:
 
     virtual ~ResponseOptimizationTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
     void test_destructor();
 
-    // Performance methods
+    // Performance
 
     void test_calculate_inputs();
 
     void test_perform_optimization();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 
@@ -112,7 +112,7 @@ private:
         inputs_index.setValues({0,1});
         outputs_index.setValues({2,3});
 
-        data_set.set_input_target_raw_variables(inputs_index,outputs_index);
+        data_set.set_input_target_raw_variables_indices(inputs_index,outputs_index);
 
         neural_network_2.set(NeuralNetwork::ModelType::Approximation,
                                      { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});

@@ -162,20 +162,11 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
 {
     const Index layers_number = layers.size();
 
-    if(layers_number > 1 && (layer_type == Layer::Type::Recurrent || layer_type == Layer::Type::LongShortTermMemory))
+    if(layers_number > 1 && layer_type == Layer::Type::LongShortTermMemory)
     {
         return false;
     }
-    /*
-    else if(layers_number == 1 && layer_type == Layer::Type::LongShortTermMemory)
-    {
-        const Layer::Type first_layer_type = layers[0]->get_type();
 
-        if(first_layer_type != Layer::Type::Scaling2D
-        && first_layer_type != Layer::Type::Scaling4D)
-            return false;
-    }
-    */
     return true;
 }
 
@@ -2719,31 +2710,28 @@ string NeuralNetwork::write_expression_c() const
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    buffer << "/*" << endl;
-    buffer << "Artificial Intelligence Techniques SL\t" << endl;
-    buffer << "artelnics@artelnics.com\t" << endl;
-    buffer << "" << endl;
-    buffer << "Your model has been exported to this c file." << endl;
-    buffer << "You can manage it with the main method, where you \t" << endl;
-    buffer << "can change the values of your inputs. For example:" << endl;
-    buffer << "" << endl;
+    buffer << "// Artificial Intelligence Techniques SL\t" << endl;
+    buffer << "// artelnics@artelnics.com\t" << endl;
+    buffer << "// Your model has been exported to this c file." << endl;
+    buffer << "// You can manage it with the main method, where you \t" << endl;
+    buffer << "// can change the values of your inputs. For example:" << endl;
 
-    buffer << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
-    buffer << "to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
-    buffer << "main program has to look like this:" << endl;
-    buffer << "\t" << endl;
-    buffer << "int main(){ " << endl;
-    buffer << "\t" << "vector<float> inputs(3);"<< endl;
-    buffer << "\t" << endl;
-    buffer << "\t" << "const float asdas  = 0.3;" << endl;
-    buffer << "\t" << "inputs[0] = asdas;"        << endl;
-    buffer << "\t" << "const float input2 = 2.5;" << endl;
-    buffer << "\t" << "inputs[1] = input2;"       << endl;
-    buffer << "\t" << "const float input3 = 1.8;" << endl;
-    buffer << "\t" << "inputs[2] = input3;"       << endl;
-    buffer << "\t" << ". . ." << endl;
-    buffer << "\n" << endl;
-    buffer << "Inputs Names:" <<endl;
+    buffer << "// if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
+    buffer << "// to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
+    buffer << "// main program has to look like this:" << endl;
+    buffer << "// \t" << endl;
+    buffer << "// int main(){ " << endl;
+    buffer << "// \t" << "vector<float> inputs(3);"<< endl;
+    buffer << "// \t" << endl;
+    buffer << "// \t" << "const float asdas  = 0.3;" << endl;
+    buffer << "// \t" << "inputs[0] = asdas;"        << endl;
+    buffer << "// \t" << "const float input2 = 2.5;" << endl;
+    buffer << "// \t" << "inputs[1] = input2;"       << endl;
+    buffer << "// \t" << "const float input3 = 1.8;" << endl;
+    buffer << "// \t" << "inputs[2] = input3;"       << endl;
+    buffer << "// \t" << ". . ." << endl;
+    buffer << "// \n" << endl;
+    buffer << "// Inputs Names:" <<endl;
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
@@ -2754,7 +2742,6 @@ string NeuralNetwork::write_expression_c() const
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << inputs_outputs_buffer(2)[0];
-    buffer << "*/" << endl;
     buffer << "\n" << endl;
     buffer << "#include <iostream>" << endl;
     buffer << "#include <vector>" << endl;

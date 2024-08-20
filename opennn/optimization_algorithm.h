@@ -39,7 +39,7 @@ public:
     enum class StoppingCondition{MinimumLossDecrease, LossGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
 
-   // Get methods
+   // Get
 
    LossIndex* get_loss_index() const;
 
@@ -61,7 +61,7 @@ public:
 
    string write_time(const type&) const;
 
-   // Set methods
+   // Set
 
    void set();
 
@@ -82,7 +82,7 @@ public:
 
    BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
-   // Training methods
+   // Training
 
    virtual void check() const;
 
@@ -90,7 +90,7 @@ public:
 
    virtual string write_optimization_algorithm_type() const {return string();}
 
-   // Serialization methods
+   // Serialization
 
    virtual void print() const;
 
@@ -197,7 +197,7 @@ struct TrainingResults
 
         cout << "Training error: " << training_error_history(epochs_number-1) << endl;
 
-        if(abs(training_error_history(epochs_number-1) + type(1))  < type(NUMERIC_LIMITS_MIN))
+        if(abs(training_error_history(epochs_number-1) + type(1)) < type(NUMERIC_LIMITS_MIN))
             cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
 
         cout << "Stopping condition: " << write_stopping_condition() << endl;

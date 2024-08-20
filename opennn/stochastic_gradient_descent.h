@@ -56,7 +56,7 @@ public:
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
 
-   // Set methods
+   // Set
 
    void set_loss_index(LossIndex*) override;
 
@@ -67,7 +67,7 @@ public:
        batch_samples_number = new_batch_samples_number;
    }
 
-   // Get methods
+   // Get
 
    Index get_batch_samples_number() const;
 
@@ -85,7 +85,7 @@ public:
    void set_loss_goal(const type&);
    void set_maximum_time(const type&);
 
-   // Training methods
+   // Training
 
    void update_parameters(BackPropagation& , StochasticGradientDescentData&) const;
 
@@ -93,7 +93,7 @@ public:
 
    string write_optimization_algorithm_type() const final;
 
-   // Serialization methods
+   // Serialization
 
    Tensor<string, 2> to_string_matrix() const final;
 

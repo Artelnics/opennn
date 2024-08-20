@@ -369,14 +369,12 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     for(Index i = 0; i < pooling_layer_forward_propagation->inputs_max_indices.size(); i++)
     {
-
         if(abs(inputs(i) - outputs(outputs_index)) < 1e-3)
         {
             pooling_layer_forward_propagation->inputs_max_indices(i) = 1;
             outputs_index++;
         }
     }
-
 }
 
 

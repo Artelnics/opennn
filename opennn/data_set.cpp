@@ -529,6 +529,7 @@ bool DataSet::is_sample_unused(const Index& index) const
 Tensor<Index, 1> DataSet::get_samples_uses_numbers() const
 {
     Tensor<Index, 1> count(4);
+    count.setZero();
 
     const Index samples_number = get_samples_number();
 
@@ -1901,7 +1902,7 @@ Tensor<string, 1> DataSet::get_used_raw_variables_names() const
 
 
 Index DataSet::get_input_raw_variables_number() const
-{
+{    
     const Index raw_variables_number = get_raw_variables_number();
 
     Index input_raw_variables_number = 0;
@@ -2364,15 +2365,34 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        const Index categories_number = raw_variables(i).get_categories_number();
-
         if(raw_variables(i).use != VariableUse::Input)
         {
-            variable_index += categories_number;
+            if(raw_variables(i).type != RawVariableType::Categorical)
+            {
+                const Index categories_number = raw_variables(i).get_categories_number();
+
+                variable_index += categories_number;
+            }
+            else
+            {
+                variable_index++;
+            }
+
             continue;
         }
 
-        for(Index j = 0; j < categories_number; j++)
+        if(raw_variables(i).type != RawVariableType::Categorical)
+        {
+            const Index categories_number = raw_variables(i).get_categories_number();
+
+            for(Index j = 0; j < categories_number; j++)
+            {
+                input_variables_indices(input_variable_index) = variable_index;
+                variable_index++;
+                input_variable_index++;
+            }
+        }
+        else
         {
             input_variables_indices(input_variable_index) = variable_index;
             variable_index++;
@@ -2499,7 +2519,7 @@ Tensor<string, 1> DataSet::get_raw_variables_types() const
 }
 
 
-void DataSet::set_input_target_raw_variables(const Tensor<Index, 1>& input_raw_variables, const Tensor<Index, 1>& target_raw_variables)
+void DataSet::set_input_target_raw_variables_indices(const Tensor<Index, 1>& input_raw_variables, const Tensor<Index, 1>& target_raw_variables)
 {
     set_raw_variables_unused();
 
@@ -2515,7 +2535,7 @@ void DataSet::set_input_target_raw_variables(const Tensor<Index, 1>& input_raw_v
 }
 
 
-void DataSet::set_input_target_raw_variables(const Tensor<string, 1>& input_raw_variables, const Tensor<string, 1>& target_raw_variables)
+void DataSet::set_input_target_raw_variables_indices(const Tensor<string, 1>& input_raw_variables, const Tensor<string, 1>& target_raw_variables)
 {
     set_raw_variables_unused();
 
@@ -4738,28 +4758,6 @@ Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
 }
 
 
-Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& variables_indices) const
-{
-    const Index variables_number = variables_indices.size();
-
-    Tensor<type, 1> means(variables_number);
-    means.setZero();
-
-#pragma omp parallel for
-
-    for(Index i = 0; i < variables_number; i++)
-    {
-        const Index variable_index = variables_indices(i);
-
-        Tensor<type, 0> mean = data.chip(variable_index, 1).mean();
-
-        means(i) = mean(0);
-    }
-
-    return means;
-}
-
-
 Tensor<type, 1> DataSet::calculate_used_targets_mean() const
 {
     const Tensor<Index, 1> used_indices = get_used_samples_indices();
@@ -4794,10 +4792,6 @@ void DataSet::set_gmt(Index& new_gmt)
 
 Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlations() const
 {
-    const int number_of_thread = omp_get_max_threads();
-    ThreadPool* correlations_thread_pool = new ThreadPool(number_of_thread);
-    ThreadPoolDevice* correlations_thread_pool_device = new ThreadPoolDevice(correlations_thread_pool, number_of_thread);
-
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
 
@@ -4821,47 +4815,9 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_samples_indices);
 
-            //correlations(i,j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            correlations(i,j) = correlation(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
-
-    delete correlations_thread_pool;
-    delete correlations_thread_pool_device;
-
-    return correlations;
-}
-
-
-Tensor<Correlation, 2> DataSet::calculate_relevant_input_target_raw_variables_correlations(const Tensor<Index, 1>& input_raw_variables_indices,
-                                                                                     const Tensor<Index, 1>& target_raw_variables_indices) const
-{
-    const int number_of_thread = omp_get_max_threads();
-    ThreadPool* correlations_thread_pool = new ThreadPool(number_of_thread);
-    ThreadPoolDevice* correlations_thread_pool_device = new ThreadPoolDevice(correlations_thread_pool, number_of_thread);
-
-    const Index input_raw_variables_number = input_raw_variables_indices.dimension(0);
-    const Index target_raw_variables_number = target_raw_variables_indices.dimension(0);
-
-    Tensor<Correlation, 2> correlations(input_raw_variables_number, target_raw_variables_number);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < input_raw_variables_number; i++)
-    {
-        const Index input_index = input_raw_variables_indices(i);
-
-        for(Index j = 0; j < target_raw_variables_number; j++)
-        {
-            const Index target_index = target_raw_variables_indices(j);
-
-            const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_index, get_used_samples_indices());
-            const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, get_used_samples_indices());
-
-            correlations(i, j) = correlation(correlations_thread_pool_device, input_raw_variable_data, target_raw_variable_data);
-        }
-    }
-
-    delete correlations_thread_pool;
-    delete correlations_thread_pool_device;
 
     return correlations;
 }
@@ -5461,49 +5417,6 @@ void DataSet::set_data_constant(const type& new_value)
 {
     data.setConstant(new_value);
     data.dimensions();
-}
-
-
-type DataSet::round_to_precision(type x, const int& precision){
-
-    const type factor = type(pow(10, precision));
-
-    return round(factor*x)/factor;
-}
-
-
-Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const int& precision)
-{
-    Tensor<type, 2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
-
-    const type factor = type(pow(10, precision));
-
-    for(int i = 0; i < matrix.dimension(0); i++)
-    {
-        for(int j = 0; j < matrix.dimension(1); j++)
-        {
-            matrix_rounded(i,j) = (round(factor*matrix(i,j)))/factor;
-        }
-    }
-
-    return matrix_rounded;
-}
-
-
-// @todo delete or move to tensors
-
-Tensor<type, 1> DataSet::round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision)
-{
-    Tensor<type, 1> tensor_rounded(tensor.size());
-
-    const type factor = type(pow(10, precision));
-
-    for(Index i = 0; i < tensor.size(); i++)
-    {
-        tensor_rounded(i) = (round(factor*tensor(i)))/factor;
-    }
-
-    return tensor_rounded;
 }
 
 
@@ -7658,8 +7571,9 @@ void DataSet::open_file(const string& file_name, ofstream& file) const
 
 void DataSet::read_data_file_preview(ifstream& file)
 {
+    if(display) cout << "Reading data file preview..." << endl;
 
-    if(display) cout << "Setting data file preview..." << endl;
+    // @todo Not implemented
 
     const string separator_string = get_separator_string();
 
@@ -7714,48 +7628,6 @@ void DataSet::read_data_file_preview(ifstream& file)
         data_file_preview(2) = data_file_preview_copy(2);
         data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
         data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
-    }
-
-    Index raw_variable_index = 0;
-
-    for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
-    {
-        if(has_ids && i == 0) continue;
-
-        const string data_file_preview_1 = data_file_preview(1)(i);
-        const string data_file_preview_2 = data_file_preview(2)(i);
-        const string data_file_preview_3 = data_file_preview(lines_number-2)(i);
-        const string data_file_preview_4 = data_file_preview(lines_number-1)(i);
-
-        /*if(nans_columns(column_index))
-        {
-            columns(column_index).type = ColumnType::Constant;
-            column_index++;
-        }
-        else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
-               || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
-               || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
-               || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::DateTime;
-
-            //time_column = raw_variables(raw_variable_index).name;
-
-            raw_variable_index++;
-        }
-        else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
-             || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
-             || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
-             || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::Numeric;
-            raw_variable_index++;
-        }
-        else
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::Categorical;
-            raw_variable_index++;
-        }
     }
 }
 

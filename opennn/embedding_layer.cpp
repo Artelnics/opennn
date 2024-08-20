@@ -197,12 +197,8 @@ void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const
 
 void EmbeddingLayer::set_parameters_random()
 {
-    // @todo Avoid loops
-
     const type minimum = type(-0.05);
     const type maximum = type(0.05);
-
-//    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
 
     // First row must be 0s because input value 0 is padding
     
@@ -248,32 +244,6 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs)
         else    outputs(i) *= scaling_factor;
     }
 }
-
-
-/*
-Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_row)
-{
-    Tensor<type, 2> one_hot_encoded_input_row(inputs_number, input_dimensions);
-    one_hot_encoded_input_row.setZero();
-
-    const Tensor<type, 0> max_input = input_row.maximum();
-
-    if(max_input(0) >= type(input_dimensions))
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-               << "void EmbeddingLayer::one_hot_encode_row(const Tensor<Index, 1>&)\n"
-               << "All input values must be less than " << input_dimensions << " (" << max_input(0) << ").\n";
-        throw invalid_argument(buffer.str());
-    }
-
-#pragma omp parallel for
-    for(Index i = 0; i < inputs_number; i++)
-        one_hot_encoded_input_row(i, Index(input_row(i))) = 1;
-
-    return one_hot_encoded_input_row;
-}
-*/
 
 
 void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)

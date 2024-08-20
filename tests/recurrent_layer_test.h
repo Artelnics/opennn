@@ -27,7 +27,7 @@ public:
 
     virtual ~RecurrentLayerTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
@@ -41,7 +41,7 @@ public:
 
     void test_forward_propagate();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

@@ -44,7 +44,7 @@ public:
                             const Index&,
                             const Index&,
                             const bool& = false);
-    // Get methods
+    // Get
 
     Index get_input_dimension() const;
     Index get_inputs_number() const;
@@ -63,7 +63,7 @@ public:
 
     const bool& get_display() const;
 
-    // Set methods
+    // Set
 
     void set();
     void set(const Index&, const Index&, const Index&, const bool& = false);
@@ -102,7 +102,7 @@ public:
                            LayerForwardPropagation*,
                            const bool&) final;
 
-    // Gradient methods
+    // Gradient
 
     void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                                   const Tensor<pair<type*, dimensions>, 1>&,
@@ -114,7 +114,7 @@ public:
     void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
 
-    // Serialization methods
+    // Serialization
 
     // @todo
 

@@ -58,7 +58,7 @@ public:
    void calculate_error_hessian_lm(const Batch&,
                                         BackPropagationLM&) const final;
 
-   // Serialization methods
+   // Serialization
 
    void write_XML(tinyxml2::XMLPrinter &) const final;
 

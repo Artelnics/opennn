@@ -283,12 +283,12 @@ void ConjugateGradientTest::run_test_case()
 {
     cout << "Running conjugate gradient test case...\n";
 
-    // Constructor methods
+    // Constructor
 
     test_constructor();
     test_destructor();
 
-    // Training methods
+    // Training
 
     test_calculate_PR_parameter();
     test_calculate_FR_parameter();

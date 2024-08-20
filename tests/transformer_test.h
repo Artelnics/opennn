@@ -28,7 +28,7 @@ public:
 
     virtual ~TransformerTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
@@ -50,7 +50,7 @@ public:
 
     bool check_activations_sums(const Tensor<type, 3>&);
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 
