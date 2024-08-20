@@ -30,7 +30,7 @@ public:
 
     void test_calculate_rank();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

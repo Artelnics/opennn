@@ -13,7 +13,7 @@ using namespace std;
 namespace opennn
 {
 
-// Codification methods
+// Codification
 
 string sj2utf8(const string &);
 

@@ -43,7 +43,7 @@ public:
 
     explicit FlattenLayer(const dimensions&);
 
-    // Get methods
+    // Get
 
     dimensions get_inputs_dimensions() const;
     Index get_outputs_number() const;
@@ -56,7 +56,7 @@ public:
     Index get_input_width() const;
     Index get_neurons_number() const;
 
-    // Set methods
+    // Set
 
     void set();
     void set(const Index&);
@@ -71,7 +71,7 @@ public:
 
 //    void set_display(const bool&);
 
-    // Check methods
+    // Check
 
 //    bool is_empty() const;
 
@@ -88,7 +88,7 @@ public:
                         LayerForwardPropagation*,
                         LayerBackPropagation*) const final;
 
-    // Serialization methods
+    // Serialization
 
     void from_XML(const tinyxml2::XMLDocument&) final;
 

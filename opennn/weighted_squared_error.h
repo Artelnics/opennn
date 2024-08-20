@@ -38,14 +38,14 @@ public:
 
    explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
 
-   // Get methods
+   // Get
 
    type get_positives_weight() const;
    type get_negatives_weight() const;
 
    type get_normalizaton_coefficient() const;
 
-   // Set methods
+   // Set
 
    void set_default();
 
@@ -90,7 +90,7 @@ public:
    void calculate_error_hessian_lm(const Batch&,
                                    BackPropagationLM&) const final;
 
-   // Serialization methods
+   // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&);
 

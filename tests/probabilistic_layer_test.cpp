@@ -308,7 +308,6 @@ void ProbabilisticLayerTest::test_calculate_activations()
             abs(activations(1, 2) - type(0.333)) < type(1e-3), LOG);
         */
     }
-
 }
 
 
@@ -329,94 +328,23 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
         combinations.setConstant({ type(-1.55) });
 
         activations.resize(samples_number, neurons_number);
-        activations_derivatives_2d.resize(samples_number, neurons_number);
+        activations_derivatives.resize(samples_number, neurons_number);
 
         probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
         probabilistic_layer.calculate_activations_derivatives(combinations,
                                                               activations,
-                                                              activations_derivatives_2d);
+                                                              activations_derivatives);
 
         assert_true(abs(activations(0, 0) - type(0.175)) < type(1e-2), LOG);
 
         assert_true(
-            activations_derivatives_2d.rank() == 2 &&
-            activations_derivatives_2d.dimension(0) == inputs_number &&
-            activations_derivatives_2d.dimension(1) == neurons_number, LOG);
+            activations_derivatives.rank() == 2 &&
+            activations_derivatives.dimension(0) == inputs_number &&
+            activations_derivatives.dimension(1) == neurons_number, LOG);
 
-        assert_true(abs(activations_derivatives_2d(0, 0) - type(0.1444)) < type(1e-3), LOG);
+        assert_true(abs(activations_derivatives(0, 0) - type(0.1444)) < type(1e-3), LOG);
     }
-
-    {
-        // Test
-
-        samples_number = 1;
-        inputs_number = 1;
-        neurons_number = 3;
-
-        probabilistic_layer.set(inputs_number, neurons_number);
-
-        combinations.resize(samples_number, neurons_number);
-        combinations.setValues({ {type(1), type(2), type(3)} });
-
-        activations.resize(samples_number, neurons_number);
-
-        activations_derivatives_3d.resize(samples_number, neurons_number, neurons_number);
-
-        probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-        /*
-        probabilistic_layer.calculate_activations_derivatives(combinations,
-                                                              activations,
-                                                             activations_derivatives_3d);
-
-        assert_true(
-            activations_derivatives_3d.rank() == 3 &&
-            activations_derivatives_3d.dimension(0) == samples_number &&
-            activations_derivatives_3d.dimension(1) == neurons_number &&
-            activations_derivatives_3d.dimension(2) == neurons_number, LOG);
-
-        assert_true(abs(activations(0, 0) - type(0.09)) < type(1e-3), LOG);
-
-        assert_true(
-            abs(activations_derivatives_3d(0, 0, 0) - type(0.0819)) < type(1e-3) &&
-            abs(activations_derivatives_3d(0, 1, 1) - type(0.1848)) < type(1e-3) &&
-            abs(activations_derivatives_3d(0, 2, 2) - type(0.2227)) < type(1e-3), LOG);
-        */
-    }
-    
-    {
-        // Test
-
-        samples_number = 1;
-        inputs_number = 1;
-        neurons_number = 4;
-
-        probabilistic_layer.set(inputs_number, neurons_number);
-
-        combinations.resize(samples_number, neurons_number);
-        combinations.setValues({ {type(-1), type(2), type(-3), type(-4)} });
-
-        activations.resize(samples_number, neurons_number);
-
-        activations_derivatives_3d.resize(samples_number, neurons_number, neurons_number);
-        /*
-        probabilistic_layer.calculate_activations_derivatives(combinations,
-                                                              activations,
-                                                              activations_derivatives_3d);
-
-
-        assert_true(activations_derivatives_3d.rank() == 3 &&
-            activations_derivatives_3d.dimension(0) == samples_number &&
-            activations_derivatives_3d.dimension(1) == neurons_number &&
-            activations_derivatives_3d.dimension(2) == neurons_number, LOG);
-
-        assert_true(abs(activations_derivatives_3d(0, 3, 0) + type(0.00011)) < type(1e-3), LOG);
-        assert_true(abs(activations_derivatives_3d(0, 3, 1) + type(0.00221)) < type(1e-3), LOG);
-        assert_true(abs(activations_derivatives_3d(0, 3, 2) + type(0.00001)) < type(1e-3), LOG);
-        assert_true(abs(activations_derivatives_3d(0, 3, 3) - type(0.00233)) < type(1e-3), LOG);
-        */
-    }
-
 }
 
 
@@ -615,7 +543,7 @@ void ProbabilisticLayerTest::run_test_case()
 {
     cout << "Running probabilistic layer test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();

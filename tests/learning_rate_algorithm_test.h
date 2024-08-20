@@ -29,13 +29,13 @@ public:
 
     virtual ~LearningRateAlgorithmTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
     void test_destructor();
 
-    // Training methods
+    // Training
 
     void test_calculate_bracketing_triplet();
 
@@ -43,7 +43,7 @@ public:
 
     void test_calculate_Brent_method_directional_point();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

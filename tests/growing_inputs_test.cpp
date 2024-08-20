@@ -98,12 +98,12 @@ void GrowingInputsTest::run_test_case()
 {
     cout << "Running growing inputs test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Input selection methods
+    // Input selection
 
     test_perform_inputs_selection();
 

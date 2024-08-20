@@ -462,8 +462,8 @@ private:
 // 	If you return 'true' from a Visit method, recursive parsing will continue. If you return
 // 	false, <b>no children of this node or its siblings</b> will be visited.
 //
-// 	All flavors of Visit methods have a default implementation that returns 'true'(continue
-// 	visiting). You need to only final methods that are interesting to you.
+// 	All flavors of Visit have a default implementation that returns 'true'(continue
+// 	visiting). You need to only final that are interesting to you.
 //
 // 	Generally Accept() is called on the XMLDocument, although all nodes support visiting.
 //

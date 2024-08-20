@@ -17,7 +17,7 @@
 namespace opennn
 {
 
-// Pearson correlation methods
+// Pearson correlation
 
 Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -37,9 +37,10 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice*, const Te
 
 Correlation correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-// Spearman correlation methods
+// Spearman correlation
 
 Correlation linear_correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+
 Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1>&);
 
 Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -53,19 +54,8 @@ type z_correlation_to_r_correlation(const type&);
 
 Tensor<type,1> confidence_interval_z_correlation(const type&, const Index&);
 
-template<typename T>
-const T& clamp(const T& value, const T& min, const T& max) {
-    if(value < min) {
-        return min;
-    } else if(value > max) {
-        return max;
-    } else {
-        return value;
-    }
-}
 
-
-// Time series correlation methods
+// Time series correlation
 
 Tensor<type, 1> autocorrelations(const ThreadPoolDevice*,
                                  const Tensor<type, 1>&,
@@ -78,7 +68,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice*,
 
 Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>&);
 
-// Missing values methods
+// Missing values
 
 pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);

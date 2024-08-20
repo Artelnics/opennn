@@ -91,7 +91,7 @@ public:
 
     string get_type_string() const;
 
-    // Parameters initialization methods
+    // Parameters initialization
 
     virtual void set_parameters_constant(const type&);
     virtual void set_parameters_random();
@@ -137,13 +137,13 @@ public:
                                                    const Index&,
                                                    Tensor<type, 2>&) const {}
 
-    // Serialization methods
+    // Serialization
 
     virtual void from_XML(const tinyxml2::XMLDocument&) {}
 
     virtual void write_XML(tinyxml2::XMLPrinter&) const {}
 
-    // Expression methods
+    // Expression
 
     virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const 
     {

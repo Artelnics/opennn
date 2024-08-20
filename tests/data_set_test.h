@@ -30,12 +30,12 @@ public:
 
    virtual ~DataSetTest();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
    void test_destructor();  
 
-   // Data resizing methods
+   // Data resizing
 
    void test_add_sample();
    void test_append_variable();
@@ -44,26 +44,24 @@ public:
    void test_unuse_repeated_samples();
    void test_unuse_uncorrelated_raw_variables();
 
-   // Statistics methods
+   // Statistics
 
    void test_calculate_variables_descriptives();
    void test_calculate_input_variables_descriptives();
-   void test_calculate_variables_means();
 
    void test_calculate_used_targets_mean();
    void test_calculate_selection_targets_mean();
 
-   // Correlation methods
+   // Correlation
 
-   void test_calculate_linear_correlations();
    void test_calculate_input_target_correlations();
    void test_calculate_input_raw_variables_correlations();
 
-   // Histrogram methods
+   // Histrogram
 
-   void test_calculate_data_distributions();
+   void test_calculate_raw_variables_distributions();
 
-   // Filtering methods
+   // Filtering
 
    void test_filter_data();
 
@@ -73,17 +71,13 @@ public:
 
    void test_unscale_data();
 
-   // Classification methods
+   // Classification
 
    void test_calculate_target_distribution();
 
    void test_calculate_Tukey_outliers();
 
-   // Data generation
-
-   void test_generate_constant_data();
-
-   // Serialization methods
+   // Serialization
 
    void test_read_csv();
 
@@ -101,18 +95,18 @@ public:
    void test_read_wine_csv();
    void test_read_binary_csv();
 
-   // Principal components methods
+   // Principal components
 
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();
    void test_scrub_missing_values();
    void test_impute_missing_values_mean();   
 
-   // Data set batch methods
+   // Data set batch
 
    void test_fill();
 
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 
@@ -123,7 +117,6 @@ public:
    string data_string;
 
    string data_source_path;
-
 
    Index inputs_number;
    Index targets_number;
@@ -147,7 +140,6 @@ public:
 }
 
 #endif
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

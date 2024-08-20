@@ -56,6 +56,7 @@ void MinkowskiErrorTest::test_destructor()
     delete minkowski_error;
 }
 
+
 void MinkowskiErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
@@ -186,7 +187,6 @@ void MinkowskiErrorTest::test_back_propagate()
 
         numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
-
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
@@ -246,6 +246,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
     // Test forecasting trivial
     {
+
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
@@ -284,7 +285,8 @@ void MinkowskiErrorTest::test_back_propagate()
     }
 
     // Test forecasting random samples, inputs, outputs, neurons
-    /*{
+    {
+/*
         samples_number = 1 + rand()%10;
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
@@ -326,9 +328,8 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.error >= type(0), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
-
-    }*/
-
+*/
+    }
 }
 
 
@@ -336,12 +337,12 @@ void MinkowskiErrorTest::run_test_case()
 {
    cout << "Running Minkowski error test case...\n";  
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    test_constructor();
    test_destructor();
 
-   // Back-propagation methods
+   // Back-propagation
 
    test_back_propagate();
 
@@ -349,6 +350,8 @@ void MinkowskiErrorTest::run_test_case()
 }
 
 }
+
+
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //

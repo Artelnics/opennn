@@ -26,7 +26,7 @@ public:
 
     virtual ~UnscalingLayerTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
@@ -38,12 +38,12 @@ public:
     void test_calculate_mean_standard_deviation_outputs();
     void test_calculate_logarithmic_outputs();
 
-    // Serialization methods
+    // Serialization
 
     void test_to_XML();
     void test_from_XML();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

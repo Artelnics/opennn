@@ -51,7 +51,7 @@ public:
 
    explicit RecurrentLayer(const Index&, const Index&, const Index&);
 
-   // Get methods
+   // Get
 
    bool is_empty() const;
 
@@ -91,7 +91,7 @@ public:
 
    const bool& get_display() const;
 
-   // Set methods
+   // Set
 
    void set();
    void set(const Index&, const Index&, const Index&);
@@ -126,7 +126,7 @@ public:
 
    void set_display(const bool&);
 
-   // Parameters initialization methods
+   // Parameters initialization
 
    void set_hidden_states_constant(const type&);
 
@@ -169,13 +169,13 @@ public:
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
-   // Expression methods
+   // Expression
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    string write_activation_function_expression() const;
 
-   // Serialization methods
+   // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&) final;
 

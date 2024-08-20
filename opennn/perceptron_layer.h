@@ -62,7 +62,7 @@ public:
         const Index&,
         const ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
-    // Get methods
+    // Get
 
     Index get_inputs_number() const final;
     Index get_neurons_number() const final;
@@ -90,7 +90,7 @@ public:
 
     const bool& get_display() const;
 
-    // Set methods
+    // Set
 
     void set();
 
@@ -123,7 +123,7 @@ public:
 
     void set_display(const bool&);
 
-    // Parameters initialization methods
+    // Parameters initialization
 
     void set_biases_constant(const type&);
     void set_synaptic_weights_constant(const type&);
@@ -150,7 +150,7 @@ public:
         LayerForwardPropagation*,
         const bool&) final;
 
-    // Gradient methods
+    // Gradient
 
     void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                         const Tensor<pair<type*, dimensions>, 1>&,
@@ -170,13 +170,13 @@ public:
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
-    // Expression methods   
+    // Expression   
 
     string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
     string write_activation_function_expression() const;
 
-    // Serialization methods
+    // Serialization
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void write_XML(tinyxml2::XMLPrinter&) const final;

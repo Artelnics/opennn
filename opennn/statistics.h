@@ -121,7 +121,7 @@ namespace opennn
  // Percentiles
  Tensor<type, 1> percentiles(const Tensor<type, 1>&);
 
- // NAN methods
+ // NAN
  Index count_nan(const Tensor<type, 1>&);
 }
 

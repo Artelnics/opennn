@@ -28,13 +28,13 @@ public:
 
     virtual ~MeanSquaredErrorTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
     void test_destructor();
 
-    // Back-propagation methods
+    // Back-propagation
 
     void test_calculate_gradient_convolutional_network();
 
@@ -46,10 +46,9 @@ public:
     void test_back_propagate_recurrent();
     void test_back_propagate_long_short_term_memory();
 
-
     void test_back_propagate_lm();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 
@@ -82,7 +81,6 @@ private:
 
     Tensor<type, 1> numerical_gradient;
     Tensor<type, 2> numerical_jacobian;
-
 };
 
 }

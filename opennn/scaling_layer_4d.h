@@ -38,7 +38,7 @@ public:
 
    explicit ScalingLayer4D(const Tensor<Descriptives, 1>&);
 
-   // Get methods
+   // Get
 
    dimensions get_output_dimensions() const;
 
@@ -67,7 +67,7 @@ public:
 
    const bool& get_display() const;
 
-   // Set methods
+   // Set
 
    void set();
    void set(const Index&);
@@ -106,7 +106,7 @@ public:
 
    void set_display(const bool&);
 
-   // Check methods
+   // Check
 
    bool is_empty() const;
 
@@ -114,7 +114,7 @@ public:
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
 
-   // Serialization methods
+   // Serialization
 
    void print() const;
 

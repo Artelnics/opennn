@@ -29,17 +29,17 @@ public:
 
    virtual ~GrowingNeuronsTest();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
 
    void test_destructor();
 
-   // Order selection methods
+   // Order selection
 
    void test_perform_neurons_selection();
 
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 

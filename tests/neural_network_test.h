@@ -28,7 +28,7 @@ public:
 
     virtual ~NeuralNetworkTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
@@ -52,12 +52,12 @@ public:
 
     void test_forward_propagate();
 
-    // Serialization methods
+    // Serialization
 
     void test_save();
     void test_load();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

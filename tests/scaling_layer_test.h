@@ -26,7 +26,7 @@ public:
 
     virtual ~ScalingLayer2DTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
@@ -38,12 +38,12 @@ public:
     void test_calculate_minimum_maximum_output();
     void test_calculate_mean_standard_deviation_output();
 
-    // Serialization methods
+    // Serialization
 
     void test_to_XML();
     void test_from_XML();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

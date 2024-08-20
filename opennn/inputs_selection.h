@@ -40,7 +40,7 @@ public:
     enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
                            MaximumSelectionFailures, CorrelationGoal};
 
-    // Get methods
+    // Get
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -57,7 +57,7 @@ public:
     const type& get_minimum_correlation() const;
     const type& get_tolerance() const;
 
-    // Set methods
+    // Set
 
     void set(TrainingStrategy*);
 
@@ -73,11 +73,11 @@ public:
     void set_maximum_correlation(const type&);
     void set_minimum_correlation(const type&);
 
-    // Performances calculation methods
+    // Performances calculation
 
     string write_stopping_condition(const TrainingResults&) const;
 
-    // inputs selection methods
+    // inputs selection
 
     void check() const;
 

@@ -23,7 +23,7 @@ struct Descriptives {
 
   explicit Descriptives(const Tensor<type, 1>&);
 
-  // Set methods
+  // Set
 
   void set(const type&, const type&, const type&, const type&);
 

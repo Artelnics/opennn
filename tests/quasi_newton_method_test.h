@@ -27,13 +27,13 @@ public:
 
     virtual ~QuasiNewtonMethodTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
     void test_destructor();
 
-    // Training methods
+    // Training
 
     void test_calculate_DFP_inverse_hessian_approximation();
     void test_calculate_BFGS_inverse_hessian_approximation();
@@ -42,7 +42,7 @@ public:
 
     void test_perform_training();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

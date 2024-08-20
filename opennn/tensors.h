@@ -9,7 +9,6 @@
 
 #include "config.h"
 
-
 using Eigen::MatrixXd;
 
 namespace opennn
@@ -22,6 +21,12 @@ const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
 type calculate_random_uniform(const type& = type(0), const type& = type(1));
 
 bool calculate_random_bool();
+
+void set_random(Tensor<type, 1>&, const type&, const type&);
+void set_random(Tensor<type, 2>&, const type&, const type&);
+void set_random(Tensor<type, 3>&, const type&, const type&);
+
+type bound(const type& value, const type& minimum, const type& maximum);
 
 // Initialization
 
@@ -160,7 +165,6 @@ Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&
 
 //void kronecker_product(const Tensor<type, 1>&, Tensor<type, 2>&);
 
-
 // L1 norm
 
 type l1_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
@@ -231,6 +235,10 @@ Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
 Index partition(Tensor<type, 2>&, const Index&, const Index&, const Index&);
 Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
+
+type round_to_precision(type, const int&);
+Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
+Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 
