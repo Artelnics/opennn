@@ -39,7 +39,7 @@ public:
 
    explicit LevenbergMarquardtAlgorithm(LossIndex*);
 
-   // Get methods
+   // Get
 
    // Stopping criteria
 
@@ -60,7 +60,7 @@ public:
    const type& get_minimum_damping_parameter() const;
    const type& get_maximum_damping_parameter() const;
 
-   // Set methods
+   // Set
 
    void set_default() final;
 
@@ -81,7 +81,7 @@ public:
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
 
-   // Training methods
+   // Training
 
    void check() const final;
 
@@ -95,7 +95,7 @@ public:
 
    string write_optimization_algorithm_type() const final;
 
-   // Serialization methods
+   // Serialization
 
    Tensor<string, 2> to_string_matrix() const final;
    

@@ -801,13 +801,7 @@ void ConvolutionalLayerTest::test_back_propagate()
 
     convolutional_layer.back_propagate(inputs_pair, deltas_pair, &forward_propagation, &back_propagation);
 
-}
-
-
-void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
-{
-    cout<< "test_calculate_hidden_delta_perceptron_test"<<endl;
-/*
+    /*
     // Current layer's values
 
     const Index images_number = 2;
@@ -853,7 +847,6 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 
     cout << convolutional_layer_backpropagate.deltas << endl;
 */
-
 }
 
 
@@ -911,7 +904,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
 
         const TensorMap<Tensor<type, 3>> single_image(input.data()+i*next_image, input.dimension(0), input.dimension(1), input.dimension(2));
 
-        for(int j =0; j<kernel_number; j++)
+        for(int j = 0; j < kernel_number; j++)
         {
             const Index next_kernel = kernel.dimension(0)*kernel.dimension(1)*kernel.dimension(2);
 
@@ -965,8 +958,6 @@ void ConvolutionalLayerTest::run_test_case()
     // Back_propagate
 
     test_back_propagate();
-
-    //test_calculate_hidden_delta_perceptron_test();
 
     //Utils
 

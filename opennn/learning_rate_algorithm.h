@@ -165,7 +165,7 @@ public:
        pair<type, type> B;
    };
 
-   // Get methods
+   // Get
 
    LossIndex* get_loss_index() const;
 
@@ -184,7 +184,7 @@ public:
    
    const bool& get_display() const;
   
-   // Set methods
+   // Set
 
    void set();
    void set(LossIndex*);
@@ -207,7 +207,7 @@ public:
 
    void set_default();
 
-   // Learning rate methods
+   // Learning rate
 
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
@@ -222,7 +222,7 @@ public:
                                                 BackPropagation&,
                                                 OptimizationAlgorithmData&) const;
 
-   // Serialization methods
+   // Serialization
       
    void from_XML(const tinyxml2::XMLDocument&);   
 

@@ -27,24 +27,24 @@ public:
 
    virtual ~ModelSelectionTest();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
 
    void test_destructor();
 
-   // Model selection methods
+   // Model selection
 
    void test_perform_neurons_selection();
 
-   // Serialization methods
+   // Serialization
 
    void test_to_XML();   
    void test_from_XML();
    void test_save();
    void test_load();
 
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 

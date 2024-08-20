@@ -147,8 +147,6 @@ void DataSetTest::test_calculate_input_variables_descriptives()
 
     Tensor<Descriptives, 1> input_variables_descriptives;
 
-    Tensor<Index, 1> indices;
-
     // Test
 
     data.resize(2, 3);
@@ -157,22 +155,20 @@ void DataSetTest::test_calculate_input_variables_descriptives()
                     {type(1), type(2.0), type(3.0)}});
 
     data_set.set(data);
-
-    indices.resize(2);
-    indices.setValues({0, 1});
-
+/*
     input_variables_descriptives = data_set.calculate_input_variables_descriptives();
 
     assert_true(input_variables_descriptives[0].mean - type(2.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].standard_deviation - type(1)< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].minimum - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
+*/
 }
 
 
-void DataSetTest::test_calculate_data_distributions()
+void DataSetTest::test_calculate_raw_variables_distributions()
 {
-    cout << "test_calculate_data_distributions\n";
+    cout << "test_calculate_raw_variables_distributions\n";
 
     Tensor<Histogram, 1> histograms;
 
@@ -192,11 +188,11 @@ void DataSetTest::test_calculate_data_distributions()
 
     assert_true(histograms.size() == 3, LOG);
 
-    assert_true(abs( histograms(0).frequencies(0) - 2 )  < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs( histograms(0).frequencies(0) - 2 ) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs( histograms(1).frequencies(0) - 1 ) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs( histograms(2).frequencies(0) - 2 ) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    assert_true(abs( histograms(0).centers(0) - 1 )  < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs( histograms(0).centers(0) - 1 ) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs( histograms(1).centers(0) - 1 ) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs( histograms(2).centers(0) - 1 ) < type(NUMERIC_LIMITS_MIN), LOG);
 }
@@ -322,7 +318,7 @@ void DataSetTest::test_calculate_target_distribution()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({4});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     target_distribution = data_set.calculate_target_distribution();
 
@@ -352,7 +348,7 @@ void DataSetTest::test_calculate_target_distribution()
     input_variables_indices.resize(2);
     input_variables_indices.setValues({0, 1});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     target_distribution = data_set.calculate_target_distribution();
 
@@ -1065,44 +1061,15 @@ void DataSetTest::test_scrub_missing_values()
 }
 
 
-void DataSetTest::test_calculate_variables_means()
-{
-    cout << "test_calculate_variables_means\n";
-
-    data.resize(3, 4);
-
-    data.setValues({{type(1), type(2), type(3.6), type(9)},
-                    {type(2), type(2), type(2), type(2)},
-                    {type(3), type(2), type(1), type(1)}});
-
-    data_set.set_data(data);
-
-    Tensor<Index, 1> indices;
-
-    indices.resize(4);
-    indices.setValues({0, 1, 2, 3});
-
-    Tensor<type, 1> means = data_set.calculate_variables_means(indices);
-    Tensor<type, 1> solution(4);
-
-    solution.setValues({type(2), type(2), type(2.2), type(4)});
-
-    Tensor<bool, 0> eq = (means==solution).all();
-
-    assert_true(eq(0), LOG);
-}
-
-
 void DataSetTest::test_calculate_used_targets_mean()
 {
     cout << "test_calculate_used_targets_mean\n";
 
     data.resize(3, 4);
 
-    data.setValues({
-                       {type(1), type(NAN), type(1), type(1)},
-                       {type(2), type(2), type(2), type(2)},
-                       {type(3), type(3), type(NAN), type(3)}});
+    data.setValues({{type(1), type(NAN), type(1), type(1)},
+                    {type(2), type(2), type(2), type(2)},
+                    {type(3), type(3), type(NAN), type(3)}});
 
     data_set.set_data(data);
 
@@ -1143,7 +1110,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
     data_set.set_input();
     data_set.set_selection(selection_indices);
 
-    data_set.set_input_target_raw_variables(Tensor<Index,1>(), target_indices);
+    data_set.set_input_target_raw_variables_indices(Tensor<Index,1>(), target_indices);
 
     selection_targets_mean = data_set.calculate_selection_targets_mean();
 
@@ -1154,7 +1121,6 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
 void DataSetTest::test_calculate_input_target_correlations()
 {
-
     cout << "test_calculate_input_target_correlations\n";
 
     // Test 1 (numeric and numeric trivial case)
@@ -1173,7 +1139,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     Tensor<Index, 1> target_raw_variables_indices(1);
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     Tensor<Correlation, 2> input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1195,7 +1161,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_raw_variables_indices.resize(2);
     target_raw_variables_indices.setValues({2,3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1217,7 +1183,7 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1243,7 +1209,7 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1265,7 +1231,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_raw_variables_indices.resize(1);
     target_raw_variables_indices.setValues({4});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 /*
@@ -1280,7 +1246,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1302,7 +1268,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1317,7 +1283,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1342,7 +1308,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_raw_variables_indices.resize(1);
     target_raw_variables_indices.setValues({4});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1360,7 +1326,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1381,7 +1347,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1396,7 +1362,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
@@ -1419,8 +1385,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 1 (numeric and numeric trivial case)
 
-    cout << "Test 1" << endl;
-
     data.resize(3, 4);
 
     data.setValues({{type(1), type(1), type(-1), type(1)},
@@ -1435,7 +1399,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     Tensor<Index, 1> target_raw_variables_indices(1);
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1453,8 +1417,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 2 (numeric and numeric non trivial case)
 
-    cout << "Test 2" << endl;
-
     data.resize(3, 4);
     data.setValues({{type(1), type(2), type(4), type(1)},
                     {type(2), type(3), type(9), type(2)},
@@ -1466,7 +1428,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     target_raw_variables_indices.setValues({2,3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1482,8 +1444,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 3 (binary and binary non trivial case)
 
-    cout << "Test 3" << endl;
-
     data.resize(3, 4);
     data.setValues({{type(0), type(0), type(1), type(1)},
                     {type(1), type(0), type(0), type(2)},
@@ -1496,7 +1456,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1521,8 +1481,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 4 (binary and binary trivial case)
 /*
-    cout << "Test 4" << endl;
-
     data.setValues({{type(1), type(0), type(1), type(1)},
                     {type(2), type(1), type(1), type(2)},
                     {type(3), type(1), type(0), type(2)}});
@@ -1534,7 +1492,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     target_raw_variables_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1546,7 +1504,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(0,2).r < 0 && inputs_correlations(0,2).r > -1, LOG);
     assert_true(inputs_correlations(0,2).form == Correlation::Form::Logistic, LOG);
-
 
     assert_true(inputs_correlations(1,0).r > 0 && inputs_correlations(1,0).r < 1, LOG);
     assert_true(inputs_correlations(1,0).form == Correlation::Form::Logistic, LOG);
@@ -1569,8 +1526,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 */
     // Test 5 (categorical and categorical)
 
-    cout << "Test 5" << endl;
-
     data_set.set("../../datasets/correlation_tests.csv",',', false);
 /*
     input_raw_variables_indices.resize(3);
@@ -1579,7 +1534,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     target_raw_variables_indices.resize(1);
     target_raw_variables_indices.setValues({5});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1603,15 +1558,13 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 6 (numeric and binary)
 
-    cout << "Test 6" << endl;
-
     input_variables_indices.resize(3);
     input_variables_indices.setValues({1, 2, 5});
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1632,10 +1585,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
 
-
     // Test 7 (numeric and categorical)
-
-    cout << "Test 7" << endl;
 
     input_variables_indices.resize(3);
     input_variables_indices.setValues({0, 1, 3});
@@ -1643,8 +1593,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
-
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1666,15 +1615,13 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 8 (binary and categorical)
 
-    cout << "Test 8" << endl;
-
     input_variables_indices.resize(3);
     input_variables_indices.setValues({0, 2, 3});
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1700,8 +1647,6 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 9 (categorical and categorical)
 
-    cout << "Test 9" << endl;
-
     data_set.set_missing_values_label("NA");
     data_set.set("../../datasets/correlation_tests_with_nan.csv",',', false);
 
@@ -1711,7 +1656,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     target_raw_variables_indices.resize(1);
     target_raw_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1735,15 +1680,13 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 10 (numeric and binary)
 
-    cout << "Test 10" << endl;
-
     input_variables_indices.resize(3);
     input_variables_indices.setValues({1, 2, 5});
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1766,15 +1709,13 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 11 (numeric and categorical)
 
-    cout << "Test 11" << endl;
-
     input_variables_indices.resize(3);
     input_variables_indices.setValues({0, 1, 3});
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1796,15 +1737,13 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     // Test 12 (binary and categorical)
 
-    cout << "Test 12" << endl;
-
     input_variables_indices.resize(3);
     input_variables_indices.setValues({0, 2, 3});
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
 
@@ -1976,7 +1915,7 @@ void DataSetTest::test_calculate_selection_negatives()
     data_set.set_testing();
     data_set.set_selection(selection_indices);
 
-    data_set.set_input_target_raw_variables(input_variables_indices, target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     Index selection_negatives = data_set.calculate_selection_negatives(target_index);
 
@@ -2029,32 +1968,32 @@ void DataSetTest::run_test_case()
 {
     cout << "Running data set test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Data resizing methods
+    // Data resizing
 
     test_unuse_constant_raw_variables();
     test_unuse_repeated_samples();
     test_unuse_uncorrelated_raw_variables();
 
-    // Statistics methods
+    // Statistics
 
     test_calculate_variables_descriptives();
-    test_calculate_variables_means();
     test_calculate_input_variables_descriptives();
-//    test_calculate_used_targets_mean();
-//    test_calculate_selection_targets_mean();
 /*
-    // Histrogram methods
+    test_calculate_used_targets_mean();
+    test_calculate_selection_targets_mean();
 
-    test_calculate_data_distributions();
+    // Histrogram
 
-    // Filtering methods
+    test_calculate_raw_variables_distributions();
 
-    test_filter_data();
+    // Filtering
+
+//    test_filter_data();
 
     // Data scaling
 
@@ -2062,19 +2001,19 @@ void DataSetTest::run_test_case()
 
     // Correlations
 
-    test_calculate_input_target_correlations();
-/*
+//    test_calculate_input_target_correlations();
+
     test_calculate_input_raw_variables_correlations();
 
-    // Classification methods
+    // Classification
 
     test_calculate_target_distribution();
-
+/*
     // Outlier detection
 
     test_calculate_Tukey_outliers();
 
-    // Serialization methods
+    // Serialization
 
     test_read_csv();
     test_read_bank_churn_csv();

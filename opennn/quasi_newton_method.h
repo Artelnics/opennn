@@ -43,7 +43,7 @@ public:
 
    explicit QuasiNewtonMethod(LossIndex*);
 
-   // Get methods
+   // Get
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm();
@@ -63,7 +63,7 @@ public:
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
 
-   // Set methods
+   // Set
 
    void set_loss_index(LossIndex*) override;
 
@@ -84,7 +84,7 @@ public:
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
 
-   // Training methods
+   // Training
 
    void calculate_DFP_inverse_hessian(QuasiNewtonMehtodData&) const;
 
@@ -98,7 +98,7 @@ public:
 
    string write_optimization_algorithm_type() const final;
 
-   // Serialization methods
+   // Serialization
    
    void from_XML(const tinyxml2::XMLDocument&) final;
 

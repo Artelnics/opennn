@@ -78,7 +78,7 @@ public:
         ADAPTIVE_MOMENT_ESTIMATION
     };
 
-    // Get methods
+    // Get
 
     DataSet* get_data_set();
 
@@ -115,7 +115,7 @@ public:
 
     const bool& get_display() const;
 
-    // Set methods
+    // Set
 
     void set();
     void set(NeuralNetwork*, DataSet*);
@@ -148,15 +148,15 @@ public:
 
     void set_maximum_time(const type&);
 
-    // Training methods
+    // Training
 
     TrainingResults perform_training();
 
-    // Check methods
+    // Check
 
     void fix_forecasting();
 
-    // Serialization methods
+    // Serialization
 
     void print() const;
 

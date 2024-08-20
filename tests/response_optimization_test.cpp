@@ -180,12 +180,12 @@ void ResponseOptimizationTest::run_test_case()
 {
     cout << "Running response optimization test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Performance methods
+    // Performance
 
     test_calculate_inputs();
 

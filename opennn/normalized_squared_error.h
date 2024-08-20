@@ -34,12 +34,12 @@ public:
 
    explicit NormalizedSquaredError();   
 
-   // Get methods
+   // Get
 
     type get_normalization_coefficient() const;
     type get_selection_normalization_coefficient() const;
 
-   // Set methods
+   // Set
 
     void set_normalization_coefficient();
     void set_normalization_coefficient(const type&);
@@ -85,7 +85,7 @@ public:
    void calculate_error_hessian_lm(const Batch&,
                                         BackPropagationLM&) const final;
 
-   // Serialization methods
+   // Serialization
 
    string get_error_type() const final;
    string get_error_type_text() const final;

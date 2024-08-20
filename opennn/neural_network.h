@@ -81,7 +81,7 @@ public:
 
    bool check_layer_type(const Layer::Type);
 
-   // Get methods
+   // Get
 
    bool has_scaling_layer() const;
    bool has_scaling_4d_layer() const;
@@ -132,7 +132,7 @@ public:
 
    const bool& get_display() const;
 
-   // Set methods
+   // Set
 
    void set();
 
@@ -206,7 +206,7 @@ public:
 
    void set_parameters(const Tensor<type, 1>&) const;
 
-   // Parameters initialization methods
+   // Parameters initialization
 
    void set_parameters_constant(const type&) const;
 
@@ -224,7 +224,7 @@ public:
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
-   // Serialization methods
+   // Serialization
 
    Tensor<string, 2> get_information() const;
    Tensor<string, 2> get_perceptron_layers_information() const;
@@ -246,7 +246,7 @@ public:
 
    Tensor<string, 1> get_layers_names() const;
 
-   // Expression methods
+   // Expression
 
    string write_expression() const;
 

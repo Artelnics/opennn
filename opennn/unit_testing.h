@@ -41,7 +41,7 @@ public:
 
    virtual ~UnitTesting();
 
-   // Get methods
+   // Get
 
    Index get_tests_count() const;
    Index get_tests_passed_count() const;
@@ -51,7 +51,7 @@ public:
 
    const bool& get_display() const;
 
-   // Set methods
+   // Set
 
    void set_tests_count(const Index&);
    void set_tests_passed_count(const Index&);
@@ -63,12 +63,12 @@ public:
 
    void set_display(const bool&);
 
-   // Unit testing methods
+   // Unit testing
 
    void assert_true(const bool&, const string&);
    void assert_false(const bool&, const string&);
    
-   // Test case methods
+   // Test case
 
    virtual void run_test_case() = 0;
 

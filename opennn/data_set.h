@@ -139,7 +139,7 @@ public:
 
     string get_model_type_string(const DataSet::ModelType&) const;
 
-    // Samples get methods
+    // Samples get
 
     inline Index get_samples_number() const {return samples_uses.size();}
 
@@ -169,7 +169,7 @@ public:
 
     Tensor<type, 1> box_plot_from_histogram(const Histogram&, const Index&) const;
 
-    // Raw variables get methods
+    // Raw variables get
 
     Tensor<RawVariable, 1> get_raw_variables() const;
     Tensor<RawVariable, 1> get_input_raw_variables() const;
@@ -209,7 +209,7 @@ public:
     VariableUse get_raw_variable_use(const Index&) const;
     Tensor<VariableUse, 1> get_raw_variables_uses() const;
 
-    // Variables get methods
+    // Variables get
 
     Index get_variables_number() const;
 
@@ -234,18 +234,18 @@ public:
     const dimensions& get_input_dimensions() const;
     const dimensions& get_target_dimensions() const;
 
-    // Scalers get methods
+    // Scalers get
 
     Tensor<Scaler, 1> get_raw_variables_scalers() const;
 
     Tensor<Scaler, 1> get_input_variables_scalers() const;
     Tensor<Scaler, 1> get_target_variables_scalers() const;
 
-    // Batches get methods
+    // Batches get
 
     Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& = 100) const;
 
-    // Data get methods
+    // Data get
 
     const Tensor<type, 2>& get_data() const;
     Tensor<type, 2>* get_data_p();
@@ -293,7 +293,7 @@ public:
 
     Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
 
-    // Members get methods
+    // Members get
 
     MissingValuesMethod get_missing_values_method() const;
 
@@ -328,7 +328,7 @@ public:
 
     bool get_augmentation() const;
 
-    // Set methods
+    // Set
 
     void set();
     void set(const Tensor<type, 2>&);
@@ -347,7 +347,7 @@ public:
 
     void set_threads_number(const int&);
 
-    // Samples set methods
+    // Samples set
 
     void set_samples_number(const Index&);
 
@@ -369,7 +369,7 @@ public:
     void set_samples_uses(const Tensor<string, 1>&);
     void set_samples_uses(const Tensor<Index, 1>&, const SampleUse);
 
-    // raw_variables set methods
+    // raw_variables set
 
     void set_raw_variables(const Tensor<RawVariable, 1>&);
     void set_default_raw_variables_uses();
@@ -382,8 +382,8 @@ public:
     void set_raw_variables_uses(const Tensor<VariableUse, 1>&);
     void set_raw_variables_unused();
     void set_raw_variables_types(const Tensor<string, 1>&);
-    void set_input_target_raw_variables(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-    void set_input_target_raw_variables(const Tensor<string, 1>&, const Tensor<string, 1>&);
+    void set_input_target_raw_variables_indices(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set_input_target_raw_variables_indices(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_raw_variables_unused();
 
     void set_raw_variables_unused(const Tensor<Index, 1>&);
@@ -409,7 +409,7 @@ public:
     void set_binary_raw_variables();
     void unuse_constant_raw_variables();
 
-    // Variables set methods
+    // Variables set
 
     void set_variables_names(const Tensor<string, 1>&);
     void set_variables_names_from_raw_variables(const Tensor<string, 1>&, const Tensor<DataSet::RawVariable, 1>&);
@@ -422,13 +422,13 @@ public:
     void set_input_variables_dimensions(const dimensions&);
     void set_target_dimensions(const dimensions&);
 
-    // Data set methods
+    // Data set
 
     void set_data(const Tensor<type, 2>&);
     void set_data(const Tensor<type, 1>&);
     void set_data(const Tensor<type, 2>&, const bool&);
 
-    // Members set methods
+    // Members set
 
     void set_data_source_path(const string&);
 
@@ -452,7 +452,7 @@ public:
 
     void set_display(const bool&);
 
-    // Check methods
+    // Check
 
     bool is_empty() const;
 
@@ -466,7 +466,7 @@ public:
 
     bool has_selection() const;
 
-    // Splitting methods
+    // Splitting
 
     void split_samples_sequential(const type& training_ratio = type(0.6),
                                   const type& selection_ratio = type(0.2),
@@ -476,7 +476,7 @@ public:
                               const type& selection_ratio = type(0.2),
                               const type& testing_ratio = type(0.2));
 
-    // Unusing methods
+    // Unusing
 
     Tensor<Index, 1> unuse_repeated_samples();
     Tensor<string, 1> get_raw_variables_types() const;
@@ -484,18 +484,14 @@ public:
     Tensor<string, 1> unuse_uncorrelated_raw_variables(const type& = type(0.25));
     Tensor<string, 1> unuse_multicollinear_raw_variables(Tensor<Index, 1>&, Tensor<Index, 1>&);
 
-    // Initialization methods
+    // Initialization
 
     void set_data_constant(const type&);
-
-    static type round_to_precision(type, const int&);
-    static Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
-    static Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
 
     void set_data_random();
     void set_data_binary_random();
 
-    // Descriptives methods
+    // Descriptives
 
     Tensor<Descriptives, 1> calculate_variables_descriptives() const;
     Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
@@ -517,7 +513,6 @@ public:
     Tensor<type, 1> calculate_input_variables_maximums() const;
     Tensor<type, 1> calculate_target_variables_maximums() const;
 
-    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
     Tensor<type, 1> calculate_used_variables_minimums() const;
 
     Tensor<type, 1> calculate_used_targets_mean() const;
@@ -528,7 +523,7 @@ public:
     Index calculate_selection_negatives(const Index&) const;
     Index calculate_testing_negatives(const Index&) const;
 
-    // Distribution methods
+    // Distribution
 
     Tensor<Histogram, 1> calculate_raw_variables_distribution(const Index& = 10) const;
 
@@ -550,17 +545,16 @@ public:
 
     Tensor<Correlation, 2> calculate_input_target_raw_variables_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_raw_variables_correlations_spearman() const;
-    Tensor<Correlation, 2> calculate_relevant_input_target_raw_variables_correlations(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
     void print_input_target_raw_variables_correlations() const;
 
     void print_top_input_target_raw_variables_correlations() const;
 
-    // Filtering methods
+    // Filtering
 
     Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    // Scaling methods
+    // Scaling
 
     void set_default_raw_variables_scalers();
 
@@ -578,7 +572,7 @@ public:
     void unscale_input_variables(const Tensor<Descriptives, 1>&);
     void unscale_target_variables(const Tensor<Descriptives, 1>&);
 
-    // Classification methods
+    // Classification
 
     Tensor<Index, 1> calculate_target_distribution() const;
 
@@ -599,7 +593,7 @@ public:
     void generate_sum_data(const Index&, const Index&);
     void generate_classification_data(const Index&, const Index&, const Index&);
 
-    // Serialization methods
+    // Serialization
 
     virtual void print() const;
 
@@ -653,11 +647,11 @@ public:
     void set_rows_missing_values_number(const Index&);
     void set_rows_missing_values_number();
 
-    // Other methods
+    // Other
 
     void fix_repeated_names();
 
-    // Eigen methods
+    // Eigen
 
     Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 

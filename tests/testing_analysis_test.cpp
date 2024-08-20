@@ -1171,12 +1171,12 @@ void TestingAnalysisTest::run_test_case()
 {
     cout << "Running testing analysis test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Error data methods
+    // Error data
 
     test_calculate_error_data();
     test_calculate_percentage_error_data();
@@ -1186,28 +1186,28 @@ void TestingAnalysisTest::run_test_case()
     test_calculate_error_data_histograms();
     test_calculate_maximal_errors();
 
-    // Linear regression analysis methodsta
+    // Linear regression analysista
 
     test_linear_regression();
     test_save();
     test_perform_linear_regression();
 
-    // Binary classification test methods
+    // Binary classification test
 
     test_calculate_binary_classification_test();
 
-    // Confusion matrix methods
+    // Confusion matrix
 
     test_calculate_confusion();
 
-    // ROC curve methods
+    // ROC curve
 
     test_calculate_Wilcoxon_parameter();
     test_calculate_roc_curve();
     test_calculate_area_under_curve();
     test_calculate_optimal_threshold();
 
-    // Lift chart methods
+    // Lift chart
 
     test_calculate_cumulative_gain();
     test_calculate_lift_chart();

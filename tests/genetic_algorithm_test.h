@@ -29,38 +29,38 @@ public:
 
    explicit GeneticAlgorithmTest();  
 
-   virtual ~GeneticAlgorithmTest(); 
+   virtual ~GeneticAlgorithmTest();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
    void test_destructor();
 
-   // Population methods
+   // Population
 
    void test_initialize_population();
 
-   // Fitness assignment methods
+   // Fitness assignment
 
    void test_perform_fitness_assignment();
 
-   // Selection methods
+   // Selection
 
    void test_perform_selection();
 
-   // Crossover methods
+   // Crossover
 
    void test_perform_crossover();
 
-   // Mutation methods
+   // Mutation
 
    void test_perform_mutation();
 
-   // Inputs selection methods
+   // Inputs selection
 
    void test_perform_inputs_selection();
 
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 

@@ -29,11 +29,11 @@ public:
 
     virtual ~CorrelationsTest();
 
-    // Correlation methods
+    // Correlation
 
     void test_linear_correlation();
 
-    void test_spearman_linear_correlation();
+    void test_spearman_correlation();
 
     void test_logistic_correlation();
 
@@ -43,16 +43,15 @@ public:
 
     void test_power_correlation();
 
-    // Time series correlation methods
+    // Time series correlation
 
     void test_autocorrelations();
 
     void test_cross_correlations();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
-
 };
 
 }

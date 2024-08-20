@@ -29,13 +29,13 @@ public:
 
    virtual ~ConjugateGradientTest();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
 
    void test_destructor();
 
-   // Training methods
+   // Training
 
    void test_calculate_PR_parameter();
    void test_calculate_FR_parameter();
@@ -45,7 +45,7 @@ public:
 
    void test_perform_training();
 
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 

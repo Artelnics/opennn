@@ -162,12 +162,12 @@ void GrowingNeuronsTest::run_test_case()
 {
     cout << "Running growing neurons test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Order selection methods
+    // Order selection
 
     test_perform_neurons_selection();
 

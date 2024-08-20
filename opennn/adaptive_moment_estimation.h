@@ -54,7 +54,7 @@ public:
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
 
-   // Set methods
+   // Set
 
    void set_loss_index(LossIndex*) final;
 
@@ -62,7 +62,7 @@ public:
 
    void set_default() final;
 
-   // Get methods
+   // Get
 
    Index get_batch_samples_number() const;
 
@@ -84,13 +84,13 @@ public:
    void set_accuracy_goal(const type&);
    void set_maximum_time(const type&);
 
-   // Training methods
+   // Training
 
    TrainingResults perform_training() final;
 
    string write_optimization_algorithm_type() const final;
 
-   // Serialization methods
+   // Serialization
 
    Tensor<string, 2> to_string_matrix() const final;
 

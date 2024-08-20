@@ -30,6 +30,24 @@
 namespace opennn
 {
 
+
+type bound(const type& value, const type& minimum, const type& maximum)
+{
+    if(value < minimum)
+    {
+        return minimum;
+    }
+    else if(value > maximum)
+    {
+        return maximum;
+    }
+    else
+    {
+        return value;
+    }
+}
+
+
 type calculate_random_uniform(const type& minimum, const type& maximum)
 {
     const type random = type(rand()/(RAND_MAX+1.0));
@@ -52,6 +70,43 @@ bool calculate_random_bool()
     else
     {
         return false;
+    }
+}
+
+
+void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum)
+{
+#pragma omp parallel for
+    for(Index i = 0; i < tensor.size(); i++)
+    {
+        const type random = type(rand()/(RAND_MAX+1.0));
+
+        tensor(i) = minimum + (maximum - minimum)*random;
+    }
+}
+
+
+void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum)
+{
+    #pragma omp parallel for
+    for(Index i = 0; i < tensor.size(); i++)
+    {
+        const type random = type(rand()/(RAND_MAX+1.0));
+
+        tensor(i) = minimum + (maximum - minimum)*random;
+    }
+}
+
+
+void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum)
+{
+    #pragma omp parallel for
+
+    for(Index i = 0; i < tensor.size(); i++)
+    {
+        const type random = type(rand()/(RAND_MAX+1.0));
+
+        tensor(i) = minimum + (maximum - minimum)*random;
     }
 }
 
@@ -2032,14 +2087,14 @@ Index partition(Tensor<type, 2>& data_matrix,
     Index left_index = start_index;
     Index right_index = end_index;
 
-    while (left_index < pivot_position && right_index > pivot_position)
+    while(left_index < pivot_position && right_index > pivot_position)
     {
-        while (data_matrix(left_index, target_column) <= pivot_value)
+        while(data_matrix(left_index, target_column) <= pivot_value)
         {
             left_index++;
         }
 
-        while (data_matrix(right_index, target_column) > pivot_value)
+        while(data_matrix(right_index, target_column) > pivot_value)
         {
             right_index--;
         }
@@ -2089,6 +2144,47 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
     }
 
     return intersection;
+}
+
+
+type round_to_precision(type x, const int& precision)
+{
+    const type factor = type(pow(10, precision));
+
+    return round(factor*x)/factor;
+}
+
+
+Tensor<type,2> round_to_precision_matrix(Tensor<type,2> matrix,const int& precision)
+{
+    Tensor<type, 2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
+
+    const type factor = type(pow(10, precision));
+
+    for(int i = 0; i < matrix.dimension(0); i++)
+    {
+        for(int j = 0; j < matrix.dimension(1); j++)
+        {
+            matrix_rounded(i,j) = (round(factor*matrix(i,j)))/factor;
+        }
+    }
+
+    return matrix_rounded;
+}
+
+
+Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision)
+{
+    Tensor<type, 1> tensor_rounded(tensor.size());
+
+    const type factor = type(pow(10, precision));
+
+    for(Index i = 0; i < tensor.size(); i++)
+    {
+        tensor_rounded(i) = round(factor*tensor(i))/factor;
+    }
+
+    return tensor_rounded;
 }
 
 

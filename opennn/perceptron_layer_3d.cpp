@@ -163,9 +163,6 @@ string PerceptronLayer3D::write_activation_function() const
 {
     switch(activation_function)
     {
-    /*case ActivationFunction::Logistic:
-        return "Logistic";*/
-
     case ActivationFunction::HyperbolicTangent:
         return "HyperbolicTangent";
 
@@ -175,7 +172,11 @@ string PerceptronLayer3D::write_activation_function() const
     case ActivationFunction::RectifiedLinear:
         return "RectifiedLinear";
 
-    /*case ActivationFunction::ScaledExponentialLinear:
+    /*
+    case ActivationFunction::Logistic:
+        return "Logistic";
+
+    case ActivationFunction::ScaledExponentialLinear:
         return "ScaledExponentialLinear";
 
     case ActivationFunction::SoftPlus:
@@ -188,7 +189,8 @@ string PerceptronLayer3D::write_activation_function() const
         return "HardSigmoid";
 
     case ActivationFunction::ExponentialLinear:
-        return "ExponentialLinear";*/
+        return "ExponentialLinear";
+*/
     }
 
     return string();

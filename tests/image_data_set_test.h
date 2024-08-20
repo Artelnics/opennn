@@ -29,22 +29,12 @@ public:
 
    virtual ~ImageDataSetTest();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
    void test_destructor();
 
-   // Preprocessing methods
-
-   void test_image_preprocessing();
-   void test_fill_image();
-
-   // Reading and writing methods
-
-   void test_bmp();
-   void test_XML();
-
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 
@@ -55,7 +45,6 @@ public:
    string data_string;
 
    string data_source_path;
-
 
    Index inputs_number;
    Index targets_number;

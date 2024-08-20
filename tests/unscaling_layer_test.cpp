@@ -62,7 +62,7 @@ void UnscalingLayerTest::run_test_case()
 {
     cout << "Running unscaling layer test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
