@@ -337,7 +337,7 @@ public:
     void set(const DataSet&);
     void set(const tinyxml2::XMLDocument&);
     void set(const string&);
-    void set(const string&, const char&, const bool&);
+//    void set(const string&, const char&, const bool&);
     void set(const string&, const char&, const bool&, const bool&, const DataSet::Codification&);
     void set(const Tensor<type, 1>&, const Index&);
     void set_default();

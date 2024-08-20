@@ -458,7 +458,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     // Neural network
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
-
+/*
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
@@ -634,7 +634,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     if(neural_network->has_unscaling_layer())
         data_set->unscale_target_variables(target_variables_descriptives);
-
+*/
     if(display) results.print();
 
     return results;

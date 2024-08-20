@@ -1599,11 +1599,19 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
     {
         if(raw_variables(i).use != VariableUse::Input) continue;
 
-        const Index categories_number = raw_variables(i).get_categories_number();
-
-        for(Index j = 0; j < categories_number; j++)
+        if(raw_variables(i).type == RawVariableType::Categorical)
         {
-            input_variables_names(index) = raw_variables(i).categories(j);
+            const Index categories_number = raw_variables(i).get_categories_number();
+
+            for(Index j = 0; j < categories_number; j++)
+            {
+                input_variables_names(index) = raw_variables(i).categories(j);
+                index++;
+            }
+        }
+        else
+        {
+            input_variables_names(index) = raw_variables(i).name;
             index++;
         }
     }
@@ -1626,11 +1634,19 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
     {
         if(raw_variables(i).use != VariableUse::Target) continue;
 
-        const Index categories_number = raw_variables(i).get_categories_number();
-
-        for(Index j = 0; j < categories_number; j++)
+        if(raw_variables(i).type == RawVariableType::Categorical)
         {
-            target_variables_names(index) = raw_variables(i).categories(j);
+            const Index categories_number = raw_variables(i).get_categories_number();
+
+            for(Index j = 0; j < categories_number; j++)
+            {
+                target_variables_names(index) = raw_variables(i).categories(j);
+                index++;
+            }
+        }
+        else
+        {
+            target_variables_names(index) = raw_variables(i).name;
             index++;
         }
     }
@@ -2367,7 +2383,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
     {
         if(raw_variables(i).use != VariableUse::Input)
         {
-            if(raw_variables(i).type != RawVariableType::Categorical)
+            if(raw_variables(i).type == RawVariableType::Categorical)
             {
                 const Index categories_number = raw_variables(i).get_categories_number();
 
@@ -2381,7 +2397,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
             continue;
         }
 
-        if(raw_variables(i).type != RawVariableType::Categorical)
+        if(raw_variables(i).type == RawVariableType::Categorical)
         {
             const Index categories_number = raw_variables(i).get_categories_number();
 
@@ -2416,15 +2432,34 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        const Index categories_number = raw_variables(i).get_categories_number();
-
         if(raw_variables(i).use != VariableUse::Target)
         {
-            variable_index += categories_number;
+            if(raw_variables(i).type == RawVariableType::Categorical)
+            {
+                const Index categories_number = raw_variables(i).get_categories_number();
+
+                variable_index += categories_number;
+            }
+            else
+            {
+                variable_index++;
+            }
+
             continue;
         }
 
-        for(Index j = 0; j < categories_number; j++)
+        if(raw_variables(i).type == RawVariableType::Categorical)
+        {
+            const Index categories_number = raw_variables(i).get_categories_number();
+
+            for(Index j = 0; j < categories_number; j++)
+            {
+                target_variables_indices(target_variable_index) = variable_index;
+                variable_index++;
+                target_variable_index++;
+            }
+        }
+        else
         {
             target_variables_indices(target_variable_index) = variable_index;
             variable_index++;
@@ -2796,7 +2831,7 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
 
 void DataSet::set_binary_raw_variables()
 {
-    if(display) cout << "Checking binary raw_variables..." << endl;
+    if(display) cout << "Setting binary raw variables..." << endl;
 
     Index variable_index = 0;
 
@@ -2841,7 +2876,7 @@ void DataSet::set_binary_raw_variables()
 
 void DataSet::unuse_constant_raw_variables()
 {
-    if(display) cout << "Setting constant raw_variables..." << endl;
+    if(display) cout << "Setting constant raw variables..." << endl;
 
     Index variable_index = 0;
 
@@ -3735,25 +3770,25 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
 }
 
 
-void DataSet::set(const string& data_source_path, const char& separator, const bool& new_has_header)
-{
-    set();
+// void DataSet::set(const string& data_source_path, const char& separator, const bool& new_has_header)
+// {
+//     set();
 
-    set_default();
+//     set_default();
 
-    set_data_source_path(data_source_path);
+//     set_data_source_path(data_source_path);
 
-    set_separator(separator);
+//     set_separator(separator);
 
-    set_has_header(new_has_header);
+//     set_has_header(new_has_header);
 
-    read_csv();
+//     read_csv();
 
-//    set_default_raw_variables_scalers();
+// //    set_default_raw_variables_scalers();
 
-//    set_default_raw_variables_uses();
+// //    set_default_raw_variables_uses();
 
-}
+// }
 
 
 void DataSet::set(const string& data_source_path,
@@ -3782,6 +3817,12 @@ void DataSet::set(const string& data_source_path,
 
     set_default_raw_variables_uses();
 
+    const Index input_variables_number = get_input_variables_number();
+    const Index target_variables_number = get_target_variables_number();
+
+    input_dimensions = {input_variables_number};
+
+    target_dimensions = {target_variables_number};
 }
 
 
@@ -6234,15 +6275,15 @@ void DataSet::print() const
          print_dimensions(input_dimensions);
          cout << "Target variables dimensions: ";
          print_dimensions(target_dimensions);
-
+    /*
     Index raw_variables_number = get_raw_variables_number();
-
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
         cout << endl;
         raw_variables(i).print();
     }
+    */
 }
 
 

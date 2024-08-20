@@ -319,6 +319,9 @@ string TrainingResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
+    case OptimizationAlgorithm::StoppingCondition::None:
+        return "None";
+
     case OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease:
         return "Minimum loss decrease";
 

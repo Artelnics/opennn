@@ -1220,7 +1220,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     }
 
     // Test 5 (categorical and categorical)
-
+/*
     data_set = opennn::DataSet();
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
@@ -1523,11 +1523,11 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
-*/
+
     // Test 5 (categorical and categorical)
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
-/*
+
     input_raw_variables_indices.resize(3);
     input_raw_variables_indices.setValues({0, 3, 4});
 
