@@ -543,13 +543,13 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     
     input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
     /*
-    for (int image_index = 0; image_index < batch_samples_number; image_index++)
+    for(int image_index = 0; image_index < batch_samples_number; image_index++)
     {
-        for (int row = 0; row < deltas_pair(0).second[1]; ++row)
+        for(int row = 0; row < deltas_pair(0).second[1]; ++row)
         {
-            for (int column = 0; column < deltas_pair(0).second[2]; ++column)
+            for(int column = 0; column < deltas_pair(0).second[2]; ++column)
             {
-                for (int channel = 0; channel < deltas_pair(0).second[3]; ++channel)
+                for(int channel = 0; channel < deltas_pair(0).second[3]; ++channel)
                 {
                     input_derivatives.chip(image_index, 0)
                         .chip(row, 0)

@@ -1866,7 +1866,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("LayerInputsIndices");
 
-        file_stream.PushAttribute("LayerIndex", to_string(i + 1).c_str());
+        file_stream.PushAttribute("LayerIndex", to_string(i+1).c_str());
 
         const Tensor<Index, 1>& indices = layers_inputs_indices(i);
         buffer.str("");

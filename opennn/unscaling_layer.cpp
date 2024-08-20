@@ -355,28 +355,28 @@ void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& i
 }
 
 
-void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
-{
-    descriptives[i].set_minimum(new_minimum);
-}
+// void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
+// {
+//     descriptives[i].set_minimum(new_minimum);
+// }
 
 
-void UnscalingLayer::set_maximum(const Index& i, const type& new_maximum)
-{
-    descriptives[i].set_maximum(new_maximum);
-}
+// void UnscalingLayer::set_maximum(const Index& i, const type& new_maximum)
+// {
+//     descriptives[i].set_maximum(new_maximum);
+// }
 
 
-void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
-{
-    descriptives[i].set_mean(new_mean);
-}
+// void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
+// {
+//     descriptives[i].set_mean(new_mean);
+// }
 
 
-void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
-{
-    descriptives[i].set_standard_deviation(new_standard_deviation);
-}
+// void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
+// {
+//     descriptives[i].set_standard_deviation(new_standard_deviation);
+// }
 
 
 void UnscalingLayer::set_scalers(const Tensor<Scaler,1>& new_unscaling_method)

@@ -1436,8 +1436,8 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
     for(Index i = Index(bin_center)-2; i >= 0; i--) // Lower centers
     {
-        minimums(i) = minimums(i + 1) - length;
-        maximums(i) = maximums(i + 1) - length;
+        minimums(i) = minimums(i+1) - length;
+        maximums(i) = maximums(i+1) - length;
 
         centers(i) = (maximums(i) + minimums(i)) /type(2.0);
     }
@@ -1836,7 +1836,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
         }
         else
         {
-            counter = Index(i + 1);
+            counter = Index(i+1);
 
             for(Index j = i+1; j < new_size; j++)
             {

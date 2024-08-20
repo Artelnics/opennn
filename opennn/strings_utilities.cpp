@@ -3264,7 +3264,7 @@ int measure(const string& word)
 {
     int count = 0;
     bool vowel_seen = false;
-    for (char ch : word)
+    for(char ch : word)
     {
         if(is_vowel(ch))
         {
@@ -3282,7 +3282,7 @@ int measure(const string& word)
 
 bool contains_vowel(const string& word)
 {
-    for (char ch : word)
+    for(char ch : word)
     {
         if(is_vowel(ch))
             return true;

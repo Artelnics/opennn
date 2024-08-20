@@ -417,13 +417,13 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     input_derivatives.setZero();
 
     // Max pooling
-    for (int batch_index = 0; batch_index < batch_samples_number; ++batch_index)
+    for(int batch_index = 0; batch_index < batch_samples_number; ++batch_index)
     {
-        for (int height_index = 0; height_index < inputs_pair(0).second[1]; ++height_index)
+        for(int height_index = 0; height_index < inputs_pair(0).second[1]; ++height_index)
         {
-            for (int width_index = 0; width_index < inputs_pair(0).second[2]; ++width_index)
+            for(int width_index = 0; width_index < inputs_pair(0).second[2]; ++width_index)
             {
-                for (int channel_index = 0; channel_index < inputs_pair(0).second[3]; ++channel_index)
+                for(int channel_index = 0; channel_index < inputs_pair(0).second[3]; ++channel_index)
                 {
                     int height_start = height_index * row_stride;
                     int height_end = min(height_start + pool_height, inputs_pair(0).second[1]);
@@ -431,9 +431,9 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                     int width_end = min(width_start + pool_width, inputs_pair(0).second[2]);
 
                     bool found_max = false;
-                    for (int pixel_height = height_start; pixel_height < height_end && !found_max; ++pixel_height)
+                    for(int pixel_height = height_start; pixel_height < height_end && !found_max; ++pixel_height)
                     {
-                        for (int pixel_width = width_start; pixel_width < width_end && !found_max; ++pixel_width)
+                        for(int pixel_width = width_start; pixel_width < width_end && !found_max; ++pixel_width)
                         {
                             if (inputs(batch_index, pixel_height, pixel_width, channel_index) == outputs(batch_index, height_index, width_index, channel_index))
                             {
