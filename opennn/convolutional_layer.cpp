@@ -856,23 +856,11 @@ void ConvolutionalLayer::set_name(const string& new_layer_name)
 }
 
 
-void ConvolutionalLayer::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void ConvolutionalLayer::set_synaptic_weights_constant(const type& value)
-{
-    synaptic_weights.setConstant(value);
-}
-
-
 void ConvolutionalLayer::set_parameters_constant(const type& value)
 {
-    set_biases_constant(value);
+    // set_biases_constant(value);
 
-    set_synaptic_weights_constant(value);
+    // set_synaptic_weights_constant(value);
 }
 
 

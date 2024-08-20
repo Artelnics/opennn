@@ -398,36 +398,36 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 }
 
 
-void Transformer::tokenize_whitespace(const Tensor<string, 1>& context_tokens, Tensor<type, 2>& context)
-{
-    const Index context_vocabulary_size = context_vocabulary.size();
+// void Transformer::tokenize_whitespace(const Tensor<string, 1>& context_tokens, Tensor<type, 2>& context)
+// {
+//     const Index context_vocabulary_size = context_vocabulary.size();
 
-    bool line_ended = false;
+//     bool line_ended = false;
 
-    for(Index j = 0; j < context_length - 1; j++)
-    {
-        if(j < context_tokens.size())
-        {
-            auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(j));
+//     for(Index j = 0; j < context_length - 1; j++)
+//     {
+//         if(j < context_tokens.size())
+//         {
+//             auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(j));
 
-            const Index word_index = it - context_vocabulary.data();
+//             const Index word_index = it - context_vocabulary.data();
 
-            context(j + 1) = type(word_index);
-        }
-        else
-        {
-            if(j == context_tokens.size() || (j == context_length - 2 && !line_ended))
-            {
-                context(j + 1) = 2; // end indicator
-                line_ended = true;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-}
+//             context(j + 1) = type(word_index);
+//         }
+//         else
+//         {
+//             if(j == context_tokens.size() || (j == context_length - 2 && !line_ended))
+//             {
+//                 context(j + 1) = 2; // end indicator
+//                 line_ended = true;
+//             }
+//             else
+//             {
+//                 break;
+//             }
+//         }
+//     }
+// }
 
 
 void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Tensor<type, 2>& context)
@@ -517,15 +517,15 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
 }
 
 
-void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
-{
-    for(Index i = 1; i < input_length; i++)
-    {
-        if(predictions(i) == 2)   break;
+// void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
+// {
+//     for(Index i = 1; i < input_length; i++)
+//     {
+//         if(predictions(i) == 2)   break;
 
-        output_string << input_vocabulary(Index(predictions(i))) << " ";
-    }
-}
+//         output_string << input_vocabulary(Index(predictions(i))) << " ";
+//     }
+// }
 
 
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& output_string)
@@ -550,6 +550,7 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
         }
     }
 }
+
 
 void Transformer::load_transformer(const string& path)
 {

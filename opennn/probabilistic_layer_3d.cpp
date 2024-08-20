@@ -305,19 +305,7 @@ void ProbabilisticLayer3D::set_display(const bool& new_display)
 }
 
 
-void ProbabilisticLayer3D::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void ProbabilisticLayer3D::set_synaptic_weights_constant(const type& value)
-{
-    synaptic_weights.setConstant(value);
-}
-
-
-void ProbabilisticLayer3D::set_synaptic_weights_constant_Glorot()
+void ProbabilisticLayer3D::set_synaptic_weights_Glorot()
 {
     synaptic_weights.setRandom();
 }

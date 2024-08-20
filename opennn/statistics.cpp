@@ -2677,11 +2677,11 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < 9; i++)
     {
-        if(new_size * (i + 1) % 10 == 0)
-            percentiles[i] = (sorted_vector[new_size * (i + 1) / 10 - 1] + sorted_vector[new_size * (i + 1) / 10]) / type(2.0);
+        if(new_size * (i+1) % 10 == 0)
+            percentiles[i] = (sorted_vector[new_size * (i+1) / 10 - 1] + sorted_vector[new_size * (i+1) / 10]) / type(2.0);
 
         else
-            percentiles[i] = type(sorted_vector[new_size * (i + 1) / 10]);
+            percentiles[i] = type(sorted_vector[new_size * (i+1) / 10]);
     }
 
     percentiles[9] = maximum(new_vector);

@@ -2765,11 +2765,11 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
 type TestingAnalysis::calculate_logloss() const
 {
-    Tensor<type, 2> inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set->get_testing_target_data();
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     const Index testing_samples_number = data_set->get_testing_samples_number();
 

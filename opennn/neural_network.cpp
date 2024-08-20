@@ -463,30 +463,30 @@ Index NeuralNetwork::get_layer_index(const string& layer_name) const
 }
 
 
-Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
-{
-    const Index layers_number = get_layers_number();
+// Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
+// {
+//     const Index layers_number = get_layers_number();
 
-    const Index trainable_layers_number = get_trainable_layers_number();
+//     const Index trainable_layers_number = get_trainable_layers_number();
 
-    Tensor<Index, 1> trainable_layers_indices(trainable_layers_number);
+//     Tensor<Index, 1> trainable_layers_indices(trainable_layers_number);
 
-    Index trainable_layer_index = 0;
+//     Index trainable_layer_index = 0;
 
-    for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() != Layer::Type::Scaling2D
-        && layers[i]->get_type() != Layer::Type::Scaling4D
-        && layers[i]->get_type() != Layer::Type::Unscaling
-        && layers[i]->get_type() != Layer::Type::Bounding)
-        {
-            trainable_layers_indices[trainable_layer_index] = i;
-            trainable_layer_index++;
-        }
-    }
+//     for(Index i = 0; i < layers_number; i++)
+//     {
+//         if(layers[i]->get_type() != Layer::Type::Scaling2D
+//         && layers[i]->get_type() != Layer::Type::Scaling4D
+//         && layers[i]->get_type() != Layer::Type::Unscaling
+//         && layers[i]->get_type() != Layer::Type::Bounding)
+//         {
+//             trainable_layers_indices[trainable_layer_index] = i;
+//             trainable_layer_index++;
+//         }
+//     }
 
-    return trainable_layers_indices;
-}
+//     return trainable_layers_indices;
+// }
 
 
 const Tensor<Tensor<Index, 1>, 1>& NeuralNetwork::get_layers_inputs_indices() const
@@ -559,20 +559,20 @@ BoundingLayer* NeuralNetwork::get_bounding_layer() const
 }
 
 
-FlattenLayer* NeuralNetwork::get_flatten_layer() const
-{
-    const Index layers_number = get_layers_number();
+// FlattenLayer* NeuralNetwork::get_flatten_layer() const
+// {
+//     const Index layers_number = get_layers_number();
 
-    for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Flatten)
-        {
-            return dynamic_cast<FlattenLayer*>(layers[i]);
-        }
-    }
+//     for(Index i = 0; i < layers_number; i++)
+//     {
+//         if(layers[i]->get_type() == Layer::Type::Flatten)
+//         {
+//             return dynamic_cast<FlattenLayer*>(layers[i]);
+//         }
+//     }
 
-    throw runtime_error("No flatten layer in neural network.\n");
-}
+//     throw runtime_error("No flatten layer in neural network.\n");
+// }
 
 
 //ConvolutionalLayer* NeuralNetwork::get_convolutional_layer() const
@@ -591,20 +591,20 @@ FlattenLayer* NeuralNetwork::get_flatten_layer() const
 //}
 
 
-PoolingLayer* NeuralNetwork::get_pooling_layer() const
-{
-    const Index layers_number = get_layers_number();
+// PoolingLayer* NeuralNetwork::get_pooling_layer() const
+// {
+//     const Index layers_number = get_layers_number();
 
-    for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Pooling)
-        {
-            return dynamic_cast<PoolingLayer*>(layers[i]);
-        }
-    }
+//     for(Index i = 0; i < layers_number; i++)
+//     {
+//         if(layers[i]->get_type() == Layer::Type::Pooling)
+//         {
+//             return dynamic_cast<PoolingLayer*>(layers[i]);
+//         }
+//     }
 
-    throw runtime_error("No pooling layer in neural network.\n");
-}
+//     throw runtime_error("No pooling layer in neural network.\n");
+// }
 
 
 ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer() const
@@ -929,19 +929,19 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 }
 
 
-void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
-{
-    if(layers.dimension(0) == 0) return;
+// void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
+// {
+//     if(layers.dimension(0) == 0) return;
 
-    Index new_inputs_number = 0;
+//     Index new_inputs_number = 0;
 
-    for(Index i = 0; i < inputs.dimension(0); i++)
-    {
-        if(inputs(i)) new_inputs_number++;
-    }
+//     for(Index i = 0; i < inputs.dimension(0); i++)
+//     {
+//         if(inputs(i)) new_inputs_number++;
+//     }
 
-    set_inputs_number(new_inputs_number);
-}
+//     set_inputs_number(new_inputs_number);
+// }
 
 
 void NeuralNetwork::set_default()
@@ -1078,54 +1078,54 @@ dimensions NeuralNetwork::get_output_dimensions() const
 }
 
 
-Tensor<Index, 1> NeuralNetwork::get_trainable_layers_neurons_numbers() const
-{
-    const Index trainable_layers_number = get_trainable_layers_number();
+// Tensor<Index, 1> NeuralNetwork::get_trainable_layers_neurons_numbers() const
+// {
+//     const Index trainable_layers_number = get_trainable_layers_number();
 
-    Tensor<Index, 1> layers_neurons_number(trainable_layers_number);
+//     Tensor<Index, 1> layers_neurons_number(trainable_layers_number);
 
-    Index count = 0;
+//     Index count = 0;
 
-    for(Index i = 0; i < layers.size(); i++)
-    {
-        if(layers(i)->get_type() != Layer::Type::Scaling2D
-        && layers(i)->get_type() != Layer::Type::Scaling4D
-        && layers(i)->get_type() != Layer::Type::Unscaling
-        && layers(i)->get_type() != Layer::Type::Bounding)
-        {
-            layers_neurons_number(count) = layers[i]->get_neurons_number();
+//     for(Index i = 0; i < layers.size(); i++)
+//     {
+//         if(layers(i)->get_type() != Layer::Type::Scaling2D
+//         && layers(i)->get_type() != Layer::Type::Scaling4D
+//         && layers(i)->get_type() != Layer::Type::Unscaling
+//         && layers(i)->get_type() != Layer::Type::Bounding)
+//         {
+//             layers_neurons_number(count) = layers[i]->get_neurons_number();
 
-            count++;
-        }
-    }
+//             count++;
+//         }
+//     }
 
-    return layers_neurons_number;
-}
+//     return layers_neurons_number;
+// }
 
 
-Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
-{
-    const Index trainable_layers_number = get_trainable_layers_number();
+// Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
+// {
+//     const Index trainable_layers_number = get_trainable_layers_number();
 
-    Tensor<Index, 1> layers_neurons_number(trainable_layers_number);
+//     Tensor<Index, 1> layers_neurons_number(trainable_layers_number);
 
-    Index count = 0;
+//     Index count = 0;
 
-    for(Index i = 0; i < layers.size(); i++)
-    {
-        if(layers(i)->get_type() != Layer::Type::Scaling2D
-        && layers(i)->get_type() != Layer::Type::Scaling4D
-        && layers(i)->get_type() != Layer::Type::Unscaling
-        && layers(i)->get_type() != Layer::Type::Bounding)
-        {
-            layers_neurons_number(count) = layers[i]->get_inputs_number();
+//     for(Index i = 0; i < layers.size(); i++)
+//     {
+//         if(layers(i)->get_type() != Layer::Type::Scaling2D
+//         && layers(i)->get_type() != Layer::Type::Scaling4D
+//         && layers(i)->get_type() != Layer::Type::Unscaling
+//         && layers(i)->get_type() != Layer::Type::Bounding)
+//         {
+//             layers_neurons_number(count) = layers[i]->get_inputs_number();
 
-            count++;
-        }
-    }
+//             count++;
+//         }
+//     }
 
-    return layers_neurons_number;
-}
+//     return layers_neurons_number;
+// }
 
 
 Tensor<Index, 1> NeuralNetwork::get_architecture() const
@@ -1265,17 +1265,17 @@ Index NeuralNetwork::get_layers_number() const
 }
 
 
-Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
-{
-    Tensor<Index, 1> layers_neurons_number(layers.size());
+// Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
+// {
+//     Tensor<Index, 1> layers_neurons_number(layers.size());
 
-    for(Index i = 0; i < layers.size(); i++)
-    {
-        layers_neurons_number(i) = layers[i]->get_neurons_number();
-    }
+//     for(Index i = 0; i < layers.size(); i++)
+//     {
+//         layers_neurons_number(i) = layers[i]->get_neurons_number();
+//     }
 
-    return layers_neurons_number;
-}
+//     return layers_neurons_number;
+// }
 
 
 Index NeuralNetwork::get_trainable_layers_number() const
@@ -3399,11 +3399,13 @@ string NeuralNetwork::write_expression_api() const
         for(int i = 0; i < found_tokens_and_input_names.dimension(0); i++)
         {
             new_word.clear();
+
             new_word = "$" + found_tokens_and_input_names[i];
+
             replace_all_word_appearances(t, found_tokens_and_input_names[i], new_word);
         }
 
-        if(LSTM_number>0)
+        if(LSTM_number > 0)
         {
             replace_all_appearances(t, "(t)"     , "");
             replace_all_appearances(t, "(t-1)"   , "");
@@ -4712,17 +4714,17 @@ Layer* NeuralNetwork::get_last_trainable_layer() const
 }
 
 
-Layer* NeuralNetwork::get_last_layer() const
-{
-    if(layers.size() > 0)
-    {
-        Layer* last_layer = layers[layers.size() - 1];
+// Layer* NeuralNetwork::get_last_layer() const
+// {
+//     if(layers.size() > 0)
+//     {
+//         Layer* last_layer = layers[layers.size() - 1];
 
-        return last_layer;
-    }
+//         return last_layer;
+//     }
 
-    return nullptr;
-}
+//     return nullptr;
+// }
 
 
 void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)

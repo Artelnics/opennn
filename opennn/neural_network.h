@@ -109,7 +109,7 @@ public:
    Layer* get_layer(const Index&) const;
    Layer* get_layer(const string&) const;
    Tensor<Layer*, 1> get_trainable_layers() const;
-   Tensor<Index, 1> get_trainable_layers_indices() const;   
+//   Tensor<Index, 1> get_trainable_layers_indices() const;
 
    Index get_layer_index(const string&) const;
 
@@ -119,15 +119,15 @@ public:
    ScalingLayer4D* get_scaling_layer_4d() const;
    UnscalingLayer* get_unscaling_layer() const;
    BoundingLayer* get_bounding_layer() const;
-   FlattenLayer* get_flatten_layer() const;
+   //FlattenLayer* get_flatten_layer() const;
    //ConvolutionalLayer* get_convolutional_layer() const;
-   PoolingLayer* get_pooling_layer() const;
+   //PoolingLayer* get_pooling_layer() const;
    ProbabilisticLayer* get_probabilistic_layer() const;
    LongShortTermMemoryLayer* get_long_short_term_memory_layer() const;
    RecurrentLayer* get_recurrent_layer() const;
 
    Layer* get_last_trainable_layer() const;
-   Layer* get_last_layer() const;
+   //Layer* get_last_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
 
    const bool& get_display() const;
@@ -157,7 +157,7 @@ public:
    void set_outputs_names(const Tensor<string, 1>&);
 
    void set_inputs_number(const Index&);
-   void set_inputs_number(const Tensor<bool, 1>&);
+   //void set_inputs_number(const Tensor<bool, 1>&);
 
    virtual void set_default();
 
@@ -168,7 +168,7 @@ public:
    // Layers
 
    Index get_layers_number() const;
-   Tensor<Index, 1> get_layers_neurons_numbers() const;
+   //Tensor<Index, 1> get_layers_neurons_numbers() const;
 
    Index get_trainable_layers_number() const;
    Index get_first_trainable_layer_index() const;
@@ -191,8 +191,8 @@ public:
    Index get_outputs_number() const;
    dimensions get_output_dimensions() const;
 
-   Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
-   Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
+   //Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
+   //Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
 
    Tensor<Index, 1> get_architecture() const;
 

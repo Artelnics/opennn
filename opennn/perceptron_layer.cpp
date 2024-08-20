@@ -317,18 +317,6 @@ void PerceptronLayer::set_display(const bool& new_display)
 }
 
 
-void PerceptronLayer::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void PerceptronLayer::set_synaptic_weights_constant(const type& value)
-{
-    synaptic_weights.setConstant(value);
-}
-
-
 void PerceptronLayer::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);

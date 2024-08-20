@@ -237,8 +237,8 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
 
 type round_to_precision(type, const int&);
-Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
-Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
+//Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
+//Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 

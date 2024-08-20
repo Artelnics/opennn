@@ -731,7 +731,7 @@ Tensor<type, 1> GeneticAlgorithm::calculate_selection_probabilities()
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        sum_from_1_to_n += (i + 1);
+        sum_from_1_to_n += (i+1);
     }
 
     Tensor<type, 1> probabilities(individuals_number);

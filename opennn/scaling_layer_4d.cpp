@@ -527,32 +527,32 @@ bool ScalingLayer4D::is_empty() const
 }
 
 
-void ScalingLayer4D::check_range(const Tensor<type, 1>& inputs) const
-{
-    const Index inputs_number = get_neurons_number();
+// void ScalingLayer4D::check_range(const Tensor<type, 1>& inputs) const
+// {
+//     const Index inputs_number = get_neurons_number();
 
-    // Check inputs
+//     // Check inputs
 
-    if(display)
-    {
-        for(Index i = 0; i < inputs_number; i++)
-        {
-            if(inputs(i) < descriptives(i).minimum)
-            {
-                cout << "OpenNN Warning: ScalingLayer4D class.\n"
-                     << "void check_range(const Tensor<type, 1>&) const method.\n"
-                     << "Input value " << i << " is less than corresponding minimum.\n";
-            }
+//     if(display)
+//     {
+//         for(Index i = 0; i < inputs_number; i++)
+//         {
+//             if(inputs(i) < descriptives(i).minimum)
+//             {
+//                 cout << "OpenNN Warning: ScalingLayer4D class.\n"
+//                      << "void check_range(const Tensor<type, 1>&) const method.\n"
+//                      << "Input value " << i << " is less than corresponding minimum.\n";
+//             }
 
-            if(inputs(i) > descriptives(i).maximum)
-            {
-                cout << "OpenNN Warning: ScalingLayer4D class.\n"
-                     << "void check_range(const Tensor<type, 1>&) const method.\n"
-                     << "Input value " << i << " is greater than corresponding maximum.\n";
-            }
-        }
-    }
-}
+//             if(inputs(i) > descriptives(i).maximum)
+//             {
+//                 cout << "OpenNN Warning: ScalingLayer4D class.\n"
+//                      << "void check_range(const Tensor<type, 1>&) const method.\n"
+//                      << "Input value " << i << " is greater than corresponding maximum.\n";
+//             }
+//         }
+//     }
+// }
 
 
 void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,

@@ -357,18 +357,6 @@ void PerceptronLayer3D::set_display(const bool& new_display)
 }
 
 
-void PerceptronLayer3D::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void PerceptronLayer3D::set_synaptic_weights_constant(const type& value)
-{
-    synaptic_weights.setConstant(value);
-}
-
-
 void PerceptronLayer3D::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
@@ -850,6 +838,16 @@ void PerceptronLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
+void PerceptronLayer3DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl;
+    cout << outputs << endl;
+
+    cout << "Activations derivatives:" << endl;
+    cout << activations_derivatives << endl;
+}
+
+
 pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() const
 {
     PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
@@ -860,6 +858,7 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, neurons_number });
 }
+
 
 void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -879,6 +878,7 @@ void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_num
 
     activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 }
+
 
 void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -904,6 +904,7 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
     inputs_derivatives(0).first = input_derivatives.data();
     inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
 }
+
 
 }
 

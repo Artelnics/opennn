@@ -2155,37 +2155,37 @@ type round_to_precision(type x, const int& precision)
 }
 
 
-Tensor<type,2> round_to_precision_matrix(Tensor<type,2> matrix,const int& precision)
-{
-    Tensor<type, 2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
+// Tensor<type,2> round_to_precision_matrix(Tensor<type,2> matrix,const int& precision)
+// {
+//     Tensor<type, 2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
 
-    const type factor = type(pow(10, precision));
+//     const type factor = type(pow(10, precision));
 
-    for(int i = 0; i < matrix.dimension(0); i++)
-    {
-        for(int j = 0; j < matrix.dimension(1); j++)
-        {
-            matrix_rounded(i,j) = (round(factor*matrix(i,j)))/factor;
-        }
-    }
+//     for(int i = 0; i < matrix.dimension(0); i++)
+//     {
+//         for(int j = 0; j < matrix.dimension(1); j++)
+//         {
+//             matrix_rounded(i,j) = (round(factor*matrix(i,j)))/factor;
+//         }
+//     }
 
-    return matrix_rounded;
-}
+//     return matrix_rounded;
+// }
 
 
-Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision)
-{
-    Tensor<type, 1> tensor_rounded(tensor.size());
+// Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision)
+// {
+//     Tensor<type, 1> tensor_rounded(tensor.size());
 
-    const type factor = type(pow(10, precision));
+//     const type factor = type(pow(10, precision));
 
-    for(Index i = 0; i < tensor.size(); i++)
-    {
-        tensor_rounded(i) = round(factor*tensor(i))/factor;
-    }
+//     for(Index i = 0; i < tensor.size(); i++)
+//     {
+//         tensor_rounded(i) = round(factor*tensor(i))/factor;
+//     }
 
-    return tensor_rounded;
-}
+//     return tensor_rounded;
+// }
 
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)

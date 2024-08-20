@@ -215,7 +215,7 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
             else
             {
                 copy(image_data + channels * columns_number * i + padding * i,
-                    image_data + channels * columns_number * (i + 1) + padding * i,
+                    image_data + channels * columns_number * (i+1) + padding * i,
                     data_without_padding.data() + channels * columns_number * i);
             }
         }

@@ -401,42 +401,6 @@ void RecurrentLayer::set_display(const bool& new_display)
 }
 
 
-void RecurrentLayer::set_hidden_states_constant(const type& value)
-{
-    hidden_states.setConstant(value);
-}
-
-
-void RecurrentLayer::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void RecurrentLayer::set_input_weights_constant(const type& value)
-{
-    input_weights.setConstant(value);
-}
-
-
-void RecurrentLayer::set_recurrent_weights_constant(const type& value)
-{
-    recurrent_weights.setConstant(value);
-}
-
-
-void RecurrentLayer::set_input_weights_random()
-{
-    input_weights.setRandom();
-}
-
-
-void RecurrentLayer::set_recurrent_weights_random()
-{
-    recurrent_weights.setRandom();
-}
-
-
 void RecurrentLayer::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);

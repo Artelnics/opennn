@@ -128,15 +128,13 @@ public:
 
    // Parameters initialization
 
-   void set_hidden_states_constant(const type&);
+   // void set_hidden_states_constant(const type&);
 
-   void set_biases_constant(const type&);
+   // void set_input_weights_constant(const type&);
+   // void set_recurrent_weights_constant(const type&);
 
-   void set_input_weights_constant(const type&);
-   void set_recurrent_weights_constant(const type&);
-
-   void set_input_weights_random();
-   void set_recurrent_weights_random();
+   // void set_input_weights_random();
+   // void set_recurrent_weights_random();
 
    void set_parameters_constant(const type&) final;
 

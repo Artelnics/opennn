@@ -104,17 +104,17 @@ namespace opennn
 
     void print();
 
-    void create_alphabet();
+//    void create_alphabet();
 
-    void encode_alphabet();
+//    void encode_alphabet();
 
-    Tensor<type, 1> one_hot_encode(const string&);
+//    Tensor<type, 1> one_hot_encode(const string&);
 
-    Tensor<type, 2> multiple_one_hot_encode(const string&);
+//    Tensor<type, 2> multiple_one_hot_encode(const string&);
 
-    string one_hot_decode(const Tensor<type, 1>&);
+//    string one_hot_decode(const Tensor<type, 1>&);
 
-    string multiple_one_hot_decode(const Tensor<type, 2>&);
+//    string multiple_one_hot_decode(const Tensor<type, 2>&);
 
     //Tensor<type, 2> str_to_input(const string&);
 
@@ -124,7 +124,7 @@ namespace opennn
     Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>&);
     void to_lower(string&);
     void to_lower(Tensor<string, 1>&);
-    void to_lower(Tensor<Tensor<string, 1>, 1>&);
+//    void to_lower(Tensor<Tensor<string, 1>, 1>&);
     void split_punctuation(Tensor<string, 1>&);
     void delete_non_printable_chars(Tensor<string, 1>&);
     void delete_extra_spaces(Tensor<string, 1>&);
@@ -199,7 +199,7 @@ namespace opennn
 
     void delete_extra_spaces(Tensor<string, 1>&);
 
-    void delete_breaks_and_tabs(Tensor<string, 1>&);
+//    void delete_breaks_and_tabs(Tensor<string, 1>&);
 
     void delete_non_printable_chars(Tensor<string, 1>&);
 
@@ -251,7 +251,7 @@ namespace opennn
 
     Tensor<Tensor<string, 1>, 1> preprocess_language_model(const Tensor<string, 1>&);
 
-    Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&);
+//    Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&);
 
 //    Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&, const Index&);
 
@@ -273,9 +273,7 @@ namespace opennn
     void stem(Tensor<string, 1>&);
     void stem(Tensor<Tensor<string, 1>, 1>&);
 
-
-
-    void print_tokens(const Tensor<Tensor<string,1>,1>&);
+//    void print_tokens(const Tensor<Tensor<string,1>,1>&);
 }
 
 #endif // OPENNNSTRINGS_H
