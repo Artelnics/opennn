@@ -29,17 +29,17 @@ public:
 
     virtual ~AdaptiveMomentEstimationTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
     void test_destructor();
 
-    // Training methods
+    // Training
 
     void test_perform_training();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 

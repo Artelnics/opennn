@@ -1144,37 +1144,33 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 {
-/*
+
     const Index raw_variables_number = get_raw_variables_number();
     const Tensor<string,1> raw_variables_names = get_raw_variables_names();
 
     const Tensor<string, 1> tokens = get_tokens(sentence, " ");
 
-    Tensor<type, 1> vectorx(raw_variables_number - 1);
-    vectorx.setZero();
+    Tensor<type, 1> vector_x(raw_variables_number - 1);
+    vector_x.setZero();
 
     const Tensor<Tensor<string,1>,1> words = preprocess(tokens);
+/*
+    const WordBag word_bag = calculate_word_bag(words);
 
-//    const WordBag word_bag = calculate_word_bag(words);
+    const Index words_number = word_bag.size();
 
-//    const Index words_number = word_bag.size();
-
-//    for(Index i = 0; i < words_number; i++)
+    for(Index i = 0; i < words_number; i++)
     {
-
         if( contains(raw_variables_names, word_bag.words(i)) )
         {
             auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words(i));
             const Index index = it - raw_variables_names.data();
 
-            vectorx(index) = type(word_bag.frequencies(i));
+            vector_x(index) = type(word_bag.frequencies(i));
         }
-
     }
-
-    return vectorx;
 */
-    return Tensor<type, 1>();
+    return vector_x;
 }
 
 /*

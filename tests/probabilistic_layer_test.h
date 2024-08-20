@@ -27,7 +27,7 @@ public:
 
     virtual ~ProbabilisticLayerTest();
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     void test_constructor();
 
@@ -41,12 +41,12 @@ public:
 
     void test_forward_propagate();
 
-    // Serialization methods
+    // Serialization
 
     void test_to_XML();
     void test_from_XML();
 
-    // Unit testing methods
+    // Unit testing
 
     void run_test_case();
 
@@ -65,8 +65,7 @@ private:
     Tensor<type, 2> outputs;
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
-    Tensor<type, 2> activations_derivatives_2d;
-    Tensor<type, 3> activations_derivatives_3d;
+    Tensor<type, 2> activations_derivatives;
 
     pair<type*, dimensions> inputs_pair;
 

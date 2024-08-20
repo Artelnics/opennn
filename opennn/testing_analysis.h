@@ -12,22 +12,15 @@
 // System includes
 
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <sstream>
-#include <cmath>
 
-#include <numeric>
+//#include <numeric>
 
 // OpenNN includes
 
 #include "config.h"
-
-#include "correlations.h"
 #include "data_set.h"
-#include "language_data_set.h"
 #include "neural_network.h"
-#include "transformer.h"
 
 //Eigen includes
 
@@ -99,14 +92,14 @@ public:
         Tensor<Index, 1> true_negatives_indices;
     };
 
-   // Get methods
+   // Get
 
    NeuralNetwork* get_neural_network() const;
    DataSet* get_data_set() const;
 
    const bool& get_display() const;
 
-   // Set methods
+   // Set
 
    void set_neural_network(NeuralNetwork*);
    void set_data_set(DataSet*);
@@ -117,11 +110,11 @@ public:
 
    void set_threads_number(const int&);
 
-   // Checking methods
+   // Checking
 
    void check() const;
 
-   // Error data methods
+   // Error data
 
    Tensor<type, 3> calculate_error_data() const;
    Tensor<type, 2> calculate_percentage_error_data() const;
@@ -165,7 +158,7 @@ public:
 
    type calculate_determination_coefficient(const Tensor<type,1>&, const Tensor<type,1>&) const;
 
-   // Goodness-of-fit analysis methods
+   // Goodness-of-fit analysis
 
    Tensor<Correlation, 1> linear_correlation() const;
    Tensor<Correlation, 1> linear_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -175,7 +168,7 @@ public:
    Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
    void print_goodness_of_fit_analysis() const;
 
-   // Binary classifcation methods
+   // Binary classifcation
 
    Tensor<type, 1> calculate_binary_classification_tests() const;
 
@@ -183,7 +176,7 @@ public:
 
    type calculate_logloss() const;
 
-   // Confusion methods
+   // Confusion
 
    Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
    Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -245,8 +238,6 @@ public:
 
    Tensor<type, 1> calculate_multiple_classification_precision() const;
    Tensor<type, 2> calculate_multiple_classification_tests() const;
-   void save_confusion(const string&) const;
-   void save_multiple_classification_tests(const string&) const;
 
    // Multiple classification rates
 
@@ -257,6 +248,12 @@ public:
    Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
 
    Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
+
+   // Save
+
+   void save_confusion(const string&) const;
+
+   void save_multiple_classification_tests(const string&) const;
 
    void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
 
@@ -274,17 +271,17 @@ public:
 
    void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
 
-   // Forecasting methods
+   // Forecasting
 
    Tensor<Tensor<type, 1>, 1> calculate_error_autocorrelation(const Index& = 10) const;
 
    Tensor<Tensor<type, 1>, 1> calculate_inputs_errors_cross_correlation(const Index& = 10) const;
 
-   // Transformer methods
+   // Transformer
 
    pair<type, type> test_transformer() const;
 
-   // Serialization methods
+   // Serialization
 
    virtual void from_XML(const tinyxml2::XMLDocument&);
 

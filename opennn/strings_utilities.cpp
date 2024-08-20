@@ -191,36 +191,6 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
         index++;
     }
 
-/*
-    //    string str = s;
-//    size_t position = 0;
-    size_t last_position = 0;
-    Index index = 0;
-
-    string::size_type position = 0;
-
-    while(text.find(separator, position) != string::npos)
-    {
-
-        if(position == 0) // Skip first position
-        {
-            position += separator.length();
-            last_position = position;
-            continue;
-        }
-
-        tokens(index) = text.substr(last_position, position - last_position);
-
-        position += separator.length();
-        last_position = position;
-        index++;
-    }
-
-    if(last_position != text.length())
-    {
-        tokens(index) = text.substr(last_position, text.length() - last_position);
-    }
-*/
     return tokens;
 }
 
@@ -840,32 +810,31 @@ bool contains_substring(const string& text, const string& sub_string)
 
 void replace_all_word_appearances(string& text, const string& to_replace, const string& replace_with)
 {
-    // @todo translate comments
-
     string buffer;
     size_t position = 0;
     size_t previous_position;
     const string underscore = "_";
 
-    // Reserva una estimación aproximada del tamaño final de la cadena.
+    // Reserve a rough estimate of the final size of the chain
 
     buffer.reserve(text.size());
 
-    while (true)
+    while(true)
     {
         previous_position = position;
         position = text.find(to_replace, position);
 
-        if(position == string::npos)
-            break;
+        if(position == string::npos) break;
 
-        // Verifica que no haya letras antes ni después de to_replace
-        if((previous_position == 0 || !isalpha(text[previous_position - 1])) &&
-            (position + to_replace.size() == text.size() || !isalpha(text[position + to_replace.size()])))
+        // Verify that there are no letters before or after to_replace
+
+        if((previous_position == 0 || !isalpha(text[previous_position - 1]))
+        && (position + to_replace.size() == text.size() || !isalpha(text[position + to_replace.size()])))
         {
-            // Verifica que no haya guiones bajos antes ni después de to_replace
-            if((previous_position == 0 || text[previous_position - 1] != '_') &&
-                (position + to_replace.size() == text.size() || text[position + to_replace.size()] != '_'))
+            // Verify that there are no underscores before or after to_replace
+
+            if((previous_position == 0 || text[previous_position - 1] != '_')
+            && (position + to_replace.size() == text.size() || text[position + to_replace.size()] != '_'))
             {
                 buffer.append(text, previous_position, position - previous_position);
                 buffer += replace_with;

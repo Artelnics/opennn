@@ -374,72 +374,21 @@ void MultiheadAttentionLayer::set_parameters_random()
     const type minimum = type(-0.2);
     const type maximum = type(0.2);
 
-    // @todo in Tensor form
-    // @todo can we reduce the number of loops for things with the same size?
+    set_random(query_weights, minimum, maximum);
 
-#pragma omp parallel for
-    for(Index i = 0; i < query_weights.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
+    set_random(query_biases, minimum, maximum);
 
-        query_weights(i) = minimum + (maximum - minimum)*random;
-    }
+    set_random(key_weights, minimum, maximum);
 
-#pragma omp parallel for
-    for(Index i = 0; i < query_biases.size(); i++)
-    {
-        const type random = type(rand() / (RAND_MAX + 1.0));
+    set_random(key_biases, minimum, maximum);
 
-        query_biases(i) = minimum + (maximum - minimum) * random;
-    }
+    set_random(value_weights, minimum, maximum);
 
-#pragma omp parallel for
-    for(Index i = 0; i < key_weights.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
+    set_random(value_biases, minimum, maximum);
 
-        key_weights(i) = minimum + (maximum - minimum)*random;
-    }
+    set_random(projection_weights, minimum, maximum);
 
-#pragma omp parallel for
-    for(Index i = 0; i < key_biases.size(); i++)
-    {
-        const type random = type(rand() / (RAND_MAX + 1.0));
-
-        key_biases(i) = minimum + (maximum - minimum) * random;
-    }
-
-#pragma omp parallel for
-    for(Index i = 0; i < value_weights.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
-
-        value_weights(i) = minimum + (maximum - minimum)*random;
-    }
-
-#pragma omp parallel for
-    for(Index i = 0; i < value_biases.size(); i++)
-    {
-        const type random = type(rand() / (RAND_MAX + 1.0));
-
-        value_biases(i) = minimum + (maximum - minimum) * random;
-    }
-
-#pragma omp parallel for
-    for(Index i = 0; i < projection_weights.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
-
-        projection_weights(i) = minimum + (maximum - minimum)*random;
-    }
-
-#pragma omp parallel for
-    for(Index i = 0; i < projection_biases.size(); i++)
-    {
-        const type random = type(rand() / (RAND_MAX + 1.0));
-
-        projection_biases(i) = minimum + (maximum - minimum) * random;
-    }
+    set_random(projection_biases, minimum, maximum);
 }
 
 
@@ -455,37 +404,13 @@ void MultiheadAttentionLayer::set_parameters_glorot()
     const type minimum = -limit;
     const type maximum = limit;
 
-#pragma omp parallel for
-    for(Index i = 0; i < query_weights.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
+    set_random(query_weights, minimum, maximum);
 
-        query_weights(i) = minimum + (maximum - minimum)*random;
-    }
+    set_random(key_weights, minimum, maximum);
 
-#pragma omp parallel for
-    for(Index i = 0; i < key_weights.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
+    set_random(value_weights, minimum, maximum);
 
-        key_weights(i) = minimum + (maximum - minimum)*random;
-    }
-
-#pragma omp parallel for
-    for(Index i = 0; i < value_weights.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
-
-        value_weights(i) = minimum + (maximum - minimum)*random;
-    }
-
-#pragma omp parallel for
-    for(Index i = 0; i < projection_weights.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
-
-        projection_weights(i) = minimum + (maximum - minimum)*random;
-    }
+    set_random(projection_weights, minimum, maximum);
 }
 
 

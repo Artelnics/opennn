@@ -201,12 +201,12 @@ void AdaptiveMomentEstimationTest::run_test_case()
 {
     cout << "Running Adaptive Moment Estimation (ADAM) test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Training methods
+    // Training
 
     test_perform_training();
 

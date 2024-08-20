@@ -33,17 +33,17 @@ public:
 
    explicit MinkowskiError(NeuralNetwork*, DataSet*);
 
-   // Get methods
+   // Get
 
    type get_Minkowski_parameter() const;
 
-   // Set methods
+   // Set
 
    void set_default();
 
    void set_Minkowski_parameter(const type&);
 
-   // loss methods
+   // loss
 
    void calculate_error(const Batch& batch,
                         const ForwardPropagation& forward_propagation,
@@ -53,7 +53,7 @@ public:
                                ForwardPropagation&,
                                BackPropagation&) const final;
 
-   // Serialization methods
+   // Serialization
 
    string get_error_type() const final;
    string get_error_type_text() const final;

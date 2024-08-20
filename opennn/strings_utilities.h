@@ -118,7 +118,7 @@ namespace opennn
 
     //Tensor<type, 2> str_to_input(const string&);
 
-    // Preprocess methods
+    // Preprocess
 
     Index count_tokens(const Tensor<Tensor<string, 1>, 1>&);
     Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>&);
@@ -139,7 +139,7 @@ namespace opennn
 
     enum Language {ENG, SPA};
 
-    // Get methods
+    // Get
 
     Language get_language();
 
@@ -159,7 +159,7 @@ namespace opennn
 
     Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>&);
 
-    // Set methods
+    // Set
 
     void set_language(const Language&);
 
@@ -169,7 +169,7 @@ namespace opennn
 
     void set_separator(const string&);
 
-    // Auxiliar methods
+    // Auxiliar
 
     //string calculate_text_outputs(TextGenerationAlphabet&, const string&, const Index&, const bool&);
 
@@ -195,7 +195,7 @@ namespace opennn
 
     Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&);
 
-    // Preprocess methods
+    // Preprocess
 
     void delete_extra_spaces(Tensor<string, 1>&);
 
@@ -225,7 +225,7 @@ namespace opennn
 
     void delete_non_alphanumeric(Tensor<string,1>&);
 
-    // Stemming methods
+    // Stemming
 
     string get_rv(const string&, const Tensor<string, 1>&);
 
@@ -282,7 +282,6 @@ namespace opennn
 
 /*
 
-
 class TextGenerationAlphabet
 {
 public:
@@ -295,7 +294,7 @@ public:
 
     virtual ~TextGenerationAlphabet();
 
-    // Get methods
+    // Get
 
     string get_text() const;
 
@@ -307,7 +306,7 @@ public:
 
     Index get_alphabet_index(const char&) const;
 
-    // Set methods
+    // Set
 
     void set();
 
@@ -317,7 +316,7 @@ public:
 
     void set_alphabet(const Tensor<string, 1>&);
 
-    // Other methods
+    // Other
 
     void print() const;
 

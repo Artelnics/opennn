@@ -255,12 +255,12 @@ void LearningRateAlgorithmTest::run_test_case()
 {
     cout << "Running learning rate algorithm test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Training methods
+    // Training
 
     test_calculate_bracketing_triplet();
 

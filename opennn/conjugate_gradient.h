@@ -41,7 +41,7 @@ public:
 
    explicit ConjugateGradient(LossIndex*);   
 
-   // Get methods
+   // Get
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm();
@@ -61,7 +61,7 @@ public:
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
 
-   // Set methods
+   // Set
 
    void set_default() final;
 
@@ -82,7 +82,7 @@ public:
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
 
-   // Training direction methods
+   // Training direction
 
    type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
    type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
@@ -97,13 +97,13 @@ public:
                                                         const Tensor<type, 1>&,
                                                         Tensor<type, 1>&) const;
 
-   // Training methods
+   // Training
 
    TrainingResults perform_training() final;
 
    string write_optimization_algorithm_type() const final;
 
-   // Serialization methods
+   // Serialization
 
    Tensor<string, 2> to_string_matrix() const final;
 

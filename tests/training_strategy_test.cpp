@@ -165,16 +165,16 @@ void TrainingStrategyTest::run_test_case()
 {
     cout << "Running training strategy test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Training methods
+    // Training
 
     test_perform_training();
 
-    // Serialization methods
+    // Serialization
 
     test_to_XML();
     test_from_XML();

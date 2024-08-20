@@ -67,28 +67,6 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 }
 
 
-// @todo bad variables names
-
-void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& columns_number)
-{
-    unsigned char* aux_row = (unsigned char*)malloc(size_t(columns_number*sizeof(unsigned char)));
-
-    const int rows_number = int(original.size()/ columns_number);
-
-    for(int i = 0; i <rows_number; i++)
-    {
-        copy(original.data() + columns_number * rows_number - (i + 1) * columns_number,
-            original.data() + columns_number * rows_number - i * columns_number,
-            aux_row);
-
-        // reverse(aux_row, aux_row + raw_variables_number); //uncomment this if the lower right corner px should be in the upper left corner.
-
-        copy(aux_row, aux_row + columns_number,
-             sorted.data() + columns_number * i);
-    }
-}
-
-
 void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
                      const Tensor<type, 3>& input,
                      Tensor<type, 3>& output)
@@ -108,8 +86,6 @@ void reflect_image_y(const ThreadPoolDevice* thread_pool_device,
     output.device(*thread_pool_device) = input.reverse(reflect_vertical_dimesions);
 }
 
-
-// @todo Improve performance
 
 void rotate_image(const ThreadPoolDevice* thread_pool_device,
                   const Tensor<type, 3>& input,

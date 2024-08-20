@@ -26,8 +26,6 @@ namespace opennn
 struct TransformerForwardPropagation;
 struct TransformerBackPropagation;
 
-// @todo explain
-
 class Transformer : public NeuralNetwork
 {
 public:

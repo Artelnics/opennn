@@ -228,19 +228,19 @@ void StochasticGradientDescentTest::run_test_case()
 {
     cout << "Running stochastic gradient descent test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
 
     test_destructor();
 
-    // Training methods
+    // Training
 
     test_perform_training();
 
     test_transformer_training();
 
-    // Serialization methods
+    // Serialization
 
     test_to_XML();
 

@@ -240,12 +240,12 @@ void QuasiNewtonMethodTest::run_test_case()
 {
     cout << "Running quasi-Newton method test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Training methods
+    // Training
 
     test_calculate_DFP_inverse_hessian_approximation();
 

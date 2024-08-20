@@ -54,42 +54,21 @@ void ImageDataSetTest::test_destructor()
 }
 
 
-void ImageDataSetTest::test_image_preprocessing()
-{
-    cout << "test_image_preprocessing\n";
-
-    ImageDataSet data_set;
-
-    data_set.set_augmentation(true);
-    data_set.set_random_reflection_axis_x(true);
-    data_set.set_random_reflection_axis_y(true);
-    data_set.set_random_rotation_minimum(type(2));
-    data_set.set_random_rotation_maximum(type(5));
-    data_set.set_random_horizontal_translation_minimum(type(2));
-    data_set.set_random_horizontal_translation_maximum(type(5));
-    data_set.set_random_vertical_translation_minimum(type(2));
-    data_set.set_random_vertical_translation_maximum(type(5));
-
-}
-
-
 void ImageDataSetTest::run_test_case()
 {
     cout << "Running image data set test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Preprocessing methods
+    // Preprocessing
 
-    /*test_image_preprocessing();
-    test_fill_image();
+    /*
 
-    // Reading and writing methods
+    // Reading and writing
 
-    test_bmp();
     test_XML();*/
 
     cout << "End of image data set test case.\n\n";

@@ -102,7 +102,7 @@ void GeneticAlgorithmTest::test_initialize_population()
     input_variables_indices.setValues({0,1,2,3,4,5,6,7,8,9});
     target_variables_indices.setValues({10,11,12});
 
-    data_set.set_input_target_raw_variables(input_variables_indices,target_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_variables_indices,target_variables_indices);
 
     genetic_algorithm.set_individuals_number(individuals_number);
 
@@ -500,30 +500,30 @@ void GeneticAlgorithmTest::run_test_case()
 {
     cout << "Running genetic algorithm test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Population methods
+    // Population
 
     test_initialize_population();
 
     test_perform_fitness_assignment();
 
-    // Selection methods
+    // Selection
 
     test_perform_selection();
 
-    // Crossover methods
+    // Crossover
 
     test_perform_crossover();
 
-    // Mutation methods
+    // Mutation
 
     test_perform_mutation();
 
-    // Order selection methods
+    // Order selection
 
     test_perform_inputs_selection();
 

@@ -29,21 +29,21 @@ public:
 
    virtual ~TimeSeriesDataSetTest();
 
-   // Constructor and destructor methods
+   // Constructor and destructor
 
    void test_constructor();
    void test_destructor();  
 
-   // Correlation methods
+   // Correlation
 
    void test_calculate_autocorrelations();
    void test_calculate_cross_correlations();
 
-   // Trasform methods
+   // Trasform
 
    void test_transform_time_series();
 
-   // Set methods
+   // Set
 
    void test_set_time_series_data();
    void test_set_steps_ahead_number();
@@ -51,11 +51,11 @@ public:
 
    //void test_has_time_raw_variables();
 
-   // Saving methods
+   // Saving
 
    void test_save_time_series_data_binary();  
 
-   // Unit testing methods
+   // Unit testing
 
    void run_test_case();
 

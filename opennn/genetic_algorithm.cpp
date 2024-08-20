@@ -643,7 +643,7 @@ void GeneticAlgorithm::evaluate_population()
 
         // Neural network
 
-        data_set->set_input_target_raw_variables(individual_raw_variables_indexes, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variables_indices(individual_raw_variables_indexes, original_target_raw_variables_indices);
 
         data_set->scrub_missing_values();
 
@@ -677,7 +677,7 @@ void GeneticAlgorithm::evaluate_population()
             cout << "Inputs number: " << data_set->get_input_raw_variables_number() << endl;
         }
 
-        data_set->set_input_target_raw_variables(original_input_raw_variables_indices, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
 
     }
 
@@ -1082,7 +1082,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             generation_selected = epoch;
 
-            data_set->set_input_target_raw_variables(original_input_raw_variables_indices, original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
 
             // Neural network
 
@@ -1090,7 +1090,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             optimal_inputs_raw_variables_indexes = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
-            data_set->set_input_target_raw_variables(optimal_inputs_raw_variables_indexes, original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variables_indices(optimal_inputs_raw_variables_indexes, original_target_raw_variables_indices);
 
             inputs_selection_results.optimal_input_raw_variables_names = data_set->get_input_raw_variables_names();
 
@@ -1105,10 +1105,10 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         }
         else
         {
-            data_set->set_input_target_raw_variables(original_input_raw_variables_indices,original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices,original_target_raw_variables_indices);
         }
 
-        data_set->set_input_target_raw_variables(original_input_raw_variables_indices, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
 
         std::time(&current_time);
 
@@ -1182,7 +1182,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     Tensor<Index, 1> optimal_raw_variables = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
-    data_set->set_input_target_raw_variables(optimal_raw_variables, original_target_raw_variables_indices);
+    data_set->set_input_target_raw_variables_indices(optimal_raw_variables, original_target_raw_variables_indices);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
 

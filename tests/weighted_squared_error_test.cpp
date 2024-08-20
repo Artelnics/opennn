@@ -160,12 +160,12 @@ void WeightedSquaredErrorTest::run_test_case()
 {
     cout << "Running weighted squared error test case...\n";
 
-    // Constructor and destructor methods
+    // Constructor and destructor
 
     test_constructor();
     test_destructor();
 
-    // Back-propagation methods
+    // Back-propagation
 
     test_back_propagate();
 
