@@ -278,7 +278,7 @@ void LossIndex::back_propagate(const Batch& batch,
     // Loss index
 
     calculate_error(batch, forward_propagation, back_propagation);
-
+ 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
     assemble_layers_error_gradient(back_propagation);
@@ -575,7 +575,6 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     // Hidden layers
 
-
     calculate_output_delta(batch, forward_propagation, back_propagation);
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
@@ -599,7 +598,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             {
                 input_index = find_input_index(layers_inputs_indices(layers_outputs_indices(i)(j)), i);
 
-                layer_deltas(j) = back_propagation.neural_network.layers(layers_outputs_indices(i)(j))->get_inputs_derivatives_pair()(input_index);
+                layer_deltas(j) = back_propagation.neural_network.layers(layers_outputs_indices(i)(j))->get_inputs_derivatives_pair()(input_index); 
             }
         }
 

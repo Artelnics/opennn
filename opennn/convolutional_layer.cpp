@@ -332,6 +332,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
 {
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
                                             inputs_pair(0).second[1],
@@ -487,7 +488,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     error_convolutions_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
 
     // Synaptic weights derivatives
-    
+
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         current_sum.setZero();
@@ -538,11 +539,12 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     }
 
 
-    // @todo optimize (input_derivatives)
+    // @todo (input_derivatives)
     input_derivatives.setZero();
-    
-    input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
+
     /*
+    input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
+    
     for(int image_index = 0; image_index < batch_samples_number; image_index++)
     {
         for(int row = 0; row < deltas_pair(0).second[1]; ++row)
@@ -564,6 +566,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
         }
     }
     */
+    
 }
 
 
@@ -1524,9 +1527,9 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                              input_width,
                              input_channels);
 
-    //inputs_derivatives.resize(1);
-    //inputs_derivatives(0).first = input_derivatives.data();
-    //inputs_derivatives(0).second = { batch_samples_number, input_height, input_width, input_channels };
+    inputs_derivatives.resize(1);
+    inputs_derivatives(0).first = input_derivatives.data();
+    inputs_derivatives(0).second = { batch_samples_number, input_height, input_width, input_channels };
 }
 
 void ConvolutionalLayerBackPropagation::print() const
