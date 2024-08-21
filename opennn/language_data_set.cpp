@@ -25,20 +25,20 @@ LanguageDataSet::LanguageDataSet() : DataSet()
 }
 
 
-string LanguageDataSet::get_text_separator_string() const
-{
-    switch(text_separator)
-    {
-    case Separator::Tab:
-        return "Tab";
+// string LanguageDataSet::get_text_separator_string() const
+// {
+//     switch(text_separator)
+//     {
+//     case Separator::Tab:
+//         return "Tab";
 
-    case Separator::Semicolon:
-        return "Semicolon";
+//     case Separator::Semicolon:
+//         return "Semicolon";
 
-    default:
-        return string();
-    }
-}
+//     default:
+//         return string();
+//     }
+// }
 
 
 Tensor<string, 1> LanguageDataSet::get_context_vocabulary() const
@@ -259,33 +259,33 @@ void LanguageDataSet::set_context_variables_dimensions(const Tensor<Index, 1>& n
 }
 
 
-void LanguageDataSet::set_text_separator(const Separator& new_separator)
-{
-    separator = new_separator;
-}
+// void LanguageDataSet::set_text_separator(const Separator& new_separator)
+// {
+//     separator = new_separator;
+// }
 
 
-void LanguageDataSet::set_text_separator(const string& new_separator_string)
-{
-    if(new_separator_string == "Tab")
-    {
-        text_separator = Separator::Tab;
-    }
-    else if(new_separator_string == "Semicolon")
-    {
-        text_separator = Separator::Semicolon;
-    }
-    else
-    {
-        ostringstream buffer;
+// void LanguageDataSet::set_text_separator(const string& new_separator_string)
+// {
+//     if(new_separator_string == "Tab")
+//     {
+//         text_separator = Separator::Tab;
+//     }
+//     else if(new_separator_string == "Semicolon")
+//     {
+//         text_separator = Separator::Semicolon;
+//     }
+//     else
+//     {
+//         ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_text_separator(const string&) method.\n"
-               << "Unknown separator: " << new_separator_string << ".\n";
+//         buffer << "OpenNN Exception: DataSet class.\n"
+//                << "void set_text_separator(const string&) method.\n"
+//                << "Unknown separator: " << new_separator_string << ".\n";
 
-        throw(buffer.str());
-    }
-}
+//         throw(buffer.str());
+//     }
+// }
 
 
 void LanguageDataSet::set_context_vocabulary_path(const string& new_context_vocabulary_path)
@@ -766,7 +766,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Text separator
 
-    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("TextSeparator");
+    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("Separator");
 
     if(text_separator_element)
     {
@@ -776,7 +776,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             try
             {
-                set_text_separator(new_separator);
+                set_separator(new_separator);
             }
             catch(const exception& e)
             {
@@ -2160,101 +2160,100 @@ void LanguageDataSet::read_txt_language_model()
 }
 
 
-void LanguageDataSet::write_data_file_whitespace(ofstream& file,
-                                                 const Tensor<Tensor<string, 1>, 1>& context_tokens,
-                                                 const Tensor<Tensor<string, 1>, 1>& completion_tokens)
-{
-    const Index entry_number = context_tokens.dimension(0);
+// void LanguageDataSet::write_data_file_whitespace(ofstream& file,
+//                                                  const Tensor<Tensor<string, 1>, 1>& context_tokens,
+//                                                  const Tensor<Tensor<string, 1>, 1>& completion_tokens)
+// {
+//     const Index entry_number = context_tokens.dimension(0);
 
-    const Index context_vocabulary_size = context_vocabulary.size();
-    const Index completion_vocabulary_size = completion_vocabulary.size();
+//     const Index context_vocabulary_size = context_vocabulary.size();
+//     const Index completion_vocabulary_size = completion_vocabulary.size();
 
-    Tensor<type, 1> context_row(max_context_length + 2);
-    Tensor<type, 1> completion_row(max_completion_length + 2);
+//     Tensor<type, 1> context_row(max_context_length + 2);
+//     Tensor<type, 1> completion_row(max_completion_length + 2);
 
-    Tensor<string, 1> line_tokens;
-    bool line_ended;
+//     Tensor<string, 1> line_tokens;
+//     bool line_ended;
 
-    for(Index i = 0; i < entry_number; i++)
-    {
-        // Context
+//     for(Index i = 0; i < entry_number; i++)
+//     {
+//         // Context
 
-        context_row.setZero();
-        context_row(0) = 1; // start indicator
+//         context_row.setZero();
+//         context_row(0) = 1; // start indicator
 
-        line_ended = false;
+//         line_ended = false;
 
-        line_tokens = context_tokens(i);
+//         line_tokens = context_tokens(i);
 
-        for(Index j = 0; j < max_context_length + 1; j++)
-        {
-            if(j < line_tokens.size())
-            {
-                auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j));
+//         for(Index j = 0; j < max_context_length + 1; j++)
+//         {
+//             if(j < line_tokens.size())
+//             {
+//                 auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j));
 
-                const Index word_index = it - context_vocabulary.data();
+//                 const Index word_index = it - context_vocabulary.data();
 
-                context_row(j + 1) = type(word_index);
-            }
-            else
-            {
-                if(j == line_tokens.size() || (j == max_context_length && !line_ended))
-                {
-                    context_row(j + 1) = 2; // end indicator
-                    line_ended = true;
-                }
-                else
-                {
-                    context_row(j + 1) = 0; // pad indicator
-                }
-            }
-        }
+//                 context_row(j + 1) = type(word_index);
+//             }
+//             else
+//             {
+//                 if(j == line_tokens.size() || (j == max_context_length && !line_ended))
+//                 {
+//                     context_row(j + 1) = 2; // end indicator
+//                     line_ended = true;
+//                 }
+//                 else
+//                 {
+//                     context_row(j + 1) = 0; // pad indicator
+//                 }
+//             }
+//         }
 
-        for(Index j = 0; j < max_context_length + 2; j++)
-            file << context_row(j) << ";";
+//         for(Index j = 0; j < max_context_length + 2; j++)
+//             file << context_row(j) << ";";
 
-        // Completion
+//         // Completion
 
-        completion_row.setZero();
-        completion_row(0) = 1;
+//         completion_row.setZero();
+//         completion_row(0) = 1;
 
-        line_ended = false;
+//         line_ended = false;
 
-        line_tokens = completion_tokens(i);
+//         line_tokens = completion_tokens(i);
 
-        for(Index j = 0; j < max_completion_length + 1; j++)
-        {
-            if(j < line_tokens.size())
-            {
-                auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j));
+//         for(Index j = 0; j < max_completion_length + 1; j++)
+//         {
+//             if(j < line_tokens.size())
+//             {
+//                 auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j));
 
-                const Index word_index = it - completion_vocabulary.data();
+//                 const Index word_index = it - completion_vocabulary.data();
 
-                completion_row(j + 1) = type(word_index);
-            }
-            else
-            {
-                if(j == line_tokens.size() || (j == max_completion_length && !line_ended))
-                {
-                    completion_row(j + 1) = 2;
-                    line_ended = true;
-                }
-                else
-                {
-                    completion_row(j + 1) = 0;
-                }
-            }
-        }
+//                 completion_row(j + 1) = type(word_index);
+//             }
+//             else
+//             {
+//                 if(j == line_tokens.size() || (j == max_completion_length && !line_ended))
+//                 {
+//                     completion_row(j + 1) = 2;
+//                     line_ended = true;
+//                 }
+//                 else
+//                 {
+//                     completion_row(j + 1) = 0;
+//                 }
+//             }
+//         }
 
-        for(Index j = 0; j < max_completion_length + 1; j++)
-            file << completion_row(j) << ";";
+//         for(Index j = 0; j < max_completion_length + 1; j++)
+//             file << completion_row(j) << ";";
 
-        for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
-            file << completion_row(j) << ";";
-        file << completion_row(max_completion_length + 1) << "\n";
-
-    }
-}
+//         for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
+//             file << completion_row(j) << ";";
+//         file << completion_row(max_completion_length + 1) << "\n";
+//     }
+// }
 
 
 void LanguageDataSet::write_data_file_wordpiece(ofstream& file,

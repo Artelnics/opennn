@@ -31,7 +31,7 @@ public:
 
     explicit LanguageDataSet();
 
-    string get_text_separator_string() const;
+//    string get_text_separator_string() const;
 
     Tensor<string, 1> get_context_vocabulary() const;
     Tensor<string, 1> get_completion_vocabulary() const;
@@ -61,8 +61,8 @@ public:
 
     void set_context_variables_dimensions(const Tensor<Index, 1>& new_context_dimensions);
 
-    void set_text_separator(const Separator&);
-    void set_text_separator(const string&);
+//    void set_text_separator(const Separator&);
+//    void set_text_separator(const string&);
 
     void set_context_vocabulary_path(const string&);
     void set_completion_vocabulary_path(const string&);
@@ -97,12 +97,12 @@ public:
     void read_csv_language_model();
 
     void read_txt_language_model();
-    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
+//    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
     void write_data_file_wordpiece(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
 
 private:
 
-    Separator text_separator = Separator::Tab;
+//    Separator text_separator = Separator::Tab;
 
     Tensor<string, 2> text_data_file_preview;
 

@@ -84,7 +84,7 @@ public:
 
    // Calculate distances for AANN histogram
 
-   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
+//   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
    // Training
 

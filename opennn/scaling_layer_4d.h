@@ -110,7 +110,7 @@ public:
 
    bool is_empty() const;
 
-   void check_range(const Tensor<type, 1>&) const;
+   //void check_range(const Tensor<type, 1>&) const;
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
 

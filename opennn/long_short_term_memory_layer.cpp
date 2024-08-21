@@ -360,14 +360,6 @@ void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 }
 
 
-void LongShortTermMemoryLayer::set_input_shape(const Tensor<Index, 1>& size)
-{
-    const Index new_size = size[0];
-
-    set_inputs_number(new_size);
-}
-
-
 void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_number)
 {
     const Index inputs_number = get_inputs_number();
@@ -654,105 +646,6 @@ void LongShortTermMemoryLayer::set_timesteps(const Index& new_timesteps)
 void LongShortTermMemoryLayer::set_display(const bool& new_display)
 {
     display = new_display;
-}
-
-
-void LongShortTermMemoryLayer::set_biases_constant(const type& value)
-{
-    forget_biases.setConstant(value);
-    input_biases.setConstant(value);
-    state_biases.setConstant(value);
-    output_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_forget_biases_constant(const type& value)
-{
-    forget_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_input_biases_constant(const type& value)
-{
-    input_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_state_biases_constant(const type& value)
-{
-    state_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_output_biases_constant(const type& value)
-{
-    output_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_weights_constant(const type& value)
-{
-    forget_weights.setConstant(value);
-    input_weights.setConstant(value);
-    state_weights.setConstant(value);
-    output_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_forget_weights_constant(const type& value)
-{
-    forget_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_input_weights_constant(const type& value)
-{
-    input_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_state_weights_constant(const type& value)
-{
-    state_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_output_weights_constant(const type&  value)
-{
-    output_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_recurrent_weights_constant(const type& value)
-{
-    forget_recurrent_weights.setConstant(value);
-    input_recurrent_weights.setConstant(value);
-    state_recurrent_weights.setConstant(value);
-    output_recurrent_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_forget_recurrent_weights_constant(const type& value)
-{
-    forget_recurrent_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_input_recurrent_weights_constant(const type& value)
-{
-    input_recurrent_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_state_recurrent_weights_constant(const type& value)
-{
-    state_recurrent_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_output_recurrent_weights_constant(const type&  value)
-{
-    output_recurrent_weights.setConstant(value);
 }
 
 

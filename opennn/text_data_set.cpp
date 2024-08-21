@@ -45,12 +45,12 @@ TextDataSet::TextDataSet() : DataSet()
 }
 
 
-const string get_text_separator_string()
-{
-    string text_separator_string = "\t";
+// const string get_text_separator_string()
+// {
+//     string text_separator_string = "\t";
 
-    return text_separator_string;
-}
+//     return text_separator_string;
+// }
 
 
 const Index& TextDataSet::get_short_words_length() const
