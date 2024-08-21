@@ -1795,15 +1795,9 @@ Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 
     Tensor<Scaler, 1> input_variables_scalers(input_variables_number);
 
-    Index index = 0;
-
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
-        for(Index j = 0;  j < input_raw_variables(i).get_categories_number(); j++)
-        {
-            input_variables_scalers(index) = input_raw_variables(i).scaler;
-            index++;
-        }
+        input_variables_scalers(i) = input_raw_variables(i).scaler;
     }
 
     return input_variables_scalers;
@@ -5287,7 +5281,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
     const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
 
     const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
-    
+
     for(Index i = 0; i < input_variables_number; i++)
     {
         switch(input_variables_scalers(i))

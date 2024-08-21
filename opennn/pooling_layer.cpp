@@ -415,7 +415,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
     input_derivatives.setZero();
-
+    /*
     // Max pooling
     for (int batch_index = 0; batch_index < batch_samples_number; ++batch_index)
     {
@@ -446,7 +446,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
             }
         }
     }
-
+    */
     // @todo calculate input derivatives (= deltas for previous layer)
 
     //input_derivatives.device(*thread_pool_device) = 0;
