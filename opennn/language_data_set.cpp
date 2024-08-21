@@ -399,7 +399,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // raw_variables names
+    // Raw variables names
     {
         file_stream.OpenElement("RawVariablesNames");
 
@@ -448,11 +448,11 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // raw_variables
+    // Raw variables
 
     file_stream.OpenElement("RawVariables");
 
-    // raw_variables number
+    // Raw variables number
     {
         file_stream.OpenElement("RawVariablesNumber");
 
@@ -464,7 +464,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // raw_variables items
+    // Raw variables items
 
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -594,7 +594,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(missing_values_number > 0)
     {
-        // raw_variables missing values number
+        // Raw variables missing values number
         {
             file_stream.OpenElement("RawVariablesMissingValuesNumber");
 
@@ -870,7 +870,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw(buffer.str());
     }
 
-    // raw_variables number
+    // Raw variables number
 
     const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
@@ -892,7 +892,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_raw_variables_number(new_raw_variables_number);
     }
 
-    // raw_variables
+    // Raw variables
 
     const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
@@ -1154,7 +1154,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number > 0)
     {
-        // raw_variables Missing values number
+        // Raw variables Missing values number
 
         const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("");
 

@@ -369,7 +369,7 @@ public:
     void set_samples_uses(const Tensor<string, 1>&);
     void set_samples_uses(const Tensor<Index, 1>&, const SampleUse);
 
-    // raw_variables set
+    // Raw variables set
 
     void set_raw_variables(const Tensor<RawVariable, 1>&);
     void set_default_raw_variables_uses();

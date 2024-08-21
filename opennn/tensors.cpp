@@ -487,31 +487,31 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 }
 
 
-void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
-{
-    const Index columns_number = vector.size();
+// void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
+// {
+//     const Index columns_number = vector.size();
 
-    for(Index i = 0; i < columns_number; i++)
-    {
-        TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
+//     for(Index i = 0; i < columns_number; i++)
+//     {
+//         TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
-        column.device(*thread_pool_device) = vector * vector(i);
-    }
-}
+//         column.device(*thread_pool_device) = vector * vector(i);
+//     }
+// }
 
 
-void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
-{
-    const Index columns_number = vector.size();
+// void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
+// {
+//     const Index columns_number = vector.size();
 
-    for(Index i = 0; i < columns_number; i++)
-    {
-        TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
+//     for(Index i = 0; i < columns_number; i++)
+//     {
+//         TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
 
-        column.device(*thread_pool_device) = vector * vector(i);
+//         column.device(*thread_pool_device) = vector * vector(i);
 
-    }
-}
+//     }
+// }
 
 
 Tensor<type, 2> self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
@@ -1718,20 +1718,20 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
 }
 
 
-void check_raw_variables_number(const Tensor<type, 2>& matrix, const Index& raw_variables_number, const string& log)
-{
-    if(matrix.dimension(1) != raw_variables_number)
-        throw runtime_error("Number of raw_variables in matrix is " + to_string(matrix.dimension(0)) + ", "
-                            "but must be " + to_string(raw_variables_number) + ".\n");
-}
+// void check_raw_variables_number(const Tensor<type, 2>& matrix, const Index& raw_variables_number, const string& log)
+// {
+//     if(matrix.dimension(1) != raw_variables_number)
+//         throw runtime_error("Number of raw_variables in matrix is " + to_string(matrix.dimension(0)) + ", "
+//                             "but must be " + to_string(raw_variables_number) + ".\n");
+// }
 
 
-void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, const string& log)
-{
-    if(matrix.dimension(1) != rows_number)
-        throw runtime_error("Number of raw_variables in matrix is " + to_string(matrix.dimension(0)) + ", "
-                            "but must be " + to_string(rows_number) + ".\n");
-}
+// void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, const string& log)
+// {
+//     if(matrix.dimension(1) != rows_number)
+//         throw runtime_error("Number of raw_variables in matrix is " + to_string(matrix.dimension(0)) + ", "
+//                             "but must be " + to_string(rows_number) + ".\n");
+// }
 
 
 Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Index, 1>& y)
@@ -2063,50 +2063,49 @@ void swap_rows(Tensor<type, 2>& matrix, const Index& row_1, const Index& row_2)
 }
 
 
+// Index partition(Tensor<type, 2>& data_matrix,
+//                 const Index& start_index,
+//                 const Index& end_index,
+//                 const Index& target_column)
+// {
+//     const Tensor<type, 1> pivot_row = data_matrix.chip(start_index, 0);
+//     const type pivot_value = pivot_row(target_column);
+//     Index smaller_elements_count = 0;
 
-Index partition(Tensor<type, 2>& data_matrix,
-                const Index& start_index,
-                const Index& end_index,
-                const Index& target_column)
-{
-    const Tensor<type, 1> pivot_row = data_matrix.chip(start_index, 0);
-    const type pivot_value = pivot_row(target_column);
-    Index smaller_elements_count = 0;
+//     for(Index current_index = start_index + 1; current_index <= end_index; current_index++)
+//     {
+//         if(data_matrix(current_index, target_column) <= pivot_value)
+//         {
+//             smaller_elements_count++;
+//         }
+//     }
 
-    for(Index current_index = start_index + 1; current_index <= end_index; current_index++)
-    {
-        if(data_matrix(current_index, target_column) <= pivot_value)
-        {
-            smaller_elements_count++;
-        }
-    }
+//     Index pivot_position = start_index + smaller_elements_count;
+//     swap_rows(data_matrix, pivot_position, start_index);
 
-    Index pivot_position = start_index + smaller_elements_count;
-    swap_rows(data_matrix, pivot_position, start_index);
+//     Index left_index = start_index;
+//     Index right_index = end_index;
 
-    Index left_index = start_index;
-    Index right_index = end_index;
+//     while(left_index < pivot_position && right_index > pivot_position)
+//     {
+//         while(data_matrix(left_index, target_column) <= pivot_value)
+//         {
+//             left_index++;
+//         }
 
-    while(left_index < pivot_position && right_index > pivot_position)
-    {
-        while(data_matrix(left_index, target_column) <= pivot_value)
-        {
-            left_index++;
-        }
+//         while(data_matrix(right_index, target_column) > pivot_value)
+//         {
+//             right_index--;
+//         }
 
-        while(data_matrix(right_index, target_column) > pivot_value)
-        {
-            right_index--;
-        }
+//         if(left_index < pivot_position && right_index > pivot_position)
+//         {
+//             swap_rows(data_matrix, left_index++, right_index--);
+//         }
+//     }
 
-        if(left_index < pivot_position && right_index > pivot_position)
-        {
-            swap_rows(data_matrix, left_index++, right_index--);
-        }
-    }
-
-    return pivot_position;
-}
+//     return pivot_position;
+// }
 
 
 Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Index, 1>& tensor_2)
