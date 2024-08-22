@@ -1161,7 +1161,7 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 
     for(Index i = 0; i < words_number; i++)
     {
-        if( contains(raw_variables_names, word_bag.words(i)) )
+        if(contains(raw_variables_names, word_bag.words(i)) )
         {
             auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words(i));
             const Index index = it - raw_variables_names.data();

@@ -764,15 +764,10 @@ bool is_constant_vector(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(isnan(vector(i)))
-        {
-            continue;
-        }
-        else
-        {
-            first_not_nan_element = vector(i);
-            break;
-        }
+        if(isnan(vector(i))) continue;
+
+        first_not_nan_element = vector(i);
+        break;
     }
 
     for(Index i = 0; i < size; i++)
@@ -848,7 +843,7 @@ bool are_equal(const Tensor<bool, 1>& vector_1, const Tensor<bool, 1>& vector_2)
 
     for(Index i = 0; i < size; i++)
     {
-        if( vector_1(i) != vector_2(i)) return false;
+        if(vector_1(i) != vector_2(i)) return false;
     }
 
     return true;
@@ -874,7 +869,7 @@ bool are_equal(const Tensor<bool, 2>& matrix_1, const Tensor<bool, 2>& matrix_2)
 
     for(Index i = 0; i < size; i++)
     {
-        if( matrix_1(i) != matrix_2(i)) return false;
+        if(matrix_1(i) != matrix_2(i)) return false;
     }
 
     return true;
@@ -1144,7 +1139,7 @@ void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
 
     for(Index i = 0; i < original_size; i++)
     {
-        if( !contains(indices, i) )
+        if(!contains(indices, i) )
         {
             vector(index) = vector_copy(i);
             index++;
@@ -1167,7 +1162,7 @@ void delete_indices(Tensor<Index,1>& vector, const Tensor<Index,1>& indices)
 
     for(Index i = 0; i < original_size; i++)
     {
-        if( !contains(indices, i) )
+        if(!contains(indices, i) )
         {
             vector(index) = vector_copy(i);
             index++;
@@ -1190,7 +1185,7 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
 
     for(Index i = 0; i < original_size; i++)
     {
-        if( !contains(indices, i) )
+        if(!contains(indices, i) )
         {
             vector(index) = vector_copy(i);
             index++;

@@ -1356,7 +1356,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         {
             roc_curve(i,0) = type(1);
         }
-        if( isnan(roc_curve(i,1)))
+        if(isnan(roc_curve(i,1)))
         {
             roc_curve(i,1) = type(0);
         }
@@ -2091,25 +2091,20 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
         predicted_class = maximal_index(outputs.chip(i, 0));
         actual_class = maximal_index(targets.chip(i, 0));
 
-        if(actual_class != predicted_class)
-        {
-            continue;
-        }
-        else
-        {
-            well_lassified_samples(number_of_well_classified, 0) = labels(i);
-            class_name = target_variables_names(actual_class);
-            well_lassified_samples(number_of_well_classified, 1) = class_name;
-            class_name = target_variables_names(predicted_class);
-            well_lassified_samples(number_of_well_classified, 2) = class_name;
-            well_lassified_samples(number_of_well_classified, 3) = to_string(double(outputs(i, predicted_class)));
+        if(actual_class != predicted_class) continue;
 
-            number_of_well_classified++;
-        }
+        well_lassified_samples(number_of_well_classified, 0) = labels(i);
+        class_name = target_variables_names(actual_class);
+        well_lassified_samples(number_of_well_classified, 1) = class_name;
+        class_name = target_variables_names(predicted_class);
+        well_lassified_samples(number_of_well_classified, 2) = class_name;
+        well_lassified_samples(number_of_well_classified, 3) = to_string(double(outputs(i, predicted_class)));
+
+        number_of_well_classified++;
     }
 
-    Eigen::array<Index, 2> offsets = {0, 0};
-    Eigen::array<Index, 2> extents = {number_of_well_classified, 4};
+    const Eigen::array<Index, 2> offsets = {0, 0};
+    const Eigen::array<Index, 2> extents = {number_of_well_classified, 4};
 
     return well_lassified_samples.slice(offsets, extents);
 }
@@ -2146,20 +2141,15 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
         predicted_class = maximal_index(outputs.chip(i, 0));
         actual_class = maximal_index(targets.chip(i, 0));
 
-        if(actual_class == predicted_class)
-        {
-            continue;
-        }
-        else
-        {
-            misclassified_samples(j, 0) = labels(i);
-            class_name = target_variables_names(actual_class);
-            misclassified_samples(j, 1) = class_name;
-            class_name = target_variables_names(predicted_class);
-            misclassified_samples(j, 2) = class_name;
-            misclassified_samples(j, 3) = to_string(double(outputs(i, predicted_class)));
-            j++;
-        }
+        if(actual_class == predicted_class) continue;
+
+        misclassified_samples(j, 0) = labels(i);
+        class_name = target_variables_names(actual_class);
+        misclassified_samples(j, 1) = class_name;
+        class_name = target_variables_names(predicted_class);
+        misclassified_samples(j, 2) = class_name;
+        misclassified_samples(j, 3) = to_string(double(outputs(i, predicted_class)));
+        j++;
     }
 
 //    Eigen::array<Index, 2> offsets = {0, 0};

@@ -1697,7 +1697,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_individuals_number(new_population_size);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1716,7 +1716,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_mutation_rate(new_mutation_rate);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1735,7 +1735,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_elitism_size(new_elitism_size);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1754,7 +1754,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display != "0");
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1773,7 +1773,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_selection_error_goal(new_selection_error_goal);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1792,7 +1792,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1811,7 +1811,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_correlation(new_maximum_correlation);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1830,7 +1830,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_correlation(new_minimum_correlation);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1849,7 +1849,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1878,7 +1878,7 @@ void GeneticAlgorithm::save(const string& file_name) const
             fclose(file);
         }
 
-    } catch (exception e)
+    } catch(exception e)
     {
         cout<< e.what();
     }

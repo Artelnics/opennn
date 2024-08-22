@@ -247,7 +247,7 @@ protected:
 
 
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void competitive(const Tensor<type, 3>&, Tensor<type, 3>&) const;
+//    void competitive(const Tensor<type, 3>&, Tensor<type, 3>&) const;
 
 
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;

@@ -1052,7 +1052,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    time_series_raw_variables(i).set_type(time_series_new_type);
 //                }
 
-//                if(time_series_raw_variables(i).type == ColumnType::Categorical || time_series_raw_variables(i).type == ColumnType::Binary)
+//                if(time_series_raw_variables(i).type == RawVariableType::Categorical || time_series_raw_variables(i).type == RawVariableType::Binary)
 //                {
 //                    // Categories
 

@@ -257,7 +257,7 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
 
     for(Index i = 0; i < tokens.size(); i++)
     {
-        if( !contains_substring(result, " " + tokens(i) + " ") )
+        if(!contains_substring(result, " " + tokens(i) + " ") )
         {
             result += tokens(i) + " ";
         }
@@ -1407,7 +1407,7 @@ string get_word_from_token(string& token)
 
     for(char& c : token)
     {
-        if( c!=' ' && c!='=' )
+        if(c!=' ' && c!='=' )
         {
             word += c;
         }
@@ -1460,7 +1460,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 
         for(char& c : s)
         {
-            if( c!=' ' && c!='=' ) word += c; 
+            if(c!=' ' && c!='=' ) word += c; 
             else break; 
         }
 

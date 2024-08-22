@@ -888,7 +888,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Tensor<type,1> x_filtered = filtered_elements.first;
     const Tensor<type,2> y_filtered = filtered_elements.second;
 
-    if( y_filtered.dimension(1) > 50)
+    if(y_filtered.dimension(1) > 50)
     {
         cout << "Warning: Y variable has too many categories." << endl;
 

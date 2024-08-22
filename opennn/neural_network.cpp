@@ -3335,7 +3335,7 @@ string NeuralNetwork::write_expression_api() const
 
     if(LSTM_number>0)
     {
-        buffer << "if( $nn->time_step_counter % $nn->time_steps === 0 ){" << endl;
+        buffer << "if($nn->time_step_counter % $nn->time_steps === 0 ){" << endl;
         buffer << "$nn->time_steps = 3;" << endl;
         buffer << "$nn->time_step_counter = 1;" << endl;
 
@@ -3958,7 +3958,7 @@ string NeuralNetwork::write_expression_javascript() const
             }
         }
 
-        buffer << "\t" << "if( time_step_counter % time_steps == 0 ){" << endl;
+        buffer << "\t" << "if(time_step_counter % time_steps == 0 ){" << endl;
         buffer << "\t\t" << "time_step_counter = 1" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -4451,7 +4451,7 @@ string NeuralNetwork::write_expression_python() const
 
     if(LSTM_number>0)
     {
-        buffer << "\n\t\t" << "if( self.time_step_counter % self.time_steps == 0 ):" << endl;
+        buffer << "\n\t\t" << "if(self.time_step_counter % self.time_steps == 0 ):" << endl;
         buffer << "\t\t\t" << "self.t = 1" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)

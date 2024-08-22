@@ -1833,14 +1833,8 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
     if(lags_number > samples_number)
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> calculate_cross_correlations(const Index& lags_number) const method.\n"
-               << "Lags number(" << lags_number << ") is greater than the number of samples("
-               << samples_number << ") \n";
-
-        throw(buffer.str());
+        throw runtime_error("Lags number (" + to_string(lags_number) + ") "
+                            "is greater than samples number (" + to_string(samples_number) + ") \n");
     }
 
     const Index raw_variables_number = get_time_series_raw_variables_number();
