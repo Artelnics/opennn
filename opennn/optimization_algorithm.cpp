@@ -159,34 +159,34 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 }
 
 
-BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_data, Tensor<Index,1>& input_dimensions,
-                                                            type* & new_outputs_data, Tensor<Index,1>& output_dimensions)
-{
-    const Index samples_number = input_dimensions(0);
-    const Index inputs_number = input_dimensions(1);
+// BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_data, Tensor<Index,1>& input_dimensions,
+//                                                             type* & new_outputs_data, Tensor<Index,1>& output_dimensions)
+// {
+//     const Index samples_number = input_dimensions(0);
+//     const Index inputs_number = input_dimensions(1);
 
-    TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
-    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, output_dimensions[0], output_dimensions(1));
+//     TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
+//     TensorMap<Tensor<type, 2>> outputs(new_outputs_data, output_dimensions[0], output_dimensions(1));
 
-    Tensor<type, 1> distances(samples_number);
-    Index distance_index = 0;
+//     Tensor<type, 1> distances(samples_number);
+//     Index distance_index = 0;
 
-    for(Index i = 0; i < samples_number; i++)
-    {
-        Tensor<type, 1> input_row = inputs.chip(i, 0);
-        Tensor<type, 1> output_row = outputs.chip(i, 0);
+//     for(Index i = 0; i < samples_number; i++)
+//     {
+//         Tensor<type, 1> input_row = inputs.chip(i, 0);
+//         Tensor<type, 1> output_row = outputs.chip(i, 0);
 
-        const type distance = l2_distance(input_row, output_row)/inputs_number;
+//         const type distance = l2_distance(input_row, output_row)/inputs_number;
 
-        if(!isnan(distance))
-        {
-            distances(distance_index) = l2_distance(input_row, output_row)/inputs_number;
-            distance_index++;
-        }
-    }
+//         if(!isnan(distance))
+//         {
+//             distances(distance_index) = l2_distance(input_row, output_row)/inputs_number;
+//             distance_index++;
+//         }
+//     }
 
-    return box_plot(distances);
-}
+//     return box_plot(distances);
+// }
 
 
 void OptimizationAlgorithm::set_default()
@@ -228,12 +228,7 @@ void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Display
 
     file_stream.OpenElement("Display");
-
-    buffer.str("");
-    buffer << display;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(display).c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();
@@ -319,6 +314,9 @@ string TrainingResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
+    case OptimizationAlgorithm::StoppingCondition::None:
+        return "None";
+
     case OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease:
         return "Minimum loss decrease";
 
@@ -477,17 +475,11 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Epochs number
 
-    buffer.str("");
-    buffer << training_error_history.size()-1;
-
-    final_results(0,1) = buffer.str();
+    final_results(0,1) = to_string(training_error_history.size()-1);
 
     // Elapsed time
 
-    buffer.str("");
-    buffer << setprecision(precision) << elapsed_time;
-
-    final_results(1,1) = buffer.str();
+    final_results(1,1) = elapsed_time;
 
     // Stopping criteria
 
@@ -495,10 +487,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Final training error
 
-    buffer.str("");
-    buffer << setprecision(precision) << training_error_history(size-1);
-
-    final_results(3,1) = buffer.str();
+    final_results(3,1) = to_string(training_error_history(size-1));
 
     // Final selection error
 
@@ -506,10 +495,9 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     selection_error_history.size() == 0
             ? buffer << "NAN"
-                        : buffer << setprecision(precision) << selection_error_history(size-1);
+            : buffer << setprecision(precision) << selection_error_history(size-1);
 
     final_results(4,1) = buffer.str();
-
 
     return final_results;
 }

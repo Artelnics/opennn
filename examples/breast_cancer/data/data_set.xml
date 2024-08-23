@@ -1,0 +1,85 @@
+<DataSet>
+   <DataSource>
+      <FileType>csv</FileType>
+      <DataSourcePath>../data/breast_cancer.csv</DataSourcePath>
+      <Separator>Semicolon</Separator>
+      <HasHeader>1</HasHeader>
+      <HasIds>0</HasIds>
+      <MissingValuesLabel>NA</MissingValuesLabel>
+      <Codification>UTF-8</Codification>
+   </DataSource>
+   <RawVariables>
+      <RawVariablesNumber>10</RawVariablesNumber>
+      <RawVariable Item="1">
+         <Name>clump_thickness</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="2">
+         <Name>cell_size_uniformity</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="3">
+         <Name>cell_shape_uniformity</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="4">
+         <Name>marginal_adhesion</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="5">
+         <Name>single_epithelial_cell_size</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="6">
+         <Name>bare_nuclei</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="7">
+         <Name>bland_chromatin</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="8">
+         <Name>normal_nucleoli</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="9">
+         <Name>mitoses</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <RawVariableUse>Input</RawVariableUse>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="10">
+         <Name>diagnose</Name>
+         <Scaler>MinimumMaximum</Scaler>
+         <RawVariableUse>Target</RawVariableUse>
+         <Type>Binary</Type>
+      </RawVariable>
+   </RawVariables>
+   <Samples>
+      <SamplesNumber>683</SamplesNumber>
+      <SamplesUses>0 0 1 0 1 0 2 2 1 1 0 0 0 0 0 0 1 0 1 0 0 0 1 0 0 2 0 0 0 1 1 0 1 0 2 2 0 0 0 0 0 0 0 1 0 0 2 1 0 0 0 0 1 0 0 2 0 1 0 0 2 0 0 1 0 1 2 0 0 1 0 0 0 1 1 2 0 1 0 0 0 2 0 0 1 0 0 0 2 0 2 0 2 2 1 2 0 0 0 1 0 0 0 2 0 1 0 2 0 2 0 0 0 0 0 2 1 0 0 2 0 2 0 0 0 0 1 2 2 2 0 0 1 0 0 0 1 0 0 0 1 1 0 2 2 2 1 1 2 1 0 0 0 2 0 2 1 2 0 0 0 0 0 2 0 2 2 1 2 0 2 0 0 2 2 0 0 2 1 2 1 1 0 0 1 2 2 0 0 0 1 0 2 2 0 1 0 2 1 2 0 2 2 2 0 0 0 0 0 1 0 2 2 0 2 0 1 0 2 0 2 2 2 0 2 1 0 0 0 0 0 0 0 0 2 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 2 0 0 1 0 0 2 0 0 0 0 0 1 0 2 0 0 0 0 1 0 0 1 0 0 2 0 0 0 0 1 0 2 2 2 0 0 0 0 2 1 1 0 2 0 0 0 2 2 2 0 0 1 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 1 0 0 2 0 0 0 0 2 1 1 2 1 2 2 0 1 0 0 0 0 1 2 1 2 0 2 0 0 0 0 0 0 0 2 1 0 0 0 0 1 2 0 1 0 0 0 0 1 2 0 1 0 2 2 0 2 0 0 0 0 0 2 0 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 2 2 0 1 0 1 0 0 0 1 2 0 2 0 1 1 2 0 0 0 2 0 0 2 1 2 1 0 0 1 0 1 0 1 0 1 0 0 0 0 1 2 1 1 0 0 0 1 1 2 0 1 0 0 0 0 0 0 0 0 2 1 2 0 0 1 1 0 0 0 2 0 2 0 1 0 0 0 0 0 0 0 0 2 0 2 2 0 0 2 0 2 2 1 0 0 1 0 2 0 0 0 2 0 1 0 2 0 0 2 0 0 1 2 0 0 1 0 2 0 0 0 1 0 2 0 0 2 0 2 1 1 2 1 1 0 0 0 1 0 1 2 0 1 0 0 0 0 0 0 2 0 0 1 0 0 0 0 0 0 0 0 0 1 2 0 0 0 0 0 1 1 2 1 0 0 0 2 1 1 1 0 0 0 1 1 0 2 0 1 0 1 0 2 0 0 1 0 0 2 1 2 0 2 1 0 2 0 0 0 0 0 2 0 0 2 0 0 0 0 0 1 1 0 1 1 0 0 2 0 0 0 0 0 0 0 0 2 1 0 0 0 1 0 2 1 0 2 0 2 1 0 0 0 0 0 2 0 0 1 1 0 1 1 0 1 0 1 0 1 0 0 0</SamplesUses>
+   </Samples>
+   <MissingValues>
+      <MissingValuesMethod>Unuse</MissingValuesMethod>
+      <MissingValuesNumber>0</MissingValuesNumber>
+   </MissingValues>
+   <PreviewData>
+      <PreviewSize>0</PreviewSize>
+   </PreviewData>
+</DataSet>

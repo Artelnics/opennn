@@ -121,8 +121,8 @@ public:
 
    // Parameters initialization
 
-   void set_biases_constant(const type&);
-   void set_synaptic_weights_constant(const type&);
+   
+   
 
    void set_parameters_constant(const type&) final;
    void set_parameters_random() final;
@@ -192,41 +192,34 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 {
     // Default constructor
 
-     explicit PerceptronLayer3DForwardPropagation() : LayerForwardPropagation()
-     {
-     }
+    explicit PerceptronLayer3DForwardPropagation() : LayerForwardPropagation()
+    {
+    }
 
 
-     explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-         : LayerForwardPropagation()
-     {        
-        set(new_batch_samples_number, new_layer);
-     }
+    explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+     : LayerForwardPropagation()
+    {
+    set(new_batch_samples_number, new_layer);
+    }
 
 
     virtual ~PerceptronLayer3DForwardPropagation()
     {
     }
-    
-    
+
+
     pair<type*, dimensions> get_outputs_pair() const final;
 
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
-     void print() const
-     {
-         cout << "Outputs:" << endl;
-         cout << outputs << endl;
+    void print() const;
 
-         cout << "Activations derivatives:" << endl;
-         cout << activations_derivatives << endl;
-     }
+    Tensor<type, 3> outputs;
 
-     Tensor<type, 3> outputs;
-
-     Tensor<type, 3> activations_derivatives;
+    Tensor<type, 3> activations_derivatives;
 };
 
 

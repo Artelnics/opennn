@@ -36,8 +36,12 @@ public:
 
    virtual ~OptimizationAlgorithm();
 
-    enum class StoppingCondition{MinimumLossDecrease, LossGoal,
-                           MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
+    enum class StoppingCondition{None,
+                                 MinimumLossDecrease,
+                                 LossGoal,
+                                 MaximumSelectionErrorIncreases,
+                                 MaximumEpochsNumber,
+                                 MaximumTime};
 
    // Get
 
@@ -80,7 +84,7 @@ public:
 
    // Calculate distances for AANN histogram
 
-   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
+//   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
    // Training
 
@@ -203,7 +207,7 @@ struct TrainingResults
         cout << "Stopping condition: " << write_stopping_condition() << endl;
     }
 
-    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumTime;
+    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::None;
 
     Tensor<string, 2> write_final_results(const Index& = 3) const;
 

@@ -355,28 +355,28 @@ void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& i
 }
 
 
-void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
-{
-    descriptives[i].set_minimum(new_minimum);
-}
+// void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
+// {
+//     descriptives[i].set_minimum(new_minimum);
+// }
 
 
-void UnscalingLayer::set_maximum(const Index& i, const type& new_maximum)
-{
-    descriptives[i].set_maximum(new_maximum);
-}
+// void UnscalingLayer::set_maximum(const Index& i, const type& new_maximum)
+// {
+//     descriptives[i].set_maximum(new_maximum);
+// }
 
 
-void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
-{
-    descriptives[i].set_mean(new_mean);
-}
+// void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
+// {
+//     descriptives[i].set_mean(new_mean);
+// }
 
 
-void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
-{
-    descriptives[i].set_standard_deviation(new_standard_deviation);
-}
+// void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
+// {
+//     descriptives[i].set_standard_deviation(new_standard_deviation);
+// }
 
 
 void UnscalingLayer::set_scalers(const Tensor<Scaler,1>& new_unscaling_method)
@@ -612,8 +612,6 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
 void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     const Index neurons_number = get_neurons_number();
 
     // Unscaling layer
@@ -623,12 +621,7 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Unscaling neurons number
 
     file_stream.OpenElement("UnscalingNeuronsNumber");
-
-    buffer.str("");
-    buffer << neurons_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(neurons_number).c_str());
     file_stream.CloseElement();
 
     // Descriptives
@@ -644,56 +637,31 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         // Minimum
 
         file_stream.OpenElement("Minimum");
-
-        buffer.str("");
-        buffer << descriptives[i].minimum;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(descriptives[i].minimum).c_str());
         file_stream.CloseElement();
 
         // Maximum
 
         file_stream.OpenElement("Maximum");
-
-        buffer.str("");
-        buffer << descriptives[i].maximum;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(descriptives[i].maximum).c_str());
         file_stream.CloseElement();
 
         // Mean
 
         file_stream.OpenElement("Mean");
-
-        buffer.str("");
-        buffer << descriptives[i].mean;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(descriptives[i].mean).c_str());
         file_stream.CloseElement();
 
         // Standard deviation
 
         file_stream.OpenElement("StandardDeviation");
-
-        buffer.str("");
-        buffer << descriptives[i].standard_deviation;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(descriptives[i].standard_deviation).c_str());
         file_stream.CloseElement();
 
         // Unscaling method
 
         file_stream.OpenElement("Scaler");
-
-        buffer.str("");
-        buffer << scalers(i);
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(scalers(i).c_str());
         file_stream.CloseElement();
 
         // Unscaling neuron (end tag)

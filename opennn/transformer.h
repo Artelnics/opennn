@@ -52,10 +52,10 @@ public:
     string calculate_outputs(const string&, const bool& = true);
     Tensor<type, 3> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    void tokenize_whitespace(const Tensor<string, 1>&, Tensor<type, 2>&);
+//    void tokenize_whitespace(const Tensor<string, 1>&, Tensor<type, 2>&);
     void tokenize_wordpiece(const Tensor<string, 1>&, Tensor<type, 2>&);
 
-    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
+//    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
 
     void load_transformer(const string&);

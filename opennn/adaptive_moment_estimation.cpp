@@ -315,7 +315,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               is_training);
 
             // Loss index
-
+ 
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
@@ -486,37 +486,37 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     // Initial learning rate
 
     labels_values(0,0) = "Learning rate";
-    labels_values(0,1) = std::to_string(double(learning_rate));
+    labels_values(0,1) = to_string(double(learning_rate));
 
     // Initial decay
 
     labels_values(1,0) = "Initial decay";
-    labels_values(1,1) = std::to_string(double(initial_decay));
+    labels_values(1,1) = to_string(double(initial_decay));
 
     // Beta 1
 
     labels_values(2,0) = "Beta 1";
-    labels_values(2,1) = std::to_string(double(beta_1));
+    labels_values(2,1) = to_string(double(beta_1));
 
     // Beta 2
 
     labels_values(3,0) = "Beta 2";
-    labels_values(3,1) = std::to_string(double(beta_2));
+    labels_values(3,1) = to_string(double(beta_2));
 
     // Epsilon
 
     labels_values(4,0) = "Epsilon";
-    labels_values(4,1) = std::to_string(double(epsilon));
+    labels_values(4,1) = to_string(double(epsilon));
 
     // Training loss goal
 
     labels_values(5,0) = "Training loss goal";
-    labels_values(5,1) = std::to_string(double(training_loss_goal));
+    labels_values(5,1) = to_string(double(training_loss_goal));
 
     // Maximum epochs number
 
     labels_values(6,0) = "Maximum epochs number";
-    labels_values(6,1) = std::to_string(maximum_epochs_number);
+    labels_values(6,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
@@ -526,7 +526,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     // Batch samples number
 
     labels_values(8,0) = "Batch samples number";
-    labels_values(8,1) = std::to_string(batch_samples_number);
+    labels_values(8,1) = to_string(batch_samples_number);
 
     return labels_values;
 }
@@ -591,18 +591,13 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 
 void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("AdaptiveMomentEstimation");
 
     // Batch size
 
     file_stream.OpenElement("BatchSize");
 
-    buffer.str("");
-    buffer << batch_samples_number;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(batch_samples_number).c_str());
 
     file_stream.CloseElement();
 
@@ -610,10 +605,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("LossGoal");
 
-    buffer.str("");
-    buffer << training_loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(training_loss_goal).c_str());
 
     file_stream.CloseElement();
 
@@ -621,10 +613,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("MaximumEpochsNumber");
 
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(maximum_epochs_number).c_str());
 
     file_stream.CloseElement();
 
@@ -632,10 +621,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("MaximumTime");
 
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(maximum_time).c_str());
 
     file_stream.CloseElement();
 
@@ -643,10 +629,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("HardwareUse");
 
-    buffer.str("");
-    buffer << get_hardware_use();
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(get_hardware_use().c_str());
 
     file_stream.CloseElement();
 

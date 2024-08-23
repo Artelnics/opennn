@@ -122,15 +122,7 @@ void TrainingStrategyTest::test_from_XML()
     string file_name = "../data/training_strategy.xml";
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
+        throw invalid_argument("Cannot load XML file " + file_name + ".\n");
 
     training_strategy.from_XML(document);
 }

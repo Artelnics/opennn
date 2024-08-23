@@ -105,7 +105,6 @@ public:
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
-   void set_input_shape(const Tensor<Index, 1>&);
 
    // Parameters
 
@@ -141,30 +140,6 @@ public:
    void set_display(const bool&);
 
    // Parameters initialization
-
-   void set_biases_constant(const type&);
-
-   void set_forget_biases_constant(const type&);
-   void set_input_biases_constant(const type&);
-   void set_state_biases_constant(const type&);
-   void set_output_biases_constant(const type&);
-
-   void set_weights_constant(const type&);
-
-   void set_forget_weights_constant(const type&);
-   void set_input_weights_constant(const type&);
-   void set_state_weights_constant(const type&);
-   void set_output_weights_constant(const type&);
-
-   void set_recurrent_weights_constant(const type&);
-
-   void set_forget_recurrent_weights_constant(const type&);
-   void set_input_recurrent_weights_constant(const type&);
-   void set_state_recurrent_weights_constant(const type&);
-   void set_output_recurrent_weights_constant(const type&);
-
-   void set_hidden_states_constant(const type&);
-   void set_cell_states_constant(const type&);
 
    void set_parameters_constant(const type&) final;
 
