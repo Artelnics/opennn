@@ -362,7 +362,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
             for(Index k = 0; k < height ; k++)
             {
                 raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                raw_variables(raw_variable_index).type = ColumnType::Numeric;
+                raw_variables(raw_variable_index).type = RawVariableType::Numeric;
                 raw_variables(raw_variable_index).use = VariableUse::Input;
                 raw_variables(raw_variable_index).scaler = Scaler::MinimumMaximum;
                 raw_variable_index++;
@@ -392,11 +392,11 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
 
     if(classes_number == 2)
     {
-        raw_variables(image_size).type = ColumnType::Binary;
+        raw_variables(image_size).type = RawVariableType::Binary;
     }
     else
     {
-        raw_variables(image_size).type = ColumnType::Categorical;
+        raw_variables(image_size).type = RawVariableType::Categorical;
     }
 
     samples_uses.resize(images_number);

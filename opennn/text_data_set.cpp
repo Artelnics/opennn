@@ -107,7 +107,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file
 
-    file_stream.OpenElement("DataFile");
+    file_stream.OpenElement("DataSource");
 
     file_stream.OpenElement("FileType");
 
@@ -142,9 +142,9 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // raw_variables names
+    // Raw variables names
     {
-        file_stream.OpenElement("RawVariablesNames");
+        file_stream.OpenElement("HasHeader");
 
         buffer.str("");
         buffer << has_header;
@@ -156,7 +156,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Rows labels
     {
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -236,11 +236,11 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // raw_variables
+    // Raw variables
 
     file_stream.OpenElement("RawVariables");
 
-    // raw_variables number
+    // Raw variables number
     {
         file_stream.OpenElement("RawVariablesNumber");
 
@@ -252,7 +252,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // raw_variables items
+    // Raw variables items
 
     const Index raw_variables_number = get_raw_variables_number();
     {
@@ -278,7 +278,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = ids.size();
 
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -380,7 +380,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(missing_values_number > 0)
     {
-        // raw_variables missing values number
+        // Raw variables missing values number
         {
             file_stream.OpenElement("RawVariablesMissingValuesNumber");
 
@@ -498,28 +498,28 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file
 
-    const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
+    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
-    if(!data_file_element)
+    if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
 
-    if(!data_file_name_element)
+    if(!data_source_path_element)
         throw runtime_error("DataSourcePath element is nullptr.\n");
 
-    if(data_file_name_element->GetText())
+    if(data_source_path_element->GetText())
     {
-        const string new_data_file_name = data_file_name_element->GetText();
+        const string new_data_file_name = data_source_path_element->GetText();
 
         set_data_source_path(new_data_file_name);
     }
 
     // Separator
 
-    const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
+    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
     {
@@ -527,21 +527,21 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_separator = separator_element->GetText();
 
-            set_separator(new_separator);
+            set_separator_name(new_separator);
         }
         else
         {
-            set_separator("Comma");
+            set_separator_name("Comma");
         }
     }
     else
     {
-        set_separator("Comma");
+        set_separator_name("Comma");
     }
 
     // Text separator
 
-    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("Separator");
+    const tinyxml2::XMLElement* text_separator_element = data_source_element->FirstChildElement("Separator");
 
     if(text_separator_element)
     {
@@ -551,7 +551,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             try
             {
-                set_separator(new_separator);
+                set_separator_name(new_separator);
             }
             catch(const exception& e)
             {
@@ -562,7 +562,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("RawVariablesNames");
+    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
     if(raw_variables_names_element)
     {
@@ -580,7 +580,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows labels
 
-    const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
 
     if(rows_label_element)
     {
@@ -598,7 +598,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values label
 
-    const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
+    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
     {
@@ -620,7 +620,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // short words length
 
-    const tinyxml2::XMLElement* short_words_length_element = data_file_element->FirstChildElement("ShortWordsLength");
+    const tinyxml2::XMLElement* short_words_length_element = data_source_element->FirstChildElement("ShortWordsLength");
 
     if(short_words_length_element)
     {
@@ -634,7 +634,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Long words length
 
-    const tinyxml2::XMLElement* long_words_length_element = data_file_element->FirstChildElement("LongWordsLength");
+    const tinyxml2::XMLElement* long_words_length_element = data_source_element->FirstChildElement("LongWordsLength");
 
     if(long_words_length_element)
     {
@@ -648,7 +648,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Stop words list
 
-    const tinyxml2::XMLElement* stop_words_list_element = data_file_element->FirstChildElement("StopWordsList");
+    const tinyxml2::XMLElement* stop_words_list_element = data_source_element->FirstChildElement("StopWordsList");
 
     if(stop_words_list_element)
     {
@@ -663,7 +663,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Codification
 
-    const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
+    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
     {
@@ -675,7 +675,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // raw_variables
+    // Raw variables
 
     const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
@@ -688,7 +688,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw(buffer.str());
     }
 
-    // raw_variables number
+    // Raw variables number
 
     const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
@@ -710,7 +710,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_raw_variables_number(new_raw_variables_number);
     }
 
-    // raw_variables
+    // Raw variables
 
     const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
@@ -840,9 +840,9 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Rows labels begin tag
 
-        const tinyxml2::XMLElement* rows_labels_element = data_set_element->FirstChildElement("RowsLabels");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
 
-        if(!rows_labels_element)
+        if(!has_ids_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -853,9 +853,9 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Rows labels
 
-        if(rows_labels_element->GetText())
+        if(has_ids_element->GetText())
         {
-            const string new_rows_labels = rows_labels_element->GetText();
+            const string new_rows_labels = has_ids_element->GetText();
 
             string separator = ",";
 
@@ -972,7 +972,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number > 0)
     {
-        // raw_variables Missing values number
+        // Raw variables Missing values number
 
         const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
@@ -1161,7 +1161,7 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 
     for(Index i = 0; i < words_number; i++)
     {
-        if( contains(raw_variables_names, word_bag.words(i)) )
+        if(contains(raw_variables_names, word_bag.words(i)) )
         {
             auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words(i));
             const Index index = it - raw_variables_names.data();
@@ -1479,10 +1479,10 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                                 r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-1);
                                 r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-1);
                             }
-                            else if((r1_r2[0] == "" && current_word.length() >= 3 && !contains(vowels,string(1,current_word[current_word.length()-1])) &&
+                            else if((r1_r2[0].empty() && current_word.length() >= 3 && !contains(vowels,string(1,current_word[current_word.length()-1])) &&
                                       !(current_word[current_word.length()-1] == 'w' || current_word[current_word.length()-1] == 'x' || current_word[current_word.length()-1] == 'Y') &&
                                       contains(vowels,string(1,current_word[current_word.length()-2])) && !contains(vowels,string(1,current_word[current_word.length()-3]))) ||
-                                     (r1_r2[0] == "" && current_word.length() == 2 && contains(vowels,string(1,current_word[0])) && contains(vowels, string(1,current_word[1]))))
+                                     (r1_r2[0].empty() && current_word.length() == 2 && contains(vowels,string(1,current_word[0])) && contains(vowels, string(1,current_word[1]))))
                             {
                                 current_word = current_word + "e";
 
