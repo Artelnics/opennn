@@ -715,9 +715,10 @@ void DataSetTest::test_read_adult_csv()
 {
     cout << "test_read_adult_csv\n";
 
-    try {
+    try
+    {
         data_set.set_missing_values_label("?");
-        data_set.set_separator(',');
+        data_set.set_separator_string(",");
         data_set.set_data_source_path("../../datasets/adult.data");
         data_set.set_has_header(false);
         data_set.read_csv();

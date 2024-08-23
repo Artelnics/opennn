@@ -356,7 +356,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file
 
-    file_stream.OpenElement("DataFile");
+    file_stream.OpenElement("DataSource");
 
     if(model_type != ModelType::ImageClassification)
     {
@@ -401,7 +401,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Raw variables names
     {
-        file_stream.OpenElement("RawVariablesNames");
+        file_stream.OpenElement("HasHeader");
 
         buffer.str("");
         buffer << has_header;
@@ -413,7 +413,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Rows labels
     {
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -491,7 +491,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = ids.size();
 
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -723,28 +723,28 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file
 
-    const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
+    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
-    if(!data_file_element)
+    if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
 
-    if(!data_file_name_element)
+    if(!data_source_path_element)
         throw runtime_error("DataSourcePath element is nullptr.\n");
 
-    if(data_file_name_element->GetText())
+    if(data_source_path_element->GetText())
     {
-        const string new_data_file_name = data_file_name_element->GetText();
+        const string new_data_file_name = data_source_path_element->GetText();
 
         set_data_source_path(new_data_file_name);
     }
 
     // Separator
 
-    const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
+    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
     {
@@ -752,21 +752,21 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_separator = separator_element->GetText();
 
-            set_separator(new_separator);
+            set_separator_name(new_separator);
         }
         else
         {
-            set_separator("Comma");
+            set_separator_name("Comma");
         }
     }
     else
     {
-        set_separator("Comma");
+        set_separator_name("Comma");
     }
 
     // Text separator
 
-    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("Separator");
+    const tinyxml2::XMLElement* text_separator_element = data_source_element->FirstChildElement("Separator");
 
     if(text_separator_element)
     {
@@ -776,7 +776,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             try
             {
-                set_separator(new_separator);
+                set_separator_name(new_separator);
             }
             catch(const exception& e)
             {
@@ -787,7 +787,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("RawVariablesNames");
+    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
     if(raw_variables_names_element)
     {
@@ -805,7 +805,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows labels
 
-    const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
 
     if(rows_label_element)
     {
@@ -823,7 +823,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values label
 
-    const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
+    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
     {
@@ -845,7 +845,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Codification
 
-    const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
+    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
     {
@@ -1022,9 +1022,9 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Rows labels begin tag
 
-        const tinyxml2::XMLElement* rows_labels_element = data_set_element->FirstChildElement("RowsLabels");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
 
-        if(!rows_labels_element)
+        if(!has_ids_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1035,9 +1035,9 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Rows labels
 
-        if(rows_labels_element->GetText())
+        if(has_ids_element->GetText())
         {
-            const string new_rows_labels = rows_labels_element->GetText();
+            const string new_rows_labels = has_ids_element->GetText();
 
             string separator = ",";
 

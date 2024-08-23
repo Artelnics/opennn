@@ -17,7 +17,6 @@
 #include <map>
 #include <random>
 #include <regex>
-#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <stdio.h>
@@ -99,7 +98,7 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 
 
 DataSet::DataSet(const string& data_source_path,
-                 const char& separator,
+                 const string& separator,
                  const bool& has_header,
                  const bool& has_samples_id,
                  const Codification& data_codification)
@@ -3786,7 +3785,7 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
 
 
 void DataSet::set(const string& data_source_path,
-                  const char& separator,
+                  const string& separator,
                   const bool& new_has_header,
                   const bool& new_has_ids,
                   const DataSet::Codification& new_codification)
@@ -3797,7 +3796,7 @@ void DataSet::set(const string& data_source_path,
 
     set_data_source_path(data_source_path);
 
-    set_separator(separator);
+    set_separator_string(separator);
 
     set_has_header(new_has_header);
 
@@ -4051,52 +4050,77 @@ void DataSet::set_separator(const Separator& new_separator)
 }
 
 
-void DataSet::set_separator(const char& new_separator)
+// void DataSet::set_separator(const char& new_separator)
+// {
+//     if(new_separator == ' ')
+//     {
+//         separator = Separator::Space;
+//     }
+//     else if(new_separator == '\t')
+//     {
+//         separator = Separator::Tab;
+//     }
+//     else if(new_separator == ',')
+//     {
+//         separator = Separator::Comma;
+//     }
+//     else if(new_separator == ';')
+//     {
+//         separator = Separator::Semicolon;
+//     }
+//     else
+//     {
+//         throw runtime_error("Unknown separator: " + to_string(new_separator) + ".\n");
+//     }
+// }
+
+
+void DataSet::set_separator_string(const string& new_separator_string)
 {
-    if(new_separator == ' ')
+    if(new_separator_string == " ")
     {
         separator = Separator::Space;
     }
-    else if(new_separator == '\t')
+    else if(new_separator_string == "\t")
     {
         separator = Separator::Tab;
     }
-    else if(new_separator == ',')
+    else if(new_separator_string == ",")
     {
         separator = Separator::Comma;
     }
-    else if(new_separator == ';')
+    else if(new_separator_string == ";")
     {
         separator = Separator::Semicolon;
     }
     else
     {
-        throw runtime_error("Unknown separator: " + to_string(new_separator) + ".\n");
+        throw runtime_error("Unknown separator: " + new_separator_string);
     }
 }
 
 
-void DataSet::set_separator(const string& new_separator_string)
+void DataSet::set_separator_name(const string& new_separator_name)
 {
-    if(new_separator_string == "Space")
+    if(new_separator_name == "Space")
     {
         separator = Separator::Space;
     }
-    else if(new_separator_string == "Tab")
+    else if(new_separator_name == "Tab")
     {
         separator = Separator::Tab;
     }
-    else if(new_separator_string == "Comma")
+    else if(new_separator_name == "Comma")
     {
         separator = Separator::Comma;
     }
-    else if(new_separator_string == "Semicolon")
+    else if(new_separator_name == "Semicolon")
     {
         separator = Separator::Semicolon;
     }
     else
     {
-        throw runtime_error("Unknown separator: " + new_separator_string + ".\n");
+        throw runtime_error("Unknown separator: " + new_separator_name + ".\n");
     }
 }
 
@@ -5502,7 +5526,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file
 
-    file_stream.OpenElement("DataFile");
+    file_stream.OpenElement("DataSource");
 
     if(model_type != ModelType::ImageClassification)
     {
@@ -5540,14 +5564,14 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Separator");
 
-        file_stream.PushText(get_separator_string().c_str());
+        file_stream.PushText(get_separator_name().c_str());
 
         file_stream.CloseElement();
     }
 
     // Raw variables names
     {
-        file_stream.OpenElement("RawVariablesNames");
+        file_stream.OpenElement("HasHeader");
 
         buffer.str("");
         buffer << has_header;
@@ -5559,7 +5583,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Rows labels
     {
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -5637,7 +5661,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = ids.size();
 
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -5835,28 +5859,28 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file
 
-    const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
+    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
-    if(!data_file_element)
-        throw runtime_error("Data file element is nullptr.\n");
+    if(!data_source_element)
+        throw runtime_error("Data source element is nullptr.\n");
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
 
-    if(!data_file_name_element)
+    if(!data_source_path_element)
         throw runtime_error("DataSourcePath element is nullptr.\n");
 
-    if(data_file_name_element->GetText())
+    if(data_source_path_element->GetText())
     {
-        const string new_data_file_name = data_file_name_element->GetText();
+        const string new_data_file_name = data_source_path_element->GetText();
 
         set_data_source_path(new_data_file_name);
     }
 
     // Separator
 
-    const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
+    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
     {
@@ -5864,21 +5888,21 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_separator = separator_element->GetText();
 
-            set_separator(new_separator);
+            set_separator_name(new_separator);
         }
         else
         {
-            set_separator("Comma");
+            set_separator_name("Comma");
         }
     }
     else
     {
-        set_separator("Comma");
+        set_separator_name("Comma");
     }
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("RawVariablesNames");
+    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
     if(raw_variables_names_element)
     {
@@ -5896,7 +5920,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows labels
 
-    const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
 
     if(rows_label_element)
     {
@@ -5914,7 +5938,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values label
 
-    const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
+    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
     {
@@ -5936,7 +5960,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Codification
 
-    const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
+    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
     {
@@ -6040,7 +6064,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 raw_variables(i).set_type(new_type);
             }
 
-            if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
+            if(raw_variables(i).type == RawVariableType::Categorical)
             {
                 // Categories
 
@@ -6056,6 +6080,22 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     raw_variables(i).categories = get_tokens(new_categories, ";");
                 }
             }
+            else if(raw_variables(i).type == RawVariableType::Binary)
+            {
+                // Categories
+
+                const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
+
+                if(categories_element)
+                {
+                    if(categories_element->GetText())
+                    {
+                        const string new_categories = categories_element->GetText();
+
+                        raw_variables(i).categories = get_tokens(new_categories, ";");
+                    }
+                }
+            }
         }
     }
 
@@ -6065,26 +6105,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Rows labels begin tag
 
-        const tinyxml2::XMLElement* rows_labels_element = data_set_element->FirstChildElement("RowsLabels");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
 
-        if(!rows_labels_element)
-            throw runtime_error("Rows labels element is nullptr.\n");
+        if(!has_ids_element)
+            throw runtime_error("HasIds element is nullptr.\n");
 
         // Rows labels
 
-        if(rows_labels_element->GetText())
+        if(has_ids_element->GetText())
         {
-            const string new_rows_labels = rows_labels_element->GetText();
+            const string new_rows_labels = has_ids_element->GetText();
 
             string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) {
+            && new_rows_labels.find(";") != string::npos)
+            {
                 separator = ";";
             }
 
             ids = get_tokens(new_rows_labels, separator);
-
         }
     }
 
@@ -6958,15 +6998,17 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
                     filtered_indices(sample_index) = type(1);
                     set_sample_use(sample_index, SampleUse::None);
 //                }
-
             }
         }
     }
 
     const Index filtered_samples_number =
             Index(count_if(filtered_indices.data(),
-                                        filtered_indices.data()+filtered_indices.size(), [](type value)
-                               {return value > type(0.5);}));
+                           filtered_indices.data()+filtered_indices.size(),
+                           [](type value)
+                           {
+                               return value > type(0.5);
+                           }));
 
     Tensor<Index, 1> filtered_samples_indices(filtered_samples_number);
 
@@ -7063,17 +7105,15 @@ void DataSet::impute_missing_values_median()
     const Index variables_number = used_variables_indices.size();
     const Index target_variables_number = target_variables_indices.size();
 
-    Index current_variable;
-    Index current_sample;
+    #pragma omp parallel for schedule(dynamic)
 
-#pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = input_variables_indices(j);
+        const Index current_variable = input_variables_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
-            current_sample = used_samples_indices(i);
+            const Index current_sample = used_samples_indices(i);
 
             if(isnan(data(current_sample, current_variable)))
             {
@@ -7082,14 +7122,15 @@ void DataSet::impute_missing_values_median()
         }
     }
 
-#pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic)
+
     for(Index j = 0; j < target_variables_number; j++)
     {
-        current_variable = target_variables_indices(j);
+        const Index current_variable = target_variables_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
-            current_sample = used_samples_indices(i);
+            const Index current_sample = used_samples_indices(i);
 
             if(isnan(data(current_sample, current_variable)))
             {
@@ -7303,7 +7344,7 @@ void DataSet::read_csv()
         if(tokens.size() != columns_number)
             throw runtime_error("Tokens number is not equal to columns number.");
 
-        #pragma omp parallel for
+        #pragma omp parallel for reduction(+:missing_values_number)
 
         for(Index i = 0; i < raw_variables_number; i++)
         {
@@ -7311,12 +7352,18 @@ void DataSet::read_csv()
 
             const string token = has_ids ? tokens(i+1) : tokens(i);
 
-            if(token.empty() || token == missing_values_label) continue;            
-
+            if(token.empty() || token == missing_values_label)
+            {
+                missing_values_number++;
+                continue;
+            }
             else if(is_numeric_string(token))
             {
                 if(type == RawVariableType::None)
                     raw_variables(i).type = RawVariableType::Numeric;
+
+                if(type == RawVariableType::Categorical)
+                    throw runtime_error("Error: Found number in categorical variable: " + raw_variables(i).name);
             }
             else if(is_date_time_string(token))
             {
@@ -7354,6 +7401,13 @@ void DataSet::read_csv()
     data.resize(samples_number, variables_number);
     data.setZero();
 
+    rows_missing_values_number = 0;
+
+    missing_values_number = 0;
+
+    raw_variables_missing_values_number.resize(raw_variables_number);
+    raw_variables_missing_values_number.setZero();
+
     // Fill data
 
     file.clear();
@@ -7372,7 +7426,7 @@ void DataSet::read_csv()
         }
     }
 
-    samples_number = 0;
+    Index sample_index = 0;
 
     while(file.good())
     {
@@ -7385,7 +7439,22 @@ void DataSet::read_csv()
 
         tokens = get_tokens(line, separator_string);
 
-        if(has_ids) ids(samples_number) = tokens(0);
+        if(has_missing_values(tokens))
+        {
+            rows_missing_values_number ++;
+
+            for(Index i = 0; i < tokens.size(); i++)
+            {
+                if(tokens(i).empty() || tokens(i) == missing_values_label)
+                {
+                    missing_values_number++;
+
+                    raw_variables_missing_values_number(i)++;
+                }
+            }
+        }
+
+        if(has_ids) ids(sample_index) = tokens(0);
 
         #pragma omp parallel for
 
@@ -7400,13 +7469,13 @@ void DataSet::read_csv()
             if(raw_variable_type == RawVariableType::Numeric)
             {
                 if(token.empty() || token == missing_values_label)
-                    data(samples_number, variable_indices(0)) = NAN;
+                    data(sample_index, variable_indices(0)) = NAN;
                 else
-                    data(samples_number, variable_indices(0)) = stof(token);
+                    data(sample_index, variable_indices(0)) = stof(token);
             }
             else if(raw_variable_type == RawVariableType::DateTime)
-            {
-                data(samples_number, raw_variable_index) = time_t(date_to_timestamp(tokens(raw_variable_index)));
+            {              
+                data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens(raw_variable_index)));
             }
             else if(raw_variable_type == RawVariableType::Categorical)
             {
@@ -7416,7 +7485,7 @@ void DataSet::read_csv()
                 {
                     for(Index category_index = 0; category_index < categories_number; category_index++)
                     {
-                        data(samples_number, variable_indices(category_index)) = NAN;
+                        data(sample_index, variable_indices(category_index)) = NAN;
                     }
                 }
                 else
@@ -7427,7 +7496,7 @@ void DataSet::read_csv()
                     {
                         if(token == categories(category_index))
                         {
-                            data(samples_number, variable_indices(category_index)) = 1;
+                            data(sample_index, variable_indices(category_index)) = 1;
                         }
                     }
                 }
@@ -7437,32 +7506,40 @@ void DataSet::read_csv()
                 if(contains(positive_words, token) || contains(negative_words, token))
                 {
                     if(contains(positive_words, token))
-                        data(samples_number, variable_indices(0)) = 1;
+                        data(sample_index, variable_indices(0)) = 1;
                     else
-                        data(samples_number, variable_indices(0)) = 0;
+                        data(sample_index, variable_indices(0)) = 0;
                 }
                 else
                 {
                     const Tensor<string, 1> categories = raw_variables(raw_variable_index).categories;
 
-                    if(token == categories(0))
-                        data(samples_number, variable_indices(variable_indices(0))) = 1;
+                    if(token.empty() || token == missing_values_label)
+                    {
+                        data(sample_index, variable_indices(0)) = type(NAN);
+                    }
+                    else if(token == categories(0))
+                    {
+                        data(sample_index, variable_indices(0)) = 1;
+                    }
                     else if(token == categories(1))
-                        data(samples_number, variable_indices(variable_indices(0))) = 0;
+                    {
+                        data(sample_index, variable_indices(0)) = 0;
+                    }
                     else
                         throw runtime_error("Unknown token " + token);
+
                 }
             }
         }
 
-        samples_number++;
+        sample_index++;
     }
 
     file.close();
 
     unuse_constant_raw_variables();
     set_binary_raw_variables();
-
     split_samples_random();
 }
 
@@ -7472,13 +7549,7 @@ Tensor<string, 1> DataSet::get_default_raw_variables_names(const Index& raw_vari
     Tensor<string, 1> raw_variables_names(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
-    {
-        ostringstream buffer;
-
-        buffer << "variable_" << i+1;
-
-        raw_variables_names(i) = buffer.str();
-    }
+        raw_variables_names(i) = "variable_" + to_string(i+1);
 
     return raw_variables_names;
 }
@@ -7759,6 +7830,16 @@ bool DataSet::has_selection() const
     if(get_selection_samples_number() == 0) return false;
 
     return true;
+}
+
+
+bool DataSet::has_missing_values(const Tensor<string, 1>& row)
+{
+    for(Index i = 0; i < row.size(); i++)
+        if(row(i).empty() || row(i) == missing_values_label)
+            return true;
+
+    return false;
 }
 
 

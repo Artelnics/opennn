@@ -69,7 +69,11 @@ public:
 
     enum class Codification{UTF8, SHIFT_JIS};
 
-    explicit DataSet(const string&, const char&, const bool& = true, const bool& = false, const Codification& = Codification::UTF8);
+    explicit DataSet(const string&,
+                     const string&,
+                     const bool& = true,
+                     const bool& = false,
+                     const Codification& = Codification::UTF8);
 
     // Destructor
 
@@ -338,7 +342,7 @@ public:
     void set(const tinyxml2::XMLDocument&);
     void set(const string&);
 //    void set(const string&, const char&, const bool&);
-    void set(const string&, const char&, const bool&, const bool&, const DataSet::Codification&);
+    void set(const string&, const string&, const bool&, const bool&, const DataSet::Codification&);
     void set(const Tensor<type, 1>&, const Index&);
     void set_default();
 
@@ -438,8 +442,9 @@ public:
     void set_has_text_data(const bool&);
 
     void set_separator(const Separator&);
-    void set_separator(const string&);
-    void set_separator(const char&);
+    void set_separator_string(const string&);
+    void set_separator_name(const string&);
+//    void set_separator(const char&);
 
     void set_codification(const Codification&);
     void set_codification(const string&);
@@ -465,6 +470,8 @@ public:
     //bool has_time_time_series_raw_variables() const;
 
     bool has_selection() const;
+
+    bool has_missing_values(const Tensor<string, 1>& row);
 
     // Splitting
 
@@ -739,11 +746,11 @@ protected:
 
     MissingValuesMethod missing_values_method = MissingValuesMethod::Unuse;
 
-    Index missing_values_number;
+    Index missing_values_number = 0;
 
     Tensor<Index, 1> raw_variables_missing_values_number;
 
-    Index rows_missing_values_number;
+    Index rows_missing_values_number = 0;
 
     bool augmentation = false;
 

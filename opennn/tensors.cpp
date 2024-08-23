@@ -2041,7 +2041,7 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 
     for(Index i = 0; i < x.size(); i++)
     {
-        vector(i) = std::to_string(x(i));
+        vector(i) = to_string(x(i));
     }
 
     return vector;

@@ -36,7 +36,7 @@ public:
     explicit TimeSeriesDataSet();
 
     explicit TimeSeriesDataSet(const string&,
-                               const char&,
+                               const string&,
                                const bool&,
                                const bool&,
                                const Index& = 3,

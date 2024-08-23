@@ -183,7 +183,7 @@ namespace opennn
 
     void filter_not_equal_to(Tensor<string,1>&, const Tensor<string,1>&);
 
-    string to_string(Tensor<string,1>);
+    //string tensor_to_string(Tensor<string,1>);
 
     //Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>&);
 

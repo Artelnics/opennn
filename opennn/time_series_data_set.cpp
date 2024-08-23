@@ -26,8 +26,8 @@ TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 }
 
 
-TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path, 
-                                     const char& separator,
+TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path,
+                                     const string& separator,
                                      const bool& has_header,
                                      const bool& has_ids,
                                      const Index& new_lags_number,
@@ -476,7 +476,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file
 
-    file_stream.OpenElement("DataFile");
+    file_stream.OpenElement("DataSource");
 
     // File type
     {
@@ -507,7 +507,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Raw variables names
     {
-        file_stream.OpenElement("RawVariablesNames");
+        file_stream.OpenElement("HasHeader");
 
         buffer.str("");
         buffer << has_header;
@@ -519,7 +519,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Rows labels
     {
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -682,7 +682,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = ids.size();
 
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -883,9 +883,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file
 
-    const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
+    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
-    if(!data_file_element)
+    if(!data_source_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -896,9 +896,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
 
-    if(!data_file_name_element)
+    if(!data_source_path_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -907,16 +907,16 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw(buffer.str());
     }
 
-    if(data_file_name_element->GetText())
+    if(data_source_path_element->GetText())
     {
-        const string new_data_file_name = data_file_name_element->GetText();
+        const string new_data_file_name = data_source_path_element->GetText();
 
         set_data_source_path(new_data_file_name);
     }
 
     // Separator
 
-    const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
+    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
     {
@@ -938,7 +938,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("RawVariablesNames");
+    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
     if(raw_variables_names_element)
     {
@@ -956,7 +956,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows labels
 
-    const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
 
     if(rows_label_element)
     {
@@ -974,7 +974,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values label
 
-    const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
+    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
     {
@@ -998,7 +998,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Lags number
 
-    const tinyxml2::XMLElement* lags_number_element = data_file_element->FirstChildElement("LagsNumber");
+    const tinyxml2::XMLElement* lags_number_element = data_source_element->FirstChildElement("LagsNumber");
 
     if(!lags_number_element)
     {
@@ -1018,7 +1018,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Steps ahead
 
-    const tinyxml2::XMLElement* steps_ahead_element = data_file_element->FirstChildElement("StepsAhead");
+    const tinyxml2::XMLElement* steps_ahead_element = data_source_element->FirstChildElement("StepsAhead");
 
     if(!steps_ahead_element)
     {
@@ -1038,7 +1038,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time raw_variable
 
-    const tinyxml2::XMLElement* time_raw_variable_element = data_file_element->FirstChildElement("TimeColumn");
+    const tinyxml2::XMLElement* time_raw_variable_element = data_source_element->FirstChildElement("TimeColumn");
 
     if(!time_raw_variable_element)
     {
@@ -1058,7 +1058,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Group by raw_variable
 
-    const tinyxml2::XMLElement* group_by_raw_variable_element = data_file_element->FirstChildElement("GroupByColumn");
+    const tinyxml2::XMLElement* group_by_raw_variable_element = data_source_element->FirstChildElement("GroupByColumn");
 
     if(!group_by_raw_variable_element)
     {
@@ -1078,7 +1078,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Codification
 
-    const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
+    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
     {
@@ -1406,9 +1406,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Rows labels begin tag
 
-        const tinyxml2::XMLElement* rows_labels_element = data_set_element->FirstChildElement("RowsLabels");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
 
-        if(!rows_labels_element)
+        if(!has_ids_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1419,9 +1419,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Rows labels
 
-        if(rows_labels_element->GetText())
+        if(has_ids_element->GetText())
         {
-            const string new_rows_labels = rows_labels_element->GetText();
+            const string new_rows_labels = has_ids_element->GetText();
 
             string separator = ",";
 

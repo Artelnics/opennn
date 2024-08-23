@@ -2225,7 +2225,7 @@ void delete_non_alphanumeric(Tensor<string, 1>& documents)
 }
 
 
-string to_string(Tensor<string, 1> token) 
+string to_string(Tensor<string, 1> token)
 {
     string word;
 
