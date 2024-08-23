@@ -1344,14 +1344,14 @@ void ImageDataSet::read_bmp()
             data(i, j) = image_data(j);
         }
 
-        if(targets_number == 2)
-        {
-            if(i >= images_number[0] && i < images_number[1])
-            {
-                data(i, pixels_number) = 1;
-            }
-        }
-        else
+        //if(targets_number == 2)
+        //{
+        //    if(i >= images_number[0] && i < images_number[1])
+        //    {
+        //        data(i, pixels_number) = 1;
+        //    }
+        //}
+        //else
         {                        
             for(Index k = 0; k < targets_number; k++)
             {

@@ -106,8 +106,6 @@ void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
     flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(inputs_pair(0).first, batch_samples_number, neurons_number);
 
-    //cout << "Flatten layer forward outputs CPU:\n" << flatten_layer_forward_propagation->outputs << endl;
-    //system("pause");
 }
 
 

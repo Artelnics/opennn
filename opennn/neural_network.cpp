@@ -1236,6 +1236,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 
 void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 {
+    /*
     const Index trainable_layers_number = get_trainable_layers_number();
 
     const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
@@ -1249,6 +1250,25 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
         trainable_layers(i)->set_parameters(new_parameters, index);
 
         index += trainable_layers_parameters_numbers(i);
+    }
+    */
+
+    const Index layers_number = get_layers_number();
+
+    const Tensor<Layer*, 1> layers = get_layers();
+
+    const Tensor<Index, 1> layers_parameters_numbers = get_layers_parameters_numbers();
+
+    Index index = 0;
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        if (layers(i)->get_type_string() != "Flatten")
+        {
+            layers(i)->set_parameters(new_parameters, index);
+
+            index += layers_parameters_numbers(i);
+        }
     }
 }
 

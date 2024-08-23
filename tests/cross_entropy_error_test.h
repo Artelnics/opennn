@@ -12,9 +12,11 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/convolutional_layer.h"
 #include "../opennn/neural_network_forward_propagation.h"
 #include "../opennn/back_propagation.h"
 #include "../opennn/cross_entropy_error.h"
+#include "../opennn/image_data_set.h"
 
 namespace opennn
 {
@@ -54,6 +56,7 @@ private:
    Tensor<Index, 1> target_variables_indices;
 
    DataSet data_set;
+   ImageDataSet image_data_set;
 
    NeuralNetwork neural_network;
 

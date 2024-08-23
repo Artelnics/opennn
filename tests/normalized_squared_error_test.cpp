@@ -92,8 +92,9 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
+
+        normalized_squared_error.set_normalization_coefficient();
 /*
-        normalized_squared_error.set_normalization_coefficient(type(1));
 
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -139,9 +140,9 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
-/*
-        normalized_squared_error.set_normalization_coefficient(type(1));
 
+        normalized_squared_error.set_normalization_coefficient();
+/*
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -182,9 +183,10 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
-/*
-        normalized_squared_error.set_normalization_coefficient(type(1));
 
+        normalized_squared_error.set_normalization_coefficient();
+
+/*
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -231,9 +233,10 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
-/*
-        normalized_squared_error.set_normalization_coefficient(type(1));
 
+        normalized_squared_error.set_normalization_coefficient();
+
+/*
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -341,9 +344,10 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 void NormalizedSquaredErrorTest::test_back_propagate_lm()
 {
     cout << "test_back_propagate_lm\n";
-/*
-    normalized_squared_error.set_normalization_coefficient(type(1));
 
+    normalized_squared_error.set_normalization_coefficient();
+
+/*
     // Test approximation random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;

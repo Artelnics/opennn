@@ -7296,7 +7296,7 @@ void DataSet::read_csv()
         if(tokens.size() != columns_number)
             throw runtime_error("Tokens number is not equal to columns number.");
 
-        #pragma omp parallel for reduction(+:missing_values_number)
+        //#pragma omp parallel for reduction(+:missing_values_number)
 
         for(Index i = 0; i < raw_variables_number; i++)
         {

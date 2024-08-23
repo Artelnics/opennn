@@ -48,6 +48,7 @@ int main()
         ImageDataSet image_data_set;
 
         image_data_set.set_data_source_path("data");
+        //image_data_set.set_data_source_path("C:/test_mnist");
 
         image_data_set.read_bmp();
 
@@ -58,8 +59,8 @@ int main()
         const Index kernel_channels = 1;
         const Index kernels_number = 1;
 
-        const Index pool_height = 2;
-        const Index pool_width = 2;
+        const Index pool_height = 1;
+        const Index pool_width = 1;
 
         // Neural network
 
@@ -75,7 +76,7 @@ int main()
         neural_network.add_layer(convolutional_layer_2);
 
         PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(), { pool_height , pool_width } );
-        neural_network.add_layer(pooling_layer);
+        //neural_network.add_layer(pooling_layer);
 
         FlattenLayer* flatten_layer = new FlattenLayer(pooling_layer->get_output_dimensions());
         neural_network.add_layer(flatten_layer);
