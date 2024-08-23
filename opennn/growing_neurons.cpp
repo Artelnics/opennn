@@ -251,82 +251,48 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
 Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
-    ostringstream buffer;
-
     Tensor<string, 1> labels(8);
     Tensor<string, 1> values(8);
 
     // Minimum neurons number
 
     labels(0) = "Minimum neurons";
-
-    buffer.str("");
-    buffer << minimum_neurons;
-
-    values(0) = buffer.str();
+    values(0) = to_string(minimum_neurons);
 
     // Maximum order
 
     labels(1) = "Maximum neurons";
-
-    buffer.str("");
-    buffer << maximum_neurons;
-
-    values(1) = buffer.str();
+    values(1) = to_string(maximum_neurons);
 
     // Step
 
     labels(2) = "Step";
-
-    buffer.str("");
-    buffer << neurons_increment;
-
-    values(2) = buffer.str();
+    values(2) = to_string(neurons_increment);
 
     // Trials number
 
     labels(3) = "Trials number";
-
-    buffer.str("");
-    buffer << trials_number;
-
-    values(3) = buffer.str();
+    values(3) = to_string(trials_number);
 
     // Selection loss goal
 
     labels(4) = "Selection loss goal";
-
-    buffer.str("");
-    buffer << selection_error_goal;
-
-    values(4) = buffer.str();
+    values(4) = to_string(selection_error_goal);
 
     // Maximum selection failures
 
     labels(5) = "Maximum selection failures";
-
-    buffer.str("");
-    buffer << maximum_selection_failures;
-
-    values(5) = buffer.str();
+    values(5) = to_string(maximum_selection_failures);
 
     // Maximum iterations number
 
     labels(6) = "Maximum iterations number";
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    values(6) = buffer.str();
+    values(6) = to_string(maximum_epochs_number);
 
     // Maximum time
 
     labels(7) = "Maximum time";
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    values(7) = buffer.str();
+    values(7) = to_string(maximum_time);
 
     const Index rows_number = labels.size();
     const Index raw_variables_number = 2;
@@ -342,85 +308,48 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 
 void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("GrowingNeurons");
 
     // Minimum order
 
     file_stream.OpenElement("MinimumNeurons");
-
-    buffer.str("");
-    buffer << minimum_neurons;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(minimum_neurons).c_str());
     file_stream.CloseElement();
 
     // Maximum order
 
     file_stream.OpenElement("MaximumNeurons");
-
-    buffer.str("");
-    buffer << maximum_neurons;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_neurons).c_str());
     file_stream.CloseElement();
 
     // Step
 
     file_stream.OpenElement("Step");
-
-    buffer.str("");
-    buffer << neurons_increment;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(neurons_increment).c_str());
     file_stream.CloseElement();
 
     // Trials number
 
     file_stream.OpenElement("TrialsNumber");
-
-    buffer.str("");
-    buffer << trials_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(trials_number).c_str());
     file_stream.CloseElement();
 
     // Selection error goal
 
     file_stream.OpenElement("SelectionErrorGoal");
-
-    buffer.str("");
-    buffer << selection_error_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(selection_error_goal).c_str());
     file_stream.CloseElement();
 
     // Maximum selection failures
 
     file_stream.OpenElement("MaximumSelectionFailures");
-
-    buffer.str("");
-    buffer << maximum_selection_failures;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
     // Maximum time
 
     file_stream.OpenElement("MaximumTime");
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_time).c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();

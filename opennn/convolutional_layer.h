@@ -77,7 +77,7 @@ public:
 
     string write_activation_function() const;
 
-    dimensions get_inputs_dimensions() const;
+    dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const;
 
     pair<Index, Index> get_padding() const;
@@ -142,10 +142,6 @@ public:
     void set_inputs_dimensions(const dimensions&);
 
     // Initialization
-
-    void set_biases_constant(const type&);
-
-    void set_synaptic_weights_constant(const type&);
 
     void set_parameters_constant(const type&);
 

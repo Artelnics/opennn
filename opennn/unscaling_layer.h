@@ -76,10 +76,10 @@ public:
 
    void set_item_descriptives(const Index&, const Descriptives&);
 
-   void set_minimum(const Index&, const type&);
-   void set_maximum(const Index&, const type&);
-   void set_mean(const Index&, const type&);
-   void set_standard_deviation(const Index&, const type&);
+//   void set_minimum(const Index&, const type&);
+//   void set_maximum(const Index&, const type&);
+//   void set_mean(const Index&, const type&);
+//   void set_standard_deviation(const Index&, const type&);
 
    void set_min_max_range(const type min, const type max);
 

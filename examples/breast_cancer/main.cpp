@@ -29,8 +29,11 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/breast_cancer.csv", ';', true);
+        DataSet data_set("../data/breast_cancer.csv", ";", true);
 
+        data_set.save("../data/data_set.xml");
+        data_set.load("../data/data_set.xml");
+/*
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -60,7 +63,7 @@ int main()
         // OKR
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); /*Fail*/
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
@@ -82,7 +85,7 @@ int main()
         // OKR
         cout << " \n write_loss_method \n" << training_strategy.write_loss_method_text();
         cout << " \n write_opt_method \n" << training_strategy.write_optimization_method_text();
-
+*/
         return 0;
     }
     catch(const exception& e)

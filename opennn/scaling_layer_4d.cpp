@@ -37,7 +37,7 @@ ScalingLayer4D::ScalingLayer4D(const Tensor<Descriptives, 1>& new_descriptives) 
 }
 
 
-dimensions ScalingLayer4D::get_inputs_dimensions() const
+dimensions ScalingLayer4D::get_input_dimensions() const
 {
     return input_dimensions;
 }
@@ -527,32 +527,32 @@ bool ScalingLayer4D::is_empty() const
 }
 
 
-void ScalingLayer4D::check_range(const Tensor<type, 1>& inputs) const
-{
-    const Index inputs_number = get_neurons_number();
+// void ScalingLayer4D::check_range(const Tensor<type, 1>& inputs) const
+// {
+//     const Index inputs_number = get_neurons_number();
 
-    // Check inputs
+//     // Check inputs
 
-    if(display)
-    {
-        for(Index i = 0; i < inputs_number; i++)
-        {
-            if(inputs(i) < descriptives(i).minimum)
-            {
-                cout << "OpenNN Warning: ScalingLayer4D class.\n"
-                     << "void check_range(const Tensor<type, 1>&) const method.\n"
-                     << "Input value " << i << " is less than corresponding minimum.\n";
-            }
+//     if(display)
+//     {
+//         for(Index i = 0; i < inputs_number; i++)
+//         {
+//             if(inputs(i) < descriptives(i).minimum)
+//             {
+//                 cout << "OpenNN Warning: ScalingLayer4D class.\n"
+//                      << "void check_range(const Tensor<type, 1>&) const method.\n"
+//                      << "Input value " << i << " is less than corresponding minimum.\n";
+//             }
 
-            if(inputs(i) > descriptives(i).maximum)
-            {
-                cout << "OpenNN Warning: ScalingLayer4D class.\n"
-                     << "void check_range(const Tensor<type, 1>&) const method.\n"
-                     << "Input value " << i << " is greater than corresponding maximum.\n";
-            }
-        }
-    }
-}
+//             if(inputs(i) > descriptives(i).maximum)
+//             {
+//                 cout << "OpenNN Warning: ScalingLayer4D class.\n"
+//                      << "void check_range(const Tensor<type, 1>&) const method.\n"
+//                      << "Input value " << i << " is greater than corresponding maximum.\n";
+//             }
+//         }
+//     }
+// }
 
 
 void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
@@ -608,12 +608,7 @@ void ScalingLayer4D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Scaling neurons number
 
     file_stream.OpenElement("ScalingNeuronsNumber");
-
-    buffer.str("");
-    buffer << neurons_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(neurons_number).c_str());
     file_stream.CloseElement();
 
     // Scaling neurons
@@ -632,32 +627,23 @@ void ScalingLayer4D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.OpenElement("Descriptives");
 
-        buffer.str(""); buffer << descriptives(i).minimum;
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(to_string(descriptives(i).minimum).c_str());
         file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).maximum;
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(to_string(descriptives(i).maximum).c_str());
         file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).mean;
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(to_string(descriptives(i).mean).c_str());
         file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).standard_deviation;
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(to_string(descriptives(i).standard_deviation).c_str());
 
         file_stream.CloseElement();
 
         // Scaler
 
         file_stream.OpenElement("Scaler");
-
-        buffer.str("");
-        buffer << scaling_methods_string(i);
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(scaling_methods_string(i).c_str());
         file_stream.CloseElement();
 
         // Scaling neuron (end tag)

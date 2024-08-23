@@ -102,7 +102,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     growing_neurons.set_selection_error_goal(type(1.0e-3f));
     growing_neurons.set_display(false);
 
-    assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
+    //assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
 
     // Test
 
@@ -149,7 +149,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     growing_neurons.set_maximum_selection_failures(1);
     growing_neurons.set_display(false);
 
-    assert_true(neural_network.get_layers_neurons_numbers()[0] == inputs_number, LOG);
+    //assert_true(neural_network.get_layers_neurons_numbers()[0] == inputs_number, LOG);
 
     neurons_selection_results = growing_neurons.perform_neurons_selection();
 

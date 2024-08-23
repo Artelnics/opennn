@@ -49,7 +49,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
     // Empty test does not work
     // cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
+    
     // Test binary classification trivial
     {
         inputs_number = 1;
@@ -91,7 +91,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
-
+    
     // Test binary classification random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
@@ -134,6 +134,87 @@ void CrossEntropyErrorTest::test_back_propagate()
         assert_true(back_propagation.error >= 0, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
+
+    }
+
+    // Test binary classification trivial convolutional layer
+    {
+        samples_number = 2;
+
+        bool is_training = true;
+
+        const Index kernel_height = 1;
+        const Index kernel_width = 1;
+        const Index kernel_channels = 1;
+        const Index kernels_number = 1;
+
+        // Data set
+
+        image_data_set.set_display(false);
+        image_data_set.set_data_source_path("data/conv_test");
+        image_data_set.read_bmp();
+        image_data_set.scale_input_variables();
+
+        training_samples_indices = image_data_set.get_training_samples_indices();
+        input_variables_indices = image_data_set.get_input_variables_indices();
+        target_variables_indices = image_data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &image_data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.delete_layers();
+
+//        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number });
+//        neural_network.add_layer(convolutional_layer);
+
+//        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number });
+//        neural_network.add_layer(convolutional_layer_2);
+
+        FlattenLayer* flatten_layer = new FlattenLayer(image_data_set.get_input_dimensions());
+        neural_network.add_layer(flatten_layer);
+
+        ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),image_data_set.get_target_dimensions());
+        neural_network.add_layer(probabilistic_layer);
+
+        //neural_network.set_parameters_constant(type(0));
+        neural_network.set_parameters_random();
+
+        /* { // debug
+            image_data_set.set_display(true);
+            image_data_set.print();
+            cout << image_data_set.get_data() << endl;
+            neural_network.print();
+            system("pause");
+        }*/
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        
+        //forward_propagation.print();
+
+        // Loss index
+
+        cross_entropy_error.set_data_set(&image_data_set);
+        cross_entropy_error.set_neural_network(&neural_network);
+
+        back_propagation.set(samples_number, &cross_entropy_error);
+        cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        //back_propagation.print();
+  
+        numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
+
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0], LOG);
+
+        assert_true(back_propagation.error >= 0, LOG);
+
+        cout << "back_propagation.gradient:\n" << back_propagation.gradient << endl;
+        cout << "numerical_gradient:\n" << numerical_gradient << endl;
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        
     }
 }
 

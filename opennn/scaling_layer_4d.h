@@ -43,7 +43,7 @@ public:
    dimensions get_output_dimensions() const;
 
    Index get_inputs_number() const final;
-   dimensions get_inputs_dimensions() const;
+   dimensions get_input_dimensions() const;
    Index get_neurons_number() const final;
 
    // Inputs descriptives
@@ -110,7 +110,7 @@ public:
 
    bool is_empty() const;
 
-   void check_range(const Tensor<type, 1>&) const;
+   //void check_range(const Tensor<type, 1>&) const;
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
 

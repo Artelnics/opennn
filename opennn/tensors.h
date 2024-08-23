@@ -191,8 +191,8 @@ void check_size(const Tensor<type, 1>&, const Index&, const string&);
 
 void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
 
-void check_raw_variables_number(const Tensor<type, 2>&, const Index&, const string&);
-void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
+//void check_raw_variables_number(const Tensor<type, 2>&, const Index&, const string&);
+//void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
 
 // Fill
 
@@ -228,17 +228,20 @@ Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const 
 
 // Conversion
 
+string dimensions_to_string(const dimensions&, const string& = " ");
+string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
+string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
 string string_tensor_to_string(const Tensor<string, 1>&, const string&);
 
 Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
 
-Index partition(Tensor<type, 2>&, const Index&, const Index&, const Index&);
+//Index partition(Tensor<type, 2>&, const Index&, const Index&, const Index&);
 Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
 
 type round_to_precision(type, const int&);
-Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
-Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
+//Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
+//Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 

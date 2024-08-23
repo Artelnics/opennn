@@ -680,9 +680,9 @@ void ConvolutionalLayerTest::test_forward_propagate()
                 && forward_propagation.outputs.dimension(3) == convolutional_layer.get_output_dimensions()[2], LOG);
 
     assert_true(forward_propagation.activations_derivatives.dimension(0) == input_images
-                && forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_inputs_dimensions()[0]
-                && forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_inputs_dimensions()[1]
-                && forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_inputs_dimensions()[2], LOG);
+                && forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_input_dimensions()[0]
+                && forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_input_dimensions()[1]
+                && forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_input_dimensions()[2], LOG);
 
     assert_true(forward_propagation.outputs(0, 0, 0, 0) == type(4590 + 1)
                 && forward_propagation.outputs(1, 0, 0, 0) == type(1530 + 1), LOG);

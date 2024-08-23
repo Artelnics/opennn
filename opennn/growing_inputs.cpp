@@ -358,82 +358,48 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
 Tensor<string, 2> GrowingInputs::to_string_matrix() const
 {
-    ostringstream buffer;
-
     Tensor<string, 1> labels(8);
     Tensor<string, 1> values(8);
 
     // Trials number
 
     labels(0) = "Trials number";
-
-    buffer.str("");
-    buffer << trials_number;
-
-    values(0) = buffer.str();
+    values(0) = to_string(trials_number);
 
     // Selection loss goal
 
     labels(1) = "Selection error goal";
-
-    buffer.str("");
-    buffer << selection_error_goal;
-
-    values(1) = buffer.str();
+    values(1) = to_string(selection_error_goal);
 
     // Maximum selection failures
 
     labels(2) = "Maximum selection failures";
-
-    buffer.str("");
-    buffer << maximum_selection_failures;
-
-    values(2) = buffer.str();
+    values(2) = to_string(maximum_selection_failures);
 
     // Maximum inputs number
 
     labels(3) = "Maximum inputs number";
-
-    buffer.str("");
-    buffer << maximum_inputs_number;
-
-    values(3) = buffer.str();
+    values(3) = to_string(maximum_inputs_number);
 
     // Minimum correlation
 
     labels(4) = "Minimum correlations";
-
-    buffer.str("");
-    buffer << minimum_correlation;
-
-    values(4) = buffer.str();
+    values(4) = to_string(minimum_correlation);
 
     // Maximum correlation
 
     labels(5) = "Maximum correlation";
-
-    buffer.str("");
-    buffer << maximum_correlation;
-
-    values(5) = buffer.str();
+    values(5) = to_string(maximum_correlation);
 
     // Maximum iterations number
 
     labels(6) = "Maximum iterations number";
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    values(6) = buffer.str();
+    values(6) = to_string(maximum_epochs_number);
 
     // Maximum time
 
     labels(7) = "Maximum time";
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    values(7) = buffer.str();
+    values(7) = to_string(maximum_time);
 
     const Index rows_number = labels.size();
     const Index raw_variables_number = 2;
@@ -449,107 +415,60 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
 
 void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("GrowingInputs");
 
     // Trials number
 
     file_stream.OpenElement("TrialsNumber");
-
-    buffer.str("");
-    buffer << trials_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(trials_number).c_str());
     file_stream.CloseElement();
 
     // selection error goal
 
     file_stream.OpenElement("SelectionErrorGoal");
-
-    buffer.str("");
-    buffer << selection_error_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(selection_error_goal).c_str());
     file_stream.CloseElement();
 
     // Maximum selection failures
 
     file_stream.OpenElement("MaximumSelectionFailures");
-
-    buffer.str("");
-    buffer << maximum_selection_failures;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
     // Minimum inputs number
 
     file_stream.OpenElement("MinimumInputsNumber");
-
-    buffer.str("");
-    buffer << minimum_inputs_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(minimum_inputs_number).c_str());
     file_stream.CloseElement();
 
     // Maximum inputs number
 
     file_stream.OpenElement("MaximumInputsNumber");
-
-    buffer.str("");
-    buffer << maximum_inputs_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_inputs_number).c_str());
     file_stream.CloseElement();
 
     // Minimum correlation
 
     file_stream.OpenElement("MinimumCorrelation");
-
-    buffer.str("");
-    buffer << minimum_correlation;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(minimum_correlation).c_str());
     file_stream.CloseElement();
 
     // Maximum correlation
 
     file_stream.OpenElement("MaximumCorrelation");
-
-    buffer.str("");
-    buffer << maximum_correlation;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_correlation).c_str());
     file_stream.CloseElement();
 
     // Maximum iterations
 
     file_stream.OpenElement("MaximumEpochsNumber");
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_epochs_number).c_str());
     file_stream.CloseElement();
 
     // Maximum time
 
     file_stream.OpenElement("MaximumTime");
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_time).c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();

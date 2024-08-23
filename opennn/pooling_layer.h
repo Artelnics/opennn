@@ -52,7 +52,7 @@ public:
 
     // Get
 
-    dimensions get_inputs_dimensions() const;
+    dimensions get_input_dimensions() const;
 
     dimensions get_output_dimensions() const;
 

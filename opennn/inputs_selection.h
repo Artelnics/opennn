@@ -73,8 +73,6 @@ public:
     void set_maximum_correlation(const type&);
     void set_minimum_correlation(const type&);
 
-    // Performances calculation
-
     string write_stopping_condition(const TrainingResults&) const;
 
     // inputs selection

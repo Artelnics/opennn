@@ -100,8 +100,6 @@ void TestingAnalysis::set_display(const bool& new_display)
 
 void TestingAnalysis::check() const
 {
-    ostringstream buffer;
-
     if(!neural_network)
         throw runtime_error("Neural network pointer is nullptr.\n");
 
@@ -114,7 +112,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 {
     // Calculate regression parameters
 
-    Tensor<type, 2> inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
     const Tensor<type, 2> targets = data_set->get_testing_target_data();
 
@@ -141,7 +139,6 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
 
 void TestingAnalysis::print_linear_regression_correlations() const
 {
-
     const Tensor<Correlation, 1> linear_correlations = linear_correlation();
 
     const Tensor<string, 1> targets_name = data_set->get_target_variables_names();
@@ -166,9 +163,9 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     if(testing_samples_number == 0)
         throw runtime_error("Number of testing samples is zero.\n");
 
-    Tensor<type, 2> testing_inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> testing_inputs = data_set->get_testing_input_data();
 
-    Tensor<type, 2> testing_targets = data_set->get_testing_target_data();
+    const Tensor<type, 2> testing_targets = data_set->get_testing_target_data();
 
     // Neural network
 
@@ -210,7 +207,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
     const Index testing_samples_number = data_set->get_testing_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
     const Tensor<type, 2> targets = data_set->get_testing_target_data();
 
@@ -549,13 +546,13 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 
     const Index training_samples_number = data_set->get_training_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_training_input_data();
+    const Tensor<type, 2> inputs = data_set->get_training_input_data();
 
-    Tensor<type, 2> targets = data_set->get_training_target_data();
+    const Tensor<type, 2> targets = data_set->get_training_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(4);
 
@@ -578,13 +575,13 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
 
     const Index training_samples_number = data_set->get_training_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_training_input_data();
+    const Tensor<type, 2> inputs = data_set->get_training_input_data();
 
-    Tensor<type, 2> targets = data_set->get_training_target_data();
+    const Tensor<type, 2> targets = data_set->get_training_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(6);
 
@@ -619,13 +616,13 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
 
     const Index training_samples_number = data_set->get_training_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_training_input_data();
+    const Tensor<type, 2> inputs = data_set->get_training_input_data();
 
-    Tensor<type, 2> targets = data_set->get_training_target_data();
+    const Tensor<type, 2> targets = data_set->get_training_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(5);
 
@@ -642,19 +639,20 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
     return errors;
 }
 
+
 Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
 {
     // Data set
 
     const Index selection_samples_number = data_set->get_selection_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_selection_input_data();
+    const Tensor<type, 2> inputs = data_set->get_selection_input_data();
 
-    Tensor<type, 2> targets = data_set->get_selection_target_data();
+    const Tensor<type, 2> targets = data_set->get_selection_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(4);
 
@@ -677,13 +675,13 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
 
     const Index selection_samples_number = data_set->get_selection_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_selection_input_data();
+    const Tensor<type, 2> inputs = data_set->get_selection_input_data();
 
-    Tensor<type, 2> targets = data_set->get_selection_target_data();
+    const Tensor<type, 2> targets = data_set->get_selection_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(6);
 
@@ -708,13 +706,13 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
 
     const Index selection_samples_number = data_set->get_selection_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_selection_input_data();
+    const Tensor<type, 2> inputs = data_set->get_selection_input_data();
 
-    Tensor<type, 2> targets = data_set->get_selection_target_data();
+    const Tensor<type, 2> targets = data_set->get_selection_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(5);
 
@@ -740,15 +738,13 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_testing_errors() const
 
     const Index testing_samples_number = data_set->get_testing_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
-
-    cout << "outputs.dimensions(): " << outputs.dimensions() << endl;
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(4);
 
@@ -757,8 +753,6 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_testing_errors() const
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     Tensor<type, 1> outputs_error = ((outputs-targets).sum(Eigen::array<int, 1>({0}))).abs();
-
-    cout << "outputs_error 1: " << endl << outputs_error << endl;
 
     Tensor<type, 1> mean_normalization_parameter(outputs.dimension(1));
     mean_normalization_parameter.setConstant(type(1.0/testing_samples_number));
@@ -787,13 +781,13 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
 
     const Index testing_samples_number = data_set->get_testing_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(6);
 
@@ -818,13 +812,13 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
     const Index testing_samples_number = data_set->get_testing_samples_number();
 
-    Tensor<type, 2> inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(4);
 
@@ -1033,10 +1027,9 @@ type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& 
 
     denominator(0) == type(0) ? denominator(0) = type(1) : type(0);
 
-    type determination_coefficient = ((numerator(0)/denominator(0))*(numerator(0)/denominator(0)));
+    type determination_coefficient = (numerator(0)/denominator(0))*(numerator(0)/denominator(0));
 
     return determination_coefficient;
-
 }
 
 
@@ -1104,7 +1097,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
                << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
                << "Number of elements in confusion matrix (" << confusion_sum << ") must be equal to number of testing samples (" << testing_samples_number << ").\n";
 
-        throw ("Number of elements in confusion matrix (" + to_string(confusion_sum) + ") "
+        throw runtime_error("Number of elements in confusion matrix (" + to_string(confusion_sum) + ") "
                "must be equal to number of testing samples (" + to_string(testing_samples_number) + ").\n");
     }
 
@@ -1356,7 +1349,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         {
             roc_curve(i,0) = type(1);
         }
-        if( isnan(roc_curve(i,1)))
+        if(isnan(roc_curve(i,1)))
         {
             roc_curve(i,1) = type(0);
         }
@@ -2091,25 +2084,20 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
         predicted_class = maximal_index(outputs.chip(i, 0));
         actual_class = maximal_index(targets.chip(i, 0));
 
-        if(actual_class != predicted_class)
-        {
-            continue;
-        }
-        else
-        {
-            well_lassified_samples(number_of_well_classified, 0) = labels(i);
-            class_name = target_variables_names(actual_class);
-            well_lassified_samples(number_of_well_classified, 1) = class_name;
-            class_name = target_variables_names(predicted_class);
-            well_lassified_samples(number_of_well_classified, 2) = class_name;
-            well_lassified_samples(number_of_well_classified, 3) = to_string(double(outputs(i, predicted_class)));
+        if(actual_class != predicted_class) continue;
 
-            number_of_well_classified++;
-        }
+        well_lassified_samples(number_of_well_classified, 0) = labels(i);
+        class_name = target_variables_names(actual_class);
+        well_lassified_samples(number_of_well_classified, 1) = class_name;
+        class_name = target_variables_names(predicted_class);
+        well_lassified_samples(number_of_well_classified, 2) = class_name;
+        well_lassified_samples(number_of_well_classified, 3) = to_string(double(outputs(i, predicted_class)));
+
+        number_of_well_classified++;
     }
 
-    Eigen::array<Index, 2> offsets = {0, 0};
-    Eigen::array<Index, 2> extents = {number_of_well_classified, 4};
+    const Eigen::array<Index, 2> offsets = {0, 0};
+    const Eigen::array<Index, 2> extents = {number_of_well_classified, 4};
 
     return well_lassified_samples.slice(offsets, extents);
 }
@@ -2146,20 +2134,15 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
         predicted_class = maximal_index(outputs.chip(i, 0));
         actual_class = maximal_index(targets.chip(i, 0));
 
-        if(actual_class == predicted_class)
-        {
-            continue;
-        }
-        else
-        {
-            misclassified_samples(j, 0) = labels(i);
-            class_name = target_variables_names(actual_class);
-            misclassified_samples(j, 1) = class_name;
-            class_name = target_variables_names(predicted_class);
-            misclassified_samples(j, 2) = class_name;
-            misclassified_samples(j, 3) = to_string(double(outputs(i, predicted_class)));
-            j++;
-        }
+        if(actual_class == predicted_class) continue;
+
+        misclassified_samples(j, 0) = labels(i);
+        class_name = target_variables_names(actual_class);
+        misclassified_samples(j, 1) = class_name;
+        class_name = target_variables_names(predicted_class);
+        misclassified_samples(j, 2) = class_name;
+        misclassified_samples(j, 3) = to_string(double(outputs(i, predicted_class)));
+        j++;
     }
 
 //    Eigen::array<Index, 2> offsets = {0, 0};
@@ -2765,11 +2748,11 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
 type TestingAnalysis::calculate_logloss() const
 {
-    Tensor<type, 2> inputs = data_set->get_testing_input_data();
+    const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set->get_testing_target_data();
 
-    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     const Index testing_samples_number = data_set->get_testing_samples_number();
 
@@ -2792,14 +2775,8 @@ void TestingAnalysis::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Display
 
     file_stream.OpenElement("Display");
-
-    buffer.str("");
-    buffer << display;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(display).c_str());
     file_stream.CloseElement();
-
 
     file_stream.CloseElement();
 }
