@@ -52,7 +52,7 @@ public:
 
    const BoundingMethod& get_bounding_method() const;
 
-   string write_bounding_method() const;
+   string get_bounding_method_string() const;
 
    const Tensor<type, 1>& get_lower_bounds() const;
    type get_lower_bound(const Index&) const;

@@ -25,7 +25,7 @@ FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
 }
 
 
-dimensions FlattenLayer::get_inputs_dimensions() const
+dimensions FlattenLayer::get_input_dimensions() const
 {
     return input_dimensions;
 }
@@ -106,8 +106,6 @@ void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
     flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(inputs_pair(0).first, batch_samples_number, neurons_number);
 
-    //cout << "Flatten layer forward outputs CPU:\n" << flatten_layer_forward_propagation->outputs << endl;
-    //system("pause");
 }
 
 
@@ -136,31 +134,20 @@ void FlattenLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 
 void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("FlattenLayer");
 
     file_stream.OpenElement("InputVariablesDimension");
 
     file_stream.OpenElement("InputHeight");
-    buffer.str("");
-    buffer << get_input_height();
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(get_input_height()).c_str());
     file_stream.CloseElement();
 
     file_stream.OpenElement("InputWidth");
-    buffer.str("");
-    buffer << get_input_width();
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(get_input_width()).c_str());
     file_stream.CloseElement();
 
     file_stream.OpenElement("InputChannels");
-    buffer.str("");
-    buffer << get_input_channels();
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(get_input_channels()).c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();
@@ -249,7 +236,7 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
 
-    dimensions input_dimensions = flatten_layer->get_inputs_dimensions();
+    dimensions input_dimensions = flatten_layer->get_input_dimensions();
 
     input_derivatives.resize(batch_samples_number,
             input_dimensions[0],

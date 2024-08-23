@@ -401,42 +401,6 @@ void RecurrentLayer::set_display(const bool& new_display)
 }
 
 
-void RecurrentLayer::set_hidden_states_constant(const type& value)
-{
-    hidden_states.setConstant(value);
-}
-
-
-void RecurrentLayer::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void RecurrentLayer::set_input_weights_constant(const type& value)
-{
-    input_weights.setConstant(value);
-}
-
-
-void RecurrentLayer::set_recurrent_weights_constant(const type& value)
-{
-    recurrent_weights.setConstant(value);
-}
-
-
-void RecurrentLayer::set_input_weights_random()
-{
-    input_weights.setRandom();
-}
-
-
-void RecurrentLayer::set_recurrent_weights_random()
-{
-    recurrent_weights.setRandom();
-}
-
-
 void RecurrentLayer::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
@@ -892,51 +856,25 @@ void RecurrentLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_number()).c_str());
     file_stream.CloseElement();
 
     // Outputs number
 
     file_stream.OpenElement("NeuronsNumber");
-
-    buffer.str("");
-    buffer << get_neurons_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_neurons_number()).c_str());
     file_stream.CloseElement();
 
     // Activation function
 
     file_stream.OpenElement("ActivationFunction");
-
     file_stream.PushText(write_activation_function().c_str());
-
     file_stream.CloseElement();
 
     // Parameters
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size-1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     // Recurrent layer (end tag)

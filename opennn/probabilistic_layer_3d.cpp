@@ -305,19 +305,7 @@ void ProbabilisticLayer3D::set_display(const bool& new_display)
 }
 
 
-void ProbabilisticLayer3D::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void ProbabilisticLayer3D::set_synaptic_weights_constant(const type& value)
-{
-    synaptic_weights.setConstant(value);
-}
-
-
-void ProbabilisticLayer3D::set_synaptic_weights_constant_Glorot()
+void ProbabilisticLayer3D::set_synaptic_weights_Glorot()
 {
     synaptic_weights.setRandom();
 }
@@ -613,6 +601,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
+
 void ProbabilisticLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -622,91 +611,51 @@ void ProbabilisticLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ProbabilisticLayer3D");
 
     // Layer name
+
     file_stream.OpenElement("LayerName");
-    buffer.str("");
-    buffer << layer_name;
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Inputs number
+
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_number()).c_str());
     file_stream.CloseElement();
 
     // Inputs depth
 
     file_stream.OpenElement("InputsDepth");
-
-    buffer.str("");
-    buffer << get_inputs_depth();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_depth()).c_str());
     file_stream.CloseElement();
 
     // Neurons number
 
     file_stream.OpenElement("NeuronsNumber");
-
-    buffer.str("");
-    buffer << get_neurons_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_neurons_number()).c_str());
     file_stream.CloseElement();
 
     // Decision threshold
 
     file_stream.OpenElement("DecisionThreshold");
-
-    buffer.str("");
-    buffer << get_decision_threshold();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_decision_threshold()).c_str());
     file_stream.CloseElement();
 
     // Activation function
 
     file_stream.OpenElement("ActivationFunction");
-
-    buffer.str("");
-    buffer << write_activation_function();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(write_activation_function().c_str());
     file_stream.CloseElement();
 
     // Biases
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size - 1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     // Probabilistic layer (end tag)
 
     file_stream.CloseElement();
 }
-
 
 
 pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair() const

@@ -553,67 +553,37 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
     // Batch size
 
     file_stream.OpenElement("BatchSize");
-
-    buffer.str("");
-    buffer << batch_samples_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(batch_samples_number).c_str());
     file_stream.CloseElement();
 
     // Apply momentum
 
     file_stream.OpenElement("ApplyMomentum");
-
-    buffer.str("");
-    buffer << (momentum > type(0));
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(momentum > type(0)).c_str());
     file_stream.CloseElement();
 
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
-
-    buffer.str("");
-    buffer << training_loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(training_loss_goal).c_str());
     file_stream.CloseElement();
 
     // Maximum iterations number
 
     file_stream.OpenElement("MaximumEpochsNumber");
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_epochs_number).c_str());
     file_stream.CloseElement();
 
     // Maximum time
 
     file_stream.OpenElement("MaximumTime");
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_time).c_str());
     file_stream.CloseElement();
 
     // Hardware use
 
     file_stream.OpenElement("HardwareUse");
-
-    buffer.str("");
-    buffer << hardware_use;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(hardware_use.c_str());
     file_stream.CloseElement();
 
     // End element

@@ -167,10 +167,7 @@ void ModelSelection::set(TrainingStrategy* new_training_strategy)
 
 void ModelSelection::check() const
 {
-
     // Optimization algorithm
-
-    ostringstream buffer;
 
     if(!training_strategy)
         throw runtime_error("Pointer to training strategy is nullptr.\n");

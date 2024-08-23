@@ -357,18 +357,6 @@ void PerceptronLayer3D::set_display(const bool& new_display)
 }
 
 
-void PerceptronLayer3D::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void PerceptronLayer3D::set_synaptic_weights_constant(const type& value)
-{
-    synaptic_weights.setConstant(value);
-}
-
-
 void PerceptronLayer3D::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
@@ -779,74 +767,54 @@ void PerceptronLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("PerceptronLayer3D");
 
     // Layer name
+
     file_stream.OpenElement("LayerName");
-    buffer.str("");
-    buffer << layer_name;
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Inputs number
+
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_number()).c_str());
     file_stream.CloseElement();
 
     // Inputs depth
+
     file_stream.OpenElement("InputsDepth");
-
-    buffer.str("");
-    buffer << get_inputs_depth();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_depth()).c_str());
     file_stream.CloseElement();
 
     // Outputs number
 
     file_stream.OpenElement("NeuronsNumber");
-
-    buffer.str("");
-    buffer << get_neurons_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_neurons_number()).c_str());
     file_stream.CloseElement();
 
     // Activation function
 
     file_stream.OpenElement("ActivationFunction");
-
     file_stream.PushText(write_activation_function().c_str());
-
     file_stream.CloseElement();
 
     // Parameters
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size-1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     // Peceptron layer (end tag)
 
     file_stream.CloseElement();
+}
+
+
+void PerceptronLayer3DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl;
+    cout << outputs << endl;
+
+    cout << "Activations derivatives:" << endl;
+    cout << activations_derivatives << endl;
 }
 
 
@@ -860,6 +828,7 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, neurons_number });
 }
+
 
 void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -879,6 +848,7 @@ void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_num
 
     activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 }
+
 
 void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -904,6 +874,7 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
     inputs_derivatives(0).first = input_derivatives.data();
     inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
 }
+
 
 }
 
