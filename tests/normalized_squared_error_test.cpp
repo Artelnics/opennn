@@ -93,7 +93,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         // Loss index
 
-        normalized_squared_error.set_normalization_coefficient(type(1));
+        normalized_squared_error.set_normalization_coefficient();
 
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -139,7 +139,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         // Loss index
 
-        normalized_squared_error.set_normalization_coefficient(type(1));
+        normalized_squared_error.set_normalization_coefficient();
 
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -181,7 +181,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         // Loss index
 
-        normalized_squared_error.set_normalization_coefficient(type(1));
+        normalized_squared_error.set_normalization_coefficient();
 
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -230,7 +230,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         // Loss index
 
-        normalized_squared_error.set_normalization_coefficient(type(1));
+        normalized_squared_error.set_normalization_coefficient();
 
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -339,7 +339,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 {
     cout << "test_back_propagate_lm\n";
 
-    normalized_squared_error.set_normalization_coefficient(type(1));
+    normalized_squared_error.set_normalization_coefficient();
 
     // Test approximation random samples, inputs, outputs, neurons
     {

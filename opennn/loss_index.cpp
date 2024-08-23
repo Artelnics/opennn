@@ -884,6 +884,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     BackPropagation back_propagation(samples_number, this);
 
     const Tensor<type, 1> parameters = neural_network->get_parameters();
+    //cout << "parameters:\n" << parameters << endl;
 
     const Index parameters_number = parameters.size();
 
@@ -901,6 +902,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
+        //cout << "parameter " << i << endl;
         h = calculate_h(parameters(i));
 
        parameters_forward(i) += h;
@@ -912,6 +914,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_forward = back_propagation.error;
+       //cout << "error_forward: " << error_forward << endl;
 
        parameters_forward(i) -= h;
 
@@ -924,10 +927,13 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_backward = back_propagation.error;
+       //cout << "error_backward: " << error_backward << endl;
 
        parameters_backward(i) += h;
 
        numerical_gradient(i) = (error_forward - error_backward)/(type(2)*h);
+
+       //cout << " numerical_gradient(i)" << numerical_gradient(i) << endl;
     }
 
     return numerical_gradient;
