@@ -43,7 +43,7 @@ public:
    dimensions get_output_dimensions() const;
 
    Index get_inputs_number() const final;
-   dimensions get_inputs_dimensions() const;
+   dimensions get_input_dimensions() const;
    Index get_neurons_number() const final;
 
    // Inputs descriptives

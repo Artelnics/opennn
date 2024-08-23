@@ -207,11 +207,7 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
     {
         try
         {
-            stringstream buffer;
-
-            buffer << tokens[i];
-
-            type_vector(i) = type(stof(buffer.str()));
+            type_vector(i) = type(stof(tokens[i]));
         }
         catch(const exception&)
         {

@@ -266,8 +266,6 @@ void DataSet::RawVariable::set_categories(const Tensor<string, 1>& new_categorie
 
 void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document)
 {
-    ostringstream buffer;
-
     // Name
 
     const tinyxml2::XMLElement* name_element = column_document.FirstChildElement("Name");
@@ -3998,7 +3996,7 @@ void DataSet::set_model_type_string(const string& new_model_type)
             "void set_model_type_string(const string&)\n"
             "Unknown project type: " + new_model_type + "\n";
 
-        throw(message);
+        throw runtime_error(message);
     }
 }
 
@@ -5572,46 +5570,28 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Raw variables names
     {
         file_stream.OpenElement("HasHeader");
-
-        buffer.str("");
-        buffer << has_header;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(has_header).c_str());
         file_stream.CloseElement();
     }
 
     // Rows labels
     {
         file_stream.OpenElement("HasIds");
-
-        buffer.str("");
-
-        buffer << has_ids;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(has_ids).c_str());
         file_stream.CloseElement();
     }
 
     // Missing values label
     {
         file_stream.OpenElement("MissingValuesLabel");
-
         file_stream.PushText(missing_values_label.c_str());
-
         file_stream.CloseElement();
     }
 
     // Codification
 
     file_stream.OpenElement("Codification");
-
-    buffer.str("");
-    buffer << get_codification_string();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(get_codification_string().c_str());
     file_stream.CloseElement();
 
     // Close DataFile
@@ -5625,12 +5605,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Raw variables number
     {
         file_stream.OpenElement("RawVariablesNumber");
-
-        buffer.str("");
-        buffer << get_raw_variables_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(get_raw_variables_number()).c_str());
         file_stream.CloseElement();
     }
 
@@ -5684,12 +5659,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Samples number
     {
         file_stream.OpenElement("SamplesNumber");
-
-        buffer.str("");
-        buffer << get_samples_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(get_samples_number()).c_str());
         file_stream.CloseElement();
     }
 
@@ -5750,15 +5720,9 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Missing values number
-
     {
         file_stream.OpenElement("MissingValuesNumber");
-
-        buffer.str("");
-        buffer << missing_values_number;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(missing_values_number).c_str());
         file_stream.CloseElement();
     }
 
@@ -5767,23 +5731,10 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         // Raw variables missing values number
         {
             file_stream.OpenElement("RawVariablesMissingValuesNumber");
-
-            const Index raw_variables_number = raw_variables_missing_values_number.size();
-
-            buffer.str("");
-
-            for(Index i = 0; i < raw_variables_number; i++)
-            {
-                buffer << raw_variables_missing_values_number(i);
-
-                if(i != (raw_variables_number-1)) buffer << " ";
-            }
-
-            file_stream.PushText(buffer.str().c_str());
-
+            file_stream.PushText(tensor_to_string(raw_variables_missing_values_number).c_str());
             file_stream.CloseElement();
         }
-
+/*
         // Rows missing values number
         {
             file_stream.OpenElement("RowsMissingValuesNumber");
@@ -5791,10 +5742,11 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             buffer.str("");
             buffer << rows_missing_values_number;
 
-            file_stream.PushText(buffer.str().c_str());
+            file_stream.PushText(tensor_to_string(rows_missing_values_number).c_str());
 
             file_stream.CloseElement();
         }
+ */
     }
 
     // Missing values
@@ -7793,7 +7745,7 @@ void DataSet::check_special_characters(const string & line) const
     //    {
     //        const string message =
     //                "Error: mixed break line characters in line: " + line + ". Please, review the file.";
-    //        throw(message);
+    //        throw runtime_error(message);
     //    }
     //#endif
 }

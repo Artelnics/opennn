@@ -1859,6 +1859,66 @@ Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const 
 }
 
 
+string dimensions_to_string(const dimensions& x, const string& separator)
+{
+    const Index size = x.size();
+
+    ostringstream buffer;
+
+    if(x.size() == 0)
+        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
+
+    buffer << x[0];
+
+    for(Index i = 1; i < size; i++)
+    {
+        buffer << x[i] << separator;
+    }
+
+    return buffer.str();
+}
+
+
+string tensor_to_string(const Tensor<type, 1>& x, const string& separator)
+{
+    const Index size = x.size();
+
+    ostringstream buffer;
+
+    if(x.size() == 0)
+        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
+
+    buffer << x[0];
+
+    for(Index i = 1; i < size; i++)
+    {
+        buffer << x[i] << separator;
+    }
+
+    return buffer.str();
+}
+
+
+string tensor_to_string(const Tensor<Index, 1>& x, const string& separator)
+{
+    const Index size = x.size();
+
+    ostringstream buffer;
+
+    if(x.size() == 0)
+        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
+
+    buffer << x[0];
+
+    for(Index i = 1; i < size; i++)
+    {
+        buffer << x[i] << separator;
+    }
+
+    return buffer.str();
+}
+
+
 string string_tensor_to_string(const Tensor<string,1>&x, const string& separator)
 {
     const Index size = x.size();
@@ -2192,7 +2252,7 @@ TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index
 
 void print_dimensions(const dimensions& new_dimensions)
 {
-    for(Index i = 0; i < new_dimensions.size(); i++)
+    for(size_t i = 0; i < new_dimensions.size(); i++)
         cout << new_dimensions[i] << " ";
 
     cout << endl;

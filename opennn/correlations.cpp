@@ -242,8 +242,6 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
 {
 #ifdef OPENNN_DEBUG
 
-    ostringstream buffer;
-
     if(x.size() != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
 
@@ -456,8 +454,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 #ifdef OPENNN_DEBUG
 
     const Index x_size = x.size();
-
-    ostringstream buffer;
 
     if(x_size != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
@@ -689,10 +685,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
 
     const Index x_size = x.size();
 
-    ostringstream buffer;
-
     if(x_size != n)
-
         throw runtime_error("Y size must be equal to X size.\n");
 
 #endif

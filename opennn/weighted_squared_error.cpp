@@ -331,8 +331,6 @@ string WeightedSquaredError::get_error_type_text() const
 
 void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     // Error type
 
     file_stream.OpenElement("WeightedSquaredError");
@@ -340,23 +338,13 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Positives weight
 
     file_stream.OpenElement("PositivesWeight");
-
-    buffer.str("");
-    buffer << positives_weight;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(positives_weight).c_str());
     file_stream.CloseElement();
 
     // Negatives weight
 
     file_stream.OpenElement("NegativesWeight");
-
-    buffer.str("");
-    buffer << negatives_weight;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(negatives_weight).c_str());
     file_stream.CloseElement();
 
     // Close error

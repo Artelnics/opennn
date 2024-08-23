@@ -891,7 +891,7 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
                 "void set_model_type_string(const string&)\n"
                 "Unknown project type: " + new_model_type + "\n";
 
-        throw(message);
+        throw runtime_error(message);
     }
 }
 
@@ -1893,22 +1893,13 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs number
 
-    //cout << "Outputs number" << endl;
-    //const Index outputs_number = get_outputs_number();
     const Index outputs_number = outputs_names.size();
-
     file_stream.OpenElement("OutputsNumber");
-
-    buffer.str("");
-    buffer << outputs_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(outputs_number).c_str());
     file_stream.CloseElement();
 
     // Outputs names
 
-    //cout << "Outputs names" << endl;
     for(Index i = 0; i < outputs_names.size(); i++)
     {
         file_stream.OpenElement("Output");

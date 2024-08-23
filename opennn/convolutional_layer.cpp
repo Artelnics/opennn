@@ -8,7 +8,7 @@
 
 #include "strings_utilities.h"
 #include "convolutional_layer.h"
-//#include "tensors.h"
+#include "tensors.h"
 #include <iostream>
 
 namespace opennn
@@ -668,7 +668,7 @@ Index ConvolutionalLayer::get_output_width() const
 }
 
 
-dimensions ConvolutionalLayer::get_inputs_dimensions() const
+dimensions ConvolutionalLayer::get_input_dimensions() const
 {
     return input_dimensions;
 }
@@ -971,7 +971,7 @@ void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 {
     if(new_stride_row <= 0)
     {
-        throw ("EXCEPTION: new_stride_row must be a positive number");
+        throw runtime_error("EXCEPTION: new_stride_row must be a positive number");
     }
 
     row_stride = new_stride_row;
@@ -982,7 +982,7 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 {
     if(new_stride_column <= 0)
     {
-        throw ("EXCEPTION: new_stride_column must be a positive number");
+        throw runtime_error("EXCEPTION: new_stride_column must be a positive number");
     }
 
     column_stride = new_stride_column;
@@ -1159,8 +1159,6 @@ void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training
 
 void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     // Convolutional layer
 
     file_stream.OpenElement("ConvolutionalLayer");
@@ -1168,116 +1166,56 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-
-    buffer.str("");
-    buffer << layer_name;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Image size
 
-    file_stream.OpenElement("InputsVariablesDimensions");
-
-    buffer.str("");
-
-    for(Index i = 0; i < Index(input_dimensions.size()); i++)
-    {
-        buffer << input_dimensions[i];
-        if(i != input_dimensions.size() - 1) buffer << " x ";
-//        if(i != input_dimensions.size() - 1) buffer << " ";
-    }
-
-    cout << "buffer (INPUT): (XML)" << buffer.str() << endl;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.OpenElement("InputDimensions");
+    file_stream.PushText(dimensions_to_string(input_dimensions).c_str());
     file_stream.CloseElement();
 
     // Outputs
 
-    file_stream.OpenElement("OutputsVariablesDimensions");
-
-    buffer.str("");
-
-    for(Index i = 0; i < Index(input_dimensions.size()); i++)
-    {
-        buffer << get_output_dimensions()[i];
-        if(i != input_dimensions.size() - 1) buffer << " x ";
-    }
-
-    cout << "buffer (OUTPUT): (XML)" << buffer.str() << endl;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("OutputDimensions");
+    file_stream.PushText(dimensions_to_string(get_output_dimensions()).c_str());
 
     file_stream.CloseElement();
 
     // Filters number
 
     file_stream.OpenElement("FiltersNumber");
-
-    buffer.str("");
-    buffer << get_kernels_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_kernels_number()).c_str());
     file_stream.CloseElement();
 
     // Filters size
 
     file_stream.OpenElement("FiltersSize");
-
-    buffer.str("");
-    buffer << get_kernel_width();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_kernel_width()).c_str());
     file_stream.CloseElement();
 
     // Activation function
 
     file_stream.OpenElement("ActivationFunction");
-
     file_stream.PushText(write_activation_function().c_str());
-
     file_stream.CloseElement();
 
     // Stride
 
     file_stream.OpenElement("Stride");
-
-    buffer.str("");
-    buffer << get_row_stride();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_row_stride()).c_str());
     file_stream.CloseElement();
 
     // Convolution Type
 
     file_stream.OpenElement("ConvolutionType");
-
     file_stream.PushText(write_convolution_type().c_str());
-
-
     file_stream.CloseElement();
-
-    cout << "filter_size(openn): " << get_kernels_number() << endl;
-    cout << "filter_number (openn): " << get_kernel_width() << endl;
-    cout << "activation_functin (openn): " << write_activation_function() << endl;
-    cout << "stride (opennn): " << get_row_stride() << endl;
-    cout << "convolution_type (opennn): " << write_convolution_type() << endl;
 
     // Parameters
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-    buffer << get_parameters();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();
@@ -1286,8 +1224,6 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     // Convolution layer
 
     const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
@@ -1310,7 +1246,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Input variables dimensions element
 
-    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputsVariablesDimensions");
+    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
 
     if(!input_variables_dimensions_element)
         throw runtime_error("Convolutional input variables dimensions element is nullptr.\n");
@@ -1321,7 +1257,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Outputs variables dimensions element
 
-    const tinyxml2::XMLElement* outputs_variables_dimensions_element = convolutional_layer_element->FirstChildElement("OutputsVariablesDimensions");
+    const tinyxml2::XMLElement* outputs_variables_dimensions_element = convolutional_layer_element->FirstChildElement("OutputDimensions");
 
     if(!outputs_variables_dimensions_element)
         throw runtime_error("Convolutional outputs variables dimensions element is nullptr.\n");

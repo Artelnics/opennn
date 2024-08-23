@@ -668,67 +668,37 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Minimum loss decrease
 
     file_stream.OpenElement("MinimumLossDecrease");
-
-    buffer.str("");
-    buffer << minimum_loss_decrease;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(minimum_loss_decrease).c_str());
     file_stream.CloseElement();
 
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
-
-    buffer.str("");
-    buffer << training_loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(training_loss_goal).c_str());
     file_stream.CloseElement();
 
     // Maximum selection error increases
 
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
-
-    buffer.str("");
-    buffer << maximum_selection_failures;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
     // Maximum iterations number
 
     file_stream.OpenElement("MaximumEpochsNumber");
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_epochs_number).c_str());
     file_stream.CloseElement();
 
     // Maximum time
 
     file_stream.OpenElement("MaximumTime");
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_time).c_str());
     file_stream.CloseElement();
 
     // Hardware use
 
     file_stream.OpenElement("HardwareUse");
-
-    buffer.str("");
-    buffer << hardware_use;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(hardware_use.c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();
