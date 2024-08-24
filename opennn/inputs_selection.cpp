@@ -200,8 +200,6 @@ string InputsSelection::write_stopping_condition(const TrainingResults& results)
 
 void InputsSelection::check() const
 {
-    ostringstream buffer;
-
     if(!training_strategy)
         throw runtime_error("Pointer to training strategy is nullptr.\n");
 
@@ -347,7 +345,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
                << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
                << "Size of uses vector("<< uses.size() <<") must be greater than " <<  inputs_number << ".\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 #endif
 

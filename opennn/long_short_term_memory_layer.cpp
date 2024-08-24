@@ -360,14 +360,6 @@ void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 }
 
 
-void LongShortTermMemoryLayer::set_input_shape(const Tensor<Index, 1>& size)
-{
-    const Index new_size = size[0];
-
-    set_inputs_number(new_size);
-}
-
-
 void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_number)
 {
     const Index inputs_number = get_inputs_number();
@@ -654,105 +646,6 @@ void LongShortTermMemoryLayer::set_timesteps(const Index& new_timesteps)
 void LongShortTermMemoryLayer::set_display(const bool& new_display)
 {
     display = new_display;
-}
-
-
-void LongShortTermMemoryLayer::set_biases_constant(const type& value)
-{
-    forget_biases.setConstant(value);
-    input_biases.setConstant(value);
-    state_biases.setConstant(value);
-    output_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_forget_biases_constant(const type& value)
-{
-    forget_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_input_biases_constant(const type& value)
-{
-    input_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_state_biases_constant(const type& value)
-{
-    state_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_output_biases_constant(const type& value)
-{
-    output_biases.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_weights_constant(const type& value)
-{
-    forget_weights.setConstant(value);
-    input_weights.setConstant(value);
-    state_weights.setConstant(value);
-    output_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_forget_weights_constant(const type& value)
-{
-    forget_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_input_weights_constant(const type& value)
-{
-    input_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_state_weights_constant(const type& value)
-{
-    state_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_output_weights_constant(const type&  value)
-{
-    output_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_recurrent_weights_constant(const type& value)
-{
-    forget_recurrent_weights.setConstant(value);
-    input_recurrent_weights.setConstant(value);
-    state_recurrent_weights.setConstant(value);
-    output_recurrent_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_forget_recurrent_weights_constant(const type& value)
-{
-    forget_recurrent_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_input_recurrent_weights_constant(const type& value)
-{
-    input_recurrent_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_state_recurrent_weights_constant(const type& value)
-{
-    state_recurrent_weights.setConstant(value);
-}
-
-
-void LongShortTermMemoryLayer::set_output_recurrent_weights_constant(const type&  value)
-{
-    output_recurrent_weights.setConstant(value);
 }
 
 
@@ -2594,108 +2487,107 @@ void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propag
 string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const Index neurons_number = get_neurons_number();
-
     const Index inputs_number = get_inputs_number();
 
     ostringstream buffer;
 
-        // Forget gate
+    // Forget gate
 
-        for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "forget_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[i] << " + ";
+
+        for(Index j = 0; j < inputs_number; j++)
         {
-            buffer << "forget_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[i] << " + ";
-
-            for(Index j = 0; j < inputs_number; j++)
-            {
-                buffer << inputs_names[j] << " * (" << forget_weights(j,i) << ") + ";
-            }
-
-            for(Index k = 0; k < neurons_number-1; k++)
-            {
-                buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << forget_recurrent_weights(k,i) << ") + ";
-            }
-
-            buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << forget_recurrent_weights(neurons_number-1,i) << ") );\n";
+            buffer << inputs_names[j] << " * (" << forget_weights(j,i) << ") + ";
         }
 
-       // Input gate
-
-       for(Index i = 0; i < neurons_number; i++)
-       {
-           buffer << "input_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << input_biases[i] << " + ";
-
-           for(Index j = 0; j < inputs_number; j++)
-           {
-               buffer << inputs_names[j] << " * (" << input_weights(j,i) << ") + ";
-           }
-
-           for(Index k = 0; k < neurons_number-1; k++)
-           {
-               buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << input_recurrent_weights(k,i) << ") + ";
-           }
-
-           buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << input_recurrent_weights(neurons_number-1,i) << ") );\n";
-
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+            buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << forget_recurrent_weights(k,i) << ") + ";
         }
 
-       // State gate
-       for(Index i = 0; i < neurons_number; i++)
+        buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << forget_recurrent_weights(neurons_number-1,i) << ") );\n";
+    }
+
+    // Input gate
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+       buffer << "input_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << input_biases[i] << " + ";
+
+       for(Index j = 0; j < inputs_number; j++)
        {
-           buffer << "state_gate_" << to_string(i) << " = " << write_activation_function_expression() << " (" << state_biases[i] << " + ";
-
-           for(Index j = 0; j < inputs_number; j++)
-           {
-               buffer << inputs_names[j] << " * (" << state_weights(j,i) << ") + ";
-           }
-
-           for(Index k = 0; k < neurons_number-1; k++)
-           {
-               buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << state_recurrent_weights(k,i) << ") + ";
-           }
-
-           buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << state_recurrent_weights(neurons_number-1,i) << ") );\n";
+           buffer << inputs_names[j] << " * (" << input_weights(j,i) << ") + ";
        }
 
-       // Output gate
-
-       for(Index i = 0; i < neurons_number; i++)
+       for(Index k = 0; k < neurons_number-1; k++)
        {
-           buffer << "output_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << output_biases[i] << " + ";
-
-           for(Index j = 0; j < inputs_number; j++)
-           {
-               buffer << inputs_names[j] << " * (" << output_weights(j,i) << ") + ";
-           }
-
-           for(Index k = 0; k < neurons_number-1; k++)
-           {
-               buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << output_recurrent_weights(k,i) << ") + ";
-           }
-
-           buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << output_recurrent_weights(neurons_number-1,i) << ") );\n";
+           buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << input_recurrent_weights(k,i) << ") + ";
        }
 
-       // Cell state
-       for(Index i = 0; i < neurons_number; i++)
+       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << input_recurrent_weights(neurons_number-1,i) << ") );\n";
+
+    }
+
+    // State gate
+    for(Index i = 0; i < neurons_number; i++)
+    {
+       buffer << "state_gate_" << to_string(i) << " = " << write_activation_function_expression() << " (" << state_biases[i] << " + ";
+
+       for(Index j = 0; j < inputs_number; j++)
        {
-            buffer << "cell_states_" << to_string(i) << "(t) = forget_gate_" << to_string(i) << " * cell_states_" << to_string(i) << "(t-1)+input_gate_" << to_string(i) << " * state_gate_" << to_string(i) << ";\n";
+           buffer << inputs_names[j] << " * (" << state_weights(j,i) << ") + ";
        }
 
-       // Hidden state
-
-       for(Index i = 0; i < neurons_number; i++)
+       for(Index k = 0; k < neurons_number-1; k++)
        {
-            buffer << "hidden_state_" << to_string(i) << "(t) = output_gate_" << to_string(i) << " * " << write_activation_function_expression() << "(cell_states_" << to_string(i) << ");\n";
+           buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << state_recurrent_weights(k,i) << ") + ";
        }
 
-       // Output
+       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << state_recurrent_weights(neurons_number-1,i) << ") );\n";
+    }
 
-       for(Index i = 0; i < neurons_number; i++)
+    // Output gate
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+       buffer << "output_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << output_biases[i] << " + ";
+
+       for(Index j = 0; j < inputs_number; j++)
        {
-           buffer << outputs_names[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
+           buffer << inputs_names[j] << " * (" << output_weights(j,i) << ") + ";
        }
 
-       return buffer.str();
+       for(Index k = 0; k < neurons_number-1; k++)
+       {
+           buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << output_recurrent_weights(k,i) << ") + ";
+       }
+
+       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << output_recurrent_weights(neurons_number-1,i) << ") );\n";
+    }
+
+    // Cell state
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "cell_states_" << to_string(i) << "(t) = forget_gate_" << to_string(i) << " * cell_states_" << to_string(i) << "(t-1)+input_gate_" << to_string(i) << " * state_gate_" << to_string(i) << ";\n";
+    }
+
+    // Hidden state
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "hidden_state_" << to_string(i) << "(t) = output_gate_" << to_string(i) << " * " << write_activation_function_expression() << "(cell_states_" << to_string(i) << ");\n";
+    }
+
+    // Output
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+       buffer << outputs_names[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
+    }
+
+    return buffer.str();
 }
 
 
@@ -2809,41 +2701,25 @@ void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    buffer.str("");
-    buffer << layer_name;
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_number()).c_str());
     file_stream.CloseElement();
 
     // Outputs number
 
     file_stream.OpenElement("NeuronsNumber");
-
-    buffer.str("");
-    buffer << get_neurons_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_neurons_number()).c_str());
     file_stream.CloseElement();
 
     // Time step
 
     file_stream.OpenElement("TimeStep");
-
-    buffer.str("");
-    buffer << get_timesteps();
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(get_timesteps()).c_str());
 
     file_stream.CloseElement();
 
@@ -2866,21 +2742,7 @@ void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     // Parameters
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size-1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     // Long short-term memory layer (end tag)

@@ -49,8 +49,6 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
 
     const Index parameters_number = neural_network->get_parameters_number();
 
-    ostringstream buffer;
-
     if(!loss_index)
         throw runtime_error("Loss index pointer is nullptr.\n");
 
@@ -90,8 +88,6 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
 type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
 #ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
 
     if(!loss_index)
         throw runtime_error("Loss index pointer is nullptr.\n");
@@ -153,8 +149,6 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
 {
 #ifdef OPENNN_DEBUG
 
-    ostringstream buffer;
-
     if(!loss_index)
         throw runtime_error("Loss index pointer is nullptr.\n");
 
@@ -194,8 +188,6 @@ void ConjugateGradient::calculate_gradient_descent_training_direction(const Tens
 type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
 #ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
 
     if(!loss_index)
         throw runtime_error("Loss index pointer is nullptr.\n");
@@ -255,8 +247,6 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                                                         Tensor<type, 1>& training_direction) const
 {
 #ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
 
     if(!loss_index)
         throw runtime_error("Loss index pointer is nullptr.\n");
@@ -652,27 +642,27 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
     // Learning rate tolerance
 
     labels_values(2,0) = "Learning rate tolerance";
-    labels_values(2,1) = std::to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
+    labels_values(2,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
 
     // Minimum loss decrease
 
     labels_values(3,0) = "Minimum loss decrease";
-    labels_values(3,1) = std::to_string(double(minimum_loss_decrease));
+    labels_values(3,1) = to_string(double(minimum_loss_decrease));
 
     // Loss goal
 
     labels_values(4,0) = "Loss goal";
-    labels_values(4,1) = std::to_string(double(training_loss_goal));
+    labels_values(4,1) = to_string(double(training_loss_goal));
 
     // Maximum selection error increases
 
     labels_values(5,0) = "Maximum selection error increases";
-    labels_values(5,1) = std::to_string(maximum_selection_failures);
+    labels_values(5,1) = to_string(maximum_selection_failures);
 
     // Maximum epochs number
 
     labels_values(6,0) = "Maximum epochs number";
-    labels_values(6,1) = std::to_string(maximum_epochs_number);
+    labels_values(6,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
@@ -802,8 +792,6 @@ string ConjugateGradient::write_training_direction_method() const
 
 void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("ConjugateGradient");
 
     // Training direction method
@@ -821,69 +809,37 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Minimum loss decrease
 
     file_stream.OpenElement("MinimumLossDecrease");
-
-    buffer.str("");
-    buffer << minimum_loss_decrease;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(minimum_loss_decrease).c_str());
     file_stream.CloseElement();
 
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
-
-    buffer.str("");
-    buffer << training_loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(training_loss_goal).c_str());
     file_stream.CloseElement();
 
     // Maximum selection error increases
 
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
-
-    buffer.str("");
-    buffer << maximum_selection_failures;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
-
-    // Maximum iterations number
+    // Maximum epochs number
 
     file_stream.OpenElement("MaximumEpochsNumber");
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_epochs_number).c_str());
     file_stream.CloseElement();
-
 
     // Maximum time
 
     file_stream.OpenElement("MaximumTime");
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_time).c_str());
     file_stream.CloseElement();
 
     // Hardware use
 
     file_stream.OpenElement("HardwareUse");
-
-    buffer.str("");
-    buffer << hardware_use;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(hardware_use.c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();

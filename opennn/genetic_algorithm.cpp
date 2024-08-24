@@ -164,8 +164,6 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
     // Optimization algorithm
 
-    ostringstream buffer;
-
     if(!training_strategy)
         throw runtime_error("Pointer to training strategy is nullptr.\n");
 
@@ -731,7 +729,7 @@ Tensor<type, 1> GeneticAlgorithm::calculate_selection_probabilities()
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        sum_from_1_to_n += (i + 1);
+        sum_from_1_to_n += (i+1);
     }
 
     Tensor<type, 1> probabilities(individuals_number);
@@ -1498,10 +1496,7 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {
     const Index individuals_number = get_individuals_number();
 
-    ostringstream buffer;
-
     Tensor<string, 1> labels(6);
-
     Tensor<string, 1> values(6);
 
     Tensor<string, 2> string_matrix(labels.size(), 2);
@@ -1509,69 +1504,37 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
     // Population size
 
     labels(0) = "Population size";
-
-    buffer.str("");
-
-    buffer << individuals_number;
-
-    values(0) = buffer.str();
+    values(0) = to_string(individuals_number);
 
     // Elitism size
 
     labels(1) = "Elitism size";
-
-    buffer.str("");
-
-    buffer << elitism_size;
-
-    values(1) = buffer.str();
+    values(1) = to_string(elitism_size);
 
     // Mutation rate
 
     labels(2) = "Mutation rate";
-
-    buffer.str("");
-
-    buffer << mutation_rate;
-
-    values(2) = buffer.str();
+    values(2) = to_string(mutation_rate);
 
     // Selection loss goal
 
     labels(3) = "Selection loss goal";
-
-    buffer.str("");
-
-    buffer << selection_error_goal;
-
-    values(3) = buffer.str();
+    values(3) = to_string(selection_error_goal);
 
     // Maximum Generations number
 
     labels(4) = "Maximum Generations number";
-
-    buffer.str("");
-
-    buffer << maximum_epochs_number;
-
-    values(4) = buffer.str();
+    values(4) = to_string(maximum_epochs_number);
 
     // Maximum time
 
     labels(5) = "Maximum time";
-
-    buffer.str("");
-
-    buffer << maximum_time;
-
-    values(5) = buffer.str();
+    values(5) = to_string(maximum_time);
 
     string_matrix.chip(0, 1) = labels;
-
     string_matrix.chip(1, 1) = values;
 
     return string_matrix;
-
 }
 
 
@@ -1611,67 +1574,37 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Population size
 
     file_stream.OpenElement("PopulationSize");
-
-    buffer.str("");
-    buffer << individuals_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(individuals_number).c_str());
     file_stream.CloseElement();
 
     // Elitism size
 
     file_stream.OpenElement("ElitismSize");
-
-    buffer.str("");
-    buffer << elitism_size;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(elitism_size).c_str());
     file_stream.CloseElement();
 
     // Mutation rate
 
     file_stream.OpenElement("MutationRate");
-
-    buffer.str("");
-    buffer << mutation_rate;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(mutation_rate).c_str());
     file_stream.CloseElement();
 
     // selection error goal
 
     file_stream.OpenElement("SelectionErrorGoal");
-
-    buffer.str("");
-    buffer << selection_error_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(selection_error_goal).c_str());
     file_stream.CloseElement();
 
     // Maximum iterations
 
     file_stream.OpenElement("MaximumGenerationsNumber");
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_epochs_number).c_str());
     file_stream.CloseElement();
 
     // Maximum time
 
     file_stream.OpenElement("MaximumTime");
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(maximum_time).c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();
@@ -1697,7 +1630,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_individuals_number(new_population_size);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1716,7 +1649,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_mutation_rate(new_mutation_rate);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1735,7 +1668,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_elitism_size(new_elitism_size);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1754,7 +1687,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display != "0");
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1773,7 +1706,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_selection_error_goal(new_selection_error_goal);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1792,7 +1725,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1811,7 +1744,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_correlation(new_maximum_correlation);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1830,7 +1763,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_correlation(new_minimum_correlation);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1849,7 +1782,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch (const exception& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1878,7 +1811,7 @@ void GeneticAlgorithm::save(const string& file_name) const
             fclose(file);
         }
 
-    } catch (exception e)
+    } catch(exception e)
     {
         cout<< e.what();
     }

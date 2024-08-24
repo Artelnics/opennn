@@ -582,7 +582,7 @@ void TrainingStrategy::set_default() const
 
 
 TrainingResults TrainingStrategy::perform_training()
-{
+{    
     if(neural_network->has_recurrent_layer()
     || neural_network->has_long_short_term_memory_layer())
     {

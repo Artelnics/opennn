@@ -30,7 +30,7 @@ public:
 
     explicit TextDataSet();
 
-    string get_text_separator_string();
+//    string get_text_separator_string();
 
     const Index& get_short_words_length() const;
     const Index& get_long_words_length() const;
@@ -55,7 +55,7 @@ public:
 
 private:
 
-    Separator text_separator = Separator::Tab;
+//    Separator text_separator = Separator::Tab;
 
     Index short_words_length = 2;
 

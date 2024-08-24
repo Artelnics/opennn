@@ -150,8 +150,6 @@ void AdditionLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
 void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     // Addition layer
 
     const tinyxml2::XMLElement* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
@@ -199,38 +197,26 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
 void AdditionLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     // Addition layer
 
     file_stream.OpenElement("AdditionLayer3D");
 
     // Layer name
-    file_stream.OpenElement("LayerName");
-    buffer.str("");
-    buffer << layer_name;
-    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.OpenElement("LayerName");   
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Inputs number
+
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_number()).c_str());
     file_stream.CloseElement();
 
     // Inputs depth
 
     file_stream.OpenElement("InputsDepth");
-
-    buffer.str("");
-    buffer << get_inputs_depth();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_depth()).c_str());
     file_stream.CloseElement();
 
     // Addition layer (end tag)

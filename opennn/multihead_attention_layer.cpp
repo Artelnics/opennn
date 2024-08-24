@@ -1129,91 +1129,51 @@ void MultiheadAttentionLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MultiheadAttentionLayer");
 
     // Layer name
+
     file_stream.OpenElement("LayerName");
-    buffer.str("");
-    buffer << layer_name;
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Input size
+
     file_stream.OpenElement("InputSize");
-
-    buffer.str("");
-    buffer << get_input_size();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_input_size()).c_str());
     file_stream.CloseElement();
 
     // Context size
 
     file_stream.OpenElement("ContextSize");
-
-    buffer.str("");
-    buffer << get_context_size();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_context_size()).c_str());
     file_stream.CloseElement();
 
     // Embedding depth
 
     file_stream.OpenElement("Depth");
-
-    buffer.str("");
-    buffer << get_depth();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_depth()).c_str());
     file_stream.CloseElement();
 
     // Number of attention heads
 
     file_stream.OpenElement("HeadsNumber");
-
-    buffer.str("");
-    buffer << get_heads_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_heads_number()).c_str());
     file_stream.CloseElement();
 
     // Use causal mask
 
     file_stream.OpenElement("CausalMask");
-
-    buffer.str("");
-    buffer << (use_causal_mask ? "true" : "false");
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(use_causal_mask ? 1 : 0).c_str());
     file_stream.CloseElement();
 
     // Parameters
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size - 1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     // Multihead Attention layer (end tag)
 
     file_stream.CloseElement();
 }
-
 
 
 pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_pair() const

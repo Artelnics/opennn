@@ -1291,7 +1291,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
     for(Index i = 1; i < size; i++)
     {
-        if( find( unique_values.data(), unique_values.data() + unique_values.size(), vector(i) )
+        if(find( unique_values.data(), unique_values.data() + unique_values.size(), vector(i) )
                 == unique_values.data() + unique_values.size() )
         {
             unique_values_number++;
@@ -1436,8 +1436,8 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
     for(Index i = Index(bin_center)-2; i >= 0; i--) // Lower centers
     {
-        minimums(i) = minimums(i + 1) - length;
-        maximums(i) = maximums(i + 1) - length;
+        minimums(i) = minimums(i+1) - length;
+        maximums(i) = maximums(i+1) - length;
 
         centers(i) = (maximums(i) + minimums(i)) /type(2.0);
     }
@@ -1836,7 +1836,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
         }
         else
         {
-            counter = Index(i + 1);
+            counter = Index(i+1);
 
             for(Index j = i+1; j < new_size; j++)
             {
@@ -2677,11 +2677,11 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < 9; i++)
     {
-        if(new_size * (i + 1) % 10 == 0)
-            percentiles[i] = (sorted_vector[new_size * (i + 1) / 10 - 1] + sorted_vector[new_size * (i + 1) / 10]) / type(2.0);
+        if(new_size * (i+1) % 10 == 0)
+            percentiles[i] = (sorted_vector[new_size * (i+1) / 10 - 1] + sorted_vector[new_size * (i+1) / 10]) / type(2.0);
 
         else
-            percentiles[i] = type(sorted_vector[new_size * (i + 1) / 10]);
+            percentiles[i] = type(sorted_vector[new_size * (i+1) / 10]);
     }
 
     percentiles[9] = maximum(new_vector);

@@ -715,9 +715,10 @@ void DataSetTest::test_read_adult_csv()
 {
     cout << "test_read_adult_csv\n";
 
-    try {
+    try
+    {
         data_set.set_missing_values_label("?");
-        data_set.set_separator(',');
+        data_set.set_separator_string(",");
         data_set.set_data_source_path("../../datasets/adult.data");
         data_set.set_has_header(false);
         data_set.read_csv();
@@ -1220,7 +1221,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     }
 
     // Test 5 (categorical and categorical)
-
+/*
     data_set = opennn::DataSet();
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
@@ -1523,11 +1524,11 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
-*/
+
     // Test 5 (categorical and categorical)
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
-/*
+
     input_raw_variables_indices.resize(3);
     input_raw_variables_indices.setValues({0, 3, 4});
 

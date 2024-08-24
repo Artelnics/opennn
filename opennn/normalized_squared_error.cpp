@@ -122,10 +122,10 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 }
 
 
-void NormalizedSquaredError::set_normalization_coefficient(const type& new_normalization_coefficient)
-{
-    normalization_coefficient = new_normalization_coefficient;
-}
+// void NormalizedSquaredError::set_normalization_coefficient(const type& new_normalization_coefficient)
+// {
+//     normalization_coefficient = new_normalization_coefficient;
+// }
 
 
 void NormalizedSquaredError::set_selection_normalization_coefficient()
@@ -148,10 +148,10 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 }
 
 
-void NormalizedSquaredError::set_selection_normalization_coefficient(const type& new_selection_normalization_coefficient)
-{
-    selection_normalization_coefficient = new_selection_normalization_coefficient;
-}
+// void NormalizedSquaredError::set_selection_normalization_coefficient(const type& new_selection_normalization_coefficient)
+// {
+//     selection_normalization_coefficient = new_selection_normalization_coefficient;
+// }
 
 
 void NormalizedSquaredError::set_default()
