@@ -25,20 +25,20 @@ LanguageDataSet::LanguageDataSet() : DataSet()
 }
 
 
-string LanguageDataSet::get_text_separator_string() const
-{
-    switch(text_separator)
-    {
-    case Separator::Tab:
-        return "Tab";
+// string LanguageDataSet::get_text_separator_string() const
+// {
+//     switch(text_separator)
+//     {
+//     case Separator::Tab:
+//         return "Tab";
 
-    case Separator::Semicolon:
-        return "Semicolon";
+//     case Separator::Semicolon:
+//         return "Semicolon";
 
-    default:
-        return string();
-    }
-}
+//     default:
+//         return string();
+//     }
+// }
 
 
 Tensor<string, 1> LanguageDataSet::get_context_vocabulary() const
@@ -259,33 +259,33 @@ void LanguageDataSet::set_context_variables_dimensions(const Tensor<Index, 1>& n
 }
 
 
-void LanguageDataSet::set_text_separator(const Separator& new_separator)
-{
-    separator = new_separator;
-}
+// void LanguageDataSet::set_text_separator(const Separator& new_separator)
+// {
+//     separator = new_separator;
+// }
 
 
-void LanguageDataSet::set_text_separator(const string& new_separator_string)
-{
-    if(new_separator_string == "Tab")
-    {
-        text_separator = Separator::Tab;
-    }
-    else if(new_separator_string == "Semicolon")
-    {
-        text_separator = Separator::Semicolon;
-    }
-    else
-    {
-        ostringstream buffer;
+// void LanguageDataSet::set_text_separator(const string& new_separator_string)
+// {
+//     if(new_separator_string == "Tab")
+//     {
+//         text_separator = Separator::Tab;
+//     }
+//     else if(new_separator_string == "Semicolon")
+//     {
+//         text_separator = Separator::Semicolon;
+//     }
+//     else
+//     {
+//         ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_text_separator(const string&) method.\n"
-               << "Unknown separator: " << new_separator_string << ".\n";
+//         buffer << "OpenNN Exception: DataSet class.\n"
+//                << "void set_text_separator(const string&) method.\n"
+//                << "Unknown separator: " << new_separator_string << ".\n";
 
-        throw(buffer.str());
-    }
-}
+//         throw runtime_error(buffer.str());
+//     }
+// }
 
 
 void LanguageDataSet::set_context_vocabulary_path(const string& new_context_vocabulary_path)
@@ -356,7 +356,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file
 
-    file_stream.OpenElement("DataFile");
+    file_stream.OpenElement("DataSource");
 
     if(model_type != ModelType::ImageClassification)
     {
@@ -393,27 +393,20 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Separator
     {
         file_stream.OpenElement("Separator");
-
         file_stream.PushText(get_separator_string().c_str());
-
         file_stream.CloseElement();
     }
 
-    // raw_variables names
+    // Raw variables names
     {
-        file_stream.OpenElement("RawVariablesNames");
-
-        buffer.str("");
-        buffer << has_header;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.OpenElement("HasHeader");
+        file_stream.PushText(to_string(has_header).c_str());
         file_stream.CloseElement();
     }
 
     // Rows labels
     {
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -448,11 +441,11 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // raw_variables
+    // Raw variables
 
     file_stream.OpenElement("RawVariables");
 
-    // raw_variables number
+    // Raw variables number
     {
         file_stream.OpenElement("RawVariablesNumber");
 
@@ -464,7 +457,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // raw_variables items
+    // Raw variables items
 
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -491,7 +484,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = ids.size();
 
-        file_stream.OpenElement("RowsLabels");
+        file_stream.OpenElement("HasIds");
 
         buffer.str("");
 
@@ -594,7 +587,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(missing_values_number > 0)
     {
-        // raw_variables missing values number
+        // Raw variables missing values number
         {
             file_stream.OpenElement("RawVariablesMissingValuesNumber");
 
@@ -723,28 +716,28 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file
 
-    const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
+    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
-    if(!data_file_element)
+    if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
 
-    if(!data_file_name_element)
+    if(!data_source_path_element)
         throw runtime_error("DataSourcePath element is nullptr.\n");
 
-    if(data_file_name_element->GetText())
+    if(data_source_path_element->GetText())
     {
-        const string new_data_file_name = data_file_name_element->GetText();
+        const string new_data_file_name = data_source_path_element->GetText();
 
         set_data_source_path(new_data_file_name);
     }
 
     // Separator
 
-    const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
+    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
     {
@@ -752,21 +745,21 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_separator = separator_element->GetText();
 
-            set_separator(new_separator);
+            set_separator_name(new_separator);
         }
         else
         {
-            set_separator("Comma");
+            set_separator_name("Comma");
         }
     }
     else
     {
-        set_separator("Comma");
+        set_separator_name("Comma");
     }
 
     // Text separator
 
-    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("TextSeparator");
+    const tinyxml2::XMLElement* text_separator_element = data_source_element->FirstChildElement("Separator");
 
     if(text_separator_element)
     {
@@ -776,7 +769,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             try
             {
-                set_text_separator(new_separator);
+                set_separator_name(new_separator);
             }
             catch(const exception& e)
             {
@@ -787,7 +780,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("RawVariablesNames");
+    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
     if(raw_variables_names_element)
     {
@@ -805,7 +798,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows labels
 
-    const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
 
     if(rows_label_element)
     {
@@ -823,7 +816,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values label
 
-    const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
+    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
     {
@@ -845,7 +838,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Codification
 
-    const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
+    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
     {
@@ -867,10 +860,10 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "RawVariables element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    // raw_variables number
+    // Raw variables number
 
     const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
@@ -880,7 +873,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "RawVariablesNumber element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index new_raw_variables_number = 0;
@@ -892,7 +885,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_raw_variables_number(new_raw_variables_number);
     }
 
-    // raw_variables
+    // Raw variables
 
     const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
@@ -909,7 +902,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "raw_variable item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             // Name
@@ -922,7 +915,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Name element is nullptr.\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(name_element->GetText())
@@ -942,7 +935,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Scaler element is nullptr.\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(scaler_element->GetText())
@@ -962,7 +955,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "raw_variable use element is nullptr.\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(raw_variable_use_element->GetText())
@@ -982,7 +975,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Type element is nullptr.\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(type_element->GetText())
@@ -1003,7 +996,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                            << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories element is nullptr.\n";
 
-                    throw(buffer.str());
+                    throw runtime_error(buffer.str());
                 }
 
                 if(categories_element->GetText())
@@ -1022,22 +1015,22 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Rows labels begin tag
 
-        const tinyxml2::XMLElement* rows_labels_element = data_set_element->FirstChildElement("RowsLabels");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
 
-        if(!rows_labels_element)
+        if(!has_ids_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows labels element is nullptr.\n";
 
-            throw(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Rows labels
 
-        if(rows_labels_element->GetText())
+        if(has_ids_element->GetText())
         {
-            const string new_rows_labels = rows_labels_element->GetText();
+            const string new_rows_labels = has_ids_element->GetText();
 
             string separator = ",";
 
@@ -1060,7 +1053,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Samples number
@@ -1073,7 +1066,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples number element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(samples_number_element->GetText())
@@ -1095,7 +1088,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples uses element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(samples_uses_element->GetText())
@@ -1113,7 +1106,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Missing values method
@@ -1126,7 +1119,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values method element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(missing_values_method_element->GetText())
@@ -1144,7 +1137,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values number element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(missing_values_number_element->GetText())
@@ -1154,7 +1147,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number > 0)
     {
-        // raw_variables Missing values number
+        // Raw variables Missing values number
 
         const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("");
 
@@ -1164,7 +1157,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "RawVariablesMissingValuesNumber element is nullptr.\n";
 
-            throw(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(raw_variables_missing_values_number_element->GetText())
@@ -1190,7 +1183,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows missing values number element is nullptr.\n";
 
-            throw(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(rows_missing_values_number_element->GetText())
@@ -1209,7 +1202,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Preview data element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Preview size
@@ -1222,7 +1215,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Preview size element is nullptr.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index new_preview_size = 0;
@@ -1252,7 +1245,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1274,7 +1267,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1294,7 +1287,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Target item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1779,7 +1772,7 @@ void LanguageDataSet::load_documents(const string& path)
                 << "void load_documents() method.\n"
                 << "Data file name is empty.\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     ifstream file(path.c_str());
@@ -1871,7 +1864,7 @@ void LanguageDataSet::load_documents(const string& path)
                         << "void load_documents() method.\n"
                         << "Found more than one separator in line: " << line << "\n";
 
-                throw(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(tokens(0).empty() && tokens(1).empty())  continue;
@@ -2019,7 +2012,7 @@ void LanguageDataSet::read_txt_language_model()
             << "void read_txt_language_model() method.\n"
             << "Context number of entries (" << entry_number << ") not equal to completion number of entries (" << completion_entry_number << ").\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<string, 1> context(entry_number);
@@ -2160,101 +2153,100 @@ void LanguageDataSet::read_txt_language_model()
 }
 
 
-void LanguageDataSet::write_data_file_whitespace(ofstream& file,
-                                                 const Tensor<Tensor<string, 1>, 1>& context_tokens,
-                                                 const Tensor<Tensor<string, 1>, 1>& completion_tokens)
-{
-    const Index entry_number = context_tokens.dimension(0);
+// void LanguageDataSet::write_data_file_whitespace(ofstream& file,
+//                                                  const Tensor<Tensor<string, 1>, 1>& context_tokens,
+//                                                  const Tensor<Tensor<string, 1>, 1>& completion_tokens)
+// {
+//     const Index entry_number = context_tokens.dimension(0);
 
-    const Index context_vocabulary_size = context_vocabulary.size();
-    const Index completion_vocabulary_size = completion_vocabulary.size();
+//     const Index context_vocabulary_size = context_vocabulary.size();
+//     const Index completion_vocabulary_size = completion_vocabulary.size();
 
-    Tensor<type, 1> context_row(max_context_length + 2);
-    Tensor<type, 1> completion_row(max_completion_length + 2);
+//     Tensor<type, 1> context_row(max_context_length + 2);
+//     Tensor<type, 1> completion_row(max_completion_length + 2);
 
-    Tensor<string, 1> line_tokens;
-    bool line_ended;
+//     Tensor<string, 1> line_tokens;
+//     bool line_ended;
 
-    for(Index i = 0; i < entry_number; i++)
-    {
-        // Context
+//     for(Index i = 0; i < entry_number; i++)
+//     {
+//         // Context
 
-        context_row.setZero();
-        context_row(0) = 1; // start indicator
+//         context_row.setZero();
+//         context_row(0) = 1; // start indicator
 
-        line_ended = false;
+//         line_ended = false;
 
-        line_tokens = context_tokens(i);
+//         line_tokens = context_tokens(i);
 
-        for(Index j = 0; j < max_context_length + 1; j++)
-        {
-            if(j < line_tokens.size())
-            {
-                auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j));
+//         for(Index j = 0; j < max_context_length + 1; j++)
+//         {
+//             if(j < line_tokens.size())
+//             {
+//                 auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j));
 
-                const Index word_index = it - context_vocabulary.data();
+//                 const Index word_index = it - context_vocabulary.data();
 
-                context_row(j + 1) = type(word_index);
-            }
-            else
-            {
-                if(j == line_tokens.size() || (j == max_context_length && !line_ended))
-                {
-                    context_row(j + 1) = 2; // end indicator
-                    line_ended = true;
-                }
-                else
-                {
-                    context_row(j + 1) = 0; // pad indicator
-                }
-            }
-        }
+//                 context_row(j + 1) = type(word_index);
+//             }
+//             else
+//             {
+//                 if(j == line_tokens.size() || (j == max_context_length && !line_ended))
+//                 {
+//                     context_row(j + 1) = 2; // end indicator
+//                     line_ended = true;
+//                 }
+//                 else
+//                 {
+//                     context_row(j + 1) = 0; // pad indicator
+//                 }
+//             }
+//         }
 
-        for(Index j = 0; j < max_context_length + 2; j++)
-            file << context_row(j) << ";";
+//         for(Index j = 0; j < max_context_length + 2; j++)
+//             file << context_row(j) << ";";
 
-        // Completion
+//         // Completion
 
-        completion_row.setZero();
-        completion_row(0) = 1;
+//         completion_row.setZero();
+//         completion_row(0) = 1;
 
-        line_ended = false;
+//         line_ended = false;
 
-        line_tokens = completion_tokens(i);
+//         line_tokens = completion_tokens(i);
 
-        for(Index j = 0; j < max_completion_length + 1; j++)
-        {
-            if(j < line_tokens.size())
-            {
-                auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j));
+//         for(Index j = 0; j < max_completion_length + 1; j++)
+//         {
+//             if(j < line_tokens.size())
+//             {
+//                 auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j));
 
-                const Index word_index = it - completion_vocabulary.data();
+//                 const Index word_index = it - completion_vocabulary.data();
 
-                completion_row(j + 1) = type(word_index);
-            }
-            else
-            {
-                if(j == line_tokens.size() || (j == max_completion_length && !line_ended))
-                {
-                    completion_row(j + 1) = 2;
-                    line_ended = true;
-                }
-                else
-                {
-                    completion_row(j + 1) = 0;
-                }
-            }
-        }
+//                 completion_row(j + 1) = type(word_index);
+//             }
+//             else
+//             {
+//                 if(j == line_tokens.size() || (j == max_completion_length && !line_ended))
+//                 {
+//                     completion_row(j + 1) = 2;
+//                     line_ended = true;
+//                 }
+//                 else
+//                 {
+//                     completion_row(j + 1) = 0;
+//                 }
+//             }
+//         }
 
-        for(Index j = 0; j < max_completion_length + 1; j++)
-            file << completion_row(j) << ";";
+//         for(Index j = 0; j < max_completion_length + 1; j++)
+//             file << completion_row(j) << ";";
 
-        for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
-            file << completion_row(j) << ";";
-        file << completion_row(max_completion_length + 1) << "\n";
-
-    }
-}
+//         for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
+//             file << completion_row(j) << ";";
+//         file << completion_row(max_completion_length + 1) << "\n";
+//     }
+// }
 
 
 void LanguageDataSet::write_data_file_wordpiece(ofstream& file,

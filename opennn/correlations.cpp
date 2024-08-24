@@ -242,8 +242,6 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
 {
 #ifdef OPENNN_DEBUG
 
-    ostringstream buffer;
-
     if(x.size() != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
 
@@ -456,8 +454,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 #ifdef OPENNN_DEBUG
 
     const Index x_size = x.size();
-
-    ostringstream buffer;
 
     if(x_size != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
@@ -689,10 +685,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
 
     const Index x_size = x.size();
 
-    ostringstream buffer;
-
     if(x_size != n)
-
         throw runtime_error("Y size must be equal to X size.\n");
 
 #endif
@@ -888,7 +881,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Tensor<type,1> x_filtered = filtered_elements.first;
     const Tensor<type,2> y_filtered = filtered_elements.second;
 
-    if( y_filtered.dimension(1) > 50)
+    if(y_filtered.dimension(1) > 50)
     {
         cout << "Warning: Y variable has too many categories." << endl;
 

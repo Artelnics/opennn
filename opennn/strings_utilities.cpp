@@ -207,11 +207,7 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
     {
         try
         {
-            stringstream buffer;
-
-            buffer << tokens[i];
-
-            type_vector(i) = type(stof(buffer.str()));
+            type_vector(i) = type(stof(tokens[i]));
         }
         catch(const exception&)
         {
@@ -257,7 +253,7 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
 
     for(Index i = 0; i < tokens.size(); i++)
     {
-        if( !contains_substring(result, " " + tokens(i) + " ") )
+        if(!contains_substring(result, " " + tokens(i) + " ") )
         {
             result += tokens(i) + " ";
         }
@@ -1075,31 +1071,31 @@ string replace_non_allowed_programming_expressions(string& s)
 }
 
 
-vector<string> get_words_in_a_string(string str)
-{
-    vector<string> output;
-    string word = "";
+// vector<string> get_words_in_a_string(string str)
+// {
+//     vector<string> output;
+//     string word = "";
 
-    for(auto x : str)
-    {
-        if(isalnum(x))
-        {
-            word = word + x;
-        }else if(x=='_')
-        {
-            word = word + x;
-        }
-        else
-        //if(x == ' ')
-        {
-            output.push_back(word);
-            word = "";
-        }
-    }
+//     for(auto x : str)
+//     {
+//         if(isalnum(x))
+//         {
+//             word = word + x;
+//         }else if(x=='_')
+//         {
+//             word = word + x;
+//         }
+//         else
+//         //if(x == ' ')
+//         {
+//             output.push_back(word);
+//             word = "";
+//         }
+//     }
 
-    output.push_back(word);
-    return output;
-}
+//     output.push_back(word);
+//     return output;
+// }
 
 
 //int WordOccurrence(char *sentence, char *word)
@@ -1376,16 +1372,16 @@ void replace(string& source, const string& find_what, const string& replace_with
 }
 
 
-bool is_not_alnum (char &c)
+bool is_not_alnum(char &c)
 {
     return (c < ' ' || c > '~');
 }
 
 
-void remove_not_alnum(string &str)
-{
-        str.erase(remove_if(str.begin(), str.end(), is_not_alnum), str.end());
-}
+// void remove_not_alnum(string &str)
+// {
+//     str.erase(remove_if(str.begin(), str.end(), is_not_alnum), str.end());
+// }
 
 
 bool find_string_in_tensor(Tensor<string, 1>& t, const string& val)
@@ -1407,7 +1403,7 @@ string get_word_from_token(string& token)
 
     for(char& c : token)
     {
-        if( c!=' ' && c!='=' )
+        if(c!=' ' && c!='=' )
         {
             word += c;
         }
@@ -1460,7 +1456,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 
         for(char& c : s)
         {
-            if( c!=' ' && c!='=' ) word += c; 
+            if(c!=' ' && c!='=' ) word += c; 
             else break; 
         }
 
@@ -1718,9 +1714,10 @@ void display_progress_bar(const int& completed, const int& total)
 }
 
 
+/*
 void create_alphabet()
 {
-/*
+
     string text_copy = text;
 
     sort(text_copy.begin(), text_copy.end());
@@ -1735,13 +1732,13 @@ void create_alphabet()
         text_copy.begin(),
         text_copy.end(),
         alphabet.data());
-*/
+
 }
-
-
+*/
+/*
 void encode_alphabet()
 {
-/*
+
     const Index rows_number = text.length();
 
     const Index raw_variables_number = alphabet.size();
@@ -1759,9 +1756,9 @@ void encode_alphabet()
 
         data_tensor(i, word_index) = type(1);
     }
-*/
-}
 
+}
+*/
 
 Index get_alphabet_index(const char& ch) 
 {
@@ -2224,7 +2221,7 @@ void delete_non_alphanumeric(Tensor<string, 1>& documents)
 }
 
 
-string to_string(Tensor<string, 1> token) 
+string to_string(Tensor<string, 1> token)
 {
     string word;
 
@@ -2641,27 +2638,27 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag)
-{
-    Index weight = 0;
+// Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag)
+// {
+//     Index weight = 0;
 
-    const Tensor<string, 1> bag_words = word_bag.words;
+//     const Tensor<string, 1> bag_words = word_bag.words;
 
-    const Tensor<Index, 1> bag_frequencies = word_bag.frequencies;
+//     const Tensor<Index, 1> bag_frequencies = word_bag.frequencies;
 
-    for(Index i = 0; i < document_words.size(); i++)
-    {
-        for(Index j = 0; j < word_bag.size(); j++)
-        {
-            if(document_words[i] == bag_words[j])
-            {
-                weight += bag_frequencies[j];
-            }
-        }
-    }
+//     for(Index i = 0; i < document_words.size(); i++)
+//     {
+//         for(Index j = 0; j < word_bag.size(); j++)
+//         {
+//             if(document_words[i] == bag_words[j])
+//             {
+//                 weight += bag_frequencies[j];
+//             }
+//         }
+//     }
 
-    return weight;
-}
+//     return weight;
+// }
 
 
 Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
@@ -2758,28 +2755,28 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 }
 
 
-Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>& tokens,
-                                                const Tensor<string, 1>& words_name)
-{
-    Tensor<double, 1> word_presence_percentage(words_name.size());
+// Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>& tokens,
+//                                                 const Tensor<string, 1>& words_name)
+// {
+//     Tensor<double, 1> word_presence_percentage(words_name.size());
 
-    for(Index i = 0; i < words_name.size(); i++)
-    {
-        Index sum = 0;
+//     for(Index i = 0; i < words_name.size(); i++)
+//     {
+//         Index sum = 0;
 
-        for(Index j = 0; j < tokens.size(); j++)
-        {
-            if(contains(tokens(j),words_name(i) ))
-            {
-                sum = sum + 1;
-            }
-        }
+//         for(Index j = 0; j < tokens.size(); j++)
+//         {
+//             if(contains(tokens(j),words_name(i) ))
+//             {
+//                 sum = sum + 1;
+//             }
+//         }
 
-        word_presence_percentage(i) = double(sum)*(double(100.0/tokens.size()));
-    }
+//         word_presence_percentage(i) = double(sum)*(double(100.0/tokens.size()));
+//     }
 
-    return word_presence_percentage;
-}
+//     return word_presence_percentage;
+// }
 
 
 /*
@@ -3263,7 +3260,7 @@ int measure(const string& word)
 {
     int count = 0;
     bool vowel_seen = false;
-    for (char ch : word)
+    for(char ch : word)
     {
         if(is_vowel(ch))
         {
@@ -3281,7 +3278,7 @@ int measure(const string& word)
 
 bool contains_vowel(const string& word)
 {
-    for (char ch : word)
+    for(char ch : word)
     {
         if(is_vowel(ch))
             return true;
@@ -3384,7 +3381,6 @@ string stem(const string& word)
 
 void stem(Tensor<string, 1>& words)
 {
-
     for(Index i = 0; i < words.size(); i++)
     {
         words(i) = stem(words(i));

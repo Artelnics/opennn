@@ -309,7 +309,7 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 }
 
 
-string BoundingLayer::write_bounding_method() const
+string BoundingLayer::get_bounding_method_string() const
 {
     if(bounding_method == BoundingMethod::Bounding)
     {
@@ -363,11 +363,7 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     const Index neurons_number = get_neurons_number();
 
-    buffer.str("");
-    buffer << neurons_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(neurons_number).c_str());
     file_stream.CloseElement();
 
     for(Index i = 0; i < neurons_number; i++)
@@ -379,52 +375,22 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         // Lower bound
 
         file_stream.OpenElement("LowerBound");
-
-        buffer.str("");
-        buffer << lower_bounds[i];
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(lower_bounds[i]).c_str());
         file_stream.CloseElement();
 
         // Upper bound
 
         file_stream.OpenElement("UpperBound");
-
-        buffer.str("");
-        buffer << upper_bounds[i];
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(upper_bounds[i]).c_str());
         file_stream.CloseElement();
-
 
         file_stream.CloseElement();
     }
 
     // Bounding method
 
-    file_stream.OpenElement("UseBoundingLayer");
-
-    if(bounding_method == BoundingMethod::Bounding)
-    {
-        buffer.str("");
-        buffer << 1;
-    }
-    else if(bounding_method == BoundingMethod::NoBounding)
-    {
-        buffer.str("");
-        buffer << 0;
-    }
-    else
-    {
-        file_stream.CloseElement();
-
-        throw runtime_error("Unknown bounding method type.\n");
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.OpenElement("BoundingMethod");
+    file_stream.PushText(get_bounding_method_string().c_str());
     file_stream.CloseElement();
 
    // Display
@@ -511,7 +477,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Use bounding layer
     {
-        const tinyxml2::XMLElement* use_bounding_layer_element = bounding_layer_element->FirstChildElement("UseBoundingLayer");
+        const tinyxml2::XMLElement* use_bounding_layer_element = bounding_layer_element->FirstChildElement("BoundingMethod");
 
         if(use_bounding_layer_element)
         {

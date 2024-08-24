@@ -421,7 +421,7 @@ const char* XMLUtil::ReadBOM(const char* p, bool* bom )
     *bom = false;
     const unsigned char* pu = reinterpret_cast<const unsigned char*>(p);
     // Check for BOM:
-    if(   *(pu+0) == TIXML_UTF_LEAD_0
+    if(  *(pu+0) == TIXML_UTF_LEAD_0
             && *(pu+1) == TIXML_UTF_LEAD_1
             && *(pu+2) == TIXML_UTF_LEAD_2 )
     {

@@ -346,19 +346,7 @@ void ProbabilisticLayer::set_display(const bool& new_display)
 }
 
 
-void ProbabilisticLayer::set_biases_constant(const type& value)
-{
-    biases.setConstant(value);
-}
-
-
-void ProbabilisticLayer::set_synaptic_weights_constant(const type& value)
-{
-    synaptic_weights.setConstant(value);
-}
-
-
-void ProbabilisticLayer::set_synaptic_weights_constant_Glorot()
+void ProbabilisticLayer::set_synaptic_weights_Glorot()
 {
     synaptic_weights.setRandom();
 }
@@ -451,8 +439,6 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     const Index neurons_number = get_neurons_number();
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-    //cout << "probabilistic batch_samples_number " << inputs_pair(0).second[0] << endl;
-    //cout << "probabilistic inputs number" << inputs_pair(0).second[1] << endl;
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
@@ -598,62 +584,31 @@ void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_number()).c_str());
     file_stream.CloseElement();
 
     // Neurons number
 
     file_stream.OpenElement("NeuronsNumber");
-
-    buffer.str("");
-    buffer << get_neurons_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_neurons_number()).c_str());
     file_stream.CloseElement();
 
     // Activation function
 
     file_stream.OpenElement("ActivationFunction");
-
     file_stream.PushText(write_activation_function().c_str());
-
     file_stream.CloseElement();
 
     // Parameters
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size-1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     // Decision threshold
 
     file_stream.OpenElement("DecisionThreshold");
-
-    buffer.str("");
-    buffer << decision_threshold;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(decision_threshold).c_str());
     file_stream.CloseElement();
 
     // Probabilistic layer (end tag)
@@ -764,8 +719,6 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-
-    buffer.str("");
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {

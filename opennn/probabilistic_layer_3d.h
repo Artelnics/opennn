@@ -104,9 +104,9 @@ public:
 
    // Parameters initialization
 
-   void set_biases_constant(const type&);
-   void set_synaptic_weights_constant(const type&);
-   void set_synaptic_weights_constant_Glorot();
+   
+   
+   void set_synaptic_weights_Glorot();
 
    void set_parameters_constant(const type&) final;
    void set_parameters_random() final;

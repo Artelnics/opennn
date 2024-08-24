@@ -445,58 +445,33 @@ void NormalizationLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("NormalizationLayer3D");
 
     // Layer name
+
     file_stream.OpenElement("LayerName");
-    buffer.str("");
-    buffer << layer_name;
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Inputs number
+
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_number()).c_str());
     file_stream.CloseElement();
 
     // Inputs depth
 
     file_stream.OpenElement("InputsDepth");
-
-    buffer.str("");
-    buffer << get_inputs_depth();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_depth()).c_str());
     file_stream.CloseElement();
 
     // Parameters
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size - 1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     // Normalization layer (end tag)
 
     file_stream.CloseElement();
 }
-
 
 
 pair<type*, dimensions> NormalizationLayer3DForwardPropagation::get_outputs_pair() const

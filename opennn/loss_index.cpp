@@ -229,8 +229,6 @@ Index LossIndex::find_input_index(const Tensor<Index, 1>& layer_inputs_indices, 
 
 void LossIndex::check() const
 {
-    ostringstream buffer;
-
     if(!neural_network)
         throw runtime_error("Pointer to neural network is nullptr.\n");
 
@@ -278,7 +276,7 @@ void LossIndex::back_propagate(const Batch& batch,
     // Loss index
 
     calculate_error(batch, forward_propagation, back_propagation);
-
+ 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
     assemble_layers_error_gradient(back_propagation);
@@ -575,7 +573,6 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     // Hidden layers
 
-
     calculate_output_delta(batch, forward_propagation, back_propagation);
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
@@ -599,7 +596,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             {
                 input_index = find_input_index(layers_inputs_indices(layers_outputs_indices(i)(j)), i);
 
-                layer_deltas(j) = back_propagation.neural_network.layers(layers_outputs_indices(i)(j))->get_inputs_derivatives_pair()(input_index);
+                layer_deltas(j) = back_propagation.neural_network.layers(layers_outputs_indices(i)(j))->get_inputs_derivatives_pair()(input_index); 
             }
         }
 
@@ -657,8 +654,6 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
 void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("LossIndex");
 
     file_stream.CloseElement();
@@ -696,8 +691,6 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 
 void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("Regularization");
 
     // Regularization method
@@ -728,14 +721,7 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
     // Regularization weight
 
     file_stream.OpenElement("RegularizationWeight");
-
-    buffer.str("");
-    buffer << regularization_weight;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    // Close regularization weight
-
+    file_stream.PushText(to_string(regularization_weight).c_str());
     file_stream.CloseElement();
 
     // Close regularization
@@ -885,6 +871,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     BackPropagation back_propagation(samples_number, this);
 
     const Tensor<type, 1> parameters = neural_network->get_parameters();
+    //cout << "parameters:\n" << parameters << endl;
 
     const Index parameters_number = parameters.size();
 
@@ -902,6 +889,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
+        //cout << "parameter " << i << endl;
         h = calculate_h(parameters(i));
 
        parameters_forward(i) += h;
@@ -913,6 +901,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_forward = back_propagation.error;
+       //cout << "error_forward: " << error_forward << endl;
 
        parameters_forward(i) -= h;
 
@@ -925,10 +914,13 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_backward = back_propagation.error;
+       //cout << "error_backward: " << error_backward << endl;
 
        parameters_backward(i) += h;
 
        numerical_gradient(i) = (error_forward - error_backward)/(type(2)*h);
+
+       //cout << " numerical_gradient(i)" << numerical_gradient(i) << endl;
     }
 
     return numerical_gradient;

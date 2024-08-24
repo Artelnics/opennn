@@ -34,12 +34,14 @@ int main()
    {
         cout << "Blank\n";
 
-        DataSet data_set("C:/Users/Roberto Lopez/Documents/dataset.csv", ',', true, false);
-
+       DataSet data_set("C:/Users/Roberto Lopez/Documents/5_years_mortality.csv", ",", true, false);
+        data_set.save("C:/Users/Roberto Lopez/Documents/5_years_mortality.xml");
+       data_set.load("C:/Users/Roberto Lopez/Documents/5_years_mortality.xml");
+/*
         data_set.print();
 
         data_set.print_data();
-
+*/
         cout << "Bye!" << endl;
 
         return 0;

@@ -31,7 +31,7 @@ int main()
 
         // Data set
 
-        TimeSeriesDataSet time_series_data_set("../data/Pendulum.csv", ',', false, false);
+        TimeSeriesDataSet time_series_data_set("../data/Pendulum.csv", ",", false, false);
         time_series_data_set.set_lags_number(5); // Not working
 
         time_series_data_set.print();
