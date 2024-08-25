@@ -1321,13 +1321,13 @@ void ImageDataSet::read_bmp()
 
     Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0].string());
 
-    const Index image_height = image_data.dimension(0);
-    const Index image_width = image_data.dimension(1);
+    const Index height = image_data.dimension(0);
+    const Index width = image_data.dimension(1);
     const Index image_channels = image_data.dimension(2);
 
-    const Index pixels_number = image_height * image_width * image_channels;
+    const Index pixels_number = height * width * image_channels;
 
-    set(samples_number, image_height, image_width, image_channels, targets_number);
+    set(samples_number, height, width, image_channels, targets_number);
 
     data.setZero();
 

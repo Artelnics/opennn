@@ -1,9 +1,9 @@
 #include "images.h"
-#include "tensors.h"
-#include <fstream>
-#include <vector>
+//#include "tensors.h"
+//#include <fstream>
+//#include <vector>
 #include <stdexcept>
-#include <iostream>
+//#include <iostream>
 
 namespace opennn
 {
@@ -13,29 +13,30 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
     FILE* file = fopen(filename.data(), "rb");
 
     if(!file)
-        throw runtime_error("Couldn't open the file.\n");
+        throw runtime_error("Cannot open the file.\n");
 
     unsigned char info[54];
 
     fread(info, sizeof(unsigned char), 54, file);
 
     const Index width_no_padding = *(int*)&info[18];
-    const Index image_height = *(int*)&info[22];
+    const Index height = *(int*)&info[22];
     const Index bits_per_pixel = *(int*)&info[28];
-    int channels = bits_per_pixel == 24 
-                 ? channels = 3 
-                 : channels = 1;
+
+    const int channels = bits_per_pixel == 24
+                       ? 3
+                       : 1;
     
-    const Index channels_number = channels;
+    //const Index channels = channels;
     
     Index padding = 0;
 
-    const Index image_width = width_no_padding;
+    const Index width = width_no_padding;
 
-    while((channels*image_width + padding)% 4 != 0)
+    while((channels*width + padding)% 4 != 0)
         padding++;
 
-    const size_t size = image_height*(channels_number*image_width + padding);
+    const size_t size = height*(channels*width + padding);
 
     Tensor<unsigned char, 1> raw_image;
 
@@ -48,17 +49,17 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     fclose(file);
 
-    Tensor<unsigned char, 3> image(image_height, image_width, channels_number);
+    Tensor<unsigned char, 3> image(height, width, channels);
 
-    const Index xxx = image_width * channels_number + padding;
+    const Index xxx = width * channels + padding;
 
-    for(Index i = 0; i < image_height; i++)
+    for(Index i = 0; i < height; i++)
     {
-        for(Index j = 0; j < image_width; ++j)
+        for(Index j = 0; j < width; ++j)
         {
-            for(Index k = 0; k < channels_number; ++k)
+            for(Index k = 0; k < channels; ++k)
             {
-                image(i, j, k) = raw_image[i*xxx  + j*channels_number + k];
+                image(i, j, k) = raw_image[i*xxx  + j*channels + k];
             }
         }
     }
@@ -68,12 +69,13 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
 
 void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
-                     const Tensor<type, 3>& input,
-                     Tensor<type, 3>& output)
+                     TensorMap<Tensor<type, 3>>& image)
 {
-    const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
+    const Eigen::array<bool, 3> reflect_horizontal_dimensions = {false, true, false};
 
-    output.device(*thread_pool_device) = input.reverse(reflect_horizontal_dimesions);
+    Tensor<type, 3> reversed_image = image.reverse(reflect_horizontal_dimensions);
+
+    image = reversed_image;
 }
 
 
@@ -116,7 +118,7 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 
     Tensor<type, 1> coordinates(3);
     Tensor<type, 1> transformed_coordinates(3);
-    Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(1,0)};
+    const Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(1,0)};
 
     for(Index x = 0; x < width; x++)
     {
@@ -128,8 +130,8 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 
             transformed_coordinates = rotation_matrix.contract(coordinates, contract_dims);
 
-            if(transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width &&
-               transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
+            if(transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width
+            && transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
             {
                 for(Index channel = 0; channel < channels; channel++)
                 {
@@ -232,9 +234,9 @@ void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Te
 
 
 Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
-                                      const Index &image_width,
-                                      const Index &image_height,
-                                      const Index &channels_number)
+                                      const Index &width,
+                                      const Index &height,
+                                      const Index &channels)
 {
     /*
     const fs::path path = data_source_path;
@@ -402,9 +404,9 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     samples_uses.resize(images_number);
     split_samples_random();
 
-    image_width = width;
-    image_height = height;
-    channels_number = channels;
+    width = width;
+    height = height;
+    channels = channels;
 
     input_dimensions.resize(3);
     input_dimensions.setValues({channels, width, height});

@@ -41,9 +41,9 @@ dimensions PoolingLayer::get_output_dimensions() const
 {
     const Index rows_number = get_output_height();
     const Index columns_number = get_output_width();
-    const Index channels_number = input_dimensions[2];
+    const Index channels = input_dimensions[2];
 
-    return { rows_number, columns_number, channels_number };
+    return { rows_number, columns_number, channels };
 }
 
 
@@ -385,9 +385,9 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                                   LayerBackPropagation* back_propagation) const
 {
 
-    // Inputs 
+    // Inputs
 
-    const Index batch_samples_number = inputs_pair(0).second[0];
+    //const Index batch_samples_number = inputs_pair(0).second[0];
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
@@ -668,9 +668,9 @@ pair<type*, dimensions> PoolingLayerForwardPropagation::get_outputs_pair() const
 
     const Index output_height = pooling_layer->get_output_height();
     const Index output_width = pooling_layer->get_output_width();
-    const Index channels_number = pooling_layer->get_channels_number();
+    const Index channels = pooling_layer->get_channels_number();
 
-    const dimensions output_dimensions = { batch_samples_number, output_height, output_width, channels_number};
+    const dimensions output_dimensions = { batch_samples_number, output_height, output_width, channels};
 
     return pair<type*, dimensions>(outputs_data, output_dimensions);
 }
@@ -692,12 +692,12 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     const Index output_width = pooling_layer->get_output_width();
 
-    const Index channels_number = pooling_layer->get_channels_number();
+    const Index channels = pooling_layer->get_channels_number();
 
     outputs.resize(batch_samples_number,
                    output_height,
                    output_width,
-                   channels_number);
+                   channels);
 
     outputs_data = outputs.data();
 
@@ -705,7 +705,7 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
                          pool_height,
                          pool_width,
                          output_height * output_width,
-                         channels_number);
+                         channels);
 }
 
 

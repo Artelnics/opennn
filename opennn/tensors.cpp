@@ -171,9 +171,9 @@ void multiply_matrices(ThreadPoolDevice* thread_pool_device,
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
-    const Index channels_number = tensor.dimension(2);
+    const Index channels = tensor.dimension(2);
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         TensorMap<Tensor<type, 2>> matrix(tensor.data() + i * rows_number * columns_number, rows_number, columns_number);
 
@@ -186,9 +186,9 @@ void multiply_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& te
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
-    const Index channels_number = tensor.dimension(2);
+    const Index channels = tensor.dimension(2);
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         TensorMap<Tensor<type, 2>> slice(tensor.data() + i * rows_number * columns_number, rows_number, columns_number);
 
@@ -219,7 +219,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].second == 1)    C_columns = B_rows;
 
-    const Index channels_number = A.dimension(2);
+    const Index channels = A.dimension(2);
 
     type* A_data = (type*)A.data();
     type* B_data = (type*)B.data();
@@ -229,7 +229,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
     type* b_matrix_data = nullptr;
     type* c_matrix_data = nullptr;
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         a_matrix_data = A_data + A_rows * A_columns * i;
         b_matrix_data = B_data + B_rows * B_columns * i;
@@ -266,7 +266,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].second == 1)    C_columns = B_rows;
 
-    const Index channels_number = A.dimension(2);
+    const Index channels = A.dimension(2);
 
     type* A_data = (type*)A.data();
     type* B_data = (type*)B.data();
@@ -276,7 +276,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
     type* b_matrix_data = nullptr;
     type* c_matrix_data = nullptr;
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         a_matrix_data = A_data + A_rows * A_columns * i;
         b_matrix_data = B_data + B_rows * B_columns * i;
@@ -315,7 +315,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
     if(contraction_axes[0].second == 1)    
         C_columns = B_rows;
 
-    const Index channels_number = A.dimension(2);
+    const Index channels = A.dimension(2);
     const Index blocks_number = A.dimension(3);
 
     type* A_data = (type*)A.data();
@@ -328,11 +328,11 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < blocks_number; i++)
     {
-        for(Index j = 0; j < channels_number; j++)
+        for(Index j = 0; j < channels; j++)
         {
-            a_matrix_data = A_data + A_rows * A_columns * (i * channels_number + j);
-            b_matrix_data = B_data + B_rows * B_columns * (i * channels_number + j);
-            c_matrix_data = C_data + C_rows * C_columns * (i * channels_number + j);
+            a_matrix_data = A_data + A_rows * A_columns * (i * channels + j);
+            b_matrix_data = B_data + B_rows * B_columns * (i * channels + j);
+            c_matrix_data = C_data + C_rows * C_columns * (i * channels + j);
 
             const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
             const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
@@ -367,7 +367,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].second == 1)    C_columns = B_rows;
 
-    const Index channels_number = A.dimension(2);
+    const Index channels = A.dimension(2);
     const Index blocks_number = A.dimension(3);
 
     type* A_data = (type*) A.data();
@@ -380,13 +380,13 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < blocks_number; i++)
     {
-        a_block_data = A_data + A_rows * A_columns * channels_number * i;
+        a_block_data = A_data + A_rows * A_columns * channels * i;
         b_matrix_data = B_data + B_rows * B_columns * i;
-        c_block_data = C_data + C_rows * C_columns * channels_number * i;
+        c_block_data = C_data + C_rows * C_columns * channels * i;
 
-        const TensorMap<Tensor<type, 3>> A_block(a_block_data, A_rows, A_columns, channels_number);
+        const TensorMap<Tensor<type, 3>> A_block(a_block_data, A_rows, A_columns, channels);
         const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
-        TensorMap<Tensor<type, 3>> C_block(c_block_data, C_rows, C_columns, channels_number);
+        TensorMap<Tensor<type, 3>> C_block(c_block_data, C_rows, C_columns, channels);
 
         C_block.device(*thread_pool_device) = A_block.contract(B_matrix, contraction_axes);
     }
@@ -411,7 +411,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].first == 0)     C_rows = A_columns;
 
-    Index channels_number = A.dimension(2);
+    Index channels = A.dimension(2);
     Index blocks_number = A.dimension(3);
 
     type* A_data = (type*) A.data();
@@ -424,11 +424,11 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < blocks_number; i++)
     {
-        for(Index j = 0; j < channels_number; j++)
+        for(Index j = 0; j < channels; j++)
         {
-            a_matrix_data = A_data + A_rows * A_columns * (i * channels_number + j);
-            b_vector_data = B_data + B_rows * (i * channels_number + j);
-            c_vector_data = C_data + C_rows * (i * channels_number + j);
+            a_matrix_data = A_data + A_rows * A_columns * (i * channels + j);
+            b_vector_data = B_data + B_rows * (i * channels + j);
+            c_vector_data = C_data + C_rows * (i * channels + j);
 
             const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
             const TensorMap<Tensor<type, 1>> B_vector(b_vector_data, B_rows);
@@ -458,7 +458,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     if(contraction_axes[0].first == 0)     C_rows = A_columns;
 
-    Index channels_number = A.dimension(2);
+    Index channels = A.dimension(2);
     Index blocks_number = A.dimension(3);
 
     type* A_data = (type*)A.data();
@@ -471,11 +471,11 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < blocks_number; i++)
     {
-        for(Index j = 0; j < channels_number; j++)
+        for(Index j = 0; j < channels; j++)
         {
-            a_matrix_data = A_data + A_rows * A_columns * (i * channels_number + j);
-            b_vector_data = B_data + B_rows * (i * channels_number + j);
-            c_vector_data = C_data + C_rows * (i * channels_number + j);
+            a_matrix_data = A_data + A_rows * A_columns * (i * channels + j);
+            b_vector_data = B_data + B_rows * (i * channels + j);
+            c_vector_data = C_data + C_rows * (i * channels + j);
 
             const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
             const TensorMap<Tensor<type, 1>> B_vector(b_vector_data, B_rows);
@@ -540,7 +540,7 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matri
 
     for(Index j = 0; j < columns_number; j++)
     {
-        TensorMap<Tensor<type,1>> raw_variable(matrix_data + j*rows_number, rows_number);
+        TensorMap<Tensor<type, 1>> raw_variable(matrix_data + j*rows_number, rows_number);
 
         raw_variable.device(*thread_pool_device) = raw_variable / vector;
     }
@@ -556,7 +556,7 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type,
 
     for(Index j = 0; j < columns_number; j++)
     {
-        TensorMap<Tensor<type,1>> raw_variable(matrix_data + j*rows_number, rows_number);
+        TensorMap<Tensor<type, 1>> raw_variable(matrix_data + j*rows_number, rows_number);
 
         raw_variable.device(*thread_pool_device) = raw_variable / vector;
     }
@@ -567,9 +567,9 @@ void divide_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tens
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
-    const Index channels_number = tensor.dimension(2);
+    const Index channels = tensor.dimension(2);
 
-    for(Index j = 0; j < channels_number; j++)
+    for(Index j = 0; j < channels; j++)
     {
         TensorMap<Tensor<type, 2>> slice(tensor.data() + j * rows_number*columns_number, rows_number, columns_number);
 
@@ -587,7 +587,7 @@ void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& ve
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type,1>> raw_variable(matrix.data() + i*rows_number, rows_number);
+        TensorMap<Tensor<type, 1>> raw_variable(matrix.data() + i*rows_number, rows_number);
 
         raw_variable.device(*thread_pool_device) = raw_variable + vector(i);
     }
@@ -614,11 +614,11 @@ void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& v
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
-    const Index channels_number = tensor.dimension(2);
+    const Index channels = tensor.dimension(2);
 
     type* tensor_data = tensor.data();
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         TensorMap<Tensor<type,2>> matrix(tensor_data + i*rows_number* columns_number, rows_number, columns_number);
 
@@ -631,9 +631,9 @@ void sum_matrices(ThreadPoolDevice* thread_pool_device, const TensorMap<Tensor<t
 {
     const Index rows_number = tensor.dimension(0);
     const Index raw_variables_number = tensor.dimension(1);
-    const Index channels_number = tensor.dimension(2);
+    const Index channels = tensor.dimension(2);
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         TensorMap<Tensor<type,2>> matrix(tensor.data() + i*rows_number*raw_variables_number, rows_number, raw_variables_number);
 
@@ -646,9 +646,9 @@ void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& m
 {
     const Index rows_number = tensor.dimension(0);
     const Index raw_variables_number = tensor.dimension(1);
-    const Index channels_number = tensor.dimension(2);
+    const Index channels = tensor.dimension(2);
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         TensorMap<Tensor<type,2>> submatrix(tensor.data() + i*rows_number*raw_variables_number, rows_number, raw_variables_number);
 
@@ -666,7 +666,7 @@ void substract_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type,1>> column(matrix_data + i*rows_number, rows_number);
+        TensorMap<Tensor<type, 1>> column(matrix_data + i*rows_number, rows_number);
 
         column.device(*thread_pool_device) = column - vector;
     }
@@ -677,9 +677,9 @@ void substract_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type,
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
-    const Index channels_number = tensor.dimension(2);
+    const Index channels = tensor.dimension(2);
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         TensorMap<Tensor<type, 2>> slice(tensor.data() + i * rows_number * columns_number, rows_number, columns_number);
 
@@ -688,7 +688,7 @@ void substract_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type,
 }
 
 
-bool is_zero(const Tensor<type,1>& tensor, const type& limit)
+bool is_zero(const Tensor<type, 1>& tensor, const type& limit)
 {
     const Index size = tensor.size();
 
@@ -1214,7 +1214,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 }
 
 
-Index count_between(const Tensor<type,1>& vector,const type& minimum, const type& maximum)
+Index count_between(const Tensor<type, 1>& vector,const type& minimum, const type& maximum)
 {
     const Index size = vector.size();
 
@@ -1240,7 +1240,7 @@ void get_row(Tensor<type, 1>& row, const Tensor<type, 2, RowMajor>& matrix, cons
 }
 
 
-void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_index)
+void set_row(Tensor<type,2>& matrix, Tensor<type, 1>& new_row, const Index& row_index)
 {
     const Index columns_number = new_row.size();
 
@@ -1265,7 +1265,7 @@ void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, c
 
 Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, const Index& column_index, const type& minimum, const type& maximum)
 {
-    const Tensor<type,1> raw_variable = matrix.chip(column_index,1);
+    const Tensor<type, 1> raw_variable = matrix.chip(column_index,1);
     const Index new_rows_number = count_between(raw_variable, minimum, maximum);
 
     if(new_rows_number == 0)
@@ -1281,7 +1281,7 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, const Index
     Tensor<type,2> new_matrix(new_rows_number, columns_number);
 
     Index row_index = 0;
-    Tensor<type,1> row(columns_number);
+    Tensor<type, 1> row(columns_number);
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -2006,7 +2006,7 @@ bool contains(const Tensor<size_t,1>& vector, const size_t& value)
 }
 
 
-bool contains(const Tensor<type,1>& vector, const type& value)
+bool contains(const Tensor<type, 1>& vector, const type& value)
 {
     Tensor<type, 1> copy(vector);
 
@@ -2093,7 +2093,7 @@ void push_back_type(Tensor<type, 1>& vector, const type& new_value)
 }
 
 
-Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
+Tensor<string, 1> to_string_tensor(const Tensor<type, 1>& x)
 {
     Tensor<string, 1> vector(x.size());
 

@@ -89,9 +89,9 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 }
 
 
-DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index& channels_number)
+DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index& channels)
 {
-    set(inputs_variables_dimensions, channels_number);
+    set(inputs_variables_dimensions, channels);
 
     set_default();
 }
@@ -1189,8 +1189,6 @@ void DataSet::set_samples_uses(const Tensor<SampleUse, 1>& new_uses)
 void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
 {
     const Index samples_number = get_samples_number();
-
-    ostringstream buffer;
 
 #ifdef OPENNN_DEBUG
 
@@ -3732,11 +3730,11 @@ void DataSet::set()
 }
 
 
-void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Index& channels_number)
+void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Index& channels)
 {
     // Set data
 
-    const Index variables_number = inputs_variables_dimensions.dimension(0) + channels_number;
+    const Index variables_number = inputs_variables_dimensions.dimension(0) + channels;
     const Index samples_number = 1;
     data.resize(samples_number, variables_number);
 
@@ -3752,7 +3750,7 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
         }
     }
 
-    for(Index i = 0; i < channels_number;i++)
+    for(Index i = 0; i < channels;i++)
     {
         raw_variables(inputs_variables_dimensions.dimension(0) + i).name = "variable_" + to_string(inputs_variables_dimensions.dimension(0) + i + 1);
         raw_variables(inputs_variables_dimensions.dimension(0) + i).use = VariableUse::Target;

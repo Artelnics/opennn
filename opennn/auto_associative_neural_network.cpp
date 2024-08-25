@@ -188,9 +188,6 @@ void AutoAssociativeNeuralNetwork::set_variables_distances_names(const Tensor<st
 
 void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument& document)
 {
-
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("BoxPlotDistances");
 
     if(!root_element)

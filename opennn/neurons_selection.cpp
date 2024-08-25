@@ -148,7 +148,8 @@ void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neuro
         throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be greater than 0.\n");
 
     if(new_maximum_neurons < minimum_neurons)
-        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be equal or greater than minimum_neurons(" << to_string(minimum_neurons) + ").\n");
+        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") "
+                            "must be equal or greater than minimum_neurons(" + to_string(minimum_neurons) + ").\n");
 
 #endif
 
@@ -329,9 +330,9 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_num
 
 void NeuronsSelectionResults::resize_history(const Index& new_size)
 {
-    const Tensor<Index, 1> old_neurons_number_history = neurons_number_history;
-    const Tensor<type, 1> old_training_error_history = training_error_history;
-    const Tensor<type, 1> old_selection_error_history = selection_error_history;
+    const Tensor<Index, 1> old_neurons_number_history(neurons_number_history);
+    const Tensor<type, 1> old_training_error_history(training_error_history);
+    const Tensor<type, 1> old_selection_error_history(selection_error_history);
 
     neurons_number_history.resize(new_size);
     training_error_history.resize(new_size);
@@ -350,7 +351,7 @@ string NeuronsSelectionResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case NeuronsSelection::StoppingCondition::MaximumTime:
+        case NeuronsSelection::StoppingCondition::MaximumTime:
             return "MaximumTime";
 
         case NeuronsSelection::StoppingCondition::SelectionErrorGoal:

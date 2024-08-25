@@ -338,15 +338,9 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
 #ifdef OPENNN_DEBUG
 
     if(uses.size() < inputs_number)
-    {
-        ostringstream buffer;
+        throw runtime_error("Size of uses vector(" + to_string(uses.size()) + ") "
+                            "must be greater than " + to_string(inputs_number) + ".\n");
 
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
-               << "Size of uses vector("<< uses.size() <<") must be greater than " <<  inputs_number << ".\n";
-
-        throw runtime_error(buffer.str());
-    }
 #endif
 
     Index i = 0;
@@ -369,6 +363,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
             i++;
         }
     }
+
     return i;
 }
 

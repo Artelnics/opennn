@@ -339,6 +339,7 @@ void LanguageDataSet::set_default()
     context_dimensions.setConstant(get_context_variables_number());
 }
 
+
 Tensor<string, 2> LanguageDataSet::get_text_data_file_preview() const
 {
     return text_data_file_preview;

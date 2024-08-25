@@ -1141,7 +1141,7 @@ Index ConvolutionalLayer::get_input_channels() const
 void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training)
 {
     const Index batch_samples_number = inputs.dimension(0);
-    const Index channels_number = get_kernels_number();
+    const Index channels = get_kernels_number();
 
     if(is_training)
     {

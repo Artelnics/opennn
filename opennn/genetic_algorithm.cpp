@@ -495,7 +495,7 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
         fitness_correlations(rank(i))=type(i+1);
     }
 
-    Tensor<type,1> probabilities_vector(raw_variables_number);
+    Tensor<type, 1> probabilities_vector(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number ; i++)
     {
@@ -1566,8 +1566,6 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
 void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     const Index individuals_number = get_individuals_number();
-
-    ostringstream buffer;
 
     file_stream.OpenElement("GeneticAlgorithm");
 

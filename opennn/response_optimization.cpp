@@ -622,7 +622,7 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     }
     else
     {
-        results->optimal_variables = Tensor<type,1>();
+        results->optimal_variables = Tensor<type, 1>();
     }
 
     return results;
