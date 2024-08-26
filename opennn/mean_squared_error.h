@@ -60,7 +60,7 @@ public:
 
    // Serialization
 
-   void write_XML(tinyxml2::XMLPrinter &) const final;
+   void to_XML(tinyxml2::XMLPrinter &) const final;
 
    string get_error_type() const final;
    string get_error_type_text() const final;

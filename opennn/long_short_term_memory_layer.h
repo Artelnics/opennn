@@ -21,7 +21,6 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 
-
 namespace opennn
 {
 
@@ -88,6 +87,7 @@ public:
 
    string write_activation_function() const;
    string write_recurrent_activation_function() const;
+
    // Display messages
 
    const bool& get_display() const;
@@ -209,13 +209,14 @@ public:
 
    string write_activation_function_expression() const;
 
+
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

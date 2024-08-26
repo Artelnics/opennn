@@ -56,7 +56,7 @@ Tensor<DataSet::RawVariable, 1> TimeSeriesDataSet::get_time_series_raw_variables
 
 /*
 
-const string& TimeSeriesDataSet::get_time_column() const
+const string& TimeSeriesDataSet::get_time_raw_variable() const
 {
     return time_column;
 }
@@ -464,8 +464,8 @@ void TimeSeriesDataSet::print() const
 
 }
 
-/*
-void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+
+void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -479,123 +479,75 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("DataSource");
 
     // File type
-    {
-        file_stream.OpenElement("FileType");
 
-        file_stream.PushText("csv");
+    file_stream.OpenElement("FileType");
+    file_stream.PushText("csv");
+    file_stream.CloseElement();
 
-        file_stream.CloseElement();
-    }
+    // Data source path
 
-    // Data file name
-    {
-        file_stream.OpenElement("DataSourcePath");
-
-        file_stream.PushText(data_source_path.c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("DataSourcePath");
+    file_stream.PushText(data_source_path.c_str());
+    file_stream.CloseElement();
 
     // Separator
-    {
-        file_stream.OpenElement("Separator");
 
-        file_stream.PushText(get_separator_string().c_str());
+    file_stream.OpenElement("Separator");
+    file_stream.PushText(get_separator_string().c_str());
+    file_stream.CloseElement();
 
-        file_stream.CloseElement();
-    }
+    // Has header
 
-    // Raw variables names
-    {
-        file_stream.OpenElement("HasHeader");
-
-        buffer.str("");
-        buffer << has_header;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("HasHeader");
+    file_stream.PushText(to_string(has_header).c_str());
+    file_stream.CloseElement();
 
     // Rows labels
-    {
-        file_stream.OpenElement("HasIds");
 
-        buffer.str("");
-
-        buffer << has_ids;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("HasIds");
+    file_stream.PushText(to_string(has_ids).c_str());
+    file_stream.CloseElement();
 
     // Missing values label
-    {
-        file_stream.OpenElement("MissingValuesLabel");
 
-        file_stream.PushText(missing_values_label.c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("MissingValuesLabel");
+    file_stream.PushText(missing_values_label.c_str());
+    file_stream.CloseElement();
 
     // Lags number
-    {
-        file_stream.OpenElement("LagsNumber");
 
-        buffer.str("");
-        buffer << get_lags_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("LagsNumber");
+    file_stream.PushText(to_string(get_lags_number()).c_str());
+    file_stream.CloseElement();
 
     // Steps Ahead
-    {
-        file_stream.OpenElement("StepsAhead");
 
-        buffer.str("");
-        buffer << get_steps_ahead();
+    file_stream.OpenElement("StepsAhead");
+    file_stream.PushText(to_string(get_steps_ahead()).c_str());
+    file_stream.CloseElement();
 
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
-    // Time raw_variable
-    {
-        file_stream.OpenElement("TimeColumn");
-
-        buffer.str("");
-        buffer << get_time_column();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    // Time raw variable
+/*
+    file_stream.OpenElement("TimeRawVariable");
+    file_stream.PushText(get_time_raw_variable().c_str());
+    file_stream.CloseElement();
 
     // Group by raw_variable
     {
         file_stream.OpenElement("GroupByColumn");
 
         buffer.str("");
-        buffer << get_time_column();
+        buffer << get_time_raw_variable();
 
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
     }
-
+*/
     // Codification
 
     file_stream.OpenElement("Codification");
-
-    buffer.str("");
-    buffer << get_codification_string();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(get_codification_string().c_str());
     file_stream.CloseElement();
 
     // Close DataFile
@@ -607,31 +559,21 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("RawVariables");
 
     // Raw variables number
-    {
-        file_stream.OpenElement("RawVariablesNumber");
 
-        buffer.str("");
-        buffer << get_raw_variables_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("RawVariablesNumber");
+    file_stream.PushText(to_string(get_raw_variables_number()).c_str());
+    file_stream.CloseElement();
 
     const Index raw_variables_number = get_raw_variables_number();
 
     // Raw variables items
+
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            file_stream.OpenElement("RawVariable");
-
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            raw_variables(i).write_XML(file_stream);
-
-            file_stream.CloseElement();
-        }
+        file_stream.OpenElement("RawVariable");
+        file_stream.PushAttribute("Item", to_string(i+1).c_str());
+        raw_variables(i).to_XML(file_stream);
+        file_stream.CloseElement();
     }
 
     // Close raw_variables
@@ -647,54 +589,32 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("TimeSeriesRawVariables");
 
         // Time series raw_variables number
-        {
-            file_stream.OpenElement("TimeSeriesraw_variablesNumber");
 
-            buffer.str("");
-            buffer << get_time_series_raw_variables_number();
-
-            file_stream.PushText(buffer.str().c_str());
-
+            file_stream.OpenElement("TimeSeriesRawVariablesNumber");
+            file_stream.PushText(to_string(get_time_series_raw_variables_number()).c_str());
             file_stream.CloseElement();
-        }
 
         // Time series raw_variables items
 
         for(Index i = 0; i < time_series_raw_variables_number; i++)
         {
-            file_stream.OpenElement("TimeSeriesColumn");
-
+            file_stream.OpenElement("TimeSeriesRawVariable");
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            time_series_raw_variables(i).write_XML(file_stream);
-
+            time_series_raw_variables(i).to_XML(file_stream);
             file_stream.CloseElement();
         }
 
-        // Close time series raw_variables
+        // Close time series raw variables
 
         file_stream.CloseElement();
     }
 
-    // Rows labels
+    // Ids
 
     if(has_ids)
     {
-        const Index rows_labels_number = ids.size();
-
         file_stream.OpenElement("HasIds");
-
-        buffer.str("");
-
-        for(Index i = 0; i < rows_labels_number; i++)
-        {
-            buffer << ids(i);
-
-            if(i != rows_labels_number-1) buffer << ",";
-        }
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(string_tensor_to_string(get_ids()).c_str());
         file_stream.CloseElement();
     }
 
@@ -703,38 +623,16 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("Samples");
 
     // Samples number
-    {
-        file_stream.OpenElement("SamplesNumber");
 
-        buffer.str("");
-        buffer << get_samples_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("SamplesNumber");
+    file_stream.PushText(to_string(get_samples_number()).c_str());
+    file_stream.CloseElement();
 
     // Samples uses
-    {
-        file_stream.OpenElement("SamplesUses");
 
-        buffer.str("");
-
-        const Index samples_number = get_samples_number();
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            SampleUse sample_use = samples_uses(i);
-
-            buffer << Index(sample_use);
-
-            if(i < (samples_number-1)) buffer << " ";
-        }
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("SamplesUses");
+    file_stream.PushText(tensor_to_string(get_samples_uses_tensor()).c_str());
+    file_stream.CloseElement();
 
     // Close samples
 
@@ -743,43 +641,15 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Missing values
 
     file_stream.OpenElement("MissingValues");
-
-    // Missing values method
-    {
-        file_stream.OpenElement("MissingValuesMethod");
-
-        if(missing_values_method == MissingValuesMethod::Mean)
-        {
-            file_stream.PushText("Mean");
-        }
-        else if(missing_values_method == MissingValuesMethod::Median)
-        {
-            file_stream.PushText("Median");
-        }
-        else if(missing_values_method == MissingValuesMethod::Unuse)
-        {
-            file_stream.PushText("Unuse");
-        }
-        else if(missing_values_method == MissingValuesMethod::Interpolation)
-        {
-            file_stream.PushText("Interpolation");
-        }
-
-        file_stream.CloseElement();
-    }
+    file_stream.PushText(get_missing_values_method_string().c_str());
+    file_stream.CloseElement();
 
     // Missing values number
-    {
-        file_stream.OpenElement("MissingValuesNumber");
 
-        buffer.str("");
-        buffer << missing_values_number;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
+    file_stream.OpenElement("MissingValuesNumber");
+    file_stream.PushText(to_string(missing_values_number).c_str());
+    file_stream.CloseElement();
+/*
     if(missing_values_number > 0)
     {
         // Raw variables missing values number
@@ -814,13 +684,13 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
-
+*/
     // Missing values
 
     file_stream.CloseElement();
 
     // Preview data
-
+/*
     file_stream.OpenElement("PreviewData");
 
     file_stream.OpenElement("PreviewSize");
@@ -855,17 +725,19 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close preview data
 
     file_stream.CloseElement();
-
+*/
     // Close data set
 
     file_stream.CloseElement();
 
     time(&finish);
+
 }
 
 
 void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
+/*
     ostringstream buffer;
 
     // Data set element
@@ -1038,7 +910,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time raw_variable
 
-    const tinyxml2::XMLElement* time_raw_variable_element = data_source_element->FirstChildElement("TimeColumn");
+    const tinyxml2::XMLElement* time_raw_variable_element = data_source_element->FirstChildElement("TimeRawVariable");
 
     if(!time_raw_variable_element)
     {
@@ -1187,7 +1059,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // raw_variable use
 
-            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("RawVariableUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("Use");
 
             if(!raw_variable_use_element)
             {
@@ -1256,7 +1128,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time series raw_variables number
 
-    const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesraw_variablesNumber");
+    const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
 
     if(!time_series_raw_variables_number_element)
     {
@@ -1284,7 +1156,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         for(Index i = 0; i < time_series_new_raw_variables_number; i++)
         {
-            const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesColumn");
+            const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
             time_series_start_element = time_series_raw_variable_element;
 
             if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
@@ -1338,7 +1210,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // raw_variable use
 
-            const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("RawVariableUse");
+            const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("Use");
 
             if(!time_series_raw_variable_use_element)
             {
@@ -1658,8 +1530,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             cerr << e.what() << endl;
         }
     }
-}
 */
+}
+
 
 void TimeSeriesDataSet::impute_missing_values_mean()
 {

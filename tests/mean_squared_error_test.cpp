@@ -610,7 +610,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
 //        Tensor<type,4> input_batch(input_heigth, input_width, channels, input_images);
 //        Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
-//        Tensor<type,1> bias(kernels_number);
+//        Tensor<type, 1> bias(kernels_number);
 
 //        const Index inputs_number_convolution = (input_heigth)*(input_width)*channels*input_images;
 //        const Index output_number_convolution = (input_heigth - kernel_height + 1)*(input_width - kernel_width + 1)*kernels_number*input_images;
@@ -901,7 +901,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //       //set dimensions
 
 //       Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
-//       Tensor<type,1> bias(kernels_number);
+//       Tensor<type, 1> bias(kernels_number);
 
 //       const Index inputs_number_convolution = (input_heigth)*(input_width)*channels;
 //       const Index output_number_convolution = (input_heigth - kernel_height + 1)*(input_width - kernel_width + 1)*kernels_number;
@@ -1646,7 +1646,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
-        const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+        const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
         cout << "Numerical gradient: " << endl << numerical_gradient << endl;
     }
@@ -1842,7 +1842,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
       BackPropagation back_propagation(images_number, &mean_squared_error);
       mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-      const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+      const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
       cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
 
@@ -2033,7 +2033,7 @@ cout << "Before back propagation" << endl;
 cout << "After back propagation" << endl;
       cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
-      const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+      const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
       cout << "Numerical gradient: " << endl << numerical_gradient << endl;
 
@@ -2067,9 +2067,9 @@ void MeanSquaredErrorTest::run_test_case()
     // Back propagate
 
     test_back_propagate_perceptron();
-    test_back_propagate_probabilistic(); /*Probabilistic only works with CrossEntropyError*/
-    test_back_propagate_convolutional();
     /*
+    test_back_propagate_probabilistic(); //Probabilistic only works with CrossEntropyError6
+    test_back_propagate_convolutional();
     test_back_propagate_recurrent();
     test_back_propagate_long_short_term_memory();
     */

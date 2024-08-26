@@ -520,7 +520,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     // Inputs derivatives
 
     input_derivatives.setZero();
-    
+
     extents = { 1, output_height, output_width, 1 };
 
     for (Index image_index = 0; image_index < batch_samples_number; image_index++)
@@ -545,7 +545,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                 delta_reshape.convolve(kernel_weights.reverse(Eigen::array<Index, 3>({ 0, 1, 2 })), convolutions_dimensions);
         }
     }
-    
+
     /* OLD INPUT DERIVATIVES
     input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
     
@@ -582,17 +582,17 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     // Convolutional layer
 
-    const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index biases_number = get_biases_number();
 
     // Back-propagation
 
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
 
-    const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
-
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
+
+    const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
 
     // Copy from back propagation to gradient
 
@@ -831,21 +831,33 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
     if(new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
+
+    if (new_kernel_dimensions.size() != 4)
+        throw runtime_error("Kernel dimensions must be 4");
     
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];
     const Index kernel_channels = new_kernel_dimensions[2];
     const Index kernels_number = new_kernel_dimensions[3];
 
+    if (kernel_height > new_input_dimensions[0])
+        throw runtime_error("kernel_height cannot be bigger than input dimensions");
+
+    if (kernel_width > new_input_dimensions[1])
+        throw runtime_error("kernel_width cannot be bigger than input dimensions");
+
+    if (kernel_channels != new_input_dimensions[2])
+        throw runtime_error("kernel_channels must match input_channels dimension");
+
     biases.resize(kernels_number);
-    biases.setRandom();
+    set_random(biases);
 
     synaptic_weights.resize(kernel_height,
                             kernel_width,
                             kernel_channels,
                             kernels_number);
 
-    synaptic_weights.setRandom();
+    set_random(synaptic_weights);
 
     moving_means.resize(kernels_number);
     moving_standard_deviations.resize(kernels_number);
@@ -865,17 +877,17 @@ void ConvolutionalLayer::set_name(const string& new_layer_name)
 
 void ConvolutionalLayer::set_parameters_constant(const type& value)
 {
-    // set_biases_constant(value);
+    biases.setConstant(value);
 
-    // set_synaptic_weights_constant(value);
+    synaptic_weights.setConstant(value);
 }
 
 
 void ConvolutionalLayer::set_parameters_random()
 {
-    biases.setRandom();
+    set_random(biases);
 
-    synaptic_weights.setRandom();
+    set_random(synaptic_weights);
 }
 
 
@@ -1141,7 +1153,7 @@ Index ConvolutionalLayer::get_input_channels() const
 void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training)
 {
     const Index batch_samples_number = inputs.dimension(0);
-    const Index channels_number = get_kernels_number();
+    const Index channels = get_kernels_number();
 
     if(is_training)
     {
@@ -1161,7 +1173,7 @@ void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training
 }
 */
 
-void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Convolutional layer
 

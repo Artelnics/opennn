@@ -80,6 +80,14 @@ Descriptives::Descriptives(const Tensor<type, 1>&x)
 }
 
 
+Tensor<type, 1> Descriptives::to_tensor() const
+{
+    Tensor<type, 1> descriptives_tensor(4);
+    descriptives_tensor.setValues({minimum, maximum, mean, standard_deviation});
+
+    return descriptives_tensor;
+}
+
 
 void Descriptives::set(const type& new_minimum, const type& new_maximum,
                        const type& new_mean, const type& new_standard_deviation)
@@ -1388,7 +1396,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 }
 
 
-Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index&  bins_number)
+Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index& bins_number)
 {
 #ifdef OPENNN_DEBUG
 
@@ -1947,7 +1955,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
     for(Index i = 0; i < row_indices_size; i++)
     {
         if(row_indices(i) >= rows_number)
-            throw runtime_error("Row index " + i + " must be less than rows number.\n");
+            throw runtime_error("Row index " + to_string(i) + " must be less than rows number.\n");
     }
 
     if(row_indices_size == 0)

@@ -11,10 +11,7 @@
 // System includes
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
-#include <cstring>
 #include <time.h>
 
 // OpenNN includes
@@ -40,21 +37,25 @@ int main()
 
         data_set.save("../data/data_set.xml");
         data_set.load("../data/data_set.xml");
-/*
 
         // Neural network
 
         const Index hidden_neurons_number = 5;
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+                                     {input_variables_number, hidden_neurons_number, target_variables_number});
 
+
+        neural_network.save("../data/neural_network.xml");
+        neural_network.load("../data/neural_network.xml");
+/*
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.perform_training();
+        //training_strategy.perform_training();
 
         // Testing analysis
 

@@ -250,10 +250,10 @@ void Layer::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
     
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
-    const Index channels_number = y.dimension(2);
+    const Index channels = y.dimension(2);
     
     const Eigen::array<Index, 3> range_3{ { rows_number, columns_number, 1 } };
-    const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels_number } };
+    const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels } };
 
     y.device(*thread_pool_device) = x - x.maximum(softmax_dimension)
                                          .eval()
@@ -274,11 +274,11 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
     const Index rows_number = x.dimension(0);
     const Index columns_number = x.dimension(1);
-    const Index channels_number = x.dimension(2);
+    const Index channels = x.dimension(2);
     const Index blocks_number = x.dimension(3);
 
     const Eigen::array<Index, 1> softmax_dimension{ { 0 } };
-    const Eigen::array<Index, 4> range_4{ { 1, columns_number, channels_number, blocks_number } };
+    const Eigen::array<Index, 4> range_4{ { 1, columns_number, channels, blocks_number } };
     const Eigen::array<Index, 4> expand_softmax_dim{ { rows_number, 1, 1, 1 } };
 
     y.device(*thread_pool_device) = x - x.maximum(softmax_dimension)
@@ -302,7 +302,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 {
     const Index rows_number = softmax.dimension(0);
     const Index columns_number = softmax.dimension(1);
-    const Index channels_number = softmax.dimension(2);
+    const Index channels = softmax.dimension(2);
 
     type* softmax_data = (type*)softmax.data();
     type* tensor_data = (type*)tensor.data();
@@ -314,7 +314,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 
     Tensor<type, 0> sum;
 
-    for(Index i = 0; i < channels_number; i++)
+    for(Index i = 0; i < channels; i++)
     {
         for(Index j = 0; j < columns_number; j++)
         {

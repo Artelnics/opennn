@@ -219,7 +219,7 @@ void OptimizationAlgorithm::check() const
 }
 
 
-void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void OptimizationAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -281,7 +281,7 @@ void OptimizationAlgorithm::save(const string& file_name) const
     if(file)
     {
         tinyxml2::XMLPrinter printer(file);
-        write_XML(printer);
+        to_XML(printer);
         fclose(file);
     }
 }

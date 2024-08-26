@@ -351,10 +351,8 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 }
 
 
-void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void BoundingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("BoundingLayer");
 
     // Bounding neurons number
@@ -412,8 +410,6 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* bounding_layer_element = document.FirstChildElement("BoundingLayer");
 
     if(!bounding_layer_element)
