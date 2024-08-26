@@ -156,14 +156,14 @@ public:
 
    type calculate_masked_accuracy(const Tensor<type, 3>&, const Tensor<type, 2>&) const;
 
-   type calculate_determination_coefficient(const Tensor<type,1>&, const Tensor<type,1>&) const;
+   type calculate_determination_coefficient(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
    // Goodness-of-fit analysis
 
    Tensor<Correlation, 1> linear_correlation() const;
    Tensor<Correlation, 1> linear_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void print_linear_regression_correlations() const;
+   void print_linear_correlations() const;
 
    Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
    void print_goodness_of_fit_analysis() const;
@@ -191,8 +191,6 @@ public:
 
    RocAnalysisResults perform_roc_analysis() const;
 
-   type calculate_Wilcoxon_parameter(const type&, const type&) const;
-
    Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
 //   type calculate_area_under_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -212,7 +210,6 @@ public:
    Tensor<type, 2> perform_lift_chart_analysis() const;
    Tensor<type, 2> calculate_lift_chart(const Tensor<type, 2>&) const;
 
-   KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis() const;
    Tensor<type, 1> calculate_maximum_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Calibration plot
@@ -285,7 +282,7 @@ public:
 
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
-   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   virtual void to_XML(tinyxml2::XMLPrinter&) const;
 
    void save(const string&) const;
    void load(const string&);

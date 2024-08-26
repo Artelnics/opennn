@@ -231,7 +231,7 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
 }
 
 
-void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ModelSelection::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Model selection
 
@@ -245,7 +245,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(write_neurons_selection_method().c_str());
     file_stream.CloseElement();
 
-    growing_neurons.write_XML(file_stream);
+    growing_neurons.to_XML(file_stream);
 
     file_stream.CloseElement();
 
@@ -257,8 +257,8 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(write_inputs_selection_method().c_str());
     file_stream.CloseElement();
 
-    growing_inputs.write_XML(file_stream);
-    genetic_algorithm.write_XML(file_stream);
+    growing_inputs.to_XML(file_stream);
+    genetic_algorithm.to_XML(file_stream);
 
     file_stream.CloseElement();
 
@@ -407,7 +407,7 @@ void ModelSelection::save(const string& file_name) const
     if(file)
     {
         tinyxml2::XMLPrinter printer(file);
-        write_XML(printer);
+        to_XML(printer);
         fclose(file);
     }
 }

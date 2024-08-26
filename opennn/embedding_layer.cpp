@@ -58,6 +58,12 @@ bool EmbeddingLayer::get_positional_encoding() const
 }
 
 
+dimensions EmbeddingLayer::get_input_dimensions() const
+{
+    return {};
+}
+
+
 dimensions EmbeddingLayer::get_output_dimensions() const
 {
     return { inputs_number, depth };
@@ -369,8 +375,6 @@ void EmbeddingLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
 void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     // Embedding layer
 
     const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("EmbeddingLayer");
@@ -454,10 +458,8 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void EmbeddingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     // Embedding layer
 
     file_stream.OpenElement("EmbeddingLayer");
@@ -469,11 +471,11 @@ void EmbeddingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Input dimension
-/*
+
     file_stream.OpenElement("InputDimension");
     file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
     file_stream.CloseElement();
-*/
+
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");

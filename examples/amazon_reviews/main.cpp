@@ -72,10 +72,10 @@ int main()
         // Model deployment
 
         string review_1 = "Highly recommend for any one who has a bluetooth phone.";
-        Tensor<type,1> processed_review_1 = text_data_set.sentence_to_data(review_1);
+        Tensor<type, 1> processed_review_1 = text_data_set.sentence_to_data(review_1);
 
         string review_2 = "You have to hold the phone at a particular angle for the other party to hear you clearly.";
-        Tensor<type,1> processed_review_2 = text_data_set.sentence_to_data(review_2);
+        Tensor<type, 1> processed_review_2 = text_data_set.sentence_to_data(review_2);
 
         Tensor<type,2> input_data(2, words_number);
         Tensor<Index, 1> input_dimensions = get_dimensions(input_data);

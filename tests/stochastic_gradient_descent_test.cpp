@@ -220,7 +220,7 @@ void StochasticGradientDescentTest::test_to_XML()
 
     tinyxml2::XMLPrinter file_stream;
 
-    stochastic_gradient_descent.write_XML(file_stream);
+    stochastic_gradient_descent.to_XML(file_stream);
 }
 
 

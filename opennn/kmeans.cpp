@@ -43,8 +43,8 @@ void KMeans::fit(const Tensor<type, 2>& data)
     const Index rows_number = data.dimension(0);
     const Index raw_variables_number = data.dimension(1);
 
-    Tensor<type,1> row(rows_number);
-    Tensor<type,1> center(raw_variables_number);
+    Tensor<type, 1> row(rows_number);
+    Tensor<type, 1> center(raw_variables_number);
     Tensor<type, 1> center_sum(raw_variables_number);
 
     cluster_centers.resize(clusters_number, raw_variables_number);
@@ -144,8 +144,8 @@ Tensor<Index, 1> KMeans::calculate_outputs(const Tensor<type, 2>& data)
 
 Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clusters)
 {
-    Tensor<type,1> data_point;
-    Tensor<type,1> cluster_center;
+    Tensor<type, 1> data_point;
+    Tensor<type, 1> cluster_center;
     Tensor<type, 1> sum_squared_error_values(max_clusters);
 
     const Index rows_number = data.dimension(0);

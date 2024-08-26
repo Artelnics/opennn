@@ -8,6 +8,7 @@
 
 #include "unscaling_layer.h"
 #include "strings_utilities.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -423,7 +424,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 }
 
 
-void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_string)
+void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_scalers)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -434,48 +435,54 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
 
 #endif
 
-    Tensor<Scaler, 1> new_unscaling_methods(neurons_number);
-
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(new_unscaling_methods_string(i) == "None")
-        {
-            new_unscaling_methods(i) = Scaler::None;
-        }
-        else if(new_unscaling_methods_string(i) == "MeanStandardDeviation")
-        {
-            new_unscaling_methods(i) = Scaler::MeanStandardDeviation;
-        }
-        else if(new_unscaling_methods_string(i) == "StandardDeviation")
-        {
-            new_unscaling_methods(i) = Scaler::StandardDeviation;
-        }
-        else if(new_unscaling_methods_string(i) == "MinimumMaximum")
-        {
-            new_unscaling_methods(i) = Scaler::MinimumMaximum;
-        }
-        else if(new_unscaling_methods_string(i) == "Logarithm")
-        {
-            new_unscaling_methods(i) = Scaler::Logarithm;
-        }
-        else
-        {
-            throw runtime_error("Unknown scaling method: " + new_unscaling_methods_string(i) + ".\n");
-        }
+        set_scaler(i, new_scalers(i));
     }
-
-    set_scalers(new_unscaling_methods);
 }
 
 
 void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
 {
     const Index neurons_number = get_neurons_number();
+
     for(Index i = 0; i < neurons_number; i++)
     {
         scalers(i) = new_unscaling_method;
     }
 }
+
+
+void UnscalingLayer::set_scaler(const Index& variable_index, const string& new_scaler)
+{
+    if(new_scaler == "None")
+    {
+        scalers(variable_index) = Scaler::None;
+    }
+    else if(new_scaler == "MeanStandardDeviation")
+    {
+        scalers(variable_index) = Scaler::MeanStandardDeviation;
+    }
+    else if(new_scaler == "StandardDeviation")
+    {
+        scalers(variable_index) = Scaler::StandardDeviation;
+    }
+    else if(new_scaler == "MinimumMaximum")
+    {
+        scalers(variable_index) = Scaler::MinimumMaximum;
+    }
+    else if(new_scaler == "Logarithm")
+    {
+        scalers(variable_index) = Scaler::Logarithm;
+    }
+    else
+    {
+        throw runtime_error("Unknown scaling method: " + new_scaler + ".\n");
+    }
+
+}
+
+
 
 
 void UnscalingLayer::set_display(const bool& new_display)
@@ -610,7 +617,7 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -630,32 +637,13 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        file_stream.OpenElement("Descriptives");
-
+        file_stream.OpenElement("UnscalingNeuron");
         file_stream.PushAttribute("Index", int(i+1));
 
-        // Minimum
+        //Descriptives
 
-        file_stream.OpenElement("Minimum");
-        file_stream.PushText(to_string(descriptives[i].minimum).c_str());
-        file_stream.CloseElement();
-
-        // Maximum
-
-        file_stream.OpenElement("Maximum");
-        file_stream.PushText(to_string(descriptives[i].maximum).c_str());
-        file_stream.CloseElement();
-
-        // Mean
-
-        file_stream.OpenElement("Mean");
-        file_stream.PushText(to_string(descriptives[i].mean).c_str());
-        file_stream.CloseElement();
-
-        // Standard deviation
-
-        file_stream.OpenElement("StandardDeviation");
-        file_stream.PushText(to_string(descriptives[i].standard_deviation).c_str());
+        file_stream.OpenElement("Descriptives");
+        file_stream.PushText(tensor_to_string(descriptives(i).to_tensor()).c_str());
         file_stream.CloseElement();
 
         // Unscaling method
@@ -677,8 +665,6 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("UnscalingLayer");
 
     if(!root_element)
@@ -699,97 +685,45 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-
     for(Index i = 0; i < neurons_number; i++)
     {
-        const tinyxml2::XMLElement* descriptives_element = start_element->NextSiblingElement("Descriptives");
-        start_element = descriptives_element;
+        const tinyxml2::XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
+        start_element = unscaling_neuron_element;
 
-        if(!descriptives_element)
-            throw runtime_error("Descriptives of unscaling neuron " + to_string(i+1) + " is nullptr.\n");
+        if(!unscaling_neuron_element)
+            throw runtime_error("Unscaling neuron " + to_string(i+1) + " is nullptr.\n");
 
-        descriptives_element->QueryUnsignedAttribute("Index", &index);
+        unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
 
         if(index != i+1)
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
 
         // Minimum
 
-        const tinyxml2::XMLElement* minimum_element = descriptives_element->FirstChildElement("Minimum");
+        const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
 
-        if(!minimum_element)
-            throw runtime_error("Minimum element " + to_string(i+1) + " is nullptr.\n");
-
-        if(minimum_element->GetText())
+        if(descriptives_element->GetText())
         {
-            descriptives(i).minimum = type(atof(minimum_element->GetText()));
-        }
+            const char* new_descriptives_element = descriptives_element->GetText();
 
-        // Maximum
+            const Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, " ");
 
-        const tinyxml2::XMLElement* maximum_element = descriptives_element->FirstChildElement("Maximum");
-
-        if(!maximum_element)
-            throw runtime_error("Maximum element " + to_string(i+1) + " is nullptr.\n");
-
-        if(maximum_element->GetText())
-        {
-            descriptives(i).maximum = type(atof(maximum_element->GetText()));
-        }
-
-        // Mean
-
-        const tinyxml2::XMLElement* mean_element = descriptives_element->FirstChildElement("Mean");
-
-        if(!mean_element)
-            throw runtime_error("Mean element " + to_string(i+1) + " is nullptr.\n");
-
-        if(mean_element->GetText())
-        {
-            descriptives(i).mean = type(atof(mean_element->GetText()));
-        }
-
-        // Standard deviation
-
-        const tinyxml2::XMLElement* standard_deviation_element = descriptives_element->FirstChildElement("StandardDeviation");
-
-        if(!standard_deviation_element)
-            throw runtime_error("Standard deviation element " + to_string(i+1) + " is nullptr.\n");
-
-        if(standard_deviation_element->GetText())
-        {
-            descriptives(i).standard_deviation = type(atof(standard_deviation_element->GetText()));
+            descriptives[i].minimum = type(stof(splitted_descriptives[0]));
+            descriptives[i].maximum = type(stof(splitted_descriptives[1]));
+            descriptives[i].mean = type(stof(splitted_descriptives[2]));
+            descriptives[i].standard_deviation = type(stof(splitted_descriptives[3]));
         }
 
         // Unscaling method
 
-        const tinyxml2::XMLElement* unscaling_method_element = descriptives_element->FirstChildElement("Scaler");
+        const tinyxml2::XMLElement* unscaling_method_element = unscaling_neuron_element->FirstChildElement("Scaler");
 
         if(!unscaling_method_element)
             throw runtime_error("Unscaling method element " + to_string(i+1) + " is nullptr.\n");
 
         const string new_method = unscaling_method_element->GetText();
 
-        if(new_method == "None")
-        {
-            scalers[i] = Scaler::None;
-        }
-        else if(new_method == "MinimumMaximum")
-        {
-            scalers[i] = Scaler::MinimumMaximum;
-        }
-        else if(new_method == "MeanStandardDeviation")
-        {
-            scalers[i] = Scaler::MeanStandardDeviation;
-        }
-        else if(new_method == "StandardDeviation")
-        {
-            scalers[i] = Scaler::StandardDeviation;
-        }
-        else if(new_method == "Logarithm")
-        {
-            scalers[i] = Scaler::Logarithm;
-        }
+        set_scaler(i, new_method);
     }
 
     // Display
@@ -798,7 +732,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(element)
     {
-        string new_display_string = element->GetText();
+        const string new_display_string = element->GetText();
 
         try
         {

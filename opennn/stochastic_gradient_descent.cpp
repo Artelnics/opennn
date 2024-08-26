@@ -544,7 +544,7 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 }
 
 
-void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

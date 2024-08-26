@@ -26,7 +26,7 @@ namespace opennn
     
     // Type
 
-    void reflect_image_x(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&);
+    void reflect_image_x(const ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&);
     void reflect_image_y(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&);
     void rotate_image(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&, const type&);
     void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&);

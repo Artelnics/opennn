@@ -306,7 +306,7 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 }
 
 
-void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void GrowingNeurons::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("GrowingNeurons");
 
@@ -505,7 +505,7 @@ void GrowingNeurons::save(const string& file_name) const
     if(file)
     {
         tinyxml2::XMLPrinter printer(file);
-        write_XML(printer);
+        to_XML(printer);
         fclose(file);
     }
 }

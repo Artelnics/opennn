@@ -98,6 +98,7 @@ public:
    void set_scalers(const Tensor<string, 1>&);
 
    void set_scaler(const Index&, const Scaler&);
+   void set_scaler(const Index&, const string&);
    void set_scalers(const Scaler&);
    void set_scalers(const string&);
 
@@ -133,7 +134,7 @@ public:
 
    virtual void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

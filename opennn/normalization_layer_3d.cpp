@@ -213,8 +213,9 @@ void NormalizationLayer3D::set_parameters_constant(const type& value)
 
 void NormalizationLayer3D::set_parameters_random()
 {
-    gammas.setRandom();
-    betas.setRandom();
+    set_random(gammas);
+
+    set_random(betas);
 }
 
 
@@ -436,7 +437,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
-void NormalizationLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void NormalizationLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

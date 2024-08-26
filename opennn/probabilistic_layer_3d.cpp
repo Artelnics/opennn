@@ -305,12 +305,6 @@ void ProbabilisticLayer3D::set_display(const bool& new_display)
 }
 
 
-void ProbabilisticLayer3D::set_synaptic_weights_Glorot()
-{
-    synaptic_weights.setRandom();
-}
-
-
 void ProbabilisticLayer3D::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
@@ -321,9 +315,9 @@ void ProbabilisticLayer3D::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer3D::set_parameters_random()
 {
-    biases.setRandom();
+    set_random(biases);
 
-    synaptic_weights.setRandom();
+    set_random(synaptic_weights);
 }
 
 
@@ -602,7 +596,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void ProbabilisticLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

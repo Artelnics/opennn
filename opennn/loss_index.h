@@ -191,7 +191,7 @@ public:
 
    void from_XML(const tinyxml2::XMLDocument&);
 
-   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   virtual void to_XML(tinyxml2::XMLPrinter&) const;
 
    void regularization_from_XML(const tinyxml2::XMLDocument&);
    void write_regularization_XML(tinyxml2::XMLPrinter&) const;

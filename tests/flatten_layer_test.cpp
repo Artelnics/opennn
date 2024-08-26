@@ -43,17 +43,17 @@ void FlattenLayerTest::test_forward_propagate()
 {    
     cout << "test_forward_propagate\n";
 
-    const Index image_height = 6;
-    const Index image_width = 6;
+    const Index height = 6;
+    const Index width = 6;
     const Index image_channels_number= 3;
     const Index images_number = 2;
 
     bool is_training = true;
 
-    Tensor<type, 4> inputs(image_height, image_width, image_channels_number, images_number);
+    Tensor<type, 4> inputs(height, width, image_channels_number, images_number);
     inputs.setRandom();
 
-    dimensions input_dimensions({image_height, image_width, image_channels_number, images_number});
+    dimensions input_dimensions({height, width, image_channels_number, images_number});
 
     flatten_layer.set(input_dimensions);
 
@@ -64,7 +64,7 @@ void FlattenLayerTest::test_forward_propagate()
     Tensor<type*, 1> input_data(1);
     input_data(0) = inputs.data();
 
-    pair<type*, dimensions> inputs_pair(inputs.data(), {{image_height, image_width, image_channels_number, images_number}});
+    pair<type*, dimensions> inputs_pair(inputs.data(), {{height, width, image_channels_number, images_number}});
 
     flatten_layer.forward_propagate(tensor_wrapper(inputs_pair), &flatten_layer_forward_propagation, is_training);
 

@@ -62,7 +62,6 @@ public:
 
     // ROC curve
 
-    void test_calculate_Wilcoxon_parameter();
     void test_calculate_roc_curve();
     void test_calculate_area_under_curve();
     void test_calculate_optimal_threshold ();

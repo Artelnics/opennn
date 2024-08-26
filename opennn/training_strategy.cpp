@@ -699,7 +699,7 @@ void TrainingStrategy::print() const
 }
 
 
-void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("TrainingStrategy");
 
@@ -713,11 +713,11 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(write_loss_method().c_str());
     file_stream.CloseElement();
 
-    mean_squared_error.write_XML(file_stream);
-    normalized_squared_error.write_XML(file_stream);
-    Minkowski_error.write_XML(file_stream);
-    cross_entropy_error.write_XML(file_stream);
-    weighted_squared_error.write_XML(file_stream);
+    mean_squared_error.to_XML(file_stream);
+    normalized_squared_error.to_XML(file_stream);
+    Minkowski_error.to_XML(file_stream);
+    cross_entropy_error.to_XML(file_stream);
+    weighted_squared_error.to_XML(file_stream);
 
     switch(loss_method)
     {
@@ -740,12 +740,12 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(write_optimization_method().c_str());
     file_stream.CloseElement();
 
-    gradient_descent.write_XML(file_stream);
-    conjugate_gradient.write_XML(file_stream);
-    stochastic_gradient_descent.write_XML(file_stream);
-    adaptive_moment_estimation.write_XML(file_stream);
-    quasi_Newton_method.write_XML(file_stream);
-    Levenberg_Marquardt_algorithm.write_XML(file_stream);
+    gradient_descent.to_XML(file_stream);
+    conjugate_gradient.to_XML(file_stream);
+    stochastic_gradient_descent.to_XML(file_stream);
+    adaptive_moment_estimation.to_XML(file_stream);
+    quasi_Newton_method.to_XML(file_stream);
+    Levenberg_Marquardt_algorithm.to_XML(file_stream);
 
     file_stream.CloseElement();
 
@@ -1026,7 +1026,7 @@ void TrainingStrategy::save(const string& file_name) const
     if(file)
     {
         tinyxml2::XMLPrinter printer(file);
-        write_XML(printer);
+        to_XML(printer);
         fclose(file);
     }
 }
