@@ -124,7 +124,7 @@ public:
                      << "U is less than A:\n"
                      << struct_to_string();
 
-              throw(buffer.str());
+              throw runtime_error(buffer.str());
            }
 
            if(U.first > B.first)
@@ -134,7 +134,7 @@ public:
                      << "U is greater than B:\n"
                      << struct_to_string();
 
-              throw(buffer.str());
+              throw runtime_error(buffer.str());
            }
 
            if(U.second >= A.second)
@@ -144,7 +144,7 @@ public:
                      << "fU is equal or greater than fA:\n"
                      << struct_to_string();
 
-              throw(buffer.str());
+              throw runtime_error(buffer.str());
            }
 
            if(U.second >= B.second)
@@ -154,7 +154,7 @@ public:
                      << "fU is equal or greater than fB:\n"
                      << struct_to_string();
 
-              throw(buffer.str());
+              throw runtime_error(buffer.str());
            }
        }
 

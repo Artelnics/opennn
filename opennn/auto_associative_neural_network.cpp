@@ -188,9 +188,6 @@ void AutoAssociativeNeuralNetwork::set_variables_distances_names(const Tensor<st
 
 void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument& document)
 {
-
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("BoxPlotDistances");
 
     if(!root_element)
@@ -521,13 +518,7 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    //    buffer << get_inputs_number();
-    buffer << inputs_names.size();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(inputs_names.size()).c_str());
     file_stream.CloseElement();
 
     // Inputs names
@@ -560,7 +551,7 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
     for(Index i = 0; i < layers.size(); i++)
     {
         buffer << layers[i]->get_type_string();
-        if(i != (layers.size()-1)) buffer << " ";
+        if(i != layers.size()-1) buffer << " ";
     }
 
     file_stream.PushText(buffer.str().c_str());
@@ -630,45 +621,25 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
     // First quartile
 
     file_stream.OpenElement("FirstQuartile");
-
-    buffer.str("");
-    buffer << get_box_plot_first_quartile();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_box_plot_first_quartile()).c_str());
     file_stream.CloseElement();
 
     // Median
 
     file_stream.OpenElement("Median");
-
-    buffer.str("");
-    buffer << get_box_plot_median();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_box_plot_median()).c_str());
     file_stream.CloseElement();
 
     // Third Quartile
 
     file_stream.OpenElement("ThirdQuartile");
-
-    buffer.str("");
-    buffer << get_box_plot_third_quartile();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_box_plot_third_quartile()).c_str());
     file_stream.CloseElement();
 
     // Maximum
 
     file_stream.OpenElement("Maximum");
-
-    buffer.str("");
-    buffer << get_box_plot_maximum();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_box_plot_maximum()).c_str());
     file_stream.CloseElement();
 
     //BoxPlotDistances (end tag)

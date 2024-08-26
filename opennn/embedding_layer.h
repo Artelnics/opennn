@@ -51,6 +51,7 @@ public:
     Index get_depth() const;
     bool get_positional_encoding() const;
 
+    dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const final;
 
     Tensor<type, 2> get_embedding_weights() const;
@@ -112,7 +113,6 @@ public:
     void add_deltas(const Tensor<pair<type*, dimensions>, 1>&) const;
 
     void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
-
 
     // Serialization
 

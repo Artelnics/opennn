@@ -591,18 +591,13 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 
 void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("AdaptiveMomentEstimation");
 
     // Batch size
 
     file_stream.OpenElement("BatchSize");
 
-    buffer.str("");
-    buffer << batch_samples_number;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(batch_samples_number).c_str());
 
     file_stream.CloseElement();
 
@@ -610,10 +605,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("LossGoal");
 
-    buffer.str("");
-    buffer << training_loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(training_loss_goal).c_str());
 
     file_stream.CloseElement();
 
@@ -621,10 +613,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("MaximumEpochsNumber");
 
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(maximum_epochs_number).c_str());
 
     file_stream.CloseElement();
 
@@ -632,10 +621,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("MaximumTime");
 
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(maximum_time).c_str());
 
     file_stream.CloseElement();
 
@@ -643,10 +629,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("HardwareUse");
 
-    buffer.str("");
-    buffer << get_hardware_use();
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(get_hardware_use().c_str());
 
     file_stream.CloseElement();
 

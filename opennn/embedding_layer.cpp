@@ -58,6 +58,12 @@ bool EmbeddingLayer::get_positional_encoding() const
 }
 
 
+dimensions EmbeddingLayer::get_input_dimensions() const
+{
+    return {};
+}
+
+
 dimensions EmbeddingLayer::get_output_dimensions() const
 {
     return { inputs_number, depth };
@@ -369,8 +375,6 @@ void EmbeddingLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
 void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     // Embedding layer
 
     const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("EmbeddingLayer");
@@ -456,87 +460,50 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 void EmbeddingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     // Embedding layer
 
     file_stream.OpenElement("EmbeddingLayer");
 
     // Layer name
+
     file_stream.OpenElement("LayerName");
-    buffer.str("");
-    buffer << layer_name;
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Input dimension
+
     file_stream.OpenElement("InputDimension");
-
-    buffer.str("");
-    buffer << get_input_dimension();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
     file_stream.CloseElement();
 
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_inputs_number()).c_str());
     file_stream.CloseElement();
 
     // Embedding depth
 
     file_stream.OpenElement("Depth");
-
-    buffer.str("");
-    buffer << get_depth();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_depth()).c_str());
     file_stream.CloseElement();
 
     // Positional encoding
 
     file_stream.OpenElement("PositionalEncoding");
-
-    buffer.str("");
-    buffer << (positional_encoding ? "true" : "false");
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(positional_encoding ? 1 : 0).c_str());
     file_stream.CloseElement();
 
     // Parameters
 
     file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size - 1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
     file_stream.CloseElement();
 
     // Embedding layer (end tag)
 
     file_stream.CloseElement();
 }
-
 
 
 pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() const

@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "pooling_layer.h"
 
 namespace opennn
@@ -40,9 +41,9 @@ dimensions PoolingLayer::get_output_dimensions() const
 {
     const Index rows_number = get_output_height();
     const Index columns_number = get_output_width();
-    const Index channels_number = input_dimensions[2];
+    const Index channels = input_dimensions[2];
 
-    return { rows_number, columns_number, channels_number };
+    return { rows_number, columns_number, channels };
 }
 
 
@@ -132,7 +133,7 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 }
 
 
-dimensions PoolingLayer::get_inputs_dimensions() const
+dimensions PoolingLayer::get_input_dimensions() const
 {
     return input_dimensions;
 }
@@ -384,9 +385,9 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                                   LayerBackPropagation* back_propagation) const
 {
 
-    // Inputs 
+    // Inputs
 
-    const Index batch_samples_number = inputs_pair(0).second[0];
+    //const Index batch_samples_number = inputs_pair(0).second[0];
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
@@ -490,128 +491,67 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-
-    buffer.str("");
-    buffer << layer_name;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(layer_name.c_str());
     file_stream.CloseElement();
 
     // Image size
 
-    file_stream.OpenElement("InputsVariablesDimensions");
-
-    buffer.str("");
-    buffer << "1 1 1";
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.OpenElement("InputDimensions");
+    file_stream.PushText(string("1 1 1").c_str());
     file_stream.CloseElement();
 
     //Filters number
 
     file_stream.OpenElement("FiltersNumber");
-
-    buffer.str("");
-    buffer << 9;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(string("9").c_str());
     file_stream.CloseElement();
-
 
     // Filters size
 
     file_stream.OpenElement("FiltersSize");
-
-    buffer.str("");
-    buffer << 9;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-
-    file_stream.PushText(write_pooling_method().c_str());
-
+    file_stream.PushText(string("9").c_str());
     file_stream.CloseElement();
 
     // Pooling method
 
     file_stream.OpenElement("PoolingMethod");
-
     file_stream.PushText(write_pooling_method().c_str());
-
     file_stream.CloseElement();
 
     // Inputs variables dimensions
 
     file_stream.OpenElement("InputDimensions");
-
-    buffer.str("");
-    buffer << get_inputs_dimensions()[0] << get_inputs_dimensions()[1] << get_inputs_dimensions()[2];
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
     file_stream.CloseElement();
 
     // raw_variable stride
 
     file_stream.OpenElement("ColumnStride");
-
-    buffer.str("");
-    buffer << get_column_stride();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_column_stride()).c_str());
     file_stream.CloseElement();
 
     //Row stride
 
     file_stream.OpenElement("RowStride");
-
-    buffer.str("");
-    buffer << get_row_stride();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_row_stride()).c_str());
     file_stream.CloseElement();
 
     // Pool columns number
 
     file_stream.OpenElement("PoolColumnsNumber");
-
-    buffer.str("");
-    buffer << get_pool_width();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_pool_width()).c_str());
     file_stream.CloseElement();
 
     // Pool rows number
 
     file_stream.OpenElement("PoolRowsNumber");
-
-    buffer.str("");
-    buffer << get_pool_height();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_pool_height()).c_str());
     file_stream.CloseElement();
 
     // Padding width
 
     file_stream.OpenElement("PaddingWidth");
-
-    buffer.str("");
-    buffer << get_padding_width();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(get_padding_width()).c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();
@@ -728,9 +668,9 @@ pair<type*, dimensions> PoolingLayerForwardPropagation::get_outputs_pair() const
 
     const Index output_height = pooling_layer->get_output_height();
     const Index output_width = pooling_layer->get_output_width();
-    const Index channels_number = pooling_layer->get_channels_number();
+    const Index channels = pooling_layer->get_channels_number();
 
-    const dimensions output_dimensions = { batch_samples_number, output_height, output_width, channels_number};
+    const dimensions output_dimensions = { batch_samples_number, output_height, output_width, channels};
 
     return pair<type*, dimensions>(outputs_data, output_dimensions);
 }
@@ -752,12 +692,12 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     const Index output_width = pooling_layer->get_output_width();
 
-    const Index channels_number = pooling_layer->get_channels_number();
+    const Index channels = pooling_layer->get_channels_number();
 
     outputs.resize(batch_samples_number,
                    output_height,
                    output_width,
-                   channels_number);
+                   channels);
 
     outputs_data = outputs.data();
 
@@ -765,7 +705,7 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
                          pool_height,
                          pool_width,
                          output_height * output_width,
-                         channels_number);
+                         channels);
 }
 
 
@@ -807,7 +747,7 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
-    const dimensions& input_dimensions = pooling_layer->get_inputs_dimensions();
+    const dimensions& input_dimensions = pooling_layer->get_input_dimensions();
 
     input_derivatives.resize(batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 

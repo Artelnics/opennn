@@ -604,7 +604,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     Tensor<type,4> inputs(input_images, input_height, input_width, channels);
     Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
-    Tensor<type,1> bias(kernels_number);
+    Tensor<type, 1> bias(kernels_number);
     
     // Copy bmp_image data into inputs
     for (int h = 0; h < input_height; ++h)
@@ -680,9 +680,9 @@ void ConvolutionalLayerTest::test_forward_propagate()
                 && forward_propagation.outputs.dimension(3) == convolutional_layer.get_output_dimensions()[2], LOG);
 
     assert_true(forward_propagation.activations_derivatives.dimension(0) == input_images
-                && forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_inputs_dimensions()[0]
-                && forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_inputs_dimensions()[1]
-                && forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_inputs_dimensions()[2], LOG);
+                && forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_input_dimensions()[0]
+                && forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_input_dimensions()[1]
+                && forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_input_dimensions()[2], LOG);
 
     assert_true(forward_propagation.outputs(0, 0, 0, 0) == type(4590 + 1)
                 && forward_propagation.outputs(1, 0, 0, 0) == type(1530 + 1), LOG);

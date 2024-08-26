@@ -96,7 +96,7 @@ int main()
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(15);
-        training_strategy.get_adaptive_moment_estimation()->set_learning_rate(0.02);
+        training_strategy.get_adaptive_moment_estimation()->set_learning_rate(type(0.02));
         training_strategy.set_display_period(1);
         
         training_strategy.perform_training();

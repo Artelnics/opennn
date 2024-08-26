@@ -77,7 +77,7 @@ public:
 
     string write_activation_function() const;
 
-    dimensions get_inputs_dimensions() const;
+    dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const;
 
     pair<Index, Index> get_padding() const;

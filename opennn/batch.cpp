@@ -42,14 +42,14 @@ void Batch::perform_augmentation() const
 
     const Index rows_number = input_dimensions[0];
     const Index columns_number = input_dimensions[1];
-    const Index channels_number = input_dimensions[2];
-    const Index input_size = rows_number*columns_number*channels_number;
+    const Index channels = input_dimensions[2];
+    const Index input_size = rows_number*columns_number*channels;
 
     TensorMap<Tensor<type, 4>> inputs(input_data,
                                       batch_size,
                                       rows_number,
                                       columns_number,
-                                      channels_number);
+                                      channels);
 
     const bool random_reflection_axis_x = image_data_set->get_random_reflection_axis_x();
     const bool random_reflection_axis_y = image_data_set->get_random_reflection_axis_y();
@@ -69,11 +69,11 @@ void Batch::perform_augmentation() const
         TensorMap<Tensor<type, 3>> image(input_data + batch*input_size,
                                          rows_number,
                                          columns_number,
-                                         channels_number);
+                                         channels);
 
         if(random_reflection_axis_x)
         {
-            //reflect_image_x(thread_pool_device, image, image);
+            reflect_image_x(thread_pool_device, image);
         }
 
         if(random_reflection_axis_y)
@@ -152,11 +152,11 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     {
         const Index rows_number = data_set_input_dimensions[0];
         const Index raw_variables_number = data_set_input_dimensions[1];
-        const Index channels_number = data_set_input_dimensions[2];
+        const Index channels = data_set_input_dimensions[2];
 
-        input_dimensions = {{batch_size, rows_number, raw_variables_number, channels_number}};
+        input_dimensions = {{batch_size, rows_number, raw_variables_number, channels}};
 
-        inputs_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
+        inputs_tensor.resize(batch_size*channels*rows_number*raw_variables_number);
     }
 
     input_data = inputs_tensor.data();
@@ -180,11 +180,11 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     {
         const Index rows_number = data_set_target_dimensions[0];
         const Index raw_variables_number = data_set_target_dimensions[1];
-        const Index channels_number = data_set_target_dimensions[2];
+        const Index channels = data_set_target_dimensions[2];
 
-        targets_dimensions = { {batch_size, rows_number, raw_variables_number, channels_number} };
+        targets_dimensions = { {batch_size, rows_number, raw_variables_number, channels} };
 
-        targets_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
+        targets_tensor.resize(batch_size*channels*rows_number*raw_variables_number);
     }
 
     targets_data = targets_tensor.data();
@@ -218,13 +218,13 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         }
         else if(data_set_context_dimensions.size() == 3)
         {
-            const Index channels_number = context_dimensions[0];
+            const Index channels = context_dimensions[0];
             const Index rows_number = context_dimensions[1];
             const Index raw_variables_number = context_dimensions[2];
 
-            context_dimensions = { {batch_size, channels_number, rows_number, raw_variables_number} };
+            context_dimensions = { {batch_size, channels, rows_number, raw_variables_number} };
 
-            context_tensor.resize(batch_size * channels_number * rows_number * raw_variables_number);
+            context_tensor.resize(batch_size * channels * rows_number * raw_variables_number);
         }
 
         context_data = context_tensor.data();

@@ -96,7 +96,7 @@ bool has_NAN(Tensor<type, 2>&);
 bool has_NAN(Tensor<type, 3>&);
 bool has_NAN(Tensor<type, 4>&);
 
-bool is_zero(const Tensor<type,1>&, const type& = type(NUMERIC_LIMITS_MIN));
+bool is_zero(const Tensor<type, 1>&, const type& = type(NUMERIC_LIMITS_MIN));
 
 bool is_binary_vector(const Tensor<type, 1>&);
 bool is_binary_matrix(const Tensor<type, 2>&);
@@ -228,6 +228,9 @@ Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const 
 
 // Conversion
 
+string dimensions_to_string(const dimensions&, const string& = " ");
+string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
+string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
 string string_tensor_to_string(const Tensor<string, 1>&, const string&);
 
 Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);

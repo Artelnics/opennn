@@ -48,7 +48,7 @@ Index ScalingLayer2D::get_inputs_number() const
 }
 
 
-dimensions ScalingLayer2D::get_inputs_dimensions() const
+dimensions ScalingLayer2D::get_input_dimensions() const
 {
     return { input_dimensions(0), input_dimensions(1), input_dimensions(2) };
 }
@@ -923,12 +923,7 @@ void ScalingLayer2D::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Scaling neurons number
 
     file_stream.OpenElement("ScalingNeuronsNumber");
-
-    buffer.str("");
-    buffer << neurons_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(neurons_number).c_str());
     file_stream.CloseElement();
 
     // Scaling neurons
@@ -947,32 +942,23 @@ void ScalingLayer2D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.OpenElement("Descriptives");
 
-        buffer.str(""); buffer << descriptives(i).minimum;
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(to_string(descriptives(i).minimum).c_str());
         file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).maximum;
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(to_string(descriptives(i).maximum).c_str());
         file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).mean;
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(to_string(descriptives(i).mean).c_str());
         file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).standard_deviation;
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(to_string(descriptives(i).standard_deviation).c_str());
 
         file_stream.CloseElement();
 
         // Scaler
 
         file_stream.OpenElement("Scaler");
-
-        buffer.str("");
-        buffer << scaling_methods_string(i);
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(scaling_methods_string(i).c_str());
         file_stream.CloseElement();
 
         // Scaling neuron (end tag)

@@ -132,8 +132,6 @@ string MinkowskiError::get_error_type_text() const
 
 void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     // Error type
 
     file_stream.OpenElement("MinkowskiError");
@@ -141,12 +139,7 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Minkowski parameter
 
     file_stream.OpenElement("MinkowskiParameter");
-
-    buffer.str("");
-    buffer << minkowski_parameter;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(minkowski_parameter).c_str());
     file_stream.CloseElement();
 
     // Close error

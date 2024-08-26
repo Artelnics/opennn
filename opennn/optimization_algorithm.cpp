@@ -228,12 +228,7 @@ void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Display
 
     file_stream.OpenElement("Display");
-
-    buffer.str("");
-    buffer << display;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(display).c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();
@@ -480,17 +475,11 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Epochs number
 
-    buffer.str("");
-    buffer << training_error_history.size()-1;
-
-    final_results(0,1) = buffer.str();
+    final_results(0,1) = to_string(training_error_history.size()-1);
 
     // Elapsed time
 
-    buffer.str("");
-    buffer << setprecision(precision) << elapsed_time;
-
-    final_results(1,1) = buffer.str();
+    final_results(1,1) = elapsed_time;
 
     // Stopping criteria
 
@@ -498,10 +487,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Final training error
 
-    buffer.str("");
-    buffer << setprecision(precision) << training_error_history(size-1);
-
-    final_results(3,1) = buffer.str();
+    final_results(3,1) = to_string(training_error_history(size-1));
 
     // Final selection error
 
@@ -509,10 +495,9 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     selection_error_history.size() == 0
             ? buffer << "NAN"
-                        : buffer << setprecision(precision) << selection_error_history(size-1);
+            : buffer << setprecision(precision) << selection_error_history(size-1);
 
     final_results(4,1) = buffer.str();
-
 
     return final_results;
 }

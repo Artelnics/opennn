@@ -306,7 +306,7 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
                    << "U = (" << triplet.U.first << "," << triplet.U.second << ")\n"
                    << "V = (" << V.first << "," << V.second << ")\n";
 
-            throw(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Check triplet
@@ -349,13 +349,12 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     if(thread_pool_device == nullptr)
         throw runtime_error("Pointer to thread pool device is nullptr.\n");
-
+/*
     if(is_zero(optimization_data.training_direction))
         throw runtime_error("Training direction is zero.\n");
-
+*/
     if(optimization_data.initial_learning_rate < type(NUMERIC_LIMITS_MIN))
         throw runtime_error("Initial learning rate is zero.\n");
-    }
 
 #endif
 
@@ -505,7 +504,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
                << "Learning rate(" << learning_rate << ") is less than left point("
                << triplet.A.first << ").\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(learning_rate > triplet.B.first)
@@ -517,7 +516,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
                << "Learning rate(" << learning_rate << ") is greater than right point("
                << triplet.B.first << ").\n";
 
-        throw(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -546,8 +545,6 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 
 void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     // Learning rate algorithm
 
     file_stream.OpenElement("LearningRateAlgorithm");
@@ -563,12 +560,7 @@ void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Learning rate tolerance
 
     file_stream.OpenElement("LearningRateTolerance");
-
-    buffer.str("");
-    buffer << learning_rate_tolerance;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(learning_rate_tolerance).c_str());
     file_stream.CloseElement();
 
     // Learning rate algorithm (end tag)
@@ -582,15 +574,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("LearningRateAlgorithm");
 
     if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Learning rate algorithm element is nullptr.\n";
-
-        throw(buffer.str());
-    }
+        throw runtime_error("Learning rate algorithm element is nullptr.\n");
 
     // Learning rate method
     {

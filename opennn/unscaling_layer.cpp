@@ -612,8 +612,6 @@ void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
 void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     const Index neurons_number = get_neurons_number();
 
     // Unscaling layer
@@ -623,12 +621,7 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Unscaling neurons number
 
     file_stream.OpenElement("UnscalingNeuronsNumber");
-
-    buffer.str("");
-    buffer << neurons_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.PushText(to_string(neurons_number).c_str());
     file_stream.CloseElement();
 
     // Descriptives
@@ -644,56 +637,31 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         // Minimum
 
         file_stream.OpenElement("Minimum");
-
-        buffer.str("");
-        buffer << descriptives[i].minimum;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(descriptives[i].minimum).c_str());
         file_stream.CloseElement();
 
         // Maximum
 
         file_stream.OpenElement("Maximum");
-
-        buffer.str("");
-        buffer << descriptives[i].maximum;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(descriptives[i].maximum).c_str());
         file_stream.CloseElement();
 
         // Mean
 
         file_stream.OpenElement("Mean");
-
-        buffer.str("");
-        buffer << descriptives[i].mean;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(descriptives[i].mean).c_str());
         file_stream.CloseElement();
 
         // Standard deviation
 
         file_stream.OpenElement("StandardDeviation");
-
-        buffer.str("");
-        buffer << descriptives[i].standard_deviation;
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(to_string(descriptives[i].standard_deviation).c_str());
         file_stream.CloseElement();
 
         // Unscaling method
 
         file_stream.OpenElement("Scaler");
-
-        buffer.str("");
-        buffer << scalers(i);
-
-        file_stream.PushText(buffer.str().c_str());
-
+        file_stream.PushText(scalers(i).c_str());
         file_stream.CloseElement();
 
         // Unscaling neuron (end tag)

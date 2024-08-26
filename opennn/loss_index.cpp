@@ -229,8 +229,6 @@ Index LossIndex::find_input_index(const Tensor<Index, 1>& layer_inputs_indices, 
 
 void LossIndex::check() const
 {
-    ostringstream buffer;
-
     if(!neural_network)
         throw runtime_error("Pointer to neural network is nullptr.\n");
 
@@ -656,8 +654,6 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
 void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("LossIndex");
 
     file_stream.CloseElement();
@@ -695,8 +691,6 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 
 void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("Regularization");
 
     // Regularization method
@@ -727,14 +721,7 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
     // Regularization weight
 
     file_stream.OpenElement("RegularizationWeight");
-
-    buffer.str("");
-    buffer << regularization_weight;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    // Close regularization weight
-
+    file_stream.PushText(to_string(regularization_weight).c_str());
     file_stream.CloseElement();
 
     // Close regularization
