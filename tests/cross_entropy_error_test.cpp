@@ -139,8 +139,6 @@ void CrossEntropyErrorTest::test_back_propagate()
 
     // Test binary classification trivial convolutional layer
     {
-        samples_number = 2;
-
         bool is_training = true;
 
         const Index kernel_height = 1;
@@ -154,6 +152,8 @@ void CrossEntropyErrorTest::test_back_propagate()
         image_data_set.set_data_source_path("data/conv_test");
         image_data_set.read_bmp();
         image_data_set.scale_input_variables();
+
+        samples_number = image_data_set.get_samples_number();
 
         training_samples_indices = image_data_set.get_training_samples_indices();
         input_variables_indices = image_data_set.get_input_variables_indices();
@@ -181,7 +181,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         //neural_network.set_parameters_constant(type(0));
         neural_network.set_parameters_random();
 
-        /* { // debug
+         /* { // debug
             image_data_set.set_display(true);
             image_data_set.print();
             cout << image_data_set.get_data() << endl;
