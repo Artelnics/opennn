@@ -62,7 +62,7 @@ public:
     Tensor<Index, 1> get_input_time_series_raw_variables_indices() const;
     Tensor<Index, 1> get_target_time_series_raw_variables_indices() const;
 
-    const string& get_time_column() const;
+    const string& get_time_raw_variable() const;
 
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_raw_variables_number(const Index&);
@@ -89,10 +89,10 @@ public:
     const Tensor<type, 2>& get_time_series_data() const;
 
     void print() const final;
-/*
-    void to_XML(tinyxml2::XMLPrinter&) const;
-    void from_XML(const tinyxml2::XMLDocument&);
-*/
+
+    void to_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const tinyxml2::XMLDocument&) final;
+
     Tensor<string, 1> get_time_series_raw_variables_names() const;
 
     Index get_time_series_time_raw_variable_index() const;

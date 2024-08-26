@@ -948,7 +948,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // raw_variable use
 
-            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("RawVariableUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("Use");
 
             if(!raw_variable_use_element)
             {

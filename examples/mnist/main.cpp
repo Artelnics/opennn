@@ -13,23 +13,8 @@
 // System includes
 
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <sstream>
-#include <cmath>
-#include <algorithm>
-#include <cstdlib>
-#include <stdexcept>
-#include <ctime>
 #include <exception>
-#include <random>
-#include <regex>
-#include <map>
-#include <stdlib.h>
-#include <stdio.h>
-#include <limits.h>
-#include <list>
-#include <vector>
 
 // OpenNN includes
 
@@ -47,11 +32,16 @@ int main()
 
         ImageDataSet image_data_set;
 
-        image_data_set.set_data_source_path("data");
-        //image_data_set.set_data_source_path("C:/test_mnist");
+        //image_data_set.set_data_source_path("../data");
+        image_data_set.set_data_source_path("C:/mnist/binary");
 
         image_data_set.read_bmp();
 
+        cout << image_data_set.get_target_data() << endl;
+
+        image_data_set.save("../data/image_data_set.xml");
+//        image_data_set.load("../data/image_data_set.xml");
+/*
         image_data_set.print();
 
         const Index kernel_height = 2;
@@ -108,7 +98,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
+*/
         cout << "Bye!" << endl;
         
         return 0;
