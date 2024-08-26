@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+
 #include "tensors.h"
 #include "pooling_layer.h"
 
@@ -179,7 +181,7 @@ void PoolingLayer::set(const dimensions& new_input_dimensions, const dimensions&
 
 void PoolingLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -252,6 +254,8 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
 void PoolingLayer::set_default()
 {
     layer_type = Layer::Type::Pooling;
+
+    name = "pooling_layer";
 }
 
 
@@ -499,7 +503,7 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Image size

@@ -155,7 +155,7 @@ protected:
     ThreadPool* thread_pool = nullptr;
     ThreadPoolDevice* thread_pool_device = nullptr;
 
-    string layer_name = "layer";
+    string name = "layer";
 
     Type layer_type;
 
@@ -164,6 +164,7 @@ protected:
     {
         y.device(*thread_pool_device) = x;
     }
+
 
     template <int rank>
     void binary(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
@@ -175,7 +176,6 @@ protected:
         const Tensor<type, rank> f_2 = x.constant(type(true));
 
         y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
     }
 
 

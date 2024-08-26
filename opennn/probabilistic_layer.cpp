@@ -43,7 +43,7 @@ ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions, c
 
 void ProbabilisticLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -270,7 +270,7 @@ void ProbabilisticLayer::set_decision_threshold(const type& new_decision_thresho
 
 void ProbabilisticLayer::set_default()
 {
-    layer_name = "probabilistic_layer";
+    name = "probabilistic_layer";
 
     layer_type = Layer::Type::Probabilistic;
 
@@ -695,18 +695,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* display_element = probabilistic_layer_element->FirstChildElement("Display");
 
     if(display_element)
-    {
-        const string new_display_string = display_element->GetText();
-
-        try
-        {
-            set_display(new_display_string != "0");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_display(display_element->GetText() != string("0"));
 }
 
 

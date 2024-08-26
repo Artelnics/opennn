@@ -37,12 +37,10 @@ int main()
 
         image_data_set.read_bmp();
 
-        cout << image_data_set.get_target_data() << endl;
-
-        image_data_set.save("../data/image_data_set.xml");
+//        image_data_set.save("../data/image_data_set.xml");
 //        image_data_set.load("../data/image_data_set.xml");
-/*
-        image_data_set.print();
+
+//        image_data_set.print();
 
         const Index kernel_height = 2;
         const Index kernel_width = 2;
@@ -59,14 +57,17 @@ int main()
         ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
         neural_network.add_layer(scaling_layer);
 
-        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number });
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
+                                                                         { kernel_height, kernel_width, kernel_channels, kernels_number });
         neural_network.add_layer(convolutional_layer);
 
-        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(), { 1,1,kernel_channels,kernels_number } );
+        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
+                                                                           { 1, 1, kernel_channels, kernels_number } );
         neural_network.add_layer(convolutional_layer_2);
 
-        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(), { pool_height , pool_width } );
-        //neural_network.add_layer(pooling_layer);
+        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(),
+                                                       { pool_height , pool_width } );
+        neural_network.add_layer(pooling_layer);
 
         FlattenLayer* flatten_layer = new FlattenLayer(pooling_layer->get_output_dimensions());
         neural_network.add_layer(flatten_layer);
@@ -75,6 +76,10 @@ int main()
                                                                          image_data_set.get_target_dimensions());
         neural_network.add_layer(probabilistic_layer);
 
+        neural_network.save("../data/neural_network.xml");
+//        image_data_set.load("../data/image_data_set.xml");
+
+/*
         neural_network.print();
 
         // Training strategy

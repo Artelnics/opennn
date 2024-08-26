@@ -6,10 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+
 #include "strings_utilities.h"
 #include "convolutional_layer.h"
 #include "tensors.h"
-#include <iostream>
 
 namespace opennn
 {
@@ -17,6 +18,7 @@ namespace opennn
 ConvolutionalLayer::ConvolutionalLayer() : Layer()
 {
     layer_type = Layer::Type::Convolutional;
+    name = "convolutional_layer";
 }
 
 
@@ -24,6 +26,7 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_kernel_dimensions) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
+    name = "convolutional_layer";
 
     set(new_input_dimensions, new_kernel_dimensions);
 }
@@ -32,9 +35,7 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
 bool ConvolutionalLayer::is_empty() const
 {
     if(biases.size() == 0 && synaptic_weights.size() == 0)
-    {
         return true;
-    }
 
     return false;
 }
@@ -871,7 +872,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
 void ConvolutionalLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -1182,7 +1183,7 @@ void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Image size

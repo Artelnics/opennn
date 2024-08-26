@@ -30,7 +30,7 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
 
     layer_type = Type::Embedding;
 
-    layer_name = "embedding_layer";
+    name = "embedding_layer";
 }
 
 
@@ -143,7 +143,7 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 
 void EmbeddingLayer::set_default()
 {
-    layer_name = "embedding_layer";
+    name = "embedding_layer";
 
     display = true;
 
@@ -153,7 +153,7 @@ void EmbeddingLayer::set_default()
 
 void EmbeddingLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -467,7 +467,7 @@ void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Input dimension

@@ -34,7 +34,7 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
 
     layer_type = Type::MultiheadAttention;
 
-    layer_name = "multihead_attention_layer";
+    name = "multihead_attention_layer";
 }
 
 
@@ -241,7 +241,7 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
 void MultiheadAttentionLayer::set_default()
 {
-    layer_name = "multihead_attention_layer";
+    name = "multihead_attention_layer";
 
     display = true;
 
@@ -253,7 +253,7 @@ void MultiheadAttentionLayer::set_default()
 
 void MultiheadAttentionLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -1131,7 +1131,7 @@ void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Input size

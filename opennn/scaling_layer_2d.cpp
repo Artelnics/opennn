@@ -319,7 +319,7 @@ void ScalingLayer2D::set_neurons_number(const Index& new_neurons_number)
 
 void ScalingLayer2D::set_default()
 {
-    layer_name = "scaling_layer";
+    name = "scaling_layer";
 
     set_scalers(Scaler::MeanStandardDeviation);
 
@@ -1028,23 +1028,11 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Display
-    {
-        const tinyxml2::XMLElement* display_element = scaling_layer_element->FirstChildElement("Display");
 
-        if(display_element)
-        {
-            const string new_display_string = display_element->GetText();
+    const tinyxml2::XMLElement* display_element = scaling_layer_element->FirstChildElement("Display");
 
-            try
-            {
-                set_display(new_display_string != "0");
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
 
 

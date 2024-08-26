@@ -22,6 +22,7 @@
 #include "neural_network.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
+#include "statistics.h"
 
 namespace opennn
 {

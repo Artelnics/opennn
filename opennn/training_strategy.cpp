@@ -999,23 +999,11 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Display
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
 
-        if(element)
-        {
-            const string new_display = element->GetText();
+    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-            try
-            {
-                set_display(new_display != "0");
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
 
 

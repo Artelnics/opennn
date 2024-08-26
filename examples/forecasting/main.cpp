@@ -34,7 +34,11 @@ int main()
         TimeSeriesDataSet time_series_data_set("../data/Pendulum.csv", ",", false, false);
         time_series_data_set.set_lags_number(5); // Not working
 
-        time_series_data_set.print();
+        time_series_data_set.save("../data/time_series_data_set.xml");
+//        time_series_data_set.load("../data/time_series_data_set.xml");
+
+
+        //time_series_data_set.print();
 
         /*
         const Index input_variables_number = data_set.get_input_variables_number();

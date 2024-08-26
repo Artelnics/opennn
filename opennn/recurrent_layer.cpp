@@ -260,7 +260,7 @@ void RecurrentLayer::set(const RecurrentLayer& other_neuron_layer)
 
 void RecurrentLayer::set_default()
 {
-    layer_name = "recurrent_layer";
+    name = "recurrent_layer";
 
     display = true;
 
