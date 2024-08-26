@@ -232,7 +232,7 @@ Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const 
 string dimensions_to_string(const dimensions&, const string& = " ");
 string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
 string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
-string string_tensor_to_string(const Tensor<string, 1>&, const string&);
+string string_tensor_to_string(const Tensor<string, 1>&, const string& = " ");
 
 Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
 

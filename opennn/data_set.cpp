@@ -296,7 +296,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
 
     // raw_variable use
 
-    const tinyxml2::XMLElement* raw_variable_use_element = column_document.FirstChildElement("RawVariableUse");
+    const tinyxml2::XMLElement* raw_variable_use_element = column_document.FirstChildElement("Use");
 
     if(!raw_variable_use_element)
         throw runtime_error("RawVariableUse element is nullptr.\n");
@@ -373,7 +373,7 @@ void DataSet::RawVariable::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // raw_variable use
 
-    file_stream.OpenElement("RawVariableUse");
+    file_stream.OpenElement("Use");
 
     switch(use)
     {
@@ -776,6 +776,21 @@ DataSet::SampleUse DataSet::get_sample_use(const Index& index) const
 const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
 {
     return samples_uses;
+}
+
+
+Tensor<Index, 1> DataSet::get_samples_uses_tensor() const
+{
+    const Index samples_number = get_samples_number();
+
+    Tensor<Index, 1> samples_uses_tensor(samples_number);
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        samples_uses_tensor(i) = Index(samples_uses(i));
+    }
+
+    return samples_uses_tensor;
 }
 
 
@@ -2962,6 +2977,32 @@ DataSet::MissingValuesMethod DataSet::get_missing_values_method() const
 }
 
 
+string DataSet::get_missing_values_method_string() const
+{
+    if(missing_values_method == MissingValuesMethod::Mean)
+    {
+        return "Mean";
+    }
+    else if(missing_values_method == MissingValuesMethod::Median)
+    {
+        return "Median";
+    }
+    else if(missing_values_method == MissingValuesMethod::Unuse)
+    {
+        return "Unuse";
+    }
+    else if(missing_values_method == MissingValuesMethod::Interpolation)
+    {
+        return "Interpolation";
+    }
+    else
+    {
+        throw runtime_error("Unknown missing values method");
+    }
+
+}
+
+
 const string& DataSet::get_data_source_path() const
 {
     return data_source_path;
@@ -2974,46 +3015,46 @@ const bool& DataSet::get_header_line() const
 }
 
 
-const bool& DataSet::get_rows_label() const
+const bool& DataSet::get_has_ids() const
 {
     return has_ids;
 }
 
 
-Tensor<string, 1> DataSet::get_rows_label_tensor() const
+Tensor<string, 1> DataSet::get_ids() const
 {
     return ids;
 }
 
 
-Tensor<string, 1> DataSet::get_testing_rows_label_tensor()
-{
-    const Index testing_samples_number = get_testing_samples_number();
-    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
-    Tensor<string, 1> testing_rows_label(testing_samples_number);
+// Tensor<string, 1> DataSet::get_testing_rows_label_tensor()
+// {
+//     const Index testing_samples_number = get_testing_samples_number();
+//     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
+//     Tensor<string, 1> testing_rows_label(testing_samples_number);
 
-    for(Index i = 0; i < testing_samples_number; i++)
-    {
-        testing_rows_label(i) = ids(testing_indices(i));
-    }
+//     for(Index i = 0; i < testing_samples_number; i++)
+//     {
+//         testing_rows_label(i) = ids(testing_indices(i));
+//     }
 
-    return testing_rows_label;
-}
+//     return testing_rows_label;
+// }
 
 
-Tensor<string, 1> DataSet::get_selection_rows_label_tensor()
-{
-    const Index selection_samples_number = get_selection_samples_number();
-    const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
-    Tensor<string, 1> selection_rows_label(selection_samples_number);
+// Tensor<string, 1> DataSet::get_selection_rows_label_tensor()
+// {
+//     const Index selection_samples_number = get_selection_samples_number();
+//     const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
+//     Tensor<string, 1> selection_rows_label(selection_samples_number);
 
-    for(Index i = 0; i < selection_samples_number; i++)
-    {
-        selection_rows_label(i) = ids(selection_indices(i));
-    }
+//     for(Index i = 0; i < selection_samples_number; i++)
+//     {
+//         selection_rows_label(i) = ids(selection_indices(i));
+//     }
 
-    return selection_rows_label;
-}
+//     return selection_rows_label;
+// }
 
 
 const DataSet::Separator& DataSet::get_separator() const
@@ -5513,10 +5554,11 @@ void DataSet::set_data_binary_random()
 
 void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
+    if(model_type == ModelType::Forecasting)
+        throw runtime_error("Forecasting");
 
-    time_t start, finish;
-    time(&start);
+    if(model_type == ModelType::ImageClassification)
+        throw runtime_error("Image classification");
 
     file_stream.OpenElement("DataSet");
 
@@ -5524,67 +5566,39 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataSource");
 
-    if(model_type != ModelType::ImageClassification)
-    {
-        // File type
-        {
-            file_stream.OpenElement("FileType");
-
-            file_stream.PushText("csv");
-
-            file_stream.CloseElement();
-        }
-    }
-    else
-    {
-        // File type
-        {
-            file_stream.OpenElement("FileType");
-
-            file_stream.PushText("bmp");
-
-            file_stream.CloseElement();
-        }
-    }
+    file_stream.OpenElement("FileType");
+    file_stream.PushText("csv");
+    file_stream.CloseElement();
 
     // Data file name
-    {
-        file_stream.OpenElement("DataSourcePath");
 
-        file_stream.PushText(data_source_path.c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("DataSourcePath");
+    file_stream.PushText(data_source_path.c_str());
+    file_stream.CloseElement();
 
     // Separator
-    {
-        file_stream.OpenElement("Separator");
 
-        file_stream.PushText(get_separator_name().c_str());
+    file_stream.OpenElement("Separator");
+    file_stream.PushText(get_separator_name().c_str());
+    file_stream.CloseElement();
 
-        file_stream.CloseElement();
-    }
+    // Has header
 
-    // Raw variables names
-    {
-        file_stream.OpenElement("HasHeader");
-        file_stream.PushText(to_string(has_header).c_str());
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("HasHeader");
+    file_stream.PushText(to_string(has_header).c_str());
+    file_stream.CloseElement();
 
-    // Rows labels
-    {
-        file_stream.OpenElement("HasIds");
-        file_stream.PushText(to_string(has_ids).c_str());
-        file_stream.CloseElement();
-    }
+    // Has Ids
+
+    file_stream.OpenElement("HasIds");
+    file_stream.PushText(to_string(has_ids).c_str());
+    file_stream.CloseElement();
 
     // Missing values label
-    {
-        file_stream.OpenElement("MissingValuesLabel");
-        file_stream.PushText(missing_values_label.c_str());
-        file_stream.CloseElement();
-    }
+
+    file_stream.OpenElement("MissingValuesLabel");
+    file_stream.PushText(missing_values_label.c_str());
+    file_stream.CloseElement();
 
     // Codification
 
@@ -5592,7 +5606,7 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(get_codification_string().c_str());
     file_stream.CloseElement();
 
-    // Close DataFile
+    // Close Data source
 
     file_stream.CloseElement();
 
@@ -5601,88 +5615,50 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("RawVariables");
 
     // Raw variables number
-    {
-        file_stream.OpenElement("RawVariablesNumber");
-        file_stream.PushText(to_string(get_raw_variables_number()).c_str());
-        file_stream.CloseElement();
-    }
+
+    file_stream.OpenElement("RawVariablesNumber");
+    file_stream.PushText(to_string(get_raw_variables_number()).c_str());
+    file_stream.CloseElement();
 
     // Raw variables items
 
     const Index raw_variables_number = get_raw_variables_number();
 
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            file_stream.OpenElement("RawVariable");
-
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            raw_variables(i).to_XML(file_stream);
-
-            file_stream.CloseElement();
-        }
+        file_stream.OpenElement("RawVariable");
+        file_stream.PushAttribute("Item", to_string(i+1).c_str());
+        raw_variables(i).to_XML(file_stream);
+        file_stream.CloseElement();
     }
 
-    // Close raw_variables
+    // Close raw variables
 
     file_stream.CloseElement();
 
     // Rows labels
 
     if(has_ids)
-    {
-        const Index rows_labels_number = ids.size();
 
-        file_stream.OpenElement("HasIds");
-
-        buffer.str("");
-
-        for(Index i = 0; i < rows_labels_number; i++)
-        {
-            buffer << ids(i);
-
-            if(i != rows_labels_number-1) buffer << ",";
-        }
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("HasIds");
+    file_stream.PushText(to_string(has_ids).c_str());
+    file_stream.CloseElement();
 
     // Samples
 
     file_stream.OpenElement("Samples");
 
     // Samples number
-    {
-        file_stream.OpenElement("SamplesNumber");
-        file_stream.PushText(to_string(get_samples_number()).c_str());
-        file_stream.CloseElement();
-    }
+
+    file_stream.OpenElement("SamplesNumber");
+    file_stream.PushText(to_string(get_samples_number()).c_str());
+    file_stream.CloseElement();
 
     // Samples uses
 
-    {
-        file_stream.OpenElement("SamplesUses");
-
-        buffer.str("");
-
-        const Index samples_number = get_samples_number();
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            SampleUse sample_use = samples_uses(i);
-
-            buffer << Index(sample_use);
-
-            if(i < (samples_number-1)) buffer << " ";
-        }
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("SamplesUses");
+    file_stream.PushText(tensor_to_string(get_samples_uses_tensor()).c_str());
+    file_stream.CloseElement();
 
     // Close samples
 
@@ -5694,70 +5670,40 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Missing values method
 
-    {
-        file_stream.OpenElement("MissingValuesMethod");
-
-        if(missing_values_method == MissingValuesMethod::Mean)
-        {
-            file_stream.PushText("Mean");
-        }
-        else if(missing_values_method == MissingValuesMethod::Median)
-        {
-            file_stream.PushText("Median");
-        }
-        else if(missing_values_method == MissingValuesMethod::Unuse)
-        {
-            file_stream.PushText("Unuse");
-        }
-        else if(missing_values_method == MissingValuesMethod::Interpolation)
-        {
-            file_stream.PushText("Interpolation");
-        }
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("MissingValuesMethod");
+    file_stream.PushText(get_missing_values_method_string().c_str());
+    file_stream.CloseElement();
 
     // Missing values number
-    {
-        file_stream.OpenElement("MissingValuesNumber");
-        file_stream.PushText(to_string(missing_values_number).c_str());
-        file_stream.CloseElement();
-    }
+
+    file_stream.OpenElement("MissingValuesNumber");
+    file_stream.PushText(to_string(missing_values_number).c_str());
+    file_stream.CloseElement();
 
     if(missing_values_number > 0)
     {
         // Raw variables missing values number
-        {
-            file_stream.OpenElement("RawVariablesMissingValuesNumber");
-            file_stream.PushText(tensor_to_string(raw_variables_missing_values_number).c_str());
-            file_stream.CloseElement();
-        }
-/*
+
+        file_stream.OpenElement("RawVariablesMissingValuesNumber");
+        file_stream.PushText(tensor_to_string(raw_variables_missing_values_number).c_str());
+        file_stream.CloseElement();
+
         // Rows missing values number
-        {
-            file_stream.OpenElement("RowsMissingValuesNumber");
 
-            buffer.str("");
-            buffer << rows_missing_values_number;
-
-            file_stream.PushText(tensor_to_string(rows_missing_values_number).c_str());
-
-            file_stream.CloseElement();
-        }
- */
+        file_stream.OpenElement("RowsMissingValuesNumber");
+        file_stream.PushText(to_string(rows_missing_values_number).c_str());
+        file_stream.CloseElement();
     }
 
     // Missing values
 
     file_stream.CloseElement();
-
+/*
     // Preview data
 
     file_stream.OpenElement("PreviewData");
 
     file_stream.OpenElement("PreviewSize");
-
-    buffer.str("");
 
     buffer << data_file_preview.size();
 
@@ -5787,19 +5733,15 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close preview data
 
     file_stream.CloseElement();
-
+*/
     // Close data set
 
     file_stream.CloseElement();
-
-    time(&finish);
 }
 
 
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
-    ostringstream buffer;
-
     // Data set element
 
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
@@ -5822,33 +5764,15 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error("DataSourcePath element is nullptr.\n");
 
     if(data_source_path_element->GetText())
-    {
-        const string new_data_file_name = data_source_path_element->GetText();
-
-        set_data_source_path(new_data_file_name);
-    }
+        set_data_source_path(data_source_path_element->GetText());
 
     // Separator
 
     const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
-    {
         if(separator_element->GetText())
-        {
-            const string new_separator = separator_element->GetText();
-
-            set_separator_name(new_separator);
-        }
-        else
-        {
-            set_separator_name("Comma");
-        }
-    }
-    else
-    {
-        set_separator_name("Comma");
-    }
+            set_separator_name(separator_element->GetText());
 
     // Has raw_variables names
 
@@ -5891,36 +5815,16 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
-    {
         if(missing_values_label_element->GetText())
-        {
-            const string new_missing_values_label = missing_values_label_element->GetText();
-
-            set_missing_values_label(new_missing_values_label);
-        }
-        else
-        {
-            set_missing_values_label("NA");
-        }
-    }
-    else
-    {
-        set_missing_values_label("NA");
-    }
+            set_missing_values_label(missing_values_label_element->GetText());
 
     // Codification
 
     const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
-    {
         if(codification_element->GetText())
-        {
-            const string new_codification = codification_element->GetText();
-
-            set_codification(new_codification);
-        }
-    }
+            set_codification(codification_element->GetText());
 
     // Raw variables
 
@@ -5989,7 +5893,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // raw_variable use
 
-            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("RawVariableUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("Use");
 
             if(!raw_variable_use_element)
                 throw runtime_error("RawVariableUse element is nullptr.\n");
@@ -6060,21 +5964,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(!has_ids_element)
             throw runtime_error("HasIds element is nullptr.\n");
 
-        // Rows labels
+        // Ids
 
         if(has_ids_element->GetText())
         {
             const string new_rows_labels = has_ids_element->GetText();
 
-            string separator = ",";
-
-            if(new_rows_labels.find(",") == string::npos
-            && new_rows_labels.find(";") != string::npos)
-            {
-                separator = ";";
-            }
-
-            ids = get_tokens(new_rows_labels, separator);
+            ids = get_tokens(new_rows_labels, " ");
         }
     }
 
@@ -6093,13 +5989,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error("Samples number element is nullptr.\n");
 
     if(samples_number_element->GetText())
-    {
-        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
-
-        samples_uses.resize(new_samples_number);
-
-        set_training();
-    }
+        samples_uses.resize(Index(atoi(samples_number_element->GetText())));
 
     // Samples uses
 
@@ -6109,9 +5999,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error("Samples uses element is nullptr.\n");
 
     if(samples_uses_element->GetText())
-    {
         set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
-    }
 
     // Missing values
 
@@ -6128,9 +6016,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error("Missing values method element is nullptr.\n");
 
     if(missing_values_method_element->GetText())
-    {
         set_missing_values_method(missing_values_method_element->GetText());
-    }
 
     // Missing values number
 
@@ -6140,15 +6026,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error("Missing values number element is nullptr.\n");
 
     if(missing_values_number_element->GetText())
-    {
         missing_values_number = Index(atoi(missing_values_number_element->GetText()));
-    }
 
     if(missing_values_number > 0)
     {
         // Raw variables Missing values number
 
-        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
+        const tinyxml2::XMLElement* raw_variables_missing_values_number_element
+                = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
         if(!raw_variables_missing_values_number_element)
             throw runtime_error("RawVariablesMissingValuesNumber element is nullptr.\n");
@@ -6174,11 +6059,9 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             throw runtime_error("Rows missing values number element is nullptr.\n");
 
         if(rows_missing_values_number_element->GetText())
-        {
             rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
-        }
     }
-
+/*
     // Preview data
 
     const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
@@ -6220,7 +6103,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             data_file_preview(i) = get_tokens(row_element->GetText(), ",");
         }
     }
-
+*/
     // Display
 
     const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
@@ -8333,6 +8216,7 @@ void DataSet::transform_associative_dataset(){}
 void DataSet::save_auto_associative_data_binary(const string&) const {};
 
 } // namespace opennn
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

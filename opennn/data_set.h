@@ -164,6 +164,8 @@ public:
     SampleUse get_sample_use(const Index&) const;
     const Tensor<SampleUse, 1>& get_samples_uses() const;
 
+    Tensor<Index, 1> get_samples_uses_tensor() const;
+
     Tensor<Index, 1> get_samples_uses_numbers() const;
     Tensor<type, 1> get_samples_uses_percentages() const;
 
@@ -300,15 +302,16 @@ public:
     // Members get
 
     MissingValuesMethod get_missing_values_method() const;
+    string get_missing_values_method_string() const;
 
     const string& get_data_source_path() const;
 
     const bool& get_header_line() const;
-    const bool& get_rows_label() const;
+    const bool& get_has_ids() const;
 
-    Tensor<string, 1> get_rows_label_tensor() const;
-    Tensor<string, 1> get_selection_rows_label_tensor();
-    Tensor<string, 1> get_testing_rows_label_tensor();
+    Tensor<string, 1> get_ids() const;
+//    Tensor<string, 1> get_selection_rows_label_tensor();
+//    Tensor<string, 1> get_testing_rows_label_tensor();
 
     const Separator& get_separator() const;
     string get_separator_string() const;
@@ -604,8 +607,8 @@ public:
 
     virtual void print() const;
 
-    void from_XML(const tinyxml2::XMLDocument&);
-    void to_XML(tinyxml2::XMLPrinter&) const;
+    virtual void from_XML(const tinyxml2::XMLDocument&);
+    virtual void to_XML(tinyxml2::XMLPrinter&) const;
 
     void save(const string&) const;
     void load(const string&);
