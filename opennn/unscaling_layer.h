@@ -90,6 +90,8 @@ public:
    void set_scalers(const Tensor<string, 1>&);
    void set_scalers(const Scaler&);
 
+   void set_scaler(const Index&, const string&);
+
    // Display messages
 
    void set_display(const bool&);
@@ -107,7 +109,7 @@ public:
    // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&) final;
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(tinyxml2::XMLPrinter&) const final;
 
    // Expression
 

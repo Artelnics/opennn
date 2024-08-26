@@ -2746,7 +2746,7 @@ type TestingAnalysis::calculate_logloss() const
 }
 
 
-void TestingAnalysis::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
     file_stream.OpenElement("TestingAnalysis");
@@ -2799,7 +2799,7 @@ void TestingAnalysis::save(const string& file_name) const
     if(pFile)
     {
         tinyxml2::XMLPrinter printer(pFile);
-        write_XML(printer);
+        to_XML(printer);
         fclose(pFile);
     }
 }

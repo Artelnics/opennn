@@ -329,7 +329,7 @@ string WeightedSquaredError::get_error_type_text() const
 }
 
 
-void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void WeightedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 

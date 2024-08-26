@@ -74,7 +74,7 @@ public:
     Tensor<string, 2> get_text_data_file_preview() const;
 
     void from_XML(const tinyxml2::XMLDocument&);
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(tinyxml2::XMLPrinter&) const;
 
     void import_vocabulary(const string&, Tensor<string, 1>&);
 

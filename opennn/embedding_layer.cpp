@@ -458,7 +458,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void EmbeddingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Embedding layer
 

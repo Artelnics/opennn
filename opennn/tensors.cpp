@@ -76,7 +76,7 @@ bool calculate_random_bool()
 
 void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum)
 {
-#pragma omp parallel for
+    #pragma omp parallel for
     for(Index i = 0; i < tensor.size(); i++)
     {
         const type random = type(rand()/(RAND_MAX+1.0));
@@ -101,6 +101,19 @@ void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximu
 void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum)
 {
     #pragma omp parallel for
+
+    for(Index i = 0; i < tensor.size(); i++)
+    {
+        const type random = type(rand()/(RAND_MAX+1.0));
+
+        tensor(i) = minimum + (maximum - minimum)*random;
+    }
+}
+
+
+void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum)
+{
+#pragma omp parallel for
 
     for(Index i = 0; i < tensor.size(); i++)
     {
@@ -1868,9 +1881,7 @@ string dimensions_to_string(const dimensions& x, const string& separator)
     if(x.size() == 0)
         throw runtime_error("Error: Dimensions size must be greater than 0.\n");
 
-    buffer << x[0];
-
-    for(Index i = 1; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
         buffer << x[i] << separator;
     }
@@ -1888,9 +1899,7 @@ string tensor_to_string(const Tensor<type, 1>& x, const string& separator)
     if(x.size() == 0)
         throw runtime_error("Error: Dimensions size must be greater than 0.\n");
 
-    buffer << x[0];
-
-    for(Index i = 1; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
         buffer << x[i] << separator;
     }
@@ -1908,9 +1917,7 @@ string tensor_to_string(const Tensor<Index, 1>& x, const string& separator)
     if(x.size() == 0)
         throw runtime_error("Error: Dimensions size must be greater than 0.\n");
 
-    buffer << x[0];
-
-    for(Index i = 1; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
         buffer << x[i] << separator;
     }
@@ -2259,7 +2266,6 @@ void print_dimensions(const dimensions& new_dimensions)
 }
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

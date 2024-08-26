@@ -130,7 +130,7 @@ string MinkowskiError::get_error_type_text() const
 }
 
 
-void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void MinkowskiError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 

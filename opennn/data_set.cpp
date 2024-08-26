@@ -340,7 +340,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
 }
 
 
-void DataSet::RawVariable::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void DataSet::RawVariable::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Name
 
@@ -5477,13 +5477,13 @@ void DataSet::set_data_constant(const type& new_value)
 
 void DataSet::set_data_random()
 {
-    data.setRandom();
+    set_random(data);
 }
 
 
 void DataSet::set_data_binary_random()
 {
-    data.setRandom();
+    set_random(data);
 
     const Index samples_number = data.dimension(0);
     const Index variables_number = data.dimension(1);
@@ -5511,7 +5511,7 @@ void DataSet::set_data_binary_random()
 }
 
 
-void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -5618,7 +5618,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            raw_variables(i).write_XML(file_stream);
+            raw_variables(i).to_XML(file_stream);
 
             file_stream.CloseElement();
         }
@@ -6277,7 +6277,7 @@ void DataSet::save(const string& file_name) const
 
     tinyxml2::XMLPrinter document(pFile);
 
-    write_XML(document);
+    to_XML(document);
 
     fclose(pFile);
 }
@@ -6802,7 +6802,7 @@ void DataSet::generate_random_data(const Index& samples_number, const Index& var
 {
     set(samples_number, variables_number);
 
-    data.setRandom();
+    set_random(data);
 }
 
 
@@ -6826,7 +6826,7 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
     set(samples_number, variables_number);
 
-    data.setRandom();
+    set_random(data);
     
 #pragma omp parallel for
 
@@ -6855,7 +6855,7 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
 
     set(samples_number, variables_number + classes_number);
 
-    data.setRandom();
+    set_random(data);
 
     data.setConstant(0.0);
 
@@ -6880,7 +6880,7 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
 {
     set(samples_number,variables_number);
 
-    data.setRandom();
+    set_random(data);
 
     for(Index i = 0; i < samples_number; i++)
     {

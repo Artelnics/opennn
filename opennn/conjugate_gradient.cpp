@@ -790,7 +790,7 @@ string ConjugateGradient::write_training_direction_method() const
 }
 
 
-void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("ConjugateGradient");
 
@@ -804,7 +804,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Learning rate algorithm
 
-    learning_rate_algorithm.write_XML(file_stream);
+    learning_rate_algorithm.to_XML(file_stream);
 
     // Minimum loss decrease
 
@@ -834,12 +834,6 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("MaximumTime");
     file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    // Hardware use
-
-    file_stream.OpenElement("HardwareUse");
-    file_stream.PushText(hardware_use.c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();

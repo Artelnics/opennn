@@ -162,7 +162,7 @@ string SumSquaredError::get_error_type_text() const
 }
 
 
-void SumSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void SumSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 

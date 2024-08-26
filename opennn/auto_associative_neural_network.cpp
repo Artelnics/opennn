@@ -505,7 +505,7 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
     file.close();
 }
 
-void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -562,7 +562,7 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
 
     for(Index i = 0; i < layers.size(); i++)
     {
-        layers[i]->write_XML(file_stream);
+        layers[i]->to_XML(file_stream);
     }
 
     // Layers (end tag)

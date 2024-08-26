@@ -480,7 +480,7 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_p
 }
 
 
-void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

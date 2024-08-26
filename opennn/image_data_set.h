@@ -87,7 +87,7 @@ public:
     void read_bmp();
 
     void from_XML(const tinyxml2::XMLDocument&);
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(tinyxml2::XMLPrinter&) const;
 
 protected:
 

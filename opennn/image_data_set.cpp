@@ -261,7 +261,7 @@ void ImageDataSet::set_random_vertical_translation_maximum(const type& new_rando
 }
 
 
-void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -415,7 +415,7 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            raw_variables(i).write_XML(file_stream);
+            raw_variables(i).to_XML(file_stream);
 
             file_stream.CloseElement();
         }

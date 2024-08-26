@@ -346,7 +346,7 @@ Tensor<string, 2> LanguageDataSet::get_text_data_file_preview() const
 }
 
 
-void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -469,7 +469,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            raw_variables(i).write_XML(file_stream);
+            raw_variables(i).to_XML(file_stream);
 
             file_stream.CloseElement();
         }

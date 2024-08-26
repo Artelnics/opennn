@@ -362,7 +362,7 @@ string NormalizedSquaredError::get_error_type_text() const
 }
 
 
-void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 

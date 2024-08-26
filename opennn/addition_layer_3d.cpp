@@ -195,7 +195,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void AdditionLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Addition layer
 

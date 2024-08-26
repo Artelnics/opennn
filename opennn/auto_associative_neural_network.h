@@ -61,7 +61,7 @@ public:
     void distances_descriptives_from_XML(const tinyxml2::XMLDocument&);
     void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&);
 
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(tinyxml2::XMLPrinter&) const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     string write_expression_autoassociation_distances(string&, string&) const;
