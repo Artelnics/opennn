@@ -606,7 +606,7 @@ type z_correlation_to_r_correlation (const type& z_correlation)
 
 
 
-Tensor<type,1> confidence_interval_z_correlation(const type& z_correlation, const Index& n)
+Tensor<type, 1> confidence_interval_z_correlation(const type& z_correlation, const Index& n)
 {
     Tensor<type, 1> confidence_interval(2);
 
@@ -622,7 +622,7 @@ Tensor<type,1> confidence_interval_z_correlation(const type& z_correlation, cons
 
 // @todo Improve this method to be more similar to the other code.
 
-Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
+Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
 {
     const int n = x.size();
 
@@ -718,10 +718,10 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 {
     Correlation correlation;
 
-    const pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type, 1>, Tensor<type, 1>> filtered_elements = filter_missing_values_vector_vector(x,y);
 
-    const Tensor<type,1> x_filtered = filtered_elements.first;
-    const Tensor<type,1> y_filtered = filtered_elements.second;
+    const Tensor<type, 1> x_filtered = filtered_elements.first;
+    const Tensor<type, 1> y_filtered = filtered_elements.second;
 
     if(x_filtered.size() == 0
     || is_constant_vector(x_filtered)
@@ -797,10 +797,10 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 {
     Correlation correlation;
 
-    pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filtered_elements = filter_missing_values_vector_vector(x,y);
 
-    const Tensor<type,1> x_filtered = filtered_elements.first;
-    const Tensor<type,1> y_filtered = filtered_elements.second;
+    const Tensor<type, 1> x_filtered = filtered_elements.first;
+    const Tensor<type, 1> y_filtered = filtered_elements.second;
 
     if(x_filtered.size() == 0)
     {
@@ -811,7 +811,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
         return correlation;
     }
 
-    const Tensor<type,1> x_rank = calculate_spearman_ranks(x_filtered);
+    const Tensor<type, 1> x_rank = calculate_spearman_ranks(x_filtered);
 
     const Tensor<type, 2> data = assemble_vector_vector(x_rank, y_filtered);
 
@@ -876,9 +876,9 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     Correlation correlation;
     correlation.form = Correlation::Form::Logistic;
 
-    const pair<Tensor<type,1>, Tensor<type,2>> filtered_elements = opennn::filter_missing_values_vector_matrix(x, y);
+    const pair<Tensor<type, 1>, Tensor<type,2>> filtered_elements = opennn::filter_missing_values_vector_matrix(x, y);
 
-    const Tensor<type,1> x_filtered = filtered_elements.first;
+    const Tensor<type, 1> x_filtered = filtered_elements.first;
     const Tensor<type,2> y_filtered = filtered_elements.second;
 
     if(y_filtered.dimension(1) > 50)

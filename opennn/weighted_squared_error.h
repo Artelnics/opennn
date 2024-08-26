@@ -94,7 +94,7 @@ public:
 
    void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 

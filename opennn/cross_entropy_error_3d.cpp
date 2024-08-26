@@ -128,7 +128,7 @@ string CrossEntropyError3D::get_error_type_text() const
 }
 
 
-void CrossEntropyError3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void CrossEntropyError3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 

@@ -45,7 +45,7 @@ public:
 
 private:
 
-    Tensor<type,1> conditions_values;
+    Tensor<type, 1> conditions_values;
 
     DataSet data_set;
 

@@ -413,7 +413,7 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
 }
 
 
-void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void GrowingInputs::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("GrowingInputs");
 
@@ -684,7 +684,7 @@ void GrowingInputs::save(const string& file_name) const
     if(file)
     {
         tinyxml2::XMLPrinter printer(file);
-        write_XML(printer);
+        to_XML(printer);
         fclose(file);
     }
 }

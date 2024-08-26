@@ -276,7 +276,7 @@ void LossIndex::back_propagate(const Batch& batch,
     // Loss index
 
     calculate_error(batch, forward_propagation, back_propagation);
- 
+
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
     assemble_layers_error_gradient(back_propagation);
@@ -652,7 +652,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 }
 
 
-void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void LossIndex::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("LossIndex");
 

@@ -25,6 +25,8 @@ struct Descriptives {
 
   // Set
 
+  Tensor<type, 1> to_tensor() const;
+
   void set(const type&, const type&, const type&, const type&);
 
   void set_minimum(const type&);

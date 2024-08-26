@@ -52,7 +52,7 @@ Correlation correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 2>&
 type r_correlation_to_z_correlation(const type&);
 type z_correlation_to_r_correlation(const type&);
 
-Tensor<type,1> confidence_interval_z_correlation(const type&, const Index&);
+Tensor<type, 1> confidence_interval_z_correlation(const type&, const Index&);
 
 
 // Time series correlation

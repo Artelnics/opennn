@@ -8,6 +8,7 @@
 
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -461,6 +462,35 @@ void ScalingLayer2D::set_scaler(const Index& variable_index, const Scaler& new_s
 }
 
 
+void ScalingLayer2D::set_scaler(const Index& variable_index, const string& new_scaler_string)
+{
+    if(new_scaler_string == "None")
+    {
+        scalers(variable_index) = Scaler::None;
+    }
+    else if(new_scaler_string == "MeanStandardDeviation")
+    {
+        scalers(variable_index) = Scaler::MeanStandardDeviation;
+    }
+    else if(new_scaler_string == "MinimumMaximum")
+    {
+        scalers(variable_index) = Scaler::MinimumMaximum;
+    }
+    else if(new_scaler_string == "StandardDeviation")
+    {
+        scalers(variable_index) = Scaler::StandardDeviation;
+    }
+    else if(new_scaler_string == "Logarithm")
+    {
+        scalers(variable_index) = Scaler::Logarithm;
+    }
+    else
+    {
+        throw runtime_error("Unknown scaling method: " + new_scaler_string + ".\n");
+    }
+}
+
+
 void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
@@ -474,37 +504,10 @@ void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 
 #endif
 
-    Tensor<Scaler, 1> new_scaling_methods(neurons_number);
-
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(new_scaling_methods_string == "None")
-        {
-            new_scaling_methods(i) = Scaler::None;
-        }
-        else if(new_scaling_methods_string == "MeanStandardDeviation")
-        {
-            new_scaling_methods(i) = Scaler::MeanStandardDeviation;
-        }
-        else if(new_scaling_methods_string == "MinimumMaximum")
-        {
-            new_scaling_methods(i) = Scaler::MinimumMaximum;
-        }
-        else if(new_scaling_methods_string == "StandardDeviation")
-        {
-            new_scaling_methods(i) = Scaler::StandardDeviation;
-        }
-        else if(new_scaling_methods_string == "Logarithm")
-        {
-            new_scaling_methods(i) = Scaler::Logarithm;
-        }
-        else
-        {
-            throw runtime_error("Unknown scaling method: " + to_string(new_scaling_methods_string[i]) + ".\n");
-        }
+        set_scaler(i, new_scaling_methods_string);
     }
-
-    set_scalers(new_scaling_methods);
 }
 
 
@@ -910,17 +913,15 @@ void ScalingLayer2D::print() const
 }
 
 
-void ScalingLayer2D::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
-    const Index neurons_number = get_neurons_number();
-
     // Scaling layer
 
     file_stream.OpenElement("ScalingLayer2D");
 
     // Scaling neurons number
+
+    const Index neurons_number = get_neurons_number();
 
     file_stream.OpenElement("ScalingNeuronsNumber");
     file_stream.PushText(to_string(neurons_number).c_str());
@@ -935,24 +936,12 @@ void ScalingLayer2D::write_XML(tinyxml2::XMLPrinter& file_stream) const
         // Scaling neuron
 
         file_stream.OpenElement("ScalingNeuron");
-
         file_stream.PushAttribute("Index", int(i+1));
 
         //Descriptives
 
         file_stream.OpenElement("Descriptives");
-
-        file_stream.PushText(to_string(descriptives(i).minimum).c_str());
-        file_stream.PushText("\\");
-
-        file_stream.PushText(to_string(descriptives(i).maximum).c_str());
-        file_stream.PushText("\\");
-
-        file_stream.PushText(to_string(descriptives(i).mean).c_str());
-        file_stream.PushText("\\");
-
-        file_stream.PushText(to_string(descriptives(i).standard_deviation).c_str());
-
+        file_stream.PushText(tensor_to_string(descriptives(i).to_tensor()).c_str());
         file_stream.CloseElement();
 
         // Scaler
@@ -974,8 +963,6 @@ void ScalingLayer2D::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("ScalingLayer2D");
 
     if(!scaling_layer_element)
@@ -986,9 +973,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* neurons_number_element = scaling_layer_element->FirstChildElement("ScalingNeuronsNumber");
 
     if(!neurons_number_element)
-    {
         throw runtime_error("Scaling neurons number element is nullptr.\n");
-    }
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
 
@@ -1020,9 +1005,10 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 
         if(descriptives_element->GetText())
         {
-
             const char* new_descriptives_element = descriptives_element->GetText();
-            Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, "\\");
+
+            const Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, " ");
+
             descriptives[i].minimum = type(stof(splitted_descriptives[0]));
             descriptives[i].maximum = type(stof(splitted_descriptives[1]));
             descriptives[i].mean = type(stof(splitted_descriptives[2]));
@@ -1038,30 +1024,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 
         const string new_method = scaling_method_element->GetText();
 
-        if(new_method == "None" || new_method == "No Scaling")
-        {
-            scalers[i] = Scaler::None;
-        }
-        else if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
-        {
-            scalers[i] = Scaler::MinimumMaximum;
-        }
-        else if(new_method == "MeanStandardDeviation" || new_method == "Mean - Standard deviation")
-        {
-            scalers[i] = Scaler::MeanStandardDeviation;
-        }
-        else if(new_method == "StandardDeviation")
-        {
-            scalers[i] = Scaler::StandardDeviation;
-        }
-        else if(new_method == "Logarithm")
-        {
-            scalers[i] = Scaler::Logarithm;
-        }
-        else
-        {
-            scalers[i] = Scaler::None;
-        }
+        set_scaler(i, new_method);
     }
 
     // Display
@@ -1070,7 +1033,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 
         if(display_element)
         {
-            string new_display_string = display_element->GetText();
+            const string new_display_string = display_element->GetText();
 
             try
             {
