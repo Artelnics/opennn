@@ -488,7 +488,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 }
 
 
-void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

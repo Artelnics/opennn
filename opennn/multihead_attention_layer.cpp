@@ -1120,7 +1120,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void MultiheadAttentionLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

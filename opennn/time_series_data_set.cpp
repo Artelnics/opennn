@@ -465,7 +465,7 @@ void TimeSeriesDataSet::print() const
 }
 
 /*
-void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -628,7 +628,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            raw_variables(i).write_XML(file_stream);
+            raw_variables(i).to_XML(file_stream);
 
             file_stream.CloseElement();
         }
@@ -666,7 +666,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            time_series_raw_variables(i).write_XML(file_stream);
+            time_series_raw_variables(i).to_XML(file_stream);
 
             file_stream.CloseElement();
         }

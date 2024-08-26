@@ -346,12 +346,6 @@ void ProbabilisticLayer::set_display(const bool& new_display)
 }
 
 
-void ProbabilisticLayer::set_synaptic_weights_Glorot()
-{
-    synaptic_weights.setRandom();
-}
-
-
 void ProbabilisticLayer::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
@@ -362,9 +356,9 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
-    biases.setRandom();
+    set_random(biases);
 
-    synaptic_weights.setRandom();
+    set_random(synaptic_weights);
 }
 
 
@@ -573,7 +567,7 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationL
 }
 
 
-void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

@@ -850,14 +850,14 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
         throw runtime_error("kernel_channels must match input_channels dimension");
 
     biases.resize(kernels_number);
-    biases.setRandom();
+    set_random(biases);
 
     synaptic_weights.resize(kernel_height,
                             kernel_width,
                             kernel_channels,
                             kernels_number);
 
-    synaptic_weights.setRandom();
+    set_random(synaptic_weights);
 
     moving_means.resize(kernels_number);
     moving_standard_deviations.resize(kernels_number);
@@ -877,17 +877,17 @@ void ConvolutionalLayer::set_name(const string& new_layer_name)
 
 void ConvolutionalLayer::set_parameters_constant(const type& value)
 {
-    // set_biases_constant(value);
+    biases.setConstant(value);
 
-    // set_synaptic_weights_constant(value);
+    synaptic_weights.setConstant(value);
 }
 
 
 void ConvolutionalLayer::set_parameters_random()
 {
-    biases.setRandom();
+    set_random(biases);
 
-    synaptic_weights.setRandom();
+    set_random(synaptic_weights);
 }
 
 
@@ -1173,7 +1173,7 @@ void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training
 }
 */
 
-void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Convolutional layer
 

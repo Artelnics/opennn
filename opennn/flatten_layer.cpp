@@ -132,7 +132,7 @@ void FlattenLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 }
 
 
-void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void FlattenLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("FlattenLayer");
 

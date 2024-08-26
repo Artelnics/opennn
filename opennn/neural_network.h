@@ -235,7 +235,7 @@ public:
    void layers_from_XML(const tinyxml2::XMLDocument&);
    void outputs_from_XML(const tinyxml2::XMLDocument&);
 
-   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   virtual void to_XML(tinyxml2::XMLPrinter&) const;
 
    void print() const;
    void save(const string&) const;

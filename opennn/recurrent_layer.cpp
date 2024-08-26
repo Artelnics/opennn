@@ -415,11 +415,11 @@ void RecurrentLayer::set_parameters_constant(const type& value)
 
 void RecurrentLayer::set_parameters_random()
 {
-    biases.setRandom();
+    set_random(biases);
 
-    input_weights.setRandom();
+    set_random(input_weights);
 
-    recurrent_weights.setRandom();
+    set_random(recurrent_weights);
 }
 
 
@@ -844,7 +844,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void RecurrentLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
 {
     ostringstream buffer;

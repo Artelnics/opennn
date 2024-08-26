@@ -202,7 +202,7 @@ string CrossEntropyError::get_error_type_text() const
 }
 
 
-void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void CrossEntropyError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 

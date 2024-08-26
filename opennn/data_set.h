@@ -132,7 +132,7 @@ public:
         void set_categories(const Tensor<string, 1>&);
 
         virtual void from_XML(const tinyxml2::XMLDocument&);
-        virtual void write_XML(tinyxml2::XMLPrinter&) const;
+        virtual void to_XML(tinyxml2::XMLPrinter&) const;
 
         void print() const;
     };
@@ -605,7 +605,7 @@ public:
     virtual void print() const;
 
     void from_XML(const tinyxml2::XMLDocument&);
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(tinyxml2::XMLPrinter&) const;
 
     void save(const string&) const;
     void load(const string&);

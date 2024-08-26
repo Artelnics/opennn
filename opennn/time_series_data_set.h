@@ -90,7 +90,7 @@ public:
 
     void print() const final;
 /*
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(tinyxml2::XMLPrinter&) const;
     void from_XML(const tinyxml2::XMLDocument&);
 */
     Tensor<string, 1> get_time_series_raw_variables_names() const;

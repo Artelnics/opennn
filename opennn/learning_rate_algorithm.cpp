@@ -543,7 +543,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 }
 
 
-void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void LearningRateAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Learning rate algorithm
 

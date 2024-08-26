@@ -367,9 +367,9 @@ void PerceptronLayer3D::set_parameters_constant(const type& value)
 
 void PerceptronLayer3D::set_parameters_random()
 {
-    biases.setRandom();
+    set_random(biases);
 
-    synaptic_weights.setRandom();
+    set_random(synaptic_weights);
 }
 
 
@@ -758,7 +758,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void PerceptronLayer3D::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void PerceptronLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

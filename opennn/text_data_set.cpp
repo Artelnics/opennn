@@ -95,7 +95,7 @@ void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 //}
 
 
-void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
 
     ostringstream buffer;
@@ -262,7 +262,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            raw_variables(i).write_XML(file_stream);
+            raw_variables(i).to_XML(file_stream);
 
             file_stream.CloseElement();
         }

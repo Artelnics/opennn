@@ -1563,7 +1563,7 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
 }
 
 
-void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     const Index individuals_number = get_individuals_number();
 
@@ -1805,7 +1805,7 @@ void GeneticAlgorithm::save(const string& file_name) const
         if(file)
         {
             tinyxml2::XMLPrinter printer(file);
-            write_XML(printer);
+            to_XML(printer);
             fclose(file);
         }
 
