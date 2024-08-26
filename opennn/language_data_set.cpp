@@ -339,13 +339,14 @@ void LanguageDataSet::set_default()
     context_dimensions.setConstant(get_context_variables_number());
 }
 
+
 Tensor<string, 2> LanguageDataSet::get_text_data_file_preview() const
 {
     return text_data_file_preview;
 }
 
 
-void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -468,7 +469,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            raw_variables(i).write_XML(file_stream);
+            raw_variables(i).to_XML(file_stream);
 
             file_stream.CloseElement();
         }
@@ -947,7 +948,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // raw_variable use
 
-            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("RawVariableUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("Use");
 
             if(!raw_variable_use_element)
             {

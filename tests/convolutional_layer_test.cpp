@@ -604,7 +604,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     Tensor<type,4> inputs(input_images, input_height, input_width, channels);
     Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
-    Tensor<type,1> bias(kernels_number);
+    Tensor<type, 1> bias(kernels_number);
     
     // Copy bmp_image data into inputs
     for (int h = 0; h < input_height; ++h)

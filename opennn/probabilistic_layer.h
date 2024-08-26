@@ -205,10 +205,6 @@ public:
 
     // Parameters initialization
 
-
-
-    void set_synaptic_weights_Glorot();
-
     void set_parameters_constant(const type&) final;
 
     void set_parameters_random() final;
@@ -266,7 +262,7 @@ public:
 
     void from_XML(const tinyxml2::XMLDocument&) final;
 
-    void write_XML(tinyxml2::XMLPrinter&) const final;
+    void to_XML(tinyxml2::XMLPrinter&) const final;
 
 
 protected:

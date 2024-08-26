@@ -139,7 +139,7 @@ void NeuralNetwork::add_layer(Layer* layer)
         
         // Layers inputs indices
         
-        Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
+        const Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
 
         layers_inputs_indices.resize(old_layers_number+1);
 
@@ -1810,7 +1810,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 }
 
 
-void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -1875,7 +1875,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(Index i = 0; i < layers.size(); i++)
     {
-        layers[i]->write_XML(file_stream);
+        layers[i]->to_XML(file_stream);
     }
 
     // Layers inputs indices
@@ -1943,17 +1943,16 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 {
+    set();
 
-    ostringstream buffer;
+    const tinyxml2::XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");
 
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
-
-    if(!root_element)
+    if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
     // Inputs
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Inputs");
+        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Inputs");
 
         if(element)
         {
@@ -1971,7 +1970,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
     // Layers
 
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Layers");
+        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Layers");
 
         if(element)
         {
@@ -1984,12 +1983,11 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             layers_from_XML(layers_document);
         }
-
     }
 
     // Outputs
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Outputs");
+        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Outputs");
 
         if(element)
         {
@@ -2006,7 +2004,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
     
     // Display
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
+        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Display");
 
         if(element)
         {
@@ -2079,9 +2077,6 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
 
 void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 {
-
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Layers");
 
     if(!root_element)
@@ -2550,7 +2545,7 @@ void NeuralNetwork::save(const string& file_name) const
     if(file)
     {
         tinyxml2::XMLPrinter printer(file);
-        write_XML(printer);
+        to_XML(printer);
         fclose(file);
     }
 }
@@ -2815,7 +2810,8 @@ string NeuralNetwork::write_expression_c() const
     for(int i = 0; i < tokens.dimension(0); i++)
     {
         string t = tokens(i);
-        string word = get_word_from_token(t);
+
+        const string word = get_word_from_token(t);
 
         if(word.size() > 1 && !find_string_in_tensor(found_tokens, word))
         {
@@ -2824,25 +2820,25 @@ string NeuralNetwork::write_expression_c() const
 
     }
 
-    string target_string0("Logistic");
-    string target_string1("ReLU");
-    string target_string4("ExponentialLinear");
-    string target_string5("SELU");
-    string target_string6("HardSigmoid");
-    string target_string7("SoftPlus");
-    string target_string8("SoftSign");
+    const string target_string0("Logistic");
+    const string target_string1("ReLU");
+    const string target_string4("ExponentialLinear");
+    const string target_string5("SELU");
+    const string target_string6("HardSigmoid");
+    const string target_string7("SoftPlus");
+    const string target_string8("SoftSign");
 
     for(int i = 0; i < tokens.dimension(0); i++)
     {
-        string t = tokens(i);
+        const string t = tokens(i);
 
-        size_t substring_length0 = t.find(target_string0);
-        size_t substring_length1 = t.find(target_string1);
-        size_t substring_length4 = t.find(target_string4);
-        size_t substring_length5 = t.find(target_string5);
-        size_t substring_length6 = t.find(target_string6);
-        size_t substring_length7 = t.find(target_string7);
-        size_t substring_length8 = t.find(target_string8);
+        const size_t substring_length0 = t.find(target_string0);
+        const size_t substring_length1 = t.find(target_string1);
+        const size_t substring_length4 = t.find(target_string4);
+        const size_t substring_length5 = t.find(target_string5);
+        const size_t substring_length6 = t.find(target_string6);
+        const size_t substring_length7 = t.find(target_string7);
+        const size_t substring_length8 = t.find(target_string8);
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
@@ -2929,11 +2925,11 @@ string NeuralNetwork::write_expression_c() const
         buffer << "\n" << endl;
     }
 
-    if(LSTM_number>0)
+    if(LSTM_number > 0)
     {
         for(int i = 0; i < found_tokens.dimension(0); i++)
         {
-            string token = found_tokens(i);
+            const string token = found_tokens(i);
 
             if(token.find("cell_state") == 0)
             {
@@ -3018,7 +3014,9 @@ string NeuralNetwork::write_expression_c() const
     }
 
     const string keyword = "double";
+
     string outputs_espresion = outputs_buffer.str();
+
     replace_substring_in_string (found_tokens, outputs_espresion, keyword);
 
     if(LSTM_number>0)

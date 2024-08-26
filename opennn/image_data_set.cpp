@@ -8,6 +8,7 @@
 
 #include "image_data_set.h"
 #include "images.h"
+#include "tensors.h"
 #include "strings_utilities.h"
 #include "filesystem"
 
@@ -150,11 +151,19 @@ void ImageDataSet::set(const Index& new_images_number,
         raw_variables(i).name = "p_" + to_string(i+1);
         raw_variables(i).use = VariableUse::Input;
         raw_variables(i).type = RawVariableType::Numeric;
+        raw_variables(i).scaler = Scaler::ImageMinMax;
     }
 
     if(new_targets_number == 1)
     {
+        Tensor<string, 1> categories(new_targets_number);
+        categories.setConstant("ABC");
+
         raw_variables(raw_variables_number-1).type = RawVariableType::Binary;
+        raw_variables(raw_variables_number-1).use = VariableUse::Target;
+        raw_variables(raw_variables_number-1).name = "target";
+
+        raw_variables(raw_variables_number-1).set_categories(categories);
     }
     else
     {
@@ -261,14 +270,10 @@ void ImageDataSet::set_random_vertical_translation_maximum(const type& new_rando
 }
 
 
-void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
 
-    time_t start, finish;
-    time(&start);
-
-    file_stream.OpenElement("DataSet");
+    file_stream.OpenElement("ImageDataSet");
 
     // Data file
 
@@ -289,99 +294,71 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Rows labels
 
     file_stream.OpenElement("HasIds");
-    buffer.str("");
-    buffer << has_ids;
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(has_ids).c_str());
     file_stream.CloseElement();
 
     // Channels
 
     file_stream.OpenElement("Channels");
-    buffer.str("");
-    buffer << get_channels_number();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(get_channels_number()).c_str());
     file_stream.CloseElement();
 
     // Width
 
     file_stream.OpenElement("Width");
-    buffer.str("");
-    buffer << get_image_width();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(get_image_width()).c_str());
     file_stream.CloseElement();
 
     // Height
 
     file_stream.OpenElement("Height");
-    buffer.str("");
-    buffer << get_image_height();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(get_image_height()).c_str());
     file_stream.CloseElement();
 
     // Padding
 
     file_stream.OpenElement("Padding");
-    buffer.str("");
-    buffer << get_image_padding();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(to_string(get_image_padding()).c_str());
     file_stream.CloseElement();
 
     // Data augmentation
 
-    file_stream.OpenElement("randomReflectionAxisX");
-    buffer.str("");
-    buffer << get_random_reflection_axis_x();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("RandomReflectionAxisX");
+    file_stream.PushText(to_string(get_random_reflection_axis_x()).c_str());
     file_stream.CloseElement();
 
-    file_stream.OpenElement("randomReflectionAxisY");
-    buffer.str("");
-    buffer << get_random_reflection_axis_y();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("RandomReflectionAxisY");
+    file_stream.PushText(to_string(get_random_reflection_axis_y()).c_str());
     file_stream.CloseElement();
 
-    file_stream.OpenElement("randomRotationMinimum");
-    buffer.str("");
-    buffer << get_random_rotation_minimum();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("RandomRotationMinimum");
+    file_stream.PushText(to_string(get_random_rotation_minimum()).c_str());
     file_stream.CloseElement();
 
-    file_stream.OpenElement("randomRotationMaximum");
-    buffer.str("");
-    buffer << get_random_rotation_maximum();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("RandomRotationMaximum");
+    file_stream.PushText(to_string(get_random_rotation_maximum()).c_str());
     file_stream.CloseElement();
 
-    file_stream.OpenElement("randomHorizontalTranslationMinimum");
-    buffer.str("");
-    buffer << get_random_horizontal_translation_minimum();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("RandomHorizontalTranslationMinimum");
+    file_stream.PushText(to_string(get_random_horizontal_translation_minimum()).c_str());
     file_stream.CloseElement();
 
-    file_stream.OpenElement("randomHorizontalTranslationMaximum");
-    buffer.str("");
-    buffer << get_random_horizontal_translation_maximum();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("RandomHorizontalTranslationMaximum");
+    file_stream.PushText(to_string(get_random_horizontal_translation_maximum()).c_str());
     file_stream.CloseElement();
 
-    file_stream.OpenElement("randomVerticalTranslationMinimum");
-    buffer.str("");
-    buffer << get_random_vertical_translation_minimum();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("RandomVerticalTranslationMinimum");
+    file_stream.PushText(to_string(get_random_vertical_translation_minimum()).c_str());
     file_stream.CloseElement();
 
-    file_stream.OpenElement("randomVerticalTranslationMaximum");
-    buffer.str("");
-    buffer << get_random_vertical_translation_maximum();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.OpenElement("RandomVerticalTranslationMaximum");
+    file_stream.PushText(to_string(get_random_vertical_translation_maximum()).c_str());
     file_stream.CloseElement();
 
     // Codification
 
     file_stream.OpenElement("Codification");
-    buffer.str("");
-    buffer << get_codification_string();
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(get_codification_string().c_str());
     file_stream.CloseElement();
 
     // Close DataFile
@@ -393,32 +370,21 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("RawVariables");
 
     // Raw variables number
-    {
-        file_stream.OpenElement("RawVariablesNumber");
 
-        buffer.str("");
-        buffer << get_raw_variables_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("RawVariablesNumber");
+    file_stream.PushText(to_string(get_raw_variables_number()).c_str());
+    file_stream.CloseElement();
 
     // Raw variables items
 
     const Index raw_variables_number = get_raw_variables_number();
 
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            file_stream.OpenElement("RawVariable");
-
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            raw_variables(i).write_XML(file_stream);
-
-            file_stream.CloseElement();
-        }
+        file_stream.OpenElement("RawVariable");
+        file_stream.PushAttribute("Item", to_string(i+1).c_str());
+        raw_variables(i).to_XML(file_stream);
+        file_stream.CloseElement();
     }
 
     // Close raw_variables
@@ -429,20 +395,8 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(has_ids)
     {
-        const Index rows_labels_number = ids.size();
-
-        file_stream.OpenElement("HasIds");
-
-        buffer.str("");
-
-        for(Index i = 0; i < rows_labels_number; i++)
-        {
-            buffer << ids(i);
-
-            if(i != rows_labels_number-1) buffer << ",";
-        }
-
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.OpenElement("Ids");
+        file_stream.PushText(string_tensor_to_string(ids).c_str());
 
         file_stream.CloseElement();
     }
@@ -452,39 +406,16 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("Samples");
 
     // Samples number
-    {
-        file_stream.OpenElement("SamplesNumber");
 
-        buffer.str("");
-        buffer << get_samples_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("SamplesNumber");
+    file_stream.PushText(to_string(get_samples_number()).c_str());
+    file_stream.CloseElement();
 
     // Samples uses
 
-    {
-        file_stream.OpenElement("SamplesUses");
-
-        buffer.str("");
-
-        const Index samples_number = get_samples_number();
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            SampleUse sample_use = samples_uses(i);
-
-            buffer << Index(sample_use);
-
-            if(i < (samples_number-1)) buffer << " ";
-        }
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("SamplesUses");
+    file_stream.PushText(tensor_to_string(get_samples_uses_tensor()).c_str());
+    file_stream.CloseElement();
 
     // Close samples
 
@@ -493,8 +424,6 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close data set
 
     file_stream.CloseElement();
-
-    time(&finish);
 }
 
 
@@ -504,69 +433,37 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data set element
 
-    const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const tinyxml2::XMLElement* image_data_set_element = data_set_document.FirstChildElement("ImageDataSet");
 
-    if(!data_set_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Data set element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+    if(!image_data_set_element)
+        throw runtime_error("Data set element is nullptr.\n");
 
     // Data file
 
-    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+    const tinyxml2::XMLElement* data_source_element = image_data_set_element->FirstChildElement("DataSource");
 
     if(!data_source_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Data file element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Data source element is nullptr.\n");
 
     // File type
 
     const tinyxml2::XMLElement* file_type_element = data_source_element->FirstChildElement("FileType");
 
     if(!file_type_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "FileType element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("FileType element is nullptr.\n");
 
     if(file_type_element->GetText())
-    {
-        const string new_file_type = file_type_element->GetText();
-
-//        set_data_source_path(new_data_file_name);
-    }
+        set_data_source_path(file_type_element->GetText());
 
     // Data file name
 
     const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
 
     if(!data_source_path_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "DataSourcePath element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("DataSourcePath element is nullptr.\n");
 
     if(data_source_path_element->GetText())
-    {
-        const string new_data_file_name = data_source_path_element->GetText();
-
-        set_data_source_path(new_data_file_name);
-    }
+        set_data_source_path(data_source_path_element->GetText());
 
     // Rows labels
 
@@ -586,206 +483,107 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-
     // Channels
 
     const tinyxml2::XMLElement* channels_number_element = data_source_element->FirstChildElement("Channels");
 
     if(channels_number_element)
-    {
         if(channels_number_element->GetText())
-        {
-            const Index channels = Index(atoi(channels_number_element->GetText()));
-
-            set_channels_number(channels);
-        }
-    }
+            set_channels_number(Index(atoi(channels_number_element->GetText())));
 
     // Width
 
     const tinyxml2::XMLElement* image_width_element = data_source_element->FirstChildElement("Width");
 
     if(image_width_element)
-    {
         if(image_width_element->GetText())
-        {
-            const Index width = Index(atoi(image_width_element->GetText()));
-
-            set_image_width(width);
-        }
-    }
+            set_image_width(Index(atoi(image_width_element->GetText())));
 
     // Height
 
     const tinyxml2::XMLElement* image_height_element = data_source_element->FirstChildElement("Height");
 
     if(image_height_element)
-    {
         if(image_height_element->GetText())
-        {
-            const Index height = Index(atoi(image_height_element->GetText()));
-
-            set_image_height(height);
-        }
-    }
+            set_image_height(Index(atoi(image_height_element->GetText())));
 
     // Padding
 
     const tinyxml2::XMLElement* image_padding_element = data_source_element->FirstChildElement("Padding");
 
     if(image_padding_element)
-    {
         if(image_padding_element->GetText())
-        {
-            const Index padding = Index(atoi(image_padding_element->GetText()));
-
-            set_image_padding(padding);
-        }
-    }
+            set_image_padding(Index(atoi(image_padding_element->GetText())));
 
     // Data augmentation
 
-    const tinyxml2::XMLElement* random_reflection_axis_element_x = data_source_element->FirstChildElement("randomReflectionAxisX");
+    const tinyxml2::XMLElement* random_reflection_axis_element_x = data_source_element->FirstChildElement("RandomReflectionAxisX");
 
     if(random_reflection_axis_element_x)
-    {
         if(random_reflection_axis_element_x->GetText())
-        {
-            const bool randomReflectionAxisX = Index(atoi(random_reflection_axis_element_x->GetText()));
+            set_random_reflection_axis_x(Index(atoi(random_reflection_axis_element_x->GetText())));
 
-            set_random_reflection_axis_x(randomReflectionAxisX);
-
-        }
-    }
-
-    const tinyxml2::XMLElement* random_reflection_axis_element_y = data_source_element->FirstChildElement("randomReflectionAxisY");
+    const tinyxml2::XMLElement* random_reflection_axis_element_y = data_source_element->FirstChildElement("RandomReflectionAxisY");
 
     if(random_reflection_axis_element_x)
-    {
         if(random_reflection_axis_element_x->GetText())
-        {
-            const bool randomReflectionAxisY = Index(atoi(random_reflection_axis_element_y->GetText()));
+            set_random_reflection_axis_y(Index(atoi(random_reflection_axis_element_y->GetText())));
 
-            set_random_reflection_axis_y(randomReflectionAxisY);
-
-        }
-    }
-
-    const tinyxml2::XMLElement* random_rotation_minimum = data_source_element->FirstChildElement("randomRotationMinimum");
+    const tinyxml2::XMLElement* random_rotation_minimum = data_source_element->FirstChildElement("RandomRotationMinimum");
 
     if(random_rotation_minimum)
-    {
         if(random_rotation_minimum->GetText())
-        {
-            const type randomRotationMinimum = type(atoi(random_rotation_minimum->GetText()));
+            set_random_rotation_minimum(type(atoi(random_rotation_minimum->GetText())));
 
-            set_random_rotation_minimum(randomRotationMinimum);
-
-        }
-    }
-
-    const tinyxml2::XMLElement* random_rotation_maximum = data_source_element->FirstChildElement("randomRotationMaximum");
+    const tinyxml2::XMLElement* random_rotation_maximum = data_source_element->FirstChildElement("RandomRotationMaximum");
 
     if(random_rotation_maximum)
-    {
         if(random_rotation_maximum->GetText())
-        {
-            const type randomRotationMaximum = type(atoi(random_rotation_maximum->GetText()));
+            set_random_rotation_minimum(type(atoi(random_rotation_maximum->GetText())));
 
-            set_random_rotation_minimum(randomRotationMaximum);
-
-        }
-    }
-
-    const tinyxml2::XMLElement* random_horizontal_translation_minimum = data_source_element->FirstChildElement("randomHorizontalTranslationMinimum");
+    const tinyxml2::XMLElement* random_horizontal_translation_minimum = data_source_element->FirstChildElement("RandomHorizontalTranslationMinimum");
 
     if(random_horizontal_translation_minimum)
-    {
         if(random_horizontal_translation_minimum->GetText())
-        {
-            const type randomHorizontalTranslationMinimum = type(atoi(random_horizontal_translation_minimum->GetText()));
+            set_random_horizontal_translation_minimum(type(atoi(random_horizontal_translation_minimum->GetText())));
 
-            set_random_horizontal_translation_minimum(randomHorizontalTranslationMinimum);
-
-        }
-    }
-
-    const tinyxml2::XMLElement* random_vertical_translation_minimum = data_source_element->FirstChildElement("randomVerticalTranslationMinimum");
+    const tinyxml2::XMLElement* random_vertical_translation_minimum = data_source_element->FirstChildElement("RandomVerticalTranslationMinimum");
 
     if(random_vertical_translation_minimum)
-    {
         if(random_vertical_translation_minimum->GetText())
-        {
-            const type randomVerticalTranslationMinimum = type(atoi(random_vertical_translation_minimum->GetText()));
+            set_random_vertical_translation_minimum(type(atoi(random_vertical_translation_minimum->GetText())));
 
-            set_random_vertical_translation_minimum(randomVerticalTranslationMinimum);
-
-        }
-    }
-
-    const tinyxml2::XMLElement* random_horizontal_translation_maximum = data_source_element->FirstChildElement("randomHorizontalTranslationMaximum");
+    const tinyxml2::XMLElement* random_horizontal_translation_maximum = data_source_element->FirstChildElement("RandomHorizontalTranslationMaximum");
 
     if(random_horizontal_translation_maximum)
-    {
         if(random_horizontal_translation_maximum->GetText())
-        {
-            const type randomHorizontalTranslationMaximum = type(atoi(random_horizontal_translation_maximum->GetText()));
+            set_random_horizontal_translation_maximum(type(atoi(random_horizontal_translation_maximum->GetText())));
 
-            set_random_horizontal_translation_maximum(randomHorizontalTranslationMaximum);
-
-        }
-    }
-
-    const tinyxml2::XMLElement* random_vertical_translation_maximum = data_source_element->FirstChildElement("randomVerticalTranslationMaximum");
+    const tinyxml2::XMLElement* random_vertical_translation_maximum = data_source_element->FirstChildElement("RandomVerticalTranslationMaximum");
 
     if(random_vertical_translation_maximum)
-    {
         if(random_vertical_translation_maximum->GetText())
-        {
-            const type randomVerticalTranslationMaximum = type(atoi(random_vertical_translation_maximum->GetText()));
-
-            set_random_vertical_translation_maximum(randomVerticalTranslationMaximum);
-
-        }
-    }
+            set_random_vertical_translation_maximum(type(atoi(random_vertical_translation_maximum->GetText())));
 
     const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
-    {
         if(codification_element->GetText())
-        {
-            const string codification = codification_element->GetText();
-
-            set_codification(codification);
-        }
-    }
+            set_codification(codification_element->GetText());
 
     // RawVariables
 
-    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
+    const tinyxml2::XMLElement* raw_variables_element = image_data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "RawVariables element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("RawVariables element is nullptr.\n");
 
     // Raw variables number
 
     const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     if(!raw_variables_number_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "RawVariablesNumber element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("RawVariablesNumber element is nullptr.\n");
 
     Index new_raw_variables_number = 0;
 
@@ -858,7 +656,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // raw_variable use
 
-            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("RawVariableUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("Use");
 
             if(!raw_variable_use_element)
             {
@@ -933,7 +731,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //    {
 //        // Time series raw_variables number
 
-//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesraw_variablesNumber");
+//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
 
 //        if(!time_series_raw_variables_number_element)
 //        {
@@ -961,7 +759,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //        {
 //            for(Index i = 0; i < time_series_new_raw_variables_number; i++)
 //            {
-//                const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesColumn");
+//                const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
 //                time_series_start_element = time_series_raw_variable_element;
 
 //                if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
@@ -1015,7 +813,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 //                // raw_variable use
 
-//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("RawVariableUse");
+//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("Use");
 
 //                if(!time_series_raw_variable_use_element)
 //                {
@@ -1084,7 +882,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Rows labels begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
+        const tinyxml2::XMLElement* has_ids_element = image_data_set_element->FirstChildElement("HasIds");
 
         if(!has_ids_element)
         {
@@ -1099,7 +897,6 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(has_ids_element->GetText())
         {
-
             const string new_rows_labels = has_ids_element->GetText();
 
             string separator = ",";
@@ -1116,7 +913,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Samples
 
-    const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
+    const tinyxml2::XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
 
     if(!samples_element)
     {
@@ -1167,107 +964,9 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
     }
 
-   // Missing values
-
-   const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
-
-   if(!missing_values_element)
-   {
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-              << "Missing values element is nullptr.\n";
-
-       throw runtime_error(buffer.str());
-   }
-
-   // Missing values method
-
-   const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
-
-   if(!missing_values_method_element)
-   {
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-              << "Missing values method element is nullptr.\n";
-
-       throw runtime_error(buffer.str());
-   }
-
-   if(missing_values_method_element->GetText())
-   {
-       set_missing_values_method(missing_values_method_element->GetText());
-   }
-
-   // Missing values number
-
-   const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
-
-   if(!missing_values_number_element)
-   {
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-              << "Missing values number element is nullptr.\n";
-
-       throw runtime_error(buffer.str());
-   }
-
-    if(missing_values_number_element->GetText())
-    {
-        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
-    }
-
-   if(missing_values_number > 0)
-   {
-       // Raw variables Missing values number
-
-       const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
-
-       if(!raw_variables_missing_values_number_element)
-       {
-           buffer << "OpenNN Exception: DataSet class.\n"
-                  << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                  << "RawVariablesMissingValuesNumber element is nullptr.\n";
-
-           throw runtime_error(buffer.str());
-       }
-
-       if(raw_variables_missing_values_number_element->GetText())
-       {
-
-           Tensor<string, 1> new_raw_variables_missing_values_number
-               = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
-
-           raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
-
-           for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
-           {
-               raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
-           }
-
-       }
-
-       // Rows missing values number
-
-       const tinyxml2::XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
-
-       if(!rows_missing_values_number_element)
-       {
-           buffer << "OpenNN Exception: DataSet class.\n"
-                  << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                  << "Rows missing values number element is nullptr.\n";
-
-           throw runtime_error(buffer.str());
-       }
-
-    if(missing_values_number_element->GetText())
-        {
-            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
-        }
-    }
-
     // Display
 
-    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
+    const tinyxml2::XMLElement* display_element = image_data_set_element->FirstChildElement("Display");
 
     if(display_element)
     {
@@ -1298,14 +997,14 @@ void ImageDataSet::read_bmp()
         }
     }
 
-    const Index targets_number = directory_path.size();
+    const Index folders_number = directory_path.size();
 
-    Tensor<Index, 1> images_number(targets_number + 1);
+    Tensor<Index, 1> images_number(folders_number + 1);
     images_number.setZero();
 
     Index samples_number = 0;
 
-    for(Index i = 0; i < targets_number; i++)
+    for(Index i = 0; i < folders_number; i++)
     {
         for(const directory_entry& current_directory : directory_iterator(directory_path[i]))
         {
@@ -1319,15 +1018,29 @@ void ImageDataSet::read_bmp()
         images_number[i+1] = samples_number;
     }
 
-    Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0].string());
+    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0].string());
 
-    const Index image_height = image_data.dimension(0);
-    const Index image_width = image_data.dimension(1);
+    const Index height = image_data.dimension(0);
+    const Index width = image_data.dimension(1);
     const Index image_channels = image_data.dimension(2);
 
-    const Index pixels_number = image_height * image_width * image_channels;
+    const Index inputs_number = height * width * image_channels;
+    const Index raw_variables_number = inputs_number + 1;
 
-    set(samples_number, image_height, image_width, image_channels, targets_number);
+    const Index pixels_number = height * width * image_channels;
+
+    const Index targets_number = (folders_number == 2) ? folders_number -1 : folders_number;
+
+    set(samples_number, height, width, image_channels, targets_number);
+
+    Tensor<string, 1> categories(targets_number);
+
+    for(Index i = 0; i < targets_number; i++)
+    {
+        categories(i) = directory_path[i].filename().string();
+    }
+
+    raw_variables(raw_variables_number-1).set_categories(categories);
 
     data.setZero();
 
@@ -1344,20 +1057,24 @@ void ImageDataSet::read_bmp()
             data(i, j) = image_data(j);
         }
 
-        //if(targets_number == 2)
-        //{
-        //    if(i >= images_number[0] && i < images_number[1])
-        //    {
-        //        data(i, pixels_number) = 1;
-        //    }
-        //}
-        //else
-        {                        
-            for(Index k = 0; k < targets_number; k++)
+        if (targets_number == 1)
+        {
+            if (i >= images_number[0] && i < images_number[1])
             {
-                if(i >= images_number[k] && i < images_number[k+1])
+                data(i, pixels_number) = 0;
+            }
+            else
+            {
+                data(i, pixels_number) = 1;
+            }
+        }
+        else
+        {
+            for (Index k = 0; k < targets_number; k++)
+            {
+                if (i >= images_number[k] && i < images_number[k + 1])
                 {
-                    data(i, k+pixels_number) = 1;
+                    data(i, k + pixels_number) = 1;
                     break;
                 }
             }

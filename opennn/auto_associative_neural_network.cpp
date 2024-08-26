@@ -188,9 +188,6 @@ void AutoAssociativeNeuralNetwork::set_variables_distances_names(const Tensor<st
 
 void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument& document)
 {
-
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("BoxPlotDistances");
 
     if(!root_element)
@@ -508,7 +505,7 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
     file.close();
 }
 
-void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -565,7 +562,7 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
 
     for(Index i = 0; i < layers.size(); i++)
     {
-        layers[i]->write_XML(file_stream);
+        layers[i]->to_XML(file_stream);
     }
 
     // Layers (end tag)

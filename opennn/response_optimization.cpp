@@ -38,7 +38,7 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
     inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
     inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
 
-    if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification case
+    if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
     {
 
         outputs_minimums.resize(outputs_number);
@@ -71,9 +71,8 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
     inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
     inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
 
-    if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification case
+    if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
     {
-
         outputs_minimums.resize(outputs_number);
         outputs_minimums.setZero();
 
@@ -622,7 +621,7 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     }
     else
     {
-        results->optimal_variables = Tensor<type,1>();
+        results->optimal_variables = Tensor<type, 1>();
     }
 
     return results;

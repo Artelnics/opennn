@@ -349,13 +349,12 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     if(thread_pool_device == nullptr)
         throw runtime_error("Pointer to thread pool device is nullptr.\n");
-
+/*
     if(is_zero(optimization_data.training_direction))
         throw runtime_error("Training direction is zero.\n");
-
+*/
     if(optimization_data.initial_learning_rate < type(NUMERIC_LIMITS_MIN))
         throw runtime_error("Initial learning rate is zero.\n");
-    }
 
 #endif
 
@@ -544,7 +543,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 }
 
 
-void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void LearningRateAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Learning rate algorithm
 
