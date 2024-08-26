@@ -483,13 +483,13 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
 }
 
 
-void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void GradientDescent::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Learning rate algorithm
 
     file_stream.OpenElement("GradientDescent");
 
-    learning_rate_algorithm.write_XML(file_stream);
+    learning_rate_algorithm.to_XML(file_stream);
 
     // Minimum loss decrease
 
@@ -519,12 +519,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("MaximumTime");
     file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    // Hardware use
-
-    file_stream.OpenElement("HardwareUse");
-    file_stream.PushText(hardware_use.c_str());
     file_stream.CloseElement();
 
     file_stream.CloseElement();
@@ -643,24 +637,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_maximum_time(new_maximum_time);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Hardware use
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
-
-        if(element)
-        {
-            const string new_hardware_use = element->GetText();
-            try
-            {
-                set_hardware_use(new_hardware_use);
             }
             catch(const exception& e)
             {

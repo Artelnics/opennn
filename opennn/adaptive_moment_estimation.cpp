@@ -589,7 +589,7 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 }
 
 
-void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("AdaptiveMomentEstimation");
 

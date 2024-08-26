@@ -51,6 +51,7 @@ public:
     Index get_depth() const;
     bool get_positional_encoding() const;
 
+    dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const final;
 
     Tensor<type, 2> get_embedding_weights() const;
@@ -113,13 +114,12 @@ public:
 
     void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
-
     // Serialization
 
     // @todo
 
     void from_XML(const tinyxml2::XMLDocument&) final;
-    void write_XML(tinyxml2::XMLPrinter&) const final;
+    void to_XML(tinyxml2::XMLPrinter&) const final;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"

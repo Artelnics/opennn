@@ -1403,7 +1403,7 @@ string get_word_from_token(string& token)
 
     for(char& c : token)
     {
-        if(c!=' ' && c!='=' )
+        if(c != ' ' && c != '=' )
         {
             word += c;
         }

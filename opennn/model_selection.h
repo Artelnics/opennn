@@ -77,7 +77,7 @@ public:
     
     void from_XML(const tinyxml2::XMLDocument&);
 
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(tinyxml2::XMLPrinter&) const;
 
     string write_neurons_selection_method() const;
     string write_inputs_selection_method() const;

@@ -83,7 +83,7 @@ namespace opennn
         // Serialization
 
         void from_XML(const tinyxml2::XMLDocument&) final;
-        void write_XML(tinyxml2::XMLPrinter&) const final;
+        void to_XML(tinyxml2::XMLPrinter&) const final;
 
         #ifdef OPENNN_CUDA
             #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_cuda.h"

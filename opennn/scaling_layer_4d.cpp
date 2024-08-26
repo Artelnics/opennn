@@ -595,7 +595,7 @@ void ScalingLayer4D::print() const
 }
 
 
-void ScalingLayer4D::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

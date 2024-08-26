@@ -670,29 +670,29 @@ void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
 
 void LongShortTermMemoryLayer::set_parameters_random()
 {
-    forget_biases.setRandom();
+    set_random(forget_biases);
 
-    input_biases.setRandom();
+    set_random(input_biases);
 
-    state_biases.setRandom();
+    set_random(state_biases);
 
-    output_biases.setRandom();
+    set_random(output_biases);
 
-    forget_weights.setRandom();
+    set_random(forget_weights);
 
-    input_weights.setRandom();
+    set_random(input_weights);
 
-    state_weights.setRandom();
+    set_random(state_weights);
 
-    output_weights.setRandom();
+    set_random(output_weights);
 
-    forget_recurrent_weights.setRandom();
+    set_random(forget_recurrent_weights);
 
-    input_recurrent_weights.setRandom();
+    set_random(input_recurrent_weights);
 
-    state_recurrent_weights.setRandom();
+    set_random(state_recurrent_weights);
 
-    output_recurrent_weights.setRandom();
+    set_random(output_recurrent_weights);
 }
 
 
@@ -2690,7 +2690,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 

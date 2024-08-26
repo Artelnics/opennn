@@ -28,16 +28,16 @@ int main()
     {
         srand(static_cast<unsigned>(time(nullptr)));
 
+
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
 //        data_set.print();
 
-        data_set.load("../data/data_set.xml");
-        data_set.save("../data/data_set.xml");
+//        data_set.load("../data/data_set.xml");
+//        data_set.save("../data/data_set.xml");
 
-/*
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -46,7 +46,10 @@ int main()
         const Index neurons_number = 10;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                      {input_variables_number, neurons_number, target_variables_number});
+                                     {input_variables_number, neurons_number, target_variables_number});
+
+        neural_network.save("../data/neural_network.xml");
+        neural_network.load("../data/neural_network.xml");
 
         // Training strategy
 
@@ -65,8 +68,11 @@ int main()
 
         //training_strategy.set_maximum_epochs_number(100000);
 
-        training_strategy.perform_training();
+        training_strategy.save("../data/training_strategy.xml");
+        training_strategy.load("../data/training_strategy.xml");
 /*
+        training_strategy.perform_training();
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);

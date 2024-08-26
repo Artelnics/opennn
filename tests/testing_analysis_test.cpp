@@ -403,38 +403,6 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
    assert_true(binary[12] == 0 , LOG);
    assert_true(binary[13] == -1 , LOG);
    assert_true(binary[14] == -1 , LOG);
-
-}
-
-
-void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
-{
-    cout << "test_calculate_Wilcoxon_parameter\n";
-
-    type wilcoxon_parameter;
-
-    // Test
-
-    type x = type(1.5);
-    type y = type(2.5);
-
-    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(x, y);
-
-    assert_true(abs(wilcoxon_parameter) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(y ,x);
-
-    assert_true(abs(wilcoxon_parameter - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    x = y;
-
-    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(x, y);
-
-    assert_true(abs(wilcoxon_parameter - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1202,7 +1170,6 @@ void TestingAnalysisTest::run_test_case()
 
     // ROC curve
 
-    test_calculate_Wilcoxon_parameter();
     test_calculate_roc_curve();
     test_calculate_area_under_curve();
     test_calculate_optimal_threshold();

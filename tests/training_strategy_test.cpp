@@ -102,7 +102,7 @@ void TrainingStrategyTest::test_to_XML()
     {
         tinyxml2::XMLPrinter document(pFile);
 
-        training_strategy.write_XML(document);
+        training_strategy.to_XML(document);
 
         fclose(pFile);
     }
