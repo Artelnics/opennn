@@ -170,6 +170,9 @@ void PoolingLayer::set(const dimensions& new_input_dimensions, const dimensions&
     pool_height = new_pool_dimensions[0];
     pool_width = new_pool_dimensions[1];
 
+    if (pool_height > input_dimensions[0] || pool_width > input_dimensions[1])
+        throw runtime_error("Pool dimensions cannot be bigger than input dimensions");
+
     set_default();
 }
 
@@ -416,67 +419,72 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
     input_derivatives.setZero();
-    /*
-    // Max pooling
-    for(int batch_index = 0; batch_index < batch_samples_number; ++batch_index)
+    
+    switch (pooling_method)
     {
-        for(int height_index = 0; height_index < inputs_pair(0).second[1]; ++height_index)
+    case PoolingMethod::MaxPooling:
+        for (Index batch_index = 0; batch_index < inputs.dimension(0); ++batch_index)
         {
-            for(int width_index = 0; width_index < inputs_pair(0).second[2]; ++width_index)
+            for (Index height_index = 0; height_index < outputs.dimension(1); ++height_index)
             {
-                for(int channel_index = 0; channel_index < inputs_pair(0).second[3]; ++channel_index)
+                const Index height_start = height_index * pool_height;
+                const Index height_end = min(height_start + pool_height, inputs.dimension(1));
+                for (Index width_index = 0; width_index < outputs.dimension(2); ++width_index)
                 {
-                    int height_start = height_index * row_stride;
-                    int height_end = min(height_start + pool_height, inputs_pair(0).second[1]);
-                    int width_start = width_index * column_stride;
-                    int width_end = min(width_start + pool_width, inputs_pair(0).second[2]);
-
-                    bool found_max = false;
-                    for(int pixel_height = height_start; pixel_height < height_end && !found_max; ++pixel_height)
+                    const Index width_start = width_index * pool_width;
+                    const Index width_end = min(width_start + pool_width, inputs.dimension(2));
+                    for (Index channel_index = 0; channel_index < inputs.dimension(3); ++channel_index)
                     {
-                        for(int pixel_width = width_start; pixel_width < width_end && !found_max; ++pixel_width)
+                        for (Index pool_height_index = height_start; pool_height_index < height_end; ++pool_height_index)
                         {
-                            if (inputs(batch_index, pixel_height, pixel_width, channel_index) == outputs(batch_index, height_index, width_index, channel_index))
+                            for (Index pool_width_index = width_start; pool_width_index < width_end; ++pool_width_index)
                             {
-                                input_derivatives(batch_index, pixel_height, pixel_width, channel_index) += deltas(batch_index, height_index, width_index, channel_index);
-                                found_max = true;
+                                if (inputs(batch_index, pool_height_index, pool_width_index, channel_index) == outputs(batch_index, height_index, width_index, channel_index))
+                                {
+                                    input_derivatives(batch_index, pool_height_index, pool_width_index, channel_index) += deltas(batch_index, height_index, width_index, channel_index);
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        break;
+
+    case PoolingMethod::AveragePooling:
+        for (Index batch_index = 0; batch_index < inputs.dimension(0); ++batch_index)
+        {
+            for (Index height_index = 0; height_index < deltas.dimension(1); ++height_index)
+            {
+                const Index height_start = height_index * pool_height;
+                const Index height_end = min(height_start + pool_height, inputs.dimension(1));
+
+                for (Index width_index = 0; width_index < deltas.dimension(2); ++width_index)
+                {
+                    const Index width_start = width_index * pool_width;
+                    const Index width_end = min(width_start + pool_width, inputs.dimension(2));
+
+                    for (Index channel_index = 0; channel_index < inputs.dimension(3); ++channel_index)
+                    {
+                        const type gradient = deltas(batch_index, height_index, width_index, channel_index) / (pool_height * pool_width);
+
+                        for (Index pool_height_index = height_start; pool_height_index < height_end; pool_height_index++)
+                        {
+                            for (Index pool_width_index = width_start; pool_width_index < width_end; pool_width_index++)
+                            {
+                                input_derivatives(batch_index, pool_height_index, pool_width_index, channel_index) += gradient;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        break;
+
+    case PoolingMethod::NoPooling:
+        input_derivatives = deltas;
+        break;
     }
-    */
-    // @todo calculate input derivatives (= deltas for previous layer)
-
-    //input_derivatives.device(*thread_pool_device) = 0;
-
-    /* Do this at the end of back_propagate(), with input_derivatives instead of deltas
-void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation,
-                                          PoolingLayerBackPropagation* next_pooling_layer_back_propagation,
-                                          PoolingLayerForwardPropagation* this_layer_forward_propagation,
-                                          PoolingLayerBackPropagation* this_pooling_layer_back_propagation) const
-{
-
-//    const Index inputs_size = next_pooling_layer_forward_propagation->inputs_max_indices.size();
-
-//    Index delta_index = 0;
-
-//    this_convolutional_layer_back_propagation->deltas.setZero();
-
-//    for(Index i = 0; i < inputs_size; i++)
-//    {
-//        if(next_pooling_layer_forward_propagation->inputs_max_indices(delta_index) == 1)
-//        {
-//            this_convolutional_layer_back_propagation->deltas(i) = next_pooling_layer_back_propagation->deltas(i);
-//            delta_index++;
-//        }
-//    }
-
-    return;
-}
-*/
 }
 
 

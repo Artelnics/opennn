@@ -2067,9 +2067,9 @@ void MeanSquaredErrorTest::run_test_case()
     // Back propagate
 
     test_back_propagate_perceptron();
-    test_back_propagate_probabilistic(); /*Probabilistic only works with CrossEntropyError*/
-    test_back_propagate_convolutional();
     /*
+    test_back_propagate_probabilistic(); //Probabilistic only works with CrossEntropyError6
+    test_back_propagate_convolutional();
     test_back_propagate_recurrent();
     test_back_propagate_long_short_term_memory();
     */
