@@ -1,0 +1,3207 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>0</InputsNumber>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling4D Convolutional Convolutional Pooling Flatten Probabilistic</LayersTypes>
+      <ScalingLayer4D>
+         <ScalingNeuronsNumber>784</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="6">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="7">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="8">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="9">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="10">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="11">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="12">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="13">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="14">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="15">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="16">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="17">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="18">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="19">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="20">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="21">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="22">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="23">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="24">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="25">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="26">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="27">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="28">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="29">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="30">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="31">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="32">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="33">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="34">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="35">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="36">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="37">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="38">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="39">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="40">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="41">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="42">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="43">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="44">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="45">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="46">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="47">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="48">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="49">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="50">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="51">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="52">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="53">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="54">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="55">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="56">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="57">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="58">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="59">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="60">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="61">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="62">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="63">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="64">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="65">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="66">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="67">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="68">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="69">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="70">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="71">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="72">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="73">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="74">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="75">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="76">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="77">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="78">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="79">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="80">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="81">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="82">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="83">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="84">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="85">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="86">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="87">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="88">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="89">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="90">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="91">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="92">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="93">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="94">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="95">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="96">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="97">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="98">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="99">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="100">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="101">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="102">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="103">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="104">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="105">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="106">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="107">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="108">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="109">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="110">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="111">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="112">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="113">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="114">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="115">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="116">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="117">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="118">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="119">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="120">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="121">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="122">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="123">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="124">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="125">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="126">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="127">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="128">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="129">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="130">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="131">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="132">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="133">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="134">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="135">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="136">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="137">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="138">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="139">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="140">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="141">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="142">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="143">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="144">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="145">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="146">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="147">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="148">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="149">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="150">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="151">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="152">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="153">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="154">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="155">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="156">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="157">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="158">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="159">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="160">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="161">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="162">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="163">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="164">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="165">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="166">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="167">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="168">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="169">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="170">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="171">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="172">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="173">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="174">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="175">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="176">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="177">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="178">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="179">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="180">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="181">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="182">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="183">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="184">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="185">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="186">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="187">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="188">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="189">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="190">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="191">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="192">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="193">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="194">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="195">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="196">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="197">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="198">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="199">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="200">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="201">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="202">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="203">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="204">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="205">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="206">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="207">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="208">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="209">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="210">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="211">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="212">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="213">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="214">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="215">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="216">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="217">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="218">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="219">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="220">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="221">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="222">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="223">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="224">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="225">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="226">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="227">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="228">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="229">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="230">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="231">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="232">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="233">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="234">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="235">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="236">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="237">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="238">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="239">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="240">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="241">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="242">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="243">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="244">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="245">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="246">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="247">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="248">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="249">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="250">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="251">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="252">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="253">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="254">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="255">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="256">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="257">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="258">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="259">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="260">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="261">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="262">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="263">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="264">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="265">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="266">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="267">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="268">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="269">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="270">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="271">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="272">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="273">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="274">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="275">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="276">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="277">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="278">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="279">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="280">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="281">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="282">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="283">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="284">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="285">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="286">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="287">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="288">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="289">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="290">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="291">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="292">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="293">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="294">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="295">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="296">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="297">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="298">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="299">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="300">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="301">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="302">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="303">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="304">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="305">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="306">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="307">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="308">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="309">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="310">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="311">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="312">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="313">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="314">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="315">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="316">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="317">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="318">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="319">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="320">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="321">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="322">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="323">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="324">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="325">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="326">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="327">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="328">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="329">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="330">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="331">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="332">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="333">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="334">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="335">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="336">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="337">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="338">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="339">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="340">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="341">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="342">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="343">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="344">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="345">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="346">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="347">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="348">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="349">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="350">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="351">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="352">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="353">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="354">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="355">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="356">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="357">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="358">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="359">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="360">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="361">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="362">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="363">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="364">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="365">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="366">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="367">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="368">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="369">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="370">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="371">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="372">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="373">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="374">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="375">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="376">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="377">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="378">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="379">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="380">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="381">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="382">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="383">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="384">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="385">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="386">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="387">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="388">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="389">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="390">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="391">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="392">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="393">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="394">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="395">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="396">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="397">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="398">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="399">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="400">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="401">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="402">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="403">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="404">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="405">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="406">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="407">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="408">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="409">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="410">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="411">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="412">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="413">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="414">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="415">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="416">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="417">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="418">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="419">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="420">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="421">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="422">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="423">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="424">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="425">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="426">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="427">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="428">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="429">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="430">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="431">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="432">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="433">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="434">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="435">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="436">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="437">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="438">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="439">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="440">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="441">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="442">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="443">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="444">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="445">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="446">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="447">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="448">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="449">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="450">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="451">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="452">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="453">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="454">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="455">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="456">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="457">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="458">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="459">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="460">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="461">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="462">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="463">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="464">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="465">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="466">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="467">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="468">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="469">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="470">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="471">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="472">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="473">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="474">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="475">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="476">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="477">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="478">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="479">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="480">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="481">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="482">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="483">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="484">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="485">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="486">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="487">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="488">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="489">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="490">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="491">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="492">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="493">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="494">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="495">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="496">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="497">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="498">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="499">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="500">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="501">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="502">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="503">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="504">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="505">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="506">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="507">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="508">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="509">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="510">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="511">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="512">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="513">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="514">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="515">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="516">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="517">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="518">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="519">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="520">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="521">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="522">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="523">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="524">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="525">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="526">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="527">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="528">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="529">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="530">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="531">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="532">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="533">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="534">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="535">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="536">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="537">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="538">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="539">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="540">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="541">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="542">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="543">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="544">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="545">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="546">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="547">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="548">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="549">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="550">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="551">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="552">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="553">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="554">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="555">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="556">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="557">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="558">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="559">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="560">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="561">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="562">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="563">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="564">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="565">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="566">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="567">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="568">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="569">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="570">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="571">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="572">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="573">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="574">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="575">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="576">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="577">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="578">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="579">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="580">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="581">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="582">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="583">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="584">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="585">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="586">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="587">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="588">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="589">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="590">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="591">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="592">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="593">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="594">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="595">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="596">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="597">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="598">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="599">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="600">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="601">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="602">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="603">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="604">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="605">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="606">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="607">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="608">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="609">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="610">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="611">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="612">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="613">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="614">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="615">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="616">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="617">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="618">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="619">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="620">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="621">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="622">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="623">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="624">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="625">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="626">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="627">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="628">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="629">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="630">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="631">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="632">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="633">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="634">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="635">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="636">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="637">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="638">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="639">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="640">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="641">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="642">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="643">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="644">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="645">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="646">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="647">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="648">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="649">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="650">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="651">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="652">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="653">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="654">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="655">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="656">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="657">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="658">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="659">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="660">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="661">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="662">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="663">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="664">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="665">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="666">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="667">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="668">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="669">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="670">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="671">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="672">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="673">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="674">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="675">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="676">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="677">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="678">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="679">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="680">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="681">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="682">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="683">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="684">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="685">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="686">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="687">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="688">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="689">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="690">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="691">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="692">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="693">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="694">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="695">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="696">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="697">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="698">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="699">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="700">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="701">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="702">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="703">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="704">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="705">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="706">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="707">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="708">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="709">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="710">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="711">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="712">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="713">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="714">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="715">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="716">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="717">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="718">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="719">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="720">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="721">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="722">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="723">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="724">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="725">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="726">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="727">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="728">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="729">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="730">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="731">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="732">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="733">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="734">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="735">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="736">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="737">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="738">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="739">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="740">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="741">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="742">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="743">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="744">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="745">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="746">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="747">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="748">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="749">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="750">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="751">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="752">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="753">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="754">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="755">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="756">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="757">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="758">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="759">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="760">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="761">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="762">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="763">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="764">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="765">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="766">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="767">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="768">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="769">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="770">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="771">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="772">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="773">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="774">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="775">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="776">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="777">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="778">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="779">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="780">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="781">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="782">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="783">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="784">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+      </ScalingLayer4D>
+      <ConvolutionalLayer>
+         <LayerName>convolutional_layer</LayerName>
+         <InputDimensions>28 28 1 </InputDimensions>
+         <OutputDimensions>27 27 1 </OutputDimensions>
+         <FiltersNumber>1</FiltersNumber>
+         <FiltersSize>2</FiltersSize>
+         <ActivationFunction>Linear</ActivationFunction>
+         <Stride>1</Stride>
+         <ConvolutionType>Valid</ConvolutionType>
+         <Parameters>0.0127136 -0.0613403 0.0617432 0.0169983 -0.0997498 </Parameters>
+      </ConvolutionalLayer>
+      <ConvolutionalLayer>
+         <LayerName>convolutional_layer</LayerName>
+         <InputDimensions>27 27 1 </InputDimensions>
+         <OutputDimensions>27 27 1 </OutputDimensions>
+         <FiltersNumber>1</FiltersNumber>
+         <FiltersSize>1</FiltersSize>
+         <ActivationFunction>Linear</ActivationFunction>
+         <Stride>1</Stride>
+         <ConvolutionType>Valid</ConvolutionType>
+         <Parameters>-0.0299438 -0.00402832 </Parameters>
+      </ConvolutionalLayer>
+      <PoolingLayer>
+         <LayerName>layer</LayerName>
+         <InputDimensions>1 1 1</InputDimensions>
+         <FiltersNumber>9</FiltersNumber>
+         <FiltersSize>9</FiltersSize>
+         <PoolingMethod>AveragePooling</PoolingMethod>
+         <InputDimensions>27 27 1 </InputDimensions>
+         <ColumnStride>1</ColumnStride>
+         <RowStride>1</RowStride>
+         <PoolColumnsNumber>1</PoolColumnsNumber>
+         <PoolRowsNumber>1</PoolRowsNumber>
+         <PaddingWidth>0</PaddingWidth>
+      </PoolingLayer>
+      <FlattenLayer>
+         <InputVariablesDimension>
+            <InputHeight>27</InputHeight>
+            <InputWidth>27</InputWidth>
+            <InputChannels>1</InputChannels>
+         </InputVariablesDimension>
+      </FlattenLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>729</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>0.064563 0.0493164 -0.0651794 0.0717834 0.042096 0.00270386 -0.0392029 -0.0970032 -0.08172 -0.0271118 -0.0705383 -0.0668213 0.097699 -0.0108643 -0.0761841 -0.0990662 -0.0982178 -0.0244263 0.00632934 0.0142334 0.0203491 0.0214294 -0.0667541 0.032605 -0.00984497 -0.0295776 -0.0885925 0.0215332 0.0566589 0.0605164 0.00397339 -0.0396118 0.0751892 0.0453308 0.0911743 0.0851379 0.00786743 -0.0715332 -0.00758667 -0.0529358 0.0724426 -0.0580811 0.0559265 0.0687256 0.099353 0.0999329 0.0222961 -0.0215149 -0.046759 -0.0405457 0.0680237 -0.0952515 -0.0248291 -0.0814758 0.035437 -0.0887573 -0.0982422 0.0837524 -0.0448242 -0.0454224 0.0175781 0.0382324 0.0675171 0.0452942 -0.00301514 -0.0589294 0.0487427 -0.00631104 -0.00841065 0.0898254 0.0488831 -0.0783447 0.0198059 -0.0229553 0.0469971 0.0217896 0.0144775 -0.0277344 -0.0696899 -0.0549805 -0.0149719 0.0605713 0.00341797 0.097992 0.0503052 -0.0308899 -0.0662048 0.0314575 -0.00162353 -0.0872925 0.0399475 0.000958249 -0.0705017 0.0899109 -0.0716858 0.0810181 0.0385742 -0.0393921 -0.0146912 -0.0859253 0.0933167 0.0366333 -0.0693543 0.0754456 0.0643311 0.0164063 -0.061731 -0.0644226 0.0634338 -0.00494995 -0.0688904 0.000781253 0.0463989 -0.0188843 -0.0440857 0.0137451 0.0364441 0.0511658 0.0443787 -0.00494385 -0.0753967 -0.0264404 0.0669312 -0.092981 0.00339966 0.0325928 -0.0147583 -0.0790649 0.0898621 0.0842712 0.00990601 -0.0308044 -0.00565796 -0.0250061 0.0693909 -0.0366272 -0.00878296 -0.0456238 0.0965881 -0.0404419 0.0478333 0.0134521 -0.0608032 0.0522583 0.0678833 -0.0204712 0.000177003 0.0780273 -0.0945068 0.0989197 0.0145142 -0.0898987 0.00626221 -0.0611877 0.0686035 0.0253479 0.0315186 -0.0604309 0.0684265 -0.0753357 -0.0780151 0.0486206 -0.0371887 0.088208 -0.0427856 -0.0327393 -0.0719482 0.0466126 0.0669189 0.0415955 0.0200439 0.0494385 -0.0494568 -0.071106 -0.0996765 -0.0877991 0.0612427 0.07052 -0.0578857 -0.0768799 0.0106384 -0.0971497 -0.0772461 -0.00910034 0.0504395 0.0372253 0.00868531 -0.0852234 -0.0126587 -0.059613 0.0392395 -0.0419312 -0.0126648 -0.0535156 0.0155701 0.00651245 0.0257324 -0.0679626 0.000823975 0.0926025 0.039148 0.0849548 -0.0620117 -0.0328125 -0.0643311 0.0990295 -0.0085144 0.0995972 -0.0804993 0.0250305 -0.0811218 -0.0124573 0.0862976 -0.0903137 0.0789185 -0.0419983 -0.054541 0.0538086 -0.0178589 -0.0596069 0.0256104 0.0208252 -0.00968017 -0.00673218 0.0195618 0.0269409 0.0709534 0.0657532 0.0249512 0.0441772 0.013147 -0.0249756 -0.063147 0.0475769 0.0110229 0.081012 -0.0514282 -0.0622131 0.0209412 0.0396973 0.0169189 -0.0297424 -0.00111084 -0.0839233 0.0481445 0.022406 0.0240723 0.0382202 0.0609009 -0.0701782 0.0152039 0.0735413 0.0823059 0.022937 0.0455322 -0.0913574 0.033551 0.0953003 -0.0369995 0.0138367 -0.0388367 -0.0652161 -0.0782898 0.0738037 0.0702393 0.0488587 -0.0690247 -0.0346191 -0.0841309 -0.0846802 0.0281921 0.0639954 0.00901489 -0.0103516 -0.0182068 -0.0402527 -0.00689087 0.000238039 -0.0694702 -0.0353943 0.0475952 -0.0372253 0.065332 0.0918091 0.0746643 0.0450012 -0.0399902 0.0887939 -0.0745544 -0.086853 0.0569885 0.00491333 0.0219238 0.091217 -0.0855469 0.0751221 0.0307678 -0.0355774 -0.0790405 0.00100708 -0.0545837 -0.0419434 0.0839905 0.0102295 0.0325562 -0.0770935 -0.00149536 -0.024176 -0.000640869 0.058667 0.00184937 -0.0235291 0.0376282 0.006427 0.0212524 -0.0209656 -0.098822 0.041571 -0.0798767 0.0246094 0.072644 -0.00170288 0.0494629 -0.000622556 -0.0239807 0.0570679 0.0105591 -0.0285828 0.0911377 0.0261658 -0.0646851 -0.0251526 -0.0736755 0.0486511 0.0903381 0.0223938 -0.0944336 -0.0340332 -0.0888184 0.0278381 -0.0736755 0.0694092 0.0728577 0.0193726 0.0443237 0.0707886 -0.0970642 -0.074707 0.0415772 0.0234253 -0.056488 -0.0868103 -0.066217 0.0248169 -0.0318054 -0.0361206 -0.0264893 0.0321961 0.0604736 0.0613709 0.00530396 0.0222168 0.0596314 0.0801147 -0.0710388 0.0260315 -0.019519 -0.0492615 -0.0726929 0.0710327 -0.0867676 -0.0144409 0.0146668 -0.0395447 0.00960694 -0.0548889 -0.0377319 -0.0778748 0.0616028 -0.0730591 -0.0431519 0.0576172 0.0790405 0.0579224 0.0487549 0.0230408 -0.0277771 0.0713257 -0.054303 0.0727112 -0.0541138 -0.0500916 0.00847778 0.0969604 -0.0892395 -0.0837158 0.00493164 -0.0146423 -0.0810669 -0.0482422 0.078302 -0.0534485 -0.0706909 -0.0749817 0.086322 -0.0839783 -0.0905823 -0.0882568 -0.0327209 0.0829346 -0.020282 -0.013446 0.0892273 0.0674316 0.00684204 0.0684143 0.0387024 -0.0204651 -0.0481689 -0.0991333 0.00511475 0.0909546 -0.0202637 -0.0517822 0.0171082 -0.0489746 0.0367981 0.0890503 -0.0129028 0.0780395 -0.0985657 0.0881897 0.0203064 0.0572266 0.015332 -0.0715149 -0.0555359 -0.0234009 -0.0991455 -0.0164185 -0.083551 0.0319824 0.0710144 -0.08703 0.062207 0.0324097 0.0382935 0.0605347 0.00602417 0.0371216 -0.0714478 0.0378967 0.045575 0.055542 -0.0937866 0.0737305 0.0289002 0.0413086 -0.0829102 0.0103943 0.0895752 -0.0882446 -0.0450073 -0.0709656 0.0963501 0.0239929 -0.0415527 0.084491 -0.0264954 0.0389038 -0.0562744 -0.0688171 -0.0518921 0.00428466 0.0804504 -0.078717 0.0805237 -0.0116577 -0.0839783 0.0564148 -0.0656433 0.094873 0.0551697 0.0740723 -0.0578735 -0.0086792 -0.0992493 0.0501221 -0.0771912 -0.0190613 -0.0377747 0.0985168 -0.0922852 -0.049585 -0.062146 -0.0504639 -0.0692993 0.0240601 0.0770691 0.0878113 -0.0608704 0.0559265 0.0291077 0.0313477 0.0818237 -0.00891113 0.0842529 0.0328308 -0.0698486 0.0272644 0.0139038 -0.0155945 0.0885986 0.00811157 0.0157105 0.0072876 -0.0489441 -0.0206116 -0.0299499 -0.0926758 0.0590454 -0.0606995 -0.0859436 -0.0221191 0.0181458 -0.0858154 -0.0604675 -0.0688232 0.0288635 -0.00913696 0.0208557 0.0394653 -0.0117432 0.0368896 -0.020697 0.0671387 0.0184387 -0.060083 0.0898865 0.0751953 -0.0216614 0.0974854 -0.0629395 0.0791382 0.0148865 -0.0115906 0.0254639 0.0416992 -0.0900757 -0.0428894 -0.0479614 -0.0184753 0.0790588 0.0420349 0.0456848 0.0792053 -0.0212891 -0.02052 0.0807678 -0.0382813 -0.0223816 0.0141113 -0.0292908 0.0467346 0.0490662 0.0472717 0.0478821 -0.0721375 -0.059967 -0.0454834 0.036084 0.0822205 -0.0264343 0.00352784 -0.078125 0.0814819 -0.0593872 0.00358887 0.0309631 -0.0122986 0.0375244 -0.0819153 -0.0840881 -0.084845 -0.0944397 -0.0289856 -0.0385559 0.0394531 -0.0714661 -0.0210327 -0.0864319 0.035144 0.0449829 -0.06026 0.0388001 0.0231384 0.0309753 0.00879516 -0.0803406 0.00906982 -0.0900757 0.0949097 -0.00719605 0.093988 0.0455688 0.00618897 0.0359802 0.0385559 -0.0255798 -0.0222778 -0.0900085 0.0619507 -0.0660889 -0.0878357 -0.0378906 0.0568909 -0.0575073 -0.0356201 -0.00307007 -0.0981689 -0.01203 0.0015686 0.0211853 0.0517029 -0.0197876 -0.0300415 0.0685242 0.0884582 0.0246582 0.0994507 -0.0893066 0.0125671 0.0727051 -0.0226501 -0.0387207 -0.043158 -0.0946594 0.0225098 -0.0217651 -0.0962769 -0.0937927 -0.0088623 0.071582 0.0873474 -0.0196228 0.0454529 0.0223145 0.0616699 0.0750793 0.0165161 0.0190002 -0.084198 0.0586304 -0.00756226 0.0181213 0.0178833 0.0138367 0.063208 0.0345459 -0.0312866 -0.0979553 -0.0465393 -0.0316895 -0.0535828 0.0541992 -0.0256531 0.0739685 -0.0766296 0.0451111 0.0257813 0.0787842 -0.0633972 0.0071106 0.0803955 0.056012 0.0930359 -0.0605286 0.080304 0.0594788 0.0906738 0.0697571 0.078064 0.0257385 -0.0629089 0.0233826 -0.0470032 -0.0498718 0.0464355 0.0576172 -0.0658142 0.0427734 -0.0038147 -0.0837036 0.0613037 0.0710632 -0.0750732 -0.0385071 0.0146606 -0.00540771 0.0524048 -0.0616272 0.0455505 0.098999 -0.0969299 0.0295227 0.038324 -0.0651733 -0.0855774 -0.0450073 0.035321 0.0677795 0.0113281 -0.0257568 0.055896 -0.0534973 0.0276428 -0.0536682 -0.059082 0.0942017 -0.0436523 -0.0954224 0.0538391 -0.069635 -0.0906067 -0.0981506 -0.0302856 0.028772 -0.0313538 -0.0170898 0.079187 </Parameters>
+         <DecisionThreshold>0.500000</DecisionThreshold>
+      </ProbabilisticLayer>
+      <LayersInputsIndices>
+         <LayerInputsIndices LayerIndex="1">-1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="2">0</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="3">1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="4">2</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="5">3</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="6">4</LayerInputsIndices>
+      </LayersInputsIndices>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>0</OutputsNumber>
+   </Outputs>
+</NeuralNetwork>

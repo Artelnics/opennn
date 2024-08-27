@@ -311,7 +311,7 @@ void UnscalingLayer::set(const UnscalingLayer& new_unscaling_layer)
 
 void UnscalingLayer::set_default()
 {
-    layer_name = "unscaling_layer";
+    name = "unscaling_layer";
 
     set_scalers(Scaler::MinimumMaximum);
 
@@ -728,21 +728,10 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Display
 
-    const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
+    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-    if(element)
-    {
-        const string new_display_string = element->GetText();
-
-        try
-        {
-            set_display(new_display_string != "0");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
 
 

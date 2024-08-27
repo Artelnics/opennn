@@ -87,7 +87,6 @@ public:
     Eigen::array<ptrdiff_t, 4> get_strides() const;
 
     Index get_output_height() const;
-
     Index get_output_width() const;
 
     ConvolutionType get_convolution_type() const;
@@ -265,6 +264,12 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    void set(const Index&, Layer*) final;
 
    void print() const;
+
+   Tensor<type, 4> delta_slice;
+   Tensor<type, 4> image_slice;
+
+   Eigen::array<Index, 4> offsets;
+   Eigen::array<Index, 4> extents;
 
    Tensor<type, 4> error_convolutions_derivatives;
    Tensor<type, 4> input_derivatives;

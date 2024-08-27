@@ -13,7 +13,6 @@
 
 #include <iostream>
 #include <string>
-#include <sstream>
 
 // OpenNN includes
 
@@ -35,8 +34,6 @@ public:
 
    explicit ScalingLayer4D(const Index&);
    explicit ScalingLayer4D(const dimensions&);
-
-   explicit ScalingLayer4D(const Tensor<Descriptives, 1>&);
 
    // Get
 
@@ -98,9 +95,12 @@ public:
    void set_scalers(const Tensor<Scaler, 1>&);
    void set_scalers(const Tensor<string, 1>&);
 
-   void set_scaler(const Index&, const Scaler&);
    void set_scalers(const Scaler&);
    void set_scalers(const string&);
+
+   void set_scaler(const Index&, const Scaler&);
+   void set_scaler(const Index&, const string&);
+
 
    // Display messages
 

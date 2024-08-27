@@ -6,12 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <sstream>
 #include <iostream>
-//#include <fstream>
-//#include <algorithm>
-//#include <functional>
-//#include <climits>
 #include <cmath>
 #include <ctime>
 
@@ -654,7 +649,7 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
     labels_values(4,0) = "Loss goal";
     labels_values(4,1) = to_string(double(training_loss_goal));
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
     labels_values(5,0) = "Maximum selection error increases";
     labels_values(5,1) = to_string(maximum_selection_failures);
@@ -818,9 +813,9 @@ void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(to_string(training_loss_goal).c_str());
     file_stream.CloseElement();
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
-    file_stream.OpenElement("MaximumSelectionErrorIncreases");
+    file_stream.OpenElement("MaximumSelectionFailures");
     file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
@@ -852,18 +847,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* training_direction_method_element = root_element->FirstChildElement("TrainingDirectionMethod");
 
     if(training_direction_method_element)
-    {
-        const string new_training_direction_method = training_direction_method_element->GetText();
-
-        try
-        {
-            set_training_direction_method(new_training_direction_method);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_training_direction_method(training_direction_method_element->GetText());
 
     // Learning rate algorithm
 
@@ -872,204 +856,83 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     if(learning_rate_algorithm_element)
     {
         tinyxml2::XMLDocument learning_rate_algorithm_document;
-        tinyxml2::XMLNode* element_clone;
 
-        element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
+        tinyxml2::XMLNode* element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
 
         learning_rate_algorithm_document.InsertFirstChild(element_clone);
 
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 
-
     // Minimum loss decrease
 
     const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
 
     if(minimum_loss_decrease_element)
-    {
-        const type new_minimum_loss_decrease = type(atof(minimum_loss_decrease_element->GetText()));
-
-        try
-        {
-            set_minimum_loss_decrease(new_minimum_loss_decrease);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
+        set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
 
     // Loss goal
 
     const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
 
     if(loss_goal_element)
-    {
-        const type new_loss_goal = type(atof(loss_goal_element->GetText()));
+        set_loss_goal(type(atof(loss_goal_element->GetText())));
 
-        try
-        {
-            set_loss_goal(new_loss_goal);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+    // Maximum selection failures
 
-
-    // Maximum selection error increases
-
-    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
 
     if(maximum_selection_failures_element)
-    {
-        const Index new_maximum_selection_failures = Index(atoi(maximum_selection_failures_element->GetText()));
-
-        try
-        {
-            set_maximum_selection_failures(new_maximum_selection_failures);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
+        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
 
     // Maximum epochs number
 
-    const tinyxml2::XMLElement* maximum_iterations_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
+    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
-    if(maximum_iterations_number_element)
-    {
-        const Index new_maximum_iterations_number = Index(atoi(maximum_iterations_number_element->GetText()));
-
-        try
-        {
-            set_maximum_epochs_number(new_maximum_iterations_number);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
+    if(maximum_epochs_number_element)
+        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
 
     // Maximum time
 
     const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
 
     if(maximum_time_element)
-    {
-        const type new_maximum_time = type(atof(maximum_time_element->GetText()));
-
-        try
-        {
-            set_maximum_time(new_maximum_time);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
+        set_maximum_time(type(atof(maximum_time_element->GetText())));
 
     // Display period
 
     const tinyxml2::XMLElement* display_period_element = root_element->FirstChildElement("DisplayPeriod");
 
     if(display_period_element)
-    {
-        const Index new_display_period = Index(atoi(display_period_element->GetText()));
-
-        try
-        {
-            set_display_period(new_display_period);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
+        set_display_period(Index(atoi(display_period_element->GetText())));
 
     // Save period
 
-    const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
+    const tinyxml2::XMLElement* save_period_element = root_element->FirstChildElement("SavePeriod");
 
-    if(element)
-    {
-        const Index new_save_period = Index(atoi(element->GetText()));
-
-        try
-        {
-            set_save_period(new_save_period);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+    if(save_period_element)
+        set_save_period(Index(atoi(save_period_element->GetText())));
 
     // Neural network filename
 
-    element = root_element->FirstChildElement("NeuralNetworkFileName");
+    const tinyxml2::XMLElement* neural_network_filename_element = root_element->FirstChildElement("NeuralNetworkFileName");
 
-    if(element)
-    {
-        const string new_neural_network_file_name = element->GetText();
-
-        try
-        {
-            set_neural_network_file_name(new_neural_network_file_name);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
+    if(neural_network_filename_element)
+        set_neural_network_file_name(neural_network_filename_element->GetText());
 
     // Display
 
     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
     if(display_element)
-    {
-        const string new_display = display_element->GetText();
-
-        try
-        {
-            set_display(new_display != "0");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
+        set_display(display_element->GetText() != string("0"));
 
     // Hardware use
 
-    element = root_element->FirstChildElement("HardwareUse");
+    const tinyxml2::XMLElement* hardware_use_element = root_element->FirstChildElement("HardwareUse");
 
-    if(element)
-    {
-        const string new_hardware_use = element->GetText();
-
-        try
-        {
-            set_hardware_use(new_hardware_use);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
+    if(hardware_use_element)
+        set_hardware_use(hardware_use_element->GetText());
 }
 
 

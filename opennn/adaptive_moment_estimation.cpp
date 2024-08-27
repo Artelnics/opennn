@@ -596,41 +596,31 @@ void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Batch size
 
     file_stream.OpenElement("BatchSize");
-
     file_stream.PushText(to_string(batch_samples_number).c_str());
-
     file_stream.CloseElement();
 
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
-
     file_stream.PushText(to_string(training_loss_goal).c_str());
-
     file_stream.CloseElement();
 
-    // Maximum iterations number
+    // Maximum epochs number
 
     file_stream.OpenElement("MaximumEpochsNumber");
-
     file_stream.PushText(to_string(maximum_epochs_number).c_str());
-
     file_stream.CloseElement();
 
     // Maximum time
 
     file_stream.OpenElement("MaximumTime");
-
     file_stream.PushText(to_string(maximum_time).c_str());
-
     file_stream.CloseElement();
 
     // Hardware use
 
     file_stream.OpenElement("HardwareUse");
-
     file_stream.PushText(get_hardware_use().c_str());
-
     file_stream.CloseElement();
 
     // End element
@@ -651,94 +641,35 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
 
     if(batch_samples_number_element)
-    {
-        const Index new_batch_samples_number = Index(atoi(batch_samples_number_element->GetText()));
-
-        try
-        {
-            set_batch_samples_number(new_batch_samples_number);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_batch_samples_number(Index(atoi(batch_samples_number_element->GetText())));
 
     // Loss goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
 
-        if(element)
-        {
-            const type new_loss_goal = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
 
-            try
-            {
-                set_loss_goal(new_loss_goal);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(loss_goal_element)
+        set_loss_goal(type(atof(loss_goal_element->GetText())));
 
     // Maximum eochs number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
 
-        if(element)
-        {
-            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
-            try
-            {
-                set_maximum_epochs_number(new_maximum_epochs_number);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_epochs_number_element)
+        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
 
     // Maximum time
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
 
-        if(element)
-        {
-            const type new_maximum_time = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
 
-            try
-            {
-                set_maximum_time(new_maximum_time);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_time_element)
+        set_maximum_time(type(atof(maximum_time_element->GetText())));
 
     // Hardware use
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
 
-        if(element)
-        {
-            const string new_hardware_use = element->GetText();
+    const tinyxml2::XMLElement* hardware_use_element = root_element->FirstChildElement("HardwareUse");
 
-            try
-            {
-                set_hardware_use(new_hardware_use);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(hardware_use_element)
+        set_hardware_use(hardware_use_element->GetText());
 }
 
 

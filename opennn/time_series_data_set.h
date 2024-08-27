@@ -73,8 +73,8 @@ public:
     void set_lags_number(const Index&);
     void set_steps_ahead_number(const Index&);
 
-    void set_time_column(const string&);
-    void set_group_by_column(const string&);
+    void set_time_raw_variable(const string&);
+    void set_group_by_raw_variable(const string&);
 
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;

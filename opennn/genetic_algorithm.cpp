@@ -1587,7 +1587,7 @@ void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(to_string(mutation_rate).c_str());
     file_stream.CloseElement();
 
-    // selection error goal
+    // Selection error goal
 
     file_stream.OpenElement("SelectionErrorGoal");
     file_stream.PushText(to_string(selection_error_goal).c_str());
@@ -1617,175 +1617,67 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("GeneticAlgorithm element is nullptr.\n");
 
     // Population size
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("PopulationSize");
 
-        if(element)
-        {
-            const Index new_population_size = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* population_size_element = root_element->FirstChildElement("PopulationSize");
 
-            try
-            {
-                set_individuals_number(new_population_size);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(population_size_element)
+        set_individuals_number(Index(atoi(population_size_element->GetText())));
 
     // Mutation rate
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MutationRate");
 
-        if(element)
-        {
-            const type new_mutation_rate = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* mutation_rate_element = root_element->FirstChildElement("MutationRate");
 
-            try
-            {
-                set_mutation_rate(new_mutation_rate);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(mutation_rate_element)
+        set_mutation_rate(type(atof(mutation_rate_element->GetText())));
 
     // Elitism size
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ElitismSize");
 
-        if(element)
-        {
-            const Index new_elitism_size = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* elitism_size_element = root_element->FirstChildElement("ElitismSize");
 
-            try
-            {
-                set_elitism_size(new_elitism_size);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(elitism_size_element)
+        set_elitism_size(Index(atoi(elitism_size_element->GetText())));
 
     // Display
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
 
-        if(element)
-        {
-            const string new_display = element->GetText();
+    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-            try
-            {
-                set_display(new_display != "0");
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 
-    // selection error goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
+    // Selection error goal
 
-        if(element)
-        {
-            const type new_selection_error_goal = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* selection_error_goal_element = root_element->FirstChildElement("SelectionErrorGoal");
 
-            try
-            {
-                set_selection_error_goal(new_selection_error_goal);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(selection_error_goal_element)
+        set_selection_error_goal(type(atof(selection_error_goal_element->GetText())));
 
-    // Maximum iterations number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumGenerationsNumber");
+    // Maximum generations number
 
-        if(element)
-        {
-            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_generations_number_element = root_element->FirstChildElement("MaximumGenerationsNumber");
 
-            try
-            {
-                set_maximum_epochs_number(new_maximum_epochs_number);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_generations_number_element)
+        set_maximum_epochs_number(Index(atoi(maximum_generations_number_element->GetText())));
 
     // Maximum correlation
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumCorrelation");
 
-        if(element)
-        {
-            const type new_maximum_correlation = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* maximum_correlation_element = root_element->FirstChildElement("MaximumCorrelation");
 
-            try
-            {
-                set_maximum_correlation(new_maximum_correlation);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_correlation_element)
+        set_maximum_correlation(type(atof(maximum_correlation_element->GetText())));
 
     // Minimum correlation
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumCorrelation");
 
-        if(element)
-        {
-            const type new_minimum_correlation = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* minimum_correlation_element = root_element->FirstChildElement("MinimumCorrelation");
 
-            try
-            {
-                set_minimum_correlation(new_minimum_correlation);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(minimum_correlation_element)
+        set_minimum_correlation(type(atof(minimum_correlation_element->GetText())));
 
     // Maximum time
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
 
-        if(element)
-        {
-            const type new_maximum_time = type(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
 
-            try
-            {
-                set_maximum_time(new_maximum_time);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_time_element)
+        set_maximum_time(type(atoi(maximum_time_element->GetText())));
 }
 
 
