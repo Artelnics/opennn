@@ -33,7 +33,6 @@ int main()
         ImageDataSet image_data_set;
 
         image_data_set.set_data_source_path("data");
-        //image_data_set.set_data_source_path("C:/mnist/binary");
 
         image_data_set.read_bmp();
 
@@ -54,7 +53,8 @@ int main()
         ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
         neural_network.add_layer(scaling_layer);
 
-        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number });
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
+                                                                         { kernel_height, kernel_width, kernel_channels, kernels_number });
         neural_network.add_layer(convolutional_layer);
 
         ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number } );

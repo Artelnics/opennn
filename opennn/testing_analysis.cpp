@@ -16,6 +16,7 @@
 #include "correlations.h"
 #include "language_data_set.h"
 #include "transformer.h"
+#include "statistics.h"
 
 namespace opennn
 {
@@ -2772,21 +2773,10 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 
     // Display
 
-    const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
+    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-    if(element)
-    {
-        string new_display_string = element->GetText();
-
-        try
-        {
-            set_display(new_display_string != "0");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
 
 

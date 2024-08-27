@@ -32,7 +32,7 @@ Layer::~Layer()
 
 string Layer::get_name() const
 {
-    return layer_name;
+    return name;
 }
 
 

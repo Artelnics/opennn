@@ -19,7 +19,7 @@
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
-#include "statistics.h"
+//#include "statistics.h"
 
 namespace opennn
 {

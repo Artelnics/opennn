@@ -243,23 +243,11 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Optimization algorithm element is nullptr.\n");
 
     // Display
-    {
-        const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-        if(display_element)
-        {
-            const string new_display_string = display_element->GetText();
+    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-            try
-            {
-                set_display(new_display_string != "0");
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
 
 

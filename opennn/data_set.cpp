@@ -17,7 +17,6 @@
 #include <map>
 #include <random>
 #include <regex>
-#include <sstream>
 #include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5840,120 +5839,77 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(!raw_variables_number_element)
         throw runtime_error("RawVariablesNumber element is nullptr.\n");
 
-    Index new_raw_variables_number = 0;
-
     if(raw_variables_number_element->GetText())
-    {
-        new_raw_variables_number = Index(atoi(raw_variables_number_element->GetText()));
-
-        set_raw_variables_number(new_raw_variables_number);
-    }
+        set_raw_variables_number(Index(atoi(raw_variables_number_element->GetText())));
 
     // Raw variables
 
     const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
-    if(new_raw_variables_number > 0)
+    for(Index i = 0; i < raw_variables.size(); i++)
     {
-        for(Index i = 0; i < new_raw_variables_number; i++)
+        const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
+        start_element = raw_variable_element;
+
+        if(raw_variable_element->Attribute("Item") != to_string(i+1))
+            throw runtime_error("Raw variable item number (" + to_string(i+1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
+
+        // Name
+
+        const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
+
+        if(!name_element)
+            throw runtime_error("Name element is nullptr.\n");
+
+        if(name_element->GetText())
+            raw_variables(i).name = name_element->GetText();
+
+        // Scaler
+
+        const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
+
+        if(!scaler_element)
+            throw runtime_error("Scaler element is nullptr.\n");
+
+        if(scaler_element->GetText())
+            raw_variables(i).set_scaler(scaler_element->GetText());
+
+        // raw_variable use
+
+        const tinyxml2::XMLElement* raw_variable_use_element = raw_variable_element->FirstChildElement("Use");
+
+        if(!raw_variable_use_element)
+            throw runtime_error("RawVariableUse element is nullptr.\n");
+
+        if(raw_variable_use_element->GetText())
+            raw_variables(i).set_use(raw_variable_use_element->GetText());
+
+        // Type
+
+        const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
+
+        if(!type_element)
+            throw runtime_error("Type element is nullptr.\n");
+
+        if(type_element->GetText())
+            raw_variables(i).set_type(type_element->GetText());
+
+        if(raw_variables(i).type == RawVariableType::Categorical
+        || raw_variables(i).type == RawVariableType::Binary)
         {
-            const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("RawVariable");
-            start_element = column_element;
+            // Categories
 
-            if(column_element->Attribute("Item") != to_string(i+1))
-                throw runtime_error("Raw variable item number (" + to_string(i+1) + ") does not match (" + column_element->Attribute("Item") + ").\n");
+            const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
-            // Name
+            if(!categories_element)
+                throw runtime_error("Categories element is nullptr.\n");
 
-            const tinyxml2::XMLElement* name_element = column_element->FirstChildElement("Name");
-
-            if(!name_element)
-                throw runtime_error("Name element is nullptr.\n");
-
-            if(name_element->GetText())
-            {
-                const string new_name = name_element->GetText();
-
-                raw_variables(i).name = new_name;
-            }
-
-            // Scaler
-
-            const tinyxml2::XMLElement* scaler_element = column_element->FirstChildElement("Scaler");
-
-            if(!scaler_element)
-                throw runtime_error("Scaler element is nullptr.\n");
-
-            if(scaler_element->GetText())
-            {
-                const string new_scaler = scaler_element->GetText();
-
-                raw_variables(i).set_scaler(new_scaler);
-            }
-
-            // raw_variable use
-
-            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("Use");
-
-            if(!raw_variable_use_element)
-                throw runtime_error("RawVariableUse element is nullptr.\n");
-
-            if(raw_variable_use_element->GetText())
-            {
-                const string new_raw_variable_use = raw_variable_use_element->GetText();
-
-                raw_variables(i).set_use(new_raw_variable_use);
-            }
-
-            // Type
-
-            const tinyxml2::XMLElement* type_element = column_element->FirstChildElement("Type");
-
-            if(!type_element)
-                throw runtime_error("Type element is nullptr.\n");
-
-            if(type_element->GetText())
-            {
-                const string new_type = type_element->GetText();
-                raw_variables(i).set_type(new_type);
-            }
-
-            if(raw_variables(i).type == RawVariableType::Categorical)
-            {
-                // Categories
-
-                const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
-
-                if(!categories_element)
-                    throw runtime_error("Categories element is nullptr.\n");
-
-                if(categories_element->GetText())
-                {
-                    const string new_categories = categories_element->GetText();
-
-                    raw_variables(i).categories = get_tokens(new_categories, ";");
-                }
-            }
-            else if(raw_variables(i).type == RawVariableType::Binary)
-            {
-                // Categories
-
-                const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
-
-                if(categories_element)
-                {
-                    if(categories_element->GetText())
-                    {
-                        const string new_categories = categories_element->GetText();
-
-                        raw_variables(i).categories = get_tokens(new_categories, ";");
-                    }
-                }
-            }
+            if(categories_element->GetText())
+                raw_variables(i).categories = get_tokens(categories_element->GetText(), ";");
         }
     }
 
-    // Rows label
+    // Has Ids
 
     if(has_ids)
     {
@@ -5967,11 +5923,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         // Ids
 
         if(has_ids_element->GetText())
-        {
-            const string new_rows_labels = has_ids_element->GetText();
-
-            ids = get_tokens(new_rows_labels, " ");
-        }
+            ids = get_tokens(has_ids_element->GetText(), " ");
     }
 
     // Samples
@@ -6109,18 +6061,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
     if(display_element)
-    {
-        const string new_display_string = display_element->GetText();
-
-        try
-        {
-            set_display(new_display_string != "0");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_display(display_element->GetText() != string("0"));
 }
 
 

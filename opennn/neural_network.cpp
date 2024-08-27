@@ -394,13 +394,13 @@ Layer* NeuralNetwork::get_layer(const Index& layer_index) const
 }
 
 
-Layer* NeuralNetwork::get_layer(const string& layer_name) const
+Layer* NeuralNetwork::get_layer(const string& name) const
 {
     Tensor<string, 1> layers_names = get_layers_names();
 
     for(Index i = 0; i < layers_names.size(); i++)
     {
-        if(layers_names(i) == layer_name)    return layers(i);
+        if(layers_names(i) == name)    return layers(i);
     }
 
     return nullptr;
@@ -437,23 +437,23 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers() const
 }
 
 
-Index NeuralNetwork::get_layer_index(const string& layer_name) const
+Index NeuralNetwork::get_layer_index(const string& name) const
 {
     const Index layers_number = get_layers_number();
 
-    if(layer_name == "dataset" || layer_name == "input")
+    if(name == "dataset" || name == "input")
     {
         return -1;
     }
 
-    if(layer_name == "context")
+    if(name == "context")
     {
         return -2;
     }
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers(i)->get_name() == layer_name)
+        if(layers(i)->get_name() == name)
         {
             return i;
         }
@@ -984,9 +984,9 @@ void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const Ten
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const Tensor<string, 1>& new_layer_inputs_names)
+void NeuralNetwork::set_layer_inputs_indices(const string& name, const Tensor<string, 1>& new_layer_inputs_names)
 {
-    const Index layer_index = get_layer_index(layer_name);
+    const Index layer_index = get_layer_index(name);
 
     const Index size = new_layer_inputs_names.size();
 
@@ -1001,18 +1001,18 @@ void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const Ten
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const initializer_list<string>& new_layer_inputs_names_list)
+void NeuralNetwork::set_layer_inputs_indices(const string& name, const initializer_list<string>& new_layer_inputs_names_list)
 {
     Tensor<string, 1> new_layer_inputs_names(new_layer_inputs_names_list.size());
     new_layer_inputs_names.setValues(new_layer_inputs_names_list);
 
-    set_layer_inputs_indices(layer_name, new_layer_inputs_names);
+    set_layer_inputs_indices(name, new_layer_inputs_names);
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const string& new_layer_inputs_name)
+void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& new_layer_inputs_name)
 {
-    const Index layer_index = get_layer_index(layer_name);
+    const Index layer_index = get_layer_index(name);
 
     Tensor<Index, 1> new_layer_inputs_indices(1);
 
@@ -2003,23 +2003,11 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
     }
     
     // Display
-    {
-        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Display");
 
-        if(element)
-        {
-            const string new_display_string = element->GetText();
+    const tinyxml2::XMLElement* display_element = neural_network_element->FirstChildElement("Display");
 
-            try
-            {
-                set_display(new_display_string != "0");
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
 
 

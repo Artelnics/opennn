@@ -87,7 +87,6 @@ public:
     Eigen::array<ptrdiff_t, 4> get_strides() const;
 
     Index get_output_height() const;
-
     Index get_output_width() const;
 
     ConvolutionType get_convolution_type() const;

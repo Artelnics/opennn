@@ -14,6 +14,7 @@ namespace opennn
 FlattenLayer::FlattenLayer() : Layer()
 {
     layer_type = Layer::Type::Flatten;
+    name = "flatten_layer";
 }
 
 
@@ -22,6 +23,7 @@ FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
     set(new_input_dimensions);
 
     layer_type = Type::Flatten;
+    name = "flatten_layer";
 }
 
 
@@ -33,7 +35,7 @@ dimensions FlattenLayer::get_input_dimensions() const
 
 void FlattenLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -81,7 +83,7 @@ Index FlattenLayer::get_neurons_number() const
 
 void FlattenLayer::set(const dimensions& new_input_dimensions)
 {
-    layer_name = "flatten_layer";
+    name = "flatten_layer";
 
     input_dimensions = new_input_dimensions;
 }

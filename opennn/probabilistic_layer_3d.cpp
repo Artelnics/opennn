@@ -189,7 +189,7 @@ void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_l
 
 void ProbabilisticLayer3D::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -264,7 +264,7 @@ void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_thres
 
 void ProbabilisticLayer3D::set_default()
 {
-    layer_name = "probabilistic_layer_3d";
+    name = "probabilistic_layer_3d";
     
     layer_type = Layer::Type::Probabilistic3D;
     
@@ -607,7 +607,7 @@ void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Inputs number

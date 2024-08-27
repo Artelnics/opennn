@@ -29,7 +29,7 @@ NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
 
     layer_type = Type::Normalization3D;
 
-    layer_name = "normalization_layer_3d";
+    name = "normalization_layer_3d";
 }
 
 
@@ -124,7 +124,7 @@ void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_
 
 void NormalizationLayer3D::set_default()
 {
-    layer_name = "normalization_layer_3d";
+    name = "normalization_layer_3d";
 
     display = true;
 
@@ -136,7 +136,7 @@ void NormalizationLayer3D::set_default()
 
 void NormalizationLayer3D::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -448,7 +448,7 @@ void NormalizationLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Inputs number

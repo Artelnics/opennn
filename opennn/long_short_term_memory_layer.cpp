@@ -340,14 +340,14 @@ void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_
 
 void LongShortTermMemoryLayer::set_default()
 {
-    layer_name = "long_short_term_memory_layer";
+    name = "long_short_term_memory_layer";
     layer_type = Type::LongShortTermMemory;
 }
 
 
 void LongShortTermMemoryLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -2701,7 +2701,7 @@ void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Inputs number

@@ -172,7 +172,7 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 
 void BoundingLayer::set_default()
 {
-    layer_name = "bounding_layer";
+    name = "bounding_layer";
 
     bounding_method = BoundingMethod::Bounding;
 
@@ -450,24 +450,16 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
             const tinyxml2::XMLElement* lower_bound_element = item_element->FirstChildElement("LowerBound");
 
             if(lower_bound_element)
-            {
                 if(lower_bound_element->GetText())
-                {
                     lower_bounds[index-1] = type(atof(lower_bound_element->GetText()));
-                }
-            }
 
             // Upper bound
 
             const tinyxml2::XMLElement* upper_bound_element = item_element->FirstChildElement("UpperBound");
 
             if(upper_bound_element)
-            {
                 if(upper_bound_element->GetText())
-                {
                     upper_bounds[index-1] = type(atof(upper_bound_element->GetText()));
-                }
-            }
         }
     }
 

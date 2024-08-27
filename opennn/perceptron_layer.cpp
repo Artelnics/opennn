@@ -30,7 +30,7 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
 
     layer_type = Type::Perceptron;
 
-    layer_name = "perceptron_layer";
+    name = "perceptron_layer";
 }
 
 
@@ -194,7 +194,7 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
 
 void PerceptronLayer::set_default()
 {
-    layer_name = "perceptron_layer";
+    name = "perceptron_layer";
 
     display = true;
 
@@ -204,7 +204,7 @@ void PerceptronLayer::set_default()
 
 void PerceptronLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -752,7 +752,7 @@ void PerceptronLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Inputs number
