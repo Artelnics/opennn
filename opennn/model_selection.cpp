@@ -297,9 +297,9 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* growing_neurons_element_copy = growing_neurons_document.NewElement("GrowingNeurons");
 
-            for(const tinyxml2::XMLNode* nodeFor=growing_neurons_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* node = growing_neurons_element->FirstChild(); node; node = node->NextSibling())
             {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&growing_neurons_document );
+                tinyxml2::XMLNode* copy = node->DeepClone(&growing_neurons_document );
                 growing_neurons_element_copy->InsertEndChild(copy );
             }
 
@@ -339,7 +339,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 growing_inputs.from_XML(growing_inputs_document);
             }
-
 
             // Genetic algorithm
 

@@ -28,7 +28,7 @@ AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& ne
 
     layer_type = Type::Addition3D;
 
-    layer_name = "addition_layer_3d";
+    name = "addition_layer_3d";
 }
 
 
@@ -74,7 +74,7 @@ void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_input
 
 void AdditionLayer3D::set_default()
 {
-    layer_name = "addition_layer_3d";
+    name = "addition_layer_3d";
 
     display = true;
 
@@ -84,7 +84,7 @@ void AdditionLayer3D::set_default()
 
 void AdditionLayer3D::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -165,9 +165,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
-    {
         set_name(layer_name_element->GetText());
-    }
 
     // Inputs number
 
@@ -177,9 +175,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
-    {
         inputs_number = Index(stoi(inputs_number_element->GetText()));
-    }
 
     // Inputs depth
 
@@ -189,9 +185,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsDepth element is nullptr.\n");
 
     if(inputs_depth_element->GetText())
-    {
         inputs_depth = Index(stoi(inputs_depth_element->GetText()));
-    }
 }
 
 
@@ -204,7 +198,7 @@ void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");   
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Inputs number

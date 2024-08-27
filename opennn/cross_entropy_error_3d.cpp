@@ -148,11 +148,10 @@ void CrossEntropyError3D::from_XML(const tinyxml2::XMLDocument& document)
     // Regularization
 
     tinyxml2::XMLDocument regularization_document;
-    tinyxml2::XMLNode* element_clone;
 
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
 
-    element_clone = regularization_element->DeepClone(&regularization_document);
+    tinyxml2::XMLNode* element_clone = regularization_element->DeepClone(&regularization_document);
 
     regularization_document.InsertFirstChild(element_clone);
 

@@ -464,7 +464,7 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
     labels_values(3,0) = "Loss goal";
     labels_values(3,1) = to_string(double(training_loss_goal));
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
     labels_values(4,0) = "Maximum selection error increases";
     labels_values(4,1) = to_string(maximum_selection_failures);
@@ -503,9 +503,9 @@ void GradientDescent::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(to_string(training_loss_goal).c_str());
     file_stream.CloseElement();
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
-    file_stream.OpenElement("MaximumSelectionErrorIncreases");
+    file_stream.OpenElement("MaximumSelectionFailures");
     file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
@@ -533,117 +533,54 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Gradient descent element is nullptr.\n");
 
     // Learning rate algorithm
+
+    const tinyxml2::XMLElement* learning_rate_algorithm_element
+            = root_element->FirstChildElement("LearningRateAlgorithm");
+
+    if(learning_rate_algorithm_element)
     {
-        const tinyxml2::XMLElement* learning_rate_algorithm_element
-                = root_element->FirstChildElement("LearningRateAlgorithm");
+        tinyxml2::XMLDocument learning_rate_algorithm_document;
+        tinyxml2::XMLNode* element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
 
-        if(learning_rate_algorithm_element)
-        {
-            tinyxml2::XMLDocument learning_rate_algorithm_document;
-            tinyxml2::XMLNode* element_clone;
+        learning_rate_algorithm_document.InsertFirstChild(element_clone);
 
-            element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
-
-            learning_rate_algorithm_document.InsertFirstChild(element_clone);
-
-            learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
-        }
+        learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 
     // Minimum loss decrease
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumLossDecrease");
 
-        if(element)
-        {
-            const type new_minimum_loss_decrease = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
 
-            try
-            {
-                set_minimum_loss_decrease(new_minimum_loss_decrease);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(minimum_loss_decrease_element)
+        set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
 
     // Loss goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
 
-        if(element)
-        {
-            const type new_loss_goal = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
 
-            try
-            {
-                set_loss_goal(new_loss_goal);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+        if(loss_goal_element)
+            set_loss_goal(type(atof(loss_goal_element->GetText())));
 
-    // Maximum selection error increases
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+    // Maximum selection failures
 
-        if(element)
-        {
-            const Index new_maximum_selection_failures = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
 
-            try
-            {
-                set_maximum_selection_failures(new_maximum_selection_failures);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_selection_failures_element)
+        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
 
     // Maximum epochs number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
 
-        if(element)
-        {
-            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
-            try
-            {
-                set_maximum_epochs_number(new_maximum_epochs_number);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_epochs_number_element)
+        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
 
     // Maximum time
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
 
-        if(element)
-        {
-            const type new_maximum_time = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
 
-            try
-            {
-                set_maximum_time(new_maximum_time);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_time_element)
+        set_maximum_time(type(atof(maximum_time_element->GetText())));
 }
 
 void GradientDescentData::set(GradientDescent* new_gradient_descent)
