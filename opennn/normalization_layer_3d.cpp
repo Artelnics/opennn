@@ -395,9 +395,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
-    {
         set_name(layer_name_element->GetText());
-    }
 
     // Inputs number
 
@@ -407,9 +405,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
-    {
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-    }
 
     // Inputs depth
 
@@ -419,9 +415,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsDepth element is nullptr.\n");
 
     if(inputs_depth_element->GetText())
-    {
         set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
-    }
 
     // Gammas
 
@@ -431,11 +425,9 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-        set_parameters(to_type_vector(parameters_string, " "));
-    }
+        set_parameters(to_type_vector(parameters_element->GetText(), " "));
 }
+
 
 void NormalizationLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {

@@ -428,63 +428,44 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     unsigned index = 0; // Index does not work
 
-    if(neurons_number > 0)
+    const tinyxml2::XMLElement* start_element = neurons_number_element;
+
+    for(Index i = 0; i < neurons_number; i++)
     {
-        const tinyxml2::XMLElement* start_element = neurons_number_element;
+        const tinyxml2::XMLElement* item_element = start_element->NextSiblingElement("Item");
+        start_element = item_element;
 
-        for(Index i = 0; i < lower_bounds.size(); i++)
-        {
-            const tinyxml2::XMLElement* item_element = start_element->NextSiblingElement("Item");
-            start_element = item_element;
+        if(!item_element)
+            throw runtime_error("Item " + to_string(i+1) + " is nullptr.\n");
 
-            if(!item_element)
-                throw runtime_error("Item " + to_string(i+1) + " is nullptr.\n");
+        item_element->QueryUnsignedAttribute("Index", &index);
 
-            item_element->QueryUnsignedAttribute("Index", &index);
+        if(index != i+1)
+            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
 
-            if(index != i+1)
-                throw runtime_error("Index " + to_string(index) + " is not correct.\n");
+        // Lower bound
 
-            // Lower bound
+        const tinyxml2::XMLElement* lower_bound_element = item_element->FirstChildElement("LowerBound");
 
-            const tinyxml2::XMLElement* lower_bound_element = item_element->FirstChildElement("LowerBound");
+        if(lower_bound_element)
+            if(lower_bound_element->GetText())
+                lower_bounds[index-1] = type(atof(lower_bound_element->GetText()));
 
-            if(lower_bound_element)
-                if(lower_bound_element->GetText())
-                    lower_bounds[index-1] = type(atof(lower_bound_element->GetText()));
+        // Upper bound
 
-            // Upper bound
+        const tinyxml2::XMLElement* upper_bound_element = item_element->FirstChildElement("UpperBound");
 
-            const tinyxml2::XMLElement* upper_bound_element = item_element->FirstChildElement("UpperBound");
-
-            if(upper_bound_element)
-                if(upper_bound_element->GetText())
-                    upper_bounds[index-1] = type(atof(upper_bound_element->GetText()));
-        }
+        if(upper_bound_element)
+            if(upper_bound_element->GetText())
+                upper_bounds[index-1] = type(atof(upper_bound_element->GetText()));
     }
 
-    // Use bounding layer
-    {
-        const tinyxml2::XMLElement* use_bounding_layer_element = bounding_layer_element->FirstChildElement("BoundingMethod");
+    // Bounding method
 
-        if(use_bounding_layer_element)
-        {
-            Index new_method = Index(atoi(use_bounding_layer_element->GetText()));
+    const tinyxml2::XMLElement* bounding_method_element = bounding_layer_element->FirstChildElement("BoundingMethod");
 
-            if(new_method == 1)
-            {
-                bounding_method = BoundingMethod::Bounding;
-            }
-            else if(new_method == 0)
-            {
-                bounding_method = BoundingMethod::NoBounding;
-            }
-            else
-            {
-                throw runtime_error("Unknown bounding method.\n");
-            }
-        }
-    }
+    if(bounding_method_element)
+        set_bounding_method(bounding_method_element->GetText());
 }
 
 

@@ -792,10 +792,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             Minkowski_error.from_XML(new_document);
         }
-        else
-        {
-            Minkowski_error.set_Minkowski_parameter(type(1.5));
-        }
 
         // Cross entropy error
 
@@ -838,11 +834,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             weighted_squared_error.from_XML(new_document);
         }
-        else
-        {
-            weighted_squared_error.set_positives_weight(type(1));
-            weighted_squared_error.set_negatives_weight(type(1));
-        }
 
         // Regularization
 
@@ -851,9 +842,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
         if(regularization_element)
         {
             tinyxml2::XMLDocument regularization_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = regularization_element->DeepClone(&regularization_document);
+            tinyxml2::XMLNode* element_clone = regularization_element->DeepClone(&regularization_document);
 
             regularization_document.InsertFirstChild(element_clone);
 

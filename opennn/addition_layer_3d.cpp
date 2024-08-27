@@ -165,9 +165,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
-    {
         set_name(layer_name_element->GetText());
-    }
 
     // Inputs number
 
@@ -177,9 +175,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
-    {
         inputs_number = Index(stoi(inputs_number_element->GetText()));
-    }
 
     // Inputs depth
 
@@ -189,9 +185,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsDepth element is nullptr.\n");
 
     if(inputs_depth_element->GetText())
-    {
         inputs_depth = Index(stoi(inputs_depth_element->GetText()));
-    }
 }
 
 

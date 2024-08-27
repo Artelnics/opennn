@@ -894,14 +894,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // raw_variable use
 
-        const tinyxml2::XMLElement* raw_variable_use_element = raw_variable_element->FirstChildElement("Use");
+        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
 
-        if(!raw_variable_use_element)
+        if(!use_element)
             throw runtime_error("Raw variable use element is nullptr.\n");
 
-        if(raw_variable_use_element->GetText())
+        if(use_element->GetText())
         {
-            const string new_raw_variable_use = raw_variable_use_element->GetText();
+            const string new_raw_variable_use = use_element->GetText();
 
             raw_variables(i).set_use(new_raw_variable_use);
         }

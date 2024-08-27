@@ -391,7 +391,7 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
     labels(5) = "Maximum correlation";
     values(5) = to_string(maximum_correlation);
 
-    // Maximum iterations number
+    // Maximum epochs number
 
     labels(6) = "Maximum iterations number";
     values(6) = to_string(maximum_epochs_number);
@@ -423,7 +423,7 @@ void GrowingInputs::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(to_string(trials_number).c_str());
     file_stream.CloseElement();
 
-    // selection error goal
+    // Selection error goal
 
     file_stream.OpenElement("SelectionErrorGoal");
     file_stream.PushText(to_string(selection_error_goal).c_str());
@@ -483,23 +483,11 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("GrowingInputs element is nullptr.\n");
 
     // Trials number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("TrialsNumber");
 
-        if(element)
-        {
-            const Index new_trials_number = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* trials_number_element = root_element->FirstChildElement("TrialsNumber");
 
-            try
-            {
-                set_trials_number(new_trials_number);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(trials_number_element)
+        set_trials_number(Index(atoi(trials_number_element->GetText())));
 
     // Display
 
@@ -508,160 +496,61 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
     if(display_element)
         set_display(display_element->GetText() != string("0"));
 
-    // selection error goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
+    // Selection error goal
 
-        if(element)
-        {
-            const type new_selection_error_goal = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* selection_error_goal_element = root_element->FirstChildElement("SelectionErrorGoal");
 
-            try
-            {
-                set_selection_error_goal(new_selection_error_goal);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(selection_error_goal_element)
+        set_selection_error_goal(type(atof(selection_error_goal_element->GetText())));
 
-    // Maximum iterations number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
+    // Maximum epochs number
 
-        if(element)
-        {
-            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
-            try
-            {
-                set_maximum_epochs_number(new_maximum_epochs_number);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_epochs_number_element)
+        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
 
     // Maximum correlation
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumCorrelation");
 
-        if(element)
-        {
-            const type new_maximum_correlation = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* maximum_correlation_element = root_element->FirstChildElement("MaximumCorrelation");
 
-            try
-            {
-                set_maximum_correlation(new_maximum_correlation);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_correlation_element)
+        set_maximum_correlation(type(atof(maximum_correlation_element->GetText())));
 
     // Minimum correlation
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumCorrelation");
 
-        if(element)
-        {
-            const type new_minimum_correlation = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* minimum_correlation_element = root_element->FirstChildElement("MinimumCorrelation");
 
-            try
-            {
-                set_minimum_correlation(new_minimum_correlation);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(minimum_correlation_element)
+        set_minimum_correlation(type(atof(minimum_correlation_element->GetText())));
 
     // Maximum time
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
 
-        if(element)
-        {
-            const type new_maximum_time = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
 
-            try
-            {
-                set_maximum_time(new_maximum_time);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-
-    }
+    if(maximum_time_element)
+        set_maximum_time(type(atof(maximum_time_element->GetText())));
 
     // Minimum inputs number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumInputsNumber");
 
-        if(element)
-        {
-            const Index new_minimum_inputs_number = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* minimum_inputs_number_element = root_element->FirstChildElement("MinimumInputsNumber");
 
-            try
-            {
-                set_minimum_inputs_number(new_minimum_inputs_number);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-
-    }
+    if(minimum_inputs_number_element)
+        set_minimum_inputs_number(Index(atoi(minimum_inputs_number_element->GetText())));
 
     // Maximum inputs number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumInputsNumber");
 
-        if(element)
-        {
-            const Index new_maximum_inputs_number = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_inputs_number_element = root_element->FirstChildElement("MaximumInputsNumber");
 
-            try
-            {
-                set_maximum_inputs_number(new_maximum_inputs_number);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_inputs_number_element)
+        set_maximum_inputs_number(Index(atoi(maximum_inputs_number_element->GetText())));
 
     // Maximum selection failures
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
 
-        if(element)
-        {
-            const Index new_maximum_selection_failures = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
 
-            try
-            {
-                set_maximum_selection_failures(new_maximum_selection_failures);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
+    if(maximum_selection_failures_element)
+        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
 }
 
 

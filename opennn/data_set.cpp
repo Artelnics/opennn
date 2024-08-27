@@ -263,78 +263,59 @@ void DataSet::RawVariable::set_categories(const Tensor<string, 1>& new_categorie
 }
 
 
-void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document)
+void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& document)
 {
     // Name
 
-    const tinyxml2::XMLElement* name_element = column_document.FirstChildElement("Name");
+    const tinyxml2::XMLElement* name_element = document.FirstChildElement("Name");
 
     if(!name_element)
         throw runtime_error("Name element is nullptr.\n");
 
     if(name_element->GetText())
-    {
-        const string new_name = name_element->GetText();
-
-        name = new_name;
-    }
+        name = name_element->GetText();
 
     // Scaler
 
-    const tinyxml2::XMLElement* scaler_element = column_document.FirstChildElement("Scaler");
+    const tinyxml2::XMLElement* scaler_element = document.FirstChildElement("Scaler");
 
     if(!scaler_element)
         throw runtime_error("Scaler element is nullptr.\n");
 
     if(scaler_element->GetText())
-    {
-        const string new_scaler = scaler_element->GetText();
+        set_scaler(scaler_element->GetText());
 
-        set_scaler(new_scaler);
-    }
+    // Use
 
-    // raw_variable use
+    const tinyxml2::XMLElement* use_element = document.FirstChildElement("Use");
 
-    const tinyxml2::XMLElement* raw_variable_use_element = column_document.FirstChildElement("Use");
-
-    if(!raw_variable_use_element)
+    if(!use_element)
         throw runtime_error("RawVariableUse element is nullptr.\n");
 
-    if(raw_variable_use_element->GetText())
-    {
-        const string new_raw_variable_use = raw_variable_use_element->GetText();
-
-        set_use(new_raw_variable_use);
-    }
+    if(use_element->GetText())
+        set_use(use_element->GetText());
 
     // Type
 
-    const tinyxml2::XMLElement* type_element = column_document.FirstChildElement("Type");
+    const tinyxml2::XMLElement* type_element = document.FirstChildElement("Type");
 
     if(!type_element)
         throw runtime_error("Type element is nullptr.\n");
 
     if(type_element->GetText())
-    {
-        const string new_type = type_element->GetText();
-        set_type(new_type);
-    }
+        set_type(type_element->GetText());
 
     if(type == RawVariableType::Categorical)
     {
         // Categories
 
-        const tinyxml2::XMLElement* categories_element = column_document.FirstChildElement("Categories");
+        const tinyxml2::XMLElement* categories_element = document.FirstChildElement("Categories");
 
         if(!categories_element)
             throw runtime_error("Categories element is nullptr.\n");
 
         if(categories_element->GetText())
-        {
-            const string new_categories = categories_element->GetText();
-
-            categories = get_tokens(new_categories, ";");
-        }
+            categories = get_tokens(categories_element->GetText(), ";");
     }
 }
 
@@ -5876,13 +5857,13 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // raw_variable use
 
-        const tinyxml2::XMLElement* raw_variable_use_element = raw_variable_element->FirstChildElement("Use");
+        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
 
-        if(!raw_variable_use_element)
+        if(!use_element)
             throw runtime_error("RawVariableUse element is nullptr.\n");
 
-        if(raw_variable_use_element->GetText())
-            raw_variables(i).set_use(raw_variable_use_element->GetText());
+        if(use_element->GetText())
+            raw_variables(i).set_use(use_element->GetText());
 
         // Type
 

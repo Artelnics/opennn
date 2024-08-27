@@ -157,7 +157,7 @@ void EmbeddingLayer::set_name(const string& new_layer_name)
 }
 
 
-void EmbeddingLayer::set_input_dim(const Index& new_inputs_dimension)
+void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
 {
     input_dimensions = new_inputs_dimension;
 
@@ -390,21 +390,17 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
-    {
         set_name(layer_name_element->GetText());
-    }
 
     // Input dimension
 
-    const tinyxml2::XMLElement* input_dimension_element = embedding_layer_element->FirstChildElement("InputDimension");
+    const tinyxml2::XMLElement* input_dimensions_element = embedding_layer_element->FirstChildElement("InputDimensions");
 
-    if(!input_dimension_element)
-        throw runtime_error("InputDimension element is nullptr.\n");
+    if(!input_dimensions_element)
+        throw runtime_error("InputDimensions element is nullptr.\n");
 
-    if(input_dimension_element->GetText())
-    {
-        set_input_dim(Index(stoi(input_dimension_element->GetText())));
-    }
+    if(input_dimensions_element->GetText())
+        set_input_dimensions(Index(stoi(input_dimensions_element->GetText())));
 
     // Inputs number
 
@@ -414,9 +410,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
-    {
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-    }
 
     // Embedding depth
 
@@ -426,9 +420,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Depth element is nullptr.\n");
 
     if(depth_element->GetText())
-    {
         set_depth(Index(stoi(depth_element->GetText())));
-    }
 
     // Positional encoding
 
@@ -438,9 +430,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("PositionalEncoding element is nullptr.\n");
 
     if(positional_encoding_element->GetText())
-    {
         positional_encoding = string(positional_encoding_element->GetText()) == "true";
-    }
 
     // Embedding weights
 
@@ -450,11 +440,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, " "));
-    }
+        set_parameters(to_type_vector(parameters_element->GetText(), " "));
 }
 
 
@@ -472,7 +458,7 @@ void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Input dimension
 
-    file_stream.OpenElement("InputDimension");
+    file_stream.OpenElement("InputDimensions");
     file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
     file_stream.CloseElement();
 

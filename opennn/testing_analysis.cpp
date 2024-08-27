@@ -2764,8 +2764,6 @@ void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
 
     if(!root_element)

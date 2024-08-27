@@ -775,9 +775,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument inputs_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&inputs_document);
+            tinyxml2::XMLNode* element_clone = element->DeepClone(&inputs_document);
 
             inputs_document.InsertFirstChild(element_clone);
 
@@ -792,9 +790,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument layers_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&layers_document);
+            tinyxml2::XMLNode* element_clone = element->DeepClone(&layers_document);
 
             layers_document.InsertFirstChild(element_clone);
 
@@ -809,9 +805,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument outputs_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&outputs_document);
+            tinyxml2::XMLNode* element_clone = element->DeepClone(&outputs_document);
 
             outputs_document.InsertFirstChild(element_clone);
 
@@ -826,9 +820,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument box_plot_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&box_plot_document);
+            tinyxml2::XMLNode* element_clone = element->DeepClone(&box_plot_document);
 
             box_plot_document.InsertFirstChild(element_clone);
 
@@ -842,9 +834,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument distances_descriptives_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&distances_descriptives_document);
+            tinyxml2::XMLNode* element_clone = element->DeepClone(&distances_descriptives_document);
 
             distances_descriptives_document.InsertFirstChild(element_clone);
 
@@ -857,9 +847,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
     if(element)
     {
         tinyxml2::XMLDocument multivariate_box_plot_document;
-        tinyxml2::XMLNode* element_clone;
-
-        element_clone = element->DeepClone(&multivariate_box_plot_document);
+        tinyxml2::XMLNode* element_clone = element->DeepClone(&multivariate_box_plot_document);
 
         multivariate_box_plot_document.InsertFirstChild(element_clone);
 

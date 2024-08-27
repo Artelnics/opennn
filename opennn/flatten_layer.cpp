@@ -167,14 +167,14 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Flatten layer input variables dimenison
 
-    const tinyxml2::XMLElement* input_variables_dimensions_element = flatten_layer_element->FirstChildElement("InputVariablesDimensions");
+    const tinyxml2::XMLElement* input_dimensions_element = flatten_layer_element->FirstChildElement("InputDimensions");
 
-    if(!input_variables_dimensions_element)
+    if(!input_dimensions_element)
         throw runtime_error("FlattenInputVariablesDimensions element is nullptr.\n");
 
     // Input height
 
-    const tinyxml2::XMLElement* input_height_element = input_variables_dimensions_element->NextSiblingElement("InputHeight");
+    const tinyxml2::XMLElement* input_height_element = input_dimensions_element->NextSiblingElement("InputHeight");
 
     if(!input_height_element)
         throw runtime_error("FlattenInputHeight element is nullptr.\n");
@@ -183,7 +183,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Input width
 
-    const tinyxml2::XMLElement* input_width_element = input_variables_dimensions_element->NextSiblingElement("InputWidth");
+    const tinyxml2::XMLElement* input_width_element = input_dimensions_element->NextSiblingElement("InputWidth");
 
     if(!input_width_element)
         throw runtime_error("FlattenInputWidth element is nullptr.\n");
@@ -192,17 +192,14 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Input channels number
 
-    const tinyxml2::XMLElement* input_channels_number_element = input_variables_dimensions_element->NextSiblingElement("InputChannels");
+    const tinyxml2::XMLElement* input_channels_number_element = input_dimensions_element->NextSiblingElement("InputChannels");
 
     if(!input_channels_number_element)
         throw runtime_error("FlattenInputChannelsNumber element is nullptr.\n");
 
     const Index input_channels = Index(atoi(input_channels_number_element->GetText()));
 
-    input_dimensions = {input_height, input_width, input_channels, 0};
-
-    set(input_dimensions);
-
+    set({input_height, input_width, input_channels, 0});
 }
 
 

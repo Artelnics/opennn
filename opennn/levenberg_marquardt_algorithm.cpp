@@ -596,7 +596,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
     labels_values(3,0) = "Loss goal";
     labels_values(3,1) = to_string(double(training_loss_goal));
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
     labels_values(4,0) = "Maximum selection error increases";
     labels_values(4,1) = to_string(maximum_selection_failures);
@@ -639,13 +639,13 @@ void LevenbergMarquardtAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.PushText(to_string(training_loss_goal).c_str());
     file_stream.CloseElement();
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
-    file_stream.OpenElement("MaximumSelectionErrorIncreases");
+    file_stream.OpenElement("MaximumSelectionFailures");
     file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
-    // Maximum iterations number
+    // Maximum epochs number
 
     file_stream.OpenElement("MaximumEpochsNumber");
     file_stream.PushText(to_string(maximum_epochs_number).c_str());
@@ -674,110 +674,43 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
             = root_element->FirstChildElement("DampingParameterFactor");
 
     if(damping_parameter_factor_element)
-    {
-        const type new_damping_parameter_factor = type(atof(damping_parameter_factor_element->GetText()));
-
-        try
-        {
-            set_damping_parameter_factor(new_damping_parameter_factor);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_damping_parameter_factor(type(atof(damping_parameter_factor_element->GetText())));
 
     // Minimum loss decrease
 
     const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
 
     if(minimum_loss_decrease_element)
-    {
-        const type new_minimum_loss_decrease = type(atof(minimum_loss_decrease_element->GetText()));
-
-        try
-        {
-            set_minimum_loss_decrease(new_minimum_loss_decrease);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
 
     // Loss goal
 
     const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
 
     if(loss_goal_element)
-    {
-        const type new_loss_goal = type(atof(loss_goal_element->GetText()));
+        set_loss_goal(type(atof(loss_goal_element->GetText())));
 
-        try
-        {
-            set_loss_goal(new_loss_goal);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Maximum selection error increases
+    // Maximum selection failures
 
     const tinyxml2::XMLElement* maximum_selection_failures_element
-            = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+            = root_element->FirstChildElement("MaximumSelectionFailures");
 
     if(maximum_selection_failures_element)
-    {
-        const Index new_maximum_selection_failures
-                = Index(atoi(maximum_selection_failures_element->GetText()));
-
-        try
-        {
-            set_maximum_selection_failures(new_maximum_selection_failures);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
 
     // Maximum epochs number
 
     const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
     if(maximum_epochs_number_element)
-    {
-        const Index new_maximum_epochs_number = Index(atoi(maximum_epochs_number_element->GetText()));
-
-        try
-        {
-            set_maximum_epochs_number(new_maximum_epochs_number);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
 
     // Maximum time
 
     const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
 
     if(maximum_time_element)
-    {
-        const type new_maximum_time = type(atof(maximum_time_element->GetText()));
-
-        try
-        {
-            set_maximum_time(new_maximum_time);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_maximum_time(type(atof(maximum_time_element->GetText())));
 }
 
 

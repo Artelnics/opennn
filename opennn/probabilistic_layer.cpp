@@ -632,9 +632,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     Index new_inputs_number;
 
     if(inputs_number_element->GetText())
-    {
         new_inputs_number = Index(stoi(inputs_number_element->GetText()));
-    }
 
     // Neurons number
 
@@ -646,9 +644,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     Index new_neurons_number;
 
     if(neurons_number_element->GetText())
-    {
         new_neurons_number = Index(stoi(neurons_number_element->GetText()));
-    }
 
     set(new_inputs_number, new_neurons_number);
 
@@ -660,9 +656,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Activation function element is nullptr.\n");
 
     if(activation_function_element->GetText())
-    {
         set_activation_function(activation_function_element->GetText());
-    }
 
     // Parameters
 
@@ -672,11 +666,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, " "));
-    }
+        set_parameters(to_type_vector(parameters_element->GetText(), " "));
 
     // Decision threshold
 
@@ -686,9 +676,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Decision threshold element is nullptr.\n");
 
     if(decision_threshold_element->GetText())
-    {
         set_decision_threshold(type(atof(decision_threshold_element->GetText())));
-    }
 
     // Display
 

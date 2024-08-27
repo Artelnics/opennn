@@ -588,20 +588,16 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!pooling_method_element)
         throw runtime_error("Pooling method element is nullptr.\n");
 
-    const string pooling_method_string = pooling_method_element->GetText();
-
-    set_pooling_method(pooling_method_string);
+    set_pooling_method(pooling_method_element->GetText());
 
     // Input variables dimensions element
 
-    const tinyxml2::XMLElement* input_variables_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
+    const tinyxml2::XMLElement* input_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
 
-    if(!input_variables_dimensions_element)
+    if(!input_dimensions_element)
         throw runtime_error("Pooling input variables dimensions element is nullptr.\n");
 
-    const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
-
-//    set_input_variables_dimenisons(input_variables_dimensions_string);
+//    set_input_dimensions(input_dimensions_element->GetText());
 
     // raw_variable stride
 
@@ -610,9 +606,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!column_stride_element)
         throw runtime_error("Pooling column stride element is nullptr.\n");
 
-    const string column_stride_string = column_stride_element->GetText();
-
-    set_column_stride(Index(stoi(column_stride_string)));
+    set_column_stride(Index(stoi(column_stride_element->GetText())));
 
     // Row stride
 
@@ -621,9 +615,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!row_stride_element)
         throw runtime_error("Pooling row stride element is nullptr.\n");
 
-    const string row_stride_string = row_stride_element->GetText();
-
-    set_row_stride(Index(stoi(row_stride_string)));
+    set_row_stride(Index(stoi(row_stride_element->GetText())));
 
     // Pool raw_variables number
 
@@ -653,11 +645,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Padding width element is nullptr.\n");
 
     if(padding_width_element->GetText())
-    {
-        const string padding_width_string = padding_width_element->GetText();
-
-        set_padding_width(Index(stoi(padding_width_string)));
-    }
+        set_padding_width(Index(stoi(padding_width_element->GetText())));
 }
 
 

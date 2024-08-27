@@ -800,9 +800,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
-    {
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-    }
 
     // Neurons number
 
@@ -812,9 +810,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("NeuronsNumber element is nullptr.\n");
 
     if(neurons_number_element->GetText())
-    {
         set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-    }
 
     // Activation function
 
@@ -824,9 +820,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("ActivationFunction element is nullptr.\n");
 
     if(activation_function_element->GetText())
-    {
         set_activation_function(activation_function_element->GetText());
-    }
 
     // Parameters
 
@@ -836,11 +830,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, " "));
-    }
+        set_parameters(to_type_vector(parameters_element->GetText(), " "));
 }
 
 

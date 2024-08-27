@@ -6,12 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <sstream>
 #include <iostream>
-//#include <fstream>
-//#include <algorithm>
-//#include <functional>
-//#include <climits>
 #include <cmath>
 #include <ctime>
 
@@ -654,7 +649,7 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
     labels_values(4,0) = "Loss goal";
     labels_values(4,1) = to_string(double(training_loss_goal));
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
     labels_values(5,0) = "Maximum selection error increases";
     labels_values(5,1) = to_string(maximum_selection_failures);
@@ -818,9 +813,9 @@ void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(to_string(training_loss_goal).c_str());
     file_stream.CloseElement();
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
-    file_stream.OpenElement("MaximumSelectionErrorIncreases");
+    file_stream.OpenElement("MaximumSelectionFailures");
     file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
@@ -861,9 +856,8 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     if(learning_rate_algorithm_element)
     {
         tinyxml2::XMLDocument learning_rate_algorithm_document;
-        tinyxml2::XMLNode* element_clone;
 
-        element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
+        tinyxml2::XMLNode* element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
 
         learning_rate_algorithm_document.InsertFirstChild(element_clone);
 
@@ -884,9 +878,9 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     if(loss_goal_element)
         set_loss_goal(type(atof(loss_goal_element->GetText())));
 
-    // Maximum selection error increases
+    // Maximum selection failures
 
-    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
 
     if(maximum_selection_failures_element)
         set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));

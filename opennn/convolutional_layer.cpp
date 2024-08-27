@@ -1255,31 +1255,25 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!convolution_name_element)
         throw runtime_error("Convolution type element is nullptr.\n");
 
-    const string convolution_name_string = convolution_name_element->GetText();
-
-    set_convolution_type(convolution_name_string);
-
-//    set_convolution_type("Valid");
+    set_convolution_type(convolution_name_element->GetText());
 
     // Input variables dimensions element
 
-    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
+    const tinyxml2::XMLElement* input_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
 
-    if(!input_variables_dimensions_element)
+    if(!input_dimensions_element)
         throw runtime_error("Convolutional input variables dimensions element is nullptr.\n");
 
-    const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
-
-    //    set_input_variables_dimenisons(Index(stoi(input_variables_dimensions_string));
+//    set_input_dimensions(string_to_dimensions(input_dimensions_element->GetText()));
 
     // Outputs variables dimensions element
 
-    const tinyxml2::XMLElement* outputs_variables_dimensions_element = convolutional_layer_element->FirstChildElement("OutputDimensions");
+    const tinyxml2::XMLElement* output_dimensions_element = convolutional_layer_element->FirstChildElement("OutputDimensions");
 
-    if(!outputs_variables_dimensions_element)
+    if(!output_dimensions_element)
         throw runtime_error("Convolutional outputs variables dimensions element is nullptr.\n");
 
-    const string outputs_variables_dimensions_string = outputs_variables_dimensions_element->GetText();
+    //set_output_dimensions(string_to_dimensions(output_dimensions_element->GetText()));
 
     // Filters Number element
 
@@ -1289,8 +1283,6 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Convolutional filters number element is nullptr.\n");
 
     const string filters_number_string = filters_number_element->GetText();
-
-    //    set_input_variables_dimenisons(Index(stoi(input_variables_dimensions_string));
 
     // Filters Size
 
@@ -1310,9 +1302,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!activation_function_element)
         throw runtime_error("Convolutional activation function element is nullptr.\n");
 
-    const string activation_function_string = activation_function_element->GetText();
-
-    set_activation_function(activation_function_string);
+    set_activation_function(activation_function_element->GetText());
 
     // Stride
 
@@ -1343,11 +1333,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, " "));
-    }
+        set_parameters(to_type_vector(parameters_element->GetText(), " "));
 }
 
 

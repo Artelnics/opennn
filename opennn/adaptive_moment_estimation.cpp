@@ -596,41 +596,31 @@ void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Batch size
 
     file_stream.OpenElement("BatchSize");
-
     file_stream.PushText(to_string(batch_samples_number).c_str());
-
     file_stream.CloseElement();
 
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
-
     file_stream.PushText(to_string(training_loss_goal).c_str());
-
     file_stream.CloseElement();
 
-    // Maximum iterations number
+    // Maximum epochs number
 
     file_stream.OpenElement("MaximumEpochsNumber");
-
     file_stream.PushText(to_string(maximum_epochs_number).c_str());
-
     file_stream.CloseElement();
 
     // Maximum time
 
     file_stream.OpenElement("MaximumTime");
-
     file_stream.PushText(to_string(maximum_time).c_str());
-
     file_stream.CloseElement();
 
     // Hardware use
 
     file_stream.OpenElement("HardwareUse");
-
     file_stream.PushText(get_hardware_use().c_str());
-
     file_stream.CloseElement();
 
     // End element
