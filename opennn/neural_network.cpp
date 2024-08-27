@@ -394,13 +394,13 @@ Layer* NeuralNetwork::get_layer(const Index& layer_index) const
 }
 
 
-Layer* NeuralNetwork::get_layer(const string& layer_name) const
+Layer* NeuralNetwork::get_layer(const string& name) const
 {
     Tensor<string, 1> layers_names = get_layers_names();
 
     for(Index i = 0; i < layers_names.size(); i++)
     {
-        if(layers_names(i) == layer_name)    return layers(i);
+        if(layers_names(i) == name)    return layers(i);
     }
 
     return nullptr;
@@ -437,23 +437,23 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers() const
 }
 
 
-Index NeuralNetwork::get_layer_index(const string& layer_name) const
+Index NeuralNetwork::get_layer_index(const string& name) const
 {
     const Index layers_number = get_layers_number();
 
-    if(layer_name == "dataset" || layer_name == "input")
+    if(name == "dataset" || name == "input")
     {
         return -1;
     }
 
-    if(layer_name == "context")
+    if(name == "context")
     {
         return -2;
     }
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers(i)->get_name() == layer_name)
+        if(layers(i)->get_name() == name)
         {
             return i;
         }
@@ -984,9 +984,9 @@ void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const Ten
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const Tensor<string, 1>& new_layer_inputs_names)
+void NeuralNetwork::set_layer_inputs_indices(const string& name, const Tensor<string, 1>& new_layer_inputs_names)
 {
-    const Index layer_index = get_layer_index(layer_name);
+    const Index layer_index = get_layer_index(name);
 
     const Index size = new_layer_inputs_names.size();
 
@@ -1001,18 +1001,18 @@ void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const Ten
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const initializer_list<string>& new_layer_inputs_names_list)
+void NeuralNetwork::set_layer_inputs_indices(const string& name, const initializer_list<string>& new_layer_inputs_names_list)
 {
     Tensor<string, 1> new_layer_inputs_names(new_layer_inputs_names_list.size());
     new_layer_inputs_names.setValues(new_layer_inputs_names_list);
 
-    set_layer_inputs_indices(layer_name, new_layer_inputs_names);
+    set_layer_inputs_indices(name, new_layer_inputs_names);
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const string& new_layer_inputs_name)
+void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& new_layer_inputs_name)
 {
-    const Index layer_index = get_layer_index(layer_name);
+    const Index layer_index = get_layer_index(name);
 
     Tensor<Index, 1> new_layer_inputs_indices(1);
 
@@ -1951,82 +1951,59 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Neural network element is nullptr.\n");
 
     // Inputs
+
+    const tinyxml2::XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
+
+    if(inputs_element)
     {
-        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Inputs");
+        tinyxml2::XMLDocument inputs_document;
+        tinyxml2::XMLNode* element_clone = inputs_element->DeepClone(&inputs_document);
 
-        if(element)
-        {
-            tinyxml2::XMLDocument inputs_document;
-            tinyxml2::XMLNode* element_clone;
+        inputs_document.InsertFirstChild(element_clone);
 
-            element_clone = element->DeepClone(&inputs_document);
-
-            inputs_document.InsertFirstChild(element_clone);
-
-            inputs_from_XML(inputs_document);
-        }
+        inputs_from_XML(inputs_document);
     }
+
 
     // Layers
 
+    const tinyxml2::XMLElement* layers_element = neural_network_element->FirstChildElement("Layers");
+
+    if(layers_element)
     {
-        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Layers");
+        tinyxml2::XMLDocument layers_document;
+        tinyxml2::XMLNode* element_clone = layers_element->DeepClone(&layers_document);
 
-        if(element)
-        {
-            tinyxml2::XMLDocument layers_document;
-            tinyxml2::XMLNode* element_clone;
+        layers_document.InsertFirstChild(element_clone);
 
-            element_clone = element->DeepClone(&layers_document);
-
-            layers_document.InsertFirstChild(element_clone);
-
-            layers_from_XML(layers_document);
-        }
+        layers_from_XML(layers_document);
     }
 
     // Outputs
+
+    const tinyxml2::XMLElement* outputs_element = neural_network_element->FirstChildElement("Outputs");
+
+    if(outputs_element)
     {
-        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Outputs");
+        tinyxml2::XMLDocument outputs_document;
+        tinyxml2::XMLNode* element_clone = outputs_element->DeepClone(&outputs_document);
 
-        if(element)
-        {
-            tinyxml2::XMLDocument outputs_document;
-            tinyxml2::XMLNode* element_clone;
+        outputs_document.InsertFirstChild(element_clone);
 
-            element_clone = element->DeepClone(&outputs_document);
-
-            outputs_document.InsertFirstChild(element_clone);
-
-            outputs_from_XML(outputs_document);
-        }
+        outputs_from_XML(outputs_document);
     }
     
     // Display
-    {
-        const tinyxml2::XMLElement* element = neural_network_element->FirstChildElement("Display");
 
-        if(element)
-        {
-            const string new_display_string = element->GetText();
+    const tinyxml2::XMLElement* display_element = neural_network_element->FirstChildElement("Display");
 
-            try
-            {
-                set_display(new_display_string != "0");
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
 
 
 void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Inputs");
 
     if(!root_element)
@@ -2042,11 +2019,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
     Index new_inputs_number = 0;
 
     if(inputs_number_element->GetText())
-    {
-        new_inputs_number = Index(atoi(inputs_number_element->GetText()));
-
-        set_inputs_number(new_inputs_number);
-    }
+        set_inputs_number(Index(atoi(inputs_number_element->GetText())));
 
     // Inputs names
 
@@ -2062,14 +2035,8 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
             if(input_element->Attribute("Index") != to_string(i+1))
                 throw runtime_error("Input index number (" + to_string(i+1) + ") does not match (" + input_element->Attribute("Item") + ").\n");
 
-            if(!input_element->GetText())
-            {
-                inputs_names(i) = "";
-            }
-            else
-            {
+            if(input_element->GetText())
                 inputs_names(i) = input_element->GetText();
-            }
         }
     }
 }
@@ -2113,9 +2080,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(scaling_element)
             {
                 tinyxml2::XMLDocument scaling_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = scaling_element->DeepClone(&scaling_document);
+                tinyxml2::XMLNode* element_clone = scaling_element->DeepClone(&scaling_document);
 
                 scaling_document.InsertFirstChild(element_clone);
 
@@ -2135,9 +2100,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(scaling_element)
             {
                 tinyxml2::XMLDocument scaling_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = scaling_element->DeepClone(&scaling_document);
+                tinyxml2::XMLNode* element_clone = scaling_element->DeepClone(&scaling_document);
 
                 scaling_document.InsertFirstChild(element_clone);
 
@@ -2146,27 +2109,25 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(scaling_layer);
         }
-        //else if(layers_types(i) == "Convolutional")
-        //{
-        //    ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
+        else if(layers_types(i) == "Convolutional")
+        {
+            ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
 
-        //    const tinyxml2::XMLElement* convolutional_element = start_element->NextSiblingElement("ConvolutionalLayer");
-        //    start_element = convolutional_element;
+            const tinyxml2::XMLElement* convolutional_layer_element = start_element->NextSiblingElement("ConvolutionalLayer");
+            start_element = convolutional_layer_element;
 
-        //    if(convolutional_element)
-        //    {
-        //        tinyxml2::XMLDocument convolutional_document;
-        //        tinyxml2::XMLNode* element_clone;
+            if(convolutional_layer_element)
+            {
+                tinyxml2::XMLDocument convolutional_document;
+                tinyxml2::XMLNode* element_clone = convolutional_layer_element->DeepClone(&convolutional_document);
 
-        //        element_clone = convolutional_element->DeepClone(&convolutional_document);
+                convolutional_document.InsertFirstChild(element_clone);
 
-        //        convolutional_document.InsertFirstChild(element_clone);
+                convolutional_layer->from_XML(convolutional_document);
+            }
 
-        //        convolutional_layer->from_XML(convolutional_document);
-        //    }
-
-        //    add_layer(convolutional_layer);
-        //}
+            add_layer(convolutional_layer);
+        }
         else if(layers_types(i) == "Perceptron")
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer();
@@ -2177,9 +2138,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(perceptron_element)
             {
                 tinyxml2::XMLDocument perceptron_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = perceptron_element->DeepClone(&perceptron_document);
+                tinyxml2::XMLNode* element_clone = perceptron_element->DeepClone(&perceptron_document);
 
                 perceptron_document.InsertFirstChild(element_clone);
 
@@ -2198,9 +2157,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(perceptron_element)
             {
                 tinyxml2::XMLDocument perceptron_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = perceptron_element->DeepClone(&perceptron_document);
+                tinyxml2::XMLNode* element_clone = perceptron_element->DeepClone(&perceptron_document);
 
                 perceptron_document.InsertFirstChild(element_clone);
 
@@ -2219,9 +2176,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(pooling_element)
             {
                 tinyxml2::XMLDocument pooling_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = pooling_element->DeepClone(&pooling_document);
+                tinyxml2::XMLNode* element_clone = pooling_element->DeepClone(&pooling_document);
 
                 pooling_document.InsertFirstChild(element_clone);
 
@@ -2240,9 +2195,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(probabilistic_element)
             {
                 tinyxml2::XMLDocument probabilistic_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = probabilistic_element->DeepClone(&probabilistic_document);
+                tinyxml2::XMLNode* element_clone = probabilistic_element->DeepClone(&probabilistic_document);
 
                 probabilistic_document.InsertFirstChild(element_clone);
                 probabilistic_layer->from_XML(probabilistic_document);
@@ -2260,9 +2213,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(probabilistic_element)
             {
                 tinyxml2::XMLDocument probabilistic_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = probabilistic_element->DeepClone(&probabilistic_document);
+                tinyxml2::XMLNode* element_clone = probabilistic_element->DeepClone(&probabilistic_document);
 
                 probabilistic_document.InsertFirstChild(element_clone);
                 probabilistic_layer_3d->from_XML(probabilistic_document);
@@ -2280,9 +2231,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(long_short_term_memory_element)
             {
                 tinyxml2::XMLDocument long_short_term_memory_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = long_short_term_memory_element->DeepClone(&long_short_term_memory_document);
+                tinyxml2::XMLNode* element_clone = long_short_term_memory_element->DeepClone(&long_short_term_memory_document);
 
                 long_short_term_memory_document.InsertFirstChild(element_clone);
 
@@ -2301,9 +2250,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(recurrent_element)
             {
                 tinyxml2::XMLDocument recurrent_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = recurrent_element->DeepClone(&recurrent_document);
+                tinyxml2::XMLNode* element_clone = recurrent_element->DeepClone(&recurrent_document);
 
                 recurrent_document.InsertFirstChild(element_clone);
 
@@ -2322,9 +2269,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(unscaling_element)
             {
                 tinyxml2::XMLDocument unscaling_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = unscaling_element->DeepClone(&unscaling_document);
+                tinyxml2::XMLNode* element_clone = unscaling_element->DeepClone(&unscaling_document);
 
                 unscaling_document.InsertFirstChild(element_clone);
 
@@ -2344,9 +2289,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(bounding_element)
             {
                 tinyxml2::XMLDocument bounding_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = bounding_element->DeepClone(&bounding_document);
+                tinyxml2::XMLNode* element_clone = bounding_element->DeepClone(&bounding_document);
 
                 bounding_document.InsertFirstChild(element_clone);
 
@@ -2366,9 +2309,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(embedding_element)
             {
                 tinyxml2::XMLDocument embedding_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = embedding_element->DeepClone(&embedding_document);
+                tinyxml2::XMLNode* element_clone = embedding_element->DeepClone(&embedding_document);
 
                 embedding_document.InsertFirstChild(element_clone);
 
@@ -2388,9 +2329,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(multihead_attention_element)
             {
                 tinyxml2::XMLDocument multihead_attention_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = multihead_attention_element->DeepClone(&multihead_attention_document);
+                tinyxml2::XMLNode* element_clone = multihead_attention_element->DeepClone(&multihead_attention_document);
                 
                 multihead_attention_document.InsertFirstChild(element_clone);
 
@@ -2410,9 +2349,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(addition_element)
             {
                 tinyxml2::XMLDocument addition_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = addition_element->DeepClone(&addition_document);
+                tinyxml2::XMLNode* element_clone = addition_element->DeepClone(&addition_document);
 
                 addition_document.InsertFirstChild(element_clone);
 
@@ -2432,9 +2369,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             if(normalization_element)
             {
                 tinyxml2::XMLDocument normalization_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = normalization_element->DeepClone(&normalization_document);
+                tinyxml2::XMLNode* element_clone = normalization_element->DeepClone(&normalization_document);
 
                 normalization_document.InsertFirstChild(element_clone);
 
@@ -2446,7 +2381,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Layers inputs indices
-/*
+
     const tinyxml2::XMLElement* layers_inputs_indices_element = root_element->FirstChildElement("LayersInputsIndices");
 
     if(!layers_inputs_indices_element)
@@ -2462,10 +2397,10 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         {
             Index layer_index = Index(stoi(layer_inputs_indices_element->Attribute("LayerIndex"))) - 1;
             const string indices_string = layer_inputs_indices_element->GetText();
-            layers_inputs_indices(layer_index) = to_type_vector(indices_string, ' ').cast<Index>();
+//            layers_inputs_indices(layer_index) = to_type_vector(indices_string, ' ').cast<Index>();
         }
     }
-*/
+
 }
 
 

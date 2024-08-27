@@ -74,7 +74,7 @@ public:
 
     // Architecture
 
-    void set_input_dim(const Index&);
+    void set_input_dimensions(const Index&);
     void set_inputs_number(const Index&);
     void set_depth(const Index&);
     void set_dropout_rate(const type&);

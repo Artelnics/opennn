@@ -365,36 +365,14 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* positives_weight_element = root_element->FirstChildElement("PositivesWeight");
 
     if(positives_weight_element)
-    {
-        const string string = positives_weight_element->GetText();
-
-        try
-        {
-            set_positives_weight(type(atof(string.c_str())));
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_positives_weight(type(atof(positives_weight_element->GetText())));
 
     // Negatives weight
 
     const tinyxml2::XMLElement* negatives_weight_element = root_element->FirstChildElement("NegativesWeight");
 
     if(negatives_weight_element)
-    {
-        const string str = negatives_weight_element->GetText();
-
-        try
-        {
-            set_negatives_weight(type(atof(str.c_str())));
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+        set_negatives_weight(type(atof(negatives_weight_element->GetText())));
 }
 
 

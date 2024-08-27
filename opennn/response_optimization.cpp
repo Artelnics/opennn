@@ -8,6 +8,7 @@
 
 #include "tensors.h"
 #include "response_optimization.h"
+#include "statistics.h"
 
 namespace opennn
 {
