@@ -16,6 +16,7 @@
 // OpenNN includes
 
 #include "neural_network.h"
+#include "box_plot.h"
 
 namespace opennn
 {

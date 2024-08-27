@@ -14,26 +14,26 @@ namespace opennn
 {
 
 ScalingLayer4D::ScalingLayer4D() : Layer()
-{
+{    
     set();
+
+    name = "scaling_layer";
 }
 
 
 ScalingLayer4D::ScalingLayer4D(const Index& new_neurons_number) : Layer()
 {
     set(new_neurons_number);
+
+    name = "scaling_layer";
 }
 
 
 ScalingLayer4D::ScalingLayer4D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
-}
 
-
-ScalingLayer4D::ScalingLayer4D(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
-{
-    set(new_descriptives);
+    name = "scaling_layer";
 }
 
 
@@ -317,7 +317,7 @@ void ScalingLayer4D::set_neurons_number(const Index& new_neurons_number)
 
 void ScalingLayer4D::set_default()
 {
-    layer_name = "scaling_layer";
+    name = "scaling_layer";
 
     set_scalers(Scaler::MinimumMaximum);
 
@@ -410,43 +410,45 @@ void ScalingLayer4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
 
 #endif
 
-    Tensor<Scaler, 1> new_scaling_methods(neurons_number);
-
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(new_scaling_methods_string(i) == "None")
-        {
-            new_scaling_methods(i) = Scaler::None;
-        }
-        else if(new_scaling_methods_string(i) == "MinimumMaximum")
-        {
-            new_scaling_methods(i) = Scaler::MinimumMaximum;
-        }
-        else if(new_scaling_methods_string(i) == "MeanStandardDeviation")
-        {
-            new_scaling_methods(i) = Scaler::MeanStandardDeviation;
-        }
-        else if(new_scaling_methods_string(i) == "StandardDeviation")
-        {
-            new_scaling_methods(i) = Scaler::StandardDeviation;
-        }
-        else if(new_scaling_methods_string(i) == "Logarithm")
-        {
-            new_scaling_methods(i) = Scaler::Logarithm;
-        }
-        else
-        {
-            throw runtime_error("Unknown scaling method: " + new_scaling_methods_string[i] + ".\n");
-        }
+        set_scaler(i, new_scaling_methods_string(i));
     }
-
-    set_scalers(new_scaling_methods);
 }
 
 
 void ScalingLayer4D::set_scaler(const Index& variable_index, const Scaler& new_scaler)
 {
     scalers(variable_index) = new_scaler;
+}
+
+
+void ScalingLayer4D::set_scaler(const Index& variable_index, const string& new_scaler_string)
+{
+    if(new_scaler_string == "None")
+    {
+        scalers(variable_index) = Scaler::None;
+    }
+    else if(new_scaler_string == "MeanStandardDeviation")
+    {
+        scalers(variable_index) = Scaler::MeanStandardDeviation;
+    }
+    else if(new_scaler_string == "MinimumMaximum")
+    {
+        scalers(variable_index) = Scaler::MinimumMaximum;
+    }
+    else if(new_scaler_string == "StandardDeviation")
+    {
+        scalers(variable_index) = Scaler::StandardDeviation;
+    }
+    else if(new_scaler_string == "Logarithm")
+    {
+        scalers(variable_index) = Scaler::Logarithm;
+    }
+    else
+    {
+        throw runtime_error("Unknown scaling method: " + new_scaler_string + ".\n");
+    }
 }
 
 
@@ -620,24 +622,12 @@ void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& file_stream) const
         // Scaling neuron
 
         file_stream.OpenElement("ScalingNeuron");
-
         file_stream.PushAttribute("Index", int(i+1));
 
         //Descriptives
 
         file_stream.OpenElement("Descriptives");
-
-        file_stream.PushText(to_string(descriptives(i).minimum).c_str());
-        file_stream.PushText("\\");
-
-        file_stream.PushText(to_string(descriptives(i).maximum).c_str());
-        file_stream.PushText("\\");
-
-        file_stream.PushText(to_string(descriptives(i).mean).c_str());
-        file_stream.PushText("\\");
-
-        file_stream.PushText(to_string(descriptives(i).standard_deviation).c_str());
-
+        file_stream.PushText(tensor_to_string(descriptives(i).to_tensor()).c_str());
         file_stream.CloseElement();
 
         // Scaler
@@ -704,7 +694,9 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
         if(descriptives_element->GetText())
         {
             const char* new_descriptives_element = descriptives_element->GetText();
-            Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, "\\");
+
+            const Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, "\\");
+
             descriptives[i].minimum = type(stof(splitted_descriptives[0]));
             descriptives[i].maximum = type(stof(splitted_descriptives[1]));
             descriptives[i].mean = type(stof(splitted_descriptives[2]));
@@ -718,53 +710,17 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
         if(!scaling_method_element)
             throw runtime_error("Scaling method element " + to_string(i+1) + " is nullptr.\n");
 
-        const string new_method = scaling_method_element->GetText();
-
-        if(new_method == "None" || new_method == "No Scaling")
-        {
-            scalers[i] = Scaler::None;
-        }
-        else if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
-        {
-            scalers[i] = Scaler::MinimumMaximum;
-        }
-        else if(new_method == "MeanStandardDeviation" || new_method == "Mean - Standard deviation")
-        {
-            scalers[i] = Scaler::MeanStandardDeviation;
-        }
-        else if(new_method == "StandardDeviation")
-        {
-            scalers[i] = Scaler::StandardDeviation;
-        }
-        else if(new_method == "Logarithm")
-        {
-            scalers[i] = Scaler::Logarithm;
-        }
-        else
-        {
-            scalers[i] = Scaler::None;
-        }
+        set_scaler(i, scaling_method_element->GetText());
     }
 
     // Display
-    {
-        const tinyxml2::XMLElement* display_element = scaling_layer_element->FirstChildElement("Display");
 
-        if(display_element)
-        {
-            string new_display_string = display_element->GetText();
+    const tinyxml2::XMLElement* display_element = scaling_layer_element->FirstChildElement("Display");
 
-            try
-            {
-                set_display(new_display_string != "0");
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
+
 
 pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() const
 {

@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+
 #include "tensors.h"
 #include "pooling_layer.h"
 
@@ -165,13 +167,13 @@ void PoolingLayer::set(const dimensions& new_input_dimensions, const dimensions&
     if(new_pool_dimensions.size() != 2)
         throw runtime_error("Pool dimensions must be 2");
 
+    if (new_pool_dimensions[0] > new_input_dimensions[0] || new_pool_dimensions[1] > new_input_dimensions[1])
+        throw runtime_error("Pool dimensions cannot be bigger than input dimensions");
+
     input_dimensions = new_input_dimensions;
 
     pool_height = new_pool_dimensions[0];
     pool_width = new_pool_dimensions[1];
-
-    if (pool_height > input_dimensions[0] || pool_width > input_dimensions[1])
-        throw runtime_error("Pool dimensions cannot be bigger than input dimensions");
 
     set_default();
 }
@@ -179,7 +181,7 @@ void PoolingLayer::set(const dimensions& new_input_dimensions, const dimensions&
 
 void PoolingLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -252,6 +254,8 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
 void PoolingLayer::set_default()
 {
     layer_type = Layer::Type::Pooling;
+
+    name = "pooling_layer";
 }
 
 
@@ -292,18 +296,13 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
                                                      LayerForwardPropagation* layer_forward_propagation,
                                                      const bool& is_training) const
 {
-    const type pool_size = type(pool_height * pool_width);
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
-    // @todo do not create tensor
-
-    Tensor<type, 4> pool(1, pool_height, pool_width, 1);
-
-    pool.setConstant(type(1.0/pool_size));
+    Tensor<type, 4>& pool = pooling_layer_forward_propagation->pool;
 
     outputs.device(*thread_pool_device) = inputs.convolve(pool, average_pooling_dimensions);
 }
@@ -499,7 +498,7 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Image size
@@ -584,20 +583,16 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!pooling_method_element)
         throw runtime_error("Pooling method element is nullptr.\n");
 
-    const string pooling_method_string = pooling_method_element->GetText();
-
-    set_pooling_method(pooling_method_string);
+    set_pooling_method(pooling_method_element->GetText());
 
     // Input variables dimensions element
 
-    const tinyxml2::XMLElement* input_variables_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
+    const tinyxml2::XMLElement* input_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
 
-    if(!input_variables_dimensions_element)
+    if(!input_dimensions_element)
         throw runtime_error("Pooling input variables dimensions element is nullptr.\n");
 
-    const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
-
-//    set_input_variables_dimenisons(input_variables_dimensions_string);
+//    set_input_dimensions(input_dimensions_element->GetText());
 
     // raw_variable stride
 
@@ -606,9 +601,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!column_stride_element)
         throw runtime_error("Pooling column stride element is nullptr.\n");
 
-    const string column_stride_string = column_stride_element->GetText();
-
-    set_column_stride(Index(stoi(column_stride_string)));
+    set_column_stride(Index(stoi(column_stride_element->GetText())));
 
     // Row stride
 
@@ -617,9 +610,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!row_stride_element)
         throw runtime_error("Pooling row stride element is nullptr.\n");
 
-    const string row_stride_string = row_stride_element->GetText();
-
-    set_row_stride(Index(stoi(row_stride_string)));
+    set_row_stride(Index(stoi(row_stride_element->GetText())));
 
     // Pool raw_variables number
 
@@ -649,11 +640,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Padding width element is nullptr.\n");
 
     if(padding_width_element->GetText())
-    {
-        const string padding_width_string = padding_width_element->GetText();
-
-        set_padding_width(Index(stoi(padding_width_string)));
-    }
+        set_padding_width(Index(stoi(padding_width_element->GetText())));
 }
 
 
@@ -702,6 +689,8 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     const Index channels = pooling_layer->get_channels_number();
 
+    const type pool_size = type(pool_height * pool_width);
+
     outputs.resize(batch_samples_number,
                    output_height,
                    output_width,
@@ -714,6 +703,10 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
                          pool_width,
                          output_height * output_width,
                          channels);
+
+    pool.resize(1, pool_height, pool_width, 1);
+
+    pool.setConstant(type(1.0 / pool_size));
 }
 
 
@@ -768,6 +761,16 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 void PoolingLayerBackPropagation::print() const
 {
     cout << "Pooling layer back propagation" << endl;
+/*
+    const TensorMap<Tensor<type, 4>> inputs_derivatives(inputs_derivatives(0).first,
+                                     inputs_derivatives(0).second[0],
+                                     inputs_derivatives(0).second[1],
+                                     inputs_derivatives(0).second[2],
+                                     inputs_derivatives(0).second[3]);
+
+    cout << "Inputs derivatives:" << endl;
+    cout << inputs_derivatives << endl;
+*/
 }
 
 }

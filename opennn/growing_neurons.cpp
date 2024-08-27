@@ -266,7 +266,7 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 
     // Step
 
-    labels(2) = "Step";
+    labels(2) = "NeuronsIncrement";
     values(2) = to_string(neurons_increment);
 
     // Trials number
@@ -284,7 +284,7 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
     labels(5) = "Maximum selection failures";
     values(5) = to_string(maximum_selection_failures);
 
-    // Maximum iterations number
+    // Maximum epochs number
 
     labels(6) = "Maximum iterations number";
     values(6) = to_string(maximum_epochs_number);
@@ -324,7 +324,7 @@ void GrowingNeurons::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Step
 
-    file_stream.OpenElement("Step");
+    file_stream.OpenElement("NeuronsIncrement");
     file_stream.PushText(to_string(neurons_increment).c_str());
     file_stream.CloseElement();
 
@@ -364,137 +364,53 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("GrowingNeurons element is nullptr.\n");
 
     // Minimum neurons
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumNeurons");
 
-        if(element)
-        {
-            const Index new_minimum_neurons = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* minimum_neurons_element = root_element->FirstChildElement("MinimumNeurons");
 
-            try
-            {
-                minimum_neurons = new_minimum_neurons;
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(minimum_neurons_element)
+        minimum_neurons = Index(atoi(minimum_neurons_element->GetText()));
 
     // Maximum neurons
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumNeurons");
 
-        if(element)
-        {
-            const Index new_maximum_neurons = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_neurons_element = root_element->FirstChildElement("MaximumNeurons");
 
-            try
-            {
-                maximum_neurons = new_maximum_neurons;
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_neurons_element)
+        maximum_neurons = Index(atoi(maximum_neurons_element->GetText()));
 
-    // Step
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Step");
+    // Neurons increment
 
-        if(element)
-        {
-            const Index new_step = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* neurons_increment_element = root_element->FirstChildElement("NeuronsIncrement");
 
-            try
-            {
-                set_neurons_increment(new_step);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(neurons_increment_element)
+        set_neurons_increment(Index(atoi(neurons_increment_element->GetText())));
 
     // Trials number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("TrialsNumber");
 
-        if(element)
-        {
-            const Index new_trials_number = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* trials_number_element = root_element->FirstChildElement("TrialsNumber");
 
-            try
-            {
-                set_trials_number(new_trials_number);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(trials_number_element)
+        set_trials_number(Index(atoi(trials_number_element->GetText())));
 
     // Selection error goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
 
-        if(element)
-        {
-            const type new_selection_error_goal = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* selection_error_goal_element = root_element->FirstChildElement("SelectionErrorGoal");
 
-            try
-            {
-                set_selection_error_goal(new_selection_error_goal);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(selection_error_goal_element)
+        set_selection_error_goal(type(atof(selection_error_goal_element->GetText())));
 
     // Maximum selection failures
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
 
-        if(element)
-        {
-            const Index new_maximum_selection_failures = Index(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
 
-            try
-            {
-                set_maximum_selection_failures(new_maximum_selection_failures);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_selection_failures_element)
+        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
 
     // Maximum time
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
 
-        if(element)
-        {
-            const type new_maximum_time = type(atoi(element->GetText()));
+    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
 
-            try
-            {
-                set_maximum_time(new_maximum_time);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(maximum_time_element)
+        set_maximum_time(type(atoi(maximum_time_element->GetText())));
 }
 
 

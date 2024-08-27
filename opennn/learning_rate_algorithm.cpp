@@ -577,61 +577,25 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Learning rate algorithm element is nullptr.\n");
 
     // Learning rate method
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LearningRateMethod");
 
-        if(element)
-        {
-            string new_learning_rate_method = element->GetText();
+    const tinyxml2::XMLElement* learning_rate_method_element = root_element->FirstChildElement("LearningRateMethod");
 
-            try
-            {
-                set_learning_rate_method(new_learning_rate_method);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(learning_rate_method_element)
+        set_learning_rate_method(learning_rate_method_element->GetText());
 
     // Learning rate tolerance
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LearningRateTolerance");
 
-        if(element)
-        {
-            const type new_learning_rate_tolerance = type(atof(element->GetText()));
+    const tinyxml2::XMLElement* learning_rate_tolerance_element = root_element->FirstChildElement("LearningRateTolerance");
 
-            try
-            {
-                set_learning_rate_tolerance(new_learning_rate_tolerance);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(learning_rate_tolerance_element)
+        set_learning_rate_tolerance(type(atof(learning_rate_tolerance_element->GetText())));
 
     // Display warnings
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
 
-        if(element)
-        {
-            const string new_display = element->GetText();
+    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-            try
-            {
-                set_display(new_display != "0");
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    if(display_element)
+        set_display(display_element->GetText() != string("0"));
 }
 
 }

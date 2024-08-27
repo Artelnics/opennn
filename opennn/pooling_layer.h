@@ -19,7 +19,7 @@
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
-#include "statistics.h"
+//#include "statistics.h"
 
 namespace opennn
 {
@@ -178,6 +178,8 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     void set(const Index&, Layer*) final;
 
     void print() const;
+
+    Tensor<type, 4> pool;
 
     Tensor<type, 4> outputs;
 

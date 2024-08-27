@@ -6,10 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <iostream>
+
 #include "strings_utilities.h"
 #include "convolutional_layer.h"
 #include "tensors.h"
-#include <iostream>
 
 namespace opennn
 {
@@ -17,6 +18,7 @@ namespace opennn
 ConvolutionalLayer::ConvolutionalLayer() : Layer()
 {
     layer_type = Layer::Type::Convolutional;
+    name = "convolutional_layer";
 }
 
 
@@ -24,6 +26,7 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_kernel_dimensions) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
+    name = "convolutional_layer";
 
     set(new_input_dimensions, new_kernel_dimensions);
 }
@@ -32,9 +35,7 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
 bool ConvolutionalLayer::is_empty() const
 {
     if(biases.size() == 0 && synaptic_weights.size() == 0)
-    {
         return true;
-    }
 
     return false;
 }
@@ -145,8 +146,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                1);
 
         convolution.device(*thread_pool_device)
-            = inputs.convolve(kernel, convolutions_dimensions);
-            //+ biases(kernel_index);
+            = inputs.convolve(kernel, convolutions_dimensions) + biases(kernel_index);
     }
 }
 
@@ -453,13 +453,13 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    Eigen::array<Index, 4> offsets;
-    Eigen::array<Index, 4> extents;
-
     const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
 
-    Tensor<type, 4> delta_slice;
-    Tensor<type, 4> image_slice;
+    Eigen::array<Index, 4>& offsets = convolutional_layer_back_propagation->offsets;
+    Eigen::array<Index, 4>& extents = convolutional_layer_back_propagation->extents;
+
+    Tensor<type, 4>& delta_slice = convolutional_layer_back_propagation->delta_slice;
+    Tensor<type, 4>& image_slice = convolutional_layer_back_propagation->image_slice;
 
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 
@@ -834,20 +834,17 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
     if (new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
+
+    if (new_kernel_dimensions[0] > new_input_dimensions[0] || new_kernel_dimensions[1] > new_input_dimensions[1])
+        throw runtime_error("kernel dimensions cannot be bigger than input dimensions");
+
+    if (new_kernel_dimensions[2] != new_input_dimensions[2])
+        throw runtime_error("kernel_channels must match input_channels dimension");
     
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];
     const Index kernel_channels = new_kernel_dimensions[2];
     const Index kernels_number = new_kernel_dimensions[3];
-
-    if (kernel_height > new_input_dimensions[0])
-        throw runtime_error("kernel_height cannot be bigger than input dimensions");
-
-    if (kernel_width > new_input_dimensions[1])
-        throw runtime_error("kernel_width cannot be bigger than input dimensions");
-
-    if (kernel_channels != new_input_dimensions[2])
-        throw runtime_error("kernel_channels must match input_channels dimension");
 
     biases.resize(kernels_number);
     set_random(biases);
@@ -871,7 +868,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
 void ConvolutionalLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -1182,7 +1179,7 @@ void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Image size
@@ -1254,31 +1251,25 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!convolution_name_element)
         throw runtime_error("Convolution type element is nullptr.\n");
 
-    const string convolution_name_string = convolution_name_element->GetText();
-
-    set_convolution_type(convolution_name_string);
-
-//    set_convolution_type("Valid");
+    set_convolution_type(convolution_name_element->GetText());
 
     // Input variables dimensions element
 
-    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
+    const tinyxml2::XMLElement* input_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
 
-    if(!input_variables_dimensions_element)
+    if(!input_dimensions_element)
         throw runtime_error("Convolutional input variables dimensions element is nullptr.\n");
 
-    const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
-
-    //    set_input_variables_dimenisons(Index(stoi(input_variables_dimensions_string));
+//    set_input_dimensions(string_to_dimensions(input_dimensions_element->GetText()));
 
     // Outputs variables dimensions element
 
-    const tinyxml2::XMLElement* outputs_variables_dimensions_element = convolutional_layer_element->FirstChildElement("OutputDimensions");
+    const tinyxml2::XMLElement* output_dimensions_element = convolutional_layer_element->FirstChildElement("OutputDimensions");
 
-    if(!outputs_variables_dimensions_element)
+    if(!output_dimensions_element)
         throw runtime_error("Convolutional outputs variables dimensions element is nullptr.\n");
 
-    const string outputs_variables_dimensions_string = outputs_variables_dimensions_element->GetText();
+    //set_output_dimensions(string_to_dimensions(output_dimensions_element->GetText()));
 
     // Filters Number element
 
@@ -1288,8 +1279,6 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Convolutional filters number element is nullptr.\n");
 
     const string filters_number_string = filters_number_element->GetText();
-
-    //    set_input_variables_dimenisons(Index(stoi(input_variables_dimensions_string));
 
     // Filters Size
 
@@ -1309,9 +1298,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!activation_function_element)
         throw runtime_error("Convolutional activation function element is nullptr.\n");
 
-    const string activation_function_string = activation_function_element->GetText();
-
-    set_activation_function(activation_function_string);
+    set_activation_function(activation_function_element->GetText());
 
     // Stride
 
@@ -1342,11 +1329,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, " "));
-    }
+        set_parameters(to_type_vector(parameters_element->GetText(), " "));
 }
 
 
@@ -1486,11 +1469,23 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
 
 void ConvolutionalLayerBackPropagation::print() const
 {
-    cout << "Biases derivatives:" << endl;
+    cout << "Convolutional layer back propagation" << endl;
+
+    cout << "Biases derivatives:\n" << endl;
     cout << biases_derivatives << endl;
 
-    cout << "Synaptic weights derivatives:" << endl;
+    cout << "Synaptic weights derivatives:\n" << endl;
     cout << synaptic_weights_derivatives << endl;
+/*
+    const TensorMap<Tensor<type, 4>> inputs_derivatives(inputs_derivatives(0).first,
+                                     inputs_derivatives(0).second[0],
+                                     inputs_derivatives(0).second[1],
+                                     inputs_derivatives(0).second[2],
+                                     inputs_derivatives(0).second[3]);
+
+    cout << "Input derivatives:\n" << endl;
+    cout << inputs_derivatives << endl;
+*/
 }
 
 

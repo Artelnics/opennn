@@ -340,14 +340,14 @@ void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_
 
 void LongShortTermMemoryLayer::set_default()
 {
-    layer_name = "long_short_term_memory_layer";
+    name = "long_short_term_memory_layer";
     layer_type = Type::LongShortTermMemory;
 }
 
 
 void LongShortTermMemoryLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -2610,9 +2610,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
-    {
         set_name(layer_name_element->GetText());
-    }
 
     // Inputs number
 
@@ -2622,9 +2620,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputsNumber element is nullptr.\n");
 
     if(inputs_number_element->GetText())
-    {
         set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-    }
 
     // Neurons number
 
@@ -2634,9 +2630,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("NeuronsNumber element is nullptr.\n");
 
     if(neurons_number_element->GetText())
-    {
         set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-    }
 
     // Time step
 
@@ -2646,9 +2640,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("TimeStep element is nullptr.\n");
 
     if(time_step_element->GetText())
-    {
         set_timesteps(Index(stoi(time_step_element->GetText())));
-    }
 
     // Activation function
 
@@ -2658,9 +2650,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("ActivationFunction element is nullptr.\n");
 
     if(activation_function_element->GetText())
-    {
         set_activation_function(activation_function_element->GetText());
-    }
 
     // Recurrent activation function
 
@@ -2670,9 +2660,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("ActivationFunction element is nullptr.\n");
 
     if(recurrent_activation_function_element->GetText())
-    {
         set_recurrent_activation_function(recurrent_activation_function_element->GetText());
-    }
 
     // Parameters
 
@@ -2682,11 +2670,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, " "));
-    }
+        set_parameters(to_type_vector(parameters_element->GetText(), " "));
 }
 
 
@@ -2701,7 +2685,7 @@ void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Inputs number

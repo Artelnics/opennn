@@ -34,7 +34,7 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
 
     layer_type = Type::MultiheadAttention;
 
-    layer_name = "multihead_attention_layer";
+    name = "multihead_attention_layer";
 }
 
 
@@ -241,7 +241,7 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
 void MultiheadAttentionLayer::set_default()
 {
-    layer_name = "multihead_attention_layer";
+    name = "multihead_attention_layer";
 
     display = true;
 
@@ -253,7 +253,7 @@ void MultiheadAttentionLayer::set_default()
 
 void MultiheadAttentionLayer::set_name(const string& new_layer_name)
 {
-    layer_name = new_layer_name;
+    name = new_layer_name;
 }
 
 
@@ -1040,9 +1040,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("LayerName element is nullptr.\n");
 
     if(layer_name_element->GetText())
-    {
         set_name(layer_name_element->GetText());
-    }
     
     // Input size
 
@@ -1052,9 +1050,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("InputSize element is nullptr.\n");
 
     if(input_size_element->GetText())
-    {
         set_input_size(Index(stoi(input_size_element->GetText())));
-    }
     
     // Context size
 
@@ -1064,9 +1060,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("ContextSize element is nullptr.\n");
 
     if(context_size_element->GetText())
-    {
         set_context_size(Index(stoi(context_size_element->GetText())));
-    }
     
     // Embedding depth
 
@@ -1076,9 +1070,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Depth element is nullptr.\n");
 
     if(depth_element->GetText())
-    {
         set_depth(Index(stoi(depth_element->GetText())));
-    }
     
     // Number of attention heads
 
@@ -1088,9 +1080,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("HeadsNumber element is nullptr.\n");
 
     if(heads_number_element->GetText())
-    {
         set_heads_number(Index(stoi(heads_number_element->GetText())));
-    }
     
     // Use causal mask
 
@@ -1100,9 +1090,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("CausalMask element is nullptr.\n");
 
     if(causal_mask_element->GetText())
-    {
         set_causal_mask(string(causal_mask_element->GetText()) == "true");
-    }
     
     // Parameters
 
@@ -1112,18 +1100,12 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Parameters element is nullptr.\n");
 
     if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, " "));
-    }
+        set_parameters(to_type_vector(parameters_element->GetText(), " "));
 }
 
 
 void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     // Multihead Attention layer
 
     file_stream.OpenElement("MultiheadAttentionLayer");
@@ -1131,7 +1113,7 @@ void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layer name
 
     file_stream.OpenElement("LayerName");
-    file_stream.PushText(layer_name.c_str());
+    file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
     // Input size
