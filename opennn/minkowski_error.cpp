@@ -157,26 +157,10 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Minkowski parameter
 
-    if(root_element)
-    {
-        const tinyxml2::XMLElement* parameter_element = root_element->FirstChildElement("MinkowskiParameter");
+    const tinyxml2::XMLElement* minkowski_parameter_element = root_element->FirstChildElement("MinkowskiParameter");
 
-        type new_Minkowski_parameter = type(1.5);
-
-        if(parameter_element)
-        {
-            new_Minkowski_parameter = type(atof(parameter_element->GetText()));
-        }
-
-        try
-        {
-            set_Minkowski_parameter(new_Minkowski_parameter);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+    if(minkowski_parameter_element)
+        set_Minkowski_parameter(type(atof(minkowski_parameter_element->GetText())));
 }
 }
 
