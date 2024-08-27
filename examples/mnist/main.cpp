@@ -32,18 +32,14 @@ int main()
 
         ImageDataSet image_data_set;
 
-        //image_data_set.set_data_source_path("../data");
-        image_data_set.set_data_source_path("C:/mnist/binary");
+        image_data_set.set_data_source_path("data");
 
         image_data_set.read_bmp();
 
-//        image_data_set.save("../data/image_data_set.xml");
-//        image_data_set.load("../data/image_data_set.xml");
+        //image_data_set.print();
 
-//        image_data_set.print();
-
-        const Index kernel_height = 2;
-        const Index kernel_width = 2;
+        const Index kernel_height = 3;
+        const Index kernel_width = 3;
         const Index kernel_channels = 1;
         const Index kernels_number = 1;
 
@@ -61,12 +57,10 @@ int main()
                                                                          { kernel_height, kernel_width, kernel_channels, kernels_number });
         neural_network.add_layer(convolutional_layer);
 
-        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
-                                                                           { 1, 1, kernel_channels, kernels_number } );
+        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number } );
         neural_network.add_layer(convolutional_layer_2);
 
-        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(),
-                                                       { pool_height , pool_width } );
+        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(), { pool_height , pool_width } );
         neural_network.add_layer(pooling_layer);
 
         FlattenLayer* flatten_layer = new FlattenLayer(pooling_layer->get_output_dimensions());
@@ -76,10 +70,6 @@ int main()
                                                                          image_data_set.get_target_dimensions());
         neural_network.add_layer(probabilistic_layer);
 
-        neural_network.save("../data/neural_network.xml");
-//        image_data_set.load("../data/image_data_set.xml");
-
-/*
         neural_network.print();
 
         // Training strategy
@@ -103,7 +93,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-*/
+
         cout << "Bye!" << endl;
         
         return 0;
