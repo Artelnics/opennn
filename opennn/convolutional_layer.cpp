@@ -1476,7 +1476,7 @@ void ConvolutionalLayerBackPropagation::print() const
 
     cout << "Synaptic weights derivatives:\n" << endl;
     cout << synaptic_weights_derivatives << endl;
-
+/*
     const TensorMap<Tensor<type, 4>> inputs_derivatives(inputs_derivatives(0).first,
                                      inputs_derivatives(0).second[0],
                                      inputs_derivatives(0).second[1],
@@ -1485,6 +1485,7 @@ void ConvolutionalLayerBackPropagation::print() const
 
     cout << "Input derivatives:\n" << endl;
     cout << inputs_derivatives << endl;
+*/
 }
 
 

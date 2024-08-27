@@ -761,7 +761,7 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 void PoolingLayerBackPropagation::print() const
 {
     cout << "Pooling layer back propagation" << endl;
-
+/*
     const TensorMap<Tensor<type, 4>> inputs_derivatives(inputs_derivatives(0).first,
                                      inputs_derivatives(0).second[0],
                                      inputs_derivatives(0).second[1],
@@ -770,6 +770,7 @@ void PoolingLayerBackPropagation::print() const
 
     cout << "Inputs derivatives:" << endl;
     cout << inputs_derivatives << endl;
+*/
 }
 
 }
