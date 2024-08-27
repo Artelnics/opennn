@@ -145,8 +145,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                1);
 
         convolution.device(*thread_pool_device)
-            = inputs.convolve(kernel, convolutions_dimensions);
-            //+ biases(kernel_index);
+            = inputs.convolve(kernel, convolutions_dimensions) + biases(kernel_index);
     }
 }
 
@@ -453,13 +452,13 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    Eigen::array<Index, 4> offsets;
-    Eigen::array<Index, 4> extents;
-
     const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
 
-    Tensor<type, 4> delta_slice;
-    Tensor<type, 4> image_slice;
+    Eigen::array<Index, 4>& offsets = convolutional_layer_back_propagation->offsets;
+    Eigen::array<Index, 4>& extents = convolutional_layer_back_propagation->extents;
+
+    Tensor<type, 4>& delta_slice = convolutional_layer_back_propagation->delta_slice;
+    Tensor<type, 4>& image_slice = convolutional_layer_back_propagation->image_slice;
 
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 
@@ -834,20 +833,17 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
     if (new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
+
+    if (new_kernel_dimensions[0] > new_input_dimensions[0] || new_kernel_dimensions[1] > new_input_dimensions[1])
+        throw runtime_error("kernel dimensions cannot be bigger than input dimensions");
+
+    if (new_kernel_dimensions[2] != new_input_dimensions[2])
+        throw runtime_error("kernel_channels must match input_channels dimension");
     
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];
     const Index kernel_channels = new_kernel_dimensions[2];
     const Index kernels_number = new_kernel_dimensions[3];
-
-    if (kernel_height > new_input_dimensions[0])
-        throw runtime_error("kernel_height cannot be bigger than input dimensions");
-
-    if (kernel_width > new_input_dimensions[1])
-        throw runtime_error("kernel_width cannot be bigger than input dimensions");
-
-    if (kernel_channels != new_input_dimensions[2])
-        throw runtime_error("kernel_channels must match input_channels dimension");
 
     biases.resize(kernels_number);
     set_random(biases);
@@ -1486,11 +1482,22 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
 
 void ConvolutionalLayerBackPropagation::print() const
 {
-    cout << "Biases derivatives:" << endl;
+    cout << "Convolutional layer back propagation" << endl;
+
+    cout << "Biases derivatives:\n" << endl;
     cout << biases_derivatives << endl;
 
-    cout << "Synaptic weights derivatives:" << endl;
+    cout << "Synaptic weights derivatives:\n" << endl;
     cout << synaptic_weights_derivatives << endl;
+
+    const TensorMap<Tensor<type, 4>> inputs_derivatives(inputs_derivatives(0).first,
+                                     inputs_derivatives(0).second[0],
+                                     inputs_derivatives(0).second[1],
+                                     inputs_derivatives(0).second[2],
+                                     inputs_derivatives(0).second[3]);
+
+    cout << "Input derivatives:\n" << endl;
+    cout << inputs_derivatives << endl;
 }
 
 

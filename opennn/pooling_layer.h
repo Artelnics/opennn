@@ -179,6 +179,8 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     void print() const;
 
+    Tensor<type, 4> pool;
+
     Tensor<type, 4> outputs;
 
     Tensor<type, 5> image_patches;
