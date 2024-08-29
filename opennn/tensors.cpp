@@ -76,7 +76,7 @@ bool calculate_random_bool()
 
 void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum)
 {
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(Index i = 0; i < tensor.size(); i++)
     {
         const type random = type(rand()/(RAND_MAX+1.0));
@@ -88,7 +88,7 @@ void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximu
 
 void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum)
 {
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(Index i = 0; i < tensor.size(); i++)
     {
         const type random = type(rand()/(RAND_MAX+1.0));
@@ -100,8 +100,7 @@ void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximu
 
 void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum)
 {
-    #pragma omp parallel for
-
+    //#pragma omp parallel for
     for(Index i = 0; i < tensor.size(); i++)
     {
         const type random = type(rand()/(RAND_MAX+1.0));
@@ -113,8 +112,7 @@ void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximu
 
 void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum)
 {
-#pragma omp parallel for
-
+    //#pragma omp parallel for
     for(Index i = 0; i < tensor.size(); i++)
     {
         const type random = type(rand()/(RAND_MAX+1.0));

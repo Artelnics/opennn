@@ -53,7 +53,7 @@ void SumSquaredError::calculate_error(const Batch& batch,
 
     error = sum_squared_error(0);
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -70,7 +70,7 @@ void SumSquaredError::calculate_error_lm(const Batch&,
 
     error = sum_squared_error(0);
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 

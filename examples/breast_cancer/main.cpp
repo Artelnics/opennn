@@ -25,7 +25,7 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Application." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
+        srand(unsigned(time(nullptr)));
 
         // Data set
 
