@@ -138,7 +138,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 kernel_height,
                                                 kernel_width,
                                                 kernel_channels);
-
+ 
         TensorMap<Tensor<type, 4>> convolution(convolutions_data + kernel_index*output_size,
                                                batch_samples_number,
                                                output_height,
@@ -352,6 +352,17 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     calculate_convolutions(preprocessed_inputs, outputs);
 
+    /* {
+        // Debug
+
+        Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
+        Eigen::array<ptrdiff_t, 4> extents = { 1, 20, 20, 1 };
+
+        Tensor<type, 4> outputs_slice = outputs.slice(offsets, extents);
+
+        cout << "convolution one output after convolve:\n" << outputs_slice << endl;
+    }*/
+
     if(batch_normalization)
     {
         normalize(layer_forward_propagation,
@@ -406,7 +417,22 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                                             deltas_pair(0).second[1],
                                             deltas_pair(0).second[2],
                                             deltas_pair(0).second[3]);
-    /*
+
+    /* {
+    // Debug
+
+    Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
+    Eigen::array<ptrdiff_t, 4> extents = { 1, deltas_pair(0).second[1], deltas_pair(0).second[2], 1 };
+
+    Tensor<type,4> one_deltas = deltas.slice(offsets, extents);
+    
+    cout << "deltas_pair(0).second[1]: " << deltas_pair(0).second[1] << endl;
+    cout << "deltas_pair(0).second[2]: " << deltas_pair(0).second[2] << endl;
+    cout << "one_deltas:\n" << one_deltas << endl;
+    system("pause");
+    }
+
+    
     cout << "batch_samples_number: " << batch_samples_number << endl;
 
     cout << "input_height: " << input_height << endl;
@@ -466,6 +492,15 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     Tensor<type, 0> current_sum;
 
     error_convolutions_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+    
+    /* { // Debug
+        Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
+        Eigen::array<ptrdiff_t, 4> extents = { 1, activations_derivatives.dimension(1), activations_derivatives.dimension(2), 1 };
+
+        Tensor<type, 4> one_activations_derivatives = activations_derivatives.slice(offsets, extents);
+        cout << "one activations_derivatives:\n" << one_activations_derivatives << endl;
+        system("pause");
+    }*/
 
     // Synaptic weights derivatives
 
@@ -543,8 +578,23 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
             input_derivatives.chip(image_index, 0).device(*thread_pool_device) +=
                 delta_reshape.convolve(kernel_weights.reverse(Eigen::array<Index, 3>({ 0, 1, 2 })), convolutions_dimensions);
+
         }
     }
+
+    /* {
+        // Debug
+
+        Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
+        Eigen::array<ptrdiff_t, 4> extents = { 1, input_derivatives.dimension(1), input_derivatives.dimension(2), 1};
+
+        Tensor<type, 4> one_input_derivatives = input_derivatives.slice(offsets, extents);
+        cout << "one_input_derivative dimension(1): " << input_derivatives.dimension(1) << endl;
+        cout << "one_input_derivative dimension(2): " << input_derivatives.dimension(2) << endl;
+        cout << "one_input_derivatives:\n" << one_input_derivatives << endl;
+        cout << "End of convolution layer back prop" << endl;
+        system("pause");
+    }*/
 
     /* OLD INPUT DERIVATIVES
     input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
@@ -578,8 +628,6 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
                                          const Index& index,
                                          Tensor<type, 1>& gradient) const
 {
-    type* gradient_data = gradient.data();
-
     // Convolutional layer
 
     const Index synaptic_weights_number = get_synaptic_weights_number();
@@ -594,15 +642,21 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
 
+    /* { // Debug
+        cout << convolutional_layer_back_propagation->synaptic_weights_derivatives << endl;
+        cout << convolutional_layer_back_propagation->biases_derivatives << endl;
+        system("pause");
+    }*/
     // Copy from back propagation to gradient
 
     copy(synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
-         gradient_data + index);
+         gradient.data() + index);
 
     copy(biases_derivatives_data,
          biases_derivatives_data + biases_number,
-         gradient_data + index + synaptic_weights_number);
+         gradient.data() + index + synaptic_weights_number);
+
 }
 
 
@@ -1390,9 +1444,9 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
     standard_deviations.resize(kernels_number);
 
     activations_derivatives.resize(batch_samples_number,
-                                   input_height,
-                                   input_width,
-                                   input_channels);
+                                   output_height,
+                                   output_width,
+                                   kernels_number);
 
     outputs_data = outputs.data();
 }
@@ -1476,16 +1530,7 @@ void ConvolutionalLayerBackPropagation::print() const
 
     cout << "Synaptic weights derivatives:\n" << endl;
     cout << synaptic_weights_derivatives << endl;
-/*
-    const TensorMap<Tensor<type, 4>> inputs_derivatives(inputs_derivatives(0).first,
-                                     inputs_derivatives(0).second[0],
-                                     inputs_derivatives(0).second[1],
-                                     inputs_derivatives(0).second[2],
-                                     inputs_derivatives(0).second[3]);
 
-    cout << "Input derivatives:\n" << endl;
-    cout << inputs_derivatives << endl;
-*/
 }
 
 

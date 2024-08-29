@@ -26,6 +26,8 @@ int main()
 {
     try
     {
+        //srand(static_cast<unsigned>(time(nullptr)));
+
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
         
         // Data set
@@ -33,10 +35,12 @@ int main()
         ImageDataSet image_data_set;
 
         image_data_set.set_data_source_path("data");
+        //image_data_set.set_data_source_path("C:/mnist/binary");
+        //image_data_set.set_data_source_path("C:/cifar10");
 
         image_data_set.read_bmp();
 
-        //image_data_set.print();
+        image_data_set.print();
 
         const Index kernel_height = 3;
         const Index kernel_width = 3;
@@ -54,10 +58,11 @@ int main()
         neural_network.add_layer(scaling_layer);
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
-                                                                         { kernel_height, kernel_width, kernel_channels, kernels_number });
+                                                                        { kernel_height, kernel_width, kernel_channels, kernels_number });
         neural_network.add_layer(convolutional_layer);
 
-        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number } );
+        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(), 
+                                                                          { kernel_height,kernel_width,kernels_number,kernels_number } );
         neural_network.add_layer(convolutional_layer_2);
 
         PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(), { pool_height , pool_width } );
