@@ -323,7 +323,7 @@ bool is_constant_string(const Tensor<string, 1>& string_list)
     {
         str1 = string_list[i];
 
-        if(str1.compare(str0) != 0)
+        if(str1 != str0)
             return false;
     }
 
@@ -3246,15 +3246,18 @@ void print_tokens(const Tensor<Tensor<string,1>,1>& tokens)
     }
 }
 
+
 bool is_vowel(char ch)
 {
     return ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u';
 }
 
+
 bool ends_with(const string& word, const string& suffix)
 {
     return word.length() >= suffix.length() && word.compare(word.length() - suffix.length(), suffix.length(), suffix) == 0;
 }
+
 
 int measure(const string& word)
 {

@@ -1197,19 +1197,19 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(new_uses(i).compare("Training") == 0 || new_uses(i).compare("0") == 0)
+        if(new_uses(i) == "Training" || new_uses(i) == "0")
         {
             samples_uses(i) = SampleUse::Training;
         }
-        else if(new_uses(i).compare("Selection") == 0 || new_uses(i).compare("1") == 0)
+        else if(new_uses(i) == "Selection" || new_uses(i) == "1")
         {
             samples_uses(i) = SampleUse::Selection;
         }
-        else if(new_uses(i).compare("Testing") == 0 || new_uses(i).compare("2") == 0)
+        else if(new_uses(i) == "Testing" || new_uses(i) == "2")
         {
             samples_uses(i) = SampleUse::Testing;
         }
-        else if(new_uses(i).compare("None") == 0 || new_uses(i).compare("3") == 0)
+        else if(new_uses(i) == "None" || new_uses(i) == "3")
         {
             samples_uses(i) = SampleUse::None;
         }
@@ -3450,7 +3450,7 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
             total_variables_number++;
         }
 
-        if((variable_index+1) <= total_variables_number) return i;
+        if(variable_index+1 <= total_variables_number) return i;
     }
 
     throw runtime_error("Cannot find variable index: " + to_string(variable_index) + ".\n");
@@ -5552,7 +5552,7 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file name
 
-    file_stream.OpenElement("DataSourcePath");
+    file_stream.OpenElement("Path");
     file_stream.PushText(data_source_path.c_str());
     file_stream.CloseElement();
 
@@ -5738,10 +5738,10 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
     if(!data_source_path_element)
-        throw runtime_error("DataSourcePath element is nullptr.\n");
+        throw runtime_error("Path element is nullptr.\n");
 
     if(data_source_path_element->GetText())
         set_data_source_path(data_source_path_element->GetText());

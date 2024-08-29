@@ -1222,7 +1222,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
 }
 
 
-TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() const
+TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 {
     const Tensor<type, 2> inputs = data_set->get_testing_input_data();
 
@@ -1230,25 +1230,25 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    RocAnalysisResults roc_analysis_results;
+    RocAnalysis roc_analysis;
 
     cout << "Calculating ROC curve..." << endl;
 
-    roc_analysis_results.roc_curve = calculate_roc_curve(targets, outputs);
+    roc_analysis.roc_curve = calculate_roc_curve(targets, outputs);
 
     cout << "Calculating area under curve..." << endl;
 
-    roc_analysis_results.area_under_curve = calculate_area_under_curve(roc_analysis_results.roc_curve);
+    roc_analysis.area_under_curve = calculate_area_under_curve(roc_analysis.roc_curve);
 
     cout << "Calculating confidence limits..." << endl;
 
-    roc_analysis_results.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs);
+    roc_analysis.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs);
 
     cout << "Calculating optimal threshold..." << endl;
 
-    roc_analysis_results.optimal_threshold = calculate_optimal_threshold(roc_analysis_results.roc_curve);
+    roc_analysis.optimal_threshold = calculate_optimal_threshold(roc_analysis.roc_curve);
 
-    return roc_analysis_results;
+    return roc_analysis;
 }
 
 
