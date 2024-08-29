@@ -70,7 +70,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     error = cross_entropy_error();
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -105,11 +105,11 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0> cross_entropy_error;
 
-    cross_entropy_error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1*batch_samples_number);
+    cross_entropy_error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1/**batch_samples_number*/);
 
     error = cross_entropy_error();
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -184,7 +184,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
 
-    const type coefficient = -type(1) / type(batch_samples_number);
+    const type coefficient = -type(1)/* / type(batch_samples_number)*/;
 
     output_deltas.device(*thread_pool_device) = (targets/outputs)*coefficient;
 }

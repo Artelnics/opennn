@@ -26,7 +26,7 @@ int main()
     {
         cout << "OpenNN. Iris Plant Example." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
+        srand(unsigned(time(nullptr)));
 
         // Data set
 

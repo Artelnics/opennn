@@ -418,8 +418,6 @@ void GeneticAlgorithm::initialize_population_random()
 
     cout << "Creating initial random population" << endl;
 
-    srand(unsigned(time(nullptr)));
-
     for(Index i = 0; i < individuals_number; i++)
     {
         random_device rd;
@@ -429,7 +427,7 @@ void GeneticAlgorithm::initialize_population_random()
         individual_raw_variables.setConstant(false);
 
         const int upper_limit = int(ceil(random_raw_variables_number * percentage) - 1);
-        const int random_number = (rand() % upper_limit) + 1;
+        const int random_number = rand() % upper_limit + 1;
 
         for(Index j = 0; j < random_number; j++)
         {

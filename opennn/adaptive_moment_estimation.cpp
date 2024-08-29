@@ -11,6 +11,7 @@
 #include "neural_network_forward_propagation.h"
 #include "adaptive_moment_estimation.h"
 #include "back_propagation.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -320,6 +321,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
+            //cout << training_back_propagation.gradient << endl;
+
+            //cout << training_back_propagation.gradient.abs() << endl;
+            //system("pause");
+            cout << loss_index->calculate_numerical_gradient().abs() << endl;
+
             training_error += training_back_propagation.error;
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
 
@@ -327,8 +334,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             update_parameters(training_back_propagation, optimization_data);
 
-            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, training_batches_number - 1);
-
+            //if(display && epoch % display_period == 0)
+            // display_progress_bar(iteration, training_batches_number - 1);
         }
         
         // Loss

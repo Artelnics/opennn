@@ -5519,14 +5519,16 @@ void DataSet::set_data_binary_random()
         if(target_variables_number == 1) 
             target_variable_index = rand()%2;
         else 
-            target_variable_index = rand()%(variables_number-input_variables_number)+input_variables_number;
+            target_variable_index = rand()%(variables_number-input_variables_number) + input_variables_number;
 
         for(Index j = input_variables_number; j < variables_number; j++)
         {
             if(target_variables_number == 1) 
                 data(i,j) = type(target_variable_index);
             else 
-                data(i,j) = (j == target_variable_index) ? type(1) : type(0);
+                data(i,j) = j == target_variable_index
+                        ? type(1)
+                        : type(0);
         }
     }
 }
@@ -6054,6 +6056,11 @@ void DataSet::print() const
     const Index input_variables_number = get_input_variables_number();
     const Index samples_number = get_samples_number();
     const Index target_variables_bumber = get_target_variables_number();
+    const Index training_samples_number = get_training_samples_number();
+    const Index selection_samples_number = get_selection_samples_number();
+    const Index testing_samples_number = get_testing_samples_number();
+    const Index unused_samples_number = get_unused_samples_number();
+
       
     cout << "Data set object summary:\n"
          << "Number of samples: " << samples_number << "\n"
@@ -6064,6 +6071,12 @@ void DataSet::print() const
          print_dimensions(input_dimensions);
          cout << "Target variables dimensions: ";
          print_dimensions(target_dimensions);
+         cout << "Number of training samples: " << training_samples_number << endl;
+         cout << "Number of selection samples: " << selection_samples_number << endl;
+         cout << "Number of testing samples: " << testing_samples_number << endl;
+         cout << "Number of unused samples: " << unused_samples_number << endl;
+
+
     /*
     Index raw_variables_number = get_raw_variables_number();
 

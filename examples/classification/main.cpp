@@ -27,7 +27,7 @@ int main()
     {
         cout << "OpenNN. Classification Example." << endl;
 
-        //        srand(static_cast<unsigned>(time(nullptr)));
+        //        srand(unsigned(time(nullptr)));
 
         // Data set
 
