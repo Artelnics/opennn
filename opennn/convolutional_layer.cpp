@@ -431,8 +431,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     cout << "one_deltas:\n" << one_deltas << endl;
     system("pause");
     }
-
-    
+   
     cout << "batch_samples_number: " << batch_samples_number << endl;
 
     cout << "input_height: " << input_height << endl;

@@ -30,6 +30,9 @@ ImageDataSet::ImageDataSet(const Index& new_classes_number,
                            const Index& new_channels,
                            const Index& new_targets_number)
 {
+    if (new_targets_number > new_classes_number)
+        throw runtime_error("Target_number cannot be bigger than samples_number");
+
     set(new_classes_number, new_height, new_width, new_channels, new_targets_number);
 }
 
@@ -126,9 +129,10 @@ void ImageDataSet::set(const Index& new_images_number,
 {
     model_type = ModelType::ImageClassification;
 
+    const Index target_number = (new_targets_number == 2) ? 1 : new_targets_number;
     const Index inputs_number = new_height * new_width * new_channels;
     const Index raw_variables_number = inputs_number + 1;
-    const Index variables_number = inputs_number + new_targets_number;
+    const Index variables_number = inputs_number + target_number;
 
     // Dimensions
 
@@ -136,7 +140,7 @@ void ImageDataSet::set(const Index& new_images_number,
     input_dimensions = { new_height, new_width, new_channels };
 
     target_dimensions.resize(1);
-    target_dimensions = { new_targets_number };
+    target_dimensions = { target_number };
 
     // Data
 
@@ -154,9 +158,9 @@ void ImageDataSet::set(const Index& new_images_number,
         raw_variables(i).scaler = Scaler::ImageMinMax;
     }
 
-    if(new_targets_number == 1)
+    if(target_number == 1)
     {
-        Tensor<string, 1> categories(new_targets_number);
+        Tensor<string, 1> categories(target_number);
         categories.setConstant("ABC");
 
         raw_variables(raw_variables_number-1).type = RawVariableType::Binary;
@@ -167,7 +171,7 @@ void ImageDataSet::set(const Index& new_images_number,
     }
     else
     {
-        Tensor<string, 1> categories(new_targets_number);
+        Tensor<string, 1> categories(target_number);
         categories.setConstant("ABC");
 
         raw_variables(raw_variables_number-1).type = RawVariableType::Categorical;
@@ -183,6 +187,67 @@ void ImageDataSet::set(const Index& new_images_number,
     split_samples_random();
 
     set_raw_variables_scalers(Scaler::ImageMinMax);
+}
+
+
+void ImageDataSet::set_image_data_random()
+{
+    const Index height = input_dimensions[0];
+    const Index width = input_dimensions[1];
+    const Index channels = input_dimensions[2];
+
+    const Index targets_number = target_dimensions[0];
+    const Index inputs_number = height * width * channels;
+    const Index samples_number = data.dimension(0);
+
+    data.setZero();
+
+    if (targets_number == 1)
+    {
+        const Index half_samples = samples_number / 2;
+
+        for (Index i = 0; i < samples_number; i++)
+        {
+            for (Index j = 0; j < inputs_number; j++)
+            {
+                data(i, j) = rand() % 256;
+            }
+            data(i, inputs_number) = (i < half_samples) ? 0 : 1;
+        }
+    }
+    else
+    {
+        Tensor<Index, 1> images_number(targets_number);
+        images_number.setZero();
+
+        const Index images_per_category = samples_number / targets_number;
+        Index remainder = samples_number % targets_number;
+
+        for (Index i = 0; i < targets_number; i++)
+        {
+            images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
+            if (remainder > 0) remainder--;
+        }
+
+        Index current_sample = 0;
+
+        for (Index k = 0; k < targets_number; k++)
+        {
+            for (Index i = 0; i < images_number[k]; i++)
+            {
+                for (Index j = 0; j < inputs_number; j++)
+                {
+                    data(current_sample, j) = rand() % 256;
+                }
+
+                data(current_sample, k + inputs_number) = 1;
+                current_sample++;
+            }
+        }
+    }
+
+    if (display)
+        cout << endl << "Random image data set generated." << endl;
 }
 
 

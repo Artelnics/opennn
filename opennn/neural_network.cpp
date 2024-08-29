@@ -17,6 +17,7 @@
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
 
+
 #include "strings_utilities.h"
 
 #include "config.h"
@@ -4638,7 +4639,7 @@ Layer* NeuralNetwork::get_last_trainable_layer() const
 }
 
 
-// Layer* NeuralNetwork::get_last_layer() const
+/* Layer* NeuralNetwork::get_last_layer() const
 // {
 //     if(layers.size() > 0)
 //     {
@@ -4648,7 +4649,7 @@ Layer* NeuralNetwork::get_last_trainable_layer() const
 //     }
 
 //     return nullptr;
-// }
+// }*/
 
 
 void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)

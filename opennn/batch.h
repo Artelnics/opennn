@@ -2,6 +2,11 @@
 #define DATASETBATCH_H
 
 #include "data_set.h"
+#include "batch.h"
+#include "tensors.h"
+#include "image_data_set.h"
+#include "images.h"
+#include "language_data_set.h"
 
 using namespace std;
 using namespace Eigen;
