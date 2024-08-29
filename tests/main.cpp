@@ -87,7 +87,7 @@ int main()
 
    try
    {
-      srand(static_cast<unsigned>(time(nullptr)));
+      srand(unsigned(time(nullptr)));
 
       string message;
 

@@ -107,7 +107,7 @@ public:
    void set_biases(const Tensor<type, 1>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
+   void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
    // Activation functions
 

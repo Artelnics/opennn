@@ -227,7 +227,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
         
     error = sum_squared_error(0)*coefficient;
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -254,7 +254,7 @@ void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
 
     error = sum_squared_error(0)*coefficient;
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 

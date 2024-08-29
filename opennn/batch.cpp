@@ -142,11 +142,11 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     else if(data_set_input_dimensions.size() == 2)
     {
         const Index rows_number = data_set_input_dimensions[0];
-        const Index columns_number = data_set_input_dimensions[1];
+        const Index raw_variables_number = data_set_input_dimensions[1];
 
-        input_dimensions = {{batch_size, rows_number, columns_number}};
+        input_dimensions = {{batch_size, rows_number, raw_variables_number}};
 
-        inputs_tensor.resize(batch_size*rows_number*columns_number);
+        inputs_tensor.resize(batch_size*rows_number* raw_variables_number);
     }
     else if(data_set_input_dimensions.size() == 3)
     {
