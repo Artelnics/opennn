@@ -231,7 +231,7 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     batch_samples_number = new_batch_samples_number;
 
-    FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
+    const FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
 
     dimensions input_dimensions = flatten_layer->get_input_dimensions();
 

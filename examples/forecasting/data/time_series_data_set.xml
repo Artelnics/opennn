@@ -1,7 +1,7 @@
 <TimeSeriesDataSet>
    <DataSource>
       <FileType>csv</FileType>
-      <DataSourcePath>../data/Pendulum.csv</DataSourcePath>
+      <Path>../data/Pendulum.csv</Path>
       <Separator>,</Separator>
       <HasHeader>0</HasHeader>
       <HasIds>0</HasIds>
@@ -384,4 +384,4 @@
    <MissingValuesNumber>0</MissingValuesNumber>
 </TimeSeriesDataSet>
 
-</ĞŞ:ö>
+</°Ş»¥÷>

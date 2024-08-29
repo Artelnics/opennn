@@ -70,7 +70,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     error = cross_entropy_error();
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -81,7 +81,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     // Batch
 
     const Index batch_samples_number = batch.get_batch_samples_number();
-
+    
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
@@ -109,7 +109,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     error = cross_entropy_error();
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 

@@ -212,6 +212,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
     Tensor<Index, 1> context_variables_indices;
+
     if(is_instance_of<LanguageDataSet>(data_set))
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
@@ -269,8 +270,16 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     if(neural_network->has_scaling_layer())
     {
-        ScalingLayer2D* scaling_layer = neural_network->get_scaling_layer_2d();
-        scaling_layer->set(input_variables_descriptives, input_variables_scalers);
+        if(neural_network->has_scaling_4d_layer())
+        {
+            ScalingLayer4D* scaling_layer_4d = neural_network->get_scaling_layer_4d();
+            scaling_layer_4d->set(input_variables_descriptives, input_variables_scalers);
+        }
+        else
+        {
+            ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+            scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
+        }
     }
 
     if(neural_network->has_unscaling_layer())
@@ -321,7 +330,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+        training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);               
 
         const Index batches_number = training_batches.dimension(0);
 

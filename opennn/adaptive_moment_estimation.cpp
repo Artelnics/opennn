@@ -11,6 +11,7 @@
 #include "neural_network_forward_propagation.h"
 #include "adaptive_moment_estimation.h"
 #include "back_propagation.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -290,14 +291,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
-        const Index batches_number = training_batches.dimension(0);
+        const Index training_batches_number = training_batches.dimension(0);
 
         training_error = type(0);
 
         if(is_classification_model) training_accuracy = type(0); 
         //optimization_data.iteration = 1;
 
-        for(Index iteration = 0; iteration < batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // Data set
 
@@ -315,26 +316,34 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               is_training);
 
             // Loss index
- 
+
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
+
+            cout << "gradient:\n" << training_back_propagation.gradient.abs() << endl;
+
+            cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient().abs() << endl;
+
+            cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient.abs() - loss_index->calculate_numerical_gradient().abs() << endl;
+
+            system("pause");
 
             training_error += training_back_propagation.error;
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
 
             // Optimization algorithm
-            
-            update_parameters(training_back_propagation, optimization_data);
-            
-            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
 
+            update_parameters(training_back_propagation, optimization_data);
+
+            //if(display && epoch % display_period == 0)
+            // display_progress_bar(iteration, training_batches_number - 1);
         }
         
         // Loss
 
-        training_error /= type(batches_number);
-        if(is_classification_model)   training_accuracy /= type(batches_number);
+        training_error /= type(training_batches_number);
+        if(is_classification_model)   training_accuracy /= type(training_batches_number);
 
         results.training_error_history(epoch) = training_error;
         
@@ -356,12 +365,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 // Neural network
                 
                 inputs_pair = selection_batch.get_inputs_pair();
-                
-                //TensorMap<Tensor<type, 4>> inpt(inputs_pair(0).first,inputs_pair(0).second[0],inputs_pair(0).second[1],inputs_pair(0).second[2],inputs_pair(0).second[3]);
-                //cout << inpt << endl;
-                //pair<type*, dimensions> target_pair = selection_batch.get_targets_pair();
-                //TensorMap<Tensor<type, 2>> targ(target_pair.first, target_pair.second[0], target_pair.second[1]);
-                //cout << targ << endl;
 
                 neural_network->forward_propagate(inputs_pair,
                                                   selection_forward_propagation,

@@ -384,7 +384,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file name
     {
-        file_stream.OpenElement("DataSourcePath");
+        file_stream.OpenElement("Path");
 
         file_stream.PushText(data_source_path.c_str());
 
@@ -724,10 +724,10 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
     if(!data_source_path_element)
-        throw runtime_error("DataSourcePath element is nullptr.\n");
+        throw runtime_error("Path element is nullptr.\n");
 
     if(data_source_path_element->GetText())
     {
