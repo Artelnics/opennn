@@ -1197,19 +1197,19 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(new_uses(i).compare("Training") == 0 || new_uses(i).compare("0") == 0)
+        if(new_uses(i) == "Training" || new_uses(i) == "0")
         {
             samples_uses(i) = SampleUse::Training;
         }
-        else if(new_uses(i).compare("Selection") == 0 || new_uses(i).compare("1") == 0)
+        else if(new_uses(i) == "Selection" || new_uses(i) == "1")
         {
             samples_uses(i) = SampleUse::Selection;
         }
-        else if(new_uses(i).compare("Testing") == 0 || new_uses(i).compare("2") == 0)
+        else if(new_uses(i) == "Testing" || new_uses(i) == "2")
         {
             samples_uses(i) = SampleUse::Testing;
         }
-        else if(new_uses(i).compare("None") == 0 || new_uses(i).compare("3") == 0)
+        else if(new_uses(i) == "None" || new_uses(i) == "3")
         {
             samples_uses(i) = SampleUse::None;
         }
@@ -3450,7 +3450,7 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
             total_variables_number++;
         }
 
-        if((variable_index+1) <= total_variables_number) return i;
+        if(variable_index+1 <= total_variables_number) return i;
     }
 
     throw runtime_error("Cannot find variable index: " + to_string(variable_index) + ".\n");
@@ -5519,14 +5519,16 @@ void DataSet::set_data_binary_random()
         if(target_variables_number == 1) 
             target_variable_index = rand()%2;
         else 
-            target_variable_index = rand()%(variables_number-input_variables_number)+input_variables_number;
+            target_variable_index = rand()%(variables_number-input_variables_number) + input_variables_number;
 
         for(Index j = input_variables_number; j < variables_number; j++)
         {
             if(target_variables_number == 1) 
                 data(i,j) = type(target_variable_index);
             else 
-                data(i,j) = (j == target_variable_index) ? type(1) : type(0);
+                data(i,j) = j == target_variable_index
+                        ? type(1)
+                        : type(0);
         }
     }
 }
@@ -5552,7 +5554,7 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file name
 
-    file_stream.OpenElement("DataSourcePath");
+    file_stream.OpenElement("Path");
     file_stream.PushText(data_source_path.c_str());
     file_stream.CloseElement();
 
@@ -5738,10 +5740,10 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
     if(!data_source_path_element)
-        throw runtime_error("DataSourcePath element is nullptr.\n");
+        throw runtime_error("Path element is nullptr.\n");
 
     if(data_source_path_element->GetText())
         set_data_source_path(data_source_path_element->GetText());
@@ -6054,6 +6056,11 @@ void DataSet::print() const
     const Index input_variables_number = get_input_variables_number();
     const Index samples_number = get_samples_number();
     const Index target_variables_bumber = get_target_variables_number();
+    const Index training_samples_number = get_training_samples_number();
+    const Index selection_samples_number = get_selection_samples_number();
+    const Index testing_samples_number = get_testing_samples_number();
+    const Index unused_samples_number = get_unused_samples_number();
+
       
     cout << "Data set object summary:\n"
          << "Number of samples: " << samples_number << "\n"
@@ -6064,6 +6071,12 @@ void DataSet::print() const
          print_dimensions(input_dimensions);
          cout << "Target variables dimensions: ";
          print_dimensions(target_dimensions);
+         cout << "Number of training samples: " << training_samples_number << endl;
+         cout << "Number of selection samples: " << selection_samples_number << endl;
+         cout << "Number of testing samples: " << testing_samples_number << endl;
+         cout << "Number of unused samples: " << unused_samples_number << endl;
+
+
     /*
     Index raw_variables_number = get_raw_variables_number();
 

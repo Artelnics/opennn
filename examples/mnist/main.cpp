@@ -26,25 +26,33 @@ int main()
 {
     try
     {
+//        srand(unsigned(time(nullptr)));
+
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
-        
-        // Data set
 
-        ImageDataSet image_data_set;
-
-        image_data_set.set_data_source_path("data");
-
-        image_data_set.read_bmp();
-
-        //image_data_set.print();
-
-        const Index kernel_height = 3;
-        const Index kernel_width = 3;
+        const Index kernel_height = 2;
+        const Index kernel_width = 2;
         const Index kernel_channels = 1;
         const Index kernels_number = 1;
 
         const Index pool_height = 1;
         const Index pool_width = 1;
+
+        // Data set
+
+        ImageDataSet image_data_set(3,3,3,1,3);
+
+        image_data_set.set_image_data_random();
+
+        //image_data_set.set_data_source_path("../data");
+        //image_data_set.set_data_source_path("C:/mnist/binary");
+        //image_data_set.set_data_source_path("C:/cifar10");
+
+        //image_data_set.read_bmp();
+
+        image_data_set.print();
+
+        //image_data_set.print_data();
 
         // Neural network
 
@@ -57,43 +65,46 @@ int main()
                                                                          { kernel_height, kernel_width, kernel_channels, kernels_number });
         neural_network.add_layer(convolutional_layer);
 
-        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number } );
-        neural_network.add_layer(convolutional_layer_2);
+        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
+                                                                           { 1,1,kernels_number,kernels_number } );
+        //neural_network.add_layer(convolutional_layer_2);
 
-        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(), { pool_height , pool_width } );
-        neural_network.add_layer(pooling_layer);
+        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(),
+                                                         {pool_height , pool_width} );
+        //neural_network.add_layer(pooling_layer);
 
-        FlattenLayer* flatten_layer = new FlattenLayer(pooling_layer->get_output_dimensions());
+        FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer_2->get_output_dimensions());
         neural_network.add_layer(flatten_layer);
 
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),
                                                                          image_data_set.get_target_dimensions());
         neural_network.add_layer(probabilistic_layer);
 
-        neural_network.print();
+        //cout << neural_network.get_parameters_number() << endl;
+        //neural_network.print();
 
         // Training strategy
-        
+
         TrainingStrategy training_strategy(&neural_network, &image_data_set);
         
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(15);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(100000);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1);
         training_strategy.get_adaptive_moment_estimation()->set_learning_rate(type(0.02));
         training_strategy.set_display_period(1);
         
         training_strategy.perform_training();
 
         // Testing analysis
-
+/*
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
+*/
         cout << "Bye!" << endl;
         
         return 0;

@@ -482,7 +482,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data source path
 
-    file_stream.OpenElement("DataSourcePath");
+    file_stream.OpenElement("Path");
     file_stream.PushText(data_source_path.c_str());
     file_stream.CloseElement();
 
@@ -530,7 +530,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Group by raw_variable
     {
-        file_stream.OpenElement("GroupByColumn");
+        file_stream.OpenElement("GroupByRawVariable");
 
         buffer.str("");
         buffer << get_time_raw_variable();
@@ -747,10 +747,10 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
     if(!data_source_path_element)
-        throw runtime_error("DataSourcePath element is nullptr.\n");
+        throw runtime_error("Path element is nullptr.\n");
 
     if(data_source_path_element->GetText())
         set_data_source_path(data_source_path_element->GetText());
@@ -819,7 +819,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Group by raw_variable
 
-    const tinyxml2::XMLElement* group_by_raw_variable_element = data_source_element->FirstChildElement("GroupByColumn");
+    const tinyxml2::XMLElement* group_by_raw_variable_element = data_source_element->FirstChildElement("GroupByRawVariable");
 
     if(!group_by_raw_variable_element)
         throw runtime_error("Group by raw_variable element is nullptr.\n");
