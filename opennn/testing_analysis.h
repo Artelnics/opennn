@@ -59,7 +59,7 @@ public:
     };
 
 
-    struct RocAnalysisResults
+    struct RocAnalysis
     {
         Tensor<type, 2> roc_curve;
 
@@ -189,7 +189,7 @@ public:
 
    // ROC curve
 
-   RocAnalysisResults perform_roc_analysis() const;
+   RocAnalysis perform_roc_analysis() const;
 
    Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 

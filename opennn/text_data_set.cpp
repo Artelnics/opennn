@@ -117,7 +117,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Data file name
     {
-        file_stream.OpenElement("DataSourcePath");
+        file_stream.OpenElement("Path");
 
         file_stream.PushText(data_source_path.c_str());
 
@@ -202,7 +202,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Stop words list
     {
-        file_stream.OpenElement("StopWordsList");
+        file_stream.OpenElement("StopWords");
 
         const Index stop_words_number = stop_words.dimension(0);
 
@@ -505,10 +505,10 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("DataSourcePath");
+    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
     if(!data_source_path_element)
-        throw runtime_error("DataSourcePath element is nullptr.\n");
+        throw runtime_error("Path element is nullptr.\n");
 
     if(data_source_path_element->GetText())
     {
@@ -648,7 +648,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Stop words list
 
-    const tinyxml2::XMLElement* stop_words_list_element = data_source_element->FirstChildElement("StopWordsList");
+    const tinyxml2::XMLElement* stop_words_list_element = data_source_element->FirstChildElement("StopWords");
 
     if(stop_words_list_element)
     {
