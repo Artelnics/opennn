@@ -69,6 +69,8 @@ public:
 
     void set(const Index&, const Index&, const Index&, const Index&, const Index&);
 
+    void set_image_data_random();
+
     void set_channels_number(const int&);
     void set_image_width(const int&);
     void set_image_height(const int&);

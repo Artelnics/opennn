@@ -18,14 +18,21 @@
 #include "config.h"
 #include "layer.h"
 #include "perceptron_layer.h"
+#include "perceptron_layer_3d.h"
+#include "addition_layer_3d.h"
+#include "normalization_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
+#include "probabilistic_layer_3d.h"
 #include "flatten_layer.h"
 #include "pooling_layer.h"
+#include "convolutional_layer.h"
 #include "long_short_term_memory_layer.h"
+#include "multihead_attention_layer.h"
+#include "embedding_layer.h"
 #include "recurrent_layer.h"
 
 namespace opennn
@@ -39,7 +46,6 @@ struct NeuralNetworkBackPropagationLM;
 struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
-
 
 class NeuralNetwork
 {
@@ -295,8 +301,8 @@ protected:
 };
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
 #endif
 
 }
