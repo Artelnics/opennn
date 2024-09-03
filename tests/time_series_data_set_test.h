@@ -23,7 +23,7 @@ namespace opennn
 class TimeSeriesDataSetTest : public UnitTesting
 {
 
-public:  
+public: 
 
    explicit TimeSeriesDataSetTest();
 

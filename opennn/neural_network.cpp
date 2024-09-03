@@ -362,21 +362,21 @@ string NeuralNetwork::get_model_type_string() const
 
 const Tensor<string, 1>& NeuralNetwork::get_outputs_names() const
 {
-    return outputs_names;
+    return outputs_name;
 }
 
 
 string NeuralNetwork::get_output_name(const Index& index) const
 {
-    return outputs_names[index];
+    return outputs_name[index];
 }
 
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-    for(Index i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_name.size(); i++)
     {
-        if(outputs_names(i) == name) return i;
+        if(outputs_name(i) == name) return i;
     }
 
     return 0;
@@ -666,7 +666,7 @@ void NeuralNetwork::set()
 {
     inputs_names.resize(0);
 
-    outputs_names.resize(0);
+    outputs_name.resize(0);
 
     delete_layers();
 
@@ -780,7 +780,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
         add_layer(unscaling_layer);
     }
 
-    outputs_names.resize(outputs_number);
+    outputs_name.resize(outputs_number);
 
     set_default();
 }
@@ -890,7 +890,7 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
         const string message =
                 "Neural Network class exception:\n"
                 "void set_model_type_string(const string&)\n"
-                "Unknown project type: " + new_model_type + "\n";
+                "Unknown model type: " + new_model_type + "\n";
 
         throw runtime_error(message);
     }
@@ -905,7 +905,7 @@ void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
 
 void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names)
 {
-    outputs_names = new_outputs_names;
+    outputs_name = new_outputs_names;
 }
 
 
@@ -1894,20 +1894,20 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs number
 
-    const Index outputs_number = outputs_names.size();
+    const Index outputs_number = outputs_name.size();
     file_stream.OpenElement("OutputsNumber");
     file_stream.PushText(to_string(outputs_number).c_str());
     file_stream.CloseElement();
 
     // Outputs names
 
-    for(Index i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_name.size(); i++)
     {
         file_stream.OpenElement("Output");
 
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
 
-        file_stream.PushText(outputs_names[i].c_str());
+        file_stream.PushText(outputs_name[i].c_str());
 
         file_stream.CloseElement();
     }
@@ -2414,7 +2414,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 
     if(new_outputs_number > 0)
     {
-        outputs_names.resize(new_outputs_number);
+        outputs_name.resize(new_outputs_number);
 
         for(Index i = 0; i < new_outputs_number; i++)
         {
@@ -2426,11 +2426,11 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
             
             if(!output_element->GetText())
             {
-                outputs_names(i) = "";
+                outputs_name(i) = "";
             }
             else
             {
-                outputs_names(i) = output_element->GetText();
+                outputs_name(i) = output_element->GetText();
             }
         }
     }
@@ -2562,13 +2562,13 @@ string NeuralNetwork::write_expression() const
     {
         if(i == layers_number-1)
         {
-            outputs_names_vector = outputs_names;
+            outputs_names_vector = outputs_name;
 
-            for(int j = 0; j < outputs_names.dimension(0); j++)
+            for(int j = 0; j < outputs_name.dimension(0); j++)
             {
                 if(!outputs_names_vector[j].empty())
                 {
-                    aux_name = outputs_names[j];
+                    aux_name = outputs_name[j];
                     outputs_names_vector(j) = replace_non_allowed_programming_expressions(aux_name);
                 }
                 else
@@ -3017,7 +3017,7 @@ string NeuralNetwork::write_expression_c() const
         }
         else
         {
-            buffer << "\t" << "printf( \""<< outputs_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
+            buffer << "\t" << "printf( \""<< outputs_name[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
         }
     }
 
@@ -3749,7 +3749,7 @@ string NeuralNetwork::write_expression_javascript() const
 
         for(int i = 0; i < outputs.dimension(0); i++)
         {
-            buffer << "<option value=\"" << outputs[i] << "\">" << outputs_names[i] << "</option>" << endl;
+            buffer << "<option value=\"" << outputs[i] << "\">" << outputs_name[i] << "</option>" << endl;
         }
 
         buffer << "</select>" << endl;
@@ -3770,7 +3770,7 @@ string NeuralNetwork::write_expression_javascript() const
         for(int i = 0; i < outputs.dimension(0); i++)
         {
             buffer << "<tr style=\"height:3.5em\">" << endl;
-            buffer << "<td> " << outputs_names[i] << " </td>" << endl;
+            buffer << "<td> " << outputs_name[i] << " </td>" << endl;
             buffer << "<td>" << endl;
             buffer << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << outputs[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl;
             buffer << "</td>" << endl;
@@ -4582,16 +4582,16 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name + " file.\n");
 
-    const Tensor<string, 1> outputs_names = get_outputs_names();
+    const Tensor<string, 1> outputs_name = get_outputs_names();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        file << outputs_names[i];
+        file << outputs_name[i];
 
-        if(i != outputs_names.size()-1) file << ";";
+        if(i != outputs_name.size()-1) file << ";";
     }
 
     file << "\n";

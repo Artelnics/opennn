@@ -30,7 +30,7 @@ namespace opennn
 class TestingAnalysis
 {
 
-public:  
+public: 
 
    // Constructors
 

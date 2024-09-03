@@ -287,7 +287,7 @@ protected:
 
    Tensor<string, 1> inputs_names;
 
-   Tensor<string, 1> outputs_names;
+   Tensor<string, 1> outputs_name;
 
    Tensor<Layer*, 1> layers;
 

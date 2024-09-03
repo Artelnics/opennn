@@ -437,23 +437,23 @@ void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations,
 {
     switch(activation_function)
     {
-        case ActivationFunction::Linear:  linear(combinations, activations); return;
+        case ActivationFunction::Linear: linear(activations); return;
 
-        case ActivationFunction::Logistic: logistic(combinations, activations); return;
+        case ActivationFunction::Logistic: logistic(activations); return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
 
-        case ActivationFunction::SoftPlus: soft_plus(combinations, activations); return;
+        case ActivationFunction::SoftPlus: soft_plus(activations); return;
 
-        case ActivationFunction::SoftSign: soft_sign(combinations, activations); return;
+        case ActivationFunction::SoftSign: soft_sign(activations); return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); return;
+        case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
 
         default: return;
     }
@@ -466,48 +466,39 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
 {
     switch(activation_function)
     {
-        case ActivationFunction::Linear: linear_derivatives(combinations,
-                                                            activations,
+        case ActivationFunction::Linear: linear_derivatives(activations,
                                                             activations_derivatives);
             return;
 
-        case ActivationFunction::Logistic: logistic_derivatives(combinations,
-                                                                activations,
+        case ActivationFunction::Logistic: logistic_derivatives(activations,
                                                                 activations_derivatives);
         return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations,
-                                                                                   activations,
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
                                                                                    activations_derivatives);
             return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations,
-                                                                               activations,
+        case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
                                                                                activations_derivatives);
             return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations,
-                                                                                                activations,
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(activations,
                                                                                                 activations_derivatives);
             return;
 
-        case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations,
-                                                                 activations,
+        case ActivationFunction::SoftPlus: soft_plus_derivatives(activations,
                                                                  activations_derivatives);
             return;
 
-        case ActivationFunction::SoftSign: soft_sign_derivatives(combinations,
-                                                                 activations,
+        case ActivationFunction::SoftSign: soft_sign_derivatives(activations,
                                                                  activations_derivatives);
             return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations,
-                                                                       activations,
+        case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(activations,
                                                                        activations_derivatives);
             return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations,
-                                                                                   activations,
+        case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(activations,
                                                                                    activations_derivatives);
             return;
 
@@ -651,14 +642,14 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
             // Combinations weights derivatives
 
-            multiply_matrices(thread_pool_device, combinations_input_weights_derivatives, current_activations_derivatives);
+            multiply_matrices(thread_pool_device.get(), combinations_input_weights_derivatives, current_activations_derivatives);
 
             combinations_input_weights_derivatives.device(*thread_pool_device) =
                 combinations_input_weights_derivatives.contract(recurrent_weights, combinations_weights_indices);
 
             // Combinations recurrent weights derivatives
 
-            multiply_matrices(thread_pool_device, combinations_recurrent_weights_derivatives, current_activations_derivatives);
+            multiply_matrices(thread_pool_device.get(), combinations_recurrent_weights_derivatives, current_activations_derivatives);
 
             combinations_recurrent_weights_derivatives.device(*thread_pool_device) =
                 combinations_recurrent_weights_derivatives.contract(recurrent_weights, combinations_weights_indices);
@@ -746,15 +737,15 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
 
 string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names,
-                                        const Tensor<string, 1>& outputs_names) const
+                                        const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < outputs_names.size(); j++)
+    for(Index j = 0; j < outputs_name.size(); j++)
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
 
-        buffer << outputs_names(j) << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
+        buffer << outputs_name(j) << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < inputs_names.size() - 1; i++)
         {

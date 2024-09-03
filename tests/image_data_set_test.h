@@ -23,7 +23,7 @@ namespace opennn
 class ImageDataSetTest : public UnitTesting
 {
 
-public:  
+public: 
 
    explicit ImageDataSetTest();
 

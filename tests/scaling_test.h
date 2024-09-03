@@ -20,7 +20,7 @@ namespace opennn
 class ScalingTest : public UnitTesting
 {
 
-public:  
+public: 
 
     explicit ScalingTest();
     virtual ~ScalingTest();

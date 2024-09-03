@@ -654,8 +654,8 @@ public:
     void set_raw_variables_missing_values_number(const Tensor<Index, 1>&);
     void set_raw_variables_missing_values_number();
 
-    void set_rows_missing_values_number(const Index&);
-    void set_rows_missing_values_number();
+    void set_samples_missing_values_number(const Index&);
+    void set_samples_missing_values_number();
 
     // Other
 
