@@ -871,7 +871,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     BackPropagation back_propagation(samples_number, this);
 
     const Tensor<type, 1> parameters = neural_network->get_parameters();
-    //cout << "parameters:\n" << parameters << endl;
 
     const Index parameters_number = parameters.size();
 

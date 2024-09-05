@@ -61,28 +61,23 @@ public:
 
     // Constructor
 
-     // explicit Layer()
-     // {
-     //     layer_type = Layer::Type::Perceptron;
+    explicit Layer()
+    {
+        //layer_type = Layer::Type::Perceptron;
 
-     //     const int n = omp_get_max_threads();
+        const int n = omp_get_max_threads();
 
-     //     thread_pool = new ThreadPool(n);
-     //     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-     // }
-
-
- // ~Layer()
- // {
- //     delete thread_pool;
- //     delete thread_pool_device;
- // }
-
-
-    Layer() = default;
-    ~Layer() = default;
+        thread_pool = new ThreadPool(n);
+        thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    }
 
     // Destructor
+
+    ~Layer()
+    {
+        delete thread_pool;
+        delete thread_pool_device;
+    }
 
     string get_name() const;
 
@@ -161,8 +156,8 @@ public:
 
 protected:
 
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+    ThreadPool* thread_pool = nullptr;
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     string name = "layer";
 
