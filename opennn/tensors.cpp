@@ -74,52 +74,53 @@ bool calculate_random_bool()
 }
 
 
-void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum)
-{
-    //#pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
+// void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum)
+// {
+//     random_device rd;
+//     mt19937 gen(rd());
+//     uniform_real_distribution<type> dist(minimum, maximum);
 
-        tensor(i) = minimum + (maximum - minimum)*random;
-    }
-}
-
-
-void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum)
-{
-    //#pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
-
-        tensor(i) = minimum + (maximum - minimum)*random;
-    }
-}
+//     for(Index i = 0; i < tensor.size(); i++)
+//     {
+//         tensor(i) = dist(gen);
+//     }
+// }
 
 
-void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum)
-{
-    //#pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
+// void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum)
+// {
+//     //#pragma omp parallel for
+//     for(Index i = 0; i < tensor.size(); i++)
+//     {
+//         const type random = type(rand()/(RAND_MAX+1.0));
 
-        tensor(i) = minimum + (maximum - minimum)*random;
-    }
-}
+//         tensor(i) = minimum + (maximum - minimum)*random;
+//     }
+// }
 
 
-void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum)
-{
-    //#pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); i++)
-    {
-        const type random = type(rand()/(RAND_MAX+1.0));
+// void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum)
+// {
+//     //#pragma omp parallel for
+//     for(Index i = 0; i < tensor.size(); i++)
+//     {
+//         const type random = type(rand()/(RAND_MAX+1.0));
 
-        tensor(i) = minimum + (maximum - minimum)*random;
-    }
-}
+//         tensor(i) = minimum + (maximum - minimum)*random;
+//     }
+// }
+
+
+// void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum)
+// {
+//     //#pragma omp parallel for
+//     for(Index i = 0; i < tensor.size(); i++)
+//     {
+//         const type random = type(rand()/(RAND_MAX+1.0));
+
+//         tensor(i) = minimum + (maximum - minimum)*random;
+//     }
+// }
 
 
 void initialize_sequential(Tensor<type, 1>& vector)
@@ -467,7 +468,8 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
     Index C_rows = A_rows;
 
-    if(contraction_axes[0].first == 0)     C_rows = A_columns;
+    if(contraction_axes[0].first == 0)
+        C_rows = A_columns;
 
     Index channels = A.dimension(2);
     Index blocks_number = A.dimension(3);
@@ -496,33 +498,6 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
         }
     }
 }
-
-
-// void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
-// {
-//     const Index columns_number = vector.size();
-
-//     for(Index i = 0; i < columns_number; i++)
-//     {
-//         TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
-
-//         column.device(*thread_pool_device) = vector * vector(i);
-//     }
-// }
-
-
-// void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
-// {
-//     const Index columns_number = vector.size();
-
-//     for(Index i = 0; i < columns_number; i++)
-//     {
-//         TensorMap<Tensor<type, 1>> column(matrix.data() + i * columns_number, columns_number);
-
-//         column.device(*thread_pool_device) = vector * vector(i);
-
-//     }
-// }
 
 
 Tensor<type, 2> self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)

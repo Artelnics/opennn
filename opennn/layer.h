@@ -164,9 +164,6 @@ protected:
     unique_ptr<ThreadPool> thread_pool = nullptr;
     unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
-    //ThreadPool* thread_pool = nullptr;
-    //ThreadPoolDevice* thread_pool_device = nullptr;
-
     string name = "layer";
 
     Type layer_type;
@@ -254,13 +251,12 @@ protected:
     template <int rank>
     void soft_sign(Tensor<type, rank>& x) const
     {
-        x.device(*thread_pool_device) = x / (1 + x.abs());
+        x.device(*thread_pool_device) = (x / (1 + x.abs())).eval();
     }
 
 
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 //    void competitive(const Tensor<type, 3>&, Tensor<type, 3>&) const;
-
 
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
     void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;

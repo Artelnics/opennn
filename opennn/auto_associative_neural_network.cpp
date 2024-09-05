@@ -544,7 +544,7 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     // Layers number
 
-    file_stream.OpenElement("LayersTypes");
+    file_stream.OpenElement("LayerTypes");
 
     buffer.str("");
 

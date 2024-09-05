@@ -137,7 +137,7 @@ public:
         void print() const;
     };
 
-    // Project type
+    // Model type
 
     ModelType get_model_type() const;
 

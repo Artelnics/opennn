@@ -309,7 +309,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
     Tensor<type, 0> sum;
 
     for(Index i = 0; i < channels; i++)
-    {
+    {        
         for(Index j = 0; j < columns_number; j++)
         {
             softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
