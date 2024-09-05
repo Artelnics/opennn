@@ -9,15 +9,11 @@
 // System includes
 
 #include <iostream>
-//#include <fstream>
-//#include <string>
-#include <sstream>
 #include <cmath>
 #include <algorithm>
 #include <cstdlib>
 #include <stdexcept>
 #include <ctime>
-//#include <exception>
 #include <algorithm>
 
 #include "tensors.h"
@@ -72,15 +68,15 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     }
 
     const Index x_rows = x.dimension(0);
-    const Index x_raw_variables = x.dimension(1);
-    const Index y_raw_variables = y.dimension(1);
+    const Index x_columns = x.dimension(1);
+    const Index y_columns = y.dimension(1);
 
     const bool x_binary = is_binary_matrix(x);
     const bool y_binary = is_binary_matrix(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
-    if(x_raw_variables == 1 && y_raw_variables == 1)
+    if(x_columns == 1 && y_columns == 1)
     {
         if(!x_binary && !y_binary)
         {
@@ -127,17 +123,17 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 
     }
 
-    else if(x_raw_variables != 1 && y_raw_variables == 1)
+    else if(x_columns != 1 && y_columns == 1)
     {
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
 
-    else if(x_raw_variables == 1 && y_raw_variables != 1)
+    else if(x_columns == 1 && y_columns != 1)
     {
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
 
-    else if(x_raw_variables != 1 && y_raw_variables != 1)
+    else if(x_columns != 1 && y_columns != 1)
     {
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
@@ -158,15 +154,15 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     Correlation correlation;
 
     const Index x_rows = x.dimension(0);
-    const Index x_raw_variables = x.dimension(1);
-    const Index y_raw_variables = y.dimension(1);
+    const Index x_columns = x.dimension(1);
+    const Index y_columns = y.dimension(1);
 
     const bool x_binary = is_binary_matrix(x);
     const bool y_binary = is_binary_matrix(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
-    if(x_raw_variables == 1 && y_raw_variables == 1)
+    if(x_columns == 1 && y_columns == 1)
     {
         if(!x_binary && !y_binary)
         {
@@ -185,15 +181,15 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
             return opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
     }
-    else if(x_raw_variables != 1 && y_raw_variables == 1)
+    else if(x_columns != 1 && y_columns == 1)
     {
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
-    else if(x_raw_variables == 1 && y_raw_variables != 1)
+    else if(x_columns == 1 && y_columns != 1)
     {
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
-    else if(x_raw_variables != 1 && y_raw_variables != 1)
+    else if(x_columns != 1 && y_columns != 1)
     {
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
@@ -279,14 +275,10 @@ pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const
     Index new_size = 0;
 
     for(Index i = 0; i < x.size(); i++)
-    {
         if(!isnan(x(i)) && !isnan(y(i))) new_size++;
-    }
 
     if(new_size == x.size())
-    {
         return make_pair(x, y);
-    }
 
     Tensor<type, 1> new_x(new_size);
 
@@ -313,7 +305,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
                                                                            const Tensor<type, 2>& y)
 {
     const Index rows_number = x.size();
-    const Index y_raw_variables_number = y.dimension(1);
+    const Index y_columns_number = y.dimension(1);
 
     Index new_rows_number = 0;
 
@@ -323,21 +315,15 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
     {
         not_NAN_row(i) = true;
 
-        if(isnan(y(i)))
-        {
+        if(isnan(x(i)) || isnan(y(i)))
             not_NAN_row(i) = false;
-        }
-        else if(isnan(x(i)))
-        {
-            not_NAN_row(i) = false;
-        }
 
         if(not_NAN_row(i)) new_rows_number++;
     }
 
     Tensor<type, 1> new_x(new_rows_number);
 
-    Tensor<type, 2> new_y(new_rows_number,y_raw_variables_number);
+    Tensor<type, 2> new_y(new_rows_number,y_columns_number);
 
     Index index = 0;
 
@@ -345,10 +331,8 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
     {
         if(not_NAN_row(i))
         {
-            for(Index j = 0; j < y_raw_variables_number; j++)
-            {
+            for(Index j = 0; j < y_columns_number; j++)
                 new_y(index, j) = y(i,j);
-            }
 
             new_x(index) = x(i);
 
@@ -360,19 +344,12 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
 }
 
 
-// pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_matrix_vector(const Tensor<type, 2>&x,
-//                                                                            const Tensor<type, 1>y)
-// {
-//     return filter_missing_values_vector_matrix(y,x);
-// }
-
-
 pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const Tensor<type, 2>& x,
                                                                            const Tensor<type, 2>& y)
 {
     const Index rows_number = x.dimension(0);
-    const Index x_raw_variables_number = x.dimension(1);
-    const Index y_raw_variables_number = y.dimension(1);
+    const Index x_columns_number = x.dimension(1);
+    const Index y_columns_number = y.dimension(1);
 
     Index new_rows_number = 0;
 
@@ -388,7 +365,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         }
         else
         {
-            for(Index j = 0; j < x_raw_variables_number; j++)
+            for(Index j = 0; j < x_columns_number; j++)
             {
                 if(isnan(x(i,j)))
                 {
@@ -401,9 +378,9 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         if(not_NAN_row(i)) new_rows_number++;
     }
 
-    Tensor<type, 2> new_x(new_rows_number, x_raw_variables_number);
+    Tensor<type, 2> new_x(new_rows_number, x_columns_number);
 
-    Tensor<type, 2> new_y(new_rows_number,y_raw_variables_number);
+    Tensor<type, 2> new_y(new_rows_number, y_columns_number);
 
     Index index = 0;
 
@@ -411,15 +388,11 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
     {
         if(not_NAN_row(i))
         {
-            for(Index j = 0; j < y_raw_variables_number; j++)
-            {
+            for(Index j = 0; j < y_columns_number; j++)
                 new_y(index, j) = y(i,j);
-            }
 
-            for(Index j = 0; j < x_raw_variables_number; j++)
-            {
+            for(Index j = 0; j < x_columns_number; j++)
                 new_x(index, j) = x(i, j);
-            }
 
             index++;
         }
@@ -899,17 +872,17 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> data = opennn::assemble_vector_matrix(x_filtered, y_filtered);
 
-    Tensor<Index, 1> input_raw_variables_indices(1);
-    input_raw_variables_indices(0) = type(0);
+    Tensor<Index, 1> input_columns_indices(1);
+    input_columns_indices(0) = type(0);
 
-    Tensor<Index, 1> target_raw_variables_indices(y_filtered.dimension(1));
+    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
 
     for(Index i = 0; i < y_filtered.dimension(1); i++)
-        target_raw_variables_indices(i) = i + 1;
+        target_columns_indices(i) = i + 1;
 
     DataSet data_set(data);
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);
 
     data_set.set_training();
 
@@ -1012,23 +985,23 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x_filtered, y_filtered);
 
-    Tensor<Index, 1> input_raw_variables_indices(x_filtered.dimension(1));
+    Tensor<Index, 1> input_columns_indices(x_filtered.dimension(1));
 
     for(Index i = 0; i < x_filtered.dimension(1); i++)
     {
-        input_raw_variables_indices(i) = i;
+        input_columns_indices(i) = i;
     }
 
-    Tensor<Index, 1> target_raw_variables_indices(y_filtered.dimension(1));
+    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
 
     for(Index i = 0; i < y_filtered.dimension(1); i++)
     {
-        target_raw_variables_indices(i) = x_filtered.dimension(1)+i;
+        target_columns_indices(i) = x_filtered.dimension(1)+i;
     }
 
     DataSet data_set(data);
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);
 
     data_set.set_training();
 

@@ -137,7 +137,7 @@ public:
         void print() const;
     };
 
-    // Project type
+    // Model type
 
     ModelType get_model_type() const;
 
@@ -654,8 +654,8 @@ public:
     void set_raw_variables_missing_values_number(const Tensor<Index, 1>&);
     void set_raw_variables_missing_values_number();
 
-    void set_rows_missing_values_number(const Index&);
-    void set_rows_missing_values_number();
+    void set_samples_missing_values_number(const Index&);
+    void set_samples_missing_values_number();
 
     // Other
 
@@ -715,7 +715,7 @@ protected:
 
     Tensor<SampleUse, 1> samples_uses;
 
-    Tensor<string, 1> ids;
+    Tensor<string, 1> samples_id;
 
     // Raw variables
 
@@ -727,7 +727,7 @@ protected:
 
     // DATA FILE
 
-    string data_source_path;
+    string data_path;
 
     Separator separator = Separator::Comma;
 

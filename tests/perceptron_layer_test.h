@@ -62,7 +62,7 @@ private:
     PerceptronLayerBackPropagation back_propagation;
 
     NumericalDifferentiation numerical_differentiation;
-
+/*
     Tensor<type, 2> get_activations(const Tensor<type, 2>& combinations) const
     {
         Tensor<type, 2> activations(combinations);
@@ -71,6 +71,7 @@ private:
 
         return activations;
     }
+*/
 };
 
 }

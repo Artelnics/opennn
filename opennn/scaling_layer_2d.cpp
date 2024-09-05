@@ -778,7 +778,7 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
 }
 
 
-string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -788,14 +788,14 @@ string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inpu
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_names(i) << " = " << inputs_names(i) << ";\n";
+        buffer << outputs_name(i) << " = " << inputs_names(i) << ";\n";
     }
 
     return buffer.str();
 }
 
 
-string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -805,14 +805,14 @@ string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>&
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_names(i) << " = 2*(" << inputs_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
+        buffer << outputs_name(i) << " = 2*(" << inputs_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
     }
 
     return buffer.str();
 }
 
 
-string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -822,14 +822,14 @@ string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<str
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
+        buffer << outputs_name(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
     }
 
     return buffer.str();
 }
 
 
-string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -839,7 +839,7 @@ string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
+        buffer << outputs_name(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
     }
 
     return buffer.str();

@@ -28,7 +28,7 @@ TrainingStrategy::TrainingStrategy()
 
 
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
-    :  data_set(new_data_set),
+    : data_set(new_data_set),
        neural_network(new_neural_network)
 {
 

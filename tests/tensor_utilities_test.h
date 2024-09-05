@@ -20,7 +20,7 @@ namespace opennn
 class TensorsTest : public UnitTesting
 {
 
-public:  
+public: 
 
     explicit TensorsTest();
 

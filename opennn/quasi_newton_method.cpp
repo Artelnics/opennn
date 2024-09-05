@@ -239,12 +239,12 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
     inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
 
     inverse_hessian.device(*thread_pool_device)
-            += self_kronecker_product(thread_pool_device, parameters_difference)
-            /parameters_difference_dot_gradient_difference(0);
+    += self_kronecker_product(thread_pool_device, parameters_difference)
+    /parameters_difference_dot_gradient_difference(0);
 
     inverse_hessian.device(*thread_pool_device)
-            -= self_kronecker_product(thread_pool_device, old_inverse_hessian_dot_gradient_difference)
-            / gradient_dot_hessian_dot_gradient(0);
+    -= self_kronecker_product(thread_pool_device, old_inverse_hessian_dot_gradient_difference)
+    / gradient_dot_hessian_dot_gradient(0);
 }
 
 

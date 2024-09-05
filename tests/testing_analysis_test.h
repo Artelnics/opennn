@@ -23,7 +23,7 @@ namespace opennn
 class TestingAnalysisTest : public UnitTesting 
 {
 
-public:  
+public: 
 
     explicit TestingAnalysisTest();
 

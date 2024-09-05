@@ -6,16 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <sstream>
-#include <iostream>
-#include <fstream>
-//#include <limits>
-//#include <math.h>
-
 #include "text_data_set.h"
-#include "strings_utilities.h"
-#include "word_bag.h"
 #include "tensors.h"
+#include "strings_utilities.h"
+
+#include <fstream>
 
 namespace opennn
 {
@@ -25,32 +20,23 @@ TextDataSet::TextDataSet() : DataSet()
     stop_words.resize(242);
 
     stop_words.setValues(
-        { "i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "u", "your", "yours", "yourself", "yourselves", "he",
-         "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
-         "what", "which", "who", "whom", "this", "that", "these", "those", "im", "am", "m", "is", "are", "was", "were", "be", "been", "being",
-         "have", "has", "s", "ve", "re", "ll", "t", "had", "having", "do", "does", "did", "doing", "would", "d", "shall", "should", "could",
-         "ought", "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd",
-         "she'd", "we'd", "they'd", "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't",
-         "haven't", "hadn't", "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't",
-         "let's", "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't", "needn't", "oughtn't",
-         "mightn't", "shes", "its", "were", "theyre", "ive", "youve", "weve", "theyve", "id", "youd", "hed", "shed", "wed", "theyd",
-         "ill", "youll", "hell", "shell", "well", "theyll", "isnt", "arent", "wasnt", "werent", "hasnt", "havent", "hadnt",
-         "doesnt", "dont", "didnt", "wont", "wouldnt", "shant", "shouldnt", "cant", "cannot", "couldnt", "mustnt", "lets",
-         "thats", "whos", "whats", "heres", "theres", "whens", "wheres", "whys", "hows", "darent", "neednt", "oughtnt",
-         "mightnt", "a", "an", "the", "and", "n", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
-         "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
-         "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
-         "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very" });
-
+    { "i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "u", "your", "yours", "yourself", "yourselves", "he",
+     "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
+     "what", "which", "who", "whom", "this", "that", "these", "those", "im", "am", "m", "is", "are", "was", "were", "be", "been", "being",
+     "have", "has", "s", "ve", "re", "ll", "t", "had", "having", "do", "does", "did", "doing", "would", "d", "shall", "should", "could",
+     "ought", "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd",
+     "she'd", "we'd", "they'd", "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't",
+     "haven't", "hadn't", "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't",
+     "let's", "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't", "needn't", "oughtn't",
+     "mightn't", "shes", "its", "were", "theyre", "ive", "youve", "weve", "theyve", "id", "youd", "hed", "shed", "wed", "theyd",
+     "ill", "youll", "hell", "shell", "well", "theyll", "isnt", "arent", "wasnt", "werent", "hasnt", "havent", "hadnt",
+     "doesnt", "dont", "didnt", "wont", "wouldnt", "shant", "shouldnt", "cant", "cannot", "couldnt", "mustnt", "lets",
+     "thats", "whos", "whats", "heres", "theres", "whens", "wheres", "whys", "hows", "darent", "neednt", "oughtnt",
+     "mightnt", "a", "an", "the", "and", "n", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
+     "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
+     "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
+     "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very" });
 }
-
-
-// const string get_text_separator_string()
-// {
-//     string text_separator_string = "\t";
-
-//     return text_separator_string;
-// }
 
 
 const Index& TextDataSet::get_short_words_length() const
@@ -97,7 +83,6 @@ void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 
 void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-
     ostringstream buffer;
 
     time_t start, finish;
@@ -109,128 +94,72 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataSource");
 
+    // File type
+
     file_stream.OpenElement("FileType");
-
     file_stream.PushText("csv");
-
     file_stream.CloseElement();
 
-    // Data file name
-    {
-        file_stream.OpenElement("Path");
+    // Data source path
 
-        file_stream.PushText(data_source_path.c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("Path");
+    file_stream.PushText(data_path.c_str());
+    file_stream.CloseElement();
 
     // Separator
-    {
-        file_stream.OpenElement("Separator");
 
-        file_stream.PushText(get_separator_string().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("Separator");
+    file_stream.PushText(get_separator_string().c_str());
+    file_stream.CloseElement();
 
     // Text separator
-    {
-        file_stream.OpenElement("Separator");
 
-        file_stream.PushText(get_separator_string().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("Separator");
+    file_stream.PushText(get_separator_string().c_str());
+    file_stream.CloseElement();
 
     // Raw variables names
-    {
-        file_stream.OpenElement("HasHeader");
 
-        buffer.str("");
-        buffer << has_header;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("HasHeader");
+    file_stream.PushText(to_string(has_header).c_str());
+    file_stream.CloseElement();
 
     // Rows labels
-    {
-        file_stream.OpenElement("HasIds");
 
-        buffer.str("");
-
-        buffer << has_ids;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("HasIds");
+    file_stream.PushText(to_string(has_ids).c_str());
+    file_stream.CloseElement();
 
     // Missing values label
-    {
-        file_stream.OpenElement("MissingValuesLabel");
 
-        file_stream.PushText(missing_values_label.c_str());
+    file_stream.OpenElement("MissingValuesLabel");
+    file_stream.PushText(missing_values_label.c_str());
+    file_stream.CloseElement();
 
-        file_stream.CloseElement();
-    }
 
     // Short words length
-    {
-        file_stream.OpenElement("ShortWordsLength");
 
-        buffer.str("");
-        buffer << get_short_words_length();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("ShortWordsLength");
+    file_stream.PushText(to_string(short_words_length).c_str());
+    file_stream.CloseElement();
 
     // Long words length
-    {
-        file_stream.OpenElement("LongWordsLength");
 
-        buffer.str("");
-        buffer << get_long_words_length();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("LongWordsLength");
+    file_stream.PushText(to_string(long_words_length).c_str());
+    file_stream.CloseElement();
 
     // Stop words list
-    {
-        file_stream.OpenElement("StopWords");
 
-        const Index stop_words_number = stop_words.dimension(0);
-
-        buffer.str("");
-
-        for(Index i = 0; i < stop_words_number; i++)
-        {
-            buffer << stop_words(i);
-
-            if(i != stop_words_number-1) buffer << ",";
-        }
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("StopWords");
+    file_stream.PushText(string_tensor_to_string(stop_words).c_str());
+    file_stream.CloseElement();
 
     // Codification
-    {
-        file_stream.OpenElement("Codification");
 
-        buffer.str("");
-        buffer << get_codification_string();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("Codification");
+    file_stream.PushText(get_codification_string().c_str());
+    file_stream.CloseElement();
 
     // Close DataFile
 
@@ -240,32 +169,23 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("RawVariables");
 
+
     // Raw variables number
-    {
-        file_stream.OpenElement("RawVariablesNumber");
 
-        buffer.str("");
-        buffer << get_raw_variables_number();
+    const Index raw_variables_number = get_raw_variables_number();
 
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("RawVariablesNumber");
+    file_stream.PushText(to_string(raw_variables_number).c_str());
+    file_stream.CloseElement();
 
     // Raw variables items
 
-    const Index raw_variables_number = get_raw_variables_number();
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            file_stream.OpenElement("RawVariable");
-
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            raw_variables(i).to_XML(file_stream);
-
-            file_stream.CloseElement();
-        }
+        file_stream.OpenElement("RawVariable");
+        file_stream.PushAttribute("Item", to_string(i+1).c_str());
+        raw_variables(i).to_XML(file_stream);
+        file_stream.CloseElement();
     }
 
     // Close raw_variables
@@ -273,7 +193,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Rows labels
-
+/*
     if(has_ids)
     {
         const Index rows_labels_number = ids.size();
@@ -289,27 +209,21 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
             if(i != rows_labels_number-1) buffer << ",";
         }
 
-        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(string_tensor_to_string(ids).c_str());
 
         file_stream.CloseElement();
     }
-
+*/
     // Samples
 
     file_stream.OpenElement("Samples");
 
     // Samples number
-    {
-        file_stream.OpenElement("SamplesNumber");
 
-        buffer.str("");
-        buffer << get_samples_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
+    file_stream.OpenElement("SamplesNumber");
+    file_stream.PushText(to_string(get_samples_number()).c_str());
+    file_stream.CloseElement();
+/*
     // Samples uses
     {
         file_stream.OpenElement("SamplesUses");
@@ -331,7 +245,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
+*/
     // Close samples
 
     file_stream.CloseElement();
@@ -367,16 +281,9 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Missing values number
 
-    {
-        file_stream.OpenElement("MissingValuesNumber");
-
-        buffer.str("");
-        buffer << missing_values_number;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("MissingValuesNumber");
+    file_stream.PushText(to_string(missing_values_number).c_str());
+    file_stream.CloseElement();
 
     if(missing_values_number > 0)
     {
@@ -645,7 +552,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             set_long_words_length(new_long_words_length);
         }
     }
-
+/*
     // Stop words list
 
     const tinyxml2::XMLElement* stop_words_list_element = data_source_element->FirstChildElement("StopWords");
@@ -1125,6 +1032,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));
+*/
 }
 
 
@@ -1859,13 +1767,13 @@ void TextDataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 
-    if(data_source_path.empty())
+    if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
-    ifstream file(data_source_path.c_str());
+    ifstream file(data_path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open text file: " + data_source_path + "\n");
+        throw runtime_error("Cannot open text file: " + data_path + "\n");
 
     const string separator_string = get_separator_string();
 
@@ -1974,7 +1882,7 @@ void TextDataSet::read_txt()
 
     cout << "Writting data file..." << endl;
 
-    string new_data_source_path = data_source_path;
+    string new_data_source_path = data_path;
     replace(new_data_source_path, ".txt", "_data.txt");
     replace(new_data_source_path, ".csv", "_data.csv");
 
@@ -2015,14 +1923,12 @@ void TextDataSet::read_txt()
 
         for(Index j = 0; j < tokens_number; j++)
         {
-            string token = documents_words(i)(j);
+            const string token = documents_words(i)(j);
 
             for(Index k = 0; k < raw_variables_number; k++)
             {
                 if(token == raw_variables_names(k))
-                {
                     row(k)++;
-                }
             }
         }
 
@@ -2034,7 +1940,7 @@ void TextDataSet::read_txt()
 
     new_file.close();
 
-    data_source_path = new_data_source_path;
+    data_path = new_data_source_path;
     separator = Separator::Semicolon;
     has_header = true;
 
