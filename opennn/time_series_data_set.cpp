@@ -27,7 +27,7 @@ TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 }
 
 
-TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path,
+TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
                                      const string& separator,
                                      const bool& has_header,
                                      const bool& has_ids,
@@ -35,7 +35,7 @@ TimeSeriesDataSet::TimeSeriesDataSet(const string& data_source_path,
                                      const Index& new_steps_ahead,
                                      const Codification& data_codification)
 {
-    set(data_source_path, separator, has_header, has_ids, data_codification);
+    set(data_path, separator, has_header, has_ids, data_codification);
 
     lags_number = new_lags_number;
     steps_ahead = new_steps_ahead;
@@ -483,7 +483,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Data source path
 
     file_stream.OpenElement("Path");
-    file_stream.PushText(data_source_path.c_str());
+    file_stream.PushText(data_path.c_str());
     file_stream.CloseElement();
 
     // Separator
@@ -1071,7 +1071,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 separator = ';';
             }
 
-            ids = get_tokens(new_rows_labels, separator);
+            samples_id = get_tokens(new_rows_labels, separator);
         }
     }
 
