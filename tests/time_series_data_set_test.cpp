@@ -216,7 +216,7 @@ void TimeSeriesDataSetTest::test_save_time_series_data_binary()
 {
     cout << "test_save_time_series_data_binary\n";
 
-    const string data_source_path = "../data/test";
+    const string data_path = "../data/test";
 
     // Test
 
@@ -232,10 +232,10 @@ void TimeSeriesDataSetTest::test_save_time_series_data_binary()
     data_set.set_steps_ahead_number(2);
     data_set.transform_time_series();
     /*
-    data_set.set_data_file_name(data_source_path);
+    data_set.set_data_file_name(data_path);
     */
-    data_set.save_time_series_data_binary(data_source_path);
-    data_set.load_time_series_data_binary(data_source_path);
+    data_set.save_time_series_data_binary(data_path);
+    data_set.load_time_series_data_binary(data_path);
     /*
     assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);

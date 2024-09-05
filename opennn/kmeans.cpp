@@ -15,7 +15,7 @@
 //#include <sstream>
 #include <string>
 //#include <cstring>
-//#include <time.h>
+//#include <ctime>
 #include <omp.h>
 
 // OpenNN includes

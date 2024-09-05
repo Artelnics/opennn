@@ -40,7 +40,7 @@ int main()
    "gradient_descent | gd\n"
    "growing_inputs | gi\n"
    "growing_neurons | gn\n"
-   "image_data_set | ids\n"
+   "image_data_set | samples_id\n"
    "inputs_selection | is\n"
    "learning_rate_algorithm | lra\n"
    "levenberg_marquardt_algorithm | lma\n"
@@ -482,7 +482,7 @@ int main()
         tests_passed_count += time_series_data_set_test.get_tests_passed_count();
         tests_failed_count += time_series_data_set_test.get_tests_failed_count();
       }
-      else if(test == "image_data_set" || test == "ids")
+      else if(test == "image_data_set" || test == "samples_id")
       {
           ImageDataSetTest image_data_set_test;
           image_data_set_test.run_test_case();

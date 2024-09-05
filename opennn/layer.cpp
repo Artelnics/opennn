@@ -6,30 +6,20 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//#include <cmath>
-//#include <cstdlib>
-//#include <fstream>
-//#include <vector>
-//#include <ctype.h>
-//#include <iostream>
-//#include <iostream>
-#include <sstream>
-
 #include "layer.h"
-#include "tensors.h"
-//#include "statistics.h"
-//#include "scaling.h"
-//#include <tuple>
+//#include "tensors.h"
 
 namespace opennn
 {
 
+
+/*
 Layer::~Layer()
 {
     delete thread_pool;
     delete thread_pool_device;
 }
-
+*/
 string Layer::get_name() const
 {
     return name;
@@ -194,6 +184,8 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     y.setZero();
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < rows_number; i++)
     {
         y(i, Index(maximum_indices(i))) = type(1);
@@ -233,7 +225,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
     y.device(*thread_pool_device) = x;
 
     aux_rows.device(*thread_pool_device) = x.maximum(softmax_dimension);
-
+/*
     substract_columns(thread_pool_device, aux_rows, y);
 
     y.device(*thread_pool_device) = y.exp();
@@ -241,6 +233,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
     aux_rows.device(*thread_pool_device) = y.sum(softmax_dimension);
 
     divide_columns(thread_pool_device, y, aux_rows);
+*/
 }
 
 
@@ -315,7 +308,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
     Tensor<type, 0> sum;
 
     for(Index i = 0; i < channels; i++)
-    {
+    {        
         for(Index j = 0; j < columns_number; j++)
         {
             softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);

@@ -709,152 +709,138 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
 }
 
 
-void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& combinations,
-                                                     Tensor<type, 1>& activations) const
+void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activations) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(combinations, activations); return;
+    case ActivationFunction::Linear: linear(activations); return;
 
-    case ActivationFunction::Logistic: logistic(combinations, activations); return;
+    case ActivationFunction::Logistic: logistic(activations); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(combinations, activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations); return;
 
-    case ActivationFunction::SoftSign: soft_sign(combinations, activations); return;
+    case ActivationFunction::SoftSign: soft_sign(activations); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
 
-    default: rectified_linear(combinations, activations); return;
+    default: rectified_linear(activations); return;
     }
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 1>& combinations,
-                                                               Tensor<type, 1>& activations) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations) const
 {
     switch(recurrent_activation_function)
     {
-    case ActivationFunction::Linear: linear(combinations, activations); return;
+    case ActivationFunction::Linear: linear(activations); return;
 
-    case ActivationFunction::Logistic: logistic(combinations, activations); return;
+    case ActivationFunction::Logistic: logistic(activations); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(combinations, activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations); return;
 
-    case ActivationFunction::SoftSign: soft_sign(combinations, activations); return;
+    case ActivationFunction::SoftSign: soft_sign(activations); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
 
-    default: rectified_linear(combinations, activations); return;
+    default: rectified_linear(activations); return;
     }
 }
 
 
-void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 1>& combinations,
-                                                                 Tensor<type, 1>& activations,
+void LongShortTermMemoryLayer::calculate_activations_derivatives(Tensor<type, 1>& activations,
                                                                  Tensor<type, 1>& activations_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear_derivatives(combinations,
-                                                        activations,
+    case ActivationFunction::Linear: linear_derivatives(activations,
                                                         activations_derivatives);
         return;
 
-    case ActivationFunction::Logistic: logistic_derivatives(combinations,
-                                                            activations,
+    case ActivationFunction::Logistic: logistic_derivatives(activations,
                                                             activations_derivatives);
         return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations,
-                                                                               activations,
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
                                                                                activations_derivatives);
         return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations,
-                                                                           activations,
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
                                                                            activations_derivatives);
         return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations,
-                                                                                            activations,
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(activations,
                                                                                             activations_derivatives);
         return;
 
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations,
-                                                             activations,
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(activations,
                                                              activations_derivatives);
         return;
 
-    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations,
-                                                             activations,
+    case ActivationFunction::SoftSign: soft_sign_derivatives(activations,
                                                              activations_derivatives);
         return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations,
-                                                                   activations,
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(activations,
                                                                    activations_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations,
-                                                                               activations,
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(activations,
                                                                                activations_derivatives); return;
 
-    default: rectified_linear_derivatives(combinations,
-                                          activations,
+    default: rectified_linear_derivatives(activations,
                                           activations_derivatives); return;
 
     }
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(const Tensor<type, 1>& combinations,
-                                                                           Tensor<type, 1>& activations,
+void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(Tensor<type, 1>& activations,
                                                                            Tensor<type, 1>& activations_derivatives) const
 {
     switch(recurrent_activation_function)
     {
     case ActivationFunction::Linear: 
         
-        linear_derivatives(combinations, activations, activations_derivatives); 
+        linear_derivatives(activations, activations_derivatives);
         
         return;
 
     case ActivationFunction::Logistic: 
         
-        logistic_derivatives(combinations, activations, activations_derivatives); 
+        logistic_derivatives(activations, activations_derivatives);
         
         return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations, activations_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations, activations_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign_derivatives(activations, activations_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(activations, activations_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(activations, activations_derivatives); return;
 
-    default: rectified_linear_derivatives(combinations, activations, activations_derivatives); return;
+    default: rectified_linear_derivatives(activations, activations_derivatives); return;
 
     }
 }
@@ -876,28 +862,28 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
     Tensor<type, 2, RowMajor>& forget_activations = long_short_term_memory_layer_forward_propagation->forget_activations;
     Tensor<type, 2, RowMajor>& forget_activations_derivatives = long_short_term_memory_layer_forward_propagation->forget_activations_derivatives;
 
-    Tensor<type, 1>& current_forget_combinations = long_short_term_memory_layer_forward_propagation->current_forget_combinations;
+//    Tensor<type, 1>& current_forget_combinations = long_short_term_memory_layer_forward_propagation->current_forget_combinations;
     Tensor<type, 1>& current_forget_activations = long_short_term_memory_layer_forward_propagation->current_forget_activations;
     Tensor<type, 1>& current_forget_activations_derivatives = long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives;
 
     Tensor<type, 2, RowMajor>& input_activations = long_short_term_memory_layer_forward_propagation->input_activations;
     Tensor<type, 2, RowMajor>& input_activations_derivatives = long_short_term_memory_layer_forward_propagation->input_activations_derivatives;
 
-    Tensor<type, 1>& current_input_combinations = long_short_term_memory_layer_forward_propagation->current_input_combinations;
+//    Tensor<type, 1>& current_input_combinations = long_short_term_memory_layer_forward_propagation->current_input_combinations;
     Tensor<type, 1>& current_input_activations = long_short_term_memory_layer_forward_propagation->current_input_activations;
     Tensor<type, 1>& current_input_activations_derivatives = long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives;
 
     Tensor<type, 2, RowMajor>& state_activations = long_short_term_memory_layer_forward_propagation->state_activations;
     Tensor<type, 2, RowMajor>& state_activations_derivatives = long_short_term_memory_layer_forward_propagation->state_activations_derivatives;
 
-    Tensor<type, 1>& current_state_combinations = long_short_term_memory_layer_forward_propagation->current_state_combinations;
+//    Tensor<type, 1>& current_state_combinations = long_short_term_memory_layer_forward_propagation->current_state_combinations;
     Tensor<type, 1>& current_state_activations = long_short_term_memory_layer_forward_propagation->current_state_activations;
     Tensor<type, 1>& current_state_activations_derivatives = long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives;
 
     Tensor<type, 2, RowMajor>& output_activations = long_short_term_memory_layer_forward_propagation->output_activations;
     Tensor<type, 2, RowMajor>& output_activations_derivatives = long_short_term_memory_layer_forward_propagation->output_activations_derivatives;
 
-    Tensor<type, 1>& current_output_combinations = long_short_term_memory_layer_forward_propagation->current_output_combinations;
+//    Tensor<type, 1>& current_output_combinations = long_short_term_memory_layer_forward_propagation->current_output_combinations;
     Tensor<type, 1>& current_output_activations = long_short_term_memory_layer_forward_propagation->current_output_activations;
     Tensor<type, 1>& current_output_activations_derivatives = long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives;
 
@@ -935,45 +921,41 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
                                previous_hidden_states,
                                forget_recurrent_weights,
                                forget_biases,
-                               current_forget_combinations);
+                               current_forget_activations);
 
         calculate_combinations(current_inputs,
                                input_weights,
                                previous_hidden_states,
                                input_recurrent_weights,
                                input_biases,
-                               current_input_combinations);
+                               current_input_activations);
 
         calculate_combinations(current_inputs,
                                state_weights,
                                previous_hidden_states,
                                state_recurrent_weights,
                                state_biases,
-                               current_state_combinations);
+                               current_state_activations);
 
         calculate_combinations(current_inputs,
                                output_weights,
                                previous_hidden_states,
                                output_recurrent_weights,
                                output_biases,
-                               current_output_combinations);
+                               current_output_activations);
 
         if(is_training)
         {
-            calculate_recurrent_activations_derivatives(current_forget_combinations,
-                                                        current_forget_activations,
+            calculate_recurrent_activations_derivatives(current_forget_activations,
                                                         current_forget_activations_derivatives);
 
-            calculate_recurrent_activations_derivatives(current_input_combinations,
-                                                        current_input_activations,
+            calculate_recurrent_activations_derivatives(current_input_activations,
                                                         current_input_activations_derivatives);
 
-            calculate_activations_derivatives(current_state_combinations,
-                                              current_state_activations,
+            calculate_activations_derivatives(current_state_activations,
                                               current_state_activations_derivatives);
 
-            calculate_recurrent_activations_derivatives(current_output_combinations,
-                                                        current_output_activations,
+            calculate_recurrent_activations_derivatives(current_output_activations,
                                                         current_output_activations_derivatives);
 
             set_row(forget_activations_derivatives, current_forget_activations_derivatives, i);
@@ -986,17 +968,13 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
         }
         else
         {
-            calculate_recurrent_activations(current_forget_combinations,
-                                            current_forget_activations);
+            calculate_recurrent_activations(current_forget_activations);
 
-            calculate_recurrent_activations(current_input_combinations,
-                                            current_input_activations);
+            calculate_recurrent_activations(current_input_activations);
 
-            calculate_activations(current_state_combinations,
-                                  current_state_activations);
+            calculate_activations(current_state_activations);
 
-            calculate_recurrent_activations(current_output_combinations,
-                                            current_output_activations);
+            calculate_recurrent_activations(current_output_activations);
         }
 
         set_row(forget_activations, current_forget_activations, i);
@@ -1015,7 +993,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
         set_row(cell_states, current_cell_states, i);
 
         // Hidden states
-
+/*
         if(is_training)
         {
             calculate_activations_derivatives(current_cell_states,
@@ -1029,7 +1007,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
             calculate_activations(current_cell_states,
                                   current_hidden_states);
         }
-
+*/
         current_hidden_states.device(*thread_pool_device) = current_output_activations * current_hidden_states;
 
         set_row(hidden_states, current_hidden_states, i);
@@ -1193,7 +1171,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
 
-        calculate_activations(current_cell_states, current_cell_states);
+        calculate_activations(current_cell_states);
 
         // FORGET PARAMETERS DERIVATIVES
 
@@ -1527,7 +1505,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
 
-        calculate_activations(current_cell_states, current_cell_states);
+        calculate_activations(current_cell_states);
 
         // INPUT PARAMETERS DERIVATIVES
 
@@ -1861,7 +1839,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
 
-        calculate_activations(current_cell_states, current_cell_states);
+        calculate_activations(current_cell_states);
 
         // STATE PARAMETERS DERIVATIVES
 
@@ -2195,7 +2173,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
 
-        calculate_activations(current_cell_states, current_cell_states);
+        calculate_activations(current_cell_states);
 
         // OUTPUT PARAMETERS DERIVATIVES
 
@@ -2484,7 +2462,7 @@ void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propag
 }
 
 
-string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -2584,7 +2562,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
     for(Index i = 0; i < neurons_number; i++)
     {
-       buffer << outputs_names[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
+       buffer << outputs_name[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
     }
 
     return buffer.str();

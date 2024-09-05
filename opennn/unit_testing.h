@@ -14,20 +14,9 @@
 //#include <cmath>
 //#include <cstdlib>
 //#include <fstream>
-//#include <iomanip>
-//#include <iostream>
 #include <string>
-//#include <sstream>
-//#include <time.h>
-
-
-// OpenNN includes
 
 #include "config.h"
-
-//#include "../../opennn/opennn/opennn.h"
-
-//using namespace opennn;
 
 namespace opennn
 {

@@ -20,7 +20,7 @@ namespace opennn
 class ScalingLayer2DTest : public UnitTesting
 {
 
-public:  
+public: 
 
     explicit ScalingLayer2DTest();
 

@@ -321,13 +321,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            cout << "gradient:\n" << training_back_propagation.gradient.abs() << endl;
-
-            cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient().abs() << endl;
-
-            cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient.abs() - loss_index->calculate_numerical_gradient().abs() << endl;
-
-            system("pause");
+            //cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
+            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient.abs() - loss_index->calculate_numerical_gradient().abs() << endl;
+            //system("pause");
 
             training_error += training_back_propagation.error;
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
