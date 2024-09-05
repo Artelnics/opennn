@@ -353,7 +353,7 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Data file name
 
     file_stream.OpenElement("Path");
-    file_stream.PushText(data_source_path.c_str());
+    file_stream.PushText(data_path.c_str());
     file_stream.CloseElement();
 
     // Rows labels
@@ -461,7 +461,7 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     if(has_ids)
     {
         file_stream.OpenElement("Ids");
-        file_stream.PushText(string_tensor_to_string(ids).c_str());
+        file_stream.PushText(string_tensor_to_string(samples_id).c_str());
 
         file_stream.CloseElement();
     }
@@ -968,7 +968,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 separator = ';';
             }
 
-            ids = get_tokens(new_rows_labels, separator);
+            samples_id = get_tokens(new_rows_labels, separator);
 
         }
     }
@@ -1040,7 +1040,7 @@ void ImageDataSet::read_bmp()
     vector<path> directory_path;
     vector<path> image_path;
 
-    for(const directory_entry& current_directory : directory_iterator(data_source_path))
+    for(const directory_entry& current_directory : directory_iterator(data_path))
     {
         if(is_directory(current_directory))
         {

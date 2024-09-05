@@ -6,11 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//#include <cmath>
-//#include <cstdlib>
-//#include <fstream>
 #include <iostream>
-//#include <errno.h>
 
 #include "transformer.h"
 #include "tensors.h"

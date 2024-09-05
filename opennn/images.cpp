@@ -239,9 +239,9 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
                                       const Index &channels)
 {
     /*
-    const fs::path path = data_source_path;
+    const fs::path path = data_path;
 
-    if(data_source_path.empty())
+    if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
     has_header = true;
@@ -307,7 +307,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     copy(execution::par,
     image_data.data(), image_data.data() + images_number * image_size, data.data());
 
-    ids.resize(images_number);
+    samples_id.resize(images_number);
 
     Index row_index = 0;
 
@@ -345,7 +345,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
                 data(row_index, image_size + i) = 1;
             }
 
-            ids(row_index) = images_paths[j];
+            samples_id(row_index) = images_paths[j];
 
             row_index++;
         }

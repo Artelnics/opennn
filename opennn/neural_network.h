@@ -133,7 +133,6 @@ public:
    RecurrentLayer* get_recurrent_layer() const;
 
    Layer* get_last_trainable_layer() const;
-   //Layer* get_last_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
 
    const bool& get_display() const;
@@ -250,7 +249,8 @@ public:
    virtual void load(const string&) final;
    void load_parameters_binary(const string&);
 
-   Tensor<string, 1> get_layers_names() const;
+   Tensor<string, 1> get_layer_names() const;
+   Tensor<string, 1> get_layer_types_string() const;
 
    // Expression
 
@@ -287,7 +287,7 @@ protected:
 
    Tensor<string, 1> inputs_names;
 
-   Tensor<string, 1> outputs_names;
+   Tensor<string, 1> outputs_name;
 
    Tensor<Layer*, 1> layers;
 

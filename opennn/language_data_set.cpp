@@ -306,7 +306,7 @@ void LanguageDataSet::set_data_random_language_model(const Index& batch_samples_
                                                      const Index& completion_dimension,
                                                      const Index& context_dimension)
 {
-    data_source_path = "";
+    data_path = "";
 
     set(batch_samples_number, context_length + 2 * completion_length);
 
@@ -386,7 +386,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Path");
 
-        file_stream.PushText(data_source_path.c_str());
+        file_stream.PushText(data_path.c_str());
 
         file_stream.CloseElement();
     }
@@ -483,7 +483,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(has_ids)
     {
-        const Index rows_labels_number = ids.size();
+        const Index rows_labels_number = samples_id.size();
 
         file_stream.OpenElement("HasIds");
 
@@ -491,7 +491,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < rows_labels_number; i++)
         {
-            buffer << ids(i);
+            buffer << samples_id(i);
 
             if(i != rows_labels_number-1) buffer << ",";
         }
@@ -1037,7 +1037,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 separator = ';';
             }
 
-            ids = get_tokens(new_rows_labels, separator);
+            samples_id = get_tokens(new_rows_labels, separator);
         }
     }
 
@@ -1887,7 +1887,7 @@ void LanguageDataSet::read_csv_3_language_model()
 {
     ifstream file;
 
-    open_file(data_source_path, file);
+    open_file(data_path, file);
 
     const bool is_float = is_same<type, float>::value;
 
@@ -1905,7 +1905,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     const Index samples_number = data.dimension(0);
 
-    if(has_ids) ids.resize(samples_number);
+    if(has_ids) samples_id.resize(samples_number);
 
     if(display) cout << "Reading data..." << endl;
 
@@ -1932,7 +1932,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
             if(has_ids && j == 0)
             {
-                ids(sample_index) = tokens(j);
+                samples_id(sample_index) = tokens(j);
             }
             else if(tokens(j) == missing_values_label || tokens(j).empty())
             {
@@ -1979,7 +1979,7 @@ void LanguageDataSet::read_txt_language_model()
 {
     cout << "Reading .txt file..." << endl;
 
-    load_documents(data_source_path);
+    load_documents(data_path);
 
     Index entry_number = documents(0).size();
 
@@ -2079,7 +2079,7 @@ void LanguageDataSet::read_txt_language_model()
 
     cout << "Writting data file..." << endl;
     
-    string transformed_data_path = data_source_path;
+    string transformed_data_path = data_path;
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
@@ -2120,7 +2120,7 @@ void LanguageDataSet::read_txt_language_model()
     
     file.close();
 
-    data_source_path = transformed_data_path;
+    data_path = transformed_data_path;
     separator = Separator::Semicolon;
     has_header = true;
 

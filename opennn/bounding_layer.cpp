@@ -326,7 +326,7 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
@@ -338,8 +338,8 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 
         for(Index i = 0; i < neurons_number; i++)
         {
-            buffer << outputs_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ")\n";
-            buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << outputs_names[i] << ")\n";
+            buffer << outputs_name[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ")\n";
+            buffer << outputs_name[i] << " = min(" << upper_bounds[i] << ", " << outputs_name[i] << ")\n";
         }
     }
     else
