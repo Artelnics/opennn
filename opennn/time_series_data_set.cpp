@@ -523,11 +523,11 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Time raw variable
-/*
+
     file_stream.OpenElement("TimeRawVariable");
     file_stream.PushText(get_time_raw_variable().c_str());
     file_stream.CloseElement();
-
+/*
     // Group by raw_variable
     {
         file_stream.OpenElement("GroupByRawVariable");
@@ -730,7 +730,6 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
-
     // Data set element
 
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
