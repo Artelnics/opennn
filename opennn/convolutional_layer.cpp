@@ -550,11 +550,11 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
              kernel_synaptic_weights_derivatives.data() + kernel_synaptic_weights_number,
              synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
     }
-
+    
     // Inputs derivatives
 
     input_derivatives.setZero();
-
+    /*
     extents = { 1, output_height, output_width, 1 };
 
     for (Index image_index = 0; image_index < batch_samples_number; image_index++)
@@ -580,7 +580,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
         }
     }
-
+    */
     /* {
         // Debug
 
@@ -1425,6 +1425,7 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
     const Index input_channels = convolutional_layer->get_input_channels();
 
     const Index kernels_number = convolutional_layer->get_kernels_number();
+
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
 
@@ -1491,17 +1492,20 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
 
     const Index input_height = convolutional_layer->get_input_height();
     const Index input_width = convolutional_layer->get_input_width();
-    const Index input_channels = convolutional_layer->get_input_channels();
+    const Index channels = convolutional_layer->get_input_channels();
 
     const Index kernel_height = convolutional_layer->get_kernel_height();
     const Index kernel_width = convolutional_layer->get_kernel_width();
     const Index kernel_channels = convolutional_layer->get_kernel_channels();
     const Index kernels_number = convolutional_layer->get_kernels_number();
 
+    const Index output_height = convolutional_layer->get_output_height();
+    const Index output_width = convolutional_layer->get_output_width();
+
     error_convolutions_derivatives.resize(batch_samples_number,
-                                          input_height,
-                                          input_width,
-                                          input_channels);
+                                          output_height,
+                                          output_width,
+                                          channels);
 
     biases_derivatives.resize(kernels_number);
 
@@ -1513,11 +1517,11 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     input_derivatives.resize(batch_samples_number,
                              input_height,
                              input_width,
-                             input_channels);
+                             channels);
 
     inputs_derivatives.resize(1);
     inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, input_height, input_width, input_channels };
+    inputs_derivatives(0).second = { batch_samples_number, input_height, input_width, channels };
 }
 
 void ConvolutionalLayerBackPropagation::print() const
