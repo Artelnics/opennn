@@ -26,7 +26,7 @@ namespace opennn
 class ModelSelection
 {
 
-public:  
+public: 
 
     // Constructors
 

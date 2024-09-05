@@ -455,13 +455,13 @@ void PerceptronLayer3D::calculate_activations(const Tensor<type, 3>& combination
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(combinations, activations); return;
+    case ActivationFunction::Linear: linear(activations); return;
 
 //    case ActivationFunction::Logistic: logistic(combinations, activations); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
 
 //    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
 
@@ -484,8 +484,7 @@ void PerceptronLayer3D::calculate_activations_derivatives(const Tensor<type, 3>&
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear_derivatives(combinations,
-                                                        activations,
+    case ActivationFunction::Linear: linear_derivatives(activations,
                                                         activations_derivatives);
         return;
 
@@ -494,13 +493,11 @@ void PerceptronLayer3D::calculate_activations_derivatives(const Tensor<type, 3>&
 //                                                            activations_derivatives);
 //        return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations,
-                                                                               activations,
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
                                                                                activations_derivatives);
         return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations,
-                                                                           activations,
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
                                                                            activations_derivatives);
         return;
 

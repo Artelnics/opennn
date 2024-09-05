@@ -1531,7 +1531,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 }
 
 Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_names,
-                                                       Tensor<string, 1>& outputs_names,
+                                                       Tensor<string, 1>& outputs_name,
                                                        ostringstream& buffer_)
 {
     //preparing output information
@@ -1541,7 +1541,7 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
     ostringstream buffer;
     buffer << buffer_.str();
 
-    Tensor<string, 1> outputs(outputs_names.dimension(0));
+    Tensor<string, 1> outputs(outputs_name.dimension(0));
     Tensor<string, 1> inputs(inputs_names.dimension(0));
     Tensor<string,1> buffer_out;
 
@@ -1563,15 +1563,15 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
         }
     }
 
-    for(int i = 0; i < outputs_names.dimension(0); i++)
+    for(int i = 0; i < outputs_name.dimension(0); i++)
     {
-        if(outputs_names[i].empty())
+        if(outputs_name[i].empty())
         {
             outputs(i) = "output_" + to_string(i);
         }
         else
         {
-            output_name_aux = outputs_names[i];
+            output_name_aux = outputs_name[i];
             outputs(i) = replace_non_allowed_programming_expressions(output_name_aux);
         }
     }
