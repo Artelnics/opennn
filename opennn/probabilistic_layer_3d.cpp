@@ -361,7 +361,7 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
-    sum_matrices(thread_pool_device.get(), biases, combinations);
+    sum_matrices(thread_pool_device, biases, combinations);
 }
 
 
@@ -471,7 +471,7 @@ void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor
         for(Index j = 0; j < outputs_number; j++)
             error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
 
-    multiply_matrices(thread_pool_device.get(), error_combinations_derivatives, mask);
+    multiply_matrices(thread_pool_device, error_combinations_derivatives, mask);
 }
 
 

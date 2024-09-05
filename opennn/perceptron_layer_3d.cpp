@@ -402,7 +402,7 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
-    sum_matrices(thread_pool_device.get(), biases, combinations);
+    sum_matrices(thread_pool_device, biases, combinations);
 }
 
 

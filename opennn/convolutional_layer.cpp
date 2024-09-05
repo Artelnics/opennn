@@ -138,15 +138,14 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 kernel_height,
                                                 kernel_width,
                                                 kernel_channels);
- 
+
         TensorMap<Tensor<type, 4>> convolution(convolutions_data + kernel_index*output_size,
                                                batch_samples_number,
                                                output_height,
                                                output_width,
                                                1);
 
-        convolution.device(*thread_pool_device)
-            = inputs.convolve(kernel, convolutions_dimensions) + biases(kernel_index);
+        convolution.device(*thread_pool_device) = inputs.convolve(kernel, convolutions_dimensions) + biases(kernel_index);
     }
 }
 
@@ -327,7 +326,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
                                             inputs_pair(0).second[1],
                                             inputs_pair(0).second[2],
                                             inputs_pair(0).second[3]);
-
+    
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
@@ -362,8 +361,11 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     if(is_training)
     {
+        //cout << "outputs:\n" << outputs << endl;
         calculate_activations_derivatives(outputs,
                                           activations_derivatives);
+        //cout << outputs << endl;
+        //cout << activations_derivatives << endl;
     }
     else
     {

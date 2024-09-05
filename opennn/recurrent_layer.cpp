@@ -642,14 +642,14 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
             // Combinations weights derivatives
 
-            multiply_matrices(thread_pool_device.get(), combinations_input_weights_derivatives, current_activations_derivatives);
+            multiply_matrices(thread_pool_device, combinations_input_weights_derivatives, current_activations_derivatives);
 
             combinations_input_weights_derivatives.device(*thread_pool_device) =
                 combinations_input_weights_derivatives.contract(recurrent_weights, combinations_weights_indices);
 
             // Combinations recurrent weights derivatives
 
-            multiply_matrices(thread_pool_device.get(), combinations_recurrent_weights_derivatives, current_activations_derivatives);
+            multiply_matrices(thread_pool_device, combinations_recurrent_weights_derivatives, current_activations_derivatives);
 
             combinations_recurrent_weights_derivatives.device(*thread_pool_device) =
                 combinations_recurrent_weights_derivatives.contract(recurrent_weights, combinations_weights_indices);

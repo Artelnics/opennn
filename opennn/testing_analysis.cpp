@@ -1165,7 +1165,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     const Index samples_number = targets.dimension(0);
 
     const dimensions& input_dimensions = data_set->get_input_dimensions();
- 
+    
     if(input_dimensions.size() == 1)
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
