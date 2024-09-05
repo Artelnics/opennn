@@ -4013,7 +4013,7 @@ void DataSet::set_model_type_string(const string& new_model_type)
         const string message =
             "Data Set class exception:\n"
             "void set_model_type_string(const string&)\n"
-            "Unknown project type: " + new_model_type + "\n";
+            "Unknown model type: " + new_model_type + "\n";
 
         throw runtime_error(message);
     }
@@ -5026,7 +5026,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
 
     for(it = top_correlation.begin(); it != top_correlation.end(); it++)
     {
-        cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
+        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
     }
 }
 
@@ -6198,7 +6198,7 @@ void DataSet::print_data_preview() const
     {
         const Tensor<type, 1> first_sample = data.chip(0, 0);
 
-        cout << "First sample:  \n";
+        cout << "First sample: \n";
 
         for(int i = 0; i< first_sample.dimension(0); i++)
         {
@@ -6212,7 +6212,7 @@ void DataSet::print_data_preview() const
     {
         const Tensor<type, 1> second_sample = data.chip(1, 0);
 
-        cout << "Second sample:  \n";
+        cout << "Second sample: \n";
 
         for(int i = 0; i< second_sample.dimension(0); i++)
         {
@@ -6226,7 +6226,7 @@ void DataSet::print_data_preview() const
     {
         const Tensor<type, 1> last_sample = data.chip(samples_number-1, 0);
 
-        cout << "Last sample:  \n";
+        cout << "Last sample: \n";
 
         for(int i = 0; i< last_sample.dimension(0); i++)
         {
@@ -7695,13 +7695,13 @@ void DataSet::set_raw_variables_missing_values_number()
 }
 
 
-void DataSet::set_rows_missing_values_number(const Index& new_rows_missing_values_number)
+void DataSet::set_samples_missing_values_number(const Index& new_rows_missing_values_number)
 {
     rows_missing_values_number = new_rows_missing_values_number;
 }
 
 
-void DataSet::set_rows_missing_values_number()
+void DataSet::set_samples_missing_values_number()
 {
     rows_missing_values_number = count_rows_with_nan();
 }

@@ -6,30 +6,20 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//#include <cmath>
-//#include <cstdlib>
-//#include <fstream>
-//#include <vector>
-//#include <ctype.h>
-//#include <iostream>
-//#include <iostream>
-#include <sstream>
-
 #include "layer.h"
-#include "tensors.h"
-//#include "statistics.h"
-//#include "scaling.h"
-//#include <tuple>
+//#include "tensors.h"
 
 namespace opennn
 {
 
+
+/*
 Layer::~Layer()
 {
     delete thread_pool;
     delete thread_pool_device;
 }
-
+*/
 string Layer::get_name() const
 {
     return name;
@@ -111,11 +101,14 @@ string Layer::get_type_string() const
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete thread_pool;
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    // if(thread_pool != nullptr) delete thread_pool;
+    // if(thread_pool_device != nullptr) delete thread_pool_device;
 
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+    //thread_pool = new ThreadPool(new_threads_number);
+    //thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -233,7 +226,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
     y.device(*thread_pool_device) = x;
 
     aux_rows.device(*thread_pool_device) = x.maximum(softmax_dimension);
-
+/*
     substract_columns(thread_pool_device, aux_rows, y);
 
     y.device(*thread_pool_device) = y.exp();
@@ -241,6 +234,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
     aux_rows.device(*thread_pool_device) = y.sum(softmax_dimension);
 
     divide_columns(thread_pool_device, y, aux_rows);
+*/
 }
 
 

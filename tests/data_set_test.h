@@ -24,7 +24,7 @@ namespace opennn
 class DataSetTest : public UnitTesting 
 {
 
-public:  
+public: 
 
    explicit DataSetTest();
 

@@ -575,7 +575,7 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     // Outputs number
 
-    const Index outputs_number = outputs_names.size();
+    const Index outputs_number = outputs_name.size();
 
     file_stream.OpenElement("OutputsNumber");
 
@@ -594,7 +594,7 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
 
-        file_stream.PushText(outputs_names[i].c_str());
+        file_stream.PushText(outputs_name[i].c_str());
 
         file_stream.CloseElement();
     }

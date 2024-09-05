@@ -589,8 +589,6 @@ void divide_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tens
 }
 
 
-
-
 void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
@@ -629,9 +627,11 @@ void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& v
 
     type* tensor_data = tensor.data();
 
+    const Index slice_size = rows_number * columns_number;
+
     for(Index i = 0; i < channels; i++)
     {
-        TensorMap<Tensor<type,2>> matrix(tensor_data + i*rows_number* columns_number, rows_number, columns_number);
+        TensorMap<Tensor<type,2>> matrix(tensor_data + i*slice_size, rows_number, columns_number);
 
         matrix.device(*thread_pool_device) = matrix + vector(i);
     }
