@@ -362,21 +362,21 @@ string NeuralNetwork::get_model_type_string() const
 
 const Tensor<string, 1>& NeuralNetwork::get_outputs_names() const
 {
-    return outputs_names;
+    return outputs_name;
 }
 
 
 string NeuralNetwork::get_output_name(const Index& index) const
 {
-    return outputs_names[index];
+    return outputs_name[index];
 }
 
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-    for(Index i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_name.size(); i++)
     {
-        if(outputs_names(i) == name) return i;
+        if(outputs_name(i) == name) return i;
     }
 
     return 0;
@@ -397,11 +397,11 @@ Layer* NeuralNetwork::get_layer(const Index& layer_index) const
 
 Layer* NeuralNetwork::get_layer(const string& name) const
 {
-    Tensor<string, 1> layers_names = get_layers_names();
+    Tensor<string, 1> layer_names = get_layer_names();
 
-    for(Index i = 0; i < layers_names.size(); i++)
+    for(Index i = 0; i < layer_names.size(); i++)
     {
-        if(layers_names(i) == name)    return layers(i);
+        if(layer_names(i) == name)    return layers(i);
     }
 
     return nullptr;
@@ -666,7 +666,7 @@ void NeuralNetwork::set()
 {
     inputs_names.resize(0);
 
-    outputs_names.resize(0);
+    outputs_name.resize(0);
 
     delete_layers();
 
@@ -780,7 +780,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
         add_layer(unscaling_layer);
     }
 
-    outputs_names.resize(outputs_number);
+    outputs_name.resize(outputs_number);
 
     set_default();
 }
@@ -886,11 +886,11 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
         set_model_type(ModelType::AutoAssociation);
     }
     else
-    {
+    {                
         const string message =
                 "Neural Network class exception:\n"
                 "void set_model_type_string(const string&)\n"
-                "Unknown project type: " + new_model_type + "\n";
+                "Unknown model type: " + new_model_type + "\n";
 
         throw runtime_error(message);
     }
@@ -905,7 +905,7 @@ void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
 
 void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names)
 {
-    outputs_names = new_outputs_names;
+    outputs_name = new_outputs_names;
 }
 
 
@@ -1558,13 +1558,16 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
     
     for(Index i = first_layer_index; i <= last_layer_index; i++)
     {
-        if(i == first_layer_index || is_input_layer(layers_inputs_indices(i)))
+        const Tensor<Index, 1> layer_input_indices = layers_inputs_indices(i);
+        const Index layer_inputs_number = layer_input_indices.size();
+
+        if(i == first_layer_index || is_input_layer(layer_input_indices))
         {
             layer_inputs.resize(1);
 
             layer_inputs(0) = inputs_pair(0);
         }
-        else if(is_context_layer(layers_inputs_indices(i)))
+        else if(is_context_layer(layer_input_indices))
         {
             layer_inputs.resize(1);
 
@@ -1572,9 +1575,9 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
         }
         else
         {
-            layer_inputs.resize(layers_inputs_indices(i).size());
+            layer_inputs.resize(layer_inputs_number);
 
-            for(Index j = 0; j < layers_inputs_indices(i).size(); j++)
+            for(Index j = 0; j < layer_inputs_number; j++)
             {
                 layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
@@ -1803,14 +1806,8 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Inputs number
 
-    file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    //    buffer << get_inputs_number();
-    buffer << inputs_names.size();
-
-    file_stream.PushText(buffer.str().c_str());
-
+    file_stream.OpenElement("InputsNumber");   
+    file_stream.PushText(to_string(inputs_names.size()).c_str());
     file_stream.CloseElement();
 
     // Inputs names
@@ -1818,11 +1815,8 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
     for(Index i = 0; i < inputs_names.size(); i++)
     {
         file_stream.OpenElement("Input");
-
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
-
         file_stream.PushText(inputs_names[i].c_str());
-
         file_stream.CloseElement();
     }
 
@@ -1836,19 +1830,9 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers number
 
-    //cout << "Layers types" << endl;
+    file_stream.OpenElement("LayerTypes");    
 
-    file_stream.OpenElement("LayersTypes");
-
-    buffer.str("");
-
-    for(Index i = 0; i < layers.size(); i++)
-    {
-        buffer << layers[i]->get_type_string();
-        if(i != (layers.size()-1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(string_tensor_to_string(get_layer_types_string()).c_str());
 
     file_stream.CloseElement();
 
@@ -1870,11 +1854,15 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushAttribute("LayerIndex", to_string(i+1).c_str());
 
         const Tensor<Index, 1>& indices = layers_inputs_indices(i);
+
         buffer.str("");
+
         for(Index j = 0; j < indices.size(); j++)
         {
             buffer << indices(j);
-            if(j != (indices.size() - 1)) buffer << " ";
+
+            if(j != indices.size() - 1)
+                buffer << " ";
         }
 
         file_stream.PushText(buffer.str().c_str());
@@ -1894,20 +1882,20 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs number
 
-    const Index outputs_number = outputs_names.size();
+    const Index outputs_number = outputs_name.size();
     file_stream.OpenElement("OutputsNumber");
     file_stream.PushText(to_string(outputs_number).c_str());
     file_stream.CloseElement();
 
     // Outputs names
 
-    for(Index i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_name.size(); i++)
     {
         file_stream.OpenElement("Output");
 
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
 
-        file_stream.PushText(outputs_names[i].c_str());
+        file_stream.PushText(outputs_name[i].c_str());
 
         file_stream.CloseElement();
     }
@@ -1944,7 +1932,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
         inputs_from_XML(inputs_document);
     }
-
 
     // Layers
 
@@ -2032,25 +2019,25 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
     // Layers types
 
-    const tinyxml2::XMLElement* layers_types_element = root_element->FirstChildElement("LayersTypes");
+    const tinyxml2::XMLElement* layer_types_element = root_element->FirstChildElement("LayerTypes");
 
-    if(!layers_types_element)
-        throw runtime_error("Layers types element is nullptr.\n");
+    if(!layer_types_element)
+        throw runtime_error("LayerTypes element is nullptr.\n");
 
-    Tensor<string, 1> layers_types;
+    Tensor<string, 1> layer_types;
 
-    if(layers_types_element->GetText())
+    if(layer_types_element->GetText())
     {
-        layers_types = get_tokens(layers_types_element->GetText(), " ");
+        layer_types = get_tokens(layer_types_element->GetText(), " ");
     }
 
     // Add layers
 
-    const tinyxml2::XMLElement* start_element = layers_types_element;
+    const tinyxml2::XMLElement* start_element = layer_types_element;
 
-    for(Index i = 0; i < layers_types.size(); i++)
+    for(Index i = 0; i < layer_types.size(); i++)
     {
-        if(layers_types(i) == "Scaling2D")
+        if(layer_types(i) == "Scaling2D")
         {
             ScalingLayer2D* scaling_layer = new ScalingLayer2D();
 
@@ -2070,7 +2057,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(scaling_layer);
         }
-        else if(layers_types(i) == "Scaling4D")
+        else if(layer_types(i) == "Scaling4D")
         {
             ScalingLayer4D* scaling_layer = new ScalingLayer4D();
 
@@ -2090,7 +2077,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(scaling_layer);
         }
-        else if(layers_types(i) == "Convolutional")
+        else if(layer_types(i) == "Convolutional")
         {
             ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
 
@@ -2109,7 +2096,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(convolutional_layer);
         }
-        else if(layers_types(i) == "Perceptron")
+        else if(layer_types(i) == "Perceptron")
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer();
 
@@ -2128,7 +2115,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(perceptron_layer);
         }
-        else if(layers_types(i) == "Perceptron3D")
+        else if(layer_types(i) == "Perceptron3D")
         {
             PerceptronLayer3D* perceptron_layer_3d = new PerceptronLayer3D();
 
@@ -2147,7 +2134,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(perceptron_layer_3d);
         }
-        else if(layers_types(i) == "Pooling")
+        else if(layer_types(i) == "Pooling")
         {
             PoolingLayer* pooling_layer = new PoolingLayer();
 
@@ -2166,7 +2153,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(pooling_layer);
         }
-        else if(layers_types(i) == "Probabilistic")
+        else if(layer_types(i) == "Probabilistic")
         {
             ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
@@ -2184,7 +2171,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(probabilistic_layer);
         }
-        else if(layers_types(i) == "Probabilistic3D")
+        else if(layer_types(i) == "Probabilistic3D")
         {
             ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D();
 
@@ -2202,7 +2189,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(probabilistic_layer_3d);
         }
-        else if(layers_types(i) == "LongShortTermMemory")
+        else if(layer_types(i) == "LongShortTermMemory")
         {
             LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
 
@@ -2221,7 +2208,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(long_short_term_memory_layer);
         }
-        else if(layers_types(i) == "Recurrent")
+        else if(layer_types(i) == "Recurrent")
         {
             RecurrentLayer* recurrent_layer = new RecurrentLayer();
 
@@ -2240,7 +2227,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(recurrent_layer);
         }
-        else if(layers_types(i) == "Unscaling")
+        else if(layer_types(i) == "Unscaling")
         {
             UnscalingLayer* unscaling_layer = new UnscalingLayer();
 
@@ -2259,7 +2246,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(unscaling_layer);
         }
-        else if(layers_types(i) == "Bounding")
+        else if(layer_types(i) == "Bounding")
         {
             BoundingLayer* bounding_layer = new BoundingLayer();
 
@@ -2279,7 +2266,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(bounding_layer);
         }
-        else if(layers_types(i) == "Embedding")
+        else if(layer_types(i) == "Embedding")
         {
             EmbeddingLayer* embedding_layer = new EmbeddingLayer();
 
@@ -2299,7 +2286,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(embedding_layer);
         }
-        else if(layers_types(i) == "MultiheadAttention")
+        else if(layer_types(i) == "MultiheadAttention")
         {
             MultiheadAttentionLayer* multihead_attention_layer = new MultiheadAttentionLayer();
 
@@ -2319,7 +2306,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(multihead_attention_layer); 
         }
-        else if(layers_types(i) == "Addition3D")
+        else if(layer_types(i) == "Addition3D")
         {
             AdditionLayer3D* addition_layer_3d = new AdditionLayer3D();
             
@@ -2339,7 +2326,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             
             add_layer(addition_layer_3d);
         }
-        else if(layers_types(i) == "Normalization3D")
+        else if(layer_types(i) == "Normalization3D")
         {
             NormalizationLayer3D* normalization_layer_3d = new NormalizationLayer3D();
 
@@ -2404,37 +2391,25 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
     Index new_outputs_number = 0;
 
     if(outputs_number_element->GetText())
-    {
         new_outputs_number = Index(atoi(outputs_number_element->GetText()));
-    }
 
     // Outputs names
-/*
+
     const tinyxml2::XMLElement* start_element = outputs_number_element;
 
-    if(new_outputs_number > 0)
-    {
-        outputs_names.resize(new_outputs_number);
+    outputs_name.resize(new_outputs_number);
 
-        for(Index i = 0; i < new_outputs_number; i++)
-        {
-            const tinyxml2::XMLElement* output_element = start_element->NextSiblingElement("Output");
-            start_element = output_element;
-            
-            if(output_element->Attribute("Index") != to_string(i+1))
-                throw runtime_error("Output index number (" + to_string(i+1) + ") does not match (" + output_element->Attribute("Item") + ").\n");
-            
-            if(!output_element->GetText())
-            {
-                outputs_names(i) = "";
-            }
-            else
-            {
-                outputs_names(i) = output_element->GetText();
-            }
-        }
+    for(Index i = 0; i < new_outputs_number; i++)
+    {
+        const tinyxml2::XMLElement* output_element = start_element->NextSiblingElement("Output");
+        start_element = output_element;
+
+        if(output_element->Attribute("Index") != to_string(i+1))
+            throw runtime_error("Output index number (" + to_string(i+1) + ") does not match (" + output_element->Attribute("Item") + ").\n");
+
+        if(output_element->GetText())
+            outputs_name(i) = output_element->GetText();
     }
-*/
 }
 
 
@@ -2531,7 +2506,7 @@ string NeuralNetwork::write_expression() const
     const Index layers_number = get_layers_number();
 
     const Tensor<Layer*, 1> layers = get_layers();
-    const Tensor<string, 1> layers_names = get_layers_names();
+    const Tensor<string, 1> layer_names = get_layer_names();
 
     Tensor<string, 1> outputs_names_vector;
     Tensor<string, 1> inputs_names_vector;
@@ -2562,13 +2537,13 @@ string NeuralNetwork::write_expression() const
     {
         if(i == layers_number-1)
         {
-            outputs_names_vector = outputs_names;
+            outputs_names_vector = outputs_name;
 
-            for(int j = 0; j < outputs_names.dimension(0); j++)
+            for(int j = 0; j < outputs_name.dimension(0); j++)
             {
                 if(!outputs_names_vector[j].empty())
                 {
-                    aux_name = outputs_names[j];
+                    aux_name = outputs_name[j];
                     outputs_names_vector(j) = replace_non_allowed_programming_expressions(aux_name);
                 }
                 else
@@ -2585,7 +2560,7 @@ string NeuralNetwork::write_expression() const
 
             for(Index j = 0; j < layer_neurons_number; j++)
             {
-                if(layers_names(i) == "scaling_layer")
+                if(layer_names(i) == "scaling_layer")
                 {
                     aux_name = inputs_names(j);
                     outputs_names_vector(j) = "scaled_" + replace_non_allowed_programming_expressions(aux_name);
@@ -2593,7 +2568,7 @@ string NeuralNetwork::write_expression() const
                 }
                 else
                 {
-                    outputs_names_vector(j) =  layers_names(i) + "_output_" + to_string(j);
+                    outputs_names_vector(j) =  layer_names(i) + "_output_" + to_string(j);
                 }
             }
             buffer << layers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
@@ -3017,7 +2992,7 @@ string NeuralNetwork::write_expression_c() const
         }
         else
         {
-            buffer << "\t" << "printf( \""<< outputs_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
+            buffer << "\t" << "printf( \""<< outputs_name[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
         }
     }
 
@@ -3749,7 +3724,7 @@ string NeuralNetwork::write_expression_javascript() const
 
         for(int i = 0; i < outputs.dimension(0); i++)
         {
-            buffer << "<option value=\"" << outputs[i] << "\">" << outputs_names[i] << "</option>" << endl;
+            buffer << "<option value=\"" << outputs[i] << "\">" << outputs_name[i] << "</option>" << endl;
         }
 
         buffer << "</select>" << endl;
@@ -3770,7 +3745,7 @@ string NeuralNetwork::write_expression_javascript() const
         for(int i = 0; i < outputs.dimension(0); i++)
         {
             buffer << "<tr style=\"height:3.5em\">" << endl;
-            buffer << "<td> " << outputs_names[i] << " </td>" << endl;
+            buffer << "<td> " << outputs_name[i] << " </td>" << endl;
             buffer << "<td>" << endl;
             buffer << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << outputs[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl;
             buffer << "</td>" << endl;
@@ -4582,16 +4557,16 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name + " file.\n");
 
-    const Tensor<string, 1> outputs_names = get_outputs_names();
+    const Tensor<string, 1> outputs_name = get_outputs_names();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        file << outputs_names[i];
+        file << outputs_name[i];
 
-        if(i != outputs_names.size()-1) file << ";";
+        if(i != outputs_name.size()-1) file << ";";
     }
 
     file << "\n";
@@ -4612,18 +4587,34 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 }
 
 
-Tensor<string, 1> NeuralNetwork::get_layers_names() const
+Tensor<string, 1> NeuralNetwork::get_layer_names() const
 {
     const Index layers_number = get_layers_number();
 
-    Tensor<string, 1> layers_names(layers_number);
+    Tensor<string, 1> layer_names(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
     {
-        layers_names[i] = layers[i]->get_name();
+        layer_names[i] = layers[i]->get_name();
     }
 
-    return layers_names;
+    return layer_names;
+}
+
+
+
+Tensor<string, 1> NeuralNetwork::get_layer_types_string() const
+{
+    const Index layers_number = get_layers_number();
+
+    Tensor<string, 1> layer_types(layers_number);
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        layer_types[i] = layers[i]->get_type_string();
+    }
+
+    return layer_types;
 }
 
 
@@ -4637,19 +4628,6 @@ Layer* NeuralNetwork::get_last_trainable_layer() const
 
     return trainable_layers(trainable_layers_number-1);
 }
-
-
-/* Layer* NeuralNetwork::get_last_layer() const
-// {
-//     if(layers.size() > 0)
-//     {
-//         Layer* last_layer = layers[layers.size() - 1];
-
-//         return last_layer;
-//     }
-
-//     return nullptr;
-// }*/
 
 
 void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)

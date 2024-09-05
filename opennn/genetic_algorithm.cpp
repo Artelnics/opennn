@@ -1319,7 +1319,7 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_
         inputs_pre_indexes(original_input_index) = true;
     }
 
-    Index cont = 0;
+    Index count = 0;
 
     Tensor<Index ,1> indexes(indexes_dimension);
 
@@ -1327,8 +1327,8 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_
     {
         if(inputs_pre_indexes(i))
         {
-            indexes(cont) = i;
-            cont++;
+            indexes(count) = i;
+            count++;
         }
     }
 
@@ -1689,19 +1689,27 @@ void GeneticAlgorithm::print() const
 
 void GeneticAlgorithm::save(const string& file_name) const
 {
-    try {
-        FILE* file = fopen(file_name.c_str(), "w");
-
-        if(file)
-        {
-            tinyxml2::XMLPrinter printer(file);
-            to_XML(printer);
-            fclose(file);
-        }
-
-    } catch(exception e)
+    try
     {
-        cout<< e.what();
+        ofstream file(file_name);
+
+        if (file.is_open())
+        {
+            tinyxml2::XMLPrinter printer;
+            to_XML(printer);
+
+            file << printer.CStr();
+
+            file.close();
+        }
+        else
+        {
+            throw runtime_error("Cannot open file: " + file_name);
+        }
+    }
+    catch (const exception& e)
+    {
+        cerr << e.what() << endl;
     }
 }
 

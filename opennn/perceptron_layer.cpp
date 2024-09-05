@@ -249,7 +249,7 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
 
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
-
+/*
     copy(new_parameters_data + index,
         new_parameters_data + index + synaptic_weights_number,
         synaptic_weights_data);
@@ -257,6 +257,14 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     copy(new_parameters_data + index + synaptic_weights_number,
         new_parameters_data + index + synaptic_weights_number + biases_number,
         biases_data);
+*/
+    synaptic_weights = TensorMap<const Tensor<type, 2>>(new_parameters.data() + index,
+                                                        synaptic_weights.dimension(0),
+                                                        synaptic_weights.dimension(1));
+
+    biases = TensorMap<const Tensor<type, 1>>(new_parameters.data() + index + synaptic_weights.size(),
+                                              biases.size());
+
 }
 
 
@@ -337,7 +345,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                              Tensor<type, 2>& combinations) const
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
-    
+
     sum_columns(thread_pool_device, biases, combinations);
 }
 
@@ -362,82 +370,93 @@ void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
 }
 
 
-void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations,
-                                            Tensor<type, 2>& activations) const
+void PerceptronLayer::calculate_activations(Tensor<type, 2>& activations) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(combinations, activations); return;
+    case ActivationFunction::Linear: linear(activations); return;
 
-    case ActivationFunction::Logistic: logistic(combinations, activations); return;
+    case ActivationFunction::Logistic: logistic(activations); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(combinations, activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations); return;
 
-    case ActivationFunction::SoftSign: soft_sign(combinations, activations); return;
+    case ActivationFunction::SoftSign: soft_sign(activations); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
 
     default: return;
     }
+
+/*
+    using ActivationFunc = void (PerceptronLayer::*)(Tensor<type, 2>&) const;
+
+    static const unordered_map<ActivationFunction, ActivationFunc> activation_map =
+        {{ ActivationFunction::Linear, &PerceptronLayer::linear },
+         { ActivationFunction::Logistic, &PerceptronLayer::logistic },
+         { ActivationFunction::HyperbolicTangent, &PerceptronLayer::hyperbolic_tangent },
+         { ActivationFunction::RectifiedLinear, &PerceptronLayer::rectified_linear },
+         { ActivationFunction::ScaledExponentialLinear, &PerceptronLayer::scaled_exponential_linear },
+         { ActivationFunction::SoftPlus, &PerceptronLayer::soft_plus },
+         { ActivationFunction::SoftSign, &PerceptronLayer::soft_sign },
+         { ActivationFunction::HardSigmoid, &PerceptronLayer::hard_sigmoid },
+         { ActivationFunction::ExponentialLinear, &PerceptronLayer::exponential_linear }};
+
+    auto it = activation_map.find(activation_function);
+
+    if (it != activation_map.end())
+    {
+        (this->*(it->second))(activations);
+    }
+*/
 }
 
 
-void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-                                                        Tensor<type, 2>& activations,
+void PerceptronLayer::calculate_activations_derivatives(Tensor<type, 2>& activations,
                                                         Tensor<type, 2>& activations_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear_derivatives(combinations,
-                                                        activations,
+    case ActivationFunction::Linear: linear_derivatives(activations,
                                                         activations_derivatives);
         return;
 
-    case ActivationFunction::Logistic: logistic_derivatives(combinations,
-                                                            activations,
+    case ActivationFunction::Logistic: logistic_derivatives(activations,
                                                             activations_derivatives);
         return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations,
-                                                                               activations,
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
                                                                                activations_derivatives);
         return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations,
-                                                                           activations,
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
                                                                            activations_derivatives);
         return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations,
-                                                                                            activations,
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(activations,
                                                                                             activations_derivatives);
         return;
 
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations,
-                                                             activations,
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(activations,
                                                              activations_derivatives);
         return;
 
-    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations,
-                                                             activations,
+    case ActivationFunction::SoftSign: soft_sign_derivatives(activations,
                                                              activations_derivatives);
         return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations,
-                                                                   activations,
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(activations,
                                                                    activations_derivatives);
         return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations,
-                                                                               activations,
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(activations,
                                                                                activations_derivatives);
         return;
 
@@ -472,13 +491,11 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
         Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
 
         calculate_activations_derivatives(outputs,
-                                          outputs,
                                           activations_derivatives);
     }
     else
     {
-        calculate_activations(outputs,
-                              outputs);
+        calculate_activations(outputs);
     }
 }
 
@@ -509,7 +526,7 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 
     Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
 
-    bool& is_first_layer = perceptron_layer_back_propagation->is_first_layer;
+    const bool& is_first_layer = perceptron_layer_back_propagation->is_first_layer;
 
     Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation->input_derivatives;
     
@@ -644,15 +661,15 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 
 
 string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names,
-                                         const Tensor<string, 1>& outputs_names) const
+                                         const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < outputs_names.size(); j++)
+    for(Index j = 0; j < outputs_name.size(); j++)
     {
         const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
 
-        buffer << outputs_names[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
+        buffer << outputs_name[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < inputs_names.size() - 1; i++)
         {

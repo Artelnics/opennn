@@ -81,7 +81,7 @@ void MeanSquaredError::calculate_error_lm(const Batch& batch,
 
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    sum_squared_error.device(*thread_pool_device) = (squared_errors*squared_errors).sum();
+    sum_squared_error.device(*thread_pool_device) = squared_errors.square().sum();
 
     const type coefficient = type(1)/type(batch_samples_number*outputs_number);
 

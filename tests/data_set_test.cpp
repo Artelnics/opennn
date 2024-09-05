@@ -387,8 +387,8 @@ void DataSetTest::test_read_csv()
 
     data_set.set(2, 2, 2);
     data_set.set_separator(',');
-    data_source_path = "../data/data.dat";
-    data_set.set_data_source_path(data_source_path);
+    data_path = "../data/data.dat";
+    data_set.set_data_source_path(data_path);
     data_set.set_data_constant(type(0));
     data_set.save_data();
 
@@ -402,12 +402,12 @@ void DataSetTest::test_read_csv()
     data_set.set_separator('\t');
     data_string = "\n\n\n   1\t2   \n\n\n   3\t4   \n\n\n    5\t6    \n\n\n";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
     data_set.set();
-    data_set.set_data_source_path(data_source_path);
+    data_set.set_data_source_path(data_path);
     data_set.read_csv();
     data = data_set.get_data();
 
@@ -429,12 +429,12 @@ void DataSetTest::test_read_csv()
     data_set.set_separator('\t');
     data_string = "\n\n\n   1\t2   \n\n\n   3\t4   \n\n\n   5\t6  \n\n\n";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
     data_set.set();
-    data_set.set_data_source_path(data_source_path);
+    data_set.set_data_source_path(data_path);
     data_set.read_csv();
 
     data = data_set.get_data();
@@ -462,7 +462,7 @@ void DataSetTest::test_read_csv()
                   "3 4\n"
                   "5 6";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -491,7 +491,7 @@ void DataSetTest::test_read_csv()
                   "\t1\t,\t2\n"
                   "\t3\t,\t4";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -516,7 +516,7 @@ void DataSetTest::test_read_csv()
                   "1 , 2\n"
                   "3 , 4\n";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -542,7 +542,7 @@ void DataSetTest::test_read_csv()
             "7.0,3.2,4.7,1.4,Iris-versicolor\n"
             "6.3,3.3,6.0,2.5,Iris-virginica";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -561,7 +561,7 @@ void DataSetTest::test_read_csv()
             "7.0,3.2,4.7,1.4,Iris-versicolor\n"
             "6.3,3.3,6.0,2.5,Iris-virginica\n";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -601,7 +601,7 @@ void DataSetTest::test_read_csv()
             "6.3,3.3,6.0,2.5,Iris-virginica\n"
             "0.0,0.0,0.0,0.0,NaN\n";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -639,7 +639,7 @@ void DataSetTest::test_read_csv()
     data_set.set_separator(' ');
     data_string = "1 2\n3 4\n5 6";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -661,7 +661,7 @@ void DataSetTest::test_read_csv()
                   "3 false\n"
                   "5 true\n";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -693,7 +693,7 @@ void DataSetTest::test_read_csv()
             "m\t40\t6619\t23\t168081\t1\tno\n"
             "f\t12\t4204\t17\t1\t2\tno\n";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -1004,13 +1004,13 @@ void DataSetTest::test_scrub_missing_values()
 
     cout << "test_scrub_missing_values\n";
 
-    const string data_source_path = "../data/data.dat";
+    const string data_path = "../data/data.dat";
 
     Tensor<DataSet::SampleUse, 1> samples_uses;
 
     ofstream file;
 
-    data_set.set_data_source_path(data_source_path);
+    data_set.set_data_source_path(data_path);
 
     string data_string;
 
@@ -1023,7 +1023,7 @@ void DataSetTest::test_scrub_missing_values()
                   "0 0 NaN\n"
                   "0 0 0\n";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 
@@ -1045,7 +1045,7 @@ void DataSetTest::test_scrub_missing_values()
                  "2 1 ?\n"
                  "1 2 1";
 
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
     file << data_string;
     file.close();
 

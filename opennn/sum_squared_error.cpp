@@ -66,7 +66,7 @@ void SumSquaredError::calculate_error_lm(const Batch&,
 
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) = (squared_errors*squared_errors).sum();
+    sum_squared_error.device(*thread_pool_device) = squared_errors.square().sum();
 
     error = sum_squared_error(0);
 

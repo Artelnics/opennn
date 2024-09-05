@@ -418,7 +418,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
     input_derivatives.setZero();
-    
+    /*
     switch (pooling_method)
     {
     case PoolingMethod::MaxPooling:
@@ -484,6 +484,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
         input_derivatives = deltas;
         break;
     }
+    */
 }
 
 
