@@ -921,6 +921,14 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 {
     const Index samples_number = data_set->get_training_samples_number();
+    const dimensions inputs_dimensions = data_set->get_input_dimensions();
+
+    Index inputs_number = 1;
+
+    for(Index i = 0; i < inputs_dimensions.size(); i++)
+        inputs_number *= inputs_dimensions[i];
+
+    inputs_number = samples_number * inputs_number;
 
     const Tensor<Index, 1> samples_indices = data_set->get_training_samples_indices();
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
@@ -933,54 +941,52 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     BackPropagation back_propagation(samples_number, this);
 
-    const Tensor<type, 1> parameters = neural_network->get_parameters();
+    type* inputs_data = batch.get_inputs_pair()(0).first;
 
-    const Index parameters_number = parameters.size();
+    TensorMap<Tensor<type, 1>> inputs_vector(inputs_data, inputs_number);
 
     type h;
-    Tensor<type, 1> parameters_forward = parameters;
-    Tensor<type, 1> parameters_backward = parameters;
+    Tensor<type, 1> inputs_forward = inputs_vector;
+    Tensor<type, 1> inputs_backward = inputs_vector;
 
     type error_forward;
     type error_backward;
 
-    Tensor<type, 1> numerical_gradient(parameters_number);
-    numerical_gradient.setConstant(type(0));
+    Tensor<type, 1> numerical_inputs_derivatives(inputs_number);
+    numerical_inputs_derivatives.setConstant(type(0));
 
     const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
-    for(Index i = 0; i < parameters_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
-        h = calculate_h(parameters(i));
+        h = calculate_h(inputs_vector(i));
 
-        parameters_forward(i) += h;
+        inputs_forward(i) += h;
 
         neural_network->forward_propagate(inputs_pair,
-                                          parameters_forward,
                                           forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
 
         error_forward = back_propagation.error;
 
-        parameters_forward(i) -= h;
+        inputs_forward(i) -= h;
 
-        parameters_backward(i) -= h;
+        inputs_backward(i) -= h;
 
         neural_network->forward_propagate(inputs_pair,
-                                          parameters_backward,
                                           forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
 
         error_backward = back_propagation.error;
 
-        parameters_backward(i) += h;
+        inputs_backward(i) += h;
 
-        numerical_gradient(i) = (error_forward - error_backward)/type(2*h);
+        numerical_inputs_derivatives(i) = (error_forward - error_backward)/type(2*h);
     }
 
-    return numerical_gradient;
+    return numerical_inputs_derivatives;
 }
 
 
