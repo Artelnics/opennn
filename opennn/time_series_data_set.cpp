@@ -55,19 +55,20 @@ Tensor<DataSet::RawVariable, 1> TimeSeriesDataSet::get_time_series_raw_variables
     return time_series_raw_variables;
 }
 
-/*
 
 const string& TimeSeriesDataSet::get_time_raw_variable() const
 {
-    return time_column;
+    //return time_column; @todo
+    return "";
 }
 
 
 const string& TimeSeriesDataSet::get_group_by_column() const
 {
-    return group_by_column;
+    //return group_by_column; @todo
+    return "";
 }
-*/
+
 
 Index TimeSeriesDataSet::get_time_series_variables_number() const
 {

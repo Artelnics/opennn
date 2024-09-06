@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
-//#include "tensors.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -225,7 +225,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
     y.device(*thread_pool_device) = x;
 
     aux_rows.device(*thread_pool_device) = x.maximum(softmax_dimension);
-/*
+
     substract_columns(thread_pool_device, aux_rows, y);
 
     y.device(*thread_pool_device) = y.exp();
@@ -233,7 +233,6 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
     aux_rows.device(*thread_pool_device) = y.sum(softmax_dimension);
 
     divide_columns(thread_pool_device, y, aux_rows);
-*/
 }
 
 
