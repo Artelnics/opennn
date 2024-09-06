@@ -362,7 +362,7 @@ Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_descrip
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        const TensorMap<Tensor<type, 2>> matrix_error(error_data.data()+index, testing_samples_number, 3);
+        const TensorMap<Tensor<type, 2>> matrix_error(error_data.data() + index, testing_samples_number, 3);
 
         const Tensor<type, 2> matrix(matrix_error);
 
@@ -563,8 +563,6 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 {
     // Data set
 
-    const Index training_samples_number = data_set->get_training_samples_number();
-
     const Tensor<type, 2> inputs = data_set->get_training_input_data();
 
     const Tensor<type, 2> targets = data_set->get_training_target_data();
@@ -598,22 +596,11 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
     Tensor<type, 0> sum_squared_error;
     sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    // SSE
     errors(0) = sum_squared_error(0);
-
-    // MSE
     errors(1) = errors(0)/type(training_samples_number);
-
-    // RMSE
     errors(2) = sqrt(errors(1));
-
-    // NSE
     errors(3) = calculate_normalized_squared_error(targets, outputs);
-
-    // CE
     errors(4) = calculate_cross_entropy_error(targets, outputs);
-
-    // WSE
     errors(5) = calculate_weighted_squared_error(targets, outputs);
 
     return errors;
@@ -654,8 +641,6 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
 Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
 {
     // Data set
-
-    const Index selection_samples_number = data_set->get_selection_samples_number();
 
     const Tensor<type, 2> inputs = data_set->get_selection_input_data();
 
@@ -1452,9 +1437,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
     Tensor<type, 1> sorted_targets(testing_samples_number);
 
     for(Index i = 0; i < testing_samples_number; i++)
-    {
         sorted_targets(i) = targets(sorted_indices(i),0);
-    }
 
     const Index points_number = 21;
     const type percentage_increment = type(0.05);
@@ -1476,14 +1459,12 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
 
         positives = 0;
 
-        maximum_index = Index(percentage* type(testing_samples_number));
+        maximum_index = Index(percentage*testing_samples_number);
 
         for(Index j = 0; j < maximum_index; j++)
         {
             if(double(sorted_targets(j)) == 1.0)
-            {
                  positives++;
-            }
         }
 
         cumulative_gain(i + 1, 0) = percentage;
@@ -1540,12 +1521,8 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
         maximum_index = Index(percentage* type(testing_samples_number));
 
         for(Index j = 0; j < maximum_index; j++)
-        {
             if(sorted_targets(j) < type(NUMERIC_LIMITS_MIN))
-            {
                  negatives++;
-            }
-        }
 
         negative_cumulative_gain(i + 1, 0) = percentage;
 
@@ -1565,6 +1542,7 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
+
     const Tensor<type, 2> lift_chart = calculate_lift_chart(cumulative_gain);
 
     return lift_chart;
@@ -1609,7 +1587,7 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
         percentage += percentage_increment;
 
         if(positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
-                && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > type(0))
+        && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > type(0))
         {
             maximum_gain(1) = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
             maximum_gain(0) = percentage;
@@ -1628,9 +1606,7 @@ Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    const Tensor<type, 2> calibration_plot = calculate_calibration_plot(targets, outputs);
-
-    return calibration_plot;
+    return calculate_calibration_plot(targets, outputs);
 }
 
 
@@ -1673,9 +1649,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
                 sum += outputs(j, 0);
 
                 if(Index(targets(j, 0)) == 1)
-                {
                     positives++;
-                }
             }
         }
 
@@ -1723,7 +1697,7 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<ty
 
     const Tensor<type, 1> output_column = outputs.chip(0,1);
 
-    output_histogram (0) = histogram(output_column, bins_number);
+    output_histogram(0) = histogram(output_column, bins_number);
 
     return output_histogram;
 }

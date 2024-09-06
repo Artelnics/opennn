@@ -884,7 +884,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
-        //cout << "parameter " << i << endl;
         h = calculate_h(parameters(i));
 
        parameters_forward(i) += h;
@@ -896,7 +895,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_forward = back_propagation.error;
-       //cout << "error_forward: " << error_forward << endl;
 
        parameters_forward(i) -= h;
 
@@ -909,16 +907,78 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_backward = back_propagation.error;
-       //cout << "error_backward: " << error_backward << endl;
 
        parameters_backward(i) += h;
 
-       numerical_gradient(i) = (error_forward - error_backward)/(type(2)*h);
-
-       //cout << " numerical_gradient(i)" << numerical_gradient(i) << endl;
+       numerical_gradient(i) = (error_forward - error_backward)/type(2*h);
     }
 
     return numerical_gradient;
+}
+
+
+
+Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
+{
+    const Index samples_number = data_set->get_training_samples_number();
+    const dimensions inputs_dimensions = data_set->get_input_dimensions();
+
+    Index inputs_number = 1;
+
+    for(Index i = 0; i < inputs_dimensions.size(); i++)
+        inputs_number *= inputs_dimensions[i];
+
+    inputs_number = samples_number * inputs_number;
+
+    const Tensor<Index, 1> samples_indices = data_set->get_training_samples_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+
+    Batch batch(samples_number, data_set);
+    batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+
+    BackPropagation back_propagation(samples_number, this);
+
+    type h;
+
+    type error_forward;
+    type error_backward;
+
+    Tensor<type, 1> numerical_inputs_derivatives(inputs_number);
+    numerical_inputs_derivatives.setConstant(type(0));
+
+    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
+
+    TensorMap<Tensor<type, 1>> inputs_vector(inputs_pair(0).first, inputs_number);
+
+    for (Index i = 0; i < inputs_number; i++)
+    {
+        h = calculate_h(inputs_vector(i));
+
+        inputs_pair(0).first[i] += h;
+
+        neural_network->forward_propagate(inputs_pair, forward_propagation);
+
+        calculate_error(batch, forward_propagation, back_propagation);
+        error_forward = back_propagation.error;
+
+        inputs_pair(0).first[i] -= h;
+
+        inputs_pair(0).first[i] -= h;
+
+        neural_network->forward_propagate(inputs_pair, forward_propagation);
+
+        calculate_error(batch, forward_propagation, back_propagation);
+        error_backward = back_propagation.error;
+
+        inputs_pair(0).first[i] += h;
+
+        numerical_inputs_derivatives(i) = (error_forward - error_backward) / type(2 * h);
+    }
+
+    return numerical_inputs_derivatives;
 }
 
 

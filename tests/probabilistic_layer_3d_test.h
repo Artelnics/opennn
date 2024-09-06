@@ -57,14 +57,11 @@ private:
     ProbabilisticLayer3D probabilistic_layer_3d;
 
     ProbabilisticLayer3DForwardPropagation probabilistic_layer_3d_forward_propagation;
-
-    NumericalDifferentiation numerical_differentiation;
 };
 
 }
 
 #endif
-
 
 
 // OpenNN: Open Neural Networks Library.

@@ -361,11 +361,8 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     if(is_training)
     {
-        //cout << "outputs:\n" << outputs << endl;
         calculate_activations_derivatives(outputs,
                                           activations_derivatives);
-        //cout << outputs << endl;
-        //cout << activations_derivatives << endl;
     }
     else
     {
@@ -458,8 +455,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
 
-    Tensor<type, 4>& error_convolutions_derivatives =
-        convolutional_layer_back_propagation->error_convolutions_derivatives;
+    Tensor<type, 4>& convolutions_derivatives =
+        convolutional_layer_back_propagation->convolutions_derivatives;
 
     Tensor<type, 1>& biases_derivatives = convolutional_layer_back_propagation->biases_derivatives;
 
@@ -479,7 +476,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 0> current_sum;
 
-    error_convolutions_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+    convolutions_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
     
     /* { // Debug
         Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
@@ -509,7 +506,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
             extents = {1, output_height, output_width, 1};
 
-            delta_slice = error_convolutions_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
+            delta_slice = convolutions_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
 
             offsets = {image_index, 0, 0, 0};
             
@@ -552,7 +549,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
         {
             offsets = { image_index, 0, 0, kernel_index };
 
-            delta_slice = error_convolutions_derivatives.slice(offsets, extents);
+            delta_slice = convolutions_derivatives.slice(offsets, extents);
             
             const TensorMap<Tensor<type, 3>> delta_reshape(delta_slice.data(),
                                                            output_height,
@@ -585,7 +582,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     }*/
 
     /* OLD INPUT DERIVATIVES
-    input_derivatives = error_convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
+    input_derivatives = convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
     
     for(int image_index = 0; image_index < batch_samples_number; image_index++)
     {
@@ -600,7 +597,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                         .chip(column, 0)
                         .slice(std::array<Index, 2>({ row, column }),
                                std::array<Index, 2>({ kernel_height, kernel_width })) +=
-                        error_convolutions_derivatives(image_index, row, column, channel) *
+                        convolutions_derivatives(image_index, row, column, channel) *
                         synaptic_weights.chip(channel, 0);
 
                 }
@@ -1491,7 +1488,7 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
 
-    error_convolutions_derivatives.resize(batch_samples_number,
+    convolutions_derivatives.resize(batch_samples_number,
                                           output_height,
                                           output_width,
                                           channels);
