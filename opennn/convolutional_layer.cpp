@@ -361,11 +361,11 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     if(is_training)
     {
-        //cout << "outputs:\n" << outputs << endl;
+        cout << "outputs:\n" << outputs << endl;
         calculate_activations_derivatives(outputs,
                                           activations_derivatives);
-        //cout << outputs << endl;
-        //cout << activations_derivatives << endl;
+        cout << "activations:\n" << outputs << endl;
+        cout << "activations_derivatives:\n" << activations_derivatives << endl;
     }
     else
     {
