@@ -54,8 +54,6 @@ private:
 
     RecurrentLayer recurrent_layer;
     RecurrentLayerForwardPropagation recurrent_layer_forward_propagation;
-
-    NumericalDifferentiation numerical_differentiation;
 };
 
 }

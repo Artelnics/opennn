@@ -126,6 +126,8 @@ public:
 
    Tensor<type, 2> calculate_numerical_jacobian();
 
+   Tensor<type, 1> calculate_numerical_inputs_derivatives();
+
    // Back propagation
 
    virtual void calculate_error(const Batch&,

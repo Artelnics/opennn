@@ -51,7 +51,6 @@ int main()
    "neural_network | nn\n"
    "neurons_selection | ns\n"
    "normalized_squared_error | nse\n"
-   "numerical_differentiation | nd\n"
    "perceptron_layer | pl\n"
    "pooling_layer | pll\n"
    "probabilistic_layer | pbl\n"
@@ -124,15 +123,6 @@ int main()
           tests_count += data_set_test.get_tests_count();
           tests_passed_count += data_set_test.get_tests_passed_count();
           tests_failed_count += data_set_test.get_tests_failed_count();
-      }
-
-      else if(test == "numerical_differentiation" || test == "nd")
-      {
-         NumericalDifferentiationTest test_numerical_differentiation;
-         test_numerical_differentiation.run_test_case();
-         tests_count += test_numerical_differentiation.get_tests_count();
-         tests_passed_count += test_numerical_differentiation.get_tests_passed_count();
-         tests_failed_count += test_numerical_differentiation.get_tests_failed_count();
       }
 
       else if(test == "perceptron_layer" || test == "pl")
@@ -493,14 +483,6 @@ int main()
 
       else if(test == "suite"/* || test == ""*/)
       {
-          // numerical differentiation
-
-          NumericalDifferentiationTest test_numerical_differentiation;
-          test_numerical_differentiation.run_test_case();
-          tests_count += test_numerical_differentiation.get_tests_count();
-          tests_passed_count += test_numerical_differentiation.get_tests_passed_count();
-          tests_failed_count += test_numerical_differentiation.get_tests_failed_count();
-
           // tensor utilities
 
           TensorsTest tensor_utilites_test;
