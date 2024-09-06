@@ -184,6 +184,8 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     y.setZero();
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < rows_number; i++)
     {
         y(i, Index(maximum_indices(i))) = type(1);

@@ -136,6 +136,8 @@ public:
    Tensor<type, 2> calculate_binary_classification_errors() const;
    Tensor<type, 2> calculate_multiple_classification_errors() const;
 
+   Tensor<type, 1> calculate_errors(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
    Tensor<type, 1> calculate_training_errors() const;
    Tensor<type, 1> calculate_binary_classification_training_errors() const;
    Tensor<type, 1> calculate_multiple_classification_training_errors() const;

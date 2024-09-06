@@ -715,7 +715,7 @@ protected:
 
     Tensor<SampleUse, 1> samples_uses;
 
-    Tensor<string, 1> ids;
+    Tensor<string, 1> samples_id;
 
     // Raw variables
 
@@ -727,7 +727,7 @@ protected:
 
     // DATA FILE
 
-    string data_source_path;
+    string data_path;
 
     Separator separator = Separator::Comma;
 

@@ -65,7 +65,7 @@ public:
 
    string data_string;
 
-   string data_source_path;
+   string data_path;
 
 
    Index inputs_number;

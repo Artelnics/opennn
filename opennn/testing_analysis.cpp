@@ -540,6 +540,25 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_errors() cons
 }
 
 
+Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets,
+                                                  const Tensor<type, 2>& outputs) const
+{
+    const Index samples_number = outputs.dimension(0);
+
+    Tensor<type, 1> errors(4);
+
+    Tensor<type, 0> sum_squared_error;
+    sum_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
+
+    errors(0) = sum_squared_error(0);
+    errors(1) = errors(0) / type(samples_number);
+    errors(2) = sqrt(errors(1));
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
+
+    return errors;
+}
+
+
 Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 {
     // Data set
@@ -554,19 +573,7 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    Tensor<type, 1> errors(4);
-
-    // Results
-
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
-
-    errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/type(training_samples_number);
-    errors(2) = sqrt(errors(1));
-    errors(3) = calculate_normalized_squared_error(targets, outputs);
-
-    return errors;
+    return calculate_errors(targets, outputs);
 }
 
 
@@ -658,19 +665,7 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    Tensor<type, 1> errors(4);
-
-    // Results
-
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
-
-    errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/type(selection_samples_number);
-    errors(2) = sqrt(errors(1));
-    errors(3) = calculate_normalized_squared_error(targets, outputs);
-
-    return errors;
+    return calculate_errors(targets, outputs);
 }
 
 
@@ -865,7 +860,7 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
 
 
 type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targets,
-        const Tensor<type, 2>& outputs) const
+                                                    const Tensor<type, 2>& outputs) const
 {
     const Index testing_samples_number = targets.dimension(0);
     const Index outputs_number = targets.dimension(1);
