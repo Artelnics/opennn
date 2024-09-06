@@ -1,4 +1,4 @@
-#   OpenNN: Open Neural Networks Library                                                          
+#   OpenNN: Open Neural Networks Library
 #   www.opennn.net                                                                                
 #                                                                                                 
 #   T E S T S   P R O J E C T                                                                     
@@ -51,7 +51,6 @@ SOURCES += \
     growing_inputs_test.cpp \
     genetic_algorithm_test.cpp \
     testing_analysis_test.cpp \
-    numerical_differentiation_test.cpp \
     correlations_test.cpp \
     stochastic_gradient_descent_test.cpp \
     statistics_test.cpp \
@@ -100,7 +99,6 @@ HEADERS += \
     growing_inputs_test.h \
     genetic_algorithm_test.h \
     testing_analysis_test.h  \
-    numerical_differentiation_test.h \
     opennn_tests.h \
     stochastic_gradient_descent_test.h \
     correlations_test.h \

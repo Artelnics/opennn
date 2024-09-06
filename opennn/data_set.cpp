@@ -47,31 +47,6 @@ DataSet::DataSet(const Tensor<type, 2>& data)
 }
 
 
-void DataSet::set_default_columns_scalers()
-{
-    const Index raw_variables_number = raw_variables.size();
-
-    if(model_type == ModelType::ImageClassification)
-    {
-        set_raw_variables_scalers(Scaler::MinimumMaximum);
-    }
-    else
-    {
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            if(raw_variables(i).type == RawVariableType::Numeric)
-            {
-                raw_variables(i).scaler = Scaler::MeanStandardDeviation;
-            }
-            else
-            {
-                raw_variables(i).scaler = Scaler::MinimumMaximum;
-            }
-        }
-    }
-}
-
-
 DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_number)
 {
     set(new_samples_number, new_variables_number);

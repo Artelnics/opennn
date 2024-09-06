@@ -99,8 +99,6 @@ public:
 
     explicit DataSet(const Tensor<type, 1>&, const Index&);
 
-    void set_default_columns_scalers();
-
     enum class Codification{UTF8, SHIFT_JIS};
 
     explicit DataSet(const string&,
