@@ -207,13 +207,9 @@ void LossIndex::set_display(const bool& new_display)
 bool LossIndex::has_selection() const
 {
     if(data_set->get_selection_samples_number() != 0)
-    {
         return true;
-    }
     else
-    {
         return false;
-    }
 }
 
 

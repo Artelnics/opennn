@@ -246,13 +246,12 @@ protected:
     template <int rank>
     void soft_sign(Tensor<type, rank>& x) const
     {
-        x.device(*thread_pool_device) = x / (1 + x.abs());
+        x.device(*thread_pool_device) = (x / (1 + x.abs())).eval();
     }
 
 
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 //    void competitive(const Tensor<type, 3>&, Tensor<type, 3>&) const;
-
 
     void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
     void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;
@@ -292,16 +291,17 @@ protected:
     template <int rank>
     void hard_sigmoid_derivatives(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = (y*type(0.2) + type(0.5)).cwiseMax(type(0)).cwiseMin(type(1));
+        hard_sigmoid(y);
 
-        dy_dx.device(*thread_pool_device) = (y > type(0) && y < type(1)).select(dy_dx.constant(type(0.2)), dy_dx.constant(type(0)));
+        dy_dx.device(*thread_pool_device)
+            = (y > type(0) && y < type(1)).select(dy_dx.constant(type(0.2)), dy_dx.constant(type(0)));
     }
 
 
     template <int rank>
     void hyperbolic_tangent_derivatives(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = y.tanh();
+        hyperbolic_tangent(y);
 
         dy_dx.device(*thread_pool_device) = (type(1) - y.square()).eval();
     }

@@ -96,13 +96,13 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 }
 
 
-DataSet::DataSet(const string& data_source_path,
+DataSet::DataSet(const string& data_path,
                  const string& separator,
                  const bool& has_header,
                  const bool& has_samples_id,
                  const Codification& data_codification)
 {
-    set(data_source_path, separator, has_header, has_samples_id, data_codification);
+    set(data_path, separator, has_header, has_samples_id, data_codification);
 }
 
 
@@ -2985,7 +2985,7 @@ string DataSet::get_missing_values_method_string() const
 
 const string& DataSet::get_data_source_path() const
 {
-    return data_source_path;
+    return data_path;
 }
 
 
@@ -3003,7 +3003,7 @@ const bool& DataSet::get_has_ids() const
 
 Tensor<string, 1> DataSet::get_ids() const
 {
-    return ids;
+    return samples_id;
 }
 
 
@@ -3015,7 +3015,7 @@ Tensor<string, 1> DataSet::get_ids() const
 
 //     for(Index i = 0; i < testing_samples_number; i++)
 //     {
-//         testing_rows_label(i) = ids(testing_indices(i));
+//         testing_rows_label(i) = samples_id(testing_indices(i));
 //     }
 
 //     return testing_rows_label;
@@ -3030,7 +3030,7 @@ Tensor<string, 1> DataSet::get_ids() const
 
 //     for(Index i = 0; i < selection_samples_number; i++)
 //     {
-//         selection_rows_label(i) = ids(selection_indices(i));
+//         selection_rows_label(i) = samples_id(selection_indices(i));
 //     }
 
 //     return selection_rows_label;
@@ -3780,13 +3780,13 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
 }
 
 
-// void DataSet::set(const string& data_source_path, const char& separator, const bool& new_has_header)
+// void DataSet::set(const string& data_path, const char& separator, const bool& new_has_header)
 // {
 //     set();
 
 //     set_default();
 
-//     set_data_source_path(data_source_path);
+//     set_data_source_path(data_path);
 
 //     set_separator(separator);
 
@@ -3801,7 +3801,7 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
 // }
 
 
-void DataSet::set(const string& data_source_path,
+void DataSet::set(const string& data_path,
                   const string& separator,
                   const bool& new_has_header,
                   const bool& new_has_ids,
@@ -3811,7 +3811,7 @@ void DataSet::set(const string& data_source_path,
 
     set_default();
 
-    set_data_source_path(data_source_path);
+    set_data_source_path(data_path);
 
     set_separator_string(separator);
 
@@ -3838,7 +3838,7 @@ void DataSet::set(const string& data_source_path,
 
 void DataSet::set(const Tensor<type, 2>& new_data)
 {
-    data_source_path = "";
+    data_path = "";
     
     const Index variables_number = new_data.dimension(1);
     const Index samples_number = new_data.dimension(0);
@@ -3880,7 +3880,7 @@ void DataSet::set(const Index& new_samples_number,
                   const Index& new_targets_number)
 {
 
-    data_source_path = "";
+    data_path = "";
 
     const Index new_variables_number = new_inputs_number + new_targets_number;
 
@@ -3917,7 +3917,7 @@ void DataSet::set(const Index& new_samples_number,
 
 void DataSet::set(const DataSet& other_data_set)
 {
-    data_source_path = other_data_set.data_source_path;
+    data_path = other_data_set.data_path;
 
     has_header = other_data_set.has_header;
 
@@ -4045,7 +4045,7 @@ void DataSet::set_data(const Tensor<type, 2>& new_data, const bool& new_samples)
 
 void DataSet::set_data_source_path(const string& new_data_file_name)
 {
-    data_source_path = new_data_file_name;
+    data_path = new_data_file_name;
 }
 
 
@@ -5555,7 +5555,7 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Data file name
 
     file_stream.OpenElement("Path");
-    file_stream.PushText(data_source_path.c_str());
+    file_stream.PushText(data_path.c_str());
     file_stream.CloseElement();
 
     // Separator
@@ -5906,7 +5906,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         // Ids
 
         if(has_ids_element->GetText())
-            ids = get_tokens(has_ids_element->GetText(), " ");
+            samples_id = get_tokens(has_ids_element->GetText(), " ");
     }
 
     // Samples
@@ -6240,10 +6240,10 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-    ofstream file(data_source_path.c_str());
+    ofstream file(data_path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open matrix data file: " + data_source_path + "\n");
+        throw runtime_error("Cannot open matrix data file: " + data_path + "\n");
 
     file.precision(20);
 
@@ -6275,7 +6275,7 @@ void DataSet::save_data() const
     {
         if(has_ids)
         {
-            file << ids(i) << separator_string;
+            file << samples_id(i) << separator_string;
         }
         for(Index j = 0; j < variables_number; j++)
         {
@@ -6339,7 +6339,7 @@ void DataSet::load_data_binary()
 {
     ifstream file;
 
-    open_file(data_source_path, file);
+    open_file(data_path, file);
 
     streamsize size = sizeof(Index);
 
@@ -7025,14 +7025,14 @@ void DataSet::scrub_missing_values()
 
 void DataSet::read_csv()
 {
-    if(data_source_path.empty())
+    if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
     ifstream file;
-    file.open(data_source_path.c_str());
+    file.open(data_path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Error: Cannot open file " + data_source_path + "\n");
+        throw runtime_error("Error: Cannot open file " + data_path + "\n");
 
     const string separator_string = get_separator_string();
     string line;
@@ -7162,7 +7162,7 @@ void DataSet::read_csv()
 
     samples_uses.resize(samples_number);
 
-    ids.resize(samples_number);
+    samples_id.resize(samples_number);
 
     const Index variables_number = get_variables_number();
 
@@ -7222,7 +7222,7 @@ void DataSet::read_csv()
             }
         }
 
-        if(has_ids) ids(sample_index) = tokens(0);
+        if(has_ids) samples_id(sample_index) = tokens(0);
 
         #pragma omp parallel for
 
@@ -7489,7 +7489,7 @@ void DataSet::read_data_file_preview(ifstream& file)
     // Check empty file
 
     if(data_file_preview(0).size() == 0)
-        throw runtime_error("File " + data_source_path + " is empty.\n");
+        throw runtime_error("File " + data_path + " is empty.\n");
 
     // Resize data file preview to original
 
@@ -7525,28 +7525,28 @@ void DataSet::check_separators(const string& line) const
     if(separator == Separator::Space)
     {
         if(line.find(',') != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_source_path + ", but separator is space (' ').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is space (' ').");
 
         if(line.find(';') != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_source_path + ", but separator is space (' ').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is space (' ').");
     }
     else if(separator == Separator::Tab)
     {
         if(line.find(',') != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_source_path + ", but separator is tab ('   ').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is tab ('   ').");
 
         if(line.find(';') != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_source_path + ", but separator is tab ('   ').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is tab ('   ').");
     }
     else if(separator == Separator::Comma)
     {
         if(line.find(";") != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_source_path + ", but separator is comma (',').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is comma (',').");
     }
     else if(separator == Separator::Semicolon)
     {
         if(line.find(",") != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_source_path + ", but separator is semicolon (';').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is semicolon (';').");
     }
 }
 
@@ -7840,7 +7840,7 @@ void DataSet::shuffle()
     {
         index = indices(i);
 
-        new_rows_labels(i) = ids(index);
+        new_rows_labels(i) = samples_id(index);
 
         for(Index j = 0; j < data_raw_variables; j++)
         {
@@ -7849,7 +7849,7 @@ void DataSet::shuffle()
     }
 
     data = new_data;
-    ids = new_rows_labels;
+    samples_id = new_rows_labels;
 }
 
 

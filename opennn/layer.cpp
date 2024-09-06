@@ -184,6 +184,8 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     y.setZero();
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < rows_number; i++)
     {
         y(i, Index(maximum_indices(i))) = type(1);
@@ -305,7 +307,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
     Tensor<type, 0> sum;
 
     for(Index i = 0; i < channels; i++)
-    {
+    {        
         for(Index j = 0; j < columns_number; j++)
         {
             softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);

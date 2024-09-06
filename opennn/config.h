@@ -20,7 +20,7 @@
 //#pragma warning(push, 0)
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
-#define OPENNN_CUDA
+//#define OPENNN_CUDA
 
 #ifdef OPENNN_CUDA
 
