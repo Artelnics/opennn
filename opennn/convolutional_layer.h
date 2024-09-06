@@ -269,7 +269,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    Eigen::array<Index, 4> offsets;
    Eigen::array<Index, 4> extents;
 
-   Tensor<type, 4> error_convolutions_derivatives;
+   Tensor<type, 4> convolutions_derivatives;
    Tensor<type, 4> input_derivatives;
 
    Tensor<type, 1> biases_derivatives;
