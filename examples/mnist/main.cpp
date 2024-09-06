@@ -26,12 +26,10 @@ int main()
 {
     try
     {
-//        srand(unsigned(time(nullptr)));
-
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
-
-        const Index kernel_height = 2;
-        const Index kernel_width = 2;
+    
+        const Index kernel_height = 1;
+        const Index kernel_width = 1;
         const Index kernel_channels = 1;
         const Index kernels_number = 1;
 
@@ -50,6 +48,8 @@ int main()
 
         //image_data_set.read_bmp();
 
+        image_data_set.set_training();
+
         image_data_set.print();
 
         //image_data_set.print_data();
@@ -61,19 +61,19 @@ int main()
         ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
         neural_network.add_layer(scaling_layer);
 
-        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
-                                                                         { kernel_height, kernel_width, kernel_channels, kernels_number });
-        neural_network.add_layer(convolutional_layer);
+        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
+        //                                                                 { kernel_height, kernel_width, kernel_channels, kernels_number });
+        //neural_network.add_layer(convolutional_layer);
 
-        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
-                                                                           { 1,1,kernels_number,kernels_number } );
+        //ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
+        //                                                                   { 1,1,kernels_number,kernels_number } );
         //neural_network.add_layer(convolutional_layer_2);
 
-        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(),
-                                                         {pool_height , pool_width} );
+        //PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2->get_output_dimensions(),
+        //                                                 {pool_height , pool_width} );
         //neural_network.add_layer(pooling_layer);
 
-        FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer_2->get_output_dimensions());
+        FlattenLayer* flatten_layer = new FlattenLayer(image_data_set.get_input_dimensions());
         neural_network.add_layer(flatten_layer);
 
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),
