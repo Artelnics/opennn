@@ -45,7 +45,7 @@ public:
     Tensor<type, 1> calculate_h(const Tensor<type, 1>&) const;
     Tensor<type, 2> calculate_h(const Tensor<type, 2>&) const;
     Tensor<type, 4> calculate_h(const Tensor<type, 4>&) const;
-
+/*
     template<class T>
     type calculate_derivatives(const T& t, type(T::*f)(const type&) const, const type& x) const
     {
@@ -1477,121 +1477,7 @@ public:
 
         return H;
     }
-
-
-    template<class T>
-    Tensor< Tensor<type, 2>, 2> calculate_hessian_matrices
-    (const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Index& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
-    {
-        const Tensor<type, 1> y = (t.*f)(dummy_int, dummy_vector, x);
-
-        Index s = y.size();
-        const Index n = x.size();
-
-        type h_j;
-        type h_k;
-
-        Tensor<type, 1> x_backward_2j(x);
-        Tensor<type, 1> x_backward_j(x);
-
-        Tensor<type, 1> x_forward_j(x);
-        Tensor<type, 1> x_forward_2j(x);
-
-        Tensor<type, 1> x_backward_jk(x);
-        Tensor<type, 1> x_forward_jk(x);
-
-        Tensor<type, 1> x_backward_j_forward_k(x);
-        Tensor<type, 1> x_forward_j_backward_k(x);
-
-        Tensor<type, 1> y_backward_2j;
-        Tensor<type, 1> y_backward_j;
-
-        Tensor<type, 1> y_forward_j;
-        Tensor<type, 1> y_forward_2j;
-
-        Tensor<type, 1> y_backward_jk;
-        Tensor<type, 1> y_forward_jk;
-
-        Tensor<type, 1> y_backward_j_forward_k;
-        Tensor<type, 1> y_forward_j_backward_k;
-
-        Tensor< Tensor<type, 2>, 2> H;
-
-        H.resize(n,s);
-
-        for(Index i = 0; i < s; i++)
-        {
-            for(Index t = 0; t < n; t++)
-            {
-                H(i,t).resize(n,s);
-
-                for(Index j = 0; j < n; j++)
-                {
-                    h_j = calculate_h(x(j));
-
-                    x_backward_2j(j) -= type(2.0)*h_j;
-                    y_backward_2j = (t.*f)(dummy_int, dummy_vector, x_backward_2j);
-                    x_backward_2j(j) += type(2.0)*h_j;
-
-                    x_backward_j(j) -= h_j;
-                    y_backward_j = (t.*f)(dummy_int, dummy_vector, x_backward_j);
-                    x_backward_j(j) += h_j;
-
-                    x_forward_j(j) += h_j;
-                    y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
-                    x_forward_j(j) -= h_j;
-
-                    x_forward_2j(j) += type(2.0)*h_j;
-                    y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
-                    x_forward_2j(j) -= type(2.0)*h_j;
-
-                    H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
-
-                    for(Index k = j; k < s; k++)
-                    {
-                        h_k = calculate_h(x[k]);
-
-                        x_backward_jk(j) -= h_j;
-                        x_backward_jk[k] -= h_k;
-                        y_backward_jk = (t.*f)(dummy_int, dummy_vector, x_backward_jk);
-                        x_backward_jk(j) += h_j;
-                        x_backward_jk[k] += h_k;
-
-                        x_forward_jk(j) += h_j;
-                        x_forward_jk[k] += h_k;
-                        y_forward_jk = (t.*f)(dummy_int, dummy_vector, x_forward_jk);
-                        x_forward_jk(j) -= h_j;
-                        x_forward_jk[k] -= h_k;
-
-                        x_backward_j_forward_k(j) -= h_j;
-                        x_backward_j_forward_k[k] += h_k;
-                        y_backward_j_forward_k = (t.*f)(dummy_int, dummy_vector, x_backward_j_forward_k);
-                        x_backward_j_forward_k(j) += h_j;
-                        x_backward_j_forward_k[k] -= h_k;
-
-                        x_forward_j_backward_k(j) += h_j;
-                        x_forward_j_backward_k[k] -= h_k;
-                        y_forward_j_backward_k = (t.*f)(dummy_int, dummy_vector, x_forward_j_backward_k);
-                        x_forward_j_backward_k(j) -= h_j;
-                        x_forward_j_backward_k[k] += h_k;
-
-                        H(i,t)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(type(4.0)*h_j*h_k);
-                    }
-                }
-
-                for(Index j = 0; j < n; j++)
-                {
-                    for(Index k = 0; k < j; k++)
-                    {
-                        H(i,t)(j,k) = H(i)(k,j);
-                    }
-                }
-            }
-        }
-
-        return H;
-    }
-
+*/
 private:
 
     Index precision_digits;

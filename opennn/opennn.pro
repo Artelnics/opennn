@@ -60,7 +60,6 @@ HEADERS += \
     embedding_layer.h \
     multihead_attention_layer.h \
     kmeans.h \
-    numerical_differentiation.h \
     config.h \
     strings_utilities.h \
     images.h \
@@ -147,7 +146,6 @@ SOURCES += \
     embedding_layer.cpp \
     multihead_attention_layer.cpp \
     kmeans.cpp \
-    numerical_differentiation.cpp \
     strings_utilities.cpp \
     images.cpp \
     tensors.cpp \

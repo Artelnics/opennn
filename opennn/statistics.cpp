@@ -135,28 +135,28 @@ Tensor<type, 1> Descriptives::to_vector() const
 }
 
 
-bool Descriptives::has_minimum_minus_one_maximum_one()
-{
-    if(abs(minimum + type(1)) < type(NUMERIC_LIMITS_MIN) && abs(maximum - type(1)) < type(NUMERIC_LIMITS_MIN))
-    {
-        return true;
-    }
+// bool Descriptives::has_minimum_minus_one_maximum_one()
+// {
+//     if(abs(minimum + type(1)) < type(NUMERIC_LIMITS_MIN) && abs(maximum - type(1)) < type(NUMERIC_LIMITS_MIN))
+//     {
+//         return true;
+//     }
 
-    return false;
-}
+//     return false;
+// }
 
 
-bool Descriptives::has_mean_zero_standard_deviation_one()
-{
-    if(abs(mean) < type(NUMERIC_LIMITS_MIN) && abs(standard_deviation - type(1)) < type(NUMERIC_LIMITS_MIN))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
+// bool Descriptives::has_mean_zero_standard_deviation_one()
+// {
+//     if(abs(mean) < type(NUMERIC_LIMITS_MIN) && abs(standard_deviation - type(1)) < type(NUMERIC_LIMITS_MIN))
+//     {
+//         return true;
+//     }
+//     else
+//     {
+//         return false;
+//     }
+// }
 
 
 void Descriptives::print(const string& title) const

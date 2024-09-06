@@ -71,8 +71,6 @@ private:
 
     ConvolutionalLayerForwardPropagation forward_propagation;
     ConvolutionalLayerBackPropagation back_propagation;
-
-    NumericalDifferentiation numerical_differentiation;
 };
 
 }
