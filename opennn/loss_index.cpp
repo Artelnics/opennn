@@ -941,13 +941,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     BackPropagation back_propagation(samples_number, this);
 
-    type* inputs_data = batch.get_inputs_pair()(0).first;
-
-    TensorMap<Tensor<type, 1>> inputs_vector(inputs_data, inputs_number);
-
     type h;
-    Tensor<type, 1> inputs_forward = inputs_vector;
-    Tensor<type, 1> inputs_backward = inputs_vector;
 
     type error_forward;
     type error_backward;
@@ -957,33 +951,31 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
-    for(Index i = 0; i < inputs_number; i++)
+    TensorMap<Tensor<type, 1>> inputs_vector(inputs_pair(0).first, inputs_number);
+
+    for (Index i = 0; i < inputs_number; i++)
     {
         h = calculate_h(inputs_vector(i));
 
-        inputs_forward(i) += h;
+        inputs_pair(0).first[i] += h;
 
-        neural_network->forward_propagate(inputs_pair,
-                                          forward_propagation);
+        neural_network->forward_propagate(inputs_pair, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
-
         error_forward = back_propagation.error;
 
-        inputs_forward(i) -= h;
+        inputs_pair(0).first[i] -= h;
 
-        inputs_backward(i) -= h;
+        inputs_pair(0).first[i] -= h;
 
-        neural_network->forward_propagate(inputs_pair,
-                                          forward_propagation);
+        neural_network->forward_propagate(inputs_pair, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
-
         error_backward = back_propagation.error;
 
-        inputs_backward(i) += h;
+        inputs_pair(0).first[i] += h;
 
-        numerical_inputs_derivatives(i) = (error_forward - error_backward)/type(2*h);
+        numerical_inputs_derivatives(i) = (error_forward - error_backward) / type(2 * h);
     }
 
     return numerical_inputs_derivatives;

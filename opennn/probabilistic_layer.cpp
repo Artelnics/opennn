@@ -522,7 +522,11 @@ void ProbabilisticLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, A_BT);
 
-    cout << "inputs_derivatives:\n" << input_derivatives << endl;
+    for (Index i = 0; i < input_derivatives.size(); i++)
+    {
+        cout << input_derivatives(i) << endl;
+    }
+    
 }
 
 
