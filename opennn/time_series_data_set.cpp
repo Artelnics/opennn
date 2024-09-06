@@ -461,8 +461,8 @@ void TimeSeriesDataSet::print() const
     print_dimensions(input_dimensions);
 
     cout << "Target variables dimensions: ";
-    print_dimensions(target_dimensions);
 
+    print_dimensions(target_dimensions);
 }
 
 
@@ -523,11 +523,11 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Time raw variable
-
+/*
     file_stream.OpenElement("TimeRawVariable");
     file_stream.PushText(get_time_raw_variable().c_str());
     file_stream.CloseElement();
-/*
+
     // Group by raw_variable
     {
         file_stream.OpenElement("GroupByRawVariable");
