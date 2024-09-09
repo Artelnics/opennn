@@ -245,7 +245,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         throw runtime_error("Data source path is empty.\n");
 
     has_header = true;
-    has_ids = true;
+    has_samples_id = true;
 
     separator = Separator::None;
 

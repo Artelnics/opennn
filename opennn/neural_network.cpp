@@ -967,6 +967,13 @@ void NeuralNetwork::set_threads_number(const int& new_threads_number)
 }
 
 
+void NeuralNetwork::set_layers_number(const Index& new_layers_number)
+{
+    layers.resize(new_layers_number);
+    layers_inputs_indices.resize(new_layers_number);
+}
+
+
 void NeuralNetwork::set_layers(Tensor<Layer*, 1>& new_layers)
 {
     layers = new_layers;
@@ -1264,19 +1271,6 @@ Index NeuralNetwork::get_layers_number() const
 {
     return layers.size();
 }
-
-
-// Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
-// {
-//     Tensor<Index, 1> layers_neurons_number(layers.size());
-
-//     for(Index i = 0; i < layers.size(); i++)
-//     {
-//         layers_neurons_number(i) = layers[i]->get_neurons_number();
-//     }
-
-//     return layers_neurons_number;
-// }
 
 
 Index NeuralNetwork::get_trainable_layers_number() const
@@ -1830,10 +1824,8 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers number
 
-    file_stream.OpenElement("LayerTypes");    
-
-    file_stream.PushText(string_tensor_to_string(get_layer_types_string()).c_str());
-
+    file_stream.OpenElement("LayersNumber");
+    file_stream.PushText(to_string(get_layers_number()).c_str());
     file_stream.CloseElement();
 
     // Layers information
@@ -1984,8 +1976,6 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
     if(!inputs_number_element)
         throw runtime_error("Inputs number element is nullptr.\n");
 
-    Index new_inputs_number = 0;
-
     if(inputs_number_element->GetText())
         set_inputs_number(Index(atoi(inputs_number_element->GetText())));
 
@@ -1993,19 +1983,16 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* start_element = inputs_number_element;
 
-    if(new_inputs_number > 0)
+    for(Index i = 0; i < get_inputs_number(); i++)
     {
-        for(Index i = 0; i < new_inputs_number; i++)
-        {
-            const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
-            start_element = input_element;
+        const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
+        start_element = input_element;
 
-            if(input_element->Attribute("Index") != to_string(i+1))
-                throw runtime_error("Input index number (" + to_string(i+1) + ") does not match (" + input_element->Attribute("Item") + ").\n");
+        if(input_element->Attribute("Index") != to_string(i+1))
+            throw runtime_error("Input index number (" + to_string(i+1) + ") does not match (" + input_element->Attribute("Item") + ").\n");
 
-            if(input_element->GetText())
-                inputs_names(i) = input_element->GetText();
-        }
+        if(input_element->GetText())
+            inputs_names(i) = input_element->GetText();
     }
 }
 
@@ -2019,21 +2006,21 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
     // Layers types
 
-    const tinyxml2::XMLElement* layer_types_element = root_element->FirstChildElement("LayerTypes");
+    const tinyxml2::XMLElement* layers_number_element = root_element->FirstChildElement("LayersNumber");
 
-    if(!layer_types_element)
-        throw runtime_error("LayerTypes element is nullptr.\n");
+    if(!layers_number_element)
+        throw runtime_error("LayersNumber element is nullptr.\n");
 
     Tensor<string, 1> layer_types;
 
-    if(layer_types_element->GetText())
+    if(layers_number_element->GetText())
     {
-        layer_types = get_tokens(layer_types_element->GetText(), " ");
+//        set_layers_number(Index(atoi(layers_number_element->GetText())));
     }
 
     // Add layers
 
-    const tinyxml2::XMLElement* start_element = layer_types_element;
+    const tinyxml2::XMLElement* start_element = layers_number_element;
 
     for(Index i = 0; i < layer_types.size(); i++)
     {

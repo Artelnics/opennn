@@ -28,9 +28,23 @@ int main()
     {
         srand(unsigned(time(nullptr)));
 
+        DataSet data_set;
+
+        data_set.save("../data/data_set.xml");
+//        data_set.load("../data/data_set.xml");
+
+        data_set.print();
+/*
+        NeuralNetwork neural_network;
+
+        neural_network.save("../data/neural_network.xml");
+        neural_network.load("../data/neural_network.xml");
+
+        neural_network.print();
+*/
 
         // Data set
-
+/*
         DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
 //        data_set.print();
@@ -70,7 +84,7 @@ int main()
 
         training_strategy.save("../data/training_strategy.xml");
         training_strategy.load("../data/training_strategy.xml");
-/*
+
         training_strategy.perform_training();
 
         // Testing analysis

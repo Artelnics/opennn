@@ -2972,7 +2972,7 @@ const bool& DataSet::get_header_line() const
 
 const bool& DataSet::get_has_ids() const
 {
-    return has_ids;
+    return has_samples_id;
 }
 
 
@@ -2980,36 +2980,6 @@ Tensor<string, 1> DataSet::get_ids() const
 {
     return samples_id;
 }
-
-
-// Tensor<string, 1> DataSet::get_testing_rows_label_tensor()
-// {
-//     const Index testing_samples_number = get_testing_samples_number();
-//     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
-//     Tensor<string, 1> testing_rows_label(testing_samples_number);
-
-//     for(Index i = 0; i < testing_samples_number; i++)
-//     {
-//         testing_rows_label(i) = samples_id(testing_indices(i));
-//     }
-
-//     return testing_rows_label;
-// }
-
-
-// Tensor<string, 1> DataSet::get_selection_rows_label_tensor()
-// {
-//     const Index selection_samples_number = get_selection_samples_number();
-//     const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
-//     Tensor<string, 1> selection_rows_label(selection_samples_number);
-
-//     for(Index i = 0; i < selection_samples_number; i++)
-//     {
-//         selection_rows_label(i) = samples_id(selection_indices(i));
-//     }
-
-//     return selection_rows_label;
-// }
 
 
 const DataSet::Separator& DataSet::get_separator() const
@@ -4032,7 +4002,7 @@ void DataSet::set_has_header(const bool& new_has_header)
 
 void DataSet::set_has_ids(const bool& new_has_ids)
 {
-    has_ids = new_has_ids;
+    has_samples_id = new_has_ids;
 }
 
 
@@ -5547,8 +5517,8 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Has Ids
 
-    file_stream.OpenElement("HasIds");
-    file_stream.PushText(to_string(has_ids).c_str());
+    file_stream.OpenElement("HasSamplesId");
+    file_stream.PushText(to_string(has_samples_id).c_str());
     file_stream.CloseElement();
 
     // Missing values label
@@ -5593,14 +5563,6 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Rows labels
-
-    if(has_ids)
-
-    file_stream.OpenElement("HasIds");
-    file_stream.PushText(to_string(has_ids).c_str());
-    file_stream.CloseElement();
-
     // Samples
 
     file_stream.OpenElement("Samples");
@@ -5610,6 +5572,15 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("SamplesNumber");
     file_stream.PushText(to_string(get_samples_number()).c_str());
     file_stream.CloseElement();
+
+    // Samples id
+
+    if(has_samples_id)
+    {
+        file_stream.OpenElement("SamplesId");
+        file_stream.PushText(string_tensor_to_string(samples_id).c_str());
+        file_stream.CloseElement();
+    }
 
     // Samples uses
 
@@ -5749,9 +5720,9 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Rows labels
+    // Samples id
 
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
 
     if(rows_label_element)
     {
@@ -5869,14 +5840,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has Ids
 
-    if(has_ids)
+    if(has_samples_id)
     {
-        // Rows labels begin tag
+        // Samples id begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
-            throw runtime_error("HasIds element is nullptr.\n");
+            throw runtime_error("HasSamplesId element is nullptr.\n");
 
         // Ids
 
@@ -6229,7 +6200,7 @@ void DataSet::save_data() const
 
     const string separator_string = get_separator_string();
 
-    if(has_ids)
+    if(has_samples_id)
     {
         file << "id" << separator_string;
     }
@@ -6248,7 +6219,7 @@ void DataSet::save_data() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(has_ids)
+        if(has_samples_id)
         {
             file << samples_id(i) << separator_string;
         }
@@ -7042,7 +7013,7 @@ void DataSet::read_csv()
         if(columns_number != 0) break;
     }
 
-    const Index raw_variables_number = has_ids
+    const Index raw_variables_number = has_samples_id
             ? columns_number - 1
             : columns_number;
 
@@ -7055,7 +7026,7 @@ void DataSet::read_csv()
         if(has_numbers(tokens))
             throw runtime_error("Error: Some header names are numeric: " + line + "\n");
 
-        if(!has_ids)
+        if(!has_samples_id)
         {
             set_raw_variables_names(tokens);
         }
@@ -7093,7 +7064,7 @@ void DataSet::read_csv()
         {
             const RawVariableType type = raw_variables(i).type;
 
-            const string token = has_ids ? tokens(i+1) : tokens(i);
+            const string token = has_samples_id ? tokens(i+1) : tokens(i);
 
             if(token.empty() || token == missing_values_label)
             {
@@ -7197,7 +7168,7 @@ void DataSet::read_csv()
             }
         }
 
-        if(has_ids) samples_id(sample_index) = tokens(0);
+        if(has_samples_id) samples_id(sample_index) = tokens(0);
 
         #pragma omp parallel for
 
@@ -7205,7 +7176,7 @@ void DataSet::read_csv()
         {
             const RawVariableType raw_variable_type = raw_variables(raw_variable_index).type;
 
-            const string token = has_ids ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
+            const string token = has_samples_id ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
 
             const Tensor<Index, 1> variable_indices = get_variable_indices(raw_variable_index);
 
@@ -7830,7 +7801,7 @@ void DataSet::shuffle()
 
 bool DataSet::get_has_rows_labels() const
 {
-    return has_ids;
+    return has_samples_id;
 }
 
 
@@ -7855,7 +7826,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const string& separator_string,
                                         const string& missing_values_label,
                                         const bool& has_raw_variables_name,
-                                        const bool& has_ids) const
+                                        const bool& has_samples_id) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -7918,7 +7889,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     line_number = 0;
     Index variable_index = 0;
     Index token_index = 0;
-    bool is_ID = has_ids;
+    bool is_ID = has_samples_id;
 
     const bool is_float = is_same<type, float>::value;
     bool has_missing_values = false;
@@ -7937,7 +7908,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         variable_index = 0;
         token_index = 0;
-        is_ID = has_ids;
+        is_ID = has_samples_id;
 
         for(Index i = 0; i < raw_variables_number; i++)
         {

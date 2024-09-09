@@ -147,6 +147,7 @@ public:
 
    void set(const string&);
 
+   void set_layers_number(const Index&);
    void set_layers(Tensor<Layer*, 1>&);
 
    void set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
@@ -173,8 +174,6 @@ public:
    // Layers
 
    Index get_layers_number() const;
-   //Tensor<Index, 1> get_layers_neurons_numbers() const;
-
    Index get_trainable_layers_number() const;
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
