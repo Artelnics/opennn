@@ -511,7 +511,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     // Layer name
 
-    const tinyxml2::XMLElement* layer_name_element = probabilistic_layer_element->FirstChildElement("LayerName");
+    const tinyxml2::XMLElement* layer_name_element = probabilistic_layer_element->FirstChildElement("Name");
 
     if(!layer_name_element)
         throw runtime_error("LayerName element is nullptr.\n");
@@ -591,7 +591,7 @@ void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layer name
 
-    file_stream.OpenElement("LayerName");
+    file_stream.OpenElement("Name");
     file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 

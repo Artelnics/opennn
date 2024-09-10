@@ -122,7 +122,7 @@ public:
    const Tensor<Tensor<Index, 1>, 1>& get_layers_inputs_indices() const;
 
    ScalingLayer2D* get_scaling_layer_2d() const;
-   ScalingLayer4D* get_scaling_layer_4d() const;
+   Scaling4D* get_scaling_layer_4d() const;
    UnscalingLayer* get_unscaling_layer() const;
    BoundingLayer* get_bounding_layer() const;
    //FlattenLayer* get_flatten_layer() const;
@@ -284,7 +284,7 @@ protected:
 
    NeuralNetwork::ModelType model_type;
 
-   Tensor<string, 1> inputs_names;
+   Tensor<string, 1> inputs_name;
 
    Tensor<string, 1> outputs_name;
 

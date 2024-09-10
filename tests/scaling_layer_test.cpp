@@ -33,7 +33,7 @@ void ScalingLayer2DTest::test_constructor()
 
     ScalingLayer2D scaling_layer_1;
 
-    assert_true(scaling_layer_1.get_type() == Layer::Type::Scaling2D, LOG);
+    assert_true(scaling_layer_1.get_type() == Layer::Type::ScalingLayer2D, LOG);
     assert_true(scaling_layer_1.get_neurons_number() == 0, LOG);
 
     ScalingLayer2D scaling_layer_2(3);

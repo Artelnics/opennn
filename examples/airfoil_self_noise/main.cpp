@@ -8,16 +8,17 @@
 
 // System includes
 
-#include <cstring>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
 #include <time.h>
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
+#include "../../opennn/data_set.h"
+#include "../../opennn/neural_network.h"
+#include "../../opennn/training_strategy.h"
+#include "../../opennn/testing_analysis.h"
+
 
 using namespace opennn;
 using namespace Eigen;
@@ -28,29 +29,14 @@ int main()
     {
         srand(unsigned(time(nullptr)));
 
-        DataSet data_set;
-
-        data_set.save("../data/data_set.xml");
-//        data_set.load("../data/data_set.xml");
-
-        data_set.print();
-/*
-        NeuralNetwork neural_network;
-
-        neural_network.save("../data/neural_network.xml");
-        neural_network.load("../data/neural_network.xml");
-
-        neural_network.print();
-*/
-
         // Data set
-/*
+
         DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
-//        data_set.print();
+        // data_set.save("../data/data_set.xml");
+        // data_set.load("../data/data_set.xml");
 
-//        data_set.load("../data/data_set.xml");
-//        data_set.save("../data/data_set.xml");
+        data_set.print();
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
@@ -62,9 +48,13 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number, neurons_number, target_variables_number});
 
+//        neural_network.print();
+
         neural_network.save("../data/neural_network.xml");
         neural_network.load("../data/neural_network.xml");
 
+//        neural_network.print();
+/*
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);

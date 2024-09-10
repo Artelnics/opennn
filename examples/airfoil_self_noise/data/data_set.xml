@@ -1,19 +1,55 @@
 <DataSet>
    <DataSource>
       <FileType>csv</FileType>
-      <Path></Path>
-      <Separator>Comma</Separator>
-      <HasHeader>0</HasHeader>
+      <Path>../data/airfoil_self_noise.csv</Path>
+      <Separator>Semicolon</Separator>
+      <HasHeader>1</HasHeader>
       <HasSamplesId>0</HasSamplesId>
       <MissingValuesLabel>NA</MissingValuesLabel>
       <Codification>UTF-8</Codification>
    </DataSource>
    <RawVariables>
-      <RawVariablesNumber>0</RawVariablesNumber>
+      <RawVariablesNumber>6</RawVariablesNumber>
+      <RawVariable Item="1">
+         <Name>frequency</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Input</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="2">
+         <Name>angle_of_attack</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Input</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="3">
+         <Name>chord_lenght</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Input</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="4">
+         <Name>free-stream_velocity</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Input</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="5">
+         <Name>suction_side_displacement_thickness</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Input</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="6">
+         <Name>scaled_sound_pressure_level</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Target</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
    </RawVariables>
    <Samples>
-      <SamplesNumber>0</SamplesNumber>
-      <SamplesUses></SamplesUses>
+      <SamplesNumber>1503</SamplesNumber>
+      <SamplesUses>1 1 2 0 2 0 0 0 0 1 2 1 0 0 0 0 0 0 2 1 1 0 0 0 0 0 0 0 1 2 2 0 2 0 0 0 0 0 2 0 1 2 0 2 0 0 0 2 2 1 2 0 0 0 2 1 0 0 1 0 0 1 0 0 0 0 2 1 0 2 0 2 1 2 0 2 0 2 0 0 1 0 0 0 0 2 2 0 2 0 1 2 2 0 2 0 0 0 2 0 2 0 0 0 0 2 0 1 2 0 0 0 0 0 0 0 0 0 0 1 0 0 2 2 1 0 0 0 0 1 0 0 0 1 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 2 0 1 1 0 0 0 2 2 2 1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 1 0 1 0 2 2 1 0 1 0 0 2 0 2 0 2 0 2 2 0 1 0 2 0 2 0 0 0 0 1 1 0 0 0 0 0 2 1 0 0 2 1 0 0 0 2 0 0 1 2 0 0 0 0 0 0 0 0 2 1 0 0 2 2 2 2 0 0 1 2 0 0 0 1 0 0 2 1 0 0 0 2 0 2 0 1 0 0 0 0 1 0 1 1 1 0 2 0 1 0 2 0 0 2 0 0 0 0 0 0 1 2 1 0 0 0 0 0 2 1 0 0 0 0 2 1 0 0 0 1 1 0 0 0 2 0 1 1 0 0 0 2 0 2 0 0 2 1 1 1 0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 2 2 0 0 0 0 0 0 1 0 2 2 2 0 2 0 0 0 0 0 0 0 1 2 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0 2 2 1 0 0 2 0 0 2 0 0 0 0 2 0 0 0 2 2 0 0 0 1 0 0 0 2 2 0 2 0 0 2 2 0 0 2 2 0 2 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 2 0 1 2 1 2 0 1 0 2 0 2 0 0 0 1 1 2 0 0 0 1 0 0 1 0 0 0 0 0 1 2 0 1 2 2 2 1 0 0 0 1 0 0 1 2 2 2 2 0 1 1 2 2 2 2 0 0 1 0 2 0 0 1 0 0 0 1 0 0 2 1 0 2 0 0 0 0 1 0 0 0 0 1 0 0 2 2 1 0 0 2 1 1 1 0 2 1 0 2 0 0 0 0 1 0 0 1 0 0 0 0 0 2 0 1 2 0 1 0 0 0 0 1 2 0 0 0 2 0 0 1 2 0 1 0 2 1 0 0 0 1 0 0 0 0 0 0 0 0 1 2 2 0 0 0 1 0 0 1 0 1 0 0 0 2 0 2 1 0 1 0 1 1 0 1 0 1 0 0 0 1 2 0 1 0 0 0 0 0 0 1 0 0 0 2 2 0 2 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 2 2 0 0 0 2 0 2 0 0 0 1 0 0 0 1 0 0 1 0 2 0 0 2 1 0 2 1 2 0 2 0 0 0 2 1 0 2 0 0 0 1 0 0 0 0 0 2 2 0 1 0 2 0 2 2 1 2 0 2 2 0 1 0 1 0 2 0 0 1 1 0 2 0 0 1 0 0 0 0 2 1 0 2 0 0 0 2 0 2 0 0 2 2 2 1 0 0 0 0 0 2 1 1 0 0 0 2 1 0 0 2 1 0 0 2 0 0 0 2 0 1 1 2 2 0 2 2 1 0 2 0 1 1 1 1 0 0 0 0 0 0 1 0 0 2 1 2 0 1 0 0 1 0 0 0 1 2 0 2 0 2 0 0 0 2 0 0 0 0 1 1 2 2 2 0 0 1 2 1 0 1 0 0 2 2 0 0 0 0 0 0 0 2 0 0 1 0 0 1 2 0 1 1 0 0 2 0 2 1 1 0 1 1 0 1 1 0 0 2 1 0 0 0 0 0 0 1 0 2 0 0 0 0 0 0 0 0 0 0 2 0 2 2 0 0 2 0 0 0 1 2 0 2 0 0 0 2 2 2 0 1 1 0 1 0 1 2 0 0 0 0 0 0 1 1 1 0 0 0 0 0 2 2 1 0 0 0 0 0 0 1 2 0 1 0 0 0 1 2 0 2 1 1 1 1 0 0 1 1 2 1 0 0 0 1 0 0 1 0 0 0 1 0 1 0 0 0 0 0 0 0 2 0 0 0 0 1 1 2 0 1 2 0 1 0 0 0 2 0 1 2 1 2 0 0 0 0 0 2 0 0 0 0 1 1 1 0 0 0 0 0 2 2 1 0 0 0 0 1 0 0 2 0 0 0 0 0 2 1 0 0 1 2 2 0 0 2 2 0 2 1 0 0 1 0 0 1 2 0 2 0 2 0 2 1 0 0 0 2 1 1 1 1 0 0 1 0 0 0 1 0 2 0 1 0 1 1 2 1 0 0 0 0 0 0 0 0 0 2 0 1 0 0 0 0 2 0 0 0 1 0 2 0 2 0 0 0 0 2 0 2 0 0 2 1 0 0 0 0 0 0 0 2 0 1 2 1 0 0 0 0 0 1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 1 0 2 1 0 2 0 1 2 0 1 2 2 0 0 0 0 0 0 0 1 0 0 0 1 2 0 1 0 1 0 0 1 0 0 0 0 0 0 1 2 0 1 2 2 1 0 2 2 0 2 0 0 0 0 0 0 0 2 0 0 0 0 0 1 0 0 2 0 0 0 2 0 0 2 2 0 0 0 1 0 0 2 2 0 1 0 2 0 0 2 0 2 0 0 1 0 1 0 1 2 0 2 2 1 1 0 0 0 1 1 0 0 0 2 0 0 0 1 0 0 0 1 1 1 0 1 0 1 1 0 1 2 1 1 0 1 2 0 0 0 2 0 0 1 0 0 2 0 0 0 0 1 0 0 0 0 0 1 2 0 2 2 2 0 0 1 0 2 2 1 1 2 0 0 2 0 0 0 2 0 0 0 2 1 0 2 2 1 2 0 0 0 0 0 1 1 0 1 0 1 1 1 1 0 0 0 0 0 0 0 0 1 1 0 0 1 0 0 2 0 0 2 0 0 2 2 0 0 0 0 1 0 1 0 1 1 0 0 0 2 0 2 0 1 1 1 1 0 0 0 0 1 0 0 2 0 0 0 2 1 0 0 1 0 2 0 0 2 0 1 0 0 0 0 0 0 2 0 2 2 0 0 0 1 2 0 0 1 0 0 1 1 0 1 0 1 0 1 2 0 2 0 0 1 2 2 0 2 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 1 0 1 1 0 0 0 0 0 2 </SamplesUses>
    </Samples>
    <MissingValues>
       <MissingValuesMethod>Unuse</MissingValuesMethod>

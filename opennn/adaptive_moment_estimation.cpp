@@ -179,7 +179,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
 
-    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
 
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();    
 
@@ -217,14 +217,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_inputs_names(inputs_names);
+    neural_network->set_inputs_names(inputs_name);
     neural_network->set_outputs_names(targets_names);
 
     if(neural_network->has_scaling_layer())
     {
         if(neural_network->has_scaling_4d_layer())
         {
-            ScalingLayer4D* scaling_layer_4d = neural_network->get_scaling_layer_4d();
+            Scaling4D* scaling_layer_4d = neural_network->get_scaling_layer_4d();
             scaling_layer_4d->set(input_variables_descriptives, input_variables_scalers);
         }
         else
