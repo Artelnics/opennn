@@ -1760,9 +1760,23 @@ Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 
     Tensor<Scaler, 1> input_variables_scalers(input_variables_number);
 
+    Index index = 0;
+
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
-        input_variables_scalers(i) = input_raw_variables(i).scaler;
+        if(input_raw_variables(i).type == RawVariableType::Categorical)
+        {
+            for(Index j = 0; j < input_raw_variables(i).get_categories_number(); j++)
+            {
+                input_variables_scalers(index) = input_raw_variables(i).scaler;
+                index++;
+            }
+        }
+        else
+        {
+            input_variables_scalers(index) = input_raw_variables(i).scaler;
+            index++;
+        }
     }
 
     return input_variables_scalers;
@@ -1782,7 +1796,15 @@ Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
 
     for(Index i = 0; i < target_raw_variables_number; i++)
     {
-        for(Index j = 0;  j < target_raw_variables(i).get_categories_number(); j++)
+        if(target_raw_variables(i).type == RawVariableType::Categorical)
+        {
+            for(Index j = 0; j < target_raw_variables(i).get_categories_number(); j++)
+            {
+                target_variables_scalers(index) = target_raw_variables(i).scaler;
+                index++;
+            }
+        }
+        else
         {
             target_variables_scalers(index) = target_raw_variables(i).scaler;
             index++;
@@ -5298,7 +5320,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 
         default:
         {
-            throw runtime_error("Unknown scaling and unscaling method: " + to_string(int(input_variables_scalers(i))) + "\n");
+            throw runtime_error("Unknown scaling inputs method: " + to_string(int(input_variables_scalers(i))) + "\n");
         }
         }
     }
@@ -5340,10 +5362,8 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
             scale_logarithmic(data, target_variables_indices(i));
             break;
 
-        default:
-        {
-            throw runtime_error("Unknown scaling and unscaling method: " + to_string(int(target_variables_scalers(i))) + "\n");
-        }
+        default:        
+            throw runtime_error("Unknown scaling targets method: " + to_string(int(target_variables_scalers(i))) + "\n");
         }
     }
 
@@ -6110,18 +6130,32 @@ void DataSet::print_raw_variables_scalers() const
 
     const Tensor<Scaler, 1> scalers = get_raw_variables_scalers();
 
+    if (scalers.size() != raw_variables_number)
+        throw runtime_error("Error: Scalers array size does not match the number of raw variables.");
+
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(scalers[i] == Scaler::None)
-            cout << "None" << endl;
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            cout << "MinimumMaximum" << endl;
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            cout << "MeanStandardDeviation" << endl;
-        else if(scalers[i] == Scaler::StandardDeviation)
-            cout << "StandardDeviation" << endl;
-        else if(scalers[i] == Scaler::Logarithm)
-            cout << "Logarithm" << endl;
+        switch(scalers(i))
+        {
+            case Scaler::None:
+                cout << "None" << endl;
+                break;
+            case Scaler::MinimumMaximum:
+                cout << "MinimumMaximum" << endl;
+                break;
+            case Scaler::MeanStandardDeviation:
+                cout << "MeanStandardDeviation" << endl;
+                break;
+            case Scaler::StandardDeviation:
+                cout << "StandardDeviation" << endl;
+                break;
+            case Scaler::Logarithm:
+                cout << "Logarithm" << endl;
+                break;
+            default:
+                cerr << "Error: Unknown scaler value at index " << i << endl;
+                break;
+        }
     }
 
     cout << endl;

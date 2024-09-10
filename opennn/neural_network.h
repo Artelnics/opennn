@@ -85,7 +85,7 @@ public:
 
    void add_layer(Layer*);
 
-   bool check_layer_type(const Layer::Type);
+   bool validate_layer_type(const Layer::Type);
 
    // Get
 
@@ -100,14 +100,14 @@ public:
    bool has_flatten_layer() const;
    bool is_empty() const;
 
-   const Tensor<string, 1>& get_inputs_names() const;
+   const Tensor<string, 1>& get_inputs_name() const;
    string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
    ModelType get_model_type() const;
    string get_model_type_string() const;
 
-   const Tensor<string, 1>& get_outputs_names() const;
+   const Tensor<string, 1>& get_outputs_name() const;
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 

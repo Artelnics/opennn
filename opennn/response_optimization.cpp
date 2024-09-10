@@ -633,8 +633,8 @@ void ResponseOptimizationResults::print() const
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<string, 1> inputs_name = neural_network->get_inputs_names();
-    const Tensor<string, 1> outputs_name = neural_network->get_outputs_names();
+    const Tensor<string, 1> inputs_name = neural_network->get_inputs_name();
+    const Tensor<string, 1> outputs_name = neural_network->get_outputs_name();
 
     cout << "\nResponse optimization results: " << endl;
 

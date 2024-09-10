@@ -329,7 +329,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
             }
         }
 
-        for(Index j = 0;  j < images_in_folder; j++)
+        for(Index j = 0; j < images_in_folder; j++)
         {
 
             if(classes_number == 2 && i == 0)

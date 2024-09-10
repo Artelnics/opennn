@@ -36,7 +36,7 @@ int main()
         // data_set.save("../data/data_set.xml");
         // data_set.load("../data/data_set.xml");
 
-        data_set.print();
+//        data_set.print();
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
@@ -48,13 +48,11 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number, neurons_number, target_variables_number});
 
-//        neural_network.print();
+        // neural_network.save("../data/neural_network.xml");
+        // neural_network.load("../data/neural_network.xml");
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.load("../data/neural_network.xml");
+        // neural_network.print();
 
-//        neural_network.print();
-/*
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -72,8 +70,8 @@ int main()
 
         //training_strategy.set_maximum_epochs_number(100000);
 
-        training_strategy.save("../data/training_strategy.xml");
-        training_strategy.load("../data/training_strategy.xml");
+        // training_strategy.save("../data/training_strategy.xml");
+        // training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
 
@@ -100,7 +98,7 @@ int main()
 //      const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
-*/
+
         cout << "Good bye!" << endl;
 
         return 0;

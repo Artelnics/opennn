@@ -115,59 +115,52 @@ void NeuralNetwork::delete_layers()
 
 void NeuralNetwork::add_layer(Layer* layer)
 {
+    const Layer::Type layer_type = layer->get_type();
+
+    if(!validate_layer_type(layer_type)) return;
+
+    const Index old_layers_number = get_layers_number();
+
+    const Tensor<Layer*, 1> old_layers = get_layers();
+
+    const Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
+
+    layers.resize(old_layers_number + 1);
+
+    for(Index i = 0; i < old_layers_number; i++)
+        layers(i) = old_layers(i);
+
+    layers(old_layers_number) = layer;
+
+    layers_inputs_indices.resize(old_layers_number+1);
+
+    for(Index i = 0; i < old_layers_number; i++)
+        layers_inputs_indices(i) = old_layers_inputs_indices(i);
+
+    Tensor<Index, 1> new_layer_inputs_indices(1);
+    new_layer_inputs_indices(0) = old_layers_number-1;
+
+    layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
+}
+
+
+bool NeuralNetwork::validate_layer_type(const Layer::Type layer_type)
+{
+/*
+    const Index layers_number = layers.size();
+
     if(has_bounding_layer())
     {
         print();
 
         throw runtime_error("No layers can be added after a bounding layer.\n");
     }
-    
-    const Layer::Type layer_type = layer->get_type();
-
-    if(check_layer_type(layer_type))
-    {  
-        const Index old_layers_number = get_layers_number();
-
-        // Layers pointers
-        
-        Tensor<Layer*, 1> old_layers = get_layers();
-        
-        layers.resize(old_layers_number + 1);
-        
-        for(Index i = 0; i < old_layers_number; i++) layers(i) = old_layers(i);
-
-        layers(old_layers_number) = layer;
-        
-        // Layers inputs indices
-        
-        const Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
-
-        layers_inputs_indices.resize(old_layers_number+1);
-
-        for(Index i = 0; i < old_layers_number; i++) 
-            layers_inputs_indices(i) = old_layers_inputs_indices(i);
-
-        Tensor<Index, 1> new_layer_inputs_indices(1);
-        new_layer_inputs_indices(0) = old_layers_number-1;
-
-        layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
-    }
-    else
-    {
-        throw runtime_error("Layer type " + layer->get_type_string() + " cannot be added in position " + to_string(layers.size()));
-    }
-}
-
-
-bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
-{
-    const Index layers_number = layers.size();
 
     if(layers_number > 1 && layer_type == Layer::Type::LongShortTermMemory)
     {
         return false;
     }
-
+*/
     return true;
 }
 
@@ -298,7 +291,7 @@ bool NeuralNetwork::is_empty() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_inputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_inputs_name() const
 {
     return inputs_name;
 }
@@ -360,7 +353,7 @@ string NeuralNetwork::get_model_type_string() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_outputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_outputs_name() const
 {
     return outputs_name;
 }
@@ -1791,8 +1784,6 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 
 void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("NeuralNetwork");
 
     // Inputs
@@ -1838,6 +1829,8 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
         layers[i]->to_XML(file_stream);
     }
 /*
+    ostringstream buffer;
+
     // Layers inputs indices
 
     file_stream.OpenElement("LayersInputsIndices");
@@ -1918,43 +1911,43 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
 
-    if(inputs_element)
-    {
-        tinyxml2::XMLDocument inputs_document;
-        tinyxml2::XMLNode* element_clone = inputs_element->DeepClone(&inputs_document);
+    if(!inputs_element)
+        throw runtime_error("Inputs element is nullptr.");
 
-        inputs_document.InsertFirstChild(element_clone);
+    tinyxml2::XMLDocument inputs_document;
+    tinyxml2::XMLNode* inputs_element_clone = inputs_element->DeepClone(&inputs_document);
 
-        inputs_from_XML(inputs_document);
-    }
+    inputs_document.InsertFirstChild(inputs_element_clone);
+
+    inputs_from_XML(inputs_document);
 
     // Layers
 
     const tinyxml2::XMLElement* layers_element = neural_network_element->FirstChildElement("Layers");
 
-    if(layers_element)
-    {
-        tinyxml2::XMLDocument layers_document;
-        tinyxml2::XMLNode* element_clone = layers_element->DeepClone(&layers_document);
+    if(!layers_element)
+        throw runtime_error("Layers element is nullptr.");
 
-        layers_document.InsertFirstChild(element_clone);
+    tinyxml2::XMLDocument layers_document;
+    tinyxml2::XMLNode* layers_element_clone = layers_element->DeepClone(&layers_document);
 
-        layers_from_XML(layers_document);
-    }
+    layers_document.InsertFirstChild(layers_element_clone);
+
+    layers_from_XML(layers_document);
 
     // Outputs
 
     const tinyxml2::XMLElement* outputs_element = neural_network_element->FirstChildElement("Outputs");
 
-    if(outputs_element)
-    {
-        tinyxml2::XMLDocument outputs_document;
-        tinyxml2::XMLNode* element_clone = outputs_element->DeepClone(&outputs_document);
+    if(!outputs_element)
+        throw runtime_error("Outputs element is nullptr.");
 
-        outputs_document.InsertFirstChild(element_clone);
+    tinyxml2::XMLDocument outputs_document;
+    tinyxml2::XMLNode* outputs_element_clone = outputs_element->DeepClone(&outputs_document);
 
-        outputs_from_XML(outputs_document);
-    }
+    outputs_document.InsertFirstChild(outputs_element_clone);
+
+    outputs_from_XML(outputs_document);
     
     // Display
 
@@ -1967,35 +1960,41 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
 void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Inputs");
+    const tinyxml2::XMLElement* inputs_element = document.FirstChildElement("Inputs");
 
-    if(!root_element)
+    if(!inputs_element)
         throw runtime_error("Inputs element is nullptr.\n");
 
     // Inputs number
 
-    const tinyxml2::XMLElement* inputs_number_element = root_element->FirstChildElement("InputsNumber");
+    const tinyxml2::XMLElement* inputs_number_element = inputs_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
         throw runtime_error("Inputs number element is nullptr.\n");
 
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(atoi(inputs_number_element->GetText())));
+    const Index new_inputs_number = Index(atoi(inputs_number_element->GetText()));
+    inputs_name.resize(new_inputs_number);
+
+    // if(inputs_number_element->GetText())
+    //     set_inputs_number(inputs_number);
 
     // Inputs names
 
     const tinyxml2::XMLElement* start_element = inputs_number_element;
 
-    for(Index i = 0; i < get_inputs_number(); i++)
+    for(Index i = 0; i < new_inputs_number; i++)
     {
         const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
-        start_element = input_element;
 
         if(input_element->Attribute("Index") != to_string(i+1))
             throw runtime_error("Input index number (" + to_string(i+1) + ") does not match (" + input_element->Attribute("Item") + ").\n");
 
-        if(input_element->GetText())
-            inputs_name(i) = input_element->GetText();
+        if(!input_element->GetText())
+            throw runtime_error("Input text is nullptr.");
+
+        inputs_name(i) = input_element->GetText();
+
+        start_element = input_element;
     }
 }
 
@@ -2014,21 +2013,18 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
     if(!layers_number_element)
         throw runtime_error("LayersNumber element is nullptr.\n");
 
-    if(layers_number_element->GetText())
-        set_layers_number(Index(atoi(layers_number_element->GetText())));
+    const Index layers_number = Index(atoi(layers_number_element->GetText()));
 
     // Add layers
 
     const tinyxml2::XMLElement* start_element = layers_number_element;
 
-    for(Index i = 0; i < get_layers_number(); i++)
+    for(Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i << endl;
-
         const tinyxml2::XMLElement* layer_element = start_element->NextSiblingElement();
 
         if(!layer_element)
-            throw runtime_error("Layer element is nullptr.");
+             throw runtime_error("Layer element is nullptr.");
 
         const string layer_type = layer_element->Name();
 
@@ -2210,7 +2206,7 @@ void NeuralNetwork::print() const
     cout << "Neural network" << endl;
 
     cout << "Inputs:" << endl
-         << get_inputs_names() << endl;
+         << get_inputs_name() << endl;
 
     const Index layers_number = get_layers_number();       
 
@@ -2223,7 +2219,7 @@ void NeuralNetwork::print() const
     }
 
     cout << "Outputs:" << endl
-         << get_outputs_names() << endl;
+         << get_outputs_name() << endl;
 }
 
 
@@ -2389,8 +2385,8 @@ string NeuralNetwork::write_expression_c() const
     ostringstream buffer;
     ostringstream outputs_buffer;
 
-    Tensor<string, 1> inputs =  get_inputs_names();
-    Tensor<string, 1> outputs = get_outputs_names();
+    Tensor<string, 1> inputs =  get_inputs_name();
+    Tensor<string, 1> outputs = get_outputs_name();
     Tensor<string, 1> found_tokens;
 
     int cell_states_counter = 0;
@@ -2455,9 +2451,9 @@ string NeuralNetwork::write_expression_c() const
 
     // sample_autoassociation_distance
     {
-        string word_to_delete = "sample_autoassociation_distance =";
+        const string word_to_delete = "sample_autoassociation_distance =";
 
-        size_t index = expression.find(word_to_delete);
+        const size_t index = expression.find(word_to_delete);
 
         if(index != string::npos)
         {
@@ -2468,9 +2464,9 @@ string NeuralNetwork::write_expression_c() const
 
     // sample_autoassociation_variables_distance
     {
-        string word_to_delete = "sample_autoassociation_variables_distance =";
+        const string word_to_delete = "sample_autoassociation_variables_distance =";
 
-        size_t index = expression.find(word_to_delete);
+        const size_t index = expression.find(word_to_delete);
 
         if(index != string::npos)
         {
@@ -2489,10 +2485,12 @@ string NeuralNetwork::write_expression_c() const
         {
             break;
         }
+
         if(token.size() > 1 && token.back() != ';')
         {
             token += ';';
         }
+
         push_back_string(tokens, token);
     }
 
@@ -2808,8 +2806,8 @@ string NeuralNetwork::write_expression_api() const
 {
     ostringstream buffer;
     Tensor<string, 1> found_tokens;
-    Tensor<string, 1> inputs =  get_inputs_names();
-    Tensor<string, 1> outputs = get_outputs_names();
+    Tensor<string, 1> inputs =  get_inputs_name();
+    Tensor<string, 1> outputs = get_outputs_name();
 
     int LSTM_number = get_long_short_term_memory_layers_number();
     int cell_states_counter = 0;
@@ -3261,8 +3259,8 @@ string NeuralNetwork::write_expression_javascript() const
     Tensor<string, 1> tokens;
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
-    Tensor<string, 1> inputs =  get_inputs_names();
-    Tensor<string, 1> outputs = get_outputs_names();
+    Tensor<string, 1> inputs =  get_inputs_name();
+    Tensor<string, 1> outputs = get_outputs_name();
 
     ostringstream buffer_to_fix;
 
@@ -3877,9 +3875,9 @@ string NeuralNetwork::write_expression_python() const
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
 
-    Tensor<string, 1> inputs =  get_inputs_names();
-    Tensor<string, 1> original_inputs =  get_inputs_names();
-    Tensor<string, 1> outputs = get_outputs_names();
+    Tensor<string, 1> inputs =  get_inputs_name();
+    Tensor<string, 1> original_inputs =  get_inputs_name();
+    Tensor<string, 1> outputs = get_outputs_name();
 
 //    const Index layers_number = get_layers_number();
 
@@ -4355,7 +4353,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name + " file.\n");
 
-    const Tensor<string, 1> outputs_name = get_outputs_names();
+    const Tensor<string, 1> outputs_name = get_outputs_name();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);
