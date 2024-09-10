@@ -272,7 +272,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     {
         if(neural_network->has_scaling_4d_layer())
         {
-            Scaling4D* scaling_layer_4d = neural_network->get_scaling_layer_4d();
+            ScalingLayer4D* scaling_layer_4d = neural_network->get_scaling_layer_4d();
             scaling_layer_4d->set(input_variables_descriptives, input_variables_scalers);
         }
         else

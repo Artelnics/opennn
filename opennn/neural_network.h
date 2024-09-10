@@ -122,7 +122,7 @@ public:
    const Tensor<Tensor<Index, 1>, 1>& get_layers_inputs_indices() const;
 
    ScalingLayer2D* get_scaling_layer_2d() const;
-   Scaling4D* get_scaling_layer_4d() const;
+   ScalingLayer4D* get_scaling_layer_4d() const;
    UnscalingLayer* get_unscaling_layer() const;
    BoundingLayer* get_bounding_layer() const;
    //FlattenLayer* get_flatten_layer() const;

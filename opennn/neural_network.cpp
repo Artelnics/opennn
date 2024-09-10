@@ -512,7 +512,7 @@ ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
 }
 
 
-Scaling4D* NeuralNetwork::get_scaling_layer_4d() const
+ScalingLayer4D* NeuralNetwork::get_scaling_layer_4d() const
 {
     const Index layers_number = get_layers_number();
 
@@ -520,7 +520,7 @@ Scaling4D* NeuralNetwork::get_scaling_layer_4d() const
     {
         if(layers[i]->get_type() == Layer::Type::Scaling4D)
         {
-            return dynamic_cast<Scaling4D*>(layers[i]);
+            return dynamic_cast<ScalingLayer4D*>(layers[i]);
         }
     }
 
@@ -805,7 +805,7 @@ void NeuralNetwork::set(const dimensions& input_dimensions,
 {
     delete_layers();
 
-    Scaling4D* scaling_layer = new Scaling4D(input_dimensions);
+    ScalingLayer4D* scaling_layer = new ScalingLayer4D(input_dimensions);
     add_layer(scaling_layer);
 
     dimensions output_dimensions = scaling_layer->get_output_dimensions();  
@@ -2044,7 +2044,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         }
         else if(layer_type == "Scaling4D")
         {
-            Scaling4D* scaling_layer = new Scaling4D();
+            ScalingLayer4D* scaling_layer = new ScalingLayer4D();
             scaling_layer->from_XML(layer_document);
             add_layer(scaling_layer);
         }

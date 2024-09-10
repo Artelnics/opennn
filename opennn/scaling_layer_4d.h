@@ -23,17 +23,17 @@
 namespace opennn
 {
 
-class Scaling4D : public Layer
+class ScalingLayer4D : public Layer
 {
 
 public:
 
    // Constructors
 
-   explicit Scaling4D();
+   explicit ScalingLayer4D();
 
-   explicit Scaling4D(const Index&);
-   explicit Scaling4D(const dimensions&);
+   explicit ScalingLayer4D(const Index&);
+   explicit ScalingLayer4D(const dimensions&);
 
    // Get
 

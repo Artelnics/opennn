@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-Scaling4D::Scaling4D() : Layer()
+ScalingLayer4D::ScalingLayer4D() : Layer()
 {    
     set();
 
@@ -21,7 +21,7 @@ Scaling4D::Scaling4D() : Layer()
 }
 
 
-Scaling4D::Scaling4D(const Index& new_neurons_number) : Layer()
+ScalingLayer4D::ScalingLayer4D(const Index& new_neurons_number) : Layer()
 {
     set(new_neurons_number);
 
@@ -29,7 +29,7 @@ Scaling4D::Scaling4D(const Index& new_neurons_number) : Layer()
 }
 
 
-Scaling4D::Scaling4D(const dimensions& new_input_dimensions) : Layer()
+ScalingLayer4D::ScalingLayer4D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
 
@@ -37,43 +37,43 @@ Scaling4D::Scaling4D(const dimensions& new_input_dimensions) : Layer()
 }
 
 
-dimensions Scaling4D::get_input_dimensions() const
+dimensions ScalingLayer4D::get_input_dimensions() const
 {
     return input_dimensions;
 }
 
 
-dimensions Scaling4D::get_output_dimensions() const
+dimensions ScalingLayer4D::get_output_dimensions() const
 {
     return input_dimensions;
 }
 
 
-Index Scaling4D::get_inputs_number() const
+Index ScalingLayer4D::get_inputs_number() const
 {
     return input_dimensions[0]*input_dimensions[1]*input_dimensions[2];
 }
 
 
-Index Scaling4D::get_neurons_number() const
+Index ScalingLayer4D::get_neurons_number() const
 {
     return descriptives.size();
 }
 
 
-Tensor<Descriptives, 1> Scaling4D::get_descriptives() const
+Tensor<Descriptives, 1> ScalingLayer4D::get_descriptives() const
 {
     return descriptives;
 }
 
 
-Descriptives Scaling4D::get_descriptives(const Index& index) const
+Descriptives ScalingLayer4D::get_descriptives(const Index& index) const
 {
     return descriptives(index);
 }
 
 
-Tensor<type, 1> Scaling4D::get_minimums() const
+Tensor<type, 1> ScalingLayer4D::get_minimums() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -88,7 +88,7 @@ Tensor<type, 1> Scaling4D::get_minimums() const
 }
 
 
-Tensor<type, 1> Scaling4D::get_maximums() const
+Tensor<type, 1> ScalingLayer4D::get_maximums() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -103,7 +103,7 @@ Tensor<type, 1> Scaling4D::get_maximums() const
 }
 
 
-Tensor<type, 1> Scaling4D::get_means() const
+Tensor<type, 1> ScalingLayer4D::get_means() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -118,7 +118,7 @@ Tensor<type, 1> Scaling4D::get_means() const
 }
 
 
-Tensor<type, 1> Scaling4D::get_standard_deviations() const
+Tensor<type, 1> ScalingLayer4D::get_standard_deviations() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -133,13 +133,13 @@ Tensor<type, 1> Scaling4D::get_standard_deviations() const
 }
 
 
-Tensor<Scaler, 1> Scaling4D::get_scaling_methods() const
+Tensor<Scaler, 1> ScalingLayer4D::get_scaling_methods() const
 {
     return scalers;
 }
 
 
-Tensor<string, 1> Scaling4D::write_scalers() const
+Tensor<string, 1> ScalingLayer4D::write_scalers() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -177,7 +177,7 @@ Tensor<string, 1> Scaling4D::write_scalers() const
 }
 
 
-Tensor<string, 1> Scaling4D::write_scalers_text() const
+Tensor<string, 1> ScalingLayer4D::write_scalers_text() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -222,13 +222,13 @@ Tensor<string, 1> Scaling4D::write_scalers_text() const
 }
 
 
-const bool& Scaling4D::get_display() const
+const bool& ScalingLayer4D::get_display() const
 {
     return display;
 }
 
 
-void Scaling4D::set()
+void ScalingLayer4D::set()
 {
     descriptives.resize(0);
 
@@ -238,7 +238,7 @@ void Scaling4D::set()
 }
 
 
-void Scaling4D::set(const Index& new_inputs_number)
+void ScalingLayer4D::set(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
 
@@ -250,7 +250,7 @@ void Scaling4D::set(const Index& new_inputs_number)
 }
 
 
-void Scaling4D::set(const dimensions& new_input_dimensions)
+void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
@@ -265,7 +265,7 @@ void Scaling4D::set(const dimensions& new_input_dimensions)
 }
 
 
-void Scaling4D::set(const Tensor<Descriptives, 1>& new_descriptives)
+void ScalingLayer4D::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
     descriptives = new_descriptives;
 
@@ -279,7 +279,7 @@ void Scaling4D::set(const Tensor<Descriptives, 1>& new_descriptives)
 }
 
 
-void Scaling4D::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
+void ScalingLayer4D::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
 {
     descriptives = new_descriptives;
 
@@ -287,7 +287,7 @@ void Scaling4D::set(const Tensor<Descriptives, 1>& new_descriptives, const Tenso
 }
 
 
-void Scaling4D::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
+void ScalingLayer4D::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
 {
     set_default();
 
@@ -295,7 +295,7 @@ void Scaling4D::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
 }
 
 
-void Scaling4D::set_inputs_number(const Index& new_inputs_number)
+void ScalingLayer4D::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
 
@@ -305,7 +305,7 @@ void Scaling4D::set_inputs_number(const Index& new_inputs_number)
 }
 
 
-void Scaling4D::set_neurons_number(const Index& new_neurons_number)
+void ScalingLayer4D::set_neurons_number(const Index& new_neurons_number)
 {
     descriptives.resize(new_neurons_number);
 
@@ -315,7 +315,7 @@ void Scaling4D::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void Scaling4D::set_default()
+void ScalingLayer4D::set_default()
 {
     name = "scaling_layer";
 
@@ -329,14 +329,14 @@ void Scaling4D::set_default()
 }
 
 
-void Scaling4D::set_min_max_range(const type& min, const type& max)
+void ScalingLayer4D::set_min_max_range(const type& min, const type& max)
 {
     min_range = min;
     max_range = max;
 }
 
 
-void Scaling4D::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
+void ScalingLayer4D::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
 
 #ifdef OPENNN_DEBUG
@@ -354,37 +354,37 @@ void Scaling4D::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives
 }
 
 
-void Scaling4D::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
+void ScalingLayer4D::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
     descriptives(i) = item_descriptives;
 }
 
 
-void Scaling4D::set_minimum(const Index& i, const type& new_minimum)
+void ScalingLayer4D::set_minimum(const Index& i, const type& new_minimum)
 {
     descriptives(i).set_minimum(new_minimum);
 }
 
 
-void Scaling4D::set_maximum(const Index& i, const type& new_maximum)
+void ScalingLayer4D::set_maximum(const Index& i, const type& new_maximum)
 {
     descriptives(i).set_maximum(new_maximum);
 }
 
 
-void Scaling4D::set_mean(const Index& i, const type& new_mean)
+void ScalingLayer4D::set_mean(const Index& i, const type& new_mean)
 {
     descriptives(i).set_mean(new_mean);
 }
 
 
-void Scaling4D::set_standard_deviation(const Index& i, const type& new_standard_deviation)
+void ScalingLayer4D::set_standard_deviation(const Index& i, const type& new_standard_deviation)
 {
     descriptives(i).set_standard_deviation(new_standard_deviation);
 }
 
 
-void Scaling4D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
+void ScalingLayer4D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
 {
 #ifdef OPENNN_DEBUG
 
@@ -399,7 +399,7 @@ void Scaling4D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
 }
 
 
-void Scaling4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_string)
+void ScalingLayer4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -417,13 +417,13 @@ void Scaling4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_string)
 }
 
 
-void Scaling4D::set_scaler(const Index& variable_index, const Scaler& new_scaler)
+void ScalingLayer4D::set_scaler(const Index& variable_index, const Scaler& new_scaler)
 {
     scalers(variable_index) = new_scaler;
 }
 
 
-void Scaling4D::set_scaler(const Index& variable_index, const string& new_scaler_string)
+void ScalingLayer4D::set_scaler(const Index& variable_index, const string& new_scaler_string)
 {
     if(new_scaler_string == "None")
     {
@@ -452,7 +452,7 @@ void Scaling4D::set_scaler(const Index& variable_index, const string& new_scaler
 }
 
 
-void Scaling4D::set_scalers(const string& new_scaling_methods_string)
+void ScalingLayer4D::set_scalers(const string& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -497,7 +497,7 @@ void Scaling4D::set_scalers(const string& new_scaling_methods_string)
 }
 
 
-void Scaling4D::set_scalers(const Scaler& new_scaling_method)
+void ScalingLayer4D::set_scalers(const Scaler& new_scaling_method)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -508,13 +508,13 @@ void Scaling4D::set_scalers(const Scaler& new_scaling_method)
 }
 
 
-void Scaling4D::set_display(const bool& new_display)
+void ScalingLayer4D::set_display(const bool& new_display)
 {
     display = new_display;
 }
 
 
-bool Scaling4D::is_empty() const
+bool ScalingLayer4D::is_empty() const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -529,7 +529,7 @@ bool Scaling4D::is_empty() const
 }
 
 
-// void Scaling4D::check_range(const Tensor<type, 1>& inputs) const
+// void ScalingLayer4D::check_range(const Tensor<type, 1>& inputs) const
 // {
 //     const Index inputs_number = get_neurons_number();
 
@@ -557,7 +557,7 @@ bool Scaling4D::is_empty() const
 // }
 
 
-void Scaling4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                      LayerForwardPropagation* forward_propagation,
                                      const bool& is_training)
 {
@@ -576,7 +576,7 @@ void Scaling4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 }
 
 
-void Scaling4D::print() const
+void ScalingLayer4D::print() const
 {
     cout << "Scaling layer" << endl;
 
@@ -597,7 +597,7 @@ void Scaling4D::print() const
 }
 
 
-void Scaling4D::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -647,7 +647,7 @@ void Scaling4D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void Scaling4D::from_XML(const tinyxml2::XMLDocument& document)
+void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
