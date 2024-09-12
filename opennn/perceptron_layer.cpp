@@ -660,7 +660,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 }
 
 
-string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names,
+string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_name,
                                          const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
@@ -671,12 +671,12 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names,
 
         buffer << outputs_name[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
 
-        for(Index i = 0; i < inputs_names.size() - 1; i++)
+        for(Index i = 0; i < inputs_name.size() - 1; i++)
         {
-            buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ") +";
+            buffer << " (" << inputs_name[i] << "*" << synaptic_weights_column(i) << ") +";
         }
 
-        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") );\n";
+        buffer << " (" << inputs_name[inputs_name.size() - 1] << "*" << synaptic_weights_column[inputs_name.size() - 1] << ") );\n";
     }
 
     return buffer.str();
@@ -694,7 +694,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Layer name
 
-    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("LayerName");
+    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("Name");
 
     if(!layer_name_element)
         throw runtime_error("LayerName element is nullptr.\n");
@@ -754,7 +754,7 @@ void PerceptronLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layer name
 
-    file_stream.OpenElement("LayerName");
+    file_stream.OpenElement("Name");
     file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
@@ -780,7 +780,6 @@ void PerceptronLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Parameters");
     file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-
     file_stream.CloseElement();
 
     // Peceptron layer (end tag)
