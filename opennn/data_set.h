@@ -342,8 +342,6 @@ public:
     const bool& get_has_ids() const;
 
     Tensor<string, 1> get_ids() const;
-//    Tensor<string, 1> get_selection_rows_label_tensor();
-//    Tensor<string, 1> get_testing_rows_label_tensor();
 
     const Separator& get_separator() const;
     string get_separator_string() const;
@@ -769,7 +767,7 @@ protected:
 
     bool has_header = false;
 
-    bool has_ids = false;
+    bool has_samples_id = false;
 
     Codification codification = Codification::UTF8;
 

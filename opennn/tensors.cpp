@@ -1887,9 +1887,6 @@ string tensor_to_string(const Tensor<Index, 1>& x, const string& separator)
 
     ostringstream buffer;
 
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
     for(Index i = 0; i < size; i++)
     {
         buffer << x[i] << separator;

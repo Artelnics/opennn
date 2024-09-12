@@ -1760,9 +1760,23 @@ Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 
     Tensor<Scaler, 1> input_variables_scalers(input_variables_number);
 
+    Index index = 0;
+
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
-        input_variables_scalers(i) = input_raw_variables(i).scaler;
+        if(input_raw_variables(i).type == RawVariableType::Categorical)
+        {
+            for(Index j = 0; j < input_raw_variables(i).get_categories_number(); j++)
+            {
+                input_variables_scalers(index) = input_raw_variables(i).scaler;
+                index++;
+            }
+        }
+        else
+        {
+            input_variables_scalers(index) = input_raw_variables(i).scaler;
+            index++;
+        }
     }
 
     return input_variables_scalers;
@@ -1782,7 +1796,15 @@ Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
 
     for(Index i = 0; i < target_raw_variables_number; i++)
     {
-        for(Index j = 0;  j < target_raw_variables(i).get_categories_number(); j++)
+        if(target_raw_variables(i).type == RawVariableType::Categorical)
+        {
+            for(Index j = 0; j < target_raw_variables(i).get_categories_number(); j++)
+            {
+                target_variables_scalers(index) = target_raw_variables(i).scaler;
+                index++;
+            }
+        }
+        else
         {
             target_variables_scalers(index) = target_raw_variables(i).scaler;
             index++;
@@ -2972,7 +2994,7 @@ const bool& DataSet::get_header_line() const
 
 const bool& DataSet::get_has_ids() const
 {
-    return has_ids;
+    return has_samples_id;
 }
 
 
@@ -2980,36 +3002,6 @@ Tensor<string, 1> DataSet::get_ids() const
 {
     return samples_id;
 }
-
-
-// Tensor<string, 1> DataSet::get_testing_rows_label_tensor()
-// {
-//     const Index testing_samples_number = get_testing_samples_number();
-//     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
-//     Tensor<string, 1> testing_rows_label(testing_samples_number);
-
-//     for(Index i = 0; i < testing_samples_number; i++)
-//     {
-//         testing_rows_label(i) = samples_id(testing_indices(i));
-//     }
-
-//     return testing_rows_label;
-// }
-
-
-// Tensor<string, 1> DataSet::get_selection_rows_label_tensor()
-// {
-//     const Index selection_samples_number = get_selection_samples_number();
-//     const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
-//     Tensor<string, 1> selection_rows_label(selection_samples_number);
-
-//     for(Index i = 0; i < selection_samples_number; i++)
-//     {
-//         selection_rows_label(i) = samples_id(selection_indices(i));
-//     }
-
-//     return selection_rows_label;
-// }
 
 
 const DataSet::Separator& DataSet::get_separator() const
@@ -4032,7 +4024,7 @@ void DataSet::set_has_header(const bool& new_has_header)
 
 void DataSet::set_has_ids(const bool& new_has_ids)
 {
-    has_ids = new_has_ids;
+    has_samples_id = new_has_ids;
 }
 
 
@@ -4958,7 +4950,7 @@ void DataSet::print_input_target_raw_variables_correlations() const
     const Index inputs_number = get_input_variables_number();
     const Index targets_number = get_target_raw_variables_number();
 
-    const Tensor<string, 1> inputs_names = get_input_raw_variables_names();
+    const Tensor<string, 1> inputs_name = get_input_raw_variables_names();
     const Tensor<string, 1> targets_name = get_target_raw_variables_names();
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_correlations();
@@ -4967,7 +4959,7 @@ void DataSet::print_input_target_raw_variables_correlations() const
     {
         for(Index i = 0; i < inputs_number; i++)
         {
-            cout << targets_name(j) << " - " << inputs_names(i) << ": " << correlations(i,j).r << endl;
+            cout << targets_name(j) << " - " << inputs_name(i) << ": " << correlations(i,j).r << endl;
         }
     }
 }
@@ -4978,7 +4970,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     const Index inputs_number = get_input_raw_variables_number();
     const Index targets_number = get_target_raw_variables_number();
 
-    const Tensor<string, 1> inputs_names = get_input_variables_names();
+    const Tensor<string, 1> inputs_name = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
     const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variables_correlations());
@@ -4993,7 +4985,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     {
         for(Index j = 0 ; j < targets_number ; j++)
         {
-            top_correlation.insert(pair<type,string>(correlations(i,j), inputs_names(i) + " - " + targets_name(j)));
+            top_correlation.insert(pair<type,string>(correlations(i,j), inputs_name(i) + " - " + targets_name(j)));
         }
     }
 
@@ -5328,7 +5320,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 
         default:
         {
-            throw runtime_error("Unknown scaling and unscaling method: " + to_string(int(input_variables_scalers(i))) + "\n");
+            throw runtime_error("Unknown scaling inputs method: " + to_string(int(input_variables_scalers(i))) + "\n");
         }
         }
     }
@@ -5370,10 +5362,8 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
             scale_logarithmic(data, target_variables_indices(i));
             break;
 
-        default:
-        {
-            throw runtime_error("Unknown scaling and unscaling method: " + to_string(int(target_variables_scalers(i))) + "\n");
-        }
+        default:        
+            throw runtime_error("Unknown scaling targets method: " + to_string(int(target_variables_scalers(i))) + "\n");
         }
     }
 
@@ -5547,8 +5537,8 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Has Ids
 
-    file_stream.OpenElement("HasIds");
-    file_stream.PushText(to_string(has_ids).c_str());
+    file_stream.OpenElement("HasSamplesId");
+    file_stream.PushText(to_string(has_samples_id).c_str());
     file_stream.CloseElement();
 
     // Missing values label
@@ -5593,14 +5583,6 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Rows labels
-
-    if(has_ids)
-
-    file_stream.OpenElement("HasIds");
-    file_stream.PushText(to_string(has_ids).c_str());
-    file_stream.CloseElement();
-
     // Samples
 
     file_stream.OpenElement("Samples");
@@ -5610,6 +5592,15 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("SamplesNumber");
     file_stream.PushText(to_string(get_samples_number()).c_str());
     file_stream.CloseElement();
+
+    // Samples id
+
+    if(has_samples_id)
+    {
+        file_stream.OpenElement("SamplesId");
+        file_stream.PushText(string_tensor_to_string(samples_id).c_str());
+        file_stream.CloseElement();
+    }
 
     // Samples uses
 
@@ -5749,9 +5740,9 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Rows labels
+    // Samples id
 
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
 
     if(rows_label_element)
     {
@@ -5869,14 +5860,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has Ids
 
-    if(has_ids)
+    if(has_samples_id)
     {
-        // Rows labels begin tag
+        // Samples id begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
-            throw runtime_error("HasIds element is nullptr.\n");
+            throw runtime_error("HasSamplesId element is nullptr.\n");
 
         // Ids
 
@@ -6139,18 +6130,32 @@ void DataSet::print_raw_variables_scalers() const
 
     const Tensor<Scaler, 1> scalers = get_raw_variables_scalers();
 
+    if (scalers.size() != raw_variables_number)
+        throw runtime_error("Error: Scalers array size does not match the number of raw variables.");
+
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(scalers[i] == Scaler::None)
-            cout << "None" << endl;
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            cout << "MinimumMaximum" << endl;
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            cout << "MeanStandardDeviation" << endl;
-        else if(scalers[i] == Scaler::StandardDeviation)
-            cout << "StandardDeviation" << endl;
-        else if(scalers[i] == Scaler::Logarithm)
-            cout << "Logarithm" << endl;
+        switch(scalers(i))
+        {
+            case Scaler::None:
+                cout << "None" << endl;
+                break;
+            case Scaler::MinimumMaximum:
+                cout << "MinimumMaximum" << endl;
+                break;
+            case Scaler::MeanStandardDeviation:
+                cout << "MeanStandardDeviation" << endl;
+                break;
+            case Scaler::StandardDeviation:
+                cout << "StandardDeviation" << endl;
+                break;
+            case Scaler::Logarithm:
+                cout << "Logarithm" << endl;
+                break;
+            default:
+                cerr << "Error: Unknown scaler value at index " << i << endl;
+                break;
+        }
     }
 
     cout << endl;
@@ -6229,7 +6234,7 @@ void DataSet::save_data() const
 
     const string separator_string = get_separator_string();
 
-    if(has_ids)
+    if(has_samples_id)
     {
         file << "id" << separator_string;
     }
@@ -6248,7 +6253,7 @@ void DataSet::save_data() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(has_ids)
+        if(has_samples_id)
         {
             file << samples_id(i) << separator_string;
         }
@@ -7042,7 +7047,7 @@ void DataSet::read_csv()
         if(columns_number != 0) break;
     }
 
-    const Index raw_variables_number = has_ids
+    const Index raw_variables_number = has_samples_id
             ? columns_number - 1
             : columns_number;
 
@@ -7055,7 +7060,7 @@ void DataSet::read_csv()
         if(has_numbers(tokens))
             throw runtime_error("Error: Some header names are numeric: " + line + "\n");
 
-        if(!has_ids)
+        if(!has_samples_id)
         {
             set_raw_variables_names(tokens);
         }
@@ -7093,7 +7098,7 @@ void DataSet::read_csv()
         {
             const RawVariableType type = raw_variables(i).type;
 
-            const string token = has_ids ? tokens(i+1) : tokens(i);
+            const string token = has_samples_id ? tokens(i+1) : tokens(i);
 
             if(token.empty() || token == missing_values_label)
             {
@@ -7197,7 +7202,7 @@ void DataSet::read_csv()
             }
         }
 
-        if(has_ids) samples_id(sample_index) = tokens(0);
+        if(has_samples_id) samples_id(sample_index) = tokens(0);
 
         #pragma omp parallel for
 
@@ -7205,7 +7210,7 @@ void DataSet::read_csv()
         {
             const RawVariableType raw_variable_type = raw_variables(raw_variable_index).type;
 
-            const string token = has_ids ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
+            const string token = has_samples_id ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
 
             const Tensor<Index, 1> variable_indices = get_variable_indices(raw_variable_index);
 
@@ -7826,7 +7831,7 @@ void DataSet::shuffle()
 
 bool DataSet::get_has_rows_labels() const
 {
-    return has_ids;
+    return has_samples_id;
 }
 
 
@@ -7851,7 +7856,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const string& separator_string,
                                         const string& missing_values_label,
                                         const bool& has_raw_variables_name,
-                                        const bool& has_ids) const
+                                        const bool& has_samples_id) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -7914,7 +7919,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     line_number = 0;
     Index variable_index = 0;
     Index token_index = 0;
-    bool is_ID = has_ids;
+    bool is_ID = has_samples_id;
 
     const bool is_float = is_same<type, float>::value;
     bool has_missing_values = false;
@@ -7933,7 +7938,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         variable_index = 0;
         token_index = 0;
-        is_ID = has_ids;
+        is_ID = has_samples_id;
 
         for(Index i = 0; i < raw_variables_number; i++)
         {

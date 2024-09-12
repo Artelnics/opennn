@@ -93,7 +93,7 @@ Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 }
 
 
-string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -105,7 +105,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
     {
         if(scalers(i) == Scaler::None)
         {
-            buffer << outputs_name(i) << " = " << inputs_names(i) << ";\n";
+            buffer << outputs_name(i) << " = " << inputs_name(i) << ";\n";
         }
         else if(scalers(i) == Scaler::MinimumMaximum)
         {
@@ -119,7 +119,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 
                 const type intercept = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
-                buffer << outputs_name[i] << "=" << inputs_names[i] << "*" << slope << "+" << intercept<<";\n";
+                buffer << outputs_name[i] << "=" << inputs_name[i] << "*" << slope << "+" << intercept<<";\n";
             }
         }
         else if(scalers(i) == Scaler::MeanStandardDeviation)
@@ -128,17 +128,17 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 
             const type mean = descriptives(i).mean;
 
-            buffer << outputs_name[i] << "=" << inputs_names[i] << "*" << standard_deviation<<"+"<<mean<<";\n";
+            buffer << outputs_name[i] << "=" << inputs_name[i] << "*" << standard_deviation<<"+"<<mean<<";\n";
         }
         else if(scalers(i) == Scaler::StandardDeviation)
         {
             const type standard_deviation = descriptives(i).standard_deviation;
 
-            buffer << outputs_name[i] <<  "=" <<  inputs_names(i) << "*" << standard_deviation<<";\n";
+            buffer << outputs_name[i] <<  "=" <<  inputs_name(i) << "*" << standard_deviation<<";\n";
         }
         else if(scalers(i) == Scaler::Logarithm)
         {
-            buffer << outputs_name[i] << "=" << "exp(" << inputs_names[i] << ");\n";
+            buffer << outputs_name[i] << "=" << "exp(" << inputs_name[i] << ");\n";
         }
         else
         {

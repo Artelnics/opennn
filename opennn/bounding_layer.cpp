@@ -159,7 +159,7 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
     {
         bounding_method = BoundingMethod::NoBounding;
     }
-    else if(new_method_string == "Bounding")
+    else if(new_method_string == "BoundingLayer")
     {
         bounding_method = BoundingMethod::Bounding;
     }
@@ -313,7 +313,7 @@ string BoundingLayer::get_bounding_method_string() const
 {
     if(bounding_method == BoundingMethod::Bounding)
     {
-        return "Bounding";
+        return "BoundingLayer";
     }
     else if(bounding_method == BoundingMethod::NoBounding)
     {
@@ -326,7 +326,7 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
@@ -338,7 +338,7 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 
         for(Index i = 0; i < neurons_number; i++)
         {
-            buffer << outputs_name[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ")\n";
+            buffer << outputs_name[i] << " = max(" << lower_bounds[i] << ", " << inputs_name[i] << ")\n";
             buffer << outputs_name[i] << " = min(" << upper_bounds[i] << ", " << outputs_name[i] << ")\n";
         }
     }

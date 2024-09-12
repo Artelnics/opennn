@@ -124,10 +124,10 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(to_string(has_header).c_str());
     file_stream.CloseElement();
 
-    // Rows labels
+    // Samples id
 
-    file_stream.OpenElement("HasIds");
-    file_stream.PushText(to_string(has_ids).c_str());
+    file_stream.OpenElement("HasSamplesId");
+    file_stream.PushText(to_string(has_samples_id).c_str());
     file_stream.CloseElement();
 
     // Missing values label
@@ -192,13 +192,13 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Rows labels
+    // Samples id
 /*
-    if(has_ids)
+    if(has_samples_id)
     {
         const Index rows_labels_number = ids.size();
 
-        file_stream.OpenElement("HasIds");
+        file_stream.OpenElement("HasSamplesId");
 
         buffer.str("");
 
@@ -485,9 +485,9 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Rows labels
+    // Samples id
 
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
 
     if(rows_label_element)
     {
@@ -740,11 +740,11 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Rows label
 
-    if(has_ids)
+    if(has_samples_id)
     {
-        // Rows labels begin tag
+        // Samples id begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
         {
@@ -755,7 +755,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
             throw runtime_error(buffer.str());
         }
 
-        // Rows labels
+        // Samples id
 
         if(has_ids_element->GetText())
         {
