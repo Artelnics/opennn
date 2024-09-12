@@ -115,59 +115,52 @@ void NeuralNetwork::delete_layers()
 
 void NeuralNetwork::add_layer(Layer* layer)
 {
+    const Layer::Type layer_type = layer->get_type();
+
+    if(!validate_layer_type(layer_type)) return;
+
+    const Index old_layers_number = get_layers_number();
+
+    const Tensor<Layer*, 1> old_layers = get_layers();
+
+    const Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
+
+    layers.resize(old_layers_number + 1);
+
+    for(Index i = 0; i < old_layers_number; i++)
+        layers(i) = old_layers(i);
+
+    layers(old_layers_number) = layer;
+
+    layers_inputs_indices.resize(old_layers_number+1);
+
+    for(Index i = 0; i < old_layers_number; i++)
+        layers_inputs_indices(i) = old_layers_inputs_indices(i);
+
+    Tensor<Index, 1> new_layer_inputs_indices(1);
+    new_layer_inputs_indices(0) = old_layers_number-1;
+
+    layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
+}
+
+
+bool NeuralNetwork::validate_layer_type(const Layer::Type layer_type)
+{
+/*
+    const Index layers_number = layers.size();
+
     if(has_bounding_layer())
     {
         print();
 
         throw runtime_error("No layers can be added after a bounding layer.\n");
     }
-    
-    const Layer::Type layer_type = layer->get_type();
-
-    if(check_layer_type(layer_type))
-    {  
-        const Index old_layers_number = get_layers_number();
-
-        // Layers pointers
-        
-        Tensor<Layer*, 1> old_layers = get_layers();
-        
-        layers.resize(old_layers_number + 1);
-        
-        for(Index i = 0; i < old_layers_number; i++) layers(i) = old_layers(i);
-
-        layers(old_layers_number) = layer;
-        
-        // Layers inputs indices
-        
-        const Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
-
-        layers_inputs_indices.resize(old_layers_number+1);
-
-        for(Index i = 0; i < old_layers_number; i++) 
-            layers_inputs_indices(i) = old_layers_inputs_indices(i);
-
-        Tensor<Index, 1> new_layer_inputs_indices(1);
-        new_layer_inputs_indices(0) = old_layers_number-1;
-
-        layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
-    }
-    else
-    {
-        throw runtime_error("Layer type " + layer->get_type_string() + " cannot be added in position " + to_string(layers.size()));
-    }
-}
-
-
-bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
-{
-    const Index layers_number = layers.size();
 
     if(layers_number > 1 && layer_type == Layer::Type::LongShortTermMemory)
     {
         return false;
     }
-
+*/
     return true;
 }
 
@@ -298,23 +291,23 @@ bool NeuralNetwork::is_empty() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_inputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_inputs_name() const
 {
-    return inputs_names;
+    return inputs_name;
 }
 
 
 string NeuralNetwork::get_input_name(const Index& index) const
 {
-    return inputs_names[index];
+    return inputs_name[index];
 }
 
 
 Index NeuralNetwork::get_input_index(const string& name) const
 {
-    for(Index i = 0; i < inputs_names.size(); i++)
+    for(Index i = 0; i < inputs_name.size(); i++)
     {
-        if(inputs_names(i) == name) return i;
+        if(inputs_name(i) == name) return i;
     }
 
     return 0;
@@ -360,7 +353,7 @@ string NeuralNetwork::get_model_type_string() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_outputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_outputs_name() const
 {
     return outputs_name;
 }
@@ -598,7 +591,7 @@ BoundingLayer* NeuralNetwork::get_bounding_layer() const
 
 //     for(Index i = 0; i < layers_number; i++)
 //     {
-//         if(layers[i]->get_type() == Layer::Type::Pooling)
+//         if(layers[i]->get_type() == Layer::Type::PoolingLayer)
 //         {
 //             return dynamic_cast<PoolingLayer*>(layers[i]);
 //         }
@@ -664,7 +657,7 @@ const bool& NeuralNetwork::get_display() const
 
 void NeuralNetwork::set()
 {
-    inputs_names.resize(0);
+    inputs_name.resize(0);
 
     outputs_name.resize(0);
 
@@ -685,7 +678,8 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     const Index inputs_number = architecture[0];
     const Index outputs_number = architecture[size-1];
 
-    inputs_names.resize(inputs_number);
+    inputs_name.resize(inputs_number);
+    for(Index i = 0; i < inputs_number; i++) inputs_name(i) = "input_" + to_string(i+1);
 
     ScalingLayer2D* scaling_layer_2d = new ScalingLayer2D(inputs_number);
     add_layer(scaling_layer_2d);
@@ -711,7 +705,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     }
     else if(model_type == ModelType::Classification || model_type == ModelType::TextClassification)
     {
-
         for(Index i = 0; i < size-2; i++)
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer(architecture[i], architecture[i+1]);
@@ -781,6 +774,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     }
 
     outputs_name.resize(outputs_number);
+    for(Index i = 0; i < outputs_number; i++) outputs_name(i) = "output_" + to_string(i+1);
 
     set_default();
 }
@@ -818,7 +812,7 @@ void NeuralNetwork::set(const dimensions& input_dimensions,
     //add_layer(convolutional_layer);
     //output_dimensions = convolutional_layer->get_output_dimensions();
 
-//        // Pooling layer 1
+//        // PoolingLayer layer 1
 
 //        PoolingLayer* pooling_layer = new PoolingLayer(output_dimensions);
 //        pooling_layer->set_name("pooling_layer_" + to_string(i+1));
@@ -899,7 +893,7 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
 
 void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
 {
-    inputs_names = new_inputs_names;
+    inputs_name = new_inputs_names;
 }
 
 
@@ -911,7 +905,7 @@ void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names
 
 void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 {
-    inputs_names.resize(new_inputs_number);
+    inputs_name.resize(new_inputs_number);
 
     if(has_scaling_layer())
     {
@@ -964,6 +958,13 @@ void NeuralNetwork::set_threads_number(const int& new_threads_number)
     {
         layers(i)->set_threads_number(new_threads_number);
     }
+}
+
+
+void NeuralNetwork::set_layers_number(const Index& new_layers_number)
+{
+    layers.resize(new_layers_number);
+    layers_inputs_indices.resize(new_layers_number);
 }
 
 
@@ -1264,19 +1265,6 @@ Index NeuralNetwork::get_layers_number() const
 {
     return layers.size();
 }
-
-
-// Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
-// {
-//     Tensor<Index, 1> layers_neurons_number(layers.size());
-
-//     for(Index i = 0; i < layers.size(); i++)
-//     {
-//         layers_neurons_number(i) = layers[i]->get_neurons_number();
-//     }
-
-//     return layers_neurons_number;
-// }
 
 
 Index NeuralNetwork::get_trainable_layers_number() const
@@ -1694,25 +1682,25 @@ Tensor<string, 2> NeuralNetwork::get_information() const
 
         const string layer_type = trainable_layers(i)->get_type_string();
 
-        if(layer_type == "Perceptron")
+        if(layer_type == "PerceptronLayer")
         {
             const PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(trainable_layers(i));
 
             information(i,2) = perceptron_layer->write_activation_function();
         }
-        else if(layer_type == "Probabilistic")
+        else if(layer_type == "ProbabilisticLayer")
         {
             const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers(i));
 
             information(i,2) = probabilistic_layer->write_activation_function();
         }
-        else if(layer_type == "LongShortTermMemory")
+        else if(layer_type == "LongShortTermMemoryLayer")
         {
             const LongShortTermMemoryLayer* long_short_term_memory_layer = static_cast<LongShortTermMemoryLayer*>(trainable_layers(i));
 
             information(i,2) = long_short_term_memory_layer->write_activation_function();
         }
-        else if(layer_type == "Recurrent")
+        else if(layer_type == "RecurrentLayer")
         {
             const RecurrentLayer* recurrent_layer = static_cast<RecurrentLayer*>(trainable_layers(i));
 
@@ -1744,7 +1732,7 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
     {
         const string layer_type = trainable_layers(i)->get_type_string();
 
-        if(layer_type == "Perceptron")
+        if(layer_type == "PerceptronLayer")
         {
             information(perceptron_layer_index,0) = to_string(trainable_layers(i)->get_inputs_number());
             information(perceptron_layer_index,1) = to_string(trainable_layers(i)->get_neurons_number());
@@ -1777,7 +1765,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
     {
         const string layer_type = trainable_layers(i)->get_type_string();
 
-        if(layer_type == "Probabilistic")
+        if(layer_type == "ProbabilisticLayer")
         {
             information(probabilistic_layer_index,0) = to_string(trainable_layers(i)->get_inputs_number());
             information(probabilistic_layer_index,1) = to_string(trainable_layers(i)->get_neurons_number());
@@ -1796,8 +1784,6 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 
 void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     file_stream.OpenElement("NeuralNetwork");
 
     // Inputs
@@ -1807,16 +1793,16 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");   
-    file_stream.PushText(to_string(inputs_names.size()).c_str());
+    file_stream.PushText(to_string(inputs_name.size()).c_str());
     file_stream.CloseElement();
 
     // Inputs names
 
-    for(Index i = 0; i < inputs_names.size(); i++)
+    for(Index i = 0; i < inputs_name.size(); i++)
     {
         file_stream.OpenElement("Input");
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
-        file_stream.PushText(inputs_names[i].c_str());
+        file_stream.PushText(inputs_name[i].c_str());
         file_stream.CloseElement();
     }
 
@@ -1830,18 +1816,20 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers number
 
-    file_stream.OpenElement("LayerTypes");    
+    const Index layers_number = get_layers_number();
 
-    file_stream.PushText(string_tensor_to_string(get_layer_types_string()).c_str());
-
+    file_stream.OpenElement("LayersNumber");
+    file_stream.PushText(to_string(layers_number).c_str());
     file_stream.CloseElement();
 
-    // Layers information
+    // Layers
 
-    for(Index i = 0; i < layers.size(); i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         layers[i]->to_XML(file_stream);
     }
+/*
+    ostringstream buffer;
 
     // Layers inputs indices
 
@@ -1871,7 +1859,7 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     file_stream.CloseElement();
-
+*/
     // Layers (end tag)
 
     file_stream.CloseElement();
@@ -1923,43 +1911,43 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
 
-    if(inputs_element)
-    {
-        tinyxml2::XMLDocument inputs_document;
-        tinyxml2::XMLNode* element_clone = inputs_element->DeepClone(&inputs_document);
+    if(!inputs_element)
+        throw runtime_error("Inputs element is nullptr.");
 
-        inputs_document.InsertFirstChild(element_clone);
+    tinyxml2::XMLDocument inputs_document;
+    tinyxml2::XMLNode* inputs_element_clone = inputs_element->DeepClone(&inputs_document);
 
-        inputs_from_XML(inputs_document);
-    }
+    inputs_document.InsertFirstChild(inputs_element_clone);
+
+    inputs_from_XML(inputs_document);
 
     // Layers
 
     const tinyxml2::XMLElement* layers_element = neural_network_element->FirstChildElement("Layers");
 
-    if(layers_element)
-    {
-        tinyxml2::XMLDocument layers_document;
-        tinyxml2::XMLNode* element_clone = layers_element->DeepClone(&layers_document);
+    if(!layers_element)
+        throw runtime_error("Layers element is nullptr.");
 
-        layers_document.InsertFirstChild(element_clone);
+    tinyxml2::XMLDocument layers_document;
+    tinyxml2::XMLNode* layers_element_clone = layers_element->DeepClone(&layers_document);
 
-        layers_from_XML(layers_document);
-    }
+    layers_document.InsertFirstChild(layers_element_clone);
+
+    layers_from_XML(layers_document);
 
     // Outputs
 
     const tinyxml2::XMLElement* outputs_element = neural_network_element->FirstChildElement("Outputs");
 
-    if(outputs_element)
-    {
-        tinyxml2::XMLDocument outputs_document;
-        tinyxml2::XMLNode* element_clone = outputs_element->DeepClone(&outputs_document);
+    if(!outputs_element)
+        throw runtime_error("Outputs element is nullptr.");
 
-        outputs_document.InsertFirstChild(element_clone);
+    tinyxml2::XMLDocument outputs_document;
+    tinyxml2::XMLNode* outputs_element_clone = outputs_element->DeepClone(&outputs_document);
 
-        outputs_from_XML(outputs_document);
-    }
+    outputs_document.InsertFirstChild(outputs_element_clone);
+
+    outputs_from_XML(outputs_document);
     
     // Display
 
@@ -1972,385 +1960,185 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
 void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Inputs");
+    const tinyxml2::XMLElement* inputs_element = document.FirstChildElement("Inputs");
 
-    if(!root_element)
+    if(!inputs_element)
         throw runtime_error("Inputs element is nullptr.\n");
 
     // Inputs number
 
-    const tinyxml2::XMLElement* inputs_number_element = root_element->FirstChildElement("InputsNumber");
+    const tinyxml2::XMLElement* inputs_number_element = inputs_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
         throw runtime_error("Inputs number element is nullptr.\n");
 
-    Index new_inputs_number = 0;
+    const Index new_inputs_number = Index(atoi(inputs_number_element->GetText()));
+    inputs_name.resize(new_inputs_number);
 
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(atoi(inputs_number_element->GetText())));
+    // if(inputs_number_element->GetText())
+    //     set_inputs_number(inputs_number);
 
     // Inputs names
 
     const tinyxml2::XMLElement* start_element = inputs_number_element;
 
-    if(new_inputs_number > 0)
+    for(Index i = 0; i < new_inputs_number; i++)
     {
-        for(Index i = 0; i < new_inputs_number; i++)
-        {
-            const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
-            start_element = input_element;
+        const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
 
-            if(input_element->Attribute("Index") != to_string(i+1))
-                throw runtime_error("Input index number (" + to_string(i+1) + ") does not match (" + input_element->Attribute("Item") + ").\n");
+        if(input_element->Attribute("Index") != to_string(i+1))
+            throw runtime_error("Input index number (" + to_string(i+1) + ") does not match (" + input_element->Attribute("Item") + ").\n");
 
-            if(input_element->GetText())
-                inputs_names(i) = input_element->GetText();
-        }
+        if(!input_element->GetText())
+            throw runtime_error("Input text is nullptr.");
+
+        inputs_name(i) = input_element->GetText();
+
+        start_element = input_element;
     }
 }
 
 
 void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Layers");
+    const tinyxml2::XMLElement* layers_element = document.FirstChildElement("Layers");
 
-    if(!root_element)
+    if(!layers_element)
         throw runtime_error("Layers element is nullptr.\n");
 
     // Layers types
 
-    const tinyxml2::XMLElement* layer_types_element = root_element->FirstChildElement("LayerTypes");
+    const tinyxml2::XMLElement* layers_number_element = layers_element->FirstChildElement("LayersNumber");
 
-    if(!layer_types_element)
-        throw runtime_error("LayerTypes element is nullptr.\n");
+    if(!layers_number_element)
+        throw runtime_error("LayersNumber element is nullptr.\n");
 
-    Tensor<string, 1> layer_types;
-
-    if(layer_types_element->GetText())
-    {
-        layer_types = get_tokens(layer_types_element->GetText(), " ");
-    }
+    const Index layers_number = Index(atoi(layers_number_element->GetText()));
 
     // Add layers
 
-    const tinyxml2::XMLElement* start_element = layer_types_element;
+    const tinyxml2::XMLElement* start_element = layers_number_element;
 
-    for(Index i = 0; i < layer_types.size(); i++)
+    for(Index i = 0; i < layers_number; i++)
     {
-        if(layer_types(i) == "Scaling2D")
+        const tinyxml2::XMLElement* layer_element = start_element->NextSiblingElement();
+
+        if(!layer_element)
+             throw runtime_error("Layer element is nullptr.");
+
+        const string layer_type = layer_element->Name();
+
+        tinyxml2::XMLDocument layer_document;
+        tinyxml2::XMLNode* element_clone = layer_element->DeepClone(&layer_document);
+        layer_document.InsertFirstChild(element_clone);
+
+        if(layer_type == "ScalingLayer2D")
         {
             ScalingLayer2D* scaling_layer = new ScalingLayer2D();
-
-            const tinyxml2::XMLElement* scaling_element = start_element->NextSiblingElement("ScalingLayer2D");
-
-            start_element = scaling_element;
-
-            if(scaling_element)
-            {
-                tinyxml2::XMLDocument scaling_document;
-                tinyxml2::XMLNode* element_clone = scaling_element->DeepClone(&scaling_document);
-
-                scaling_document.InsertFirstChild(element_clone);
-
-                scaling_layer->from_XML(scaling_document);
-            }
-
+            scaling_layer->from_XML(layer_document);
             add_layer(scaling_layer);
         }
-        else if(layer_types(i) == "Scaling4D")
+        else if(layer_type == "Scaling4D")
         {
             ScalingLayer4D* scaling_layer = new ScalingLayer4D();
-
-            const tinyxml2::XMLElement* scaling_element = start_element->NextSiblingElement("ScalingLayer4D");
-
-            start_element = scaling_element;
-
-            if(scaling_element)
-            {
-                tinyxml2::XMLDocument scaling_document;
-                tinyxml2::XMLNode* element_clone = scaling_element->DeepClone(&scaling_document);
-
-                scaling_document.InsertFirstChild(element_clone);
-
-                scaling_layer->from_XML(scaling_document);
-            }
-
+            scaling_layer->from_XML(layer_document);
             add_layer(scaling_layer);
         }
-        else if(layer_types(i) == "Convolutional")
+        else if(layer_type == "ConvolutionalLayer")
         {
             ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
-
-            const tinyxml2::XMLElement* convolutional_layer_element = start_element->NextSiblingElement("ConvolutionalLayer");
-            start_element = convolutional_layer_element;
-
-            if(convolutional_layer_element)
-            {
-                tinyxml2::XMLDocument convolutional_document;
-                tinyxml2::XMLNode* element_clone = convolutional_layer_element->DeepClone(&convolutional_document);
-
-                convolutional_document.InsertFirstChild(element_clone);
-
-                convolutional_layer->from_XML(convolutional_document);
-            }
-
+            convolutional_layer->from_XML(layer_document);
             add_layer(convolutional_layer);
         }
-        else if(layer_types(i) == "Perceptron")
+        else if(layer_type == "PerceptronLayer")
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer();
-
-            const tinyxml2::XMLElement* perceptron_element = start_element->NextSiblingElement("PerceptronLayer");
-            start_element = perceptron_element;
-
-            if(perceptron_element)
-            {
-                tinyxml2::XMLDocument perceptron_document;
-                tinyxml2::XMLNode* element_clone = perceptron_element->DeepClone(&perceptron_document);
-
-                perceptron_document.InsertFirstChild(element_clone);
-
-                perceptron_layer->from_XML(perceptron_document);
-            }
-
+            perceptron_layer->from_XML(layer_document);
             add_layer(perceptron_layer);
         }
-        else if(layer_types(i) == "Perceptron3D")
+        else if(layer_type == "PerceptronLayer3D")
         {
             PerceptronLayer3D* perceptron_layer_3d = new PerceptronLayer3D();
-
-            const tinyxml2::XMLElement* perceptron_element = start_element->NextSiblingElement("PerceptronLayer3D");
-            start_element = perceptron_element;
-
-            if(perceptron_element)
-            {
-                tinyxml2::XMLDocument perceptron_document;
-                tinyxml2::XMLNode* element_clone = perceptron_element->DeepClone(&perceptron_document);
-
-                perceptron_document.InsertFirstChild(element_clone);
-
-                perceptron_layer_3d->from_XML(perceptron_document);
-            }
-
+            perceptron_layer_3d->from_XML(layer_document);
             add_layer(perceptron_layer_3d);
         }
-        else if(layer_types(i) == "Pooling")
+        else if(layer_type == "PoolingLayer")
         {
             PoolingLayer* pooling_layer = new PoolingLayer();
-
-            const tinyxml2::XMLElement* pooling_element = start_element->NextSiblingElement("PoolingLayer");
-            start_element = pooling_element;
-
-            if(pooling_element)
-            {
-                tinyxml2::XMLDocument pooling_document;
-                tinyxml2::XMLNode* element_clone = pooling_element->DeepClone(&pooling_document);
-
-                pooling_document.InsertFirstChild(element_clone);
-
-                pooling_layer->from_XML(pooling_document);
-            }
-
+            pooling_layer->from_XML(layer_document);
             add_layer(pooling_layer);
         }
-        else if(layer_types(i) == "Probabilistic")
+        else if(layer_type == "ProbabilisticLayer")
         {
             ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-
-            const tinyxml2::XMLElement* probabilistic_element = start_element->NextSiblingElement("ProbabilisticLayer");
-            start_element = probabilistic_element;
-
-            if(probabilistic_element)
-            {
-                tinyxml2::XMLDocument probabilistic_document;
-                tinyxml2::XMLNode* element_clone = probabilistic_element->DeepClone(&probabilistic_document);
-
-                probabilistic_document.InsertFirstChild(element_clone);
-                probabilistic_layer->from_XML(probabilistic_document);
-            }
-
+            probabilistic_layer->from_XML(layer_document);
             add_layer(probabilistic_layer);
         }
-        else if(layer_types(i) == "Probabilistic3D")
+        else if(layer_type == "ProbabilisticLayer3D")
         {
             ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D();
-
-            const tinyxml2::XMLElement* probabilistic_element = start_element->NextSiblingElement("ProbabilisticLayer3D");
-            start_element = probabilistic_element;
-
-            if(probabilistic_element)
-            {
-                tinyxml2::XMLDocument probabilistic_document;
-                tinyxml2::XMLNode* element_clone = probabilistic_element->DeepClone(&probabilistic_document);
-
-                probabilistic_document.InsertFirstChild(element_clone);
-                probabilistic_layer_3d->from_XML(probabilistic_document);
-            }
-
+            probabilistic_layer_3d->from_XML(layer_document);
             add_layer(probabilistic_layer_3d);
         }
-        else if(layer_types(i) == "LongShortTermMemory")
+        else if(layer_type == "LongShortTermMemoryLayer")
         {
             LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
-
-            const tinyxml2::XMLElement* long_short_term_memory_element = start_element->NextSiblingElement("LongShortTermMemoryLayer");
-            start_element = long_short_term_memory_element;
-
-            if(long_short_term_memory_element)
-            {
-                tinyxml2::XMLDocument long_short_term_memory_document;
-                tinyxml2::XMLNode* element_clone = long_short_term_memory_element->DeepClone(&long_short_term_memory_document);
-
-                long_short_term_memory_document.InsertFirstChild(element_clone);
-
-                long_short_term_memory_layer->from_XML(long_short_term_memory_document);
-            }
-
+            long_short_term_memory_layer->from_XML(layer_document);
             add_layer(long_short_term_memory_layer);
         }
-        else if(layer_types(i) == "Recurrent")
+        else if(layer_type == "RecurrentLayer")
         {
             RecurrentLayer* recurrent_layer = new RecurrentLayer();
-
-            const tinyxml2::XMLElement* recurrent_element = start_element->NextSiblingElement("RecurrentLayer");
-            start_element = recurrent_element;
-
-            if(recurrent_element)
-            {
-                tinyxml2::XMLDocument recurrent_document;
-                tinyxml2::XMLNode* element_clone = recurrent_element->DeepClone(&recurrent_document);
-
-                recurrent_document.InsertFirstChild(element_clone);
-
-                recurrent_layer->from_XML(recurrent_document);
-            }
-
+            recurrent_layer->from_XML(layer_document);
             add_layer(recurrent_layer);
         }
-        else if(layer_types(i) == "Unscaling")
+        else if(layer_type == "UnscalingLayer")
         {
             UnscalingLayer* unscaling_layer = new UnscalingLayer();
-
-            const tinyxml2::XMLElement* unscaling_element = start_element->NextSiblingElement("UnscalingLayer");
-            start_element = unscaling_element;
-
-            if(unscaling_element)
-            {
-                tinyxml2::XMLDocument unscaling_document;
-                tinyxml2::XMLNode* element_clone = unscaling_element->DeepClone(&unscaling_document);
-
-                unscaling_document.InsertFirstChild(element_clone);
-
-                unscaling_layer->from_XML(unscaling_document);
-            }
-
+            unscaling_layer->from_XML(layer_document);
             add_layer(unscaling_layer);
         }
-        else if(layer_types(i) == "Bounding")
+        else if(layer_type == "BoundingLayer")
         {
             BoundingLayer* bounding_layer = new BoundingLayer();
-
-            const tinyxml2::XMLElement* bounding_element = start_element->NextSiblingElement("BoundingLayer");
-
-            start_element = bounding_element;
-
-            if(bounding_element)
-            {
-                tinyxml2::XMLDocument bounding_document;
-                tinyxml2::XMLNode* element_clone = bounding_element->DeepClone(&bounding_document);
-
-                bounding_document.InsertFirstChild(element_clone);
-
-                bounding_layer->from_XML(bounding_document);
-            }
-
+            bounding_layer->from_XML(layer_document);
             add_layer(bounding_layer);
         }
-        else if(layer_types(i) == "Embedding")
+        else if(layer_type == "EmbeddingLayer")
         {
             EmbeddingLayer* embedding_layer = new EmbeddingLayer();
-
-            const tinyxml2::XMLElement* embedding_element = start_element->NextSiblingElement("EmbeddingLayer");
-
-            start_element = embedding_element;
-
-            if(embedding_element)
-            {
-                tinyxml2::XMLDocument embedding_document;
-                tinyxml2::XMLNode* element_clone = embedding_element->DeepClone(&embedding_document);
-
-                embedding_document.InsertFirstChild(element_clone);
-
-                embedding_layer->from_XML(embedding_document);
-            }
-
+            embedding_layer->from_XML(layer_document);
             add_layer(embedding_layer);
         }
-        else if(layer_types(i) == "MultiheadAttention")
+        else if(layer_type == "MultiheadAttentionLayer")
         {
             MultiheadAttentionLayer* multihead_attention_layer = new MultiheadAttentionLayer();
-
-            const tinyxml2::XMLElement* multihead_attention_element = start_element->NextSiblingElement("MultiheadAttentionLayer");
-
-            start_element = multihead_attention_element;
-            
-            if(multihead_attention_element)
-            {
-                tinyxml2::XMLDocument multihead_attention_document;
-                tinyxml2::XMLNode* element_clone = multihead_attention_element->DeepClone(&multihead_attention_document);
-                
-                multihead_attention_document.InsertFirstChild(element_clone);
-
-                multihead_attention_layer->from_XML(multihead_attention_document);
-            }
-
+            multihead_attention_layer->from_XML(layer_document);
             add_layer(multihead_attention_layer); 
         }
-        else if(layer_types(i) == "Addition3D")
+        else if(layer_type == "AdditionLayer3D")
         {
             AdditionLayer3D* addition_layer_3d = new AdditionLayer3D();
-            
-            const tinyxml2::XMLElement* addition_element = start_element->NextSiblingElement("AdditionLayer3D");
-
-            start_element = addition_element;
-
-            if(addition_element)
-            {
-                tinyxml2::XMLDocument addition_document;
-                tinyxml2::XMLNode* element_clone = addition_element->DeepClone(&addition_document);
-
-                addition_document.InsertFirstChild(element_clone);
-
-                addition_layer_3d->from_XML(addition_document);
-            }
-            
+            addition_layer_3d->from_XML(layer_document);
             add_layer(addition_layer_3d);
         }
-        else if(layer_types(i) == "Normalization3D")
+        else if(layer_type == "NormalizationLayer3D")
         {
             NormalizationLayer3D* normalization_layer_3d = new NormalizationLayer3D();
-
-            const tinyxml2::XMLElement* normalization_element = start_element->NextSiblingElement("NormalizationLayer3D");
-
-            start_element = normalization_element;
-
-            if(normalization_element)
-            {
-                tinyxml2::XMLDocument normalization_document;
-                tinyxml2::XMLNode* element_clone = normalization_element->DeepClone(&normalization_document);
-
-                normalization_document.InsertFirstChild(element_clone);
-
-                normalization_layer_3d->from_XML(normalization_document);
-            }
-
+            normalization_layer_3d->from_XML(layer_document);
             add_layer(normalization_layer_3d);
         }
+        else
+        {
+            throw runtime_error("Unknown layer type: " + layer_type);
+        }
+
+        start_element = layer_element;
     }
 
     // Layers inputs indices
-
-    const tinyxml2::XMLElement* layers_inputs_indices_element = root_element->FirstChildElement("LayersInputsIndices");
+/*
+    const tinyxml2::XMLElement* layers_inputs_indices_element = layers_element->FirstChildElement("LayersInputsIndices");
 
     if(!layers_inputs_indices_element)
         throw runtime_error("LayersInputsIndices element is nullptr.\n");
@@ -2363,12 +2151,12 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
     {
         if(layer_inputs_indices_element->GetText())
         {
-            Index layer_index = Index(stoi(layer_inputs_indices_element->Attribute("LayerIndex"))) - 1;
-            const string indices_string = layer_inputs_indices_element->GetText();
+//            const Index layer_index = Index(stoi(layer_inputs_indices_element->Attribute("LayerIndex"))) - 1;
+//            const string indices_string = layer_inputs_indices_element->GetText();
 //            layers_inputs_indices(layer_index) = to_type_vector(indices_string, ' ').cast<Index>();
         }
     }
-
+*/
 }
 
 
@@ -2417,7 +2205,10 @@ void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl;
 
-    const Index layers_number = get_layers_number();
+    cout << "Inputs:" << endl
+         << get_inputs_name() << endl;
+
+    const Index layers_number = get_layers_number();       
 
     cout << "Layers number: " << layers_number << endl;
 
@@ -2426,6 +2217,9 @@ void NeuralNetwork::print() const
         cout << "Layer " << i << ": " << layers[i]->get_neurons_number()
              << " " << layers[i]->get_type_string() << " neurons" << endl;
     }
+
+    cout << "Outputs:" << endl
+         << get_outputs_name() << endl;
 }
 
 
@@ -2510,14 +2304,14 @@ string NeuralNetwork::write_expression() const
 
     Tensor<string, 1> outputs_names_vector;
     Tensor<string, 1> inputs_names_vector;
-    inputs_names_vector = inputs_names;
+    inputs_names_vector = inputs_name;
     string aux_name = "";
 
-    for(int i = 0; i < inputs_names.dimension(0); i++)
+    for(int i = 0; i < inputs_name.dimension(0); i++)
     {
         if(!inputs_names_vector[i].empty())
         {
-            aux_name = inputs_names[i];
+            aux_name = inputs_name[i];
             inputs_names_vector(i) = replace_non_allowed_programming_expressions(aux_name);
         }
         else
@@ -2528,8 +2322,8 @@ string NeuralNetwork::write_expression() const
 
     Index layer_neurons_number;
 
-    Tensor<string, 1> scaled_inputs_names(inputs_names.dimension(0));
-    Tensor<string, 1> unscaled_outputs_names(inputs_names.dimension(0));
+    Tensor<string, 1> scaled_inputs_names(inputs_name.dimension(0));
+    Tensor<string, 1> unscaled_outputs_names(inputs_name.dimension(0));
 
     ostringstream buffer;
 
@@ -2562,7 +2356,7 @@ string NeuralNetwork::write_expression() const
             {
                 if(layer_names(i) == "scaling_layer")
                 {
-                    aux_name = inputs_names(j);
+                    aux_name = inputs_name(j);
                     outputs_names_vector(j) = "scaled_" + replace_non_allowed_programming_expressions(aux_name);
                     scaled_inputs_names(j) = outputs_names_vector(j);
                 }
@@ -2591,8 +2385,8 @@ string NeuralNetwork::write_expression_c() const
     ostringstream buffer;
     ostringstream outputs_buffer;
 
-    Tensor<string, 1> inputs =  get_inputs_names();
-    Tensor<string, 1> outputs = get_outputs_names();
+    Tensor<string, 1> inputs =  get_inputs_name();
+    Tensor<string, 1> outputs = get_outputs_name();
     Tensor<string, 1> found_tokens;
 
     int cell_states_counter = 0;
@@ -2657,9 +2451,9 @@ string NeuralNetwork::write_expression_c() const
 
     // sample_autoassociation_distance
     {
-        string word_to_delete = "sample_autoassociation_distance =";
+        const string word_to_delete = "sample_autoassociation_distance =";
 
-        size_t index = expression.find(word_to_delete);
+        const size_t index = expression.find(word_to_delete);
 
         if(index != string::npos)
         {
@@ -2670,9 +2464,9 @@ string NeuralNetwork::write_expression_c() const
 
     // sample_autoassociation_variables_distance
     {
-        string word_to_delete = "sample_autoassociation_variables_distance =";
+        const string word_to_delete = "sample_autoassociation_variables_distance =";
 
-        size_t index = expression.find(word_to_delete);
+        const size_t index = expression.find(word_to_delete);
 
         if(index != string::npos)
         {
@@ -2691,10 +2485,12 @@ string NeuralNetwork::write_expression_c() const
         {
             break;
         }
+
         if(token.size() > 1 && token.back() != ';')
         {
             token += ';';
         }
+
         push_back_string(tokens, token);
     }
 
@@ -3010,8 +2806,8 @@ string NeuralNetwork::write_expression_api() const
 {
     ostringstream buffer;
     Tensor<string, 1> found_tokens;
-    Tensor<string, 1> inputs =  get_inputs_names();
-    Tensor<string, 1> outputs = get_outputs_names();
+    Tensor<string, 1> inputs =  get_inputs_name();
+    Tensor<string, 1> outputs = get_outputs_name();
 
     int LSTM_number = get_long_short_term_memory_layers_number();
     int cell_states_counter = 0;
@@ -3463,8 +3259,8 @@ string NeuralNetwork::write_expression_javascript() const
     Tensor<string, 1> tokens;
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
-    Tensor<string, 1> inputs =  get_inputs_names();
-    Tensor<string, 1> outputs = get_outputs_names();
+    Tensor<string, 1> inputs =  get_inputs_name();
+    Tensor<string, 1> outputs = get_outputs_name();
 
     ostringstream buffer_to_fix;
 
@@ -3666,7 +3462,7 @@ string NeuralNetwork::write_expression_javascript() const
         {
             buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
             buffer << "<tr style=\"height:3.5em\">" << endl;
-            buffer << "<td> " << inputs_names[i] << " </td>" << endl;
+            buffer << "<td> " << inputs_name[i] << " </td>" << endl;
             buffer << "<td style=\"text-align:center\">" << endl;
             buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
             buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
@@ -3681,7 +3477,7 @@ string NeuralNetwork::write_expression_javascript() const
         {
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl;
             buffer << "<tr style=\"height:3.5em\">" << endl;
-            buffer << "<td> " << inputs_names[i] << " </td>" << endl;
+            buffer << "<td> " << inputs_name[i] << " </td>" << endl;
             buffer << "<td style=\"text-align:center\">" << endl;
             buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
             buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
@@ -4079,9 +3875,9 @@ string NeuralNetwork::write_expression_python() const
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
 
-    Tensor<string, 1> inputs =  get_inputs_names();
-    Tensor<string, 1> original_inputs =  get_inputs_names();
-    Tensor<string, 1> outputs = get_outputs_names();
+    Tensor<string, 1> inputs =  get_inputs_name();
+    Tensor<string, 1> original_inputs =  get_inputs_name();
+    Tensor<string, 1> outputs = get_outputs_name();
 
 //    const Index layers_number = get_layers_number();
 
@@ -4271,7 +4067,7 @@ string NeuralNetwork::write_expression_python() const
 
         buffer << "\t" << "def __init__(self):" << endl;
         buffer << "\t\t" << "self.inputs_number = " << to_string(inputs.size()) << endl;
-        buffer << "\t\t" << "self.inputs_names = [" << inputs_list << "]" << endl;
+        buffer << "\t\t" << "self.inputs_name = [" << inputs_list << "]" << endl;
 
     }
 
@@ -4557,7 +4353,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name + " file.\n");
 
-    const Tensor<string, 1> outputs_name = get_outputs_names();
+    const Tensor<string, 1> outputs_name = get_outputs_name();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);
@@ -4653,7 +4449,7 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         }
         break;
 
-        case Layer::Type::Perceptron3D:
+        case Layer::Type::PerceptronLayer3D:
         {
             layers(i) = new PerceptronLayer3DBackPropagation(batch_samples_number, neural_network_layers(i));
         }
@@ -4754,7 +4550,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
         }
         break;
 
-        case Layer::Type::Perceptron3D:
+        case Layer::Type::PerceptronLayer3D:
         {
             layers(i) = new PerceptronLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
         }

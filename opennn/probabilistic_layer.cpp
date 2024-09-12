@@ -692,57 +692,57 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_name.size(); j++)
     {
-        buffer << outputs_name(j) << " = binary(" << inputs_names(j) << ");\n";
+        buffer << outputs_name(j) << " = binary(" << inputs_name(j) << ");\n";
     }
     return buffer.str();
 }
 
 
-string ProbabilisticLayer::write_logistic_expression(const Tensor<string, 1>& inputs_names,
+string ProbabilisticLayer::write_logistic_expression(const Tensor<string, 1>& inputs_name,
                                                      const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_name.size(); j++)
     {
-        buffer << outputs_name(j) << " = logistic(" << inputs_names(j) << ");\n";
+        buffer << outputs_name(j) << " = logistic(" << inputs_name(j) << ");\n";
     }
     return buffer.str();
 }
 
 
-string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_name.size(); j++)
     {
-        buffer << outputs_name(j) << " = competitive(" << inputs_names(j) << ");\n";
+        buffer << outputs_name(j) << " = competitive(" << inputs_name(j) << ");\n";
     }
     return buffer.str();
 }
 
 
-string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_name.size(); j++)
     {
-        buffer << outputs_name(j) << " = softmax(" << inputs_names(j) << ");\n";
+        buffer << outputs_name(j) << " = softmax(" << inputs_name(j) << ");\n";
     }
 
     return buffer.str();
 }
 
 
-string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& inputs_names) const
+string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& inputs_name) const
 {
     ostringstream buffer;
 
@@ -755,7 +755,7 @@ string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& inputs_na
 
         for(Index j = 0; j < inputs_number; j++)
         {
-            buffer << " +" << synaptic_weights(j, i) << "*" << inputs_names(j) << "";
+            buffer << " +" << synaptic_weights(j, i) << "*" << inputs_name(j) << "";
         }
 
         buffer << " " << endl;
@@ -836,12 +836,12 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
 }
 
 
-string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_names,
+string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name,
                                             const Tensor<string, 1>& outputs_name) const
 {
     ostringstream buffer;
 
-    buffer << write_combinations(inputs_names);
+    buffer << write_combinations(inputs_name);
 
     buffer << write_activations(outputs_name);
 

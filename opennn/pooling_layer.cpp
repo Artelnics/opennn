@@ -492,13 +492,13 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    // Pooling layer
+    // PoolingLayer layer
 
     file_stream.OpenElement("PoolingLayer");
 
     // Layer name
 
-    file_stream.OpenElement("LayerName");
+    file_stream.OpenElement("Name");
     file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
@@ -520,7 +520,7 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(string("9").c_str());
     file_stream.CloseElement();
 
-    // Pooling method
+    // PoolingLayer method
 
     file_stream.OpenElement("PoolingMethod");
     file_stream.PushText(write_pooling_method().c_str());
@@ -570,19 +570,19 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
-    // Pooling layer
+    // PoolingLayer layer
 
     const tinyxml2::XMLElement* pooling_layer_element = document.FirstChildElement("PoolingLayer");
 
     if(!pooling_layer_element)
-        throw runtime_error("Pooling layer element is nullptr.\n");
+        throw runtime_error("PoolingLayer layer element is nullptr.\n");
 
-    // Pooling method element
+    // PoolingLayer method element
 
     const tinyxml2::XMLElement* pooling_method_element = pooling_layer_element->FirstChildElement("PoolingMethod");
 
     if(!pooling_method_element)
-        throw runtime_error("Pooling method element is nullptr.\n");
+        throw runtime_error("PoolingLayer method element is nullptr.\n");
 
     set_pooling_method(pooling_method_element->GetText());
 
@@ -591,7 +591,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* input_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
 
     if(!input_dimensions_element)
-        throw runtime_error("Pooling input variables dimensions element is nullptr.\n");
+        throw runtime_error("PoolingLayer input variables dimensions element is nullptr.\n");
 
 //    set_input_dimensions(input_dimensions_element->GetText());
 
@@ -600,7 +600,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
 
     if(!column_stride_element)
-        throw runtime_error("Pooling column stride element is nullptr.\n");
+        throw runtime_error("PoolingLayer column stride element is nullptr.\n");
 
     set_column_stride(Index(stoi(column_stride_element->GetText())));
 
@@ -609,7 +609,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* row_stride_element = pooling_layer_element->FirstChildElement("RowStride");
 
     if(!row_stride_element)
-        throw runtime_error("Pooling row stride element is nullptr.\n");
+        throw runtime_error("PoolingLayer row stride element is nullptr.\n");
 
     set_row_stride(Index(stoi(row_stride_element->GetText())));
 
@@ -618,7 +618,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* pool_columns_number_element = pooling_layer_element->FirstChildElement("PoolColumnsNumber");
 
     if(!pool_columns_number_element)
-        throw runtime_error("Pooling columns number element is nullptr.\n");
+        throw runtime_error("PoolingLayer columns number element is nullptr.\n");
 
     const string pool_columns_number_string = pool_columns_number_element->GetText();
 
@@ -627,7 +627,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* pool_rows_number_element = pooling_layer_element->FirstChildElement("PoolRowsNumber");
 
     if(!pool_rows_number_element)
-        throw runtime_error("Pooling rows number element is nullptr.\n");
+        throw runtime_error("PoolingLayer rows number element is nullptr.\n");
 
     const string pool_rows_number_string = pool_rows_number_element->GetText();
 
@@ -713,7 +713,7 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
 void PoolingLayerForwardPropagation::print() const
 {
-    cout << "Pooling layer forward propagation" << endl;
+    cout << "PoolingLayer layer forward propagation" << endl;
 
     cout << "Outputs:" << endl;
 
@@ -761,7 +761,7 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
 void PoolingLayerBackPropagation::print() const
 {
-    cout << "Pooling layer back propagation" << endl;
+    cout << "PoolingLayer layer back propagation" << endl;
 
 }
 
