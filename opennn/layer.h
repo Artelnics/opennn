@@ -45,7 +45,7 @@ public:
                     Normalization3D,
                     Convolutional,
                     Perceptron,
-                    Perceptron3D,
+                    PerceptronLayer3D,
                     Pooling,
                     Probabilistic,
                     Probabilistic3D,
@@ -73,7 +73,7 @@ public:
 
     // Destructor
 
-    ~Layer()
+    virtual ~Layer()
     {
         delete thread_pool;
         delete thread_pool_device;

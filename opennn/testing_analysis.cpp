@@ -2055,7 +2055,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
     Index actual_class;
     string class_name;
 
-    const Tensor<string, 1> target_variables_names = neural_network->get_outputs_names();
+    const Tensor<string, 1> target_variables_names = neural_network->get_outputs_name();
 
     Index count_misclassified = 0;
 

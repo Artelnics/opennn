@@ -37,40 +37,40 @@ string Layer::get_type_string() const
     switch(layer_type)
     {
     case Type::Perceptron:
-        return "Perceptron";
+        return "PerceptronLayer";
 
-    case Type::Perceptron3D:
-        return "Perceptron3D";
+    case Type::PerceptronLayer3D:
+        return "PerceptronLayer3D";
 
     case Type::Bounding:
-        return "Bounding";
+        return "BoundingLayer";
 
     case Type::Pooling:
-        return "Pooling";
+        return "PoolingLayer";
 
     case Type::Probabilistic:
-        return "Probabilistic";
+        return "ProbabilisticLayer2D";
 
     case Type::Probabilistic3D:
-        return "Probabilistic3D";
+        return "ProbabilisticLayer3D";
 
     case Type::Convolutional:
-        return "Convolutional";
+        return "ConvolutionalLayer";
 
     case Type::LongShortTermMemory:
-        return "LongShortTermMemory";
+        return "LongShortTermMemoryLayer";
 
     case Type::Recurrent:
-        return "Recurrent";
+        return "RecurrentLayer";
 
     case Type::Scaling2D:
-        return "Scaling2D";
+        return "ScalingLayer2D";
 
     case Type::Scaling4D:
         return "Scaling4D";
 
     case Type::Unscaling:
-        return "Unscaling";
+        return "UnscalingLayer";
 
     case Type::Flatten:
         return "Flatten";
@@ -82,16 +82,16 @@ string Layer::get_type_string() const
         return "NonMaxSuppression";
 
     case Type::Addition3D:
-        return "Addition3D";
+        return "AdditionLayer3D";
 
     case Type::Normalization3D:
-        return "Normalization3D";
+        return "NormalizationLayer3D";
 
     case Type::Embedding:
-        return "Embedding";
+        return "EmbeddingLayer";
 
     case Type::MultiheadAttention:
-        return "MultiheadAttention";
+        return "MultiheadAttentionLayer";
 
     default:
         return "Unkown type";
