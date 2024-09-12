@@ -68,7 +68,7 @@ void BoundingLayerTest::test_forward_propagate()
 
     bounding_layer.set_lower_bound(0, type(-1.0));
     bounding_layer.set_upper_bound(0, type(1));
-    bounding_layer.set_bounding_method("Bounding");
+    bounding_layer.set_bounding_method("BoundingLayer");
 
     inputs.resize(1, 1);
     inputs(0) = type(-2.0);

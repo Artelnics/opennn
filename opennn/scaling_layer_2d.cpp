@@ -778,7 +778,7 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
 }
 
 
-string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -788,14 +788,14 @@ string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inpu
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_name(i) << " = " << inputs_names(i) << ";\n";
+        buffer << outputs_name(i) << " = " << inputs_name(i) << ";\n";
     }
 
     return buffer.str();
 }
 
 
-string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -805,14 +805,14 @@ string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>&
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_name(i) << " = 2*(" << inputs_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
+        buffer << outputs_name(i) << " = 2*(" << inputs_name(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
     }
 
     return buffer.str();
 }
 
 
-string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -822,14 +822,14 @@ string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<str
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_name(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
+        buffer << outputs_name(i) << " = (" << inputs_name(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
     }
 
     return buffer.str();
 }
 
 
-string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     const Index inputs_number = get_neurons_number();
 
@@ -839,14 +839,14 @@ string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_name(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
+        buffer << outputs_name(i) << " = " << inputs_name(i) << "/(" << descriptives(i).standard_deviation << ");\n";
     }
 
     return buffer.str();
 }
 
 
-string ScalingLayer2D::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>&) const
+string ScalingLayer2D::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>&) const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -858,26 +858,26 @@ string ScalingLayer2D::write_expression(const Tensor<string, 1>& inputs_names, c
     {
         if(scalers(i) == Scaler::None)
         {
-            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << ";\n";
+            buffer << "scaled_" << inputs_name(i) << " = " << inputs_name(i) << ";\n";
         }
         else if(scalers(i) == Scaler::MinimumMaximum)
         {
-            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "*(" << max_range << "-" << min_range << ")/("
+            buffer << "scaled_" << inputs_name(i) << " = " << inputs_name(i) << "*(" << max_range << "-" << min_range << ")/("
                                                             << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*("
                                                             << max_range << "-" << min_range << ")/("
                                                             << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
         }
         else if(scalers(i) == Scaler::MeanStandardDeviation)
         {
-            buffer << "scaled_" << inputs_names(i) << " = (" << inputs_names(i) << "-" << descriptives(i).mean << ")/" << descriptives(i).standard_deviation << ";\n";
+            buffer << "scaled_" << inputs_name(i) << " = (" << inputs_name(i) << "-" << descriptives(i).mean << ")/" << descriptives(i).standard_deviation << ";\n";
         }
         else if(scalers(i) == Scaler::StandardDeviation)
         {
-            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
+            buffer << "scaled_" << inputs_name(i) << " = " << inputs_name(i) << "/(" << descriptives(i).standard_deviation << ");\n";
         }
         else if(scalers(i) == Scaler::Logarithm)
         {
-            buffer << "scaled_" << inputs_names(i) << " = log(" << inputs_names(i) << ");\n";
+            buffer << "scaled_" << inputs_name(i) << " = log(" << inputs_name(i) << ");\n";
         }
         else
         {
@@ -919,11 +919,17 @@ void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("ScalingLayer2D");
 
+    // Layer name
+
+    file_stream.OpenElement("Name");
+    file_stream.PushText(name.c_str());
+    file_stream.CloseElement();
+
     // Scaling neurons number
 
     const Index neurons_number = get_neurons_number();
 
-    file_stream.OpenElement("ScalingNeuronsNumber");
+    file_stream.OpenElement("NeuronsNumber");
     file_stream.PushText(to_string(neurons_number).c_str());
     file_stream.CloseElement();
 
@@ -968,9 +974,18 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");
 
-    // Scaling neurons number
+    // Name
 
-    const tinyxml2::XMLElement* neurons_number_element = scaling_layer_element->FirstChildElement("ScalingNeuronsNumber");
+    const tinyxml2::XMLElement* name_element = scaling_layer_element->FirstChildElement("Name");
+
+    if(!name_element)
+        throw runtime_error("Name element is nullptr.\n");
+
+    name = name_element->GetText();
+
+    // Neurons number
+
+    const tinyxml2::XMLElement* neurons_number_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
 
     if(!neurons_number_element)
         throw runtime_error("Scaling neurons number element is nullptr.\n");
@@ -986,7 +1001,6 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
     for(Index i = 0; i < neurons_number; i++)
     {
         const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
-        start_element = scaling_neuron_element;
 
         if(!scaling_neuron_element)
             throw runtime_error("Scaling neuron " + to_string(i+1) + " is nullptr.\n");
@@ -1005,14 +1019,12 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 
         if(descriptives_element->GetText())
         {
-            const char* new_descriptives_element = descriptives_element->GetText();
+            const Tensor<string,1> descriptives_string = get_tokens(descriptives_element->GetText(), " ");
 
-            const Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, " ");
-
-            descriptives[i].minimum = type(stof(splitted_descriptives[0]));
-            descriptives[i].maximum = type(stof(splitted_descriptives[1]));
-            descriptives[i].mean = type(stof(splitted_descriptives[2]));
-            descriptives[i].standard_deviation = type(stof(splitted_descriptives[3]));
+            descriptives[i].minimum = type(stof(descriptives_string[0]));
+            descriptives[i].maximum = type(stof(descriptives_string[1]));
+            descriptives[i].mean = type(stof(descriptives_string[2]));
+            descriptives[i].standard_deviation = type(stof(descriptives_string[3]));
         }
 
         // Scaling method
@@ -1022,17 +1034,18 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
         if(!scaling_method_element)
             throw runtime_error("Scaling method element " + to_string(i+1) + " is nullptr.\n");
 
-        const string new_method = scaling_method_element->GetText();
+        set_scaler(i, scaling_method_element->GetText());
 
-        set_scaler(i, new_method);
+        start_element = scaling_neuron_element;
     }
 
     // Display
-
+/*
     const tinyxml2::XMLElement* display_element = scaling_layer_element->FirstChildElement("Display");
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));
+*/
 }
 
 

@@ -83,7 +83,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
 {
     delete_layers();
     
-    inputs_names.resize(input_length + context_length);
+    inputs_name.resize(input_length + context_length);
 
 
     // Embedding Layers
@@ -606,7 +606,7 @@ void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNe
         }
         break;
 
-        case Layer::Type::Perceptron3D:
+        case Layer::Type::PerceptronLayer3D:
         {
             layers(i) = new PerceptronLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
 

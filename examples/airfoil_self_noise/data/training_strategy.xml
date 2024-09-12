@@ -24,7 +24,7 @@
          </LearningRateAlgorithm>
          <MinimumLossDecrease>0.000000</MinimumLossDecrease>
          <LossGoal>0.000000</LossGoal>
-         <MaximumSelectionErrorIncreases>9223372036854775807</MaximumSelectionErrorIncreases>
+         <MaximumSelectionFailures>9223372036854775807</MaximumSelectionFailures>
          <MaximumEpochsNumber>1000</MaximumEpochsNumber>
          <MaximumTime>3600.000000</MaximumTime>
       </GradientDescent>
@@ -36,7 +36,7 @@
          </LearningRateAlgorithm>
          <MinimumLossDecrease>0.000000</MinimumLossDecrease>
          <LossGoal>0.000000</LossGoal>
-         <MaximumSelectionErrorIncreases>1000000</MaximumSelectionErrorIncreases>
+         <MaximumSelectionFailures>1000000</MaximumSelectionFailures>
          <MaximumEpochsNumber>1000</MaximumEpochsNumber>
          <MaximumTime>3600.000000</MaximumTime>
       </ConjugateGradient>
@@ -63,7 +63,7 @@
          </LearningRateAlgorithm>
          <MinimumLossDecrease>0.000000</MinimumLossDecrease>
          <LossGoal>0.000000</LossGoal>
-         <MaximumSelectionErrorIncreases>9223372036854775807</MaximumSelectionErrorIncreases>
+         <MaximumSelectionFailures>9223372036854775807</MaximumSelectionFailures>
          <MaximumEpochsNumber>1000</MaximumEpochsNumber>
          <MaximumTime>3600.000000</MaximumTime>
       </QuasiNewtonMethod>
@@ -71,7 +71,7 @@
          <DampingParameterFactor>10.000000</DampingParameterFactor>
          <MinimumLossDecrease>0.000000</MinimumLossDecrease>
          <LossGoal>0.000000</LossGoal>
-         <MaximumSelectionErrorIncreases>1000</MaximumSelectionErrorIncreases>
+         <MaximumSelectionFailures>1000</MaximumSelectionFailures>
          <MaximumEpochsNumber>1000</MaximumEpochsNumber>
          <MaximumTime>3600.000000</MaximumTime>
       </LevenbergMarquardt>

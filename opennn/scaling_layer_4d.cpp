@@ -541,14 +541,14 @@ bool ScalingLayer4D::is_empty() const
 //         {
 //             if(inputs(i) < descriptives(i).minimum)
 //             {
-//                 cout << "OpenNN Warning: ScalingLayer4D class.\n"
+//                 cout << "OpenNN Warning: Scaling4D class.\n"
 //                      << "void check_range(const Tensor<type, 1>&) const method.\n"
 //                      << "Input value " << i << " is less than corresponding minimum.\n";
 //             }
 
 //             if(inputs(i) > descriptives(i).maximum)
 //             {
-//                 cout << "OpenNN Warning: ScalingLayer4D class.\n"
+//                 cout << "OpenNN Warning: Scaling4D class.\n"
 //                      << "void check_range(const Tensor<type, 1>&) const method.\n"
 //                      << "Input value " << i << " is greater than corresponding maximum.\n";
 //             }
@@ -605,11 +605,11 @@ void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Scaling layer
 
-    file_stream.OpenElement("ScalingLayer4D");
+    file_stream.OpenElement("Scaling4D");
 
     // Scaling neurons number
 
-    file_stream.OpenElement("ScalingNeuronsNumber");
+    file_stream.OpenElement("NeuronsNumber");
     file_stream.PushText(to_string(neurons_number).c_str());
     file_stream.CloseElement();
 
@@ -651,14 +651,14 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
-    const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("ScalingLayer4D");
+    const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("Scaling4D");
 
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");
 
     // Scaling neurons number
 
-    const tinyxml2::XMLElement* neurons_number_element = scaling_layer_element->FirstChildElement("ScalingNeuronsNumber");
+    const tinyxml2::XMLElement* neurons_number_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
 
     if(!neurons_number_element)
         throw runtime_error("Scaling neurons number element is nullptr.\n");

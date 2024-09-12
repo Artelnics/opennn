@@ -2462,7 +2462,7 @@ void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propag
 }
 
 
-string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_name) const
+string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -2477,7 +2477,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
         for(Index j = 0; j < inputs_number; j++)
         {
-            buffer << inputs_names[j] << " * (" << forget_weights(j,i) << ") + ";
+            buffer << inputs_name[j] << " * (" << forget_weights(j,i) << ") + ";
         }
 
         for(Index k = 0; k < neurons_number-1; k++)
@@ -2496,7 +2496,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
        for(Index j = 0; j < inputs_number; j++)
        {
-           buffer << inputs_names[j] << " * (" << input_weights(j,i) << ") + ";
+           buffer << inputs_name[j] << " * (" << input_weights(j,i) << ") + ";
        }
 
        for(Index k = 0; k < neurons_number-1; k++)
@@ -2515,7 +2515,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
        for(Index j = 0; j < inputs_number; j++)
        {
-           buffer << inputs_names[j] << " * (" << state_weights(j,i) << ") + ";
+           buffer << inputs_name[j] << " * (" << state_weights(j,i) << ") + ";
        }
 
        for(Index k = 0; k < neurons_number-1; k++)
@@ -2534,7 +2534,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
        for(Index j = 0; j < inputs_number; j++)
        {
-           buffer << inputs_names[j] << " * (" << output_weights(j,i) << ") + ";
+           buffer << inputs_name[j] << " * (" << output_weights(j,i) << ") + ";
        }
 
        for(Index k = 0; k < neurons_number-1; k++)
@@ -2582,7 +2582,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Layer name
 
-    const tinyxml2::XMLElement* layer_name_element = long_short_term_memory_layer_element->FirstChildElement("LayerName");
+    const tinyxml2::XMLElement* layer_name_element = long_short_term_memory_layer_element->FirstChildElement("Name");
 
     if(!layer_name_element)
         throw runtime_error("LayerName element is nullptr.\n");
@@ -2662,7 +2662,7 @@ void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layer name
 
-    file_stream.OpenElement("LayerName");
+    file_stream.OpenElement("Name");
     file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
