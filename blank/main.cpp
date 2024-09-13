@@ -8,16 +8,8 @@
 
 // System includes
 
-//#include <stdio.h>
-//#include <cstring>
 #include <iostream>
-//#include <fstream>
-//#include <sstream>
 #include <string>
-//#include <time.h>
-//#include <chrono>
-//#include <algorithm>
-//#include <execution>
 
 // OpenNN includes
 

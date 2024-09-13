@@ -14,15 +14,9 @@
 #include <iostream>
 #include <string>
 
-//#include <numeric>
-
-// OpenNN includes
-
 #include "config.h"
 #include "data_set.h"
 #include "neural_network.h"
-
-//Eigen includes
 
 namespace opennn
 {

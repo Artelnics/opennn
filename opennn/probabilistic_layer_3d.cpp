@@ -137,13 +137,9 @@ Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
-    copy(synaptic_weights.data(),
-         synaptic_weights.data() + synaptic_weights.size(),
-         parameters.data());
+    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights.size()*sizeof(type));
 
-    copy(biases.data(),
-         biases.data() + biases.size(),
-         parameters.data() + synaptic_weights.size());
+    memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size()*sizeof(type));
 
     return parameters;
 }
@@ -236,13 +232,9 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
 
-    copy(new_parameters.data() + index,
-         new_parameters.data() + index + synaptic_weights_number,
-         synaptic_weights.data());
+    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights_number*sizeof(type));
 
-    copy(new_parameters.data() + index + synaptic_weights_number,
-         new_parameters.data() + index + synaptic_weights_number + biases_number,
-         biases.data());
+    memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number*sizeof(type));
 }
 
 
@@ -346,13 +338,9 @@ void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, 
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy(parameters.data(),
-         parameters.data() + biases_number,
-         biases.data());
+    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
 
-    copy(parameters.data() + biases_number,
-         parameters.data() + biases_number + synaptic_weights_number,
-         synaptic_weights.data());
+    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
 }
 
 
@@ -485,18 +473,16 @@ void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     const ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
-            static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
+        static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
     const type* synaptic_weights_derivatives_data = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_3d_back_propagation->biases_derivatives.data();
 
-    copy(synaptic_weights_derivatives_data,
-         synaptic_weights_derivatives_data + synaptic_weights_number,
-         gradient.data() + index);
+    type* gradient_data = gradient.data();
 
-    copy(biases_derivatives_data,
-         biases_derivatives_data + biases_number,
-         gradient.data() + index + synaptic_weights_number);
+    memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
+
+    memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
 }
 
 

@@ -1,15 +1,9 @@
 #ifndef TENSORS_H
 #define TENSORS_H
 
-// System includes
-
 #include <stdio.h>
 
-// OpenNN includes
-
 #include "config.h"
-
-using Eigen::MatrixXd;
 
 namespace opennn
 {
@@ -164,18 +158,12 @@ void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
 void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
 void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
 
-Tensor<string, 1> get_first(const Tensor<string,1>&, const Index&);
-Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index&);
+//Tensor<string, 1> get_first(const Tensor<string,1>&, const Index&);
+//Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index&);
 
 //void scrub_missing_values(Tensor<type, 2>&, const type&);
 
 Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
-
-// Kronecker product
-
-Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&);
-
-//void kronecker_product(const Tensor<type, 1>&, Tensor<type, 2>&);
 
 // L1 norm
 

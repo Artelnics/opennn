@@ -86,7 +86,7 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    memcpy(parameters.data(), embedding_weights.data(), embedding_weights.size() * sizeof(type));
+    memcpy(parameters.data(), embedding_weights.data(), embedding_weights.size()*sizeof(type));
 
     return parameters;
 }
@@ -193,7 +193,7 @@ void EmbeddingLayer::set_embedding_weights()
 
 void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    memcpy(embedding_weights.data(), new_parameters.data() + index, embedding_weights.size() * sizeof(type));
+    memcpy(embedding_weights.data(), new_parameters.data() + index, embedding_weights.size()*sizeof(type));
 }
 
 
@@ -232,7 +232,7 @@ void EmbeddingLayer::set_display(const bool& new_display)
 }
 
 
-void EmbeddingLayer::dropout(Tensor<type, 3>& outputs)
+void EmbeddingLayer::dropout(Tensor<type, 3>& outputs) const
 {
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
@@ -363,7 +363,7 @@ void EmbeddingLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     type* gradient_data = gradient.data();
 
-    memcpy(gradient_data + index, embedding_weights_derivatives_data, embedding_weights_number * sizeof(type));
+    memcpy(gradient_data + index, embedding_weights_derivatives_data, embedding_weights_number*sizeof(type));
 }
 
 

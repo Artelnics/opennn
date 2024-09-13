@@ -165,7 +165,7 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
 }
 
 
-Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_values)
+Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_values) const
 {
 
     Index cluster_number = sum_squared_error_values.dimension(0);
@@ -218,7 +218,7 @@ Tensor<Index, 1> KMeans::get_cluster_labels()
 }
 
 
-Index KMeans::get_clusters_number()
+Index KMeans::get_clusters_number() const
 {
     return clusters_number;
 }

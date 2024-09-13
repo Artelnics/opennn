@@ -9,13 +9,8 @@
 #ifndef NORMALIZATIONLAYER3D_H
 #define NORMALIZATIONLAYER3D_H
 
-// System includes
-
-//#include <cstdlib>
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "layer.h"
