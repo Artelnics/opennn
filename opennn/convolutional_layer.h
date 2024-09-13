@@ -260,7 +260,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    void print() const;
 
-   Tensor<type, 4> delta_slice;
+   Tensor<type, 4> image_convolutions_derivatives;
    Tensor<type, 4> image_slice;
 
    Eigen::array<Index, 4> offsets;

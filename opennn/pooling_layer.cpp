@@ -403,6 +403,13 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                                             deltas_pair(0).second[2],
                                             deltas_pair(0).second[3]);
 
+    const Index input_height = inputs.dimension(1);
+    const Index input_width = inputs.dimension(2);
+    const Index input_channels = inputs.dimension(3);
+
+    const Index output_height = deltas.dimension(1);
+    const Index output_width = deltas.dimension(2);
+
     // Forward propagation
 
     const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
@@ -422,28 +429,36 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     switch (pooling_method)
     {
     case PoolingMethod::MaxPooling:
-        for (Index batch_index = 0; batch_index < inputs.dimension(0); ++batch_index)
+        for (Index n = 0; n < batch_samples_number; ++n) 
         {
-            for (Index height_index = 0; height_index < outputs.dimension(1); ++height_index)
+            for (Index c = 0; c < input_channels; ++c) 
             {
-                const Index height_start = height_index * pool_height;
-                const Index height_end = min(height_start + pool_height, inputs.dimension(1));
-                for (Index width_index = 0; width_index < outputs.dimension(2); ++width_index)
+                for (Index i = 0; i < output_height; ++i) 
                 {
-                    const Index width_start = width_index * pool_width;
-                    const Index width_end = min(width_start + pool_width, inputs.dimension(2));
-                    for (Index channel_index = 0; channel_index < inputs.dimension(3); ++channel_index)
+                    for (Index j = 0; j < output_width; ++j) 
                     {
-                        for (Index pool_height_index = height_start; pool_height_index < height_end; ++pool_height_index)
+                        Index h_start = i * row_stride;
+                        Index h_end = min(h_start + pool_height, input_height);
+                        Index w_start = j * column_stride;
+                        Index w_end = min(w_start + pool_width, input_width);
+
+                        type max_val = -std::numeric_limits<type>::infinity();
+                        Index max_h = h_start;
+                        Index max_w = w_start;
+
+                        for (Index h = h_start; h < h_end; ++h) 
                         {
-                            for (Index pool_width_index = width_start; pool_width_index < width_end; ++pool_width_index)
+                            for (Index w = w_start; w < w_end; ++w) 
                             {
-                                if (inputs(batch_index, pool_height_index, pool_width_index, channel_index) == outputs(batch_index, height_index, width_index, channel_index))
+                                if (inputs(n, h, w, c) > max_val) 
                                 {
-                                    input_derivatives(batch_index, pool_height_index, pool_width_index, channel_index) += (deltas(batch_index, height_index, width_index, channel_index)*batch_samples_number);
+                                    max_val = inputs(n, h, w, c);
+                                    max_h = h;
+                                    max_w = w;
                                 }
                             }
                         }
+                        input_derivatives(n, max_h, max_w, c) += deltas(n, i, j, c);
                     }
                 }
             }
@@ -451,43 +466,40 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
         break;
 
     case PoolingMethod::AveragePooling:
-        for (Index batch_index = 0; batch_index < inputs.dimension(0); ++batch_index)
+        for (Index n = 0; n < batch_samples_number; ++n) 
         {
-            for (Index height_index = 0; height_index < deltas.dimension(1); ++height_index)
+            for (Index c = 0; c < input_channels; ++c) 
             {
-                const Index height_start = height_index * pool_height;
-                const Index height_end = min(height_start + pool_height, inputs.dimension(1));
-
-                for (Index width_index = 0; width_index < deltas.dimension(2); ++width_index)
+                for (Index i = 0; i < output_height; ++i) 
                 {
-                    const Index width_start = width_index * pool_width;
-                    const Index width_end = min(width_start + pool_width, inputs.dimension(2));
-
-                    for (Index channel_index = 0; channel_index < inputs.dimension(3); ++channel_index)
+                    for (Index j = 0; j < output_width; ++j) 
                     {
-                        const type gradient = deltas(batch_index, height_index, width_index, channel_index) / (pool_height * pool_width);
+                        Index h_start = i * row_stride;
+                        Index h_end = min(h_start + pool_height, input_height);
+                        Index w_start = j * column_stride;
+                        Index w_end = min(w_start + pool_width, input_width);
 
-                        for (Index pool_height_index = height_start; pool_height_index < height_end; pool_height_index++)
+                        type delta = deltas(n, i, j, c);
+                        Index pool_size = (h_end - h_start) * (w_end - w_start);
+                        type gradient = delta / static_cast<type>(pool_size);
+
+                        for (Index h = h_start; h < h_end; ++h) 
                         {
-                            for (Index pool_width_index = width_start; pool_width_index < width_end; pool_width_index++)
+                            for (Index w = w_start; w < w_end; ++w) 
                             {
-                                input_derivatives(batch_index, pool_height_index, pool_width_index, channel_index) += (gradient*batch_samples_number);
+                                input_derivatives(n, h, w, c) += gradient;
                             }
                         }
                     }
                 }
             }
         }
+
         break;
 
     case PoolingMethod::NoPooling:
         input_derivatives = deltas;
         break;
-    }
-    
-    for (Index i = 0; i < input_derivatives.size(); i++)
-    {
-        cout << input_derivatives(i) << endl;
     }
 }
 
