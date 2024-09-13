@@ -121,9 +121,6 @@ public:
 
    // Parameters initialization
 
-   
-   
-
    void set_parameters_constant(const type&) final;
    void set_parameters_random() final;
    void set_parameters_glorot();
@@ -137,12 +134,8 @@ public:
 
    void dropout(Tensor<type, 3>&) const;
 
-   void calculate_activations(const Tensor<type, 3>&,
-                              Tensor<type, 3>&) const;
-
-   void calculate_activations_derivatives(const Tensor<type, 3>&,
-                                          Tensor<type, 3>&,
-                                          Tensor<type, 3>&) const;
+   void calculate_activations(Tensor<type, 3>&,
+                              Tensor<type, 3>& = Tensor<type, 3>()) const;
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                           LayerForwardPropagation*,

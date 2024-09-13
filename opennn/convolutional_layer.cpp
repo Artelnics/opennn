@@ -241,79 +241,32 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
 }
 
 
-void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations) const
+void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activations_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations); return;
+    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations); return;
+    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
     default: return;
     }
 }
 
-
-void ConvolutionalLayer::calculate_activations_derivatives(Tensor<type, 4>& activations,
-                                                           Tensor<type, 4>& activations_derivatives) const
-{
-    switch(activation_function)
-    {
-    case ActivationFunction::Linear: linear_derivatives(activations,
-                                                        activations_derivatives);
-        return;
-
-    case ActivationFunction::Logistic: logistic_derivatives(activations,
-                                                            activations_derivatives);
-        return;
-
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
-                                                                               activations_derivatives);
-        return;
-
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
-                                                                           activations_derivatives);
-        return;
-
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(activations,
-                                                                                            activations_derivatives);
-        return;
-
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(activations,
-                                                             activations_derivatives);
-        return;
-
-    case ActivationFunction::SoftSign: soft_sign_derivatives(activations,
-                                                             activations_derivatives);
-        return;
-
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(activations,
-                                                                   activations_derivatives);
-        return;
-
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(activations,
-                                                                               activations_derivatives);
-        return;
-
-    default:
-
-        return;
-    }
-}
 
 
 void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
@@ -361,8 +314,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     if(is_training)
     {
-        calculate_activations_derivatives(outputs,
-                                          activations_derivatives);
+        calculate_activations(outputs, activations_derivatives);
     }
     else
     {
@@ -462,6 +414,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
 
+    type* synaptic_weights_data = (type*)synaptic_weights.data();
+
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
     const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
@@ -469,25 +423,21 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     Eigen::array<Index, 4>& offsets = convolutional_layer_back_propagation->offsets;
     Eigen::array<Index, 4>& extents = convolutional_layer_back_propagation->extents;
 
-    Tensor<type, 4>& delta_slice = convolutional_layer_back_propagation->delta_slice;
     Tensor<type, 4>& image_slice = convolutional_layer_back_propagation->image_slice;
+
+    Tensor<type, 4>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
 
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 
     Tensor<type, 0> current_sum;
 
+    // Convolutions derivatives
+
     convolutions_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
-    
-    /* { // Debug
-        Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
-        Eigen::array<ptrdiff_t, 4> extents = { 1, activations_derivatives.dimension(1), activations_derivatives.dimension(2), 1 };
 
-        Tensor<type, 4> one_activations_derivatives = activations_derivatives.slice(offsets, extents);
-        cout << "one activations_derivatives:\n" << one_activations_derivatives << endl;
-        system("pause");
-    }*/
+    // Biases synaptic weights and input derivatives
 
-    // Synaptic weights derivatives
+    input_derivatives.setZero();
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
@@ -506,105 +456,150 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
             extents = {1, output_height, output_width, 1};
 
-            delta_slice = convolutions_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
+            image_convolutions_derivatives = convolutions_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
 
-            offsets = {image_index, 0, 0, 0};
-            
-            extents = {1, input_height, input_width, input_channels};
+            // Biases
+
+            current_sum.device(*thread_pool_device) = image_convolutions_derivatives.sum();
+
+            biases_derivatives(kernel_index) += current_sum();
+
+            // Synaptic weights
+
+            offsets = { image_index, 0, 0, 0 };
+
+            extents = { 1, input_height, input_width, input_channels };
 
             image_slice = inputs.slice(offsets, extents); // device(*thread_pool_device) does not work here
 
             const TensorMap<Tensor<type, 3>> image(image_slice.data(),
-                                                   input_height,
-                                                   input_width,
-                                                   input_channels);
+                input_height,
+                input_width,
+                input_channels);
 
-            const TensorMap<Tensor<type, 3>> delta_reshape(delta_slice.data(),
-                                                           output_height,
-                                                           output_width,
-                                                           1);
-
-            current_sum.device(*thread_pool_device) = delta_slice.sum();
-
-            biases_derivatives(kernel_index) += current_sum();
+            const TensorMap<Tensor<type, 3>> image_convolutions_derivatives(image_convolutions_derivatives.data(),
+                output_height,
+                output_width,
+                1);
 
             kernel_synaptic_weights_derivatives.device(*thread_pool_device)
-                += image.convolve(delta_reshape, convolutions_dimensions);
+                += image.convolve(image_convolutions_derivatives, convolutions_dimensions);
+
+            // Input derivatives
+
+            TensorMap<Tensor<type, 3>> kernel_weights(synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
+                kernel_height,
+                kernel_width,
+                kernel_channels);
+
+            for (Index channel_in = 0; channel_in < input_channels; ++channel_in)
+            {
+                const Tensor<type, 2> kernel_slice = kernel_weights.chip(channel_in, 2); 
+
+                const Tensor<type, 2> delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
+
+                Tensor<type, 2> convolution_output(input_height, input_width);
+                convolution_output.setZero();
+
+                for (Index i = 0; i < output_height; ++i)
+                {
+                    for (Index j = 0; j < output_width; ++j)
+                    {
+                        type delta_value = delta_reshape_2d(i, j);
+
+                        for (Index m = 0; m < kernel_height; ++m)
+                        {
+                            for (Index n = 0; n < kernel_width; ++n)
+                            {
+                                const Index x = i + m;
+                                const Index y = j + n;
+
+                                if (x < input_height && y < input_width)
+                                {
+                                    convolution_output(x, y) += delta_value * kernel_slice(m, n);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (Index x = 0; x < input_height; ++x)
+                {
+                    for (Index y = 0; y < input_width; ++y)
+                    {
+                        input_derivatives(image_index, x, y, channel_in) += convolution_output(x, y);
+                    }
+                }
+            }
         }
         
-        copy(kernel_synaptic_weights_derivatives.data(),
-             kernel_synaptic_weights_derivatives.data() + kernel_synaptic_weights_number,
-             synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
+        memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
+               kernel_synaptic_weights_derivatives.data(),
+               kernel_synaptic_weights_number * sizeof(type));
     }
     
-    // Inputs derivatives
-
-    input_derivatives.setZero();
-    /*
-    extents = { 1, output_height, output_width, 1 };
-
+    /* 
     for (Index image_index = 0; image_index < batch_samples_number; image_index++)
     {
         for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
         {
             offsets = { image_index, 0, 0, kernel_index };
 
-            delta_slice = convolutions_derivatives.slice(offsets, extents);
-            
-            const TensorMap<Tensor<type, 3>> delta_reshape(delta_slice.data(),
-                                                           output_height,
-                                                           output_width,
-                                                           1);
+            image_convolutions_derivatives = convolutions_derivatives.slice(offsets, extents);
 
-            TensorMap<Tensor<type, 3>> kernel_weights(synaptic_weights_derivatives_data + kernel_index * kernel_synaptic_weights_number,
-                                                      kernel_height,
-                                                      kernel_width,
-                                                      kernel_channels);
+            const TensorMap<Tensor<type, 3>> image_convolutions_derivatives(image_convolutions_derivatives.data(),
+                output_height,
+                output_width,
+                1);
 
-            input_derivatives.chip(image_index, 0).device(*thread_pool_device) +=
-                delta_reshape.convolve(kernel_weights.reverse(Eigen::array<Index, 3>({ 0, 1, 2 })), convolutions_dimensions);
+            TensorMap<Tensor<type, 3>> kernel_weights(synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
+                kernel_height,
+                kernel_width,
+                kernel_channels);
 
-        }
-    }
-    */
-    /* {
-        // Debug
-
-        Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
-        Eigen::array<ptrdiff_t, 4> extents = { 1, input_derivatives.dimension(1), input_derivatives.dimension(2), 1};
-
-        Tensor<type, 4> one_input_derivatives = input_derivatives.slice(offsets, extents);
-        cout << "one_input_derivative dimension(1): " << input_derivatives.dimension(1) << endl;
-        cout << "one_input_derivative dimension(2): " << input_derivatives.dimension(2) << endl;
-        cout << "one_input_derivatives:\n" << one_input_derivatives << endl;
-        cout << "End of convolution layer back prop" << endl;
-        system("pause");
-    }*/
-
-    /* OLD INPUT DERIVATIVES
-    input_derivatives = convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
-    
-    for(int image_index = 0; image_index < batch_samples_number; image_index++)
-    {
-        for(int row = 0; row < deltas_pair(0).second[1]; ++row)
-        {
-            for(int column = 0; column < deltas_pair(0).second[2]; ++column)
+            for (Index channel_in = 0; channel_in < input_channels; ++channel_in)
             {
-                for(int channel = 0; channel < deltas_pair(0).second[3]; ++channel)
-                {
-                    input_derivatives.chip(image_index, 0)
-                        .chip(row, 0)
-                        .chip(column, 0)
-                        .slice(std::array<Index, 2>({ row, column }),
-                               std::array<Index, 2>({ kernel_height, kernel_width })) +=
-                        convolutions_derivatives(image_index, row, column, channel) *
-                        synaptic_weights.chip(channel, 0);
+                const Tensor<type,2> kernel_slice = kernel_weights.chip(channel_in, 2); // TensorMap
 
+                const Tensor<type,2> delta_reshape_2d = image_convolutions_derivatives.chip(0, 2); // !!!
+
+                Tensor<type, 2> convolution_output(input_height, input_width);
+                convolution_output.setZero();
+
+                for (Index i = 0; i < output_height; ++i)
+                {
+                    for (Index j = 0; j < output_width; ++j)
+                    {
+                        type delta_value = delta_reshape_2d(i, j);
+
+                        for (Index m = 0; m < kernel_height; ++m)
+                        {
+                            for (Index n = 0; n < kernel_width; ++n)
+                            {
+                                const Index x = i + m;
+                                const Index y = j + n;
+
+                                if (x < input_height && y < input_width)
+                                {
+                                    convolution_output(x, y) += delta_value * kernel_slice(m, n);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (Index x = 0; x < input_height; ++x)
+                {
+                    for (Index y = 0; y < input_width; ++y)
+                    {
+                        input_derivatives(image_index, x, y, channel_in) += convolution_output(x, y);
+                    }
                 }
             }
         }
     }
     */
+    //cout << "input_derivatives convolutional cpu:\n" << input_derivatives << endl;
 
 }
 
@@ -621,27 +616,14 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
     // Back-propagation
 
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
-            static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
+        static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
 
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
-
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
 
-    /* { // Debug
-        cout << convolutional_layer_back_propagation->synaptic_weights_derivatives << endl;
-        cout << convolutional_layer_back_propagation->biases_derivatives << endl;
-        system("pause");
-    }*/
-    // Copy from back propagation to gradient
+    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    copy(synaptic_weights_derivatives_data,
-         synaptic_weights_derivatives_data + synaptic_weights_number,
-         gradient.data() + index);
-
-    copy(biases_derivatives_data,
-         biases_derivatives_data + biases_number,
-         gradient.data() + index + synaptic_weights_number);
-
+    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
 }
 
 
@@ -842,13 +824,9 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    copy(synaptic_weights.data(),
-         synaptic_weights.data() + synaptic_weights.size(),
-         parameters.data());
+    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights.size() * sizeof(type));
 
-    copy(biases.data(),
-         biases.data() + biases.size(),
-         parameters.data() + synaptic_weights.size());
+    memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size() * sizeof(type));
 
 // @todo add scales and offsets
 
@@ -1054,20 +1032,16 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     const Index kernel_channels = get_kernel_channels();
     const Index kernels_number = get_kernels_number();
 
-    synaptic_weights.resize(kernel_height,
-                            kernel_width,
-                            kernel_channels,
-                            kernels_number);
+    //synaptic_weights.resize(kernel_height,
+        //kernel_width,
+        //kernel_channels,
+        //        kernels_number);
 
-    biases.resize(kernels_number);
+//    biases.resize(kernels_number);
 
-    copy(new_parameters.data() + index,
-         new_parameters.data() + index + synaptic_weights.size(), 
-         synaptic_weights.data());
+    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights.size() * sizeof(type));
 
-    copy(new_parameters.data() + index + synaptic_weights.size(),
-         new_parameters.data() + index + synaptic_weights.size() + biases.size(),
-         biases.data());
+    memcpy(biases.data(), new_parameters.data() + index + synaptic_weights.size(), biases.size() * sizeof(type));
 }
 
 

@@ -162,10 +162,7 @@ public:
 
     void shift(LayerForwardPropagation*);
 
-    void calculate_activations(Tensor<type, 4>&) const;
-
-    void calculate_activations_derivatives(Tensor<type, 4>&,
-                                           Tensor<type, 4>&) const;
+    void calculate_activations(Tensor<type, 4>&, Tensor<type, 4>& = Tensor<type, 4>()) const;
 
     void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                            LayerForwardPropagation*,
@@ -263,7 +260,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    void print() const;
 
-   Tensor<type, 4> delta_slice;
+   Tensor<type, 4> image_convolutions_derivatives;
    Tensor<type, 4> image_slice;
 
    Eigen::array<Index, 4> offsets;

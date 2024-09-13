@@ -1,5 +1,3 @@
-//#include <string>
-
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
