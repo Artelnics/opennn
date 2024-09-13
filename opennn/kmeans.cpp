@@ -6,26 +6,13 @@
 // Artificial Intelligence Techniques SL
 // artelnics@artelnics.com
 
-#include "kmeans.h"
 
-// System includes
-
-//#include <iostream>
-//#include <fstream>
-//#include <sstream>
 #include <string>
-//#include <cstring>
-//#include <ctime>
 #include <omp.h>
-
-// OpenNN includes
 
 #include "tensors.h"
 #include "config.h"
-
-//#include "opennn.h"
-
-//using namespace opennn;
+#include "kmeans.h"
 
 namespace opennn
 {

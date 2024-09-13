@@ -193,29 +193,6 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 }
 
 
-// void Layer::competitive(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
-// {
-//     const Index rows_number = x.dimension(0);
-//     const Index columns_number = x.dimension(1);
-
-//     const Index competition_dimension = 2;
-
-//     Tensor<Index, 2> maximum_indices;
-    
-//     maximum_indices.device(*thread_pool_device) = x.argmax(competition_dimension);
-
-//     y.setZero();
-
-//     for(Index i = 0; i < rows_number; i++)
-//     {
-//         for(Index j = 0; j < columns_number; j++)
-//         {
-//             y(i, j, Index(maximum_indices(i, j))) = type(1);
-//         }
-//     }
-// }
-
-
 void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>& aux_rows) const
 {
     const Eigen::array<Index, 1> softmax_dimension{ { 1 } };
