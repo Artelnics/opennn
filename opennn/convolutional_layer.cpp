@@ -414,6 +414,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
 
+    type* synaptic_weights_data = (type*)synaptic_weights.data();
+
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
     const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
@@ -429,15 +431,6 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     Tensor<type, 0> current_sum;
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
-    
-    /* { // Debug
-        Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
-        Eigen::array<ptrdiff_t, 4> extents = { 1, activations_derivatives.dimension(1), activations_derivatives.dimension(2), 1 };
-
-        Tensor<type, 4> one_activations_derivatives = activations_derivatives.slice(offsets, extents);
-        cout << "one activations_derivatives:\n" << one_activations_derivatives << endl;
-        system("pause");
-    }*/
 
     // Synaptic weights derivatives
 
@@ -492,7 +485,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     // Inputs derivatives
 
     input_derivatives.setZero();
-    /*
+
     extents = { 1, output_height, output_width, 1 };
 
     for (Index image_index = 0; image_index < batch_samples_number; image_index++)
@@ -500,63 +493,60 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
         for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
         {
             offsets = { image_index, 0, 0, kernel_index };
-
             delta_slice = convolutions_derivatives.slice(offsets, extents);
-            
+
             const TensorMap<Tensor<type, 3>> delta_reshape(delta_slice.data(),
-                                                           output_height,
-                                                           output_width,
-                                                           1);
+                output_height,
+                output_width,
+                1);
 
-            TensorMap<Tensor<type, 3>> kernel_weights(synaptic_weights_derivatives_data + kernel_index * kernel_synaptic_weights_number,
-                                                      kernel_height,
-                                                      kernel_width,
-                                                      kernel_channels);
+            TensorMap<Tensor<type, 3>> kernel_weights(synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
+                kernel_height,
+                kernel_width,
+                kernel_channels);
 
-            input_derivatives.chip(image_index, 0).device(*thread_pool_device) +=
-                delta_reshape.convolve(kernel_weights.reverse(Eigen::array<Index, 3>({ 0, 1, 2 })), convolutions_dimensions);
-
-        }
-    }
-    */
-    /* {
-        // Debug
-
-        Eigen::array<ptrdiff_t, 4> offsets = { 0, 0, 0, 0 };
-        Eigen::array<ptrdiff_t, 4> extents = { 1, input_derivatives.dimension(1), input_derivatives.dimension(2), 1};
-
-        Tensor<type, 4> one_input_derivatives = input_derivatives.slice(offsets, extents);
-        cout << "one_input_derivative dimension(1): " << input_derivatives.dimension(1) << endl;
-        cout << "one_input_derivative dimension(2): " << input_derivatives.dimension(2) << endl;
-        cout << "one_input_derivatives:\n" << one_input_derivatives << endl;
-        cout << "End of convolution layer back prop" << endl;
-        system("pause");
-    }*/
-
-    /* OLD INPUT DERIVATIVES
-    input_derivatives = convolutions_derivatives.convolve(synaptic_weights,convolutions_dimensions);
-    
-    for(int image_index = 0; image_index < batch_samples_number; image_index++)
-    {
-        for(int row = 0; row < deltas_pair(0).second[1]; ++row)
-        {
-            for(int column = 0; column < deltas_pair(0).second[2]; ++column)
+            for (Index channel_in = 0; channel_in < input_channels; ++channel_in)
             {
-                for(int channel = 0; channel < deltas_pair(0).second[3]; ++channel)
-                {
-                    input_derivatives.chip(image_index, 0)
-                        .chip(row, 0)
-                        .chip(column, 0)
-                        .slice(std::array<Index, 2>({ row, column }),
-                               std::array<Index, 2>({ kernel_height, kernel_width })) +=
-                        convolutions_derivatives(image_index, row, column, channel) *
-                        synaptic_weights.chip(channel, 0);
+                Tensor<type,2> kernel_slice = kernel_weights.chip(channel_in, 2);
 
+                Tensor<type,2> delta_reshape_2d = delta_reshape.chip(0, 2);
+
+                Tensor<type, 2> convolution_output(input_height, input_width);
+                convolution_output.setZero();
+
+                for (Index i = 0; i < output_height; ++i)
+                {
+                    for (Index j = 0; j < output_width; ++j)
+                    {
+                        type delta_value = delta_reshape_2d(i, j);
+
+                        for (Index m = 0; m < kernel_height; ++m)
+                        {
+                            for (Index n = 0; n < kernel_width; ++n)
+                            {
+                                Index x = i + m;
+                                Index y = j + n;
+                                if (x < input_height && y < input_width)
+                                {
+                                    convolution_output(x, y) += delta_value * kernel_slice(m, n);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (Index x = 0; x < input_height; ++x)
+                {
+                    for (Index y = 0; y < input_width; ++y)
+                    {
+                        input_derivatives(image_index, x, y, channel_in) += convolution_output(x, y);
+                    }
                 }
             }
         }
     }
-    */
+
+    //cout << "input_derivatives convolutional cpu:\n" << input_derivatives << endl;
 
 }
 

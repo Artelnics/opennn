@@ -389,7 +389,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 
     // Inputs
 
-    //const Index batch_samples_number = inputs_pair(0).second[0];
+    const Index batch_samples_number = inputs_pair(0).second[0];
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
@@ -418,7 +418,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
     input_derivatives.setZero();
-    /*
+    
     switch (pooling_method)
     {
     case PoolingMethod::MaxPooling:
@@ -440,7 +440,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                             {
                                 if (inputs(batch_index, pool_height_index, pool_width_index, channel_index) == outputs(batch_index, height_index, width_index, channel_index))
                                 {
-                                    input_derivatives(batch_index, pool_height_index, pool_width_index, channel_index) += deltas(batch_index, height_index, width_index, channel_index);
+                                    input_derivatives(batch_index, pool_height_index, pool_width_index, channel_index) += (deltas(batch_index, height_index, width_index, channel_index)*batch_samples_number);
                                 }
                             }
                         }
@@ -471,7 +471,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                         {
                             for (Index pool_width_index = width_start; pool_width_index < width_end; pool_width_index++)
                             {
-                                input_derivatives(batch_index, pool_height_index, pool_width_index, channel_index) += gradient;
+                                input_derivatives(batch_index, pool_height_index, pool_width_index, channel_index) += (gradient*batch_samples_number);
                             }
                         }
                     }
@@ -484,7 +484,11 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
         input_derivatives = deltas;
         break;
     }
-    */
+    
+    for (Index i = 0; i < input_derivatives.size(); i++)
+    {
+        cout << input_derivatives(i) << endl;
+    }
 }
 
 

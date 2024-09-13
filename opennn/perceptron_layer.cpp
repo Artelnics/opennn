@@ -35,6 +35,17 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
     name = "perceptron_layer";
 }
 
+PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
+{
+    set(new_input_dimensions[0], new_output_dimensions[0]);
+
+    activation_function = ActivationFunction::Linear;
+
+    layer_type = Type::Perceptron;
+
+    name = "perceptron_layer";
+}
+
 
 Index PerceptronLayer::get_inputs_number() const
 {
@@ -442,7 +453,7 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
     Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation->input_derivatives;
     
     error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
-    
+
     biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
 
     synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(error_combinations_derivatives, AT_B);
