@@ -1,9 +1,5 @@
 #include "images.h"
-//#include "tensors.h"
-//#include <fstream>
-//#include <vector>
 #include <stdexcept>
-//#include <iostream>
 
 namespace opennn
 {

@@ -18,7 +18,6 @@
 
 #include "tensors.h"
 #include "correlations.h"
-//#include "statistics.h"
 #include "data_set.h"
 #include "neural_network.h"
 #include "training_strategy.h"

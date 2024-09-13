@@ -62,6 +62,8 @@ public:
         const Index&,
         const ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
+    explicit PerceptronLayer(const dimensions&, const dimensions&);
+
     // Get
 
     Index get_inputs_number() const final;
@@ -139,10 +141,8 @@ public:
 
     void dropout(Tensor<type, 2>&) const;
 
-    void calculate_activations(Tensor<type, 2>&) const;
-
-    void calculate_activations_derivatives(Tensor<type, 2>&,
-                                           Tensor<type, 2>&) const;
+    void calculate_activations(Tensor<type, 2>&,
+                               Tensor<type, 2>& = Tensor<type, 2>()) const;
 
     void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
         LayerForwardPropagation*,

@@ -6,11 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//#include <fstream>
 #include <sstream>
 #include <iomanip>
-//#include <cmath>
-//#include <ctime>
 
 #include "inputs_selection.h"
 
