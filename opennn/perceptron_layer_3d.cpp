@@ -450,85 +450,30 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
 }
 
 
-void PerceptronLayer3D::calculate_activations(const Tensor<type, 3>& combinations,
-                                              Tensor<type, 3>& activations) const
+void PerceptronLayer3D::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activations_derivatives) const
 {
+
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations); return;
+    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
 
-//    case ActivationFunction::Logistic: logistic(combinations, activations); return;
+//    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
 
-//    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
+//    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
 
-//    case ActivationFunction::SoftPlus: soft_plus(combinations, activations); return;
+//    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
 
-//    case ActivationFunction::SoftSign: soft_sign(combinations, activations); return;
+//    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
 
-//    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); return;
+//    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
 
-//    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); return;
+//    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
     default: return;
-    }
-}
-
-
-void PerceptronLayer3D::calculate_activations_derivatives(const Tensor<type, 3>& combinations,
-                                                        Tensor<type, 3>& activations,
-                                                        Tensor<type, 3>& activations_derivatives) const
-{
-    switch(activation_function)
-    {
-    case ActivationFunction::Linear: linear_derivatives(activations,
-                                                        activations_derivatives);
-        return;
-
-//    case ActivationFunction::Logistic: logistic_derivatives(combinations,
-//                                                            activations,
-//                                                            activations_derivatives);
-//        return;
-
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
-                                                                               activations_derivatives);
-        return;
-
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
-                                                                           activations_derivatives);
-        return;
-
-//    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations,
-//                                                                                            activations,
-//                                                                                            activations_derivatives);
-//        return;
-
-//    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations,
-//                                                             activations,
-//                                                             activations_derivatives);
-//        return;
-
-//    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations,
-//                                                             activations,
-//                                                             activations_derivatives);
-//        return;
-
-//    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations,
-//                                                                   activations,
-//                                                                   activations_derivatives);
-//        return;
-
-//    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations,
-//                                                                               activations,
-//                                                                               activations_derivatives);
-//        return;
-
-    default:
-
-        return;
     }
 }
 
@@ -537,6 +482,7 @@ void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
+/*
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
 
     PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
@@ -567,6 +513,7 @@ void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 
         calculate_activations(outputs,
                               outputs);
     }
+*/
 }
 
 

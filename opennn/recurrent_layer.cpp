@@ -432,75 +432,28 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
 }
 
 
-void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations,
-                                           Tensor<type, 1>& activations) const
+void RecurrentLayer::calculate_activations(Tensor<type, 1>& activations,
+                                           Tensor<type, 1>& activations_derivatives) const
 {
     switch(activation_function)
     {
-        case ActivationFunction::Linear: linear(activations); return;
+        case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
 
-        case ActivationFunction::Logistic: logistic(activations); return;
+        case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
 
-        case ActivationFunction::SoftPlus: soft_plus(activations); return;
+        case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
 
-        case ActivationFunction::SoftSign: soft_sign(activations); return;
+        case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
-
-        default: return;
-    }
-}
-
-
-void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& combinations,
-                                                       Tensor<type, 1>& activations,
-                                                       Tensor<type, 1>& activations_derivatives)
-{
-    switch(activation_function)
-    {
-        case ActivationFunction::Linear: linear_derivatives(activations,
-                                                            activations_derivatives);
-            return;
-
-        case ActivationFunction::Logistic: logistic_derivatives(activations,
-                                                                activations_derivatives);
-        return;
-
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
-                                                                                   activations_derivatives);
-            return;
-
-        case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
-                                                                               activations_derivatives);
-            return;
-
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(activations,
-                                                                                                activations_derivatives);
-            return;
-
-        case ActivationFunction::SoftPlus: soft_plus_derivatives(activations,
-                                                                 activations_derivatives);
-            return;
-
-        case ActivationFunction::SoftSign: soft_sign_derivatives(activations,
-                                                                 activations_derivatives);
-            return;
-
-        case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(activations,
-                                                                       activations_derivatives);
-            return;
-
-        case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(activations,
-                                                                                   activations_derivatives);
-            return;
+        case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
         default: return;
     }
@@ -511,6 +464,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
+/*
     const Index samples_number = inputs_pair(0).second[0];
     const Index inputs_number = inputs_pair(0).second[1];
 
@@ -555,6 +509,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
         outputs.chip(i, 0).device(*thread_pool_device) = hidden_states;
     }
+*/
 }
 
 
