@@ -368,12 +368,14 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 void ProbabilisticLayer3D::calculate_activations(const Tensor<type, 3>& combinations,
                                                  Tensor<type, 3>& activations) const
 {
+/*
     switch(activation_function)
     {
     case ActivationFunction::Softmax: softmax(combinations, activations); return;
 
     default: return;
     }
+*/
 }
 
 
