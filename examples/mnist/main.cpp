@@ -50,6 +50,7 @@ int main()
 
         //image_data_set.read_bmp();
 
+
         image_data_set.set_training();
 
         image_data_set.print();

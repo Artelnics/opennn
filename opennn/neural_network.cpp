@@ -123,7 +123,7 @@ void NeuralNetwork::add_layer(Layer* layer)
 
     const Tensor<Layer*, 1> old_layers = get_layers();
 
-    const Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
+    const Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_input_indices();
 
     layers.resize(old_layers_number + 1);
 
@@ -291,7 +291,7 @@ bool NeuralNetwork::is_empty() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_inputs_name() const
+const Tensor<string, 1>& NeuralNetwork::get_input_names() const
 {
     return inputs_name;
 }
@@ -353,7 +353,7 @@ string NeuralNetwork::get_model_type_string() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_outputs_name() const
+const Tensor<string, 1>& NeuralNetwork::get_output_names() const
 {
     return outputs_name;
 }
@@ -483,7 +483,7 @@ Index NeuralNetwork::get_layer_index(const string& name) const
 // }
 
 
-const Tensor<Tensor<Index, 1>, 1>& NeuralNetwork::get_layers_inputs_indices() const
+const Tensor<Tensor<Index, 1>, 1>& NeuralNetwork::get_layers_input_indices() const
 {
     return layers_inputs_indices;
 }
@@ -1043,9 +1043,7 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer() const
 Index NeuralNetwork::get_inputs_number() const
 {
     if(layers.dimension(0) != 0)
-    {
         return layers(0)->get_inputs_number();
-    }
 
     return 0;
 }
@@ -1523,7 +1521,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 
     const Tensor<Layer*, 1> layers = get_layers();
 
-    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = get_layers_inputs_indices();
+    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = get_layers_input_indices();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
@@ -1792,14 +1790,19 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Inputs number
 
+    const Index inputs_number = get_inputs_number();
+
     file_stream.OpenElement("InputsNumber");   
-    file_stream.PushText(to_string(inputs_name.size()).c_str());
+    file_stream.PushText(to_string(inputs_number).c_str());
     file_stream.CloseElement();
 
     // Inputs names
 
-    for(Index i = 0; i < inputs_name.size(); i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
+        if(inputs_name.size() != inputs_number)
+            throw runtime_error("Size of inputs name is not equal to inputs number");
+
         file_stream.OpenElement("Input");
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
         file_stream.PushText(inputs_name[i].c_str());
@@ -2206,7 +2209,7 @@ void NeuralNetwork::print() const
     cout << "Neural network" << endl;
 
     cout << "Inputs:" << endl
-         << get_inputs_name() << endl;
+         << get_input_names() << endl;
 
     const Index layers_number = get_layers_number();       
 
@@ -2219,7 +2222,7 @@ void NeuralNetwork::print() const
     }
 
     cout << "Outputs:" << endl
-         << get_outputs_name() << endl;
+         << get_output_names() << endl;
 }
 
 
@@ -2385,8 +2388,8 @@ string NeuralNetwork::write_expression_c() const
     ostringstream buffer;
     ostringstream outputs_buffer;
 
-    Tensor<string, 1> inputs =  get_inputs_name();
-    Tensor<string, 1> outputs = get_outputs_name();
+    Tensor<string, 1> inputs =  get_input_names();
+    Tensor<string, 1> outputs = get_output_names();
     Tensor<string, 1> found_tokens;
 
     int cell_states_counter = 0;
@@ -2806,8 +2809,8 @@ string NeuralNetwork::write_expression_api() const
 {
     ostringstream buffer;
     Tensor<string, 1> found_tokens;
-    Tensor<string, 1> inputs =  get_inputs_name();
-    Tensor<string, 1> outputs = get_outputs_name();
+    Tensor<string, 1> inputs =  get_input_names();
+    Tensor<string, 1> outputs = get_output_names();
 
     int LSTM_number = get_long_short_term_memory_layers_number();
     int cell_states_counter = 0;
@@ -3259,8 +3262,8 @@ string NeuralNetwork::write_expression_javascript() const
     Tensor<string, 1> tokens;
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
-    Tensor<string, 1> inputs =  get_inputs_name();
-    Tensor<string, 1> outputs = get_outputs_name();
+    Tensor<string, 1> inputs =  get_input_names();
+    Tensor<string, 1> outputs = get_output_names();
 
     ostringstream buffer_to_fix;
 
@@ -3875,9 +3878,9 @@ string NeuralNetwork::write_expression_python() const
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
 
-    Tensor<string, 1> inputs =  get_inputs_name();
-    Tensor<string, 1> original_inputs =  get_inputs_name();
-    Tensor<string, 1> outputs = get_outputs_name();
+    Tensor<string, 1> inputs =  get_input_names();
+    Tensor<string, 1> original_inputs =  get_input_names();
+    Tensor<string, 1> outputs = get_output_names();
 
 //    const Index layers_number = get_layers_number();
 
@@ -4353,7 +4356,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name + " file.\n");
 
-    const Tensor<string, 1> outputs_name = get_outputs_name();
+    const Tensor<string, 1> outputs_name = get_output_names();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);

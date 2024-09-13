@@ -100,14 +100,14 @@ public:
    bool has_flatten_layer() const;
    bool is_empty() const;
 
-   const Tensor<string, 1>& get_inputs_name() const;
+   const Tensor<string, 1>& get_input_names() const;
    string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
    ModelType get_model_type() const;
    string get_model_type_string() const;
 
-   const Tensor<string, 1>& get_outputs_name() const;
+   const Tensor<string, 1>& get_output_names() const;
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
@@ -119,7 +119,7 @@ public:
 
    Index get_layer_index(const string&) const;
 
-   const Tensor<Tensor<Index, 1>, 1>& get_layers_inputs_indices() const;
+   const Tensor<Tensor<Index, 1>, 1>& get_layers_input_indices() const;
 
    ScalingLayer2D* get_scaling_layer_2d() const;
    ScalingLayer4D* get_scaling_layer_4d() const;

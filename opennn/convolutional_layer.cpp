@@ -241,79 +241,32 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
 }
 
 
-void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations) const
+void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activations_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations); return;
+    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations); return;
+    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
     default: return;
     }
 }
 
-
-void ConvolutionalLayer::calculate_activations_derivatives(Tensor<type, 4>& activations,
-                                                           Tensor<type, 4>& activations_derivatives) const
-{
-    switch(activation_function)
-    {
-    case ActivationFunction::Linear: linear_derivatives(activations,
-                                                        activations_derivatives);
-        return;
-
-    case ActivationFunction::Logistic: logistic_derivatives(activations,
-                                                            activations_derivatives);
-        return;
-
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
-                                                                               activations_derivatives);
-        return;
-
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
-                                                                           activations_derivatives);
-        return;
-
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(activations,
-                                                                                            activations_derivatives);
-        return;
-
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(activations,
-                                                             activations_derivatives);
-        return;
-
-    case ActivationFunction::SoftSign: soft_sign_derivatives(activations,
-                                                             activations_derivatives);
-        return;
-
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(activations,
-                                                                   activations_derivatives);
-        return;
-
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(activations,
-                                                                               activations_derivatives);
-        return;
-
-    default:
-
-        return;
-    }
-}
 
 
 void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
@@ -361,8 +314,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     if(is_training)
     {
-        calculate_activations_derivatives(outputs,
-                                          activations_derivatives);
+        calculate_activations(outputs, activations_derivatives);
     }
     else
     {

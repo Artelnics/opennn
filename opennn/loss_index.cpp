@@ -363,7 +363,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const Tensor<Tensor<Index, 1>, 1>& layers_inputs_indices = neural_network->get_layers_inputs_indices();
+    const Tensor<Tensor<Index, 1>, 1>& layers_inputs_indices = neural_network->get_layers_input_indices();
     const Tensor<Tensor<Index, 1>, 1>& layers_outputs_indices = back_propagation_lm.layers_outputs_indices;
 
     const Tensor<Index, 1> trainable_layers_parameters_number = neural_network->get_trainable_layers_parameters_numbers();
@@ -555,7 +555,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const Tensor<Tensor<Index, 1>, 1>& layers_inputs_indices = neural_network->get_layers_inputs_indices();
+    const Tensor<Tensor<Index, 1>, 1>& layers_inputs_indices = neural_network->get_layers_input_indices();
     const Tensor<Tensor<Index, 1>, 1>& layers_outputs_indices = back_propagation.layers_outputs_indices;
 
     Layer* layer = nullptr;
@@ -769,7 +769,7 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 
     const Index outputs_number = output_dimensions[0];
 
-    set_layers_outputs_indices(neural_network_p->get_layers_inputs_indices());
+    set_layers_outputs_indices(neural_network_p->get_layers_input_indices());
 
     // First order loss
 
@@ -1155,7 +1155,7 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
 
     const dimensions output_dimensions = neural_network_p->get_output_dimensions();
     
-    set_layers_outputs_indices(neural_network_p->get_layers_inputs_indices());
+    set_layers_outputs_indices(neural_network_p->get_layers_input_indices());
     
     neural_network.set(batch_samples_number, neural_network_p);
     

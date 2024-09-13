@@ -409,6 +409,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
                                                            Tensor<type, 2>& activations,
                                                            Tensor<type, 2>& activations_derivatives) const
 {
+/*
     switch(activation_function)
     {
     case ActivationFunction::Logistic:
@@ -422,6 +423,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
 
         return;
     }
+*/
 }
 
 
