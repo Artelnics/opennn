@@ -9,18 +9,8 @@
 #ifndef SUMSQUAREDERROR_H
 #define SUMSQUAREDERROR_H
 
-// System includes
-
-//#include <iostream>
-//#include <fstream>
-//#include <cmath>
-//#include <sstream>
 #include <string>
-//#include <limits>
 
-// OpenNN includes
-
-//#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 

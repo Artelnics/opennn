@@ -172,9 +172,9 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 
     Tensor<type, 1> parameters(synaptic_weights_number + biases_number);
 
-    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights_number * sizeof(type));
+    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights_number*sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number * sizeof(type));
+    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number*sizeof(type));
 
     return parameters;
 }
@@ -251,9 +251,9 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
 
-    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights_number * sizeof(type));
+    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights_number*sizeof(type));
 
-    memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number * sizeof(type));
+    memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number*sizeof(type));
 }
 
 
@@ -362,9 +362,9 @@ void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, co
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(biases.data(), parameters.data(), biases_number * sizeof(type));
+    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
 
-    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number * sizeof(type));
+    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
 }
 
 
@@ -381,6 +381,7 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
                                                Tensor<type, 2>& activations,
                                                Tensor<type, 1>& aux_rows) const
 {
+/*
     switch(activation_function)
     {
     case ActivationFunction::Binary: binary(combinations, activations); return;
@@ -393,6 +394,7 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 
     default: return;
     }
+*/
 }
 
 
@@ -433,33 +435,26 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     calculate_combinations(inputs, outputs);
 
-    if(is_training)
+    if (neurons_number == 1 && !is_training)
     {
-        if(neurons_number == 1)
-        {
-            Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
-
-            calculate_activations_derivatives(outputs,
-                                              outputs,
-                                              activations_derivatives);
-        }
-        else
-        {
-            Tensor<type, 1>& aux_rows = probabilistic_layer_forward_propagation->aux_rows;
-
-            calculate_activations(outputs,
-                                  outputs,
-                                  aux_rows); 
-        }
-        
+        logistic(outputs, empty);
     }
-    else
+    else if (neurons_number == 1 && is_training)
+    {
+        Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+
+        logistic(outputs, activations_derivatives);
+    }
+    else if (neurons_number > 1)
     {
         Tensor<type, 1>& aux_rows = probabilistic_layer_forward_propagation->aux_rows;
 
-        calculate_activations(outputs,
-                              outputs,
-                              aux_rows);
+        softmax(outputs, outputs, aux_rows);
+
+    }
+    else
+    {
+		throw runtime_error("Unknown case in forward propagation.\n");
     }
 }
 
@@ -530,9 +525,9 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
 
-    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
+    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
 
-    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
 }
 
 
@@ -548,7 +543,7 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationL
 
     type* squared_errors_Jacobian_data = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
-    memcpy(squared_errors_Jacobian_data + index, squared_errors_Jacobian_data, parameters_number * batch_samples_number * sizeof(type));
+    memcpy(squared_errors_Jacobian_data + index, squared_errors_Jacobian_data, parameters_number * batch_samples_number*sizeof(type));
 }
 
 

@@ -6,9 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//#include <cmath>
-//#include <cstdlib>
-//#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -322,25 +319,15 @@ void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_
 
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-#ifdef OPENNN_DEBUG
-check_size(new_parameters, get_parameters_number(), LOG);
-#endif
-
     const Index biases_number = get_biases_number();
     const Index inputs_weights_number = get_input_weights_number();
     const Index recurrent_weights_number = get_recurrent_weights_number();
 
-    copy(new_parameters.data() + index,
-         new_parameters.data() + index + biases_number,
-         biases.data());
+    memcpy(biases.data(), new_parameters.data() + index, biases_number*sizeof(type));
 
-    copy(new_parameters.data() + index + biases_number,
-         new_parameters.data() + index + biases_number + inputs_weights_number,
-         input_weights.data());
+    memcpy(input_weights.data(), new_parameters.data() + index + biases_number, inputs_weights_number*sizeof(type));
 
-    copy(new_parameters.data() + biases_number + inputs_weights_number + index,
-         new_parameters.data() + biases_number + inputs_weights_number + index + recurrent_weights_number,
-         recurrent_weights.data());
+    memcpy(recurrent_weights.data(), new_parameters.data() + index + biases_number + inputs_weights_number, recurrent_weights_number*sizeof(type));
 }
 
 
@@ -464,7 +451,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
-/*
+
     const Index samples_number = inputs_pair(0).second[0];
     const Index inputs_number = inputs_pair(0).second[1];
 
@@ -492,7 +479,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
         calculate_combinations(current_inputs,
                                current_combinations);
-
+/*
         if(is_training)
         {
             calculate_activations_derivatives(current_combinations,
@@ -506,10 +493,9 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
             calculate_activations(current_combinations,
                                   hidden_states);
         }
-
+*/
         outputs.chip(i, 0).device(*thread_pool_device) = hidden_states;
     }
-*/
 }
 
 
@@ -668,26 +654,20 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     type* gradient_data = gradient.data();
 
-    RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-        = static_cast<RecurrentLayerBackPropagation*>(back_propagation);
+    RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
+        static_cast<RecurrentLayerBackPropagation*>(back_propagation);
 
-    // Biases
+    memcpy(gradient_data + index, 
+        recurrent_layer_back_propagation->biases_derivatives.data(),
+        neurons_number*sizeof(type));
 
-    copy(recurrent_layer_back_propagation->biases_derivatives.data(),
-        recurrent_layer_back_propagation->biases_derivatives.data() + neurons_number,
-        gradient_data + index);
+    memcpy(gradient_data + index + neurons_number,
+        recurrent_layer_back_propagation->input_weights_derivatives.data(),
+        inputs_number * neurons_number*sizeof(type));
 
-    // Input weights
-
-    copy(recurrent_layer_back_propagation->input_weights_derivatives.data(),
-        recurrent_layer_back_propagation->input_weights_derivatives.data() + inputs_number * neurons_number,
-        gradient_data + index + neurons_number);
-
-    // Recurrent weights
-
-    copy(recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
-        recurrent_layer_back_propagation->recurrent_weights_derivatives.data() + neurons_number * neurons_number,
-        gradient_data + index + neurons_number + inputs_number * neurons_number);
+    memcpy(gradient_data + index + neurons_number + inputs_number * neurons_number,
+        recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
+        neurons_number * neurons_number*sizeof(type));
 }
 
 

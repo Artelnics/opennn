@@ -9,17 +9,9 @@
 #ifndef KMEANS_H
 #define KMEANS_H
 
-// System includes
-
 #include <string>
 
-// OpenNN includes
-
-//#include "statistics.h"
-//#include "tinyxml2.h"
 #include "config.h"
-
-// System includes
 
 using namespace std;
 
@@ -35,11 +27,11 @@ public:
 
     Tensor<Index, 1> calculate_outputs(const Tensor<type, 2>&);
     Tensor<type, 1> elbow_method(const Tensor<type, 2>&, Index max_clusters=10);
-    Index find_optimal_clusters(const Tensor<type, 1>&);
+    Index find_optimal_clusters(const Tensor<type, 1>&) const;
 
     Tensor<Index, 1> get_cluster_labels();
     Tensor<type, 2> get_cluster_centers();
-    Index get_clusters_number();
+    Index get_clusters_number() const;
 
     void fit(const Tensor<type, 2>&);
     void set_cluster_number(const Index&);
