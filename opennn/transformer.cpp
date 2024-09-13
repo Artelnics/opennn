@@ -18,8 +18,6 @@
 #include "probabilistic_layer_3d.h"
 #include "strings_utilities.h"
 
-//#include "batch.h"
-
 namespace opennn
 {
 

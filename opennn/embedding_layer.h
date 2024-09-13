@@ -91,7 +91,7 @@ public:
 
     // Dropout
 
-    void dropout(Tensor<type, 3>&);
+    void dropout(Tensor<type, 3>&) const;
 
     // Embedding lookup
 

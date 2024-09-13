@@ -138,51 +138,35 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 
     Index parameters_index = 0;
 
-    copy(query_weights.data(),
-         query_weights.data() + query_weights.size(),
-         parameters.data());
+    memcpy(parameters.data(), query_weights.data(), query_weights.size()*sizeof(type));
 
     parameters_index += query_weights.size();
-
-    copy(query_biases.data(),
-         query_biases.data() + query_biases.size(),
-         parameters.data() + parameters_index);
+   
+    memcpy(parameters.data() + parameters_index, query_biases.data(), query_biases.size()*sizeof(type));
 
     parameters_index += query_biases.size();
-
-    copy(key_weights.data(),
-         key_weights.data() + key_weights.size(),
-         parameters.data() + parameters_index);
+   
+    memcpy(parameters.data() + parameters_index, key_weights.data(), key_weights.size()*sizeof(type));
 
     parameters_index += key_weights.size();
 
-    copy(key_biases.data(),
-         key_biases.data() + key_biases.size(),
-         parameters.data() + parameters_index);
+    memcpy(parameters.data() + parameters_index, key_biases.data(), key_biases.size()*sizeof(type));
 
     parameters_index += key_biases.size();
 
-    copy(value_weights.data(),
-         value_weights.data() + value_weights.size(),
-         parameters.data() + parameters_index);
+    memcpy(parameters.data() + parameters_index, value_weights.data(), value_weights.size()*sizeof(type));
 
     parameters_index += value_weights.size();
 
-    copy(value_biases.data(),
-         value_biases.data() + value_biases.size(),
-         parameters.data() + parameters_index);
+    memcpy(parameters.data() + parameters_index, value_biases.data(), value_biases.size()*sizeof(type));
 
     parameters_index += value_biases.size();
 
-    copy(projection_weights.data(),
-         projection_weights.data() + projection_weights.size(),
-         parameters.data() + parameters_index);
+    memcpy(parameters.data() + parameters_index, projection_weights.data(), projection_weights.size()*sizeof(type));
 
     parameters_index += projection_weights.size();
 
-    copy(projection_biases.data(),
-         projection_biases.data() + projection_biases.size(),
-         parameters.data() + parameters_index);
+    memcpy(parameters.data() + parameters_index, projection_biases.data(), projection_biases.size()*sizeof(type));
 
     return parameters;
 }
@@ -259,67 +243,51 @@ void MultiheadAttentionLayer::set_name(const string& new_layer_name)
 
 void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    type* new_parameters_data = (type*) new_parameters.data();
+    const type* new_parameters_data = new_parameters.data();
 
-    type* query_weights_data = (type*)query_weights.data();
-    type* query_biases_data = (type*)query_biases.data();
+    type* query_weights_data = query_weights.data();
+    type* query_biases_data = query_biases.data();
 
-    type* key_weights_data = (type*)key_weights.data();
-    type* key_biases_data = (type*)key_biases.data();
+    type* key_weights_data = key_weights.data();
+    type* key_biases_data = key_biases.data();
 
-    type* value_weights_data = (type*)value_weights.data();
-    type* value_biases_data = (type*)value_biases.data();
+    type* value_weights_data = value_weights.data();
+    type* value_biases_data = value_biases.data();
 
-    type* projection_weights_data = (type*)projection_weights.data();
-    type* projection_biases_data = (type*)projection_biases.data();
+    type* projection_weights_data = projection_weights.data();
+    type* projection_biases_data = projection_biases.data();
 
     Index parameters_index = index;
 
-    copy(new_parameters_data + parameters_index,
-         new_parameters_data + parameters_index + query_weights.size(),
-         query_weights_data);
+    memcpy(query_weights_data, new_parameters_data + parameters_index, query_weights.size()*sizeof(type));
 
     parameters_index += query_weights.size();
 
-    copy(new_parameters_data + parameters_index,
-         new_parameters_data + parameters_index + query_biases.size(),
-         query_biases_data);
+    memcpy(query_biases_data, new_parameters_data + parameters_index, query_biases.size()*sizeof(type));
 
     parameters_index += query_biases.size();
-    
-    copy(new_parameters_data + parameters_index,
-         new_parameters_data + parameters_index + key_weights.size(),
-         key_weights_data);
+
+    memcpy(key_weights_data, new_parameters_data + parameters_index, key_weights.size()*sizeof(type));
 
     parameters_index += key_weights.size();
 
-    copy(new_parameters_data + parameters_index,
-         new_parameters_data + parameters_index + key_biases.size(),
-         key_biases_data);
+    memcpy(key_biases_data, new_parameters_data + parameters_index, key_biases.size()*sizeof(type));
 
     parameters_index += key_biases.size();
-    
-    copy(new_parameters_data + parameters_index,
-         new_parameters_data + parameters_index + value_weights.size(),
-         value_weights_data);
+
+    memcpy(value_weights_data, new_parameters_data + parameters_index, value_weights.size()*sizeof(type));
 
     parameters_index += value_weights.size();
 
-    copy(new_parameters_data + parameters_index,
-         new_parameters_data + parameters_index + value_biases.size(),
-         value_biases_data);
+    memcpy(value_biases_data, new_parameters_data + parameters_index, value_biases.size()*sizeof(type));
 
     parameters_index += value_biases.size();
-    
-    copy(new_parameters_data + parameters_index,
-         new_parameters_data + parameters_index + projection_weights.size(),
-         projection_weights_data);
+
+    memcpy(projection_weights_data, new_parameters_data + parameters_index, projection_weights.size()*sizeof(type));
 
     parameters_index += projection_weights.size();
-    
-    copy(new_parameters_data + parameters_index,
-         new_parameters_data + parameters_index + projection_biases.size(),
-         projection_biases_data);
+
+    memcpy(projection_biases_data, new_parameters_data + parameters_index, projection_biases.size()*sizeof(type));
 }
 
 
@@ -582,12 +550,10 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 
     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
-    if(use_causal_mask)
-    {
-        apply_causal_mask(attention_scores);
-    }
-
+    if(use_causal_mask) apply_causal_mask(attention_scores);
+/*
     softmax(attention_scores, attention_weights);
+*/
 }
 
 
@@ -639,8 +605,10 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
     {
         random = calculate_random_uniform(type(0), type(1));
 
-        if(random < dropout_rate)    attention_scores(i) = 0;
-        else    attention_scores(i) *= scaling_factor;
+        if(random < dropout_rate)    
+            attention_scores(i) = 0;
+        else    
+            attention_scores(i) *= scaling_factor;
     }
 }
 
@@ -973,51 +941,35 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
 
     Index gradient_index = index;
 
-    copy(query_weights_derivatives.data(),
-         query_weights_derivatives.data() + query_weights_derivatives.size(),
-         gradient_data + gradient_index);
+    memcpy(gradient_data + gradient_index, query_weights_derivatives.data(), query_weights_derivatives.size()*sizeof(type));
 
     gradient_index += query_weights_derivatives.size();
 
-    copy(query_biases_derivatives.data(),
-         query_biases_derivatives.data() + query_biases_derivatives.size(),
-         gradient_data + gradient_index);
+    memcpy(gradient_data + gradient_index, query_biases_derivatives.data(), query_biases_derivatives.size()*sizeof(type));
 
     gradient_index += query_biases_derivatives.size();
 
-    copy(key_weights_derivatives.data(),
-         key_weights_derivatives.data() + key_weights_derivatives.size(),
-         gradient_data + gradient_index);
+    memcpy(gradient_data + gradient_index, key_weights_derivatives.data(), key_weights_derivatives.size()*sizeof(type));
 
     gradient_index += key_weights_derivatives.size();
 
-    copy(key_biases_derivatives.data(),
-         key_biases_derivatives.data() + key_biases_derivatives.size(),
-         gradient_data + gradient_index);
+    memcpy(gradient_data + gradient_index, key_biases_derivatives.data(), key_biases_derivatives.size()*sizeof(type));
 
     gradient_index += key_biases_derivatives.size();
 
-    copy(value_weights_derivatives.data(),
-         value_weights_derivatives.data() + value_weights_derivatives.size(),
-         gradient_data + gradient_index);
+    memcpy(gradient_data + gradient_index, value_weights_derivatives.data(),value_weights_derivatives.size()*sizeof(type));
 
     gradient_index += value_weights_derivatives.size();
 
-    copy(value_biases_derivatives.data(),
-         value_biases_derivatives.data() + value_biases_derivatives.size(),
-         gradient_data + gradient_index);
+    memcpy(gradient_data + gradient_index, value_biases_derivatives.data(), value_biases_derivatives.size()*sizeof(type));
 
     gradient_index += value_biases_derivatives.size();
 
-    copy(projection_weights_derivatives.data(),
-         projection_weights_derivatives.data() + projection_weights_derivatives.size(),
-         gradient_data + gradient_index);
+    memcpy(gradient_data + gradient_index, projection_weights_derivatives.data(), projection_weights_derivatives.size()*sizeof(type));
 
     gradient_index += projection_weights_derivatives.size();
 
-    copy(projection_biases_derivatives.data(),
-         projection_biases_derivatives.data() + projection_biases_derivatives.size(),
-         gradient_data + gradient_index);
+    memcpy(gradient_data + gradient_index, projection_biases_derivatives.data(), projection_biases_derivatives.size()*sizeof(type));
 }
 
 

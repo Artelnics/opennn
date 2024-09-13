@@ -30,10 +30,6 @@ struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
-//struct PerceptronLayerForwardPropagation;
-//struct PerceptronLayerBackPropagation;
-//struct PerceptronLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct ProbabilisticLayerForwardPropagationCuda;
     struct ProbabilisticLayerBackPropagationCuda;
@@ -276,6 +272,8 @@ protected:
     type decision_threshold;
 
     bool display = true;
+
+    Tensor<type, 2> empty;
 
 #ifdef OPENNN_CUDA
 #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
