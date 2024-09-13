@@ -7577,7 +7577,7 @@ bool DataSet::has_selection() const
 }
 
 
-bool DataSet::has_missing_values(const Tensor<string, 1>& row)
+bool DataSet::has_missing_values(const Tensor<string, 1>& row) const
 {
     for(Index i = 0; i < row.size(); i++)
         if(row(i).empty() || row(i) == missing_values_label)

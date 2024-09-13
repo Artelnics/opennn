@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//#include <cstdlib>
-
 #include "addition_layer_3d.h"
 
 namespace opennn

@@ -504,7 +504,7 @@ public:
 
     bool has_selection() const;
 
-    bool has_missing_values(const Tensor<string, 1>& row);
+    bool has_missing_values(const Tensor<string, 1>&) const;
 
     // Splitting
 

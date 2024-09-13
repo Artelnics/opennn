@@ -298,7 +298,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         imageDataAux.resize(images_number, image_size + classes_number);
     }
 
-//    memcpy(data.data(), image_data.data(), images_number * image_size * sizeof(type));
+//    memcpy(data.data(), image_data.data(), images_number * image_size*sizeof(type));
 
     copy(execution::par,
     image_data.data(), image_data.data() + images_number * image_size, data.data());
