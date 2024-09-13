@@ -167,15 +167,14 @@ Index ProbabilisticLayer::get_parameters_number() const
 
 Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 {
-    Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
+    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index biases_number = biases.size();
 
-    copy(synaptic_weights.data(),
-         synaptic_weights.data() + synaptic_weights.size(),
-         parameters.data());
+    Tensor<type, 1> parameters(synaptic_weights_number + biases_number);
 
-    copy(biases.data(),
-         biases.data() + biases.size(),
-         parameters.data() + synaptic_weights.size());
+    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights_number * sizeof(type));
+
+    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number * sizeof(type));
 
     return parameters;
 }
@@ -252,13 +251,9 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
 
-    copy(new_parameters.data() + index,
-         new_parameters.data() + index + synaptic_weights_number,
-         synaptic_weights.data());
+    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights_number * sizeof(type));
 
-    copy(new_parameters.data() + index + synaptic_weights_number,
-         new_parameters.data() + index + synaptic_weights_number + biases_number,
-         biases.data());
+    memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number * sizeof(type));
 }
 
 
@@ -367,13 +362,9 @@ void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, co
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy(parameters.data(),
-         parameters.data() + biases_number,
-         biases.data());
+    memcpy(biases.data(), parameters.data(), biases_number * sizeof(type));
 
-    copy(parameters.data() + biases_number,
-         parameters.data() + biases_number + synaptic_weights_number,
-         synaptic_weights.data());
+    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number * sizeof(type));
 }
 
 
@@ -534,18 +525,14 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
-            static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
+        static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
 
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
 
-    copy(synaptic_weights_derivatives_data,
-         synaptic_weights_derivatives_data + synaptic_weights_number,
-         gradient.data() + index);
+    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    copy(biases_derivatives_data,
-         biases_derivatives_data + biases_number,
-         gradient.data() + index + synaptic_weights_number);
+    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
 }
 
 
@@ -554,17 +541,14 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationL
                                                            Tensor<type, 2>& squared_errors_Jacobian) const
 {
     ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
-            static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
+        static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
-
     const Index parameters_number = get_parameters_number();
 
     type* squared_errors_Jacobian_data = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
-    copy(squared_errors_Jacobian_data,
-         squared_errors_Jacobian_data + parameters_number*batch_samples_number,
-         squared_errors_Jacobian_data + index);
+    memcpy(squared_errors_Jacobian_data + index, squared_errors_Jacobian_data, parameters_number * batch_samples_number * sizeof(type));
 }
 
 

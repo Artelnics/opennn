@@ -477,9 +477,9 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                 += image.convolve(delta_reshape, convolutions_dimensions);
         }
         
-        copy(kernel_synaptic_weights_derivatives.data(),
-             kernel_synaptic_weights_derivatives.data() + kernel_synaptic_weights_number,
-             synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
+        memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
+               kernel_synaptic_weights_derivatives.data(),
+               kernel_synaptic_weights_number * sizeof(type));
     }
     
     // Inputs derivatives
@@ -563,27 +563,14 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
     // Back-propagation
 
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
-            static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
+        static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
 
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
-
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
 
-    /* { // Debug
-        cout << convolutional_layer_back_propagation->synaptic_weights_derivatives << endl;
-        cout << convolutional_layer_back_propagation->biases_derivatives << endl;
-        system("pause");
-    }*/
-    // Copy from back propagation to gradient
+    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    copy(synaptic_weights_derivatives_data,
-         synaptic_weights_derivatives_data + synaptic_weights_number,
-         gradient.data() + index);
-
-    copy(biases_derivatives_data,
-         biases_derivatives_data + biases_number,
-         gradient.data() + index + synaptic_weights_number);
-
+    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
 }
 
 
@@ -784,13 +771,9 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    copy(synaptic_weights.data(),
-         synaptic_weights.data() + synaptic_weights.size(),
-         parameters.data());
+    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights.size() * sizeof(type));
 
-    copy(biases.data(),
-         biases.data() + biases.size(),
-         parameters.data() + synaptic_weights.size());
+    memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size() * sizeof(type));
 
 // @todo add scales and offsets
 
@@ -996,20 +979,16 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     const Index kernel_channels = get_kernel_channels();
     const Index kernels_number = get_kernels_number();
 
-    synaptic_weights.resize(kernel_height,
-                            kernel_width,
-                            kernel_channels,
-                            kernels_number);
+    //synaptic_weights.resize(kernel_height,
+        //kernel_width,
+        //kernel_channels,
+        //        kernels_number);
 
-    biases.resize(kernels_number);
+//    biases.resize(kernels_number);
 
-    copy(new_parameters.data() + index,
-         new_parameters.data() + index + synaptic_weights.size(), 
-         synaptic_weights.data());
+    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights.size() * sizeof(type));
 
-    copy(new_parameters.data() + index + synaptic_weights.size(),
-         new_parameters.data() + index + synaptic_weights.size() + biases.size(),
-         biases.data());
+    memcpy(biases.data(), new_parameters.data() + index + synaptic_weights.size(), biases.size() * sizeof(type));
 }
 
 

@@ -144,83 +144,58 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
     const Index parameters_number = get_parameters_number();
 
     Tensor<type, 1> parameters(parameters_number);
-/*
+
     Index current_position = forget_biases.size();
 
-    // Biases
+    // Copy Biases
+    memcpy(parameters.data(), forget_biases.data(), forget_biases.size() * sizeof(type));
 
-    copy((type*)forget_biases.data(),
-         (type*)forget_biases.data() + forget_biases.size(),
-         (type*)parameters.data());
-
-    copy(input_biases.data(),
-         input_biases.data() + input_biases.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, input_biases.data(), input_biases.size() * sizeof(type));
 
     current_position += input_biases.size();
 
-    copy(state_biases.data(),
-         state_biases.data() + state_biases.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, state_biases.data(), state_biases.size() * sizeof(type));
 
     current_position += state_biases.size();
 
-    copy(output_biases.data(),
-         output_biases.data() + output_biases.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, output_biases.data(), output_biases.size() * sizeof(type));
 
     current_position += output_biases.size();
 
-    // Weights
+    // Copy Weights
 
-    copy(forget_weights.data(),
-         forget_weights.data() + forget_weights.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, forget_weights.data(), forget_weights.size() * sizeof(type));
 
     current_position += forget_weights.size();
 
-    copy(input_weights.data(),
-         input_weights.data() + input_weights.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, input_weights.data(), input_weights.size() * sizeof(type));
 
     current_position += input_weights.size();
 
-    copy(state_weights.data(),
-         state_weights.data() + state_weights.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, state_weights.data(), state_weights.size() * sizeof(type));
 
     current_position += state_weights.size();
 
-    copy(output_weights.data(),
-         output_weights.data() + output_weights.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, output_weights.data(), output_weights.size() * sizeof(type));
 
     current_position += output_weights.size();
 
-    // Recurrent weights
-
-    copy(forget_recurrent_weights.data(),
-         forget_recurrent_weights.data() + forget_recurrent_weights.size(),
-         parameters.data() + current_position);
+    // Copy Recurrent Weights
+    
+    memcpy(parameters.data() + current_position, forget_recurrent_weights.data(), forget_recurrent_weights.size() * sizeof(type));
 
     current_position += forget_recurrent_weights.size();
 
-    copy(input_recurrent_weights.data(),
-         input_recurrent_weights.data() + input_recurrent_weights.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, input_recurrent_weights.data(), input_recurrent_weights.size() * sizeof(type));
 
     current_position += input_recurrent_weights.size();
 
-    copy(state_recurrent_weights.data(),
-         state_recurrent_weights.data() + state_recurrent_weights.size(),
-         parameters.data() + current_position);
+    memcpy(parameters.data() + current_position, state_recurrent_weights.data(), state_recurrent_weights.size() * sizeof(type));
 
     current_position += state_recurrent_weights.size();
 
-    copy(output_recurrent_weights.data(),
-         output_recurrent_weights.data() + output_recurrent_weights.size(),
-         parameters.data() + current_position);
-*/
+    memcpy(parameters.data() + current_position, output_recurrent_weights.data(), output_recurrent_weights.size() * sizeof(type));
+
     return parameters;
 }
 
@@ -444,7 +419,6 @@ void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-/*
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
@@ -456,84 +430,65 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
     Index size = neurons_number;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         forget_biases.data());
-
+    memcpy(forget_biases.data(), new_parameters_data + current_index, size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         input_biases.data());
-
+    memcpy(input_biases.data(), new_parameters_data + current_index, size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         state_biases.data());
-
+    memcpy(state_biases.data(), new_parameters_data + current_index, size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         output_biases.data());
-
+    memcpy(output_biases.data(), new_parameters_data + current_index, size * sizeof(type));
     current_index += size;
 
     // Weights
 
-    size = inputs_number*neurons_number;
+    size = inputs_number * neurons_number;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         forget_weights.data());
-
+    std::memcpy(forget_weights.data(),
+        new_parameters_data + current_index,
+        size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         input_weights.data());
-
+    std::memcpy(input_weights.data(),
+        new_parameters_data + current_index,
+        size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         state_weights.data());
-
+    std::memcpy(state_weights.data(),
+        new_parameters_data + current_index,
+        size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         output_weights.data());
-
+    std::memcpy(output_weights.data(),
+        new_parameters_data + current_index,
+        size * sizeof(type));
     current_index += size;
 
     // Recurrent weights
 
-    size = neurons_number*neurons_number;
+    size = neurons_number * neurons_number;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         forget_recurrent_weights.data());
-
+    std::memcpy(forget_recurrent_weights.data(),
+        new_parameters_data + current_index,
+        size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         input_recurrent_weights.data());
-
+    std::memcpy(input_recurrent_weights.data(),
+        new_parameters_data + current_index,
+        size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         state_recurrent_weights.data());
-
+    std::memcpy(state_recurrent_weights.data(),
+        new_parameters_data + current_index,
+        size * sizeof(type));
     current_index += size;
 
-    copy(new_parameters_data + current_index,
-         new_parameters_data + current_index + size,
-         output_recurrent_weights.data());         
-*/
+    std::memcpy(output_recurrent_weights.data(),
+        new_parameters_data + current_index,
+        size * sizeof(type));
+
 }
 
 
