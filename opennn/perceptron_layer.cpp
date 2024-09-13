@@ -116,9 +116,9 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
 
     Tensor<type, 1> parameters(synaptic_weights_number + biases_number);
 
-    memcpy(parameters.data(), synaptic_weights.data(),synaptic_weights_number * sizeof(type));
+    memcpy(parameters.data(), synaptic_weights.data(),synaptic_weights_number*sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number * sizeof(type));
+    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number*sizeof(type));
 
     return parameters;
 }
@@ -254,9 +254,9 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(synaptic_weights_data, new_parameters_data + index, synaptic_weights_number * sizeof(type));
+    memcpy(synaptic_weights_data, new_parameters_data + index, synaptic_weights_number*sizeof(type));
 
-    memcpy(biases_data, new_parameters_data + index + synaptic_weights_number, biases_number * sizeof(type));
+    memcpy(biases_data, new_parameters_data + index + synaptic_weights_number, biases_number*sizeof(type));
 }
 
 
@@ -417,7 +417,9 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
     }
     else
     {
-        calculate_activations(outputs);
+        Tensor<type, 2> empty;
+
+        calculate_activations(outputs, empty);
     }
 }
 
@@ -550,9 +552,9 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* biases_derivatives_data = biases_derivatives.data();
     type* gradient_data = gradient.data();
 
-    memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
+    memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
 
-    memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
 }
 
 
@@ -568,7 +570,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 
     type* squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
-    memcpy(squared_errors_Jacobian_data + index, squared_errors_Jacobian_data, layer_parameters_number * batch_samples_number * sizeof(type));
+    memcpy(squared_errors_Jacobian_data + index, squared_errors_Jacobian_data, layer_parameters_number * batch_samples_number*sizeof(type));
 }
 
 

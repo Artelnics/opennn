@@ -2,7 +2,6 @@
 #define WORDBAG_H
 
 #include <string>
-//#include "config.h"
 #include <iostream>
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"

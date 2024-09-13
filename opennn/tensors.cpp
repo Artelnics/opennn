@@ -20,10 +20,11 @@
 
 #include "../eigen/Eigen/Dense"
 
-#include "../eigen/unsupported/Eigen/KroneckerProduct"
+//#include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 #include "strings_utilities.h"
 #include "tensors.h"
+#include "config.h"
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
@@ -1180,24 +1181,24 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
 }
 
 
-Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
-{
-    Tensor<string, 1> new_vector(index);
+//Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
+//{
+//    Tensor<string, 1> new_vector(index);
 
-    copy(vector.data(), vector.data() + index, new_vector.data());
+//    copy(vector.data(), vector.data() + index, new_vector.data());
 
-    return new_vector;
-}
+//    return new_vector;
+//}
 
 
-Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
-{
-    Tensor<Index, 1> new_vector(index);
+//Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
+//{
+//    Tensor<Index, 1> new_vector(index);
 
-    copy(vector.data(), vector.data() + index, new_vector.data());
+//    copy(vector.data(), vector.data() + index, new_vector.data());
 
-    return new_vector;
-}
+//    return new_vector;
+//}
 
 
 Index count_between(const Tensor<type, 1>& vector,const type& minimum, const type& maximum)
@@ -1220,9 +1221,7 @@ void get_row(Tensor<type, 1>& row, const Tensor<type, 2, RowMajor>& matrix, cons
 {
     const Index columns_number = row.dimension(0);
 
-    copy(matrix.data() + row_index * columns_number,
-         matrix.data() + (row_index + 1) * columns_number,
-         row.data());
+    memcpy(row.data(), matrix.data() + row_index * columns_number, columns_number*sizeof(type));
 }
 
 
@@ -1243,9 +1242,7 @@ void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, c
 {
     const Index columns_number = vector.size();
 
-    copy((type*)vector.data(),
-        (type*)vector.data() + columns_number,
-        matrix.data() + row_index * columns_number);
+    memcpy(matrix.data() + row_index * columns_number, vector.data(), columns_number*sizeof(type));
 }
 
 
@@ -1287,29 +1284,6 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, const Index
         throw runtime_error("Invalid conditions\n");
 
     return new_matrix;
-}
-
-
-Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    type* x_data = (type*)x.data();
-    type* y_data = (type*)y.data();
-
-    // Transform Tensors into Dense matrix
-
-    const auto ml = Map<Matrix<type, Dynamic, Dynamic, RowMajor>>(x_data, x.dimension(0), 1);
-
-    const auto mr = Map<Matrix<type, Dynamic, Dynamic, RowMajor>>(y_data, y.dimension(0), 1);
-
-    // Kronecker Product
-
-    auto product = kroneckerProduct(ml, mr).eval();
-
-    // Matrix into a Tensor
-
-    const TensorMap<Tensor<type, 2>> direct_matrix(product.data(), x.size(), y.size());
-
-    return direct_matrix;
 }
 
 
@@ -1365,6 +1339,7 @@ void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<t
 
 void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
 {
+/*
     const type norm = l2_norm(thread_pool_device, vector);
 
     if(norm < type(NUMERIC_LIMITS_MIN))
@@ -1374,7 +1349,8 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>
         return;
     }
 
-    hessian.device(*thread_pool_device) = kronecker_product(vector, vector)/(norm*norm*norm);
+    hessian = self_kronecker_product(thread_pool_device, vector)/(norm*norm*norm);
+*/
 }
 
 
@@ -1483,6 +1459,7 @@ void substract_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b)
 {
+
     const Index n = A.dimension(0);
 
     Tensor<type, 1> x(n);
@@ -1721,9 +1698,9 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 
     Tensor<Index, 1> data(size);
 
-    copy(x.data(), x.data() + x.size(), data.data());
+    memcpy(data.data(), x.data(), x.size() * sizeof(Index));
 
-    copy(y.data(), y.data() + y.size(), data.data() + x.size());
+    memcpy(data.data() + x.size(), y.data(), y.size() * sizeof(Index));
 
     return data;
 }

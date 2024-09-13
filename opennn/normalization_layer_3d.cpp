@@ -85,13 +85,9 @@ Tensor<type, 1> NormalizationLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(gammas.size() + betas.size());
 
-    copy(gammas.data(),
-         gammas.data() + gammas.size(),
-         parameters.data());
+    memcpy(parameters.data(), gammas.data(), gammas.size()*sizeof(type));
 
-    copy(betas.data(),
-         betas.data() + betas.size(),
-         parameters.data() + gammas.size());
+    memcpy(parameters.data() + gammas.size(), betas.data(), betas.size()*sizeof(type));
 
     return parameters;
 }
@@ -169,13 +165,9 @@ void NormalizationLayer3D::set_betas(const Tensor<type, 1>& new_betas)
 
 void NormalizationLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    copy(new_parameters.data() + index,
-         new_parameters.data() + index + gammas.size(),
-         gammas.data());
+    memcpy(gammas.data(), new_parameters.data() + index, gammas.size()*sizeof(type));
 
-    copy(new_parameters.data() + index + gammas.size(),
-         new_parameters.data() + index + gammas.size() + betas.size(),
-         betas.data());
+    memcpy(betas.data(), new_parameters.data() + index + gammas.size(), betas.size()*sizeof(type));
 }
 
 
@@ -353,8 +345,8 @@ void NormalizationLayer3D::add_deltas(const Tensor<pair<type*, dimensions>, 1>& 
 
 
 void NormalizationLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
-    const Index& index,
-    Tensor<type, 1>& gradient) const
+                                           const Index& index,
+                                           Tensor<type, 1>& gradient) const
 {
     const Index gammas_number = get_gammas_number();
     const Index betas_number = get_betas_number();
@@ -366,14 +358,11 @@ void NormalizationLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const type* betas_derivatives_data = normalization_layer_3d_back_propagation->betas_derivatives.data();
     type* gradient_data = gradient.data();
 
-    copy(gammas_derivatives_data,
-         gammas_derivatives_data + gammas_number,
-         gradient_data + index);
+    memcpy(gradient_data + index, gammas_derivatives_data, gammas_number*sizeof(type));
 
-    copy(betas_derivatives_data,
-         betas_derivatives_data + betas_number,
-         gradient_data + index + gammas_number);
+    memcpy(gradient_data + index + gammas_number, betas_derivatives_data, betas_number*sizeof(type));
 }
+
 
 
 void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)

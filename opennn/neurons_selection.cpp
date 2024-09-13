@@ -6,10 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//#include <fstream>
 #include <sstream>
-//#include <cmath>
-//#include <ctime>
 #include <iomanip>
 
 #include "neurons_selection.h"

@@ -148,53 +148,53 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
     Index current_position = forget_biases.size();
 
     // Copy Biases
-    memcpy(parameters.data(), forget_biases.data(), forget_biases.size() * sizeof(type));
+    memcpy(parameters.data(), forget_biases.data(), forget_biases.size()*sizeof(type));
 
-    memcpy(parameters.data() + current_position, input_biases.data(), input_biases.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, input_biases.data(), input_biases.size()*sizeof(type));
 
     current_position += input_biases.size();
 
-    memcpy(parameters.data() + current_position, state_biases.data(), state_biases.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, state_biases.data(), state_biases.size()*sizeof(type));
 
     current_position += state_biases.size();
 
-    memcpy(parameters.data() + current_position, output_biases.data(), output_biases.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, output_biases.data(), output_biases.size()*sizeof(type));
 
     current_position += output_biases.size();
 
     // Copy Weights
 
-    memcpy(parameters.data() + current_position, forget_weights.data(), forget_weights.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, forget_weights.data(), forget_weights.size()*sizeof(type));
 
     current_position += forget_weights.size();
 
-    memcpy(parameters.data() + current_position, input_weights.data(), input_weights.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, input_weights.data(), input_weights.size()*sizeof(type));
 
     current_position += input_weights.size();
 
-    memcpy(parameters.data() + current_position, state_weights.data(), state_weights.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, state_weights.data(), state_weights.size()*sizeof(type));
 
     current_position += state_weights.size();
 
-    memcpy(parameters.data() + current_position, output_weights.data(), output_weights.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, output_weights.data(), output_weights.size()*sizeof(type));
 
     current_position += output_weights.size();
 
     // Copy Recurrent Weights
     
-    memcpy(parameters.data() + current_position, forget_recurrent_weights.data(), forget_recurrent_weights.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, forget_recurrent_weights.data(), forget_recurrent_weights.size()*sizeof(type));
 
     current_position += forget_recurrent_weights.size();
 
-    memcpy(parameters.data() + current_position, input_recurrent_weights.data(), input_recurrent_weights.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, input_recurrent_weights.data(), input_recurrent_weights.size()*sizeof(type));
 
     current_position += input_recurrent_weights.size();
 
-    memcpy(parameters.data() + current_position, state_recurrent_weights.data(), state_recurrent_weights.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, state_recurrent_weights.data(), state_recurrent_weights.size()*sizeof(type));
 
     current_position += state_recurrent_weights.size();
 
-    memcpy(parameters.data() + current_position, output_recurrent_weights.data(), output_recurrent_weights.size() * sizeof(type));
+    memcpy(parameters.data() + current_position, output_recurrent_weights.data(), output_recurrent_weights.size()*sizeof(type));
 
     return parameters;
 }
@@ -430,64 +430,48 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
     Index size = neurons_number;
 
-    memcpy(forget_biases.data(), new_parameters_data + current_index, size * sizeof(type));
+    memcpy(forget_biases.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    memcpy(input_biases.data(), new_parameters_data + current_index, size * sizeof(type));
+    memcpy(input_biases.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    memcpy(state_biases.data(), new_parameters_data + current_index, size * sizeof(type));
+    memcpy(state_biases.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    memcpy(output_biases.data(), new_parameters_data + current_index, size * sizeof(type));
+    memcpy(output_biases.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
     // Weights
 
     size = inputs_number * neurons_number;
 
-    std::memcpy(forget_weights.data(),
-        new_parameters_data + current_index,
-        size * sizeof(type));
+    memcpy(forget_weights.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    std::memcpy(input_weights.data(),
-        new_parameters_data + current_index,
-        size * sizeof(type));
+    memcpy(input_weights.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    std::memcpy(state_weights.data(),
-        new_parameters_data + current_index,
-        size * sizeof(type));
+    memcpy(state_weights.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    std::memcpy(output_weights.data(),
-        new_parameters_data + current_index,
-        size * sizeof(type));
+    memcpy(output_weights.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
     // Recurrent weights
 
     size = neurons_number * neurons_number;
 
-    std::memcpy(forget_recurrent_weights.data(),
-        new_parameters_data + current_index,
-        size * sizeof(type));
+    memcpy(forget_recurrent_weights.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    std::memcpy(input_recurrent_weights.data(),
-        new_parameters_data + current_index,
-        size * sizeof(type));
+    memcpy(input_recurrent_weights.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    std::memcpy(state_recurrent_weights.data(),
-        new_parameters_data + current_index,
-        size * sizeof(type));
+    memcpy(state_recurrent_weights.data(), new_parameters_data + current_index, size*sizeof(type));
     current_index += size;
 
-    std::memcpy(output_recurrent_weights.data(),
-        new_parameters_data + current_index,
-        size * sizeof(type));
+    memcpy(output_recurrent_weights.data(), new_parameters_data + current_index, size*sizeof(type));
 
 }
 
@@ -694,29 +678,29 @@ void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activation
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activations_derivatives) const
 {
     switch(recurrent_activation_function)
     {
-    case ActivationFunction::Linear: linear(activations); return;
+    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations); return;
+    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
-    default: rectified_linear(activations); return;
+    default: throw runtime_error("Unknown activation function");
     }
 }
 
@@ -725,7 +709,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
                                                  LayerForwardPropagation* forward_propagation,
                                                  const bool& is_training)
 {
-/*
+
     const Index samples_number = inputs_pair(0).second[0];
     const Index inputs_number = inputs_pair(0).second[1];
 
@@ -844,13 +828,13 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
         }
         else
         {
-            calculate_recurrent_activations(current_forget_activations);
+            calculate_recurrent_activations(current_forget_activations, empty);
 
-            calculate_recurrent_activations(current_input_activations);
+            calculate_recurrent_activations(current_input_activations, empty);
 
-            calculate_activations(current_state_activations);
+            calculate_activations(current_state_activations, empty);
 
-            calculate_recurrent_activations(current_output_activations);
+            calculate_recurrent_activations(current_output_activations, empty);
         }
 
         set_row(forget_activations, current_forget_activations, i);
@@ -883,8 +867,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
             calculate_activations(current_cell_states,
                                   current_hidden_states);
         }
-*/
-/*
+
         current_hidden_states.device(*thread_pool_device) = current_output_activations * current_hidden_states;
 
         set_row(hidden_states, current_hidden_states, i);
@@ -892,8 +875,9 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
         // Activations 2d
 
         outputs.chip(i, 0).device(*thread_pool_device) = current_hidden_states;
-    }
 */
+    }
+
 }
 
 
