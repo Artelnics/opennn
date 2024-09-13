@@ -11,6 +11,8 @@
 #include "strings_utilities.h"
 
 #include <iostream>
+#include <map>
+#include <functional>
 
 namespace opennn
 {
@@ -103,17 +105,9 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
 
     Tensor<type, 1> parameters(synaptic_weights_number + biases_number);
 
-    const type* synaptic_weights_data = synaptic_weights.data();
-    const type* biases_data = biases.data();
-    type* parameters_data = parameters.data();
+    memcpy(parameters.data(), synaptic_weights.data(),synaptic_weights_number * sizeof(type));
 
-    copy(synaptic_weights_data,
-         synaptic_weights_data + synaptic_weights_number,
-         parameters_data);
-
-    copy(biases_data,
-         biases_data + biases_number,
-         parameters_data + synaptic_weights_number);
+    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number * sizeof(type));
 
     return parameters;
 }
@@ -242,29 +236,16 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {   
-    type* new_parameters_data = (type*)new_parameters.data();
-
-    type* synaptic_weights_data = (type*)synaptic_weights.data();
-    type* biases_data = (type*)biases.data();
+    const type* new_parameters_data = new_parameters.data();
+    type* synaptic_weights_data = synaptic_weights.data();
+    type* biases_data = biases.data();
 
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
-/*
-    copy(new_parameters_data + index,
-        new_parameters_data + index + synaptic_weights_number,
-        synaptic_weights_data);
 
-    copy(new_parameters_data + index + synaptic_weights_number,
-        new_parameters_data + index + synaptic_weights_number + biases_number,
-        biases_data);
-*/
-    synaptic_weights = TensorMap<const Tensor<type, 2>>(new_parameters.data() + index,
-                                                        synaptic_weights.dimension(0),
-                                                        synaptic_weights.dimension(1));
+    memcpy(synaptic_weights_data, new_parameters_data + index, synaptic_weights_number * sizeof(type));
 
-    biases = TensorMap<const Tensor<type, 1>>(new_parameters.data() + index + synaptic_weights.size(),
-                                              biases.size());
-
+    memcpy(biases_data, new_parameters_data + index + synaptic_weights_number, biases_number * sizeof(type));
 }
 
 
@@ -370,99 +351,30 @@ void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
 }
 
 
-void PerceptronLayer::calculate_activations(Tensor<type, 2>& activations) const
+void PerceptronLayer::calculate_activations(Tensor<type, 2>& activations,
+                                            Tensor<type, 2>& activations_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations); return;
+    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations); return;
+    case ActivationFunction::Logistic: logistic(activations, activations_derivatives);return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations); return;
+	case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;        
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives);return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
     default: return;
-    }
-
-/*
-    using ActivationFunc = void (PerceptronLayer::*)(Tensor<type, 2>&) const;
-
-    static const unordered_map<ActivationFunction, ActivationFunc> activation_map =
-        {{ ActivationFunction::Linear, &PerceptronLayer::linear },
-         { ActivationFunction::Logistic, &PerceptronLayer::logistic },
-         { ActivationFunction::HyperbolicTangent, &PerceptronLayer::hyperbolic_tangent },
-         { ActivationFunction::RectifiedLinear, &PerceptronLayer::rectified_linear },
-         { ActivationFunction::ScaledExponentialLinear, &PerceptronLayer::scaled_exponential_linear },
-         { ActivationFunction::SoftPlus, &PerceptronLayer::soft_plus },
-         { ActivationFunction::SoftSign, &PerceptronLayer::soft_sign },
-         { ActivationFunction::HardSigmoid, &PerceptronLayer::hard_sigmoid },
-         { ActivationFunction::ExponentialLinear, &PerceptronLayer::exponential_linear }};
-
-    auto it = activation_map.find(activation_function);
-
-    if (it != activation_map.end())
-    {
-        (this->*(it->second))(activations);
-    }
-*/
-}
-
-
-void PerceptronLayer::calculate_activations_derivatives(Tensor<type, 2>& activations,
-                                                        Tensor<type, 2>& activations_derivatives) const
-{
-    switch(activation_function)
-    {
-    case ActivationFunction::Linear: linear_derivatives(activations,
-                                                        activations_derivatives);
-        return;
-
-    case ActivationFunction::Logistic: logistic_derivatives(activations,
-                                                            activations_derivatives);
-        return;
-
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(activations,
-                                                                               activations_derivatives);
-        return;
-
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(activations,
-                                                                           activations_derivatives);
-        return;
-
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(activations,
-                                                                                            activations_derivatives);
-        return;
-
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(activations,
-                                                             activations_derivatives);
-        return;
-
-    case ActivationFunction::SoftSign: soft_sign_derivatives(activations,
-                                                             activations_derivatives);
-        return;
-
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(activations,
-                                                                   activations_derivatives);
-        return;
-
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(activations,
-                                                                               activations_derivatives);
-        return;
-
-    default:
-
-        return;
     }
 }
 
@@ -490,8 +402,7 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
     {
         Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
 
-        calculate_activations_derivatives(outputs,
-                                          activations_derivatives);
+        calculate_activations(outputs, activations_derivatives);
     }
     else
     {
@@ -619,25 +530,18 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
-            static_cast<PerceptronLayerBackPropagation*>(back_propagation);
+        static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
     const Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_back_propagation->synaptic_weights_derivatives;
-
-    const type* synaptic_weights_derivatives_data = synaptic_weights_derivatives.data();
-
     const Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
 
+    const type* synaptic_weights_derivatives_data = synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = biases_derivatives.data();
-
     type* gradient_data = gradient.data();
 
-    copy(synaptic_weights_derivatives_data,
-         synaptic_weights_derivatives_data + synaptic_weights_number,
-         gradient_data + index);
+    memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    copy(biases_derivatives_data,
-         biases_derivatives_data + biases_number,
-         gradient_data + index + synaptic_weights_number);
+    memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
 }
 
 
@@ -646,7 +550,6 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
                                                         Tensor<type, 2>& squared_errors_Jacobian) const
 {
     const Index layer_parameters_number = get_parameters_number();
-
     const Index batch_samples_number = back_propagation->batch_samples_number;
 
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
@@ -654,9 +557,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 
     type* squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
-    copy(squared_errors_Jacobian_data,
-         squared_errors_Jacobian_data + layer_parameters_number * batch_samples_number,
-         squared_errors_Jacobian_data + index);
+    memcpy(squared_errors_Jacobian_data + index, squared_errors_Jacobian_data, layer_parameters_number * batch_samples_number * sizeof(type));
 }
 
 

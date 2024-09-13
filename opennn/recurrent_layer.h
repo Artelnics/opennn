@@ -145,12 +145,8 @@ public:
    void calculate_combinations(const Tensor<type, 1>&,
                                Tensor<type, 1>&) const;
 
-   void calculate_activations(const Tensor<type, 1>&,
-                              Tensor<type, 1>&) const;
-
-   void calculate_activations_derivatives(const Tensor<type, 1>&,
-                                          Tensor<type, 1>&,
-                                          Tensor<type, 1>&);
+   void calculate_activations(Tensor<type, 1>&,
+                              Tensor<type, 1>& = Tensor<type, 1>()) const;
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                           LayerForwardPropagation*,
