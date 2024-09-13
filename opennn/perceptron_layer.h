@@ -62,6 +62,8 @@ public:
         const Index&,
         const ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
+    explicit PerceptronLayer(const dimensions&, const dimensions&);
+
     // Get
 
     Index get_inputs_number() const final;
