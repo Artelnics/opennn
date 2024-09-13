@@ -3,7 +3,6 @@
 
 #include <string>
 
-//#include "unscaling_layer.h"
 #include "layer.h"
 
 using namespace std;

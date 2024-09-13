@@ -135,7 +135,7 @@ public:
    void dropout(Tensor<type, 3>&) const;
 
    void calculate_activations(Tensor<type, 3>&,
-                              Tensor<type, 3>& = Tensor<type, 3>()) const;
+                              Tensor<type, 3>&) const;
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                           LayerForwardPropagation*,

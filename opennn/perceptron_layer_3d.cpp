@@ -141,13 +141,9 @@ Tensor<type, 1> PerceptronLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
-    copy(synaptic_weights.data(),
-         synaptic_weights.data() + synaptic_weights.size(),
-         parameters.data());
+    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights.size()*sizeof(type));
 
-    copy(biases.data(),
-         biases.data() + biases.size(),
-         parameters.data() + synaptic_weights.size());
+    memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size()*sizeof(type));
 
     return parameters;
 }
@@ -290,13 +286,9 @@ void PerceptronLayer3D::set_synaptic_weights(const Tensor<type, 2>& new_synaptic
 
 void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    copy(new_parameters.data() + index,
-         new_parameters.data() + index + synaptic_weights.size(),
-         synaptic_weights.data());
+    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights.size()*sizeof(type));
 
-    copy(new_parameters.data() + index + synaptic_weights.size(),
-         new_parameters.data() + index + synaptic_weights.size() + biases.size(),
-         biases.data());
+    std::memcpy(biases.data(), new_parameters.data() + index + synaptic_weights.size(), biases.size()*sizeof(type));
 }
 
 
@@ -599,19 +591,15 @@ void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
-            static_cast<PerceptronLayer3DBackPropagation*>(back_propagation);
+        static_cast<PerceptronLayer3DBackPropagation*>(back_propagation);
 
     const type* synaptic_weights_derivatives_data = perceptron_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();
     type* gradient_data = gradient.data();
 
-    copy(synaptic_weights_derivatives_data,
-         synaptic_weights_derivatives_data + synaptic_weights_number,
-         gradient_data + index);
+    memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
 
-    copy(biases_derivatives_data,
-         biases_derivatives_data + biases_number,
-         gradient_data + index + synaptic_weights_number);
+    memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
 }
 
 

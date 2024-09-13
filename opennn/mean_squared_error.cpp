@@ -10,7 +10,6 @@
 #include "mean_squared_error.h"
 #include "neural_network_forward_propagation.h"
 #include "back_propagation.h"
-//#include "adaptive_moment_estimation.h"
 
 namespace opennn
 {
