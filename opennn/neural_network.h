@@ -85,7 +85,7 @@ public:
 
    void add_layer(Layer*);
 
-   bool check_layer_type(const Layer::Type);
+   bool validate_layer_type(const Layer::Type);
 
    // Get
 
@@ -100,14 +100,14 @@ public:
    bool has_flatten_layer() const;
    bool is_empty() const;
 
-   const Tensor<string, 1>& get_inputs_names() const;
+   const Tensor<string, 1>& get_inputs_name() const;
    string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
    ModelType get_model_type() const;
    string get_model_type_string() const;
 
-   const Tensor<string, 1>& get_outputs_names() const;
+   const Tensor<string, 1>& get_outputs_name() const;
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
@@ -147,6 +147,7 @@ public:
 
    void set(const string&);
 
+   void set_layers_number(const Index&);
    void set_layers(Tensor<Layer*, 1>&);
 
    void set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
@@ -173,8 +174,6 @@ public:
    // Layers
 
    Index get_layers_number() const;
-   //Tensor<Index, 1> get_layers_neurons_numbers() const;
-
    Index get_trainable_layers_number() const;
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
@@ -285,7 +284,7 @@ protected:
 
    NeuralNetwork::ModelType model_type;
 
-   Tensor<string, 1> inputs_names;
+   Tensor<string, 1> inputs_name;
 
    Tensor<string, 1> outputs_name;
 

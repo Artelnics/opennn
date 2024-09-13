@@ -433,7 +433,7 @@ TrainingResults ConjugateGradient::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();

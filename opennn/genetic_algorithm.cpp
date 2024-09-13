@@ -625,7 +625,7 @@ void GeneticAlgorithm::evaluate_population()
 
     Tensor<Index, 1> inputs_number(individuals_number);
 
-    Tensor<string, 1> inputs_names;
+    Tensor<string, 1> inputs_name;
 
     for(Index i = 0; i < individuals_number; i++)
     {
@@ -643,11 +643,11 @@ void GeneticAlgorithm::evaluate_population()
 
         data_set->scrub_missing_values();
 
-        inputs_names = data_set->get_input_variables_names();
+        inputs_name = data_set->get_input_variables_names();
 
         neural_network->set_inputs_number(data_set->get_input_variables_number());
 
-        neural_network->set_inputs_names(inputs_names);
+        neural_network->set_inputs_names(inputs_name);
 
         neural_network->set_parameters_random();
 
@@ -668,7 +668,7 @@ void GeneticAlgorithm::evaluate_population()
 
             cout << "Selection error: " << training_results.get_selection_error() << endl;
 
-            cout << "Variables number: " << inputs_names.size() << endl;
+            cout << "Variables number: " << inputs_name.size() << endl;
 
             cout << "Inputs number: " << data_set->get_input_raw_variables_number() << endl;
         }

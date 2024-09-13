@@ -19,7 +19,7 @@ PerceptronLayer3D::PerceptronLayer3D() : Layer()
 {
     set();
 
-    layer_type = Type::Perceptron3D;
+    layer_type = Type::PerceptronLayer3D;
 }
 
 
@@ -30,7 +30,7 @@ PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number,
 {
     set(new_inputs_number, new_inputs_depth, new_neurons_number, new_activation_function);
 
-    layer_type = Type::Perceptron3D;
+    layer_type = Type::PerceptronLayer3D;
 
     name = "perceptron_layer_3d";
 }
@@ -238,7 +238,7 @@ void PerceptronLayer3D::set_default()
 
     display = true;
 
-    layer_type = Type::Perceptron3D;
+    layer_type = Type::PerceptronLayer3D;
 
     dropout_rate = 0;
 }
@@ -679,7 +679,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     // Layer name
 
-    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("LayerName");
+    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("Name");
 
     if(!layer_name_element)
         throw runtime_error("LayerName element is nullptr.\n");
@@ -749,7 +749,7 @@ void PerceptronLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layer name
 
-    file_stream.OpenElement("LayerName");
+    file_stream.OpenElement("Name");
     file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 

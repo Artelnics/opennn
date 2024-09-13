@@ -30,12 +30,12 @@ TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
                                      const string& separator,
                                      const bool& has_header,
-                                     const bool& has_ids,
+                                     const bool& has_samples_id,
                                      const Index& new_lags_number,
                                      const Index& new_steps_ahead,
                                      const Codification& data_codification)
 {
-    set(data_path, separator, has_header, has_ids, data_codification);
+    set(data_path, separator, has_header, has_samples_id, data_codification);
 
     lags_number = new_lags_number;
     steps_ahead = new_steps_ahead;
@@ -499,10 +499,10 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(to_string(has_header).c_str());
     file_stream.CloseElement();
 
-    // Rows labels
+    // Samples id
 
-    file_stream.OpenElement("HasIds");
-    file_stream.PushText(to_string(has_ids).c_str());
+    file_stream.OpenElement("HasSamplesId");
+    file_stream.PushText(to_string(has_samples_id).c_str());
     file_stream.CloseElement();
 
     // Missing values label
@@ -608,9 +608,9 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Ids
 
-    if(has_ids)
+    if(has_samples_id)
     {
-        file_stream.OpenElement("HasIds");
+        file_stream.OpenElement("HasSamplesId");
         file_stream.PushText(string_tensor_to_string(get_ids()).c_str());
         file_stream.CloseElement();
     }
@@ -770,9 +770,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(raw_variables_names_element)
         set_has_header(raw_variables_names_element->GetText() == string("1"));
 
-    // Rows labels
+    // Samples id
 
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
 
     if(rows_label_element)
         set_has_ids(rows_label_element->GetText() == string("1"));
@@ -1049,16 +1049,16 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    if(has_ids)
+    if(has_samples_id)
     {
-        // Rows labels begin tag
+        // Samples id begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
             throw runtime_error("Rows labels element is nullptr.\n");
 
-        // Rows labels
+        // Samples id
 
         if(has_ids_element->GetText())
         {

@@ -405,13 +405,13 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Rows labels
+    // Samples id
     {
-        file_stream.OpenElement("HasIds");
+        file_stream.OpenElement("HasSamplesId");
 
         buffer.str("");
 
-        buffer << has_ids;
+        buffer << has_samples_id;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -479,13 +479,13 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Rows labels
+    // Samples id
 
-    if(has_ids)
+    if(has_samples_id)
     {
         const Index rows_labels_number = samples_id.size();
 
-        file_stream.OpenElement("HasIds");
+        file_stream.OpenElement("HasSamplesId");
 
         buffer.str("");
 
@@ -797,9 +797,9 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Rows labels
+    // Samples id
 
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasIds");
+    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
 
     if(rows_label_element)
     {
@@ -1009,11 +1009,11 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    if(has_ids)
+    if(has_samples_id)
     {
-        // Rows labels begin tag
+        // Samples id begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasIds");
+        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
         {
@@ -1024,7 +1024,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             throw runtime_error(buffer.str());
         }
 
-        // Rows labels
+        // Samples id
 
         if(has_ids_element->GetText())
         {
@@ -1899,13 +1899,13 @@ void LanguageDataSet::read_csv_3_language_model()
 
     // Read data
 
-    const Index raw_variables_number = has_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
+    const Index raw_variables_number = has_samples_id ? get_raw_variables_number() + 1 : get_raw_variables_number();
 
     Tensor<string, 1> tokens(raw_variables_number);
 
     const Index samples_number = data.dimension(0);
 
-    if(has_ids) samples_id.resize(samples_number);
+    if(has_samples_id) samples_id.resize(samples_number);
 
     if(display) cout << "Reading data..." << endl;
 
@@ -1930,7 +1930,7 @@ void LanguageDataSet::read_csv_3_language_model()
         {
             trim(tokens(j));
 
-            if(has_ids && j == 0)
+            if(has_samples_id && j == 0)
             {
                 samples_id(sample_index) = tokens(j);
             }

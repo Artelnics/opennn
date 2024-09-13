@@ -1207,7 +1207,7 @@ void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layer name
 
-    file_stream.OpenElement("LayerName");
+    file_stream.OpenElement("Name");
     file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
@@ -1275,7 +1275,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Convolutional layer name element
 
-    const tinyxml2::XMLElement* convolution_name_element = convolutional_layer_element->FirstChildElement("LayerName");
+    const tinyxml2::XMLElement* convolution_name_element = convolutional_layer_element->FirstChildElement("Name");
 
     if(!convolution_name_element)
         throw runtime_error("Convolution type element is nullptr.\n");
