@@ -374,7 +374,7 @@ public:
 
     // Raw variables set
 
-    void set_raw_variables(const Tensor<RawVariable, 1>&);
+    void set_raw_variables(const Tensor<RawVariable, 1>&&);
     void set_default_raw_variables_uses();
 
     void set_default_raw_variables_names();
