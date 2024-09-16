@@ -12,14 +12,6 @@
 namespace opennn
 {
 
-
-/*
-Layer::~Layer()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-}
-*/
 string Layer::get_name() const
 {
     return name;
