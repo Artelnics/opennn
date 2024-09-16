@@ -925,7 +925,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     Index inputs_number = 1;
 
-    for(Index i = 0; i < inputs_dimensions.size(); i++)
+    for(size_t i = 0; i < inputs_dimensions.size(); i++)
         inputs_number *= inputs_dimensions[i];
 
     inputs_number = samples_number * inputs_number;
