@@ -173,11 +173,11 @@ public:
    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                                  const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final; //change
+                                 LayerBackPropagation*) const final;
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
-                        Tensor<type, 1>&) const final; // change
+                        Tensor<type, 1>&) const final;
 
    void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
@@ -217,6 +217,8 @@ protected:
 
    Tensor<type, 1> scales;
    Tensor<type, 1> offsets;
+
+   Tensor<type, 4> empty;
 
 };
 
@@ -262,9 +264,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    Tensor<type, 4> image_convolutions_derivatives;
    Tensor<type, 4> image_slice;
-
-   Eigen::array<Index, 4> offsets;
-   Eigen::array<Index, 4> extents;
 
    Tensor<type, 4> convolutions_derivatives;
    Tensor<type, 4> input_derivatives;

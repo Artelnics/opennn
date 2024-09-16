@@ -254,6 +254,9 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
         C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
     }
+/*
+    C.device(*thread_pool_device) = A.contract(B, contraction_axes);
+*/
 }
 
 
@@ -1485,6 +1488,8 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
+    const Index* rows_indices_data = rows_indices.data();
+
     const type* matrix_data = matrix.data();
 
     #pragma omp parallel for
@@ -1496,8 +1501,6 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
         type* tensor_value = tensor_data + rows_number*j;
 
         const type* matrix_value = nullptr;
-
-        const Index* rows_indices_data = rows_indices.data();
 
         for(Index i = 0; i < rows_number; i++)
         {
@@ -1515,7 +1518,6 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
                                 const Tensor<Index, 1>& columns_indices,
                                 type* tensor_data)
 {
-
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
@@ -1540,16 +1542,16 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 
 Index count_NAN(const Tensor<type, 1>& x)
 {
-    Index NAN_number = 0;
+    Index count = 0;
 
-    #pragma omp parallel for
+    #pragma omp parallel for reduction(+:count)
 
     for(Index i = 0; i < x.size(); i++)
     {
-        if(isnan(x(i))) NAN_number++;
+        if(isnan(x(i))) count++;
     }
 
-    return NAN_number;
+    return count;
 }
 
 
@@ -1562,12 +1564,9 @@ Index count_NAN(const Tensor<type, 2>& x)
 
     #pragma omp parallel for reduction(+: count)
 
-    for(Index row_index = 0; row_index < rows_number; row_index++)
+    for(Index i = 0; i < x.size(); i++)
     {
-        for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
-        {
-            if(isnan(x(row_index, raw_variable_index))) count++;
-        }
+        if(isnan(x[i])) count++;
     }
 
     return count;
@@ -1624,6 +1623,8 @@ Index count_empty(const Tensor<string, 1>& strings)
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for( Index i = 0; i < strings_number; i++)
     {
         string element = strings(i);
@@ -1643,6 +1644,8 @@ Index count_not_empty(const Tensor<string, 1>& strings)
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for( Index i = 0; i < strings_number; i++)
     {
         string element = strings(i);
@@ -1654,7 +1657,6 @@ Index count_not_empty(const Tensor<string, 1>& strings)
 
     return count;
 }
-
 
 
 void check_size(const Tensor<type, 1>& vector, const Index& size, const string& log)
@@ -1894,7 +1896,7 @@ string string_tensor_to_string(const Tensor<string,1>&x, const string& separator
 Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
 {
     const Index rows_number = tensor.dimension(0);
-    const Index raw_variables_number = tensor.dimension(1);
+    const Index columns_number = tensor.dimension(1);
    #ifdef OPENNN_DEBUG
 
    if(row_index > rows_number)
@@ -1908,13 +1910,13 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
 
    #endif
 
-   Tensor<type, 2> new_matrix(rows_number-1, raw_variables_number);
+   Tensor<type, 2> new_matrix(rows_number-1, columns_number);
 
     #pragma omp parallel for
 
    for(Index i = 0; i < row_index; i++)
    {
-      for(Index j = 0; j < raw_variables_number; j++)
+      for(Index j = 0; j < columns_number; j++)
       {
           new_matrix(i,j) = tensor(i,j);
       }
@@ -1924,7 +1926,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
 
    for(Index i = row_index+1; i < rows_number; i++)
    {
-      for(Index j = 0; j < raw_variables_number; j++)
+      for(Index j = 0; j < columns_number; j++)
       {
          new_matrix(i-1,j) = tensor(i,j);
       }

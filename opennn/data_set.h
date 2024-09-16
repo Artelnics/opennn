@@ -181,7 +181,7 @@ public:
     Tensor<RawVariable, 1> get_target_raw_variables() const;
     Tensor<RawVariable, 1> get_used_raw_variables() const;
 
-    Index get_raw_variables_number() const;
+    inline Index get_raw_variables_number() const { return raw_variables.size(); }
     Index get_constant_raw_variables_number() const;
 
     Index get_input_raw_variables_number() const;
