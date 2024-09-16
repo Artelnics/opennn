@@ -585,14 +585,14 @@ Tensor<Index, 1> DataSet::get_training_samples_indices() const
 
     Tensor<Index, 1> training_indices(training_samples_number);
 
-    Index count = 0;
+    Index index = 0;
 
     for(Index i = 0; i < samples_number; i++)
     {
         if(samples_uses(i) == SampleUse::Training)
         {
-            training_indices(count) = i;
-            count++;
+            training_indices(index) = i;
+            index++;
         }
     }
 
@@ -658,7 +658,6 @@ Tensor<Index, 1> DataSet::get_used_samples_indices() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-
         if(samples_uses(i) != SampleUse::None)
         {
             used_indices(index) = i;
@@ -767,6 +766,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     for(Index i = 0; i < batches_number; i++)
     {
         const Index offset = i * batches_number;
+
         for(Index j = 0; j < batch_size; j++)
             batches(i, j) = samples_copy(offset + j);
     }
@@ -5954,31 +5954,31 @@ void DataSet::print() const
     const Index testing_samples_number = get_testing_samples_number();
     const Index unused_samples_number = get_unused_samples_number();
 
-      
     cout << "Data set object summary:\n"
          << "Number of samples: " << samples_number << "\n"
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
-         print_dimensions(input_dimensions);
-         cout << "Target variables dimensions: ";
-         print_dimensions(target_dimensions);
-         cout << "Number of training samples: " << training_samples_number << endl;
-         cout << "Number of selection samples: " << selection_samples_number << endl;
-         cout << "Number of testing samples: " << testing_samples_number << endl;
-         cout << "Number of unused samples: " << unused_samples_number << endl;
-
-
-    /*
-    Index raw_variables_number = get_raw_variables_number();
+   
+    print_dimensions(input_dimensions);
+         
+    cout << "Target variables dimensions: ";
+    
+    print_dimensions(target_dimensions);
+    
+    cout << "Number of training samples: " << training_samples_number << endl
+         << "Number of selection samples: " << selection_samples_number << endl
+         << "Number of testing samples: " << testing_samples_number << endl
+         << "Number of unused samples: " << unused_samples_number << endl;
+   
+    const Index raw_variables_number = get_raw_variables_number();
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
         cout << endl;
         raw_variables(i).print();
     }
-    */
 }
 
 
