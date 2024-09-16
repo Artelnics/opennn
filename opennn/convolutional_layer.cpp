@@ -601,7 +601,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
         }
     }
     */
-    //cout << "input_derivatives convolutional cpu:\n" << input_derivatives << endl;
+    cout << "input_derivatives convolutional cpu:\n" << input_derivatives << endl;
 
 }
 
