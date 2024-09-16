@@ -1544,7 +1544,7 @@ Index count_NAN(const Tensor<type, 1>& x)
 {
     Index count = 0;
 
-    #pragma omp parallel for reduction(+:NAN_number)
+    #pragma omp parallel for reduction(+:count)
 
     for(Index i = 0; i < x.size(); i++)
     {
