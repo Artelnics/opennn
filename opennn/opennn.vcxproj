@@ -238,6 +238,7 @@
     <ClInclude Include="codification.h" />
     <ClCompile Include="codification.cpp" />
     <ClInclude Include="normalization_layer_3d.h" />
+    <ClInclude Include="normalized_squared_error.h" />
     <ClInclude Include="raw_variable.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="conjugate_gradient.h" />
@@ -302,11 +303,8 @@
     <ClInclude Include="neural_network_forward_propagation.h" />
     <ClInclude Include="neurons_selection.h" />
     <ClCompile Include="neurons_selection.cpp" />
-    <ClInclude Include="normalized_squared_error.h" />
     <ClCompile Include="normalization_layer_3d.cpp" />
     <ClCompile Include="normalized_squared_error.cpp" />
-    <ClInclude Include="numerical_differentiation.h" />
-    <ClCompile Include="numerical_differentiation.cpp" />
     <ClInclude Include="opennn.h" />
     <ClInclude Include="images.h" />
     <ClCompile Include="images.cpp" />

@@ -1292,24 +1292,16 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
             output = outputs(j,0);
 
             if(target >= threshold && output >= threshold)
-            {
                 true_positive++;
-            }
             else if(target >= threshold && output < threshold)
-            {
                 false_negative++;
-            }
             else if(target < threshold && output >= threshold)
-            {
                 false_positive++;
-            }
             else if(target < threshold && output < threshold)
-            {
                 true_negative++;
-            }
         }
 
-        roc_curve(i,0) = type(1) - type(true_positive)/type(true_positive + false_negative);
+        roc_curve(i,0) = type(1 - true_positive)/type(true_positive + false_negative);
         roc_curve(i,1) = type(true_negative)/type(true_negative + false_positive);
         roc_curve(i,2) = type(threshold);
 
@@ -1341,7 +1333,7 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& roc_curv
 
     for(Index i = 1; i < roc_curve.dimension(0); i++)
     {
-        area_under_curve += (roc_curve(i,0)-roc_curve(i-1,0))*(roc_curve(i,1)+roc_curve(i-1,1));
+        area_under_curve += (roc_curve(i,0) - roc_curve(i-1,0))*(roc_curve(i,1) + roc_curve(i-1,1));
     }
 
     return area_under_curve/ type(2);
