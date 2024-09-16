@@ -233,7 +233,7 @@ Tensor<string, 1> TimeSeriesDataSet::get_time_series_variables_names() const
         }
     }
 
-    return variables_names;
+    return move(variables_names);
 }
 
 
