@@ -23,15 +23,13 @@
 using namespace opennn;
 using namespace Eigen;
 
-
-
-
 int main()
 {
     try
     {
         srand(unsigned(time(nullptr)));
 
+/*
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
@@ -101,7 +99,7 @@ int main()
 //      const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

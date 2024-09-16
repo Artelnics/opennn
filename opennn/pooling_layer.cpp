@@ -246,7 +246,7 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
     }
     else
     {
-        throw runtime_error("Unknown pooling type: " + new_pooling_method + ".\n");
+        throw runtime_error("Unknown pooling type: " + new_pooling_method + ".\batch_index");
     }
 }
 
@@ -300,9 +300,9 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
-    Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
+    const Tensor<type, 4>& pool = pooling_layer_forward_propagation->pool;
 
-    Tensor<type, 4>& pool = pooling_layer_forward_propagation->pool;
+    Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
     outputs.device(*thread_pool_device) = inputs.convolve(pool, average_pooling_dimensions);
 }
@@ -361,27 +361,25 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     // Extract maximum indices
 
-    Tensor<Index, 4>& inputs_max_indices = pooling_layer_forward_propagation->inputs_max_indices;
+    Tensor<Index, 4>& inputs_maximal_indices = pooling_layer_forward_propagation->inputs_maximal_indices;
 
-    inputs_max_indices.setZero();
-
-    Index outputs_index = 0;
-
-    for(Index i = 0; i < inputs_max_indices.size(); i++)
-    {
-        if(abs(inputs(i) - outputs(outputs_index)) < 1e-3)
-        {
-            inputs_max_indices(i) = 1;
-            outputs_index++;
-        }
-    }
+    inputs_maximal_indices.setZero();
 
     // @todo: avoid loop and do something like the following:
 
-    //inputs_max_indices.device(*thread_pool_device) = ((inputs - outputs.broadcast(input_shape_matching_broadcast_dimensions)).abs() < type(1e-3)).cast<Index>();
+    //inputs_maximal_indices.device(*thread_pool_device) = ((inputs - outputs.broadcast(input_shape_matching_broadcast_dimensions)).abs() < type(1e-3)).cast<Index>();
 
+    Index outputs_index = 0;
+
+    for(Index output_height_index = 0; output_height_index < inputs_maximal_indices.size(); output_height_index++)
+    {
+        if(abs(inputs(output_height_index) - outputs(outputs_index)) < 1e-3)
+        {
+            inputs_maximal_indices(output_height_index) = 1;
+            outputs_index++;
+        }
+    }
 }
-
 
 
 void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
@@ -391,8 +389,6 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 {
 
     // Inputs
-
-    const Index batch_samples_number = inputs_pair(0).second[0];
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
                                             inputs_pair(0).second[0],
@@ -406,19 +402,52 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                                             deltas_pair(0).second[2],
                                             deltas_pair(0).second[3]);
 
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-    const Index input_channels = inputs.dimension(3);
-
-    const Index output_height = deltas.dimension(1);
-    const Index output_width = deltas.dimension(2);
-
     // Forward propagation
 
     const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
           static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
 
     const Tensor<type, 4> outputs = pooling_layer_forward_propagation->outputs;
+    
+    switch(pooling_method)
+    {
+    case PoolingMethod::MaxPooling:
+        back_propagate_max_pooling(inputs,
+                                   deltas,
+                                   back_propagation);
+        break;
+
+    case PoolingMethod::AveragePooling:
+        back_propagate_average_pooling(inputs,
+                                       deltas,
+                                       back_propagation);
+        break;
+
+    case PoolingMethod::NoPooling:
+
+        PoolingLayerBackPropagation* pooling_layer_back_propagation =
+            static_cast<PoolingLayerBackPropagation*>(back_propagation);
+
+        Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
+
+        input_derivatives = deltas;
+        break;
+    }
+}
+
+
+void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
+                                              const Tensor<type, 4>& deltas,
+                                              LayerBackPropagation* back_propagation) const
+{
+    const Index batch_samples_number = inputs.dimension(0);
+
+    const Index input_height = inputs.dimension(1);
+    const Index input_width = inputs.dimension(2);
+    const Index input_channels = inputs.dimension(3);
+
+    const Index output_height = deltas.dimension(1);
+    const Index output_width = deltas.dimension(2);
 
     // Back propagation
 
@@ -428,86 +457,101 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
     input_derivatives.setZero();
-    
-    switch (pooling_method)
+
+    for (Index batch_index = 0; batch_index < batch_samples_number; ++batch_index)
     {
-    case PoolingMethod::MaxPooling:
-
-        for (Index n = 0; n < batch_samples_number; ++n) 
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
         {
-            for (Index c = 0; c < input_channels; ++c) 
+            for (Index output_height_index = 0; output_height_index < output_height; ++output_height_index)
             {
-                for (Index i = 0; i < output_height; ++i) 
+                const Index height_start = output_height_index * row_stride;
+                const Index height_end = min(height_start + pool_height, input_height);
+
+                for (Index output_width_index = 0; output_width_index < output_width; ++output_width_index)
                 {
-                    const Index h_start = i * row_stride;
-                    const Index h_end = min(h_start + pool_height, input_height);
+                    const Index width_start = output_width_index * column_stride;
+                    const Index width_end = min(width_start + pool_width, input_width);
 
-                    for (Index j = 0; j < output_width; ++j) 
+                    // @todo input maximal indices already calculated
+
+                    type maximum = -numeric_limits<type>::infinity();
+                    Index maximum_height = height_start;
+                    Index maximun_width = width_start;
+
+                    for (Index height_index = height_start; height_index < height_end; ++height_index)
                     {
-                        const Index w_start = j * column_stride;
-                        const Index w_end = min(w_start + pool_width, input_width);
-
-                        type max_val = -numeric_limits<type>::infinity();
-                        Index max_h = h_start;
-                        Index max_w = w_start;
-
-                        for (Index h = h_start; h < h_end; ++h) 
+                        for (Index width_index = width_start; width_index < width_end; ++width_index)
                         {
-                            for (Index w = w_start; w < w_end; ++w) 
+                            if (inputs(batch_index, height_index, width_index, channel_index) > maximum)
                             {
-                                if (inputs(n, h, w, c) > max_val) 
-                                {
-                                    max_val = inputs(n, h, w, c);
-                                    max_h = h;
-                                    max_w = w;
-                                }
+                                maximum = inputs(batch_index, height_index, width_index, channel_index);
+                                maximum_height = height_index;
+                                maximun_width = width_index;
                             }
                         }
+                    }
 
-                        input_derivatives(n, max_h, max_w, c) += deltas(n, i, j, c);
+                    input_derivatives(batch_index, maximum_height, maximun_width, channel_index)
+                        += deltas(batch_index, output_height_index, output_width_index, channel_index);
+                }
+            }
+        }
+    }
+}
+
+
+void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
+                                                  const Tensor<type, 4>& deltas,
+                                                  LayerBackPropagation* back_propagation) const
+{
+    const Index batch_samples_number = inputs.dimension(0);
+
+    const Index input_height = inputs.dimension(1);
+    const Index input_width = inputs.dimension(2);
+    const Index input_channels = inputs.dimension(3);
+
+    const Index output_height = deltas.dimension(1);
+    const Index output_width = deltas.dimension(2);
+
+    const Index pool_size = pool_height*pool_width;
+
+    // Back propagation
+
+    PoolingLayerBackPropagation* pooling_layer_back_propagation =
+        static_cast<PoolingLayerBackPropagation*>(back_propagation);
+
+    Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
+
+    input_derivatives.setZero();
+
+    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
+    {
+        for (Index channel_index = 0; channel_index < input_channels; channel_index++)
+        {
+            for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
+            {
+                const Index height_start = output_height_index * row_stride;
+                const Index height_end = min(height_start + pool_height, input_height);
+
+                for (Index output_width_index = 0; output_width_index < output_width; output_width_index++)
+                {
+                    const Index width_start = output_width_index * column_stride;
+                    const Index width_end = min(width_start + pool_width, input_width);
+
+                    // @todo This sums the same value to all elements in the pool. Try to simplify.
+
+                    const type gradient = deltas(batch_index, output_height_index, output_width_index, channel_index)/type(pool_size);
+
+                    for (Index height_index = height_start; height_index < height_end; height_index++)
+                    {
+                        for (Index width_index = width_start; width_index < width_end; width_index++)
+                        {
+                            input_derivatives(batch_index, height_index, width_index, channel_index) += gradient;
+                        }
                     }
                 }
             }
         }
-        break;
-
-    case PoolingMethod::AveragePooling:
-
-        for (Index n = 0; n < batch_samples_number; ++n) 
-        {
-            for (Index c = 0; c < input_channels; ++c) 
-            {
-                for (Index i = 0; i < output_height; ++i) 
-                {
-                    const Index h_start = i * row_stride;
-                    const Index h_end = min(h_start + pool_height, input_height);
-
-                    for (Index j = 0; j < output_width; ++j) 
-                    {
-                        const Index w_start = j * column_stride;
-                        const Index w_end = min(w_start + pool_width, input_width);
-
-                        const Index pool_size = (h_end - h_start)*(w_end - w_start);
-
-                        const type gradient = deltas(n, i, j, c)/type(pool_size);
-
-                        for (Index h = h_start; h < h_end; ++h) 
-                        {
-                            for (Index w = w_start; w < w_end; ++w) 
-                            {
-                                input_derivatives(n, h, w, c) += gradient;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        break;
-
-    case PoolingMethod::NoPooling:
-        input_derivatives = deltas;
-        break;
     }
 }
 
@@ -599,14 +643,14 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* pooling_layer_element = document.FirstChildElement("PoolingLayer");
 
     if(!pooling_layer_element)
-        throw runtime_error("PoolingLayer layer element is nullptr.\n");
+        throw runtime_error("PoolingLayer layer element is nullptr.\batch_index");
 
     // PoolingLayer method element
 
     const tinyxml2::XMLElement* pooling_method_element = pooling_layer_element->FirstChildElement("PoolingMethod");
 
     if(!pooling_method_element)
-        throw runtime_error("PoolingLayer method element is nullptr.\n");
+        throw runtime_error("PoolingLayer method element is nullptr.\batch_index");
 
     set_pooling_method(pooling_method_element->GetText());
 
@@ -615,7 +659,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* input_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
 
     if(!input_dimensions_element)
-        throw runtime_error("PoolingLayer input variables dimensions element is nullptr.\n");
+        throw runtime_error("PoolingLayer input variables dimensions element is nullptr.\batch_index");
 
 //    set_input_dimensions(input_dimensions_element->GetText());
 
@@ -624,7 +668,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
 
     if(!column_stride_element)
-        throw runtime_error("PoolingLayer column stride element is nullptr.\n");
+        throw runtime_error("PoolingLayer column stride element is nullptr.\batch_index");
 
     set_column_stride(Index(stoi(column_stride_element->GetText())));
 
@@ -633,7 +677,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* row_stride_element = pooling_layer_element->FirstChildElement("RowStride");
 
     if(!row_stride_element)
-        throw runtime_error("PoolingLayer row stride element is nullptr.\n");
+        throw runtime_error("PoolingLayer row stride element is nullptr.\batch_index");
 
     set_row_stride(Index(stoi(row_stride_element->GetText())));
 
@@ -642,7 +686,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* pool_columns_number_element = pooling_layer_element->FirstChildElement("PoolColumnsNumber");
 
     if(!pool_columns_number_element)
-        throw runtime_error("PoolingLayer columns number element is nullptr.\n");
+        throw runtime_error("PoolingLayer columns number element is nullptr.\batch_index");
 
     const string pool_columns_number_string = pool_columns_number_element->GetText();
 
@@ -651,7 +695,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* pool_rows_number_element = pooling_layer_element->FirstChildElement("PoolRowsNumber");
 
     if(!pool_rows_number_element)
-        throw runtime_error("PoolingLayer rows number element is nullptr.\n");
+        throw runtime_error("PoolingLayer rows number element is nullptr.\batch_index");
 
     const string pool_rows_number_string = pool_rows_number_element->GetText();
 
@@ -662,7 +706,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* padding_width_element = pooling_layer_element->FirstChildElement("PaddingWidth");
 
     if(!padding_width_element)
-        throw runtime_error("Padding width element is nullptr.\n");
+        throw runtime_error("Padding width element is nullptr.\batch_index");
 
     if(padding_width_element->GetText())
         set_padding_width(Index(stoi(padding_width_element->GetText())));
@@ -716,6 +760,12 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     const type pool_size = type(pool_height * pool_width);
 
+    const dimensions input_dimensions = pooling_layer->get_input_dimensions();
+
+    const Index input_height = input_dimensions[1];
+
+    const Index input_width = input_dimensions[2];
+
     outputs.resize(batch_samples_number,
                    output_height,
                    output_width,
@@ -733,12 +783,10 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     pool.setConstant(type(1.0 / pool_size));
 
-    const dimensions input_dimensions = pooling_layer->get_input_dimensions();
-
-    inputs_max_indices.resize(input_dimensions[0],
-                              input_dimensions[1],
-                              input_dimensions[2],
-                              input_dimensions[3]);
+    inputs_maximal_indices.resize(batch_samples_number,
+                                  input_height,
+                                  input_width,
+                                  channels);
 
 }
 

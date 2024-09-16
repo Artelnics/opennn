@@ -127,29 +127,17 @@ void DataSet::RawVariable::set_scaler(const Scaler& new_scaler)
 void DataSet::RawVariable::set_scaler(const string& new_scaler)
 {
     if(new_scaler == "None")
-    {
         set_scaler(Scaler::None);
-    }
     else if(new_scaler == "MinimumMaximum")
-    {
         set_scaler(Scaler::MinimumMaximum);
-    }
     else if(new_scaler == "MeanStandardDeviation")
-    {
         set_scaler(Scaler::MeanStandardDeviation);
-    }
     else if(new_scaler == "StandardDeviation")
-    {
         set_scaler(Scaler::StandardDeviation);
-    }
     else if(new_scaler == "Logarithm")
-    {
         set_scaler(Scaler::Logarithm);
-    }
     else
-    {
         throw runtime_error("Unknown scaler: " + new_scaler + "\n");
-    }
 }
 
 
@@ -217,9 +205,7 @@ void DataSet::RawVariable::add_category(const string & new_category)
 {
     const Index old_categories_number = categories.size();
 
-    Tensor<string, 1> old_categories = categories;
-
-    categories.resize(old_categories_number+1);
+    Tensor<string, 1> old_categories(old_categories_number+1);
 
     for(Index category_index = 0; category_index < old_categories_number; category_index++)
     {
@@ -486,24 +472,13 @@ Tensor<Index, 1> DataSet::get_samples_uses_numbers() const
     const Index samples_number = get_samples_number();
 
     for(Index i = 0; i < samples_number; i++)
-    {
-        if(samples_uses(i) == SampleUse::Training)
+        switch (samples_uses(i))
         {
-            count(0)++;
+        case SampleUse::Training: count[0]++; break;
+        case SampleUse::Selection: count[1]++; break;
+        case SampleUse::Testing: count[2]++; break;
+        default: count[3]++; break;
         }
-        else if(samples_uses(i) == SampleUse::Selection)
-        {
-            count(1)++;
-        }
-        else if(samples_uses(i) == SampleUse::Testing)
-        {
-            count(2)++;
-        }
-        else
-        {
-            count(3)++;
-        }
-    }
 
     return count;
 }
@@ -517,17 +492,11 @@ Tensor<type, 1> DataSet::get_samples_uses_percentages() const
     const Index testing_samples_number = get_testing_samples_number();
     const Index unused_samples_number = get_unused_samples_number();
 
-    const type training_samples_percentage = type(training_samples_number*100)/type(samples_number);
-    const type selection_samples_percentage = type(selection_samples_number*100)/type(samples_number);
-    const type testing_samples_percentage = type(testing_samples_number*100)/type(samples_number);
-    const type unused_samples_percentage = type(unused_samples_number*100)/type(samples_number);
-
     Tensor<type, 1> samples_uses_percentage(4);
-
-    samples_uses_percentage.setValues({training_samples_percentage,
-                                       selection_samples_percentage,
-                                       testing_samples_percentage,
-                                       unused_samples_percentage});
+    samples_uses_percentage.setValues({ type(training_samples_number * 100) / type(samples_number),
+                                       type(selection_samples_number * 100) / type(samples_number),
+                                       type(testing_samples_number * 100) / type(samples_number),
+                                       type(unused_samples_number * 100) / type(samples_number) });
 
     return samples_uses_percentage;
 }
@@ -548,8 +517,10 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
         switch(raw_variables(i).type)
         {
         case RawVariableType::Numeric:
-            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += to_string(double(data(sample_index, variable_index)));
+            if(isnan(data(sample_index, variable_index))) 
+                sample_string += missing_values_label;
+            else 
+                sample_string += to_string(double(data(sample_index, variable_index)));
             variable_index++;
             break;
 
@@ -740,10 +711,10 @@ Tensor<Index, 1> DataSet::get_samples_uses_tensor() const
 
     Tensor<Index, 1> samples_uses_tensor(samples_number);
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < samples_number; i++)
-    {
         samples_uses_tensor(i) = Index(samples_uses(i));
-    }
 
     return samples_uses_tensor;
 }
@@ -768,9 +739,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     // When samples_number is less than 100 (small sample)
 
     if(buffer_size > samples_number)
-    {
         buffer_size = samples_number;
-    }
 
     // Check batch size and samples number
 
@@ -793,16 +762,22 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < batches_number; i++)
+    {
+        const Index offset = i * batches_number;
         for(Index j = 0; j < batch_size; j++)
-            batches(i, j) = samples_copy(i * batches_number + j);
+            batches(i, j) = samples_copy(offset + j);
+    }
 
     return batches;
     
-
+/*
     Tensor<Index, 1> buffer(buffer_size);
 
-    for(Index i = 0; i < buffer_size; i++) buffer(i) = i;
+    for(Index i = 0; i < buffer_size; i++) 
+        buffer(i) = i;
 
     Index next_index = buffer_size;
     Index random_index = 0;
@@ -920,7 +895,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     std::shuffle(batches.data(), batches.data() + batches.size(), urng);
     return batches;
-
+*/
 }
 
 
@@ -931,12 +906,8 @@ Index DataSet::get_training_samples_number() const
     Index training_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-    {
         if(samples_uses(i) == SampleUse::Training)
-        {
             training_samples_number++;
-        }
-    }
 
     return training_samples_number;
 }
@@ -949,12 +920,8 @@ Index DataSet::get_selection_samples_number() const
     Index selection_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-    {
         if(samples_uses(i) == SampleUse::Selection)
-        {
             selection_samples_number++;
-        }
-    }
 
     return selection_samples_number;
 }
@@ -967,12 +934,8 @@ Index DataSet::get_testing_samples_number() const
     Index testing_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-    {
         if(samples_uses(i) == SampleUse::Testing)
-        {
             testing_samples_number++;
-        }
-    }
 
     return testing_samples_number;
 }
@@ -1007,34 +970,19 @@ Index DataSet::get_unused_samples_number() const
 
 void DataSet::set_training()
 {
-    const Index samples_number = get_samples_number();
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        samples_uses(i) = SampleUse::Training;
-    }
+    samples_uses.setConstant(SampleUse::Training);
 }
 
 
 void DataSet::set_selection()
 {
-    const Index samples_number = get_samples_number();
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        samples_uses(i) = SampleUse::Selection;
-    }
+    samples_uses.setConstant(SampleUse::Selection);
 }
 
 
 void DataSet::set_testing()
 {
-    const Index samples_number = get_samples_number();
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        samples_uses(i) = SampleUse::Testing;
-    }
+    samples_uses.setConstant(SampleUse::Testing);
 }
 
 
@@ -1616,7 +1564,7 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
         }
     }
 
-    return target_variables_names;
+    return move(target_variables_names);
 }
 
 
@@ -2199,12 +2147,6 @@ Tensor<DataSet::RawVariable, 1> DataSet::get_used_raw_variables() const
 }
 
 
-Index DataSet::get_raw_variables_number() const
-{
-    return raw_variables.size();
-}
-
-
 Index DataSet::get_constant_raw_variables_number() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -2228,16 +2170,10 @@ Index DataSet::get_variables_number() const
     Index variables_number = 0;
 
     for(Index i = 0; i < raw_variables_number; i++)
-    {
         if(raw_variables(i).type == RawVariableType::Categorical)
-        {
             variables_number += raw_variables(i).get_categories_number();
-        }
         else
-        {
             variables_number++;
-        }
-    }
 
     return variables_number;
 }
@@ -2251,16 +2187,13 @@ Index DataSet::get_input_variables_number() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use != VariableUse::Input) continue;
+        if(raw_variables(i).use != VariableUse::Input) 
+            continue;
 
         if(raw_variables(i).type == RawVariableType::Categorical)
-        {
             input_variables_number += raw_variables(i).get_categories_number();
-        }
         else
-        {
             input_variables_number++;
-        }
     }
 
     return input_variables_number;
@@ -2275,16 +2208,13 @@ Index DataSet::get_target_variables_number() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use != VariableUse::Target) continue;
+        if(raw_variables(i).use != VariableUse::Target) 
+            continue;
 
         if(raw_variables(i).type == RawVariableType::Categorical)
-        {
             target_variables_number += raw_variables(i).get_categories_number();
-        }
         else
-        {
             target_variables_number++;
-        }
     }
 
     return target_variables_number;
@@ -2299,16 +2229,13 @@ Index DataSet::get_unused_variables_number() const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use != VariableUse::None) continue;
+        if(raw_variables(i).use != VariableUse::None) 
+            continue;
 
         if(raw_variables(i).type == RawVariableType::Categorical)
-        {
             unused_variables_number += raw_variables(i).get_categories_number();
-        }
         else
-        {
             unused_variables_number++;
-        }
 
         unused_variables_number += raw_variables(i).get_categories_number();
     }
