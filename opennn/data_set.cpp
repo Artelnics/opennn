@@ -762,9 +762,14 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < batches_number; i++)
+    {
+        const Index offset = i * batches_number;
         for(Index j = 0; j < batch_size; j++)
-            batches(i, j) = samples_copy(i * batches_number + j);
+            batches(i, j) = samples_copy(offset + j);
+    }
 
     return batches;
     
@@ -1489,7 +1494,7 @@ Tensor<string, 1> DataSet::get_variables_names() const
         }
     }
 
-    return move(variables_names);
+    return variables_names;
 }
 
 
@@ -1524,7 +1529,7 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
         }
     }
 
-    return move(input_variables_names);
+    return input_variables_names;
 }
 
 
