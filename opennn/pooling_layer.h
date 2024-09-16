@@ -125,6 +125,14 @@ public:
                         LayerForwardPropagation*,
                         LayerBackPropagation*) const final;
 
+    void back_propagate_max_pooling(const Tensor<type, 4>&,
+                                    const Tensor<type, 4>&,
+                                    LayerBackPropagation*) const;
+
+    void back_propagate_average_pooling(const Tensor<type, 4>&,
+                                        const Tensor<type, 4>&,
+                                        LayerBackPropagation*) const;
+
     // Serialization
 
     void from_XML(const tinyxml2::XMLDocument&) final;
@@ -155,6 +163,7 @@ protected:
     const Eigen::array<ptrdiff_t, 4> average_pooling_dimensions = {0, 1, 2, 3}; // For average pooling
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
 
+
 };
 
 
@@ -180,7 +189,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 5> image_patches;
 
-    Tensor<Index, 4> inputs_max_indices;
+    Tensor<Index, 4> inputs_maximal_indices;
 };
 
 
