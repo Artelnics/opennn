@@ -40,7 +40,7 @@ int main()
         const Index samples_number = 3;
         const Index image_height = 3;
         const Index image_width = 3;
-        ImageDataSet image_data_set(samples_number, image_height, image_width,kernel_channels,3);
+        ImageDataSet image_data_set(samples_number, image_height, image_width, kernel_channels, 3);
 
         image_data_set.set_image_data_random();
 
@@ -55,7 +55,7 @@ int main()
 
         image_data_set.print();
 
-        //image_data_set.print_data();
+        image_data_set.print_data();
 
         // Neural network
 
@@ -80,6 +80,7 @@ int main()
 
         PoolingLayer* pooling_layer = new PoolingLayer(image_data_set.get_input_dimensions(),
                                                       { pool_height , pool_width } );
+        pooling_layer->set_pooling_method("AveragePooling");
         neural_network.add_layer(pooling_layer);
 
         FlattenLayer* flatten_layer = new FlattenLayer(pooling_layer->get_output_dimensions());
