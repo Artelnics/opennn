@@ -455,7 +455,7 @@ void LossIndex::calculate_error_gradient_lm(const Batch&,
 }
 
 
-string LossIndex::get_error_type() const
+string LossIndex::get_loss_method() const
 {
     return "USER_ERROR_TERM";
 }
@@ -925,10 +925,10 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     Index inputs_number = 1;
 
-    for(size_t i = 0; i < inputs_dimensions.size(); i++)
+    for(Index i = 0; i < Index(inputs_dimensions.size()); i++)
         inputs_number *= inputs_dimensions[i];
 
-    inputs_number = samples_number * inputs_number;
+    inputs_number *= samples_number;
 
     const Tensor<Index, 1> samples_indices = data_set->get_training_samples_indices();
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();

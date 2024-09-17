@@ -288,9 +288,9 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
 
     if(classes_number == 2)
     {
-        Index binary_raw_variables_number = 1;
-        data.resize(images_number, image_size + binary_raw_variables_number);
-        imageDataAux.resize(images_number, image_size + binary_raw_variables_number);
+        Index binary_columns_number = 1;
+        data.resize(images_number, image_size + binary_columns_number);
+        imageDataAux.resize(images_number, image_size + binary_columns_number);
     }
     else
     {
@@ -347,9 +347,9 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         }
     }
 
-    raw_variables.resize(image_size + 1);
+    columns.resize(image_size + 1);
 
-    // Input raw_variables
+    // Input columns
 
     Index raw_variable_index = 0;
 
@@ -359,18 +359,18 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         {
             for(Index k = 0; k < height ; k++)
             {
-                raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                raw_variables(raw_variable_index).type = RawVariableType::Numeric;
-                raw_variables(raw_variable_index).use = VariableUse::Input;
-                raw_variables(raw_variable_index).scaler = Scaler::MinimumMaximum;
+                columns(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                columns(raw_variable_index).type = RawVariableType::Numeric;
+                columns(raw_variable_index).use = VariableUse::Input;
+                columns(raw_variable_index).scaler = Scaler::MinimumMaximum;
                 raw_variable_index++;
             }
         }
     }
 
-    // Target raw_variables
+    // Target columns
 
-    raw_variables(image_size).name = "class";
+    columns(image_size).name = "class";
 
     if(classes_number == 1)
         throw runtime_error("Invalid number of categories. The minimum is 2 and you have 1.\n");
@@ -382,19 +382,19 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         categories(i) = folder_paths[i].filename().string();
     }
 
-    raw_variables(image_size).use = VariableUse::Target;
-    raw_variables(image_size).categories = categories;
+    columns(image_size).use = VariableUse::Target;
+    columns(image_size).categories = categories;
 
-    raw_variables(image_size).categories_uses.resize(classes_number);
-    raw_variables(image_size).categories_uses.setConstant(VariableUse::Target);
+    columns(image_size).categories_uses.resize(classes_number);
+    columns(image_size).categories_uses.setConstant(VariableUse::Target);
 
     if(classes_number == 2)
     {
-        raw_variables(image_size).type = RawVariableType::Binary;
+        columns(image_size).type = RawVariableType::Binary;
     }
     else
     {
-        raw_variables(image_size).type = RawVariableType::Categorical;
+        columns(image_size).type = RawVariableType::Categorical;
     }
 
     samples_uses.resize(images_number);

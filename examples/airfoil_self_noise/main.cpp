@@ -28,7 +28,6 @@ int main()
     try
     {
         srand(unsigned(time(nullptr)));
-
 /*
         // Data set
 

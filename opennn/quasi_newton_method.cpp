@@ -433,7 +433,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Loss index
 
-    const string error_type = loss_index->get_error_type();
+    const string error_type = loss_index->get_loss_method();
 
     const Index training_samples_number = data_set->get_training_samples_number();
 

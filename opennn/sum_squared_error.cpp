@@ -150,7 +150,7 @@ void SumSquaredError::calculate_error_hessian_lm(const Batch&,
 }
 
 
-string SumSquaredError::get_error_type() const
+string SumSquaredError::get_loss_method() const
 {
     return "SUM_SQUARED_ERROR";
 }

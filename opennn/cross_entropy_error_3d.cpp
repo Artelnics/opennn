@@ -116,7 +116,7 @@ void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
 
 
 
-string CrossEntropyError3D::get_error_type() const
+string CrossEntropyError3D::get_loss_method() const
 {
     return "CROSS_ENTROPY_ERROR_3D";
 }
