@@ -600,7 +600,7 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
     file_stream.CloseElement();
 
-    // raw_variable stride
+    // column stride
 
     file_stream.OpenElement("ColumnStride");
     file_stream.PushText(to_string(get_column_stride()).c_str());
@@ -663,7 +663,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //    set_input_dimensions(input_dimensions_element->GetText());
 
-    // raw_variable stride
+    // column stride
 
     const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
 
@@ -681,7 +681,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     set_row_stride(Index(stoi(row_stride_element->GetText())));
 
-    // Pool raw_variables number
+    // Pool columns number
 
     const tinyxml2::XMLElement* pool_columns_number_element = pooling_layer_element->FirstChildElement("PoolColumnsNumber");
 

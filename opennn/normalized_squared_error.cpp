@@ -77,19 +77,19 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     const Tensor<type, 2> targets = data_set->get_target_data();
 
     const Index rows = targets.dimension(0)-1;
-    const Index raw_variables = targets.dimension(1);
+    const Index columns = targets.dimension(1);
 
-    Tensor<type, 2> targets_t(rows, raw_variables);
-    Tensor<type, 2> targets_t_1(rows, raw_variables);
+    Tensor<type, 2> targets_t(rows, columns);
+    Tensor<type, 2> targets_t_1(rows, columns);
 
-    for(Index i = 0; i < raw_variables; i++)
+    for(Index i = 0; i < columns; i++)
     {
         copy(targets.data() + targets.dimension(0) * i,
              targets.data() + targets.dimension(0) * i + rows,
              targets_t_1.data() + targets_t_1.dimension(0) * i);
     }
 
-    for(Index i = 0; i < raw_variables; i++)
+    for(Index i = 0; i < columns; i++)
     {
         copy(targets.data() + targets.dimension(0) * i + 1,
              targets.data() + targets.dimension(0) * i + 1 + rows,
