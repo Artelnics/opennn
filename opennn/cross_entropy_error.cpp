@@ -190,7 +190,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 }
 
 
-string CrossEntropyError::get_error_type() const
+string CrossEntropyError::get_loss_method() const
 {
     return "CROSS_ENTROPY_ERROR";
 }

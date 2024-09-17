@@ -66,7 +66,7 @@ const string& TimeSeriesDataSet::get_time_raw_variable() const
 const string& TimeSeriesDataSet::get_group_by_column() const
 {
     //return group_by_column; @todo
-    return "";
+    return string();
 }
 
 

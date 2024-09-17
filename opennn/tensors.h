@@ -236,7 +236,7 @@ string string_tensor_to_string(const Tensor<string, 1>&, const string& = " ");
 Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
 
 //Index partition(Tensor<type, 2>&, const Index&, const Index&, const Index&);
-Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+//Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
 
 type round_to_precision(type, const int&);

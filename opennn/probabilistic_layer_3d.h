@@ -115,8 +115,7 @@ public:
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;
 
-   void calculate_activations(const Tensor<type, 3>&,
-                              Tensor<type, 3>&) const;
+   void calculate_activations(Tensor<type, 3>&) const;
 
    // Outputs
 
@@ -165,6 +164,8 @@ protected:
    bool display = true;
 
    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
+
+   Tensor<type, 3> empty;
 
 };
 

@@ -338,6 +338,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
+    void set_derivatives_zero();
 
     void print() const
     {
