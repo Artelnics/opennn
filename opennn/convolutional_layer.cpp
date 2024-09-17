@@ -373,13 +373,13 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     Eigen::array<Index, 4> offsets;
     Eigen::array<Index, 4> extents;
 
-    Tensor<type, 4>& image_slice = convolutional_layer_back_propagation->image_slice;
+    Tensor<type, 3>& image = convolutional_layer_back_propagation->image;
 
-    Tensor<type, 4>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
+    Tensor<type, 3>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
 
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 
-    Tensor<type, 0> current_sum;
+    Tensor<type, 0> biases_derivatives_sum;
 
     // Convolutions derivatives
 
@@ -401,7 +401,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                                                                        kernel_width,
                                                                        kernel_channels);
 
-        current_sum.setZero();
+        biases_derivatives_sum.setZero();
 
         kernel_synaptic_weights_derivatives.setZero();
 
@@ -409,40 +409,18 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
         {
             // Image
 
-            offsets = { image_index, 0, 0, 0 };
-
-            extents = { 1, input_height, input_width, input_channels };
-
-            // @todo Image to tensor map directly?
-
-            image_slice = inputs.slice(offsets, extents); // device(*thread_pool_device) does not work here
-
-            const TensorMap<Tensor<type, 3>> image(image_slice.data(),
-                                                   input_height,
-                                                   input_width,
-                                                   input_channels);
+            image = inputs.chip(image_index, 0);       
+                                                   
             // Image convolutions derivatives
 
-            offsets = {image_index, 0, 0, kernel_index};
-
-            extents = {1, output_height, output_width, 1};
-
-            // @todo Image to tensor map directly?
-
-            image_convolutions_derivatives = convolutions_derivatives.slice(offsets, extents); // device(*thread_pool_device) does not work here
-
-            const TensorMap<Tensor<type, 3>> image_convolutions_derivatives(image_convolutions_derivatives.data(),
-                                                                            output_height,
-                                                                            output_width,
-                                                                            1);
+            image_convolutions_derivatives = convolutions_derivatives.chip(image_index, 0).chip(kernel_index, 3)
+                                             .reshape(Eigen::array<Index, 3>{output_height, output_width, 1});
 
             // Biases
 
-            // @todo Rename current sum to something specific
+            biases_derivatives_sum.device(*thread_pool_device) = image_convolutions_derivatives.sum();
 
-            current_sum.device(*thread_pool_device) = image_convolutions_derivatives.sum();
-
-            biases_derivatives(kernel_index) += current_sum();
+            biases_derivatives(kernel_index) += biases_derivatives_sum();
 
             // Synaptic weights
 
@@ -453,49 +431,32 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
             for (Index channel_in = 0; channel_in < input_channels; ++channel_in)
             {
-                // @todo Fix this memory assignment
 
                 const Tensor<type, 2> kernel_slice = kernel_synaptic_weights.chip(channel_in, 2);
+                Eigen::array<bool, 2> reverse_dims = { true, true };
+                Tensor<type, 2> rotated_kernel = kernel_slice.reverse(reverse_dims);
 
                 const Tensor<type, 2> delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
 
-                // @todo Is it really a convolution? Is it calculated already?
+                Index pad_height = (input_height + kernel_height - 1) - output_height;
+                Index pad_width = (input_width + kernel_width - 1) - output_width;
 
-                Tensor<type, 2> convolution(input_height, input_width);
-                convolution.setZero();
+                Index pad_top = pad_height / 2;
+                Index pad_bottom = pad_height - pad_top;
+                Index pad_left = pad_width / 2;
+                Index pad_right = pad_width - pad_left;
 
-                for (Index i = 0; i < output_height; ++i)
-                {
-                    for (Index j = 0; j < output_width; ++j)
-                    {
-                        const type delta = delta_reshape_2d(i, j);
+                Eigen::array<pair<Index, Index>, 2> paddings = {make_pair(pad_top, pad_bottom),make_pair(pad_left, pad_right)};
 
-                        for (Index m = 0; m < kernel_height; ++m)
-                        {
-                            const Index x = i + m;
+                Tensor<type, 2> delta_padded = delta_reshape_2d.pad(paddings);
 
-                            for (Index n = 0; n < kernel_width; ++n)
-                            {
-                                const Index y = j + n;
+                Eigen::array<Index, 2> convolution_dims = { 0, 1 };
 
-                                if (x < input_height && y < input_width)
-                                {
-                                    convolution(x, y) += delta * kernel_slice(m, n);
-                                }
-                            }
-                        }
-                    }
-                }
+                Tensor<type, 2> convolution = delta_padded.convolve(rotated_kernel, convolution_dims);
 
-                // @todo Can we do this in tensor form?
+                input_derivatives.chip(image_index, 0)
+                    .chip(channel_in, 3) += convolution;
 
-                for (Index x = 0; x < input_height; ++x)
-                {
-                    for (Index y = 0; y < input_width; ++y)
-                    {
-                        input_derivatives(image_index, x, y, channel_in) += convolution(x, y);
-                    }
-                }
             }
         }
         
@@ -503,9 +464,6 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                kernel_synaptic_weights_derivatives.data(),
                kernel_synaptic_weights_number*sizeof(type));
     }
-    
-    cout << "input_derivatives convolutional cpu:\n" << input_derivatives << endl;
-
 }
 
 
@@ -1358,6 +1316,9 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                         kernel_height,
                                         kernel_width,
                                         kernel_channels);
+
+    image.resize(input_height, input_width, channels);
+    image_convolutions_derivatives.resize(output_height, output_width, 1);
 
     input_derivatives.resize(batch_samples_number,
                              input_height,

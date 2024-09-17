@@ -1483,21 +1483,21 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
-    const Index* rows_indices_data = rows_indices.data();
-
     const type* matrix_data = matrix.data();
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
-    for(Index j = 0; j < columns_number; j++)
+    for (Index j = 0; j < columns_number; j++)
     {
-        const type* matrix_column = matrix_data + matrix.dimension(0)*columns_indices[j];
+        const type* matrix_column = matrix_data + matrix.dimension(0) * columns_indices[j];
 
-        type* tensor_value = tensor_data + rows_number*j;
+        type* tensor_value = tensor_data + rows_number * j;
 
         const type* matrix_value = nullptr;
 
-        for(Index i = 0; i < rows_number; i++)
+        const Index* rows_indices_data = rows_indices.data();
+
+        for (Index i = 0; i < rows_number; i++)
         {
             matrix_value = matrix_column + *rows_indices_data;
             rows_indices_data++;
