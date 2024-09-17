@@ -190,7 +190,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 cout << "Input raw_variables number: " << input_raw_variables_number << endl;
                 cout << "Inputs: " << endl;
 
-                input_raw_variables_names = data_set->get_input_raw_variables_names();
+                input_raw_variables_names = data_set->get_input_raw_variable_names();
 
                 for(Index j = 0; j < input_raw_variables_number; j++) cout << "   " << input_raw_variables_names(j) << endl;
             }
@@ -223,7 +223,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                     // Neural network
 
                     inputs_selection_results.optimal_input_raw_variables_indices = data_set->get_input_raw_variables_indices();
-                    inputs_selection_results.optimal_input_raw_variables_names = data_set->get_input_raw_variables_names();
+                    inputs_selection_results.optimal_input_raw_variables_names = data_set->get_input_raw_variable_names();
 
                     inputs_selection_results.optimal_parameters = neural_network->get_parameters();
 
