@@ -912,10 +912,10 @@ void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_input_dimen
 
 void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    const Index kernel_height = get_kernel_height();
-    const Index kernel_width = get_kernel_width();
-    const Index kernel_channels = get_kernel_channels();
-    const Index kernels_number = get_kernels_number();
+    // const Index kernel_height = get_kernel_height();
+    // const Index kernel_width = get_kernel_width();
+    // const Index kernel_channels = get_kernel_channels();
+    // const Index kernels_number = get_kernels_number();
 
     //synaptic_weights.resize(kernel_height,
         //kernel_width,

@@ -673,7 +673,7 @@ void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activation
 
     case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
-    default: rectified_linear(activations, activations_derivatives); return;
+    default: throw runtime_error("Unknown activation function");
     }
 }
 

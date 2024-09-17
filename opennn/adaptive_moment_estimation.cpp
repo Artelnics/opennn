@@ -377,8 +377,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                             selection_back_propagation);
                 
                 selection_error += selection_back_propagation.error;
-                if(is_classification_model) selection_accuracy += selection_back_propagation.accuracy;
-              
+
+                if(is_classification_model) 
+                    selection_accuracy += selection_back_propagation.accuracy;
             }
 
             selection_error /= type(selection_batches_number);
