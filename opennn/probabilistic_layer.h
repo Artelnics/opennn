@@ -54,8 +54,6 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 2> outputs;
     Tensor<type, 2> activations_derivatives;
-
-    Tensor<type, 1> aux_rows;
 };
 
 
@@ -223,19 +221,19 @@ public:
     // Outputs
 
     void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-        LayerForwardPropagation*,
-        const bool&) final;
+                           LayerForwardPropagation*,
+                           const bool&) final;
 
     // Gradient
 
     void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-        const Tensor<pair<type*, dimensions>, 1>&,
-        LayerForwardPropagation*,
-        LayerBackPropagation*) const final;
+                        const Tensor<pair<type*, dimensions>, 1>&,
+                        LayerForwardPropagation*,
+                        LayerBackPropagation*) const final;
 
     void insert_gradient(LayerBackPropagation*,
-        const Index&,
-        Tensor<type, 1>&) const final;
+                         const Index&,
+                         Tensor<type, 1>&) const final;
 
     // Squared errors
 

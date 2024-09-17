@@ -62,7 +62,7 @@ public:
 
    void to_XML(tinyxml2::XMLPrinter &) const final;
 
-   string get_error_type() const final;
+   string get_loss_method() const final;
    string get_error_type_text() const final;
 
 #ifdef OPENNN_CUDA

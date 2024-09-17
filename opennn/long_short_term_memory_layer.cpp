@@ -673,7 +673,7 @@ void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activation
 
     case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
-    default: rectified_linear(activations, activations_derivatives); return;
+    default: throw runtime_error("Unknown activation function");
     }
 }
 
@@ -1042,28 +1042,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
 
         if(sample % timesteps == 0)
         {
-            forget_combinations_weights_derivatives.setZero();
-            input_combinations_weights_derivatives.setZero();
-            output_combinations_weights_derivatives.setZero();
-            state_combinations_weights_derivatives.setZero();
-
-            forget_combinations_recurrent_weights_derivatives.setZero();
-            input_combinations_recurrent_weights_derivatives.setZero();
-            output_combinations_recurrent_weights_derivatives.setZero();
-            state_combinations_recurrent_weights_derivatives.setZero();
-
-            forget_combinations_biases_derivatives.setZero();
-            input_combinations_biases_derivatives.setZero();
-            output_combinations_biases_derivatives.setZero();
-            state_combinations_biases_derivatives.setZero();
-
-            cell_states_weights_derivatives.setZero();
-            cell_states_recurrent_weights_derivatives.setZero();
-            cell_states_biases_derivatives.setZero();
-
-            hidden_states_weights_derivatives.setZero();
-            hidden_states_recurrent_weights_derivatives.setZero();
-            hidden_states_biases_derivatives.setZero();
+            set_derivatives_zero();
 
             previous_cell_states.setZero();
             previous_hidden_states.setZero();
@@ -1378,28 +1357,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
 
         if(sample % timesteps == 0)
         {
-            forget_combinations_weights_derivatives.setZero();
-            input_combinations_weights_derivatives.setZero();
-            output_combinations_weights_derivatives.setZero();
-            state_combinations_weights_derivatives.setZero();
-
-            forget_combinations_recurrent_weights_derivatives.setZero();
-            input_combinations_recurrent_weights_derivatives.setZero();
-            output_combinations_recurrent_weights_derivatives.setZero();
-            state_combinations_recurrent_weights_derivatives.setZero();
-
-            forget_combinations_biases_derivatives.setZero();
-            input_combinations_biases_derivatives.setZero();
-            output_combinations_biases_derivatives.setZero();
-            state_combinations_biases_derivatives.setZero();
-
-            cell_states_weights_derivatives.setZero();
-            cell_states_recurrent_weights_derivatives.setZero();
-            cell_states_biases_derivatives.setZero();
-
-            hidden_states_weights_derivatives.setZero();
-            hidden_states_recurrent_weights_derivatives.setZero();
-            hidden_states_biases_derivatives.setZero();
+            set_derivatives_zero();
 
             previous_cell_states.setZero();
             previous_hidden_states.setZero();
@@ -1714,28 +1672,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
 
         if(sample % timesteps == 0)
         {
-            forget_combinations_weights_derivatives.setZero();
-            input_combinations_weights_derivatives.setZero();
-            output_combinations_weights_derivatives.setZero();
-            state_combinations_weights_derivatives.setZero();
-
-            forget_combinations_recurrent_weights_derivatives.setZero();
-            input_combinations_recurrent_weights_derivatives.setZero();
-            output_combinations_recurrent_weights_derivatives.setZero();
-            state_combinations_recurrent_weights_derivatives.setZero();
-
-            forget_combinations_biases_derivatives.setZero();
-            input_combinations_biases_derivatives.setZero();
-            output_combinations_biases_derivatives.setZero();
-            state_combinations_biases_derivatives.setZero();
-
-            cell_states_weights_derivatives.setZero();
-            cell_states_recurrent_weights_derivatives.setZero();
-            cell_states_biases_derivatives.setZero();
-
-            hidden_states_weights_derivatives.setZero();
-            hidden_states_recurrent_weights_derivatives.setZero();
-            hidden_states_biases_derivatives.setZero();
+            set_derivatives_zero();
 
             previous_cell_states.setZero();
             previous_hidden_states.setZero();
@@ -2050,28 +1987,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 
         if(sample % timesteps == 0)
         {
-            forget_combinations_weights_derivatives.setZero();
-            input_combinations_weights_derivatives.setZero();
-            output_combinations_weights_derivatives.setZero();
-            state_combinations_weights_derivatives.setZero();
-
-            forget_combinations_recurrent_weights_derivatives.setZero();
-            input_combinations_recurrent_weights_derivatives.setZero();
-            output_combinations_recurrent_weights_derivatives.setZero();
-            state_combinations_recurrent_weights_derivatives.setZero();
-
-            forget_combinations_biases_derivatives.setZero();
-            input_combinations_biases_derivatives.setZero();
-            output_combinations_biases_derivatives.setZero();
-            state_combinations_biases_derivatives.setZero();
-
-            cell_states_weights_derivatives.setZero();
-            cell_states_recurrent_weights_derivatives.setZero();
-            cell_states_biases_derivatives.setZero();
-
-            hidden_states_weights_derivatives.setZero();
-            hidden_states_recurrent_weights_derivatives.setZero();
-            hidden_states_biases_derivatives.setZero();
+            set_derivatives_zero();
 
             previous_cell_states.setZero();
             previous_hidden_states.setZero();
@@ -2745,6 +2661,35 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
     inputs_derivatives(0).first = input_derivatives.data();
     inputs_derivatives(0).second = { batch_samples_number, inputs_number };
 }
+
+
+void LongShortTermMemoryLayerBackPropagation::set_derivatives_zero()
+{
+    forget_combinations_weights_derivatives.setZero();
+    input_combinations_weights_derivatives.setZero();
+    output_combinations_weights_derivatives.setZero();
+    state_combinations_weights_derivatives.setZero();
+
+    forget_combinations_recurrent_weights_derivatives.setZero();
+    input_combinations_recurrent_weights_derivatives.setZero();
+    output_combinations_recurrent_weights_derivatives.setZero();
+    state_combinations_recurrent_weights_derivatives.setZero();
+
+    forget_combinations_biases_derivatives.setZero();
+    input_combinations_biases_derivatives.setZero();
+    output_combinations_biases_derivatives.setZero();
+    state_combinations_biases_derivatives.setZero();
+
+    cell_states_weights_derivatives.setZero();
+    cell_states_recurrent_weights_derivatives.setZero();
+    cell_states_biases_derivatives.setZero();
+
+    hidden_states_weights_derivatives.setZero();
+    hidden_states_recurrent_weights_derivatives.setZero();
+    hidden_states_biases_derivatives.setZero();
+}
+
+
 }
 
 // OpenNN: Open Neural Networks Library.

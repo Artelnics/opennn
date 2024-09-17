@@ -447,10 +447,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     }
     else if (neurons_number > 1)
     {
-        Tensor<type, 1>& aux_rows = probabilistic_layer_forward_propagation->aux_rows;
-
-        softmax(outputs, outputs, aux_rows);
-
+        softmax(outputs);
     }
     else
     {
@@ -869,10 +866,6 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
     if(neurons_number == 1)
     {
         activations_derivatives.resize(batch_samples_number, neurons_number);
-    }
-    else
-    {
-        aux_rows.resize(batch_samples_number);
     }
 }
 

@@ -168,7 +168,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 }
 
 
-string MeanSquaredError::get_error_type() const
+string MeanSquaredError::get_loss_method() const
 {
     return "MEAN_SQUARED_ERROR";
 }

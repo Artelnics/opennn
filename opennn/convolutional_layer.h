@@ -262,8 +262,8 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    void print() const;
 
-   Tensor<type, 4> image_convolutions_derivatives;
-   Tensor<type, 4> image_slice;
+   Tensor<type, 3> image_convolutions_derivatives;
+   Tensor<type, 3> image;
 
    Tensor<type, 4> convolutions_derivatives;
    Tensor<type, 4> input_derivatives;
