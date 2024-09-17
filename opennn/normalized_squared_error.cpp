@@ -350,7 +350,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 }
 
 
-string NormalizedSquaredError::get_error_type() const
+string NormalizedSquaredError::get_loss_method() const
 {
     return "NORMALIZED_SQUARED_ERROR";
 }

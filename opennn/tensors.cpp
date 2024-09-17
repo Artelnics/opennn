@@ -254,9 +254,6 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
         C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
     }
-/*
-    C.device(*thread_pool_device) = A.contract(B, contraction_axes);
-*/
 }
 
 

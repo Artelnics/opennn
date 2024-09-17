@@ -353,17 +353,16 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 }
 
 
-void ProbabilisticLayer3D::calculate_activations(const Tensor<type, 3>& combinations,
-                                                 Tensor<type, 3>& activations) const
+void ProbabilisticLayer3D::calculate_activations(Tensor<type, 3>& activations) const
 {
-/*
+
     switch(activation_function)
     {
-    case ActivationFunction::Softmax: softmax(combinations, activations); return;
+    case ActivationFunction::Softmax: softmax(activations); return;
 
     default: return;
     }
-*/
+
 }
 
 
@@ -381,7 +380,7 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
     calculate_combinations(inputs, outputs);
 
     if(is_training)
-        calculate_activations(outputs, outputs);
+        calculate_activations(outputs);
     //else competitive(outputs, outputs);
 }
 
