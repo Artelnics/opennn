@@ -13,7 +13,6 @@
 
 #include "../opennn/unit_testing.h"
 #include "../opennn/convolutional_layer.h"
-#include "../opennn/numerical_differentiation.h"
 
 namespace opennn
 {

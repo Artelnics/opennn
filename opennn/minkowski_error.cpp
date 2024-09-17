@@ -118,7 +118,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 }
 
 
-string MinkowskiError::get_error_type() const
+string MinkowskiError::get_loss_method() const
 {
     return "MINKOWSKI_ERROR";
 }

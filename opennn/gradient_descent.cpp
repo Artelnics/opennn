@@ -279,7 +279,7 @@ TrainingResults GradientDescent::perform_training()
 
     // Loss index
 
-    const string error_type = loss_index->get_error_type();
+    const string error_type = loss_index->get_loss_method();
 
     loss_index->set_normalization_coefficient();
 

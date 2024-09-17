@@ -9,12 +9,7 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-// System includes
-
 #include <string>
-#include <memory>
-
-// OpenNN includes
 
 #include "config.h"
 #include "tinyxml2.h"
@@ -63,8 +58,6 @@ public:
 
     explicit Layer()
     {
-        //layer_type = Layer::Type::Perceptron;
-
         const int n = omp_get_max_threads();
 
         thread_pool = new ThreadPool(n);
@@ -164,8 +157,9 @@ protected:
     Type layer_type;
 
     template <int rank>
-    void binary(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    void binary(Tensor<type, rank>& y) const
     {
+        /*
         const Tensor<bool, rank> if_sentence = x < x.constant(type(0.5));
 
         const Tensor<type, rank> f_1 = x.constant(type(false));
@@ -173,6 +167,7 @@ protected:
         const Tensor<type, rank> f_2 = x.constant(type(true));
 
         y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+        */
     }
 
 
@@ -262,7 +257,6 @@ protected:
     void leaky_rectified_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
     {
         if (dy_dx.size() == 0) return;
-
     }
 
 
@@ -342,12 +336,11 @@ protected:
     }
 
 
-    void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void competitive(Tensor<type, 2>&) const;
 
-    void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
+    void softmax(Tensor<type, 2>&) const;
     void softmax(Tensor<type, 3>&) const;
     void softmax(Tensor<type, 4>&) const;
-
 
     void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
