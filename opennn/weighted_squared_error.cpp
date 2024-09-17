@@ -317,7 +317,7 @@ void WeightedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 }
 
 
-string WeightedSquaredError::get_error_type() const
+string WeightedSquaredError::get_loss_method() const
 {
     return "WEIGHTED_SQUARED_ERROR";
 }
