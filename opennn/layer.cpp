@@ -164,8 +164,11 @@ void Layer::set_neurons_number(const Index&)
 }
 
 
-void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
+
+
+void Layer::competitive(Tensor<type, 2>& y) const
 {
+/*
     const Index rows_number = x.dimension(0);
 
     const Index competition_dimension = 1;
@@ -182,11 +185,13 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         y(i, Index(maximum_indices(i))) = type(1);
     }
+*/
 }
 
 
-void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>& aux_rows) const
+void Layer::softmax(Tensor<type, 2>& y) const
 {
+/*
     const Eigen::array<Index, 1> softmax_dimension{ { 1 } };
 
     // Normalize values to avoid possible NANs
@@ -202,6 +207,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1
     aux_rows.device(*thread_pool_device) = y.sum(softmax_dimension);
 
     divide_columns(thread_pool_device, y, aux_rows);
+*/
 }
 
 
@@ -226,8 +232,7 @@ void Layer::softmax(Tensor<type, 3>& y) const
     y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
                                          .eval()
                                          .reshape(range_3)
-                                         .broadcast(expand_softmax_dim);
-    
+                                         .broadcast(expand_softmax_dim);   
 }
 
 

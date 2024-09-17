@@ -60,6 +60,8 @@ int main()
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
 
+        // cross entropy
+
         // OKR
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);

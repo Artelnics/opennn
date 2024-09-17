@@ -213,18 +213,12 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
-    if(loss_index->get_error_type() == "MINKOWSKI_ERROR")
-    {
+    if(loss_index->get_loss_method() == "MINKOWSKI_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
-    }
-    else if(loss_index->get_error_type() == "CROSS_ENTROPY_ERROR")
-    {
+    else if(loss_index->get_loss_method() == "CROSS_ENTROPY_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
-    }
-    else if(loss_index->get_error_type() == "WEIGHTED_SQUARED_ERROR")
-    {
+    else if(loss_index->get_loss_method() == "WEIGHTED_SQUARED_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
-    }
 
     // Start training
 

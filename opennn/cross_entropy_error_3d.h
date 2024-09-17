@@ -42,7 +42,7 @@ public:
                                ForwardPropagation&,
                                BackPropagation&) const final;
 
-   string get_error_type() const final;
+   string get_loss_method() const final;
    string get_error_type_text() const final;
 
    // Serialization
