@@ -723,7 +723,7 @@ bool is_binary_vector(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(vector(i) != type(0) && vector(i) != type(1) && !isnan(vector(i)) ) return false;
+        if(vector(i) != type(0) && vector(i) != type(1) && !isnan(vector(i))) return false;
     }
 
     return true;
