@@ -292,7 +292,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
 
-    const Tensor<string, 1> outputs_name = data_set->get_target_variables_names();
+    const Tensor<string, 1> output_names = data_set->get_target_variables_names();
 
     Index index;
 
@@ -304,7 +304,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
             set_input_condition(index, conditions[i], values_conditions[i]);
         }
-        else if(contains(outputs_name,names[i]))
+        else if(contains(output_names,names[i]))
         {
             index = neural_network->get_output_index(names[i]);
 
@@ -634,7 +634,7 @@ void ResponseOptimizationResults::print() const
     const Index outputs_number = neural_network->get_outputs_number();
 
     const Tensor<string, 1> inputs_name = neural_network->get_input_names();
-    const Tensor<string, 1> outputs_name = neural_network->get_output_names();
+    const Tensor<string, 1> output_names = neural_network->get_output_names();
 
     cout << "\nResponse optimization results: " << endl;
 
@@ -648,7 +648,7 @@ void ResponseOptimizationResults::print() const
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        cout << outputs_name[i] << ": " << optimal_variables[inputs_number + i] << endl;
+        cout << output_names[i] << ": " << optimal_variables[inputs_number + i] << endl;
     }
 }
 

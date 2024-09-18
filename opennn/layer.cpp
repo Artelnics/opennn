@@ -168,46 +168,36 @@ void Layer::set_neurons_number(const Index&)
 
 void Layer::competitive(Tensor<type, 2>& y) const
 {
-/*
-    const Index rows_number = x.dimension(0);
+        Tensor<Index, 1> maximum_indices = y.argmax(1);
 
-    const Index competition_dimension = 1;
+        y.setZero();
 
-    Tensor<Index, 1> maximum_indices;
-
-    maximum_indices.device(*thread_pool_device) = x.argmax(competition_dimension);
-
-    y.setZero();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        y(i, Index(maximum_indices(i))) = type(1);
-    }
-*/
+        #pragma omp parallel for
+        for(Index i = 0; i < y.dimension(0); i++){y(i, Index(maximum_indices(i))) = type(1);}
 }
 
 
 void Layer::softmax(Tensor<type, 2>& y) const
 {
-/*
     const Eigen::array<Index, 1> softmax_dimension{ { 1 } };
+    
+    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    
+    const Eigen::array<Index, 2> range_2{ { rows_number, 1 } };
+    const Eigen::array<Index, 2> expand_softmax_dim{ { 1, columns_number} };
 
-    // Normalize values to avoid possible NANs
-
-    y.device(*thread_pool_device) = x;
-
-    aux_rows.device(*thread_pool_device) = x.maximum(softmax_dimension);
-
-    substract_columns(thread_pool_device, aux_rows, y);
+    y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
+                                         .eval()
+                                         .reshape(range_2)
+                                         .broadcast(expand_softmax_dim);
 
     y.device(*thread_pool_device) = y.exp();
 
-    aux_rows.device(*thread_pool_device) = y.sum(softmax_dimension);
-
-    divide_columns(thread_pool_device, y, aux_rows);
-*/
+    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+                                         .eval()
+                                         .reshape(range_2)
+                                         .broadcast(expand_softmax_dim);
 }
 
 
@@ -232,7 +222,7 @@ void Layer::softmax(Tensor<type, 3>& y) const
     y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
                                          .eval()
                                          .reshape(range_3)
-                                         .broadcast(expand_softmax_dim);   
+                                         .broadcast(expand_softmax_dim);
 }
 
 

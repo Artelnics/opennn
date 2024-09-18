@@ -1088,7 +1088,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             data_set->set_input_target_raw_variables_indices(optimal_inputs_raw_variables_indexes, original_target_raw_variables_indices);
 
-            inputs_selection_results.optimal_input_raw_variables_names = data_set->get_input_raw_variables_names();
+            inputs_selection_results.optimal_input_raw_variables_names = data_set->get_input_raw_variable_names();
 
             inputs_selection_results.optimal_parameters = parameters(optimal_individual_index);
 

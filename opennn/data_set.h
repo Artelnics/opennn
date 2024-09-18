@@ -204,7 +204,7 @@ public:
 
     Tensor<string, 1> get_raw_variables_names() const;
 
-    Tensor<string, 1> get_input_raw_variables_names() const;
+    Tensor<string, 1> get_input_raw_variable_names() const;
     Tensor<string, 1> get_target_raw_variables_names() const;
     Tensor<string, 1> get_used_raw_variables_names() const;
 
@@ -307,7 +307,7 @@ public:
     const bool& get_header_line() const;
     const bool& get_has_ids() const;
 
-    Tensor<string, 1> get_ids() const;
+    Tensor<string, 1> get_sample_ids() const;
 
     const Separator& get_separator() const;
     string get_separator_string() const;
@@ -465,6 +465,8 @@ public:
 
     bool has_binary_raw_variables() const;
     bool has_categorical_raw_variables() const;
+
+    bool has_binary_or_categorical_raw_variables() const;
 
     //bool has_time_time_series_raw_variables() const;
 

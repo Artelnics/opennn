@@ -1330,7 +1330,7 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
     vocabulary.resize(vocabulary_size);
 
-    Index counter = 0;
+    Index count = 0;
 
     while(file.good())
     {
@@ -1338,8 +1338,8 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
         if(line.empty()) continue;
 
-        vocabulary(counter) = line;
-        counter++;
+        vocabulary(count) = line;
+        count++;
 
         if(file.peek() == EOF) break;
     }

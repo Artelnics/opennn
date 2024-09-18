@@ -1055,7 +1055,7 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 
     for(Index i = 0; i < words_number; i++)
     {
-        if(contains(raw_variables_names, word_bag.words(i)) )
+        if(contains(raw_variables_names, word_bag.words(i)))
         {
             auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words(i));
             const Index index = it - raw_variables_names.data();
@@ -1227,7 +1227,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
 
             for(size_t k = 1; k < current_word.size(); k++)
             {
-                if(contains(vowels, string(1,current_word[k-1]) ) && current_word[k] == 'y')
+                if(contains(vowels, string(1,current_word[k-1])) && current_word[k] == 'y')
                 {
                     current_word[k] = 'Y';
                 }
