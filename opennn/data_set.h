@@ -73,15 +73,6 @@ namespace opennn
     }
 #endif
 
-/// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
-
-///
-/// It basically consists of a data Matrix separated by raw_variables.
-/// These raw_variables can take different categories depending on the data hosted in them.
-///
-/// With OpenNN DataSet class you can edit the data to prepare your model, such as eliminating missing values,
-/// calculating correlations between variables (inputs and targets), not using certain variables or samples, etc \dots.
-
 class DataSet
 {
 
