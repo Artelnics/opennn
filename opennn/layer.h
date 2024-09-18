@@ -157,17 +157,13 @@ protected:
     Type layer_type;
 
     template <int rank>
-    void binary(Tensor<type, rank>& y) const
+    void binary(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type threshold) const
     {
-        /*
-        const Tensor<bool, rank> if_sentence = x < x.constant(type(0.5));
+        y.device(*thread_pool_device) = (y < threshold).select(type(0), type(1));
 
-        const Tensor<type, rank> f_1 = x.constant(type(false));
+        if (dy_dx.size() == 0) return;
 
-        const Tensor<type, rank> f_2 = x.constant(type(true));
-
-        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-        */
+        dy_dx.setConstant(type(0));
     }
 
 
@@ -183,28 +179,13 @@ protected:
     template <int rank>
     void exponential_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = (y > 0).select(y, y.exp() - type(1));
-
-        if (dy_dx.size() == 0) return;
-
-        /*
         const type alpha = type(1);
 
-        const Tensor<bool, rank> if_sentence = x < x.constant(type(0));
+        y.device(*thread_pool_device) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
 
-        Tensor<type, rank> f_1 = alpha*(x.exp() - type(1));
-
-        // Activations
-
-        y.device(*thread_pool_device) = if_sentence.select(f_1, x);
-
-        // Activations Derivatives
-
-        f_1 = alpha * x.exp();
-
-        dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, x.constant(type(1)));
-*/
-
+        if (dy_dx.size() == 0) return;
+        
+        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
     }
 
 
@@ -249,14 +230,18 @@ protected:
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).cast<type>();
+        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
     }
 
 
     template <int rank>
-    void leaky_rectified_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    void leaky_rectified_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type slope) const
     {
+        y.device(*thread_pool_device) = (y > type(0)).select(y, slope * y);
+
         if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
     }
 
 
@@ -265,32 +250,13 @@ protected:
     {
         const type lambda = type(1.0507);
 
-        const type alpha = type(1);
+        const type alpha = type(1.6733);
 
-        y.device(*thread_pool_device) = (y > 0).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
+        y.device(*thread_pool_device) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
 
         if (dy_dx.size() == 0) return;
 
-        /*
-                const type lambda = type(1.0507);
-
-                const type alpha = type(1.67326);
-
-                const Tensor<bool, rank> if_sentence = x < x.constant(type(0));
-
-                Tensor<type, rank> f_1 = lambda*alpha*(x.exp()-type(1));
-
-                Tensor<type, rank> f_2 = lambda*x;
-
-                y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-                f_1 = lambda*alpha*x.exp();
-
-                f_2 = x.constant(type(1))*lambda;
-
-                dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-        */
-
+        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
     }
 
 
@@ -301,11 +267,7 @@ protected:
 
         if (dy_dx.size() == 0) return;
 
-        /*
-        y.device(*thread_pool_device) = (x.constant(type(1)) + x.exp()).log();
-
-        dy_dx.device(*thread_pool_device) = type(1) / (type(1) + x.exp().inverse());
-*/
+        dy_dx.device(*thread_pool_device) = type(1) - (-y).exp();
     }
 
 
@@ -316,23 +278,7 @@ protected:
 
         if (dy_dx.size() == 0) return;
 
-        /*
-                const Tensor<bool, rank> if_sentence = x < x.constant(type(0));
-
-                Tensor<type, rank> f_1 = x / (type(1) - x);
-
-                Tensor<type, rank> f_2 = x / (type(1) + x);
-
-                y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-                // Activations Derivatives
-
-                f_1 = type(1) / (type(1) - x).pow(type(2));
-
-                f_2 = type(1) / (type(1) + x).pow(type(2));
-
-                dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-        */
+        dy_dx.device(*thread_pool_device) = (type(1) + (y / type(1) - y).abs()).pow(-2);
     }
 
 

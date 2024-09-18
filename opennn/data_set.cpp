@@ -1778,7 +1778,7 @@ Tensor<string, 1> DataSet::get_raw_variables_names() const
 }
 
 
-Tensor<string, 1> DataSet::get_input_raw_variables_names() const
+Tensor<string, 1> DataSet::get_input_raw_variable_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -2925,7 +2925,7 @@ const bool& DataSet::get_has_ids() const
 }
 
 
-Tensor<string, 1> DataSet::get_ids() const
+Tensor<string, 1> DataSet::get_sample_ids() const
 {
     return samples_id;
 }
@@ -3879,38 +3879,19 @@ void DataSet::set_default()
 void DataSet::set_model_type_string(const string& new_model_type)
 {
     if(new_model_type == "Approximation")
-    {
         set_model_type(ModelType::Approximation);
-    }
     else if(new_model_type == "Classification")
-    {
         set_model_type(ModelType::Classification);
-    }
     else if(new_model_type == "Forecasting")
-    {
         set_model_type(ModelType::Forecasting);
-    }
     else if(new_model_type == "ImageClassification")
-    {
         set_model_type(ModelType::ImageClassification);
-    }
     else if(new_model_type == "TextClassification")
-    {
         set_model_type(ModelType::TextClassification);
-    }
     else if(new_model_type == "AutoAssociation")
-    {
         set_model_type(ModelType::AutoAssociation);
-    }
     else
-    {
-        const string message =
-            "Data Set class exception:\n"
-            "void set_model_type_string(const string&)\n"
-            "Unknown model type: " + new_model_type + "\n";
-
-        throw runtime_error(message);
-    }
+        throw runtime_error("Unknown model type: " + new_model_type + "\n");
 }
 
 
@@ -4877,7 +4858,7 @@ void DataSet::print_input_target_raw_variables_correlations() const
     const Index inputs_number = get_input_variables_number();
     const Index targets_number = get_target_raw_variables_number();
 
-    const Tensor<string, 1> inputs_name = get_input_raw_variables_names();
+    const Tensor<string, 1> inputs_name = get_input_raw_variable_names();
     const Tensor<string, 1> targets_name = get_target_raw_variables_names();
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_correlations();
@@ -7491,6 +7472,14 @@ bool DataSet::has_categorical_raw_variables() const
     {
         if(raw_variables(i).type == RawVariableType::Categorical) return true;
     }
+
+    return false;
+}
+
+
+bool DataSet::has_binary_or_categorical_raw_variables() const
+{
+    if(has_binary_raw_variables() || has_categorical_raw_variables()) return true;
 
     return false;
 }

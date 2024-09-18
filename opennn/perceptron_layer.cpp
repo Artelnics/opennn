@@ -575,22 +575,22 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* 
 
 
 string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_name,
-                                         const Tensor<string, 1>& outputs_name) const
+                                         const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < outputs_name.size(); j++)
+    for(Index j = 0; j < output_names.size(); j++)
     {
         const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
 
-        buffer << outputs_name[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
+        buffer << output_names[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < inputs_name.size() - 1; i++)
         {
             buffer << " (" << inputs_name[i] << "*" << synaptic_weights_column(i) << ") +";
         }
 
-        buffer << " (" << inputs_name[inputs_name.size() - 1] << "*" << synaptic_weights_column[inputs_name.size() - 1] << ") );\n";
+        buffer << " (" << inputs_name[inputs_name.size() - 1] << "*" << synaptic_weights_column[inputs_name.size() - 1] << "));\n";
     }
 
     return buffer.str();
