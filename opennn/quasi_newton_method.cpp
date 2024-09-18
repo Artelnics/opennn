@@ -463,7 +463,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
     neural_network->set_inputs_names(inputs_name);
-    neural_network->set_outputs_names(targets_names);
+    neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer())
     {

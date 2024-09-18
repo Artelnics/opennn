@@ -1300,7 +1300,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     for(Index i = 1; i < size; i++)
     {
         if(find( unique_values.data(), unique_values.data() + unique_values.size(), vector(i) )
-                == unique_values.data() + unique_values.size() )
+                == unique_values.data() + unique_values.size())
         {
             unique_values_number++;
 
@@ -1832,7 +1832,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
         type empirical_distribution;
 
-        Index counter = 0;
+        Index count = 0;
 
         if(new_vector(i) < sorted_vector(0))
         {
@@ -1844,13 +1844,13 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
         }
         else
         {
-            counter = Index(i+1);
+            count = Index(i+1);
 
             for(Index j = i+1; j < new_size; j++)
             {
                 if(sorted_vector(j) <= sorted_vector(i))
                 {
-                    counter++;
+                    count++;
                 }
                 else
                 {
@@ -1858,7 +1858,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
                 }
             }
 
-            empirical_distribution = type(counter)/type(new_size);
+            empirical_distribution = type(count)/type(new_size);
         }
 
 #pragma omp critical
@@ -2269,18 +2269,18 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 
     sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
-    Index counter = 0;
+    Index count = 0;
 
     for(Index i = 0; i < n; i++)
     {
         normal_distribution = type(0.5) * type(erfc(double(mean_value) - double(sorted_vector(i))))/(standard_deviation*type(sqrt(2.0)));
-        counter = 0;
+        count = 0;
 
         for(Index j = 0; j < n; j++)
         {
             if(sorted_vector(j) <= sorted_vector(i))
             {
-                counter++;
+                count++;
             }
             else
             {
@@ -2288,7 +2288,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = type(counter)/type(n);
+        empirical_distribution = type(count)/type(n);
 
         normal_distribution_distance += abs(normal_distribution - empirical_distribution);
     }
@@ -2312,19 +2312,19 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 
     sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
-    Index counter = 0;
+    Index count = 0;
 
     for(Index i = 0; i < n; i++)
     {
         half_normal_distribution = type(erf(double(sorted_vector(i))))/(standard_deviation * type(sqrt(2)));
 
-        counter = 0;
+        count = 0;
 
         for(Index j = 0; j < n; j++)
         {
             if(sorted_vector(j) <= sorted_vector(i))
             {
-                counter++;
+                count++;
             }
             else
             {
@@ -2332,7 +2332,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = type(counter)/type(n);
+        empirical_distribution = type(count)/type(n);
 
         half_normal_distribution_distance += abs(half_normal_distribution - empirical_distribution);
     }
@@ -2357,18 +2357,18 @@ type uniform_distribution_distance(const Tensor<type, 1>& vector)
     const type minimum = sorted_vector[0];
     const type maximum = sorted_vector[n-1];
 
-    Index counter = 0;
+    Index count = 0;
 
     for(Index i = 0; i < n; i++)
     {
         uniform_distribution = (sorted_vector(i)-minimum)/(maximum - minimum);
-        counter = 0;
+        count = 0;
 
         for(Index j = 0; j < n; j++)
         {
             if(sorted_vector(j) <= sorted_vector(i))
             {
-                counter++;
+                count++;
             }
             else
             {
@@ -2376,7 +2376,7 @@ type uniform_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = type(counter)/type(n);
+        empirical_distribution = type(count)/type(n);
 
         uniform_distribution_distance += abs(uniform_distribution - empirical_distribution);
     }

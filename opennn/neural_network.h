@@ -160,7 +160,7 @@ public:
    void set_model_type(const ModelType&);
    void set_model_type_string(const string&);
    void set_inputs_names(const Tensor<string, 1>&);
-   void set_outputs_names(const Tensor<string, 1>&);
+   void set_output_namess(const Tensor<string, 1>&);
 
    void set_inputs_number(const Index&);
    //void set_inputs_number(const Tensor<bool, 1>&);
@@ -286,7 +286,7 @@ protected:
 
    Tensor<string, 1> inputs_name;
 
-   Tensor<string, 1> outputs_name;
+   Tensor<string, 1> output_names;
 
    Tensor<Layer*, 1> layers;
 

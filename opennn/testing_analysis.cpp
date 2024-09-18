@@ -1305,7 +1305,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         roc_curve(i,1) = type(true_negative)/type(true_negative + false_positive);
         roc_curve(i,2) = type(threshold);
 
-        if(isnan(roc_curve(i,0)) )
+        if(isnan(roc_curve(i,0)))
         {
             roc_curve(i,0) = type(1);
         }

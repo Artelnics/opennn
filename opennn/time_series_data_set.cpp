@@ -611,7 +611,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     if(has_samples_id)
     {
         file_stream.OpenElement("HasSamplesId");
-        file_stream.PushText(string_tensor_to_string(get_ids()).c_str());
+        file_stream.PushText(string_tensor_to_string(get_sample_ids()).c_str());
         file_stream.CloseElement();
     }
 
@@ -1405,7 +1405,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
     Index input_target_numeric_raw_variables_number = 0;
 
-    int counter = 0;
+    int count = 0;
 
     for(Index i = 0; i < input_target_raw_variables_number; i++)
     {
@@ -1422,7 +1422,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
         }
         else
         {
-            const Index raw_variable_index = target_raw_variables_indices(counter);
+            const Index raw_variable_index = target_raw_variables_indices(count);
 
             const RawVariableType target_raw_variable_type = time_series_raw_variables(raw_variable_index).type;
 
@@ -1431,7 +1431,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
                 input_target_numeric_raw_variables_number++;
             }
 
-            counter++;
+            count++;
         }
     }
 
@@ -1510,7 +1510,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
     const Tensor<Index, 1> target_raw_variables_indices = get_target_time_series_raw_variables_indices();
 
     Index input_target_numeric_raw_variables_number = 0;
-    int counter = 0;
+    int count = 0;
 
     for(Index i = 0; i < input_target_raw_variables_number; i++)
     {
@@ -1527,7 +1527,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
         }
         else
         {
-            const Index raw_variable_index = target_raw_variables_indices(counter);
+            const Index raw_variable_index = target_raw_variables_indices(count);
 
             const RawVariableType target_raw_variable_type = time_series_raw_variables(raw_variable_index).type;
 
@@ -1536,7 +1536,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
                 input_target_numeric_raw_variables_number++;
             }
 
-            counter++;
+            count++;
         }
     }
 

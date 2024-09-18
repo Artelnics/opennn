@@ -253,7 +253,7 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
 
     for(Index i = 0; i < tokens.size(); i++)
     {
-        if(!contains_substring(result, " " + tokens(i) + " ") )
+        if(!contains_substring(result, " " + tokens(i) + " "))
         {
             result += tokens(i) + " ";
         }
@@ -1531,7 +1531,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 }
 
 Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_name,
-                                                       Tensor<string, 1>& outputs_name,
+                                                       Tensor<string, 1>& output_names,
                                                        ostringstream& buffer_)
 {
     //preparing output information
@@ -1541,7 +1541,7 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
     ostringstream buffer;
     buffer << buffer_.str();
 
-    Tensor<string, 1> outputs(outputs_name.dimension(0));
+    Tensor<string, 1> outputs(output_names.dimension(0));
     Tensor<string, 1> inputs(inputs_name.dimension(0));
     Tensor<string,1> buffer_out;
 
@@ -1563,15 +1563,15 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
         }
     }
 
-    for(int i = 0; i < outputs_name.dimension(0); i++)
+    for(int i = 0; i < output_names.dimension(0); i++)
     {
-        if(outputs_name[i].empty())
+        if(output_names[i].empty())
         {
             outputs(i) = "output_" + to_string(i);
         }
         else
         {
-            output_name_aux = outputs_name[i];
+            output_name_aux = output_names[i];
             outputs(i) = replace_non_allowed_programming_expressions(output_name_aux);
         }
     }
@@ -2832,7 +2832,7 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
         }
     }
 
-//    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words ) ) );
+//    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words )));
 
 //    Tensor<string, 2> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
 

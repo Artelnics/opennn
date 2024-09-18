@@ -255,7 +255,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     
     neural_network->set_inputs_names(inputs_name);
-    neural_network->set_outputs_names(targets_names);
+    neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer())
     {
