@@ -2252,7 +2252,7 @@ void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propag
 }
 
 
-string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& outputs_name) const
+string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& output_names) const
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -2275,7 +2275,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
             buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << forget_recurrent_weights(k,i) << ") + ";
         }
 
-        buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << forget_recurrent_weights(neurons_number-1,i) << ") );\n";
+        buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << forget_recurrent_weights(neurons_number-1,i) << "));\n";
     }
 
     // Input gate
@@ -2294,7 +2294,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
            buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << input_recurrent_weights(k,i) << ") + ";
        }
 
-       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << input_recurrent_weights(neurons_number-1,i) << ") );\n";
+       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << input_recurrent_weights(neurons_number-1,i) << "));\n";
 
     }
 
@@ -2313,7 +2313,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
            buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << state_recurrent_weights(k,i) << ") + ";
        }
 
-       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << state_recurrent_weights(neurons_number-1,i) << ") );\n";
+       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << state_recurrent_weights(neurons_number-1,i) << "));\n";
     }
 
     // Output gate
@@ -2332,7 +2332,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
            buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << output_recurrent_weights(k,i) << ") + ";
        }
 
-       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << output_recurrent_weights(neurons_number-1,i) << ") );\n";
+       buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << output_recurrent_weights(neurons_number-1,i) << "));\n";
     }
 
     // Cell state
@@ -2352,7 +2352,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
     for(Index i = 0; i < neurons_number; i++)
     {
-       buffer << outputs_name[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
+       buffer << output_names[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
     }
 
     return buffer.str();
