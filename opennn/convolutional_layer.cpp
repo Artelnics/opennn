@@ -382,12 +382,12 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     Tensor<type, 0> biases_derivatives_sum;
 
     const Eigen::array<bool, 2> reverse_dims = { true, true };
-    const Eigen::array<Index, 2> convolution_dims = { 0, 1 };
+    const Eigen::array<ptrdiff_t, 2> convolution_dims = { 0, 1};
 
     Tensor<type, 2> rotated_kernel_slice;
     Tensor<type, 2> delta_reshape_2d;
-    Tensor<type, 2> input_derivatives_convolution;
     Tensor<type, 2> delta_padded;
+    Tensor<type, 2> convolution(input_height, input_width);
 
     const Index pad_height = (input_height + kernel_height - 1) - output_height;
     const Index pad_width = (input_width + kernel_width - 1) - output_width;
@@ -404,7 +404,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     // Biases synaptic weights and input derivatives
 
     input_derivatives.setZero();
-
+    
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {       
         TensorMap<Tensor<type, 3>> kernel_synaptic_weights(synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
@@ -445,17 +445,49 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
             // Input derivatives
 
-            for (Index channel_in = 0; channel_in < input_channels; ++channel_in)
+            if (input_channels == 3)
+            { 
+                for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+                {
+                    rotated_kernel_slice = kernel_synaptic_weights.chip(channel_index, 2).reverse(Eigen::array<ptrdiff_t, 2>{1, 1});
+
+                    delta_reshape_2d = image_convolutions_derivatives.chip(0, 2); // @todo if this isnt the last conv, image_convolutions_derivatives will be bigger
+                    /*
+                    * Future pseudocode
+                    * if (convolution_layer != last_convolution_layer)
+                    *   delta_reshape_2d = image_convolutions_derivatives.chip(channel_index, 2);
+                    * else
+                    *   delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
+                    */
+
+                    delta_padded = delta_reshape_2d.pad(paddings);
+
+                    convolution.setZero();
+
+                    convolution.device(*thread_pool_device) = delta_padded.convolve(rotated_kernel_slice, convolution_dims);
+
+                    for (Index x = 0; x < input_height; ++x)
+                    {
+                        for (Index y = 0; y < input_width; ++y)
+                        {
+                            input_derivatives(image_index, x, y, channel_index) += convolution(x, y);
+                        }
+                    }
+                }
+            } 
+            else
             {
-                rotated_kernel_slice = kernel_synaptic_weights.chip(channel_in, 2).reverse(reverse_dims);
+                rotated_kernel_slice = kernel_synaptic_weights.chip(0, 2).reverse(reverse_dims);
 
                 delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
 
                 delta_padded = delta_reshape_2d.pad(paddings);
 
-                input_derivatives_convolution = delta_padded.convolve(rotated_kernel_slice, convolution_dims);
+                convolution.setZero();
 
-                input_derivatives.chip(image_index, 0).chip(channel_in, 3) += input_derivatives_convolution;
+                convolution.device(*thread_pool_device) = delta_padded.convolve(rotated_kernel_slice, convolution_dims);
+
+                input_derivatives.chip(image_index, 0).chip(0, 3).device(*thread_pool_device) += convolution;
             }
         }
         
@@ -463,7 +495,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                kernel_synaptic_weights_derivatives.data(),
                kernel_synaptic_weights_number*sizeof(type));
     }
-
+    
 }
 
 
@@ -733,7 +765,6 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                             kernel_width,
                             kernel_channels,
                             kernels_number);
-
     set_random(synaptic_weights);
 
     moving_means.resize(kernels_number);

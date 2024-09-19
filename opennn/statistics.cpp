@@ -343,10 +343,11 @@ Index Histogram::count_empty_bins() const
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < size; i++)
-    {
-        if(frequencies(i) == 0) count++;
-    }
+        if(frequencies(i) == 0) 
+            count++;
 
     return count;
 }
@@ -1849,13 +1850,9 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
             for(Index j = i+1; j < new_size; j++)
             {
                 if(sorted_vector(j) <= sorted_vector(i))
-                {
                     count++;
-                }
                 else
-                {
                     break;
-                }
             }
 
             empirical_distribution = type(count)/type(new_size);
@@ -2279,13 +2276,9 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
         for(Index j = 0; j < n; j++)
         {
             if(sorted_vector(j) <= sorted_vector(i))
-            {
                 count++;
-            }
             else
-            {
                 break;
-            }
         }
 
         empirical_distribution = type(count)/type(n);
@@ -2323,13 +2316,9 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
         for(Index j = 0; j < n; j++)
         {
             if(sorted_vector(j) <= sorted_vector(i))
-            {
                 count++;
-            }
             else
-            {
                 break;
-            }
         }
 
         empirical_distribution = type(count)/type(n);
@@ -2367,13 +2356,9 @@ type uniform_distribution_distance(const Tensor<type, 1>& vector)
         for(Index j = 0; j < n; j++)
         {
             if(sorted_vector(j) <= sorted_vector(i))
-            {
                 count++;
-            }
             else
-            {
                 break;
-            }
         }
 
         empirical_distribution = type(count)/type(n);
