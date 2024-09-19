@@ -9,11 +9,7 @@
 #ifndef AUTOASSOCIATIVENEURALNETWORK_H
 #define AUTOASSOCIATIVENEURALNETWORK_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
 
 #include "neural_network.h"
 #include "box_plot.h"
@@ -75,13 +71,13 @@ public:
 
 private:
 
-    BoxPlot auto_associative_distances_box_plot = BoxPlot();
+    BoxPlot auto_associative_distances_box_plot;
 
     Tensor<BoxPlot, 1> multivariate_distances_box_plot;
 
-    Descriptives distances_descriptives = Descriptives();
+    Descriptives distances_descriptives;
 
-    Tensor<string, 1> variables_distances_names = Tensor<string, 1>();
+    Tensor<string, 1> variables_distances_names;
 
 };
 };

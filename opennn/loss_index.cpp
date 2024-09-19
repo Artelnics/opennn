@@ -822,9 +822,9 @@ void BackPropagation::set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 
     for(Index i = 0; i < layers_number; i++)
     {
         for(Index j = 0; j < layers_number; j++)
-        {
-            for(Index k = 0; k < layer_inputs_indices(j).size(); k++)    if(layer_inputs_indices(j)(k) == i)    layer_count++;
-        }
+            for(Index k = 0; k < layer_inputs_indices(j).size(); k++)    
+                if(layer_inputs_indices(j)(k) == i)    
+                    layer_count++;
 
         layers_outputs_indices(i).resize(layer_count);
         layer_count = 0;
@@ -1110,9 +1110,9 @@ void BackPropagationLM::set_layers_outputs_indices(const Tensor<Tensor<Index, 1>
     for(Index i = 0; i < layers_number; i++)
     {
         for(Index j = 0; j < layers_number; j++)
-        {
-            for(Index k = 0; k < layer_inputs_indices(j).size(); k++)    if(layer_inputs_indices(j)(k) == i)    layer_count++;
-        }
+            for(Index k = 0; k < layer_inputs_indices(j).size(); k++)    
+                if(layer_inputs_indices(j)(k) == i)    
+                    layer_count++;
 
         layers_outputs_indices(i).resize(layer_count);
         layer_count = 0;

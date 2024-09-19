@@ -6205,17 +6205,9 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     size = sizeof(type);
 
-    type value;
+    const Index total_elements = columns_number * rows_number;
 
-    for(int i = 0; i < columns_number; i++)
-    {
-        for(int j = 0; j < rows_number; j++)
-        {
-            value = data(j,i);
-
-            file.write(reinterpret_cast<char*>(&value), size);
-        }
-    }
+    file.write(reinterpret_cast<const char*>(data.data()), total_elements * size);
 
     file.close();
 
@@ -6231,23 +6223,21 @@ void DataSet::load_data_binary()
 
     streamsize size = sizeof(Index);
 
-    Index raw_variables_number = 0;
+    Index columns_number = 0;
     Index rows_number = 0;
 
-    file.read(reinterpret_cast<char*>(&raw_variables_number), size);
+    file.read(reinterpret_cast<char*>(&columns_number), size);
     file.read(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
     type value = type(0);
 
-    data.resize(rows_number, raw_variables_number);
+    data.resize(rows_number, columns_number);
 
-    for(Index i = 0; i < rows_number*raw_variables_number; i++)
-    {
-        file.read(reinterpret_cast<char*>(&value), size);
-        data(i) = value;
-    }
+    const Index total_elements = rows_number * columns_number;
+
+    file.read(reinterpret_cast<char*>(data.data()), total_elements * size);
 
     file.close();
 }

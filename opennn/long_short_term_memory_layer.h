@@ -267,9 +267,6 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
         cout << "Current inputs: " << endl;
         cout << current_inputs << endl;
 
-        cout << "Current input combinations: " << endl;
-        cout << current_input_combinations << endl;
-
         cout << "Current input activations: " << endl;
         cout << current_input_activations << endl;
 
@@ -280,25 +277,21 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 1> current_inputs;
 
-    Tensor<type, 1> current_forget_combinations;
     Tensor<type, 1> current_forget_activations;
     Tensor<type, 1> current_forget_activations_derivatives;
     Tensor<type, 2, RowMajor> forget_activations;
     Tensor<type, 2, RowMajor> forget_activations_derivatives;
 
-    Tensor<type, 1> current_input_combinations;
     Tensor<type, 1> current_input_activations;
     Tensor<type, 1> current_input_activations_derivatives;
     Tensor<type, 2, RowMajor> input_activations;
     Tensor<type, 2, RowMajor> input_activations_derivatives;
 
-    Tensor<type, 1> current_state_combinations;
     Tensor<type, 1> current_state_activations;
     Tensor<type, 1> current_state_activations_derivatives;
     Tensor<type, 2, RowMajor> state_activations;
     Tensor<type, 2, RowMajor> state_activations_derivatives;
 
-    Tensor<type, 1> current_output_combinations;
     Tensor<type, 1> current_output_activations;
     Tensor<type, 1> current_output_activations_derivatives;
     Tensor<type, 2, RowMajor> output_activations;

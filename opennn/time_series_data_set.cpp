@@ -17,13 +17,6 @@ namespace opennn
 
 TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 {
-    time_series_data.resize(0, 0);
-
-    time_series_raw_variables.resize(0);
-
-    lags_number = 0;
-
-    steps_ahead = 0;
 }
 
 
@@ -1543,17 +1536,11 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
     Index new_lags_number;
 
     if(samples_number == lags_number)
-    {
         new_lags_number = lags_number - 2;
-    }
     else if(samples_number == lags_number + 1)
-    {
         new_lags_number = lags_number - 1;
-    }
     else
-    {
         new_lags_number = lags_number;
-    }
 
     Tensor<type, 3> cross_correlations(input_target_numeric_raw_variables_number,
                                        input_target_numeric_raw_variables_number,
@@ -1569,34 +1556,26 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables(i).use != VariableUse::None
-        && time_series_raw_variables(i).type == RawVariableType::Numeric)
-        {
-            input_i = get_time_series_raw_variable_data(i);
-
-            if(display) cout << "Calculating " << time_series_raw_variables(i).name << " cross correlations:" << endl;
-
-            counter_j = 0;
-        }
-        else
-        {
+        if(time_series_raw_variables(i).use == VariableUse::None
+        || time_series_raw_variables(i).type != RawVariableType::Numeric)
             continue;
-        }
+
+        input_i = get_time_series_raw_variable_data(i);
+
+        if (display) cout << "Calculating " << time_series_raw_variables(i).name << " cross correlations:" << endl;
+
+        counter_j = 0;
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            if(time_series_raw_variables(j).use != VariableUse::None
-            && time_series_raw_variables(j).type == RawVariableType::Numeric)
-            {
-                input_j = get_time_series_raw_variable_data(j);
-
-                if(display) cout << "   vs. " << time_series_raw_variables(j).name << endl;
-            }
-            else
-            {
+            if(time_series_raw_variables(j).use == VariableUse::None
+            || time_series_raw_variables(j).type == RawVariableType::Numeric)
                 continue;
-            }
 
+            input_j = get_time_series_raw_variable_data(j);
+
+            if(display) cout << "   vs. " << time_series_raw_variables(j).name << endl;
+ 
             const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
             const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
@@ -1628,24 +1607,21 @@ void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_d
 
     streamsize size = sizeof(Index);
 
-    Index raw_variables_number = 0;
+    Index columns_number = 0;
     Index rows_number = 0;
 
-    file.read(reinterpret_cast<char*>(&raw_variables_number), size);
+    file.read(reinterpret_cast<char*>(&columns_number), size);
     file.read(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
     type value = type(0);
 
-    time_series_data.resize(rows_number, raw_variables_number);
+    time_series_data.resize(rows_number, columns_number);
 
-    for(Index i = 0; i < rows_number*raw_variables_number; i++)
-    {
-        file.read(reinterpret_cast<char*>(&value), size);
+    const Index total_elements = rows_number * columns_number;
 
-        time_series_data(i) = value;
-    }
+    file.read(reinterpret_cast<char*>(time_series_data.data()), total_elements * size);
 
     file.close();
 }
@@ -1662,27 +1638,19 @@ void TimeSeriesDataSet::save_time_series_data_binary(const string& binary_data_f
 
     streamsize size = sizeof(Index);
 
-    Index raw_variables_number = time_series_data.dimension(1);
+    Index columns_number = time_series_data.dimension(1);
     Index rows_number = time_series_data.dimension(0);
 
     cout << "Saving binary data file..." << endl;
 
-    file.write(reinterpret_cast<char*>(&raw_variables_number), size);
+    file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
-    type value;
-
-    for(int i = 0; i < raw_variables_number; i++)
-    {
-        for(int j = 0; j < rows_number; j++)
-        {
-            value = time_series_data(j,i);
-
-            file.write(reinterpret_cast<char*>(&value), size);
-        }
-    }
+    const Index total_elements = columns_number * rows_number;
+    
+    file.write(reinterpret_cast<const char*>(time_series_data.data()), total_elements * size);
 
     file.close();
 
