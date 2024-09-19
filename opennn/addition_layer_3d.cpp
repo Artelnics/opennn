@@ -117,8 +117,7 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 3>& outputs = addition_layer_3d_forward_propagation->outputs;
 
-    outputs.device(*thread_pool_device) = input_1 + input_2;
-    
+    outputs.device(*thread_pool_device) = input_1 + input_2;    
 }
 
 

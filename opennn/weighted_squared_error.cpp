@@ -183,25 +183,14 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     errors.device(*thread_pool_device) = (outputs - targets).square();
     
-    type weighted_squared_error = type(0);
+    Tensor<type, 0> weighted_squared_error;
 
-    #pragma omp parallel for reduction(+:weighted_squared_error)
-
-    for(Index i = 0; i < errors.size(); i++)
-    {
-        if(targets(i) == type(0))
-        {
-            weighted_squared_error += negatives_weight * errors(i);
-        }
-        else
-        {
-            weighted_squared_error += positives_weight * errors(i);
-        }
-    }
+    weighted_squared_error.device(*thread_pool_device)
+        = ((targets == type(0)).select(negatives_weight*errors, positives_weight*errors)).sum();
 
     const type coefficient = type(total_samples_number) / (type(batch_samples_number) * normalization_coefficient);
 
-    error = weighted_squared_error*coefficient;
+    error = weighted_squared_error(0)*coefficient;
 }
 
 

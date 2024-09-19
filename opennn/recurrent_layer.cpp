@@ -462,14 +462,11 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
-    Tensor<type, 1>& current_combinations = recurrent_layer_forward_propagation->current_combinations;
-
     Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
 
     Tensor<type, 2, RowMajor>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
 
     Tensor<type, 1>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
-
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -478,22 +475,20 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
         current_inputs.device(*thread_pool_device) = inputs.chip(i, 0);
 
         calculate_combinations(current_inputs,
-                               current_combinations);
-/*
+                               hidden_states);
+
         if(is_training)
         {
-            calculate_activations_derivatives(current_combinations,
-                                              hidden_states,
-                                              current_activations_derivatives);
+            calculate_activations(hidden_states,
+                                  current_activations_derivatives);
 
             set_row(activations_derivatives, current_activations_derivatives, i);
         }
         else
         {
-            calculate_activations(current_combinations,
-                                  hidden_states);
+            calculate_activations(hidden_states, empty);
         }
-*/
+
         outputs.chip(i, 0).device(*thread_pool_device) = hidden_states;
     }
 }
@@ -607,26 +602,26 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
         biases_derivatives.device(*thread_pool_device)
             += combinations_biases_derivatives.contract(error_current_combinations_derivatives, A_B);
 
-        for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
-        {
-            for(Index input_index = 0; input_index < inputs_number; input_index++)
-            {
-                combinations_input_weights_derivatives(input_index, neuron_index, neuron_index) += current_inputs(input_index);
-            }
-        }
+//        combinations_input_weights_derivatives += current_inputs
+//            .reshape(Eigen::array<Index, 2>({ inputs_number, 1 }))
+//            .broadcast(Eigen::array<Index, 3>({ 1, neurons_number, 1 }));
+
+//        for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+//            for(Index input_index = 0; input_index < inputs_number; input_index++)
+//                combinations_input_weights_derivatives(input_index, neuron_index, neuron_index) += current_inputs(input_index);
 
         if(sample_index % timesteps != 0)
         {
             // @todo parallelize
 
             for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
-            {
                 for(Index activation_index = 0; activation_index < neurons_number; activation_index++)
-                {
                     combinations_recurrent_weights_derivatives(activation_index, neuron_index, neuron_index)
                         += outputs(sample_index - 1, activation_index);
-                }
-            }
+
+//            combinations_recurrent_weights_derivatives += outputs.chip(sample_index - 1, 0)
+//                .reshape(Eigen::array<Index, 2>({ neurons_number, 1 }))
+//                .broadcast(Eigen::array<Index, 3>({ 1, neurons_number, 1 }));
         }
 
         // Weights derivatives
@@ -822,7 +817,6 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number
     previous_activations.resize(neurons_number);
 
     current_inputs.resize(inputs_number);
-    current_combinations.resize(neurons_number);
     current_activations_derivatives.resize(neurons_number);
 
     activations_derivatives.resize(batch_samples_number, neurons_number);
