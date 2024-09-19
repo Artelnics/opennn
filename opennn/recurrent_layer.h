@@ -191,6 +191,8 @@ protected:
 
    bool display = true;
 
+   Tensor<type, 1> empty;
+
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
 #endif
@@ -223,7 +225,6 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 1> previous_activations;
 
     Tensor<type, 1> current_inputs;
-    Tensor<type, 1> current_combinations;
     Tensor<type, 1> current_activations_derivatives;
 
     Tensor<type, 2, RowMajor> activations_derivatives;

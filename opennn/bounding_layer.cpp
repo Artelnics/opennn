@@ -156,17 +156,11 @@ void BoundingLayer::set_bounding_method(const BoundingMethod& new_method)
 void BoundingLayer::set_bounding_method(const string& new_method_string)
 {
     if(new_method_string == "NoBounding")
-    {
         bounding_method = BoundingMethod::NoBounding;
-    }
     else if(new_method_string == "BoundingLayer")
-    {
         bounding_method = BoundingMethod::Bounding;
-    }
     else
-    {
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
-    }
 }
 
 
@@ -282,30 +276,30 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
-    outputs.device(*thread_pool_device) = inputs;
-
     if(bounding_method == BoundingMethod::Bounding)
     {
-        const Index rows_number = inputs.dimension(0);
+        const int rows_number = inputs.dimension(0);
         const Index raw_variables_number = inputs.dimension(1);
 
-        #pragma omp parallel for
-
-        for(Index i = 0; i < rows_number; i++)
-        {
-            for(Index j = 0; j < raw_variables_number; j++)
-            {
-                if(inputs(i,j) < lower_bounds(j))
-                {
-                    outputs(i,j) = lower_bounds(j);
-                }
-                else if(inputs(i,j) > upper_bounds(j))
-                {
-                    outputs(i,j) = upper_bounds(j);
-                }
-            }
-        }
+        // @todo 
+/*
+        outputs = inputs.cwiseMax(lower_bounds.broadcast(Eigen::array<int, 2>{rows_number, 1}))
+                        .cwiseMin(upper_bounds.broadcast(Eigen::array<int, 2>{rows_number, 1}));
+*/
+//        #pragma omp parallel for
+//        for(Index i = 0; i < rows_number; i++)
+//            for(Index j = 0; j < raw_variables_number; j++)
+//                if(inputs(i,j) < lower_bounds(j))
+//                    outputs(i,j) = lower_bounds(j);
+//                else if(inputs(i,j) > upper_bounds(j))
+//                    outputs(i,j) = upper_bounds(j);
     }
+    else
+    {
+        outputs.device(*thread_pool_device) = inputs;
+    }
+
+
 }
 
 
