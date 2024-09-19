@@ -671,7 +671,7 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>& ).\n"
+                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&).\n"
                    << "Outputs dimensions must be equal to " << points_number << " and " << neurons_number << ".\n";
 
             throw invalid_argument(buffer.str());
@@ -750,7 +750,7 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>& ).\n"
+                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&).\n"
                    << "Input and output data must have the same dimensions.\n";
 
             throw invalid_argument(buffer.str());
@@ -770,7 +770,7 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void ScalingLayer::calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>& ).\n"
+               << "void ScalingLayer::calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&).\n"
                << "Input dimension must be 2 or 4.\n";
 
         throw invalid_argument(buffer.str());

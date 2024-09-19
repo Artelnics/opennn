@@ -353,7 +353,7 @@ const char* StrPair::GetStr()
                     else
                     {
                         bool entityFound = false;
-                        for(int i = 0; i < NUM_ENTITIES;i++ )
+                        for(int i = 0; i < NUM_ENTITIES;i++)
                         {
                             const Entity& entity = entities[i];
                             if(strncmp(p + 1, entity.pattern, entity.length ) == 0
@@ -2599,12 +2599,12 @@ XMLPrinter::XMLPrinter(FILE* file, bool compact, int depth ) :
     _compactMode(compact ),
     _buffer()
 {
-    for(int i = 0; i <ENTITY_RANGE;i++ )
+    for(int i = 0; i <ENTITY_RANGE;i++)
     {
         _entityFlag[i] = false;
         _restrictedEntityFlag[i] = false;
     }
-    for(int i = 0; i <NUM_ENTITIES;i++ )
+    for(int i = 0; i <NUM_ENTITIES;i++)
     {
         const char entityValue = entities[i].value;
         const unsigned char flagint = (unsigned char)entityValue;
@@ -2674,7 +2674,7 @@ void XMLPrinter::Putc(char ch )
 
 void XMLPrinter::PrintSpace(int depth )
 {
-    for(int i = 0; i <depth;i++ )
+    for(int i = 0; i <depth;i++)
     {
         Write("   ");
     }
@@ -2708,7 +2708,7 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
                         p += toPrint;
                     }
                     bool entityPatternPrinted = false;
-                    for(int i = 0; i <NUM_ENTITIES;i++ )
+                    for(int i = 0; i <NUM_ENTITIES;i++)
                     {
                         if(entities[i].value == *q )
                         {
