@@ -9,18 +9,6 @@
 #ifndef TRAININGSTRATEGY_H
 #define TRAININGSTRATEGY_H
 
-// System includes
-
-// #include <iostream>
-// #include <fstream>
-// #include <algorithm>
-// #include <functional>
-// #include <limits>
-// #include <cmath>
-// #include <ctime>
-
-// OpenNN includes
-
 #include "config.h"
 #include "loss_index.h"
 #include "sum_squared_error.h"
@@ -30,16 +18,13 @@
 #include "cross_entropy_error.h"
 #include "cross_entropy_error_3d.h"
 #include "weighted_squared_error.h"
-
 #include "optimization_algorithm.h"
-
 #include "gradient_descent.h"
 #include "conjugate_gradient.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
-
 
 namespace opennn
 {

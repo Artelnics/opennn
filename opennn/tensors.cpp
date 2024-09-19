@@ -705,13 +705,11 @@ Index count_true(const Tensor<bool, 1>& tensor)
 {
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(int i = 0; i < tensor.size(); i++)
-    {
         if(tensor(i))
-        {
             count++;
-        }
-    }
 
     return count;
 }
@@ -993,11 +991,11 @@ Index count_less_than(const Tensor<Index,1>& vector, const Index& bound)
 {
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < vector.size(); i++)
-    {
         if(vector(i) < bound)
             count++;
-    }
 
     return count;
 }
@@ -1029,11 +1027,11 @@ Index count_less_than(const Tensor<double,1>& vector, const double& bound)
 {
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < vector.size(); i++)
-    {
         if(vector(i) < bound)
             count++;
-    }
 
     return count;
 }
@@ -1064,11 +1062,11 @@ Index count_greater_than(const Tensor<Index,1>& vector, const Index& bound)
 {
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < vector.size(); i++)
-    {
         if(vector(i) > bound)
             count++;
-    }
 
     return count;
 }
@@ -1207,11 +1205,11 @@ Index count_between(const Tensor<type, 1>& vector,const type& minimum, const typ
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < size; i++)
-    {
         if(vector(i) >= minimum && vector(i) <= maximum) 
             count++;
-    }
 
     return count;
 }
@@ -1542,7 +1540,8 @@ Index count_NAN(const Tensor<type, 1>& x)
     #pragma omp parallel for reduction(+:count)
 
     for(Index i = 0; i < x.size(); i++)
-        if(isnan(x(i))) count++;
+        if(isnan(x(i))) 
+            count++;
 
     return count;
 }
@@ -1555,7 +1554,8 @@ Index count_NAN(const Tensor<type, 2>& x)
     #pragma omp parallel for reduction(+: count)
 
     for(Index i = 0; i < x.size(); i++)
-        if(isnan(x(i))) count++;
+        if(isnan(x(i))) 
+            count++;
 
     return count;
 }
