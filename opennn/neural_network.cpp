@@ -1297,13 +1297,11 @@ Index NeuralNetwork::get_perceptron_layers_number() const
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers(i)->get_type() == Layer::Type::Perceptron)
-        {
             count++;
-        }
-    }
 
     return count;
 }
@@ -1315,13 +1313,11 @@ Index NeuralNetwork::get_probabilistic_layers_number() const
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers(i)->get_type() == Layer::Type::Probabilistic)
-        {
             count++;
-        }
-    }
 
     return count;
 }
@@ -1333,14 +1329,12 @@ Index NeuralNetwork::get_long_short_term_memory_layers_number() const
 
     Index count = 0;
 
-    for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers(i)->get_type() == Layer::Type::LongShortTermMemory)
-        {
-            count++;
-        }
-    }
+    #pragma omp parallel for reduction(+: count)
 
+    for(Index i = 0; i < layers_number; i++)
+        if(layers(i)->get_type() == Layer::Type::LongShortTermMemory)
+            count++;
+ 
     return count;
 }
 
@@ -1351,13 +1345,11 @@ Index NeuralNetwork::get_flatten_layers_number() const
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers(i)->get_type() == Layer::Type::Flatten)
-        {
             count++;
-        }
-    }
 
     return count;
 }
@@ -1387,13 +1379,11 @@ Index NeuralNetwork::get_pooling_layers_number() const
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers(i)->get_type() == Layer::Type::Pooling)
-        {
             count++;
-        }
-    }
 
     return count;
 }
@@ -1405,13 +1395,11 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 
     Index count = 0;
 
+    #pragma omp parallel for reduction(+: count)
+
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers(i)->get_type() == Layer::Type::Recurrent)
-        {
             count++;
-        }
-    }
 
     return count;
 }
@@ -1420,7 +1408,8 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 bool NeuralNetwork::is_input_layer(const Tensor<Index, 1>& layer_inputs_indices) const
 {
     for(Index i = 0; i < layer_inputs_indices.size(); i++)
-        if(layer_inputs_indices(i) == -1) return true;
+        if(layer_inputs_indices(i) == -1) 
+            return true;
 
     return false;
 }
@@ -1428,7 +1417,8 @@ bool NeuralNetwork::is_input_layer(const Tensor<Index, 1>& layer_inputs_indices)
 bool NeuralNetwork::is_context_layer(const Tensor<Index, 1>& layer_inputs_indices) const
 {
     for(Index i = 0; i < layer_inputs_indices.size(); i++)
-        if(layer_inputs_indices(i) == -2) return true;
+        if(layer_inputs_indices(i) == -2) 
+            return true;
 
     return false;
 }
