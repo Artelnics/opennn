@@ -352,7 +352,7 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 void ProbabilisticLayer::set_parameters_random()
 {
     set_random(biases);
-
+    
     set_random(synaptic_weights);
 }
 

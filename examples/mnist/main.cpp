@@ -37,19 +37,19 @@ int main()
         const Index pool_width = 2;
 
         // Data set
-        const Index samples_number = 3;
+        const Index samples_number = 2;
         const Index image_height = 3;
         const Index image_width = 3;
-        ImageDataSet image_data_set(samples_number, image_height, image_width, kernel_channels, 2);
+        //ImageDataSet image_data_set(samples_number, image_height, image_width, kernel_channels, 2);
 
-        image_data_set.set_image_data_random();
+        //image_data_set.set_image_data_random();
 
-        //ImageDataSet image_data_set;
+        ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        //image_data_set.set_data_source_path("C:/mnist/binary");
+        image_data_set.set_data_source_path("C:/mnist/train");
         //image_data_set.set_data_source_path("C:/cifar10");
 
-        //image_data_set.read_bmp();
+        image_data_set.read_bmp();
 
         image_data_set.set_training();
 
@@ -66,7 +66,6 @@ int main()
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
                                                                         { kernel_height, kernel_width, kernel_channels, kernels_number });
-        convolutional_layer->set_activation_function("Linear");
         neural_network.add_layer(convolutional_layer);
 
         //ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
@@ -89,9 +88,6 @@ int main()
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),
                                                                          image_data_set.get_target_dimensions());
         neural_network.add_layer(probabilistic_layer);
-
-        //PerceptronLayer* perceptron_layer = new PerceptronLayer(flatten_layer->get_input_dimensions()[0] * flatten_layer->get_input_dimensions()[1], 1, PerceptronLayer::ActivationFunction::Linear);
-        //neural_network.add_layer(perceptron_layer);
         
         //neural_network.print();
 
@@ -103,20 +99,20 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(25);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(20);
         //training_strategy.get_adaptive_moment_estimation()->set_learning_rate(type(0.02));
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
 
         // Testing analysis
-        
+        /*
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+        */
         cout << "Bye!" << endl;
         
         return 0;
