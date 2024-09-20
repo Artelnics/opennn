@@ -37,9 +37,9 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     inputs_number = 1;
     neurons_number = 1;
-    timesteps = 1;
+    time_steps = 1;
 
-    long_short_term_memory_layer.set(inputs_number, neurons_number, timesteps);
+    long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
 
     assert_true(long_short_term_memory_layer.get_parameters_number() == 12, LOG);
 
@@ -47,9 +47,9 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     inputs_number = 2;
     neurons_number = 3;
-    timesteps = 1;
+    time_steps = 1;
 
-    long_short_term_memory_layer.set(inputs_number, neurons_number, timesteps);
+    long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
 
     assert_true(long_short_term_memory_layer.get_parameters_number() == 72, LOG);
 }
@@ -84,12 +84,12 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
     samples_number = 1;
     inputs_number = 1;
     neurons_number = 1;
-    timesteps = 1;
+    time_steps = 1;
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
-    long_short_term_memory_layer.set(inputs_number, neurons_number, timesteps);
+    long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
     long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
     long_short_term_memory_layer.set_parameters_constant(type(1));
 

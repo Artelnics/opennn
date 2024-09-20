@@ -49,7 +49,7 @@ private:
     Index inputs_number;
     Index neurons_number;
     Index samples_number;
-    Index timesteps;
+    Index time_steps;
 
     RecurrentLayer recurrent_layer;
     RecurrentLayerForwardPropagation recurrent_layer_forward_propagation;

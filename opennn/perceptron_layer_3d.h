@@ -253,7 +253,7 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
-    Tensor<type, 3> error_combinations_derivatives;
+    Tensor<type, 3> combinations_derivatives;
     Tensor<type, 3> input_derivatives;
 };
 
