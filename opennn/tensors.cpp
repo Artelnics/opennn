@@ -1124,7 +1124,7 @@ void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
 
     for(Index i = 0; i < original_size; i++)
     {
-        if(!contains(indices, i) )
+        if(!contains(indices, i))
         {
             vector(index) = vector_copy(i);
             index++;
@@ -1147,7 +1147,7 @@ void delete_indices(Tensor<Index,1>& vector, const Tensor<Index,1>& indices)
 
     for(Index i = 0; i < original_size; i++)
     {
-        if(!contains(indices, i) )
+        if(!contains(indices, i))
         {
             vector(index) = vector_copy(i);
             index++;
@@ -1170,7 +1170,7 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
 
     for(Index i = 0; i < original_size; i++)
     {
-        if(!contains(indices, i) )
+        if(!contains(indices, i))
         {
             vector(index) = vector_copy(i);
             index++;

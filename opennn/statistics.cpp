@@ -1300,7 +1300,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
     for(Index i = 1; i < size; i++)
     {
-        if(find( unique_values.data(), unique_values.data() + unique_values.size(), vector(i) )
+        if(find( unique_values.data(), unique_values.data() + unique_values.size(), vector(i))
                 == unique_values.data() + unique_values.size())
         {
             unique_values_number++;

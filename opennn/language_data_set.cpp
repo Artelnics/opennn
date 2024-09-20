@@ -1499,7 +1499,7 @@ set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts
                 return a.second > b.second;
             return a.first < b.first;
         }
-    );
+);
 
     set<char> allowed_characters;
     for(int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); i++)    allowed_characters.insert(sorted_counts[i].first);
@@ -1515,7 +1515,7 @@ vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed
         {
             return a.second > b.second;
         }
-    );
+);
 
     vector<pair<string, int>> filtered_counts;
 
@@ -1563,7 +1563,7 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
             if(a.second != b.second)    return a.second > b.second;
             return a.first < b.first;
         }
-    );
+);
 
     for(const auto& [token, _] : sorted_tokens)
     {

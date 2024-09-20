@@ -832,7 +832,7 @@ void NeuralNetwork::set(const dimensions& input_dimensions,
 //    {
         // Check convolutional
         //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(output_dimensions, kernel_dimensions);
-        //convolutional_layer->set_name("convolutional_layer_1" + to_string(1) );
+        //convolutional_layer->set_name("convolutional_layer_1" + to_string(1));
 
     //add_layer(convolutional_layer);
     //output_dimensions = convolutional_layer->get_output_dimensions();
@@ -2681,7 +2681,7 @@ string NeuralNetwork::write_expression_c() const
         replace_all_appearances(outputs_espresion, "(t-1)", "");
         replace_all_appearances(outputs_espresion, "double cell_state", "cell_state");
         replace_all_appearances(outputs_espresion, "double hidden_state", "hidden_state");
-        replace_all_appearances(outputs_espresion, "cell_state"  , "lstm.cell_state"  );
+        replace_all_appearances(outputs_espresion, "cell_state"  , "lstm.cell_state");
         replace_all_appearances(outputs_espresion, "hidden_state", "lstm.hidden_state");
     }
 
@@ -3075,9 +3075,9 @@ string NeuralNetwork::write_expression_api() const
             replace_all_appearances(t, "(t)"     , "");
             replace_all_appearances(t, "(t-1)"   , "");
             replace_all_appearances(t, "hidden_" , "$hidden_");
-            replace_all_appearances(t, "cell_"   , "$cell_"  );
+            replace_all_appearances(t, "cell_"   , "$cell_");
             replace_all_appearances(t, "$hidden_", "$nn->hidden_");
-            replace_all_appearances(t, "$cell_"  , "$nn->cell_"  );
+            replace_all_appearances(t, "$cell_"  , "$nn->cell_");
         }
 
         buffer << t << endl;
@@ -3829,7 +3829,7 @@ string NeuralNetwork::write_expression_javascript() const
     {
         replace_all_appearances(out, "(t)", "");
         replace_all_appearances(out, "(t-1)", "");
-        replace_all_appearances(out, "var cell_state"  , "cell_state"  );
+        replace_all_appearances(out, "var cell_state"  , "cell_state");
         replace_all_appearances(out, "var hidden_state", "hidden_state");
     }
 
