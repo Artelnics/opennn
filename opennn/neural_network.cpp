@@ -140,6 +140,21 @@ void NeuralNetwork::add_layer(Layer* layer)
     new_layer_inputs_indices(0) = old_layers_number-1;
 
     layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
+
+    if (layer_type == Layer::Type::Flatten)
+    {
+        if (old_layers_number > 0)
+        {
+            Layer* previous_layer = old_layers(old_layers_number - 1);
+
+            if (previous_layer->get_type() == Layer::Type::Convolutional)
+            {
+                ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(previous_layer);
+
+                convolutional_layer->set_is_before_flatten(true);
+            }
+        }
+    }
 }
 
 

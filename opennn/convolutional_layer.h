@@ -140,6 +140,8 @@ public:
 
     void set_inputs_dimensions(const dimensions&);
 
+    void set_is_before_flatten(const bool&);
+
     // Initialization
 
     void set_parameters_constant(const type&);
@@ -219,6 +221,8 @@ protected:
    Tensor<type, 1> offsets;
 
    Tensor<type, 4> empty;
+
+   bool is_before_flatten = false;
 
 };
 
