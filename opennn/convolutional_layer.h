@@ -114,6 +114,8 @@ public:
     Tensor<type, 1> get_parameters() const final;
     Index get_parameters_number() const final;
 
+    bool get_is_before_flatten() const;
+
     // Set
 
     void set(const dimensions&, const dimensions&);

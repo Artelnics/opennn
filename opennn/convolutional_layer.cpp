@@ -451,13 +451,10 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                 {
                     rotated_kernel_slice = kernel_synaptic_weights.chip(channel_index, 2).reverse(Eigen::array<ptrdiff_t, 2>{1, 1});
 
-                    delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
-                   /*
-                    * if (convolution_layer != is_last_convolution_layer)
-                    *   delta_reshape_2d = image_convolutions_derivatives.chip(channel_index, 2);
-                    * else
-                    *   delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
-                    */
+                    if (!get_is_before_flatten())
+                       delta_reshape_2d = image_convolutions_derivatives.chip(channel_index, 2);
+                    else
+                       delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
 
                     delta_padded = delta_reshape_2d.pad(paddings);
 
@@ -494,6 +491,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                kernel_synaptic_weights_derivatives.data(),
                kernel_synaptic_weights_number*sizeof(type));
     }
+    //cout << "input derivatives convolution:\n" << input_derivatives << endl;
 }
 
 
@@ -730,6 +728,12 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 Index ConvolutionalLayer::get_parameters_number() const
 {
     return synaptic_weights.size() + biases.size();
+}
+
+
+bool ConvolutionalLayer::get_is_before_flatten() const
+{
+    return is_before_flatten;
 }
 
 

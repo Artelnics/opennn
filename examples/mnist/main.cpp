@@ -38,8 +38,8 @@ int main()
 
         // Data set
         const Index samples_number = 2;
-        const Index image_height = 4;
-        const Index image_width = 4;
+        const Index image_height = 5;
+        const Index image_width = 5;
         //ImageDataSet image_data_set(samples_number, image_height, image_width, kernel_channels, 2);
 
         //image_data_set.set_image_data_random();
@@ -72,22 +72,22 @@ int main()
                                                                           { kernel_height, kernel_width, kernels_number, kernels_number } );
         neural_network.add_layer(convolutional_layer_2);
 
-        ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(convolutional_layer_2->get_output_dimensions(),
-                                                                          { kernel_height,kernel_width,kernels_number,kernels_number });
-        neural_network.add_layer(convolutional_layer_3);
+        //ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(convolutional_layer_2->get_output_dimensions(),
+        //                                                                  { kernel_height,kernel_width,kernels_number,kernels_number });
+        //neural_network.add_layer(convolutional_layer_3);
 
         //PoolingLayer* pooling_layer = new PoolingLayer(image_data_set.get_input_dimensions(),
         //                                              { pool_height , pool_width } );
         //pooling_layer->set_pooling_method("AveragePooling");
         //neural_network.add_layer(pooling_layer);
 
-        FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer_3->get_output_dimensions());
+        FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer_2->get_output_dimensions());
         neural_network.add_layer(flatten_layer);
 
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),
                                                                          image_data_set.get_target_dimensions());
         neural_network.add_layer(probabilistic_layer);
-        
+
         //neural_network.print();
 
         // Training strategy
