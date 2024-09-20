@@ -30,7 +30,7 @@ int main()
     
         const Index kernel_height = 2;
         const Index kernel_width = 2;
-        const Index kernel_channels = 1;
+        const Index kernel_channels = 3;
         const Index kernels_number = 1;
 
         const Index pool_height = 2;
@@ -38,20 +38,20 @@ int main()
 
         // Data set
         const Index samples_number = 2;
-        const Index image_height = 5;
-        const Index image_width = 5;
-        //ImageDataSet image_data_set(samples_number, image_height, image_width, kernel_channels, 2);
+        const Index image_height = 3;
+        const Index image_width = 3;
+        ImageDataSet image_data_set(samples_number, image_height, image_width, kernel_channels, 1);
 
-        //image_data_set.set_image_data_random();
+        image_data_set.set_image_data_random();
 
-        ImageDataSet image_data_set;
+        //ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        image_data_set.set_data_source_path("C:/mnist/train");
+        //image_data_set.set_data_source_path("C:/mnist/train");
         //image_data_set.set_data_source_path("C:/cifar10");
 
-        image_data_set.read_bmp();
+        //image_data_set.read_bmp();
 
-        //image_data_set.set_training();
+        image_data_set.set_training();
 
         //image_data_set.print();
 
