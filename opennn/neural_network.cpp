@@ -140,6 +140,21 @@ void NeuralNetwork::add_layer(Layer* layer)
     new_layer_inputs_indices(0) = old_layers_number-1;
 
     layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
+
+    if (layer_type == Layer::Type::Flatten)
+    {
+        if (old_layers_number > 0)
+        {
+            Layer* previous_layer = old_layers(old_layers_number - 1);
+
+            if (previous_layer->get_type() == Layer::Type::Convolutional)
+            {
+                ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(previous_layer);
+
+                convolutional_layer->set_is_before_flatten(true);
+            }
+        }
+    }
 }
 
 
@@ -730,7 +745,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     }
     else if(model_type == ModelType::Forecasting)
     {
-        // architecture[2] must be timesteps
+        // architecture[2] must be time_steps
 
         LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1], architecture[2]);
         // RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
@@ -817,7 +832,7 @@ void NeuralNetwork::set(const dimensions& input_dimensions,
 //    {
         // Check convolutional
         //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(output_dimensions, kernel_dimensions);
-        //convolutional_layer->set_name("convolutional_layer_1" + to_string(1) );
+        //convolutional_layer->set_name("convolutional_layer_1" + to_string(1));
 
     //add_layer(convolutional_layer);
     //output_dimensions = convolutional_layer->get_output_dimensions();
@@ -2585,7 +2600,7 @@ string NeuralNetwork::write_expression_c() const
 
         buffer << "struct LSTMMemory" << endl;
         buffer << "{" << endl;
-        buffer << "\t" << "int time_steps = 3;" << endl;
+        buffer << "\t" << "int current_combinations_derivatives = 3;" << endl;
         buffer << "\t" << "int time_step_counter = 1;" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -2622,7 +2637,7 @@ string NeuralNetwork::write_expression_c() const
 
     if(LSTM_number>0)
     {
-        buffer << "\n\tif(lstm.time_step_counter%lstm.time_steps == 0 ){" << endl;
+        buffer << "\n\tif(lstm.time_step_counter%lstm.current_combinations_derivatives == 0 ){" << endl;
         buffer << "\t\t" << "lstm.time_step_counter = 1;" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -2666,7 +2681,7 @@ string NeuralNetwork::write_expression_c() const
         replace_all_appearances(outputs_espresion, "(t-1)", "");
         replace_all_appearances(outputs_espresion, "double cell_state", "cell_state");
         replace_all_appearances(outputs_espresion, "double hidden_state", "hidden_state");
-        replace_all_appearances(outputs_espresion, "cell_state"  , "lstm.cell_state"  );
+        replace_all_appearances(outputs_espresion, "cell_state"  , "lstm.cell_state");
         replace_all_appearances(outputs_espresion, "hidden_state", "lstm.hidden_state");
     }
 
@@ -2985,8 +3000,8 @@ string NeuralNetwork::write_expression_api() const
 
     if(LSTM_number>0)
     {
-        buffer << "if($nn->time_step_counter % $nn->time_steps === 0 ){" << endl;
-        buffer << "$nn->time_steps = 3;" << endl;
+        buffer << "if($nn->time_step_counter % $nn->current_combinations_derivatives === 0 ){" << endl;
+        buffer << "$nn->current_combinations_derivatives = 3;" << endl;
         buffer << "$nn->time_step_counter = 1;" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -3060,9 +3075,9 @@ string NeuralNetwork::write_expression_api() const
             replace_all_appearances(t, "(t)"     , "");
             replace_all_appearances(t, "(t-1)"   , "");
             replace_all_appearances(t, "hidden_" , "$hidden_");
-            replace_all_appearances(t, "cell_"   , "$cell_"  );
+            replace_all_appearances(t, "cell_"   , "$cell_");
             replace_all_appearances(t, "$hidden_", "$nn->hidden_");
-            replace_all_appearances(t, "$cell_"  , "$nn->cell_"  );
+            replace_all_appearances(t, "$cell_"  , "$nn->cell_");
         }
 
         buffer << t << endl;
@@ -3608,7 +3623,7 @@ string NeuralNetwork::write_expression_javascript() const
             }
         }
 
-        buffer << "\t" << "if(time_step_counter % time_steps == 0 ){" << endl;
+        buffer << "\t" << "if(time_step_counter % current_combinations_derivatives == 0 ){" << endl;
         buffer << "\t\t" << "time_step_counter = 1" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -3703,7 +3718,7 @@ string NeuralNetwork::write_expression_javascript() const
     if(LSTM_number>0)
     {
         buffer << "\t" << "var steps = 3;            " << endl;
-        buffer << "\t" << "var time_steps = steps;   " << endl;
+        buffer << "\t" << "var current_combinations_derivatives = steps;   " << endl;
         buffer << "\t" << "var time_step_counter = 1;" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -3814,7 +3829,7 @@ string NeuralNetwork::write_expression_javascript() const
     {
         replace_all_appearances(out, "(t)", "");
         replace_all_appearances(out, "(t-1)", "");
-        replace_all_appearances(out, "var cell_state"  , "cell_state"  );
+        replace_all_appearances(out, "var cell_state"  , "cell_state");
         replace_all_appearances(out, "var hidden_state", "hidden_state");
     }
 
@@ -3991,7 +4006,7 @@ string NeuralNetwork::write_expression_python() const
     {
         buffer << "\t" << "def __init__(self, ts = 1):" << endl;
         buffer << "\t\t" << "self.inputs_number = " << to_string(inputs.size()) << endl;
-        buffer << "\t\t" << "self.time_steps = ts" << endl;
+        buffer << "\t\t" << "self.current_combinations_derivatives = ts" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
         {
@@ -4101,7 +4116,7 @@ string NeuralNetwork::write_expression_python() const
 
     if(LSTM_number>0)
     {
-        buffer << "\n\t\t" << "if(self.time_step_counter % self.time_steps == 0 ):" << endl;
+        buffer << "\n\t\t" << "if(self.time_step_counter % self.current_combinations_derivatives == 0 ):" << endl;
         buffer << "\t\t\t" << "self.t = 1" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -4207,13 +4222,13 @@ string NeuralNetwork::write_expression_python() const
 
     if(has_recurrent_layer())
     {
-        buffer << "\t\t\tif(i%self.time_steps == 0):\n" << endl;
+        buffer << "\t\t\tif(i%self.current_combinations_derivatives == 0):\n" << endl;
         buffer << "\t\t\t\tself.hidden_states = "+to_string(get_recurrent_layer()->get_neurons_number())+"*[0]\n" << endl;
     }
 
     if(has_long_short_term_memory_layer())
     {
-        buffer << "\t\t\tif(i%self.time_steps == 0):\n" << endl;
+        buffer << "\t\t\tif(i%self.current_combinations_derivatives == 0):\n" << endl;
         buffer << "\t\t\t\tself.hidden_states = "+to_string(get_long_short_term_memory_layer()->get_neurons_number())+"*[0]\n" << endl;
         buffer << "\t\t\t\tself.cell_states = "+to_string(get_long_short_term_memory_layer()->get_neurons_number())+"*[0]\n" << endl;
     }

@@ -129,7 +129,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
 #ifdef OPENNN_DEBUG
 
     if(new_damping_parameter_factor <= type(0))
-        throw runtime_error("Damping parameter factor must be greater than zero." );
+        throw runtime_error("Damping parameter factor must be greater than zero.");
 
 #endif
 

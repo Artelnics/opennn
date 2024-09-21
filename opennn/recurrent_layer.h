@@ -60,7 +60,7 @@ public:
 
    dimensions get_output_dimensions() const final;
 
-   const Tensor<type, 1>& get_hidden_states() const;
+   const Tensor<type, 3>& get_hidden_states() const;
 
    // Parameters
 
@@ -128,25 +128,17 @@ public:
 
    // Parameters initialization
 
-   // void set_hidden_states_constant(const type&);
-
-   // void set_input_weights_constant(const type&);
-   // void set_recurrent_weights_constant(const type&);
-
-   // void set_input_weights_random();
-   // void set_recurrent_weights_random();
-
    void set_parameters_constant(const type&) final;
 
    void set_parameters_random() final;
 
    // Forward propagation
 
-   void calculate_combinations(const Tensor<type, 1>&,
-                               Tensor<type, 1>&) const;
+   void calculate_combinations(const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
-   void calculate_activations(Tensor<type, 1>&,
-                              Tensor<type, 1>&) const;
+   void calculate_activations(Tensor<type, 2>&,
+                              Tensor<type, 2>&) const;
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                           LayerForwardPropagation*,
@@ -177,7 +169,7 @@ public:
 
 protected:
 
-   Index timesteps = 1;
+   Index time_steps = 1;
 
    Tensor<type, 1> biases;
 
@@ -187,11 +179,11 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
-   Tensor<type, 1> hidden_states;
+   Tensor<type, 3> hidden_states;
 
    bool display = true;
 
-   Tensor<type, 1> empty;
+   Tensor<type, 2> empty;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
@@ -220,14 +212,10 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     {
     }
 
-    Tensor<type, 2> outputs;
+    Tensor<type, 2> current_inputs;
+    Tensor<type, 2> current_activations_derivatives;
 
-    Tensor<type, 1> previous_activations;
-
-    Tensor<type, 1> current_inputs;
-    Tensor<type, 1> current_activations_derivatives;
-
-    Tensor<type, 2, RowMajor> activations_derivatives;
+    Tensor<type, 3> activations_derivatives;
 };
 
 
@@ -254,14 +242,14 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 
     }
 
-    Tensor<type, 1> current_deltas;
+    //Tensor<type, 1> current_deltas;
+
+    Tensor<type, 2> combinations_derivatives;
+    Tensor<type, 1> current_combinations_derivatives;
 
     Tensor<type, 2> combinations_biases_derivatives;
     Tensor<type, 3> combinations_input_weights_derivatives;
     Tensor<type, 3> combinations_recurrent_weights_derivatives;
-
-    Tensor<type, 2> error_combinations_derivatives;
-    Tensor<type, 1> error_current_combinations_derivatives;
 
     Tensor<type, 1> biases_derivatives;
 
@@ -269,7 +257,7 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> recurrent_weights_derivatives;
 
-    Tensor<type, 2> input_derivatives;
+    Tensor<type, 3> input_derivatives;
 };
 
 }
