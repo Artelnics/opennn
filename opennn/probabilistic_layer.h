@@ -74,7 +74,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> deltas_row;
     Tensor<type, 2> activations_derivatives_matrix;
 
-    Tensor<type, 2> error_combinations_derivatives;
+    Tensor<type, 2> combinations_derivatives;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
@@ -115,7 +115,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 
     Tensor<type, 1> deltas_row;
 
-    Tensor<type, 2> error_combinations_derivatives;
+    Tensor<type, 2> combinations_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;
 
