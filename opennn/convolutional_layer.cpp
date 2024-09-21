@@ -370,8 +370,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
 
-    Eigen::array<Index, 4> offsets;
-    Eigen::array<Index, 4> extents;
+//    Eigen::array<Index, 4> offsets;
+//    Eigen::array<Index, 4> extents;
 
     Tensor<type, 3>& image = convolutional_layer_back_propagation->image;
 
@@ -381,13 +381,13 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 0> biases_derivatives_sum;
 
-    const Eigen::array<bool, 2> reverse_dims = { true, true };
+//    const Eigen::array<bool, 2> reverse_dims = { true, true };
     const Eigen::array<ptrdiff_t, 2> convolution_dims = { 0, 1};
 
     Tensor<type, 2> rotated_kernel_slice;
-    Tensor<type, 2> delta_reshape_2d;
-    Tensor<type, 2> delta_padded;
-    Tensor<type, 2> convolution(input_height, input_width);
+    Tensor<type, 2> image_convolutions_derivatives_reshape_2d;
+    Tensor<type, 2> image_convolutions_derivatives_padded;
+    Tensor<type, 2> channel_convolution(input_height, input_width);
 
     const Index pad_height = (input_height + kernel_height - 1) - output_height;
     const Index pad_width = (input_width + kernel_width - 1) - output_width;
@@ -445,57 +445,44 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
             // Input derivatives
 
-            if (input_channels == 3)
-            { 
-                for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-                {
-                    rotated_kernel_slice = kernel_synaptic_weights.chip(channel_index, 2).reverse(Eigen::array<ptrdiff_t, 2>{1, 1});
-
-                    delta_reshape_2d = image_convolutions_derivatives.chip(0, 2); // @todo if this isnt the last conv, image_convolutions_derivatives will be bigger
-                    /*
-                    * Future pseudocode
-                    * if (convolution_layer != last_convolution_layer)
-                    *   delta_reshape_2d = image_convolutions_derivatives.chip(channel_index, 2);
-                    * else
-                    *   delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
-                    */
-
-                    delta_padded = delta_reshape_2d.pad(paddings);
-
-                    convolution.setZero();
-
-                    convolution.device(*thread_pool_device) = delta_padded.convolve(rotated_kernel_slice, convolution_dims);
-
-                    for (Index x = 0; x < input_height; ++x)
-                    {
-                        for (Index y = 0; y < input_width; ++y)
-                        {
-                            input_derivatives(image_index, x, y, channel_index) += convolution(x, y);
-                        }
-                    }
-                }
-            } 
-            else
+            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             {
-                rotated_kernel_slice = kernel_synaptic_weights.chip(0, 2).reverse(reverse_dims);
+                rotated_kernel_slice = kernel_synaptic_weights.chip(channel_index, 2).reverse(Eigen::array<ptrdiff_t, 2>{1, 1});
 
-                delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
+                image_convolutions_derivatives_reshape_2d = image_convolutions_derivatives.chip(0, 2);
 
-                delta_padded = delta_reshape_2d.pad(paddings);
+                image_convolutions_derivatives_padded = image_convolutions_derivatives_reshape_2d.pad(paddings);
 
-                convolution.setZero();
+                channel_convolution.device(*thread_pool_device)
+                    = image_convolutions_derivatives_padded.convolve(rotated_kernel_slice, convolution_dims);
 
-                convolution.device(*thread_pool_device) = delta_padded.convolve(rotated_kernel_slice, convolution_dims);
+                // TensorMap inputs derivatives ?
 
-                input_derivatives.chip(image_index, 0).chip(0, 3).device(*thread_pool_device) += convolution;
+                #pragma omp parallel for
+                for(Index x = 0; x < input_height; ++x)
+                    for(Index y = 0; y < input_width; ++y)
+                        input_derivatives(image_index, x, y, channel_index) += channel_convolution(x, y);
             }
-        }
+
+        } // Image index loop
         
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
                kernel_synaptic_weights_derivatives.data(),
                kernel_synaptic_weights_number*sizeof(type));
-    }
-    
+
+
+    } // Kernel index loop
+
+
+    cout << "input derivatives convolution:\n" << input_derivatives << endl;
+
+    // OLD INPUT DERIVATIVES 1 CHANNEL
+    //rotated_kernel_slice = kernel_synaptic_weights.chip(0, 2).reverse(reverse_dims);
+    //delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
+    //delta_padded = delta_reshape_2d.pad(paddings);
+    //convolution.setZero();
+    //convolution.device(*thread_pool_device) = delta_padded.convolve(rotated_kernel_slice, convolution_dims);
+    //input_derivatives.chip(image_index, 0).chip(0, 3).device(*thread_pool_device) += convolution;
 }
 
 
@@ -735,6 +722,12 @@ Index ConvolutionalLayer::get_parameters_number() const
 }
 
 
+bool ConvolutionalLayer::get_is_before_flatten() const
+{
+    return is_before_flatten;
+}
+
+
 void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions)
 {
@@ -896,6 +889,12 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
+}
+
+
+void ConvolutionalLayer::set_is_before_flatten(const bool& new_is_before_flatten)
+{
+    is_before_flatten = new_is_before_flatten;
 }
 
 

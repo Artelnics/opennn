@@ -641,15 +641,15 @@ TrainingResults TrainingStrategy::perform_training()
 
 void TrainingStrategy::fix_forecasting()
 {
-    Index timesteps = 0;
+    Index time_steps = 0;
 
     if(neural_network->has_recurrent_layer())
     {
-        timesteps = neural_network->get_recurrent_layer()->get_timesteps();
+        time_steps = neural_network->get_recurrent_layer()->get_timesteps();
     }
     else if(neural_network->has_long_short_term_memory_layer())
     {
-        timesteps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
+        time_steps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
     }
     else
     {
@@ -671,21 +671,21 @@ void TrainingStrategy::fix_forecasting()
         return;
     }
 
-    if(batch_samples_number%timesteps == 0)
+    if(batch_samples_number%time_steps == 0)
     {
         return;
     }
     else
     {
-        const Index constant = timesteps > batch_samples_number ? 1 : Index(batch_samples_number/timesteps);
+        const Index constant = time_steps > batch_samples_number ? 1 : Index(batch_samples_number/time_steps);
 
         if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
         {
-            adaptive_moment_estimation.set_batch_samples_number(constant*timesteps);
+            adaptive_moment_estimation.set_batch_samples_number(constant*time_steps);
         }
         else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
         {
-            stochastic_gradient_descent.set_batch_samples_number(constant*timesteps);
+            stochastic_gradient_descent.set_batch_samples_number(constant*time_steps);
         }
     }
 }

@@ -212,7 +212,7 @@ public:
 
 protected:
 
-   Index timesteps = 3;
+   Index time_steps = 3;
 
    Tensor<type, 1> input_biases;
    Tensor<type, 1> forget_biases;
