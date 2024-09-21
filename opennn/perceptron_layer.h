@@ -235,7 +235,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     //Tensor<type, 2> deltas;
 
-    Tensor<type, 2> error_combinations_derivatives;
+    Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;
 
     Tensor<type, 1> biases_derivatives;
@@ -257,7 +257,7 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
     void print() const;
 
-    Tensor<type, 2> error_combinations_derivatives;
+    Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;

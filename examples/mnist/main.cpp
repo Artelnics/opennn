@@ -30,7 +30,7 @@ int main()
     
         const Index kernel_height = 2;
         const Index kernel_width = 2;
-        const Index kernel_channels = 1;
+        const Index kernel_channels = 3;
         const Index kernels_number = 1;
 
         const Index pool_height = 2;
@@ -40,16 +40,16 @@ int main()
         const Index samples_number = 2;
         const Index image_height = 3;
         const Index image_width = 3;
-        //ImageDataSet image_data_set(samples_number, image_height, image_width, kernel_channels, 2);
+        ImageDataSet image_data_set(samples_number, image_height, image_width, kernel_channels, 1);
 
-        //image_data_set.set_image_data_random();
+        image_data_set.set_image_data_random();
 
-        ImageDataSet image_data_set;
+        //ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        image_data_set.set_data_source_path("C:/mnist/train");
+        //image_data_set.set_data_source_path("C:/mnist/train");
         //image_data_set.set_data_source_path("C:/cifar10");
 
-        image_data_set.read_bmp();
+        //image_data_set.read_bmp();
 
         image_data_set.set_training();
 
@@ -70,11 +70,10 @@ int main()
 
         //ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
         //                                                                  { kernel_height, kernel_width, kernels_number, kernels_number } );
-        //convolutional_layer_2->set_activation_function("Linear");
         //neural_network.add_layer(convolutional_layer_2);
 
         //ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(convolutional_layer_2->get_output_dimensions(),
-        //                                                                  { 1,1,kernels_number,kernels_number });
+        //                                                                  { kernel_height,kernel_width,kernels_number,kernels_number });
         //neural_network.add_layer(convolutional_layer_3);
 
         //PoolingLayer* pooling_layer = new PoolingLayer(image_data_set.get_input_dimensions(),
@@ -88,7 +87,7 @@ int main()
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),
                                                                          image_data_set.get_target_dimensions());
         neural_network.add_layer(probabilistic_layer);
-        
+
         //neural_network.print();
 
         // Training strategy
@@ -106,13 +105,13 @@ int main()
         training_strategy.perform_training();
 
         // Testing analysis
-        /*
+        
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        */
+        
         cout << "Bye!" << endl;
         
         return 0;

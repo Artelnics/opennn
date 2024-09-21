@@ -48,7 +48,7 @@ private:
 
     Index inputs_number = 0;
     Index neurons_number = 0;
-    Index timesteps = 0;
+    Index time_steps = 0;
 
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 2> recurrent_initializer;

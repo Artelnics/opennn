@@ -142,7 +142,7 @@ public:
 
    void calculate_layers_error_gradient(const Batch& ,
                                         ForwardPropagation& ,
-                                        BackPropagation& ) const;
+                                        BackPropagation&) const;
 
    void assemble_layers_error_gradient(BackPropagation&) const;
 
