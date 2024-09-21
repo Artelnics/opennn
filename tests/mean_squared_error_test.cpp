@@ -306,7 +306,7 @@ void MeanSquaredErrorTest::test_back_propagate_recurrent()
     cout << "test_back_propagate_recurrent\n";
 
     Index samples_number = 100;
-    Index timesteps = 5;
+    Index time_steps = 5;
     Index inputs_number = 12;
     Index neurons_number = 10;
     Index targets_number = 4;
@@ -340,7 +340,7 @@ void MeanSquaredErrorTest::test_back_propagate_recurrent()
 
     NeuralNetwork neural_network;
 
-    RecurrentLayer* recurrent_layer = new RecurrentLayer(inputs_number, neurons_number, timesteps);
+    RecurrentLayer* recurrent_layer = new RecurrentLayer(inputs_number, neurons_number, time_steps);
     neural_network.add_layer(recurrent_layer);
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
@@ -367,7 +367,7 @@ void MeanSquaredErrorTest::test_back_propagate_long_short_term_memory()
     cout << "test_back_propagate_long_short_term_memory\n";
 
     Index samples_number = 100;
-    Index timesteps = 5;
+    Index time_steps = 5;
     Index inputs_number = 12;
     Index neurons_number = 10;
     Index targets_number = 4;
@@ -401,7 +401,7 @@ void MeanSquaredErrorTest::test_back_propagate_long_short_term_memory()
 
     NeuralNetwork neural_network;
 
-    LongShortTermMemoryLayer* lstm_layer = new LongShortTermMemoryLayer(inputs_number, neurons_number, timesteps);
+    LongShortTermMemoryLayer* lstm_layer = new LongShortTermMemoryLayer(inputs_number, neurons_number, time_steps);
     neural_network.add_layer(lstm_layer);
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);

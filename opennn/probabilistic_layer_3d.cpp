@@ -411,7 +411,7 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
     Tensor<type, 2>& mask = probabilistic_layer_3d_back_propagation->mask;
     bool& built_mask = probabilistic_layer_3d_back_propagation->built_mask;
 
-    Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
+    Tensor<type, 3>& combinations_derivatives = probabilistic_layer_3d_back_propagation->combinations_derivatives;
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_3d_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives;
@@ -429,38 +429,38 @@ void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
         built_mask = true;
     }
 
-    calculate_error_combinations_derivatives(outputs, targets, mask, error_combinations_derivatives);
+    calculate_combinations_derivatives(outputs, targets, mask, combinations_derivatives);
 
     biases_derivatives.device(*thread_pool_device) 
-        = error_combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
+        = combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
 
     synaptic_weights_derivatives.device(*thread_pool_device) 
-        = inputs.contract(error_combinations_derivatives, double_contraction_indices);
+        = inputs.contract(combinations_derivatives, double_contraction_indices);
 
     input_derivatives.device(*thread_pool_device) 
-        = error_combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
+        = combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
 }
 
 
-void ProbabilisticLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& outputs, 
+void ProbabilisticLayer3D::calculate_combinations_derivatives(const Tensor<type, 3>& outputs, 
                                                                     const Tensor<type, 2>& targets,
                                                                     const Tensor<type, 2>& mask,
-                                                                    Tensor<type, 3>& error_combinations_derivatives) const
+                                                                    Tensor<type, 3>& combinations_derivatives) const
 {
     const Index batch_samples_number = outputs.dimension(0);
     const Index outputs_number = outputs.dimension(1);
 
     // @todo Can we simplify this? For instance put the division in the last line somewhere else. 
 
-    error_combinations_derivatives.device(*thread_pool_device) = outputs;
+    combinations_derivatives.device(*thread_pool_device) = outputs;
 
 #pragma omp parallel for
 
     for(Index i = 0; i < batch_samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)
-            error_combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
+            combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
 
-    multiply_matrices(thread_pool_device, error_combinations_derivatives, mask);
+    multiply_matrices(thread_pool_device, combinations_derivatives, mask);
 }
 
 
@@ -673,7 +673,7 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
 
     synaptic_weights_derivatives.resize(inputs_depth, neurons_number);
 
-    error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+    combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 

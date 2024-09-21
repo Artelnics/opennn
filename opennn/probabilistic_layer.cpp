@@ -482,17 +482,17 @@ void ProbabilisticLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     const Tensor<type, 2>& targets = probabilistic_layer_back_propagation->targets;
     Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation->input_derivatives;
 
-    Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives;
+    Tensor<type, 2>& combinations_derivatives = probabilistic_layer_back_propagation->combinations_derivatives;
 
     if(neurons_number == 1)
     {
         const Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
-        error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+        combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
     }
     else
     {
-        error_combinations_derivatives.device(*thread_pool_device) = outputs - targets;
+        combinations_derivatives.device(*thread_pool_device) = outputs - targets;
     }
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives;
@@ -501,11 +501,11 @@ void ProbabilisticLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     const Eigen::array<Index, 1> sum_dimensions({0});
 
-    synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(error_combinations_derivatives, AT_B);
+    synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(combinations_derivatives, AT_B);
 
-    biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(sum_dimensions);
+    biases_derivatives.device(*thread_pool_device) = combinations_derivatives.sum(sum_dimensions);
 
-    input_derivatives.device(*thread_pool_device) = error_combinations_derivatives.contract(synaptic_weights, A_BT);
+    input_derivatives.device(*thread_pool_device) = combinations_derivatives.contract(synaptic_weights, A_BT);
 }
 
 
@@ -924,9 +924,9 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
     deltas_row.resize(neurons_number);
     activations_derivatives_matrix.resize(neurons_number, neurons_number);
 
-    error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+    combinations_derivatives.resize(batch_samples_number, neurons_number);
 
-    error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+    combinations_derivatives.resize(batch_samples_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number);
 
@@ -960,7 +960,7 @@ void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_num
 
     squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
 
-    error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+    combinations_derivatives.resize(batch_samples_number, neurons_number);
 }
 } // namespace opennn
 

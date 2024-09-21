@@ -299,7 +299,7 @@ private:
             int newAllocated = cap * 2;
             T* newMem = new T[size_t(newAllocated)];
             TIXMLASSERT(newAllocated >= _size );
-            memcpy(newMem, _mem, sizeof(T)*size_t(_size) );	// warning: not using constructors, only works for PODs
+            memcpy(newMem, _mem, sizeof(T)*size_t(_size));	// warning: not using constructors, only works for PODs
             if(_mem != _pool ) {
                 delete [] _mem;
             }
@@ -372,7 +372,7 @@ public:
             _blockPtrs.Push(block );
 
             Item* blockItems = block->items;
-            for(int i = 0; i < ITEMS_PER_BLOCK - 1;i++ ) {
+            for(int i = 0; i < ITEMS_PER_BLOCK - 1;i++) {
                 blockItems[i].next = &(blockItems[i + 1]);
             }
             blockItems[ITEMS_PER_BLOCK - 1].next = 0;
@@ -592,7 +592,7 @@ public:
         TIXMLASSERT(p );
         TIXMLASSERT(q );
         TIXMLASSERT(nChar >= 0 );
-        return strncmp(p, q, size_t(nChar) ) == 0;
+        return strncmp(p, q, size_t(nChar)) == 0;
     }
     
     inline static bool IsUTF8Continuation(char p ) {

@@ -135,7 +135,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_output_recurrent_weights() const
 
 Index LongShortTermMemoryLayer::get_timesteps() const
 {
-    return timesteps;
+    return time_steps;
 }
 
 
@@ -145,56 +145,56 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     Tensor<type, 1> parameters(parameters_number);
 
-    Index current_position = forget_biases.size();
+    Index current_position = 0;
 
-    // Copy Biases
-    memcpy(parameters.data(), forget_biases.data(), forget_biases.size()*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(parameters.data(), forget_biases.data(), forget_biases.size() * sizeof(type));
 
-    memcpy(parameters.data() + current_position, input_biases.data(), input_biases.size()*sizeof(type));
+        #pragma omp section
+        memcpy(parameters.data() + forget_biases.size(), input_biases.data(), input_biases.size() * sizeof(type));
 
-    current_position += input_biases.size();
+        #pragma omp section
+        memcpy(parameters.data() + forget_biases.size() + input_biases.size(), state_biases.data(), state_biases.size() * sizeof(type));
 
-    memcpy(parameters.data() + current_position, state_biases.data(), state_biases.size()*sizeof(type));
+        #pragma omp section
+        memcpy(parameters.data() + forget_biases.size() + input_biases.size() + state_biases.size(), output_biases.data(), output_biases.size() * sizeof(type));
+    }
 
-    current_position += state_biases.size();
+    current_position = forget_biases.size() + input_biases.size() + state_biases.size() + output_biases.size();
 
-    memcpy(parameters.data() + current_position, output_biases.data(), output_biases.size()*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(parameters.data() + current_position, forget_weights.data(), forget_weights.size() * sizeof(type));
 
-    current_position += output_biases.size();
+        #pragma omp section
+        memcpy(parameters.data() + current_position + forget_weights.size(), input_weights.data(), input_weights.size() * sizeof(type));
 
-    // Copy Weights
+        #pragma omp section
+        memcpy(parameters.data() + current_position + forget_weights.size() + input_weights.size(), state_weights.data(), state_weights.size() * sizeof(type));
 
-    memcpy(parameters.data() + current_position, forget_weights.data(), forget_weights.size()*sizeof(type));
+        #pragma omp section
+        memcpy(parameters.data() + current_position + forget_weights.size() + input_weights.size() + state_weights.size(), output_weights.data(), output_weights.size() * sizeof(type));
+    }
 
-    current_position += forget_weights.size();
+    current_position += forget_weights.size() + input_weights.size() + state_weights.size() + output_weights.size();
 
-    memcpy(parameters.data() + current_position, input_weights.data(), input_weights.size()*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(parameters.data() + current_position, forget_recurrent_weights.data(), forget_recurrent_weights.size() * sizeof(type));
 
-    current_position += input_weights.size();
+        #pragma omp section
+        memcpy(parameters.data() + current_position + forget_recurrent_weights.size(), input_recurrent_weights.data(), input_recurrent_weights.size() * sizeof(type));
 
-    memcpy(parameters.data() + current_position, state_weights.data(), state_weights.size()*sizeof(type));
+        #pragma omp section
+        memcpy(parameters.data() + current_position + forget_recurrent_weights.size() + input_recurrent_weights.size(), state_recurrent_weights.data(), state_recurrent_weights.size() * sizeof(type));
 
-    current_position += state_weights.size();
-
-    memcpy(parameters.data() + current_position, output_weights.data(), output_weights.size()*sizeof(type));
-
-    current_position += output_weights.size();
-
-    // Copy Recurrent Weights
-    
-    memcpy(parameters.data() + current_position, forget_recurrent_weights.data(), forget_recurrent_weights.size()*sizeof(type));
-
-    current_position += forget_recurrent_weights.size();
-
-    memcpy(parameters.data() + current_position, input_recurrent_weights.data(), input_recurrent_weights.size()*sizeof(type));
-
-    current_position += input_recurrent_weights.size();
-
-    memcpy(parameters.data() + current_position, state_recurrent_weights.data(), state_recurrent_weights.size()*sizeof(type));
-
-    current_position += state_recurrent_weights.size();
-
-    memcpy(parameters.data() + current_position, output_recurrent_weights.data(), output_recurrent_weights.size()*sizeof(type));
+        #pragma omp section
+        memcpy(parameters.data() + current_position + forget_recurrent_weights.size() + input_recurrent_weights.size() + state_recurrent_weights.size(), output_recurrent_weights.data(), output_recurrent_weights.size() * sizeof(type));
+    }
 
     return parameters;
 }
@@ -295,7 +295,7 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
     state_recurrent_weights.resize(new_neurons_number, new_neurons_number);
     output_recurrent_weights.resize(new_neurons_number, new_neurons_number);
 
-    timesteps = new_timesteps;
+    time_steps = new_timesteps;
 
     set_parameters_random();
 
@@ -329,18 +329,18 @@ void LongShortTermMemoryLayer::set_name(const string& new_layer_name)
 void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
-    const Index timesteps = get_timesteps();
+    const Index time_steps = get_timesteps();
 
-    set(new_inputs_number, neurons_number, timesteps);
+    set(new_inputs_number, neurons_number, time_steps);
 }
 
 
 void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_number)
 {
     const Index inputs_number = get_inputs_number();
-    const Index timesteps = get_timesteps();
+    const Index time_steps = get_timesteps();
 
-    set(inputs_number, new_neurons_number, timesteps);
+    set(inputs_number, new_neurons_number, time_steps);
 }
 
 
@@ -426,53 +426,58 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
     const type* new_parameters_data = new_parameters.data();
 
-    // Biases
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            Index size = neurons_number;
 
-    Index size = neurons_number;
+            memcpy(forget_biases.data(), new_parameters_data + current_index, size * sizeof(type));
+            current_index += size;
 
-    memcpy(forget_biases.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
+            memcpy(input_biases.data(), new_parameters_data + current_index, size * sizeof(type));
+            current_index += size;
 
-    memcpy(input_biases.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
+            memcpy(state_biases.data(), new_parameters_data + current_index, size * sizeof(type));
+            current_index += size;
 
-    memcpy(state_biases.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
+            memcpy(output_biases.data(), new_parameters_data + current_index, size * sizeof(type));
+        }
 
-    memcpy(output_biases.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
+        #pragma omp section
+        {
+            Index size = inputs_number * neurons_number;
+            Index local_index = current_index + neurons_number * 4;  
 
-    // Weights
+            memcpy(forget_weights.data(), new_parameters_data + local_index, size * sizeof(type));
+            local_index += size;
 
-    size = inputs_number * neurons_number;
+            memcpy(input_weights.data(), new_parameters_data + local_index, size * sizeof(type));
+            local_index += size;
 
-    memcpy(forget_weights.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
+            memcpy(state_weights.data(), new_parameters_data + local_index, size * sizeof(type));
+            local_index += size;
 
-    memcpy(input_weights.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
+            memcpy(output_weights.data(), new_parameters_data + local_index, size * sizeof(type));
+        }
 
-    memcpy(state_weights.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
+        #pragma omp section
+        {
+            Index size = neurons_number * neurons_number;
+            Index local_index = current_index + neurons_number * 4 + inputs_number * neurons_number * 4;  // Skip bias and weights size
 
-    memcpy(output_weights.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
+            memcpy(forget_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
+            local_index += size;
 
-    // Recurrent weights
+            memcpy(input_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
+            local_index += size;
 
-    size = neurons_number * neurons_number;
+            memcpy(state_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
+            local_index += size;
 
-    memcpy(forget_recurrent_weights.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
-
-    memcpy(input_recurrent_weights.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
-
-    memcpy(state_recurrent_weights.data(), new_parameters_data + current_index, size*sizeof(type));
-    current_index += size;
-
-    memcpy(output_recurrent_weights.data(), new_parameters_data + current_index, size*sizeof(type));
-
+            memcpy(output_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
+        }
+    }
 }
 
 
@@ -580,7 +585,7 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
 
 void LongShortTermMemoryLayer::set_timesteps(const Index& new_timesteps)
 {
-    timesteps = new_timesteps;
+    time_steps = new_timesteps;
 }
 
 
@@ -759,7 +764,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(i%timesteps == 0)
+        if(i%time_steps == 0)
         {
             previous_cell_states.setZero();
             previous_hidden_states.setZero();
@@ -1036,7 +1041,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
 */
         // FORGET PARAMETERS DERIVATIVES
 
-        if(sample % timesteps == 0)
+        if(sample % time_steps == 0)
         {
             //set_derivatives_zero();
 
@@ -1172,7 +1177,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
 
         // Forget recurrent weights derivatives
 
-        if(sample % timesteps != 0)
+        if(sample % time_steps != 0)
         {
             multiply_rows(cell_states_recurrent_weights_derivatives, current_forget_activations);
 
@@ -1351,7 +1356,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
 */
         // INPUT PARAMETERS DERIVATIVES
 
-        if(sample % timesteps == 0)
+        if(sample % time_steps == 0)
         {
             //set_derivatives_zero();
 
@@ -1487,7 +1492,7 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
 
         // Input recurrent weights derivatives
 
-        if(sample % timesteps != 0)
+        if(sample % time_steps != 0)
         {
             multiply_rows(cell_states_recurrent_weights_derivatives, current_forget_activations);
 
@@ -1665,7 +1670,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
 */
         // STATE PARAMETERS DERIVATIVES
 
-        if(sample % timesteps == 0)
+        if(sample % time_steps == 0)
         {
             //set_derivatives_zero();
 
@@ -1801,7 +1806,7 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
 
         // State recurrent weights derivatives
 
-        if(sample % timesteps != 0)
+        if(sample % time_steps != 0)
         {
             multiply_rows(cell_states_recurrent_weights_derivatives, current_forget_activations);
 
@@ -1979,7 +1984,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 */
         // OUTPUT PARAMETERS DERIVATIVES
 
-        if(sample % timesteps == 0)
+        if(sample % time_steps == 0)
         {
             //set_derivatives_zero();
 
@@ -2115,7 +2120,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 
         // Output recurrent weights derivatives
 
-        if(sample % timesteps != 0)
+        if(sample % time_steps != 0)
         {
             multiply_rows(cell_states_recurrent_weights_derivatives, current_forget_activations);
 

@@ -1403,7 +1403,7 @@ string get_word_from_token(string& token)
 
     for(char& c : token)
     {
-        if(c != ' ' && c != '=' )
+        if(c != ' ' && c != '=')
         {
             word += c;
         }
@@ -1456,7 +1456,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 
         for(char& c : s)
         {
-            if(c!=' ' && c!='=' ) word += c; 
+            if(c!=' ' && c!='=') word += c; 
             else break; 
         }
 
@@ -2051,7 +2051,7 @@ vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
             else
                 return a.first < b.first;
         }
-    );
+);
 
     return word_counts;
 }
@@ -2163,7 +2163,7 @@ void split_punctuation(Tensor<string, 1>& documents)
     replace_substring(documents, "&", " & ");
     replace_substring(documents, "/", " / ");
     replace_substring(documents, "(", " ( ");
-    replace_substring(documents, ")", " ) ");
+    replace_substring(documents, ")", ") ");
     replace_substring(documents, "\\", " \\ ");
     replace_substring(documents, "=", " = ");
     replace_substring(documents, "?", " ? ");
@@ -2766,7 +2766,7 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 
 //         for(Index j = 0; j < tokens.size(); j++)
 //         {
-//             if(contains(tokens(j),words_name(i) ))
+//             if(contains(tokens(j),words_name(i)))
 //             {
 //                 sum = sum + 1;
 //             }
