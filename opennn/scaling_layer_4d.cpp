@@ -518,14 +518,7 @@ bool ScalingLayer4D::is_empty() const
 {
     const Index inputs_number = get_neurons_number();
 
-    if(inputs_number == 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return inputs_number == 0;
 }
 
 
