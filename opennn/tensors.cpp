@@ -35,17 +35,11 @@ namespace opennn
 type bound(const type& value, const type& minimum, const type& maximum)
 {
     if(value < minimum)
-    {
         return minimum;
-    }
     else if(value > maximum)
-    {
         return maximum;
-    }
     else
-    {
         return value;
-    }
 }
 
 
@@ -64,14 +58,7 @@ type calculate_random_uniform(const type& minimum, const type& maximum)
 
 bool calculate_random_bool()
 {
-    if(rand() % 2 == 1)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return rand() % 2 == 1;
 }
 
 

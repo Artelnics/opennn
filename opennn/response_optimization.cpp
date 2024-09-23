@@ -41,7 +41,6 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 
     if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
     {
-
         outputs_minimums.resize(outputs_number);
         outputs_minimums.setZero();
 
@@ -323,39 +322,25 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
     for(Index i = 0; i < conditions_size; i++)
     {
         if(conditions_string[i] == "Minimize" || conditions_string[i] == "Minimum")
-        {
             conditions[i] = Condition::Minimum;
-        }
         else if(conditions_string[i] == "Maximize" || conditions_string[i] == "Maximum")
-        {
             conditions[i] = Condition::Maximum;
-        }
         else if(conditions_string[i] == "="|| conditions_string[i] == "EqualTo")
-        {
             conditions[i] = Condition::EqualTo;
-        }
         else if(conditions_string[i] == "Between")
-        {
             conditions[i] = Condition::Between;
-        }
         else if(conditions_string[i] == ">="
                 || conditions_string[i] == ">"
                 || conditions_string[i] == "GreaterEqualTo"
                 || conditions_string[i] == "GreaterThan")
-        {
             conditions[i] = Condition::GreaterEqualTo;
-        }
         else if(conditions_string[i] == "<="
                 || conditions_string[i] == "<"
                 || conditions_string[i] == "LessEqualTo"
                 || conditions_string[i] == "LessThan")
-        {
             conditions[i] = Condition::LessEqualTo;
-        }
         else
-        {
             conditions[i] = Condition::None;
-        }
     }
 
     return conditions;
@@ -381,67 +366,52 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
         switch(current_condition)
         {
         case Condition::Minimum:
-
             values_conditions[i].resize(0);
-
             index++;
             break;
 
         case Condition::Maximum:
-
             values_conditions[i].resize(0);
-
             index++;
             break;
 
         case Condition::EqualTo:
-
             current_values.resize(1);
             current_values[0] = values[index];
             index++;
-
             values_conditions[i] = current_values;
 
             break;
 
         case Condition::LessEqualTo:
-
             current_values.resize(1);
             current_values[0] = values[index];
             index++;
-
             values_conditions[i] = current_values;
 
             break;
 
         case Condition::GreaterEqualTo:
-
             current_values.resize(1);
             current_values[0] = values[index];
-
             index++;
-
             values_conditions[i] = current_values;
-
             break;
 
         case Condition::Between:
-
             current_values.resize(2);
             current_values[0] = values[index];
             index++;
             current_values[1] = values[index];
             index++;
-
             values_conditions[i] = current_values;
-
             break;
 
         case Condition::None:
 
             current_values.resize(2);
 
-            if(i<inputs_minimums.size())
+            if(i < inputs_minimums.size())
             {
                 current_values[0] = inputs_minimums(i);
                 current_values[1] = inputs_maximums(i);
@@ -493,32 +463,28 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
             else if(column_type == DataSet::RawVariableType::Binary)
             {
-                if(inputs_conditions(index) == ResponseOptimization::Condition::EqualTo)
-                {
-                    inputs(i,index) = inputs_minimums[index];
-                }
-                else
-                {
-                    inputs(i,index) = type(rand() % 2);
-                }
+                inputs(i, index) = (inputs_conditions(index) == ResponseOptimization::Condition::EqualTo)
+                    ? inputs_minimums[index]
+                    : type(rand() % 2);
+
                 index++;
             }
 
             else if(column_type == DataSet::RawVariableType::Categorical)
             {
-                Index categories_number = data_set->get_raw_variables()(used_raw_variable_index).get_categories_number();
+                const Index categories_number = data_set->get_raw_variables()(used_raw_variable_index).get_categories_number();
                 Index equal_index = -1;
 
                 for(Index k = 0; k < categories_number; k++)
                 {
                     inputs(i,index + k) = type(0);
+
                     if(inputs_conditions(index + k) == ResponseOptimization::Condition::EqualTo)
                     {
                         inputs(i,index + k) = inputs_minimums(index +k);
+
                         if(inputs(i, index + k) == 1)
-                        {
                             equal_index = k;
-                        }
                     }
                 }
 
@@ -553,17 +519,12 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
     for(Index i = 0; i < outputs_number; i++)
     {
         if(envelope.size() != 0)
-        {
             envelope = filter_column_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
-        }
         else
-        {
             return Tensor<type,2>();
-        }
     }
 
     return envelope;
-
 }
 
 
@@ -590,40 +551,23 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     for(Index i = 0; i < samples_number; i++)
     {
         for(Index j = 0; j < inputs_number; j++)
-        {
             if(inputs_conditions[j] == Condition::Minimum)
-            {
                 objective[i] += envelope(i,j);
-            }
             else if(inputs_conditions[j] == Condition::Maximum)
-            {
                 objective[i] += -envelope(i,j);
-            }
-        }
 
         for(Index j = 0; j < outputs_number; j++)
-        {
             if(outputs_conditions[j] == Condition::Minimum)
-            {
                 objective[i] += envelope(i, inputs_number+j);
-            }
             else if(outputs_conditions[j] == Condition::Maximum)
-            {
                 objective[i] += -envelope(i, inputs_number+j);
-            }
-        }
     }
 
     const Index optimal_index = minimal_index(objective);
 
-    if(envelope.size() != 0 )
-    {
-        results->optimal_variables = envelope.chip(optimal_index, 0);
-    }
-    else
-    {
-        results->optimal_variables = Tensor<type, 1>();
-    }
+    results->optimal_variables = (envelope.size() != 0)
+        ? envelope.chip(optimal_index, 0)
+        : Tensor<type, 1>();
 
     return results;
 }
@@ -642,14 +586,10 @@ void ResponseOptimizationResults::print() const
         throw runtime_error("Optimal variables vector is empty.\n");
 
     for(Index i = 0; i < inputs_number; i++)
-    {
         cout << inputs_name[i] << ": " << optimal_variables[i] << endl;
-    }
 
     for(Index i = 0; i < outputs_number; i++)
-    {
         cout << output_names[i] << ": " << optimal_variables[inputs_number + i] << endl;
-    }
 }
 
 }

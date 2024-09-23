@@ -30,8 +30,8 @@ int main()
     
         const Index kernel_height = 2;
         const Index kernel_width = 2;
-        const Index kernel_channels = 3;
-        const Index kernels_number = 1;
+        const Index kernel_channels = 1;
+        const Index kernels_number = 2;
 
         const Index pool_height = 2;
         const Index pool_width = 2;
@@ -105,13 +105,13 @@ int main()
         training_strategy.perform_training();
 
         // Testing analysis
-        
+        /*
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+        */
         cout << "Bye!" << endl;
         
         return 0;

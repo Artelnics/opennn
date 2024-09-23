@@ -1049,25 +1049,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         output = outputs(i,0);
 
         if(target >= decision_threshold && output >= decision_threshold)
-        {
             true_positive++;
-        }
         else if(target >= decision_threshold && output < decision_threshold)
-        {
             false_negative++;
-        }
         else if(target < decision_threshold && output >= decision_threshold)
-        {
             false_positive++;
-        }
         else if(target < decision_threshold && output < decision_threshold)
-        {
             true_negative++;
-        }
         else
-        {
             throw runtime_error("calculate_confusion_binary_classification Unknown case.\n");
-        }
     }
 
     confusion(0,0) = true_positive;
@@ -1182,16 +1172,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
 {
     if(outputs_number == 1)
     {
-        type decision_threshold;
-
-        if(neural_network->get_probabilistic_layer() != nullptr)
-        {
-            decision_threshold = neural_network->get_probabilistic_layer()->get_decision_threshold();
-        }
-        else
-        {
-            decision_threshold = type(0.5);
-        }
+        const type decision_threshold = (neural_network->get_probabilistic_layer() != nullptr)
+                                       ? neural_network->get_probabilistic_layer()->get_decision_threshold()
+                                       : type(0.5);
 
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
     }
@@ -1705,16 +1688,9 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
     const Tensor<Index, 1> testing_indices = data_set->get_testing_samples_indices();
 
-    type decision_threshold;
-
-    if(neural_network->get_probabilistic_layer() != nullptr)
-    {
-        decision_threshold = neural_network->get_probabilistic_layer()->get_decision_threshold();
-    }
-    else
-    {
-        decision_threshold = type(0.5);
-    }
+    const type decision_threshold = (neural_network->get_probabilistic_layer() != nullptr)
+                                  ? neural_network->get_probabilistic_layer()->get_decision_threshold()
+                                  : type(0.5);
 
     BinaryClassificationRates binary_classification_rates;
 
@@ -2354,8 +2330,6 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
 Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 {
-    // Confusion matrix
-
     const Tensor<Index, 2> confusion = calculate_confusion();
 
     const Index true_positive = confusion(0,0);
@@ -2363,219 +2337,93 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     const Index false_negative = confusion(0,1);
     const Index true_negative = confusion(1,1);
 
-    // Classification accuracy
+    const type classification_accuracy = (true_positive + true_negative + false_positive + false_negative == 0)
+    ? type(0)
+    : type(true_positive + true_negative) / type(true_positive + true_negative + false_positive + false_negative);
 
-    type classification_accuracy;
+    const type error_rate = (true_positive + true_negative + false_positive + false_negative == 0)
+    ? type(0)
+    : type(false_positive + false_negative) / type(true_positive + true_negative + false_positive + false_negative);
 
-    if(true_positive + true_negative + false_positive + false_negative == 0)
-    {
-        classification_accuracy = type(0);
-    }
-    else
-    {
-        classification_accuracy = type(true_positive + true_negative)/type(true_positive + true_negative + false_positive + false_negative);
-    }
+    const type sensitivity = (true_positive + false_negative == 0)
+    ? type(0)
+    : type(true_positive) / type(true_positive + false_negative);
 
-    // Error rate
+    const type false_positive_rate = (false_positive + true_negative == 0)
+    ? type(0)
+    : type(false_positive) / type(false_positive + true_negative);
 
-    type error_rate;
+    const type specificity = (false_positive + true_negative == 0)
+    ? type(0)
+    : type(true_negative) / type(true_negative + false_positive);
 
-    if(true_positive + true_negative + false_positive + false_negative == 0)
-    {
-        error_rate = type(0);
-    }
-    else
-    {
-        error_rate = type(false_positive + false_negative)/type(true_positive + true_negative + false_positive + false_negative);
-    }
-
-    // Sensitivity
-
-    type sensitivity;
-
-    if(true_positive + false_negative == 0)
-    {
-        sensitivity = type(0);
-    }
-    else
-    {
-        sensitivity = type(true_positive)/type(true_positive + false_negative);
-    }
-
-    // False positive rate
-
-    type false_positive_rate;
-
-    if(false_positive + true_negative == 0)
-    {
-        false_positive_rate = type(0);
-    }
-    else
-    {
-        false_positive_rate = type(false_positive)/type(false_positive + true_negative);
-    }
-
-    // Specificity
-
-    type specificity;
-
-    if(false_positive + true_negative== 0)
-    {
-        specificity = type(0);
-    }
-    else
-    {
-        specificity = type(true_negative)/type(true_negative + false_positive);
-    }
-
-    // Precision
-
-    type precision;
-
-    if(true_positive + false_positive == 0)
-    {
-        precision = type(0);
-    }
-    else
-    {
-        precision = type(true_positive) /type(true_positive + false_positive);
-    }
-
-    // Positive likelihood
+    const type precision = (true_positive + false_positive == 0)
+    ? type(0)
+    : type(true_positive) / type(true_positive + false_positive);
 
     type positive_likelihood;
 
     if(abs(classification_accuracy - type(1)) < type(NUMERIC_LIMITS_MIN))
-    {
         positive_likelihood = type(1);
-    }
     else if(abs(type(1) - specificity) < type(NUMERIC_LIMITS_MIN))
-    {
         positive_likelihood = type(0);
-    }
     else
-    {
         positive_likelihood = sensitivity/(type(1) - specificity);
-    }
-
-    // Negative likelihood
 
     type negative_likelihood;
 
     if(Index(classification_accuracy) == 1)
-    {
         negative_likelihood = type(1);
-    }
     else if(abs(type(1) - sensitivity) < type(NUMERIC_LIMITS_MIN))
-    {
         negative_likelihood = type(0);
-    }
     else
-    {
         negative_likelihood = specificity/(type(1) - sensitivity);
-    }
 
-    // F1 score
+    const type f1_score = (2 * true_positive + false_positive + false_negative == 0)
+    ? type(0)
+    : type(2.0) * type(true_positive) / (type(2.0) * type(true_positive) + type(false_positive) + type(false_negative));
 
-    type f1_score;
+    const type false_discovery_rate = (false_positive + true_positive == 0)
+    ? type(0)
+    : type(false_positive) / type(false_positive + true_positive);
 
-    if(2*true_positive + false_positive + false_negative == 0)
-    {
-        f1_score = type(0);
-    }
-    else
-    {
-        f1_score = type(2.0)* type(true_positive)/(type(2.0)* type(true_positive) + type(false_positive) + type(false_negative));
-    }
+    const type false_negative_rate = (false_negative + true_positive == 0)
+    ? type(0)
+    : type(false_negative) / type(false_negative + true_positive);
 
-    // False discovery rate
+    const type negative_predictive_value = (true_negative + false_negative == 0)
+    ? type(0)
+    : type(true_negative) / type(true_negative + false_negative);
 
-    type false_discovery_rate;
-
-    if(false_positive + true_positive == 0)
-    {
-        false_discovery_rate = type(0);
-    }
-    else
-    {
-        false_discovery_rate = type(false_positive) /type(false_positive + true_positive);
-    }
-
-    // False negative rate
-
-    type false_negative_rate;
-
-    if(false_negative + true_positive == 0)
-    {
-        false_negative_rate = type(0);
-    }
-    else
-    {
-        false_negative_rate = type(false_negative)/type(false_negative + true_positive);
-    }
-
-    // Negative predictive value
-
-    type negative_predictive_value;
-
-    if(true_negative + false_negative == 0)
-    {
-        negative_predictive_value = type(0);
-    }
-    else
-    {
-        negative_predictive_value = type(true_negative)/type(true_negative + false_negative);
-    }
-
-    // Matthews correlation coefficient
-
-    type Matthews_correlation_coefficient;
-
-    if((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative) == 0)
-    {
-        Matthews_correlation_coefficient = type(0);
-    }
-    else
-    {
-        Matthews_correlation_coefficient = type(true_positive * true_negative - false_positive * false_negative) / type(sqrt((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative)));
-    }
-
-    //Informedness
+    const type Matthews_correlation_coefficient = ((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative) == 0)
+    ? type(0)
+    : type(true_positive * true_negative - false_positive * false_negative) / type(sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative)));
 
     const type informedness = sensitivity + specificity - type(1);
 
-    //Markedness
-
-    type markedness;
-
-    if(true_negative + false_positive == 0)
-    {
-        markedness = precision - type(1);
-    }
-    else
-    {
-        markedness = precision + type(true_negative)/type(true_negative + false_positive) - type(1);
-    }
+    type markedness = (true_negative + false_positive == 0)
+                          ? precision - type(1)
+                          : precision + type(true_negative) / type(true_negative + false_positive) - type(1);
 
     //Arrange vector
 
     Tensor<type, 1> binary_classification_test(15);
-
-    binary_classification_test[0] = classification_accuracy;
-    binary_classification_test[1] = error_rate;
-    binary_classification_test[2] = sensitivity;
-    binary_classification_test[3] = specificity;
-    binary_classification_test[4] = precision;
-    binary_classification_test[5] = positive_likelihood;
-    binary_classification_test[6] = negative_likelihood;
-    binary_classification_test[7] = f1_score;
-    binary_classification_test[8] = false_positive_rate;
-    binary_classification_test[9] = false_discovery_rate;
-    binary_classification_test[10] = false_negative_rate;
-    binary_classification_test[11] = negative_predictive_value;
-    binary_classification_test[12] = Matthews_correlation_coefficient;
-    binary_classification_test[13] = informedness;
-    binary_classification_test[14] = markedness;
+    binary_classification_test.setValues(
+    {classification_accuracy,
+    error_rate,
+    sensitivity,
+    specificity,
+    precision,
+    positive_likelihood,
+    negative_likelihood,
+    f1_score,
+    false_positive_rate,
+    false_discovery_rate,
+    false_negative_rate,
+    negative_predictive_value,
+    Matthews_correlation_coefficient,
+    informedness,
+    markedness});
 
     return binary_classification_test;
 }
@@ -2630,31 +2478,17 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
         false_negatives = row_sum(0) - true_positives;
         false_positives= column_sum(0) - true_positives;
 
-        // Precision
+        const type precision = (true_positives + false_positives == 0)
+                             ? type(0)
+                             : type(true_positives) / type(true_positives + false_positives);
 
-        type precision;
-        if(true_positives + false_positives == 0)
-            precision = type(0);
-        else
-            precision = type(true_positives) /type(true_positives + false_positives);
+        const type recall = (true_positives + false_negatives == 0)
+                          ? type(0)
+                          : type(true_positives) / type(true_positives + false_negatives);
 
-        // Recall
-
-        type recall;
-
-        if(true_positives + false_negatives == 0)
-            recall = type(0);
-        else
-            recall = type(true_positives)/type(true_positives + false_negatives);
-
-        // F1-Score
-
-        type f1_score;
-
-        if(precision + recall == 0)
-            f1_score = type(0);
-        else
-            f1_score = type(2*precision*recall)/type(precision + recall);
+        const type f1_score = (precision + recall == 0)
+                            ? type(0)
+                            : type(2 * precision * recall) / type(precision + recall);
 
         // Save results
 

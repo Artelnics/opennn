@@ -103,7 +103,7 @@ public:
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const Tensor<string, 1>& = Tensor<string, 1>());
 
-        string name = "";
+        string name;
 
         DataSet::VariableUse use = DataSet::VariableUse::None;
 

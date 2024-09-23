@@ -294,23 +294,14 @@ Histogram::Histogram(const Tensor<type, 1>& probability_data)
     type data_maximum = maximum(probability_data);
     const type data_minimum = type(0);
 
-    if(data_maximum > type(1))
-    {
-        data_maximum = type(100.0);
-    }
-    else
-    {
-        data_maximum = type(1);
-    }
+    data_maximum = (data_maximum > type(1)) ? type(100.0) : type(1);
 
     const type step = (data_maximum - data_minimum) / type(number_of_bins);
 
     Tensor<type, 1> new_centers(number_of_bins);
 
     for(size_t i = 0; i < number_of_bins; i++)
-    {
         new_centers(i) = data_minimum + (type(0.5) * step) + (step * type(i));
-    }
 
     Tensor<Index, 1> new_frequencies(number_of_bins);
     new_frequencies.setZero();
@@ -663,9 +654,7 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
         used_column_indices.resize(columns_number);
 
         for(Index i = 0; i < columns_number; i++)
-        {
             used_column_indices(i) = i;
-        }
     }
     else
     {
@@ -679,9 +668,7 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
         used_row_indices.resize(rows_number);
 
         for(Index i = 0; i < rows_number; i++)
-        {
             used_row_indices(i) = i;
-        }
     }
     else
     {
@@ -874,13 +861,9 @@ type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& i
 
 #endif
 
-    if(variance(vector, indices) < type(1e-9))
-    {
-        return type(0);
-    }else
-    {
-        return sqrt(variance(vector, indices));
-    }
+    return (variance(vector, indices) < type(1e-9)) 
+        ? type(0) 
+        : sqrt(variance(vector, indices));
 }
 
 
@@ -1406,16 +1389,9 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
 #endif
 
-    Index bin_center;
-
-    if(bins_number%2 == 0)
-    {
-        bin_center = Index(type(bins_number)/type(2.0));
-    }
-    else
-    {
-        bin_center = Index(type(bins_number)/type(2.0) + type(0.5));
-    }
+    const Index bin_center = (bins_number % 2 == 0) 
+        ? Index(type(bins_number) / type(2.0)) 
+        : Index(type(bins_number) / type(2.0) + type(0.5));
 
     Tensor<type, 1> minimums(bins_number);
     Tensor<type, 1> maximums(bins_number);
@@ -1652,9 +1628,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     else
     {
         for(Index i = 0; i < column_indices_size; i++)
-        {
             standard_deviation(i) = type(0);
-        }
     }
 
     for(Index i = 0; i < column_indices_size; i++)
@@ -1683,9 +1657,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix,
         used_column_indices.resize(columns_number);
 
         for(Index i = 0; i < columns_number; i++)
-        {
             used_column_indices(i) = i;
-        }
     }
     else
     {
@@ -1699,9 +1671,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix,
         used_row_indices.resize(rows_number);
 
         for(Index i = 0; i < rows_number; i++)
-        {
             used_row_indices(i) = i;
-        }
     }
     else
     {
@@ -2073,14 +2043,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 
         median_index = Index(rows_number/2);
 
-        if(rows_number % 2 == 0)
-        {
-            median(j) = (sorted_column[median_index - 1] + sorted_column[median_index])/ type(2);
-        }
-        else
-        {
-            median(j) = sorted_column[median_index - 1/2];
-        }
+        median(j) = (rows_number % 2 == 0)
+            ? (sorted_column[median_index - 1] + sorted_column[median_index]) / type(2)
+            : sorted_column[median_index - 1 / 2];
     }
 
     return median;
@@ -2115,14 +2080,9 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
     median_index = Index(rows_number/2);
 
-    if(rows_number % 2 == 0)
-    {
-        median = (sorted_column[median_index - 1] + sorted_column[median_index])/ type(2);
-    }
-    else
-    {
-        median = sorted_column[median_index - 1/2];
-    }
+    median = (rows_number % 2 == 0)
+        ? (sorted_column[median_index - 1] + sorted_column[median_index]) / type(2)
+        : sorted_column[median_index - 1 / 2];
 
     return median;
 }
@@ -2158,14 +2118,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
-        if(rows_number % 2 == 0)
-        {
-            median(j) = (sorted_column[sorted_column.size()*2/4] + sorted_column[sorted_column.size()*2/4+1])/type(2);
-        }
-        else
-        {
-            median(j) = sorted_column[sorted_column.size()*2/4];
-        }
+        median(j) = (rows_number % 2 == 0)
+            ? (sorted_column[sorted_column.size() * 2 / 4] + sorted_column[sorted_column.size() * 2 / 4 + 1]) / type(2)
+            : sorted_column[sorted_column.size() * 2 / 4];
     }
 
     return median;
@@ -2236,14 +2191,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 
         const Index sorted_list_size = sorted_column.size();
 
-        if(sorted_list_size % 2 == 0)
-        {
-            median(j) = (sorted_column[sorted_list_size*2/4] + sorted_column[sorted_list_size*2/4 + 1])/ type(2);
-        }
-        else
-        {
-            median(j) = sorted_column[sorted_list_size * 2 / 4];
-        }
+        median(j) = (sorted_list_size % 2 == 0)
+            ? (sorted_column[sorted_list_size * 2 / 4] + sorted_column[sorted_list_size * 2 / 4 + 1]) / type(2)
+            : sorted_column[sorted_list_size * 2 / 4];
     }
 
     return median;
@@ -2670,11 +2620,9 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < 9; i++)
     {
-        if(new_size * (i+1) % 10 == 0)
-            percentiles[i] = (sorted_vector[new_size * (i+1) / 10 - 1] + sorted_vector[new_size * (i+1) / 10]) / type(2.0);
-
-        else
-            percentiles[i] = type(sorted_vector[new_size * (i+1) / 10]);
+        percentiles[i] = (new_size * (i + 1) % 10 == 0)
+            ? (sorted_vector[new_size * (i + 1) / 10 - 1] + sorted_vector[new_size * (i + 1) / 10]) / type(2.0)
+            : type(sorted_vector[new_size * (i + 1) / 10]);
     }
 
     percentiles[9] = maximum(new_vector);

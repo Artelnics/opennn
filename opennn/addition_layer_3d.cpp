@@ -11,7 +11,6 @@
 namespace opennn
 {
 
-
 AdditionLayer3D::AdditionLayer3D() : Layer()
 {
     set();

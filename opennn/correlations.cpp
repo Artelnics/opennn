@@ -93,48 +93,43 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 
             Correlation strongest_correlation = linear_correlation;
 
-            if(abs(exponential_correlation.r) > abs(strongest_correlation.r))
-                strongest_correlation = exponential_correlation;
-
-            if(abs(logarithmic_correlation.r) > abs(strongest_correlation.r))
-                strongest_correlation = logarithmic_correlation;
-
-            if(abs(power_correlation.r) > abs(strongest_correlation.r))
-                strongest_correlation = power_correlation;
+            strongest_correlation = std::max({ linear_correlation, exponential_correlation, logarithmic_correlation, power_correlation },
+                [](const Correlation& a, const Correlation& b) {
+                    return abs(a.r) < abs(b.r);
+                });
 
             return strongest_correlation;
         }
 
         else if(!x_binary && y_binary)
         {
-            return opennn::logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
+            return logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
 
         else if(x_binary && !y_binary)
         {
-            return opennn::logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
+            return logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
         }
 
         else if(x_binary && y_binary)
         {
             return opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
-
     }
 
     else if(x_columns != 1 && y_columns == 1)
     {
-        return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
+        return logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
 
     else if(x_columns == 1 && y_columns != 1)
     {
-        return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
+        return logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
 
     else if(x_columns != 1 && y_columns != 1)
     {
-        return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
+        return logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
 
     else

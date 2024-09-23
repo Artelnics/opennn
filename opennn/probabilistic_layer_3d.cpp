@@ -78,34 +78,22 @@ const ProbabilisticLayer3D::ActivationFunction& ProbabilisticLayer3D::get_activa
 string ProbabilisticLayer3D::write_activation_function() const
 {
     if(activation_function == ActivationFunction::Competitive)
-    {
         return "Competitive";
-    }
     else if(activation_function == ActivationFunction::Softmax)
-    {
         return "Softmax";
-    }
     else
-    {
         throw runtime_error("Unknown probabilistic method.\n");
-    }
 }
 
 
 string ProbabilisticLayer3D::write_activation_function_text() const
 {
     if(activation_function == ActivationFunction::Competitive)
-    {
         return "competitive";
-    }
     else if(activation_function == ActivationFunction::Softmax)
-    {
         return "softmax";
-    }
     else
-    {
         throw runtime_error("Unknown probabilistic method.\n");
-    }
 }
 
 
@@ -277,17 +265,11 @@ void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new
 void ProbabilisticLayer3D::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Competitive")
-    {
         set_activation_function(ActivationFunction::Competitive);
-    }
     else if(new_activation_function == "Softmax")
-    {
         set_activation_function(ActivationFunction::Softmax);
-    }
     else
-    {
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
-    }
 }
 
 
@@ -362,7 +344,6 @@ void ProbabilisticLayer3D::calculate_activations(Tensor<type, 3>& activations) c
 
     default: return;
     }
-
 }
 
 
