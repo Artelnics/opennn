@@ -113,25 +113,13 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
     // Prevent a possible division by 0
 
-    if(abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
-    {
-        FR_parameter = type(0);
-    }
-    else
-    {
-        FR_parameter = numerator(0)/denominator(0);
-    }
+    FR_parameter = (abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
+        ? type(0)
+        : numerator(0) / denominator(0);
 
     // Bound the Fletcher-Reeves parameter between 0 and 1
 
-    if(FR_parameter < type(0.0))
-    {
-        FR_parameter = type(0);
-    }
-    else if(FR_parameter > type(1.0))
-    {
-        FR_parameter = type(1);
-    }
+    FR_parameter = clamp(FR_parameter, type(0), type(1));
 
     return FR_parameter;
 }
@@ -212,25 +200,13 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
     // Prevent a possible division by 0
 
-    if(abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
-    {
-        PR_parameter = type(0);
-    }
-    else
-    {
-        PR_parameter = numerator(0)/denominator(0);
-    }
+    PR_parameter = (abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
+        ? type(0)
+        : numerator(0) / denominator(0);
 
     // Bound the Polak-Ribiere parameter between 0 and 1
 
-    if(PR_parameter < type(0.0))
-    {
-        PR_parameter = type(0);
-    }
-    else if(PR_parameter > type(1.0))
-    {
-        PR_parameter = type(1);
-    }
+    PR_parameter = std::clamp(PR_parameter, type(0), type(1));
 
     return PR_parameter;
 }
@@ -358,17 +334,11 @@ void ConjugateGradient::set_training_direction_method
 void ConjugateGradient::set_training_direction_method(const string& new_training_direction_method_name)
 {
     if(new_training_direction_method_name == "PR")
-    {
         training_direction_method = TrainingDirectionMethod::PR;
-    }
     else if(new_training_direction_method_name == "FR")
-    {
         training_direction_method = TrainingDirectionMethod::FR;
-    }
     else
-    {
         throw runtime_error("Unknown training direction method: " + new_training_direction_method_name + ".\n");
-    }
 }
 
 
@@ -596,8 +566,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.resize_training_error_history(epoch+1);
 
-            if(has_selection) results.resize_selection_error_history(epoch+1);
-            else results.resize_selection_error_history(0);
+            results.resize_selection_error_history(has_selection ? epoch + 1 : 0);
 
             results.elapsed_time = write_time(elapsed_time);
 

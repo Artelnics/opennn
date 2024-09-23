@@ -532,14 +532,7 @@ bool UnscalingLayer::is_empty() const
 {
     const Index neurons_number = get_neurons_number();
 
-    if(neurons_number == 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return neurons_number == 0;
 }
 
 
