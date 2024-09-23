@@ -300,46 +300,26 @@ void PerceptronLayer3D::set_activation_function(const PerceptronLayer3D::Activat
 
 void PerceptronLayer3D::set_activation_function(const string& new_activation_function_name)
 {
-    if(new_activation_function_name == "Logistic")
-    {
-        //activation_function = ActivationFunction::Logistic;
-    }
-    else if(new_activation_function_name == "HyperbolicTangent")
-    {
+    if (new_activation_function_name == "Logistic")
+        ;//activation_function = ActivationFunction::Logistic;
+    else if (new_activation_function_name == "HyperbolicTangent")
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Linear")
-    {
+    else if (new_activation_function_name == "Linear")
         activation_function = ActivationFunction::Linear;
-    }
-    else if(new_activation_function_name == "RectifiedLinear")
-    {
+    else if (new_activation_function_name == "RectifiedLinear")
         activation_function = ActivationFunction::RectifiedLinear;
-    }
-    else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
-        //activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
-    else if(new_activation_function_name == "SoftPlus")
-    {
-        //activation_function = ActivationFunction::SoftPlus;
-    }
-    else if(new_activation_function_name == "SoftSign")
-    {
-        //activation_function = ActivationFunction::SoftSign;
-    }
-    else if(new_activation_function_name == "HardSigmoid")
-    {
-        //activation_function = ActivationFunction::HardSigmoid;
-    }
-    else if(new_activation_function_name == "ExponentialLinear")
-    {
-        //activation_function = ActivationFunction::ExponentialLinear;
-    }
+    else if (new_activation_function_name == "ScaledExponentialLinear")
+        ;//activation_function = ActivationFunction::ScaledExponentialLinear;
+    else if (new_activation_function_name == "SoftPlus")
+        ;//activation_function = ActivationFunction::SoftPlus;
+    else if (new_activation_function_name == "SoftSign")
+        ;//activation_function = ActivationFunction::SoftSign;
+    else if (new_activation_function_name == "HardSigmoid")
+        ;//activation_function = ActivationFunction::HardSigmoid;
+    else if (new_activation_function_name == "ExponentialLinear")
+        ;//activation_function = ActivationFunction::ExponentialLinear;
     else
-    {
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-    }
 }
 
 
@@ -419,13 +399,9 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
         random = calculate_random_uniform(type(0), type(1));
 
         if(random < dropout_rate)
-        {
             matrix.setZero();
-        }
         else
-        {
             matrix.device(*thread_pool_device) = matrix * scaling_factor;
-        }                   
     }
     */
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
@@ -436,8 +412,7 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
     {
         random = calculate_random_uniform(type(0), type(1));
 
-        if(random < dropout_rate)    outputs(i) = 0;
-        else    outputs(i) *= scaling_factor;
+        outputs(i) = (random < dropout_rate) ? 0 : outputs(i) * scaling_factor;
     }
 }
 

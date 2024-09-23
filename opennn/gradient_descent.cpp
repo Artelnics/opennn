@@ -185,19 +185,11 @@ void GradientDescent::update_parameters(
         const Index parameters_number = neural_network->get_parameters_number();
 
         for(Index i = 0; i < parameters_number; i++)
-        {
             if(abs(back_propagation.gradient(i)) >= type(NUMERIC_LIMITS_MIN))
-            {
                 if(back_propagation.gradient(i) > type(0))
-                {
                     back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
-                }
                 else if(back_propagation.gradient(i) < type(0))
-                {
                     back_propagation.parameters(i) += numeric_limits<type>::epsilon();
-                }
-            }
-        }
 
         optimization_data.learning_rate = optimization_data.old_learning_rate;
 
@@ -313,7 +305,9 @@ TrainingResults GradientDescent::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
+        neural_network->forward_propagate(training_batch.get_inputs_pair(), 
+                                          training_forward_propagation, 
+                                          is_training);
 
         // Loss index
 
@@ -326,7 +320,6 @@ TrainingResults GradientDescent::perform_training()
 
         if(has_selection)
         {
-            
             neural_network->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
 
             loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -412,8 +405,7 @@ TrainingResults GradientDescent::perform_training()
 
             results.resize_training_error_history(epoch+1);
 
-            if(has_selection) results.resize_selection_error_history(epoch+1);
-            else results.resize_selection_error_history(0);
+            results.resize_selection_error_history(has_selection ? epoch + 1 : 0);
 
             results.elapsed_time = write_time(elapsed_time);
 

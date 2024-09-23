@@ -98,7 +98,7 @@ void AdaptiveMomentEstimation::set_default()
 
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
-    epsilon= new_epsilon;
+    epsilon = new_epsilon;
 }
 
 
@@ -323,11 +323,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             //cout << "gradient:\n" << training_back_propagation.gradient << endl;
             //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
-
             //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient.abs() - loss_index->calculate_numerical_gradient().abs() << endl;
 
-            cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-            system("pause");
+            //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            //system("pause");
 
             training_error += training_back_propagation.error;
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
@@ -461,8 +460,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.resize_training_error_history(epoch+1);
 
-            if(has_selection) results.resize_selection_error_history(epoch+1);
-            else results.resize_selection_error_history(0);
+            results.resize_selection_error_history(has_selection ? epoch + 1 : 0);
 
             results.elapsed_time = write_time(elapsed_time);
 
