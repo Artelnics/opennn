@@ -538,7 +538,7 @@ void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>&
     PerceptronLayer3DBackPropagation* perceptron_layer_3d_back_propagation =
             static_cast<PerceptronLayer3DBackPropagation*>(back_propagation);
 
-    Tensor<type, 3>& error_combinations_derivatives = perceptron_layer_3d_back_propagation->error_combinations_derivatives;
+    Tensor<type, 3>& combinations_derivatives = perceptron_layer_3d_back_propagation->combinations_derivatives;
 
     Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
 
@@ -549,17 +549,17 @@ void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
     const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    error_combinations_derivatives.device(*thread_pool_device) 
+    combinations_derivatives.device(*thread_pool_device) 
         = deltas * activations_derivatives;
 
     biases_derivatives.device(*thread_pool_device)
-        = error_combinations_derivatives.sum(Eigen::array<Index, 2>({0, 1}));
+        = combinations_derivatives.sum(Eigen::array<Index, 2>({0, 1}));
 
     synaptic_weights_derivatives.device(*thread_pool_device)
-        = inputs.contract(error_combinations_derivatives, double_contraction_indices);
+        = inputs.contract(combinations_derivatives, double_contraction_indices);
 
     input_derivatives.device(*thread_pool_device) 
-        = error_combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
+        = combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
 }
 
 
@@ -782,7 +782,7 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
 
     synaptic_weights_derivatives.resize(inputs_depth, neurons_number);
 
-    error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+    combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 

@@ -382,7 +382,7 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     Tensor<type, 3> rotated_kernel_synaptic_weights;
     Tensor<type, 2> rotated_kernel_slice;
     Tensor<type, 2> image_kernel_convolutions_derivatives_padded;
-    Tensor<type, 2> convolution(input_height, input_width);
+    Tensor<type, 2> channel_convolution(input_height, input_width);
 
     const Index pad_height = (input_height + kernel_height - 1) - output_height;
     const Index pad_width = (input_width + kernel_width - 1) - output_width;
@@ -438,15 +438,12 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
             {
                 rotated_kernel_slice = rotated_kernel_synaptic_weights.chip(channel_index, 2);
 
-                convolution.device(*thread_pool_device) = image_kernel_convolutions_derivatives_padded.convolve(rotated_kernel_slice, convolution_dimensions_2d);
+                channel_convolution.device(*thread_pool_device) = image_kernel_convolutions_derivatives_padded.convolve(rotated_kernel_slice, convolution_dimensions_2d);
 
-                for (Index x = 0; x < input_height; ++x)
-                {
-                    for (Index y = 0; y < input_width; ++y)
-                    {
-                        input_derivatives(image_index, x, y, channel_index) += convolution(x, y);
-                    }
-                }
+                #pragma omp parallel for
+                for(Index x = 0; x < input_height; ++x)
+                    for(Index y = 0; y < input_width; ++y)
+                        input_derivatives(image_index, x, y, channel_index) += channel_convolution(x, y);
             }
         }
     }
