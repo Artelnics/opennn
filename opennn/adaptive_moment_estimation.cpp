@@ -98,7 +98,7 @@ void AdaptiveMomentEstimation::set_default()
 
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
-    epsilon= new_epsilon;
+    epsilon = new_epsilon;
 }
 
 

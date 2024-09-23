@@ -99,14 +99,7 @@ const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 
 bool BoundingLayer::is_empty() const
 {
-    if(get_neurons_number() == 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return get_neurons_number() == 0;
 }
 
 

@@ -2654,10 +2654,7 @@ void DataSet::set_target_dimensions(const dimensions& new_targets_dimensions)
 
 bool DataSet::is_empty() const
 {
-    if(data.dimension(0) == 0 || data.dimension(1) == 0)
-        return true;
-
-    return false;
+    return data.dimension(0) == 0 || data.dimension(1) == 0;
 }
 
 

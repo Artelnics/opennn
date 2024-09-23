@@ -34,10 +34,7 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
 
 bool ConvolutionalLayer::is_empty() const
 {
-    if(biases.size() == 0 && synaptic_weights.size() == 0)
-        return true;
-
-    return false;
+    return biases.size() == 0 && synaptic_weights.size() == 0;
 }
 
 

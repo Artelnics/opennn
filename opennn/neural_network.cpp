@@ -299,9 +299,7 @@ bool NeuralNetwork::has_probabilistic_layer() const
 
 bool NeuralNetwork::is_empty() const
 {
-    if(layers.dimension(0) == 0) return true;
-
-    return false;
+    return layers.dimension(0) == 0;
 }
 
 
