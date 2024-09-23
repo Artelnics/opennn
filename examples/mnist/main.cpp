@@ -30,8 +30,8 @@ int main()
     
         const Index kernel_height = 2;
         const Index kernel_width = 2;
-        const Index kernel_channels = 3;
-        const Index kernels_number = 1;
+        const Index kernel_channels = 1;
+        const Index kernels_number = 2;
 
         const Index pool_height = 2;
         const Index pool_width = 2;
@@ -68,9 +68,9 @@ int main()
                                                                         { kernel_height, kernel_width, kernel_channels, kernels_number });
         neural_network.add_layer(convolutional_layer);
 
-        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
-                                                                          { kernel_height, kernel_width, kernels_number, kernels_number } );
-        neural_network.add_layer(convolutional_layer_2);
+        //ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
+        //                                                                  { kernel_height, kernel_width, kernels_number, kernels_number } );
+        //neural_network.add_layer(convolutional_layer_2);
 
         //ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(convolutional_layer_2->get_output_dimensions(),
         //                                                                  { kernel_height,kernel_width,kernels_number,kernels_number });
@@ -81,7 +81,7 @@ int main()
         //pooling_layer->set_pooling_method("AveragePooling");
         //neural_network.add_layer(pooling_layer);
 
-        FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer_2->get_output_dimensions());
+        FlattenLayer* flatten_layer = new FlattenLayer(convolutional_layer->get_output_dimensions());
         neural_network.add_layer(flatten_layer);
 
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),
@@ -105,13 +105,13 @@ int main()
         training_strategy.perform_training();
 
         // Testing analysis
-        
+        /*
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+        */
         cout << "Bye!" << endl;
         
         return 0;

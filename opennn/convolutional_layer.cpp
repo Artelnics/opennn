@@ -366,14 +366,12 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     type* synaptic_weights_data = (type*)synaptic_weights.data();
 
+    Tensor<type, 4>& kernel_synaptic_weights_derivatives = convolutional_layer_back_propagation->kernel_synaptic_weights_derivatives;
+
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
-
-    Eigen::array<Index, 4> offsets;
-    Eigen::array<Index, 4> extents;
-
-    Tensor<type, 3>& image = convolutional_layer_back_propagation->image;
+    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = {0, 1, 2};
+    const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = { 0, 1 };
 
     Tensor<type, 3>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
 
@@ -381,12 +379,9 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     Tensor<type, 0> biases_derivatives_sum;
 
-    const Eigen::array<bool, 2> reverse_dims = { true, true };
-    const Eigen::array<ptrdiff_t, 2> convolution_dims = { 0, 1};
-
+    Tensor<type, 3> rotated_kernel_synaptic_weights;
     Tensor<type, 2> rotated_kernel_slice;
-    Tensor<type, 2> delta_reshape_2d;
-    Tensor<type, 2> delta_padded;
+    Tensor<type, 2> image_kernel_convolutions_derivatives_padded;
     Tensor<type, 2> convolution(input_height, input_width);
 
     const Index pad_height = (input_height + kernel_height - 1) - output_height;
@@ -403,59 +398,47 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
 
     // Biases synaptic weights and input derivatives
 
-    input_derivatives.setZero();
-    
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {       
+        
         TensorMap<Tensor<type, 3>> kernel_synaptic_weights(synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
                                                            kernel_height,
                                                            kernel_width,
                                                            kernel_channels);
 
-        TensorMap<Tensor<type, 3>> kernel_synaptic_weights_derivatives(synaptic_weights_derivatives_data + kernel_index*kernel_synaptic_weights_number,
-                                                                       kernel_height,
-                                                                       kernel_width,
-                                                                       kernel_channels);
+        TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
+                                                           convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
+                                                           batch_samples_number,
+                                                           output_height,
+                                                           output_width);
+        
+        // Biases derivatives
 
-        biases_derivatives_sum.setZero();
+        biases_derivatives_sum.device(*thread_pool_device) = kernel_convolutions_derivatives.sum();
 
-        kernel_synaptic_weights_derivatives.setZero();
+        biases_derivatives(kernel_index) = biases_derivatives_sum();
 
-        for(Index image_index = 0; image_index < batch_samples_number; image_index++)
+        // Synaptic weights derivatives
+
+        kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
+
+        memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
+               kernel_synaptic_weights_derivatives.data(),
+               kernel_synaptic_weights_number * sizeof(type));
+
+        // Input derivatives
+
+        rotated_kernel_synaptic_weights = kernel_synaptic_weights.reverse(Eigen::array<ptrdiff_t, 3>{1, 1, 0});
+        
+        for (Index image_index = 0; image_index < batch_samples_number; ++image_index)
         {
-            // Image
-
-            image = inputs.chip(image_index, 0);
-                                                   
-            // Image convolutions derivatives
-
-            image_convolutions_derivatives = convolutions_derivatives.chip(image_index, 0).chip(kernel_index, 3)
-                                             .reshape(Eigen::array<Index, 3>{output_height, output_width, 1});
-            cout << "image_convolutions_derivatives:\n" << image_convolutions_derivatives << endl;
-            // Biases
-
-            biases_derivatives_sum.device(*thread_pool_device) = image_convolutions_derivatives.sum();
-
-            biases_derivatives(kernel_index) += biases_derivatives_sum();
-
-            // Synaptic weights
-
-            kernel_synaptic_weights_derivatives.device(*thread_pool_device)
-                += image.convolve(image_convolutions_derivatives, convolutions_dimensions);
-
-            // Input derivatives
+            image_kernel_convolutions_derivatives_padded = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
 
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             {
-                rotated_kernel_slice = kernel_synaptic_weights.chip(channel_index, 2).reverse(Eigen::array<ptrdiff_t, 2>{1, 1});
+                rotated_kernel_slice = rotated_kernel_synaptic_weights.chip(channel_index, 2);
 
-                delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
-
-                delta_padded = delta_reshape_2d.pad(paddings);
-
-                convolution.setZero();
-
-                convolution.device(*thread_pool_device) = delta_padded.convolve(rotated_kernel_slice, convolution_dims);
+                convolution.device(*thread_pool_device) = image_kernel_convolutions_derivatives_padded.convolve(rotated_kernel_slice, convolution_dimensions_2d);
 
                 for (Index x = 0; x < input_height; ++x)
                 {
@@ -465,20 +448,8 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
                     }
                 }
             }
-            // OLD INPUT DERIVATIVES 1 CHANNEL
-            //rotated_kernel_slice = kernel_synaptic_weights.chip(0, 2).reverse(reverse_dims);
-            //delta_reshape_2d = image_convolutions_derivatives.chip(0, 2);
-            //delta_padded = delta_reshape_2d.pad(paddings);
-            //convolution.setZero();
-            //convolution.device(*thread_pool_device) = delta_padded.convolve(rotated_kernel_slice, convolution_dims);
-            //input_derivatives.chip(image_index, 0).chip(0, 3).device(*thread_pool_device) += convolution;
         }
-        
-        memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
-               kernel_synaptic_weights_derivatives.data(),
-               kernel_synaptic_weights_number*sizeof(type));
     }
-    cout << "input derivatives convolution:\n" << input_derivatives << endl;
 }
 
 
@@ -1334,7 +1305,7 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     convolutions_derivatives.resize(batch_samples_number,
                                           output_height,
                                           output_width,
-                                          channels);
+                                          kernels_number);
 
     biases_derivatives.resize(kernels_number);
 
@@ -1343,7 +1314,11 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                         kernel_width,
                                         kernel_channels);
 
-    image.resize(input_height, input_width, channels);
+    kernel_synaptic_weights_derivatives.resize(1,
+                                               kernel_height,
+                                               kernel_width,
+                                               kernel_channels);
+
     image_convolutions_derivatives.resize(output_height, output_width, 1);
 
     input_derivatives.resize(batch_samples_number,
