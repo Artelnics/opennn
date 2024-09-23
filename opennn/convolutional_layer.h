@@ -269,13 +269,14 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    void print() const;
 
    Tensor<type, 3> image_convolutions_derivatives;
-   Tensor<type, 3> image;
 
+   Tensor<type, 4> kernel_synaptic_weights_derivatives;
    Tensor<type, 4> convolutions_derivatives;
    Tensor<type, 4> input_derivatives;
 
    Tensor<type, 1> biases_derivatives;
    Tensor<type, 4> synaptic_weights_derivatives;
+
 };
 
 #ifdef OPENNN_CUDA

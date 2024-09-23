@@ -9,11 +9,7 @@
 #ifndef AUTOASSOCIATION_H
 #define AUTOASSOCIATION_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "data_set.h"

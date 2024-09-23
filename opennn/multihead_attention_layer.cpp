@@ -605,10 +605,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
     {
         random = calculate_random_uniform(type(0), type(1));
 
-        if(random < dropout_rate)    
-            attention_scores(i) = 0;
-        else    
-            attention_scores(i) *= scaling_factor;
+        attention_scores(i) = (random < dropout_rate) ? 0 : attention_scores(i) * scaling_factor;
     }
 }
 

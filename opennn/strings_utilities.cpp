@@ -135,14 +135,10 @@ Index count_tokens(const string& text, const string& separator)
     }
 
     if(text.find(separator, 0) == 0)
-    {
         tokens_number--;
-    }
 
     if(position == text.length())
-    {
         tokens_number--;
-    }
 
     return tokens_number + 1;
 }
@@ -249,15 +245,11 @@ Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 
 Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
 {
-    string result = " ";
+    string result;
 
     for(Index i = 0; i < tokens.size(); i++)
-    {
         if(!contains_substring(result, " " + tokens(i) + " "))
-        {
             result += tokens(i) + " ";
-        }
-    }
 
     return get_tokens(result, " ");
 }
@@ -265,16 +257,14 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
 
 Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
 {
-    Tensor<string, 1> unique_elements = get_unique_elements(tokens);
+    const Tensor<string, 1> unique_elements = get_unique_elements(tokens);
 
     const Index unique_size = unique_elements.size();
 
     Tensor<Index, 1> unique_count(unique_size);
 
     for(Index i = 0; i < unique_size; i++)
-    {
         unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements(i)));
-    }
 
     return unique_count;
 }
@@ -317,15 +307,9 @@ bool is_constant_string(const Tensor<string, 1>& string_list)
 {
     const string str0 = string_list[0];
 
-    string str1;
-
-    for(int i = 1; i < string_list.size(); i++)
-    {
-        str1 = string_list[i];
-
-        if(str1 != str0)
+    for(int i = 1; i < string_list.size(); i++) 
+        if(string_list[i] != str0)
             return false;
-    }
 
     return true;
 }
@@ -336,9 +320,8 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
     const type a0 = str[0];
 
     for(int i = 1; i < str.size(); i++)
-    {
-        if(abs(str[i]-a0) > type(1e-3) || isnan(str[i]) || isnan(a0)) return false;
-    }
+        if(abs(str[i]-a0) > type(1e-3) || isnan(str[i]) || isnan(a0)) 
+            return false;
 
     return true;
 }
@@ -385,23 +368,14 @@ bool is_date_time_string(const string& text)
                                    + format_16 + "|"
                                    + format_17);
 
-    if(regex_match(text, regular_expression))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return regex_match(text, regular_expression);
 }
 
 
 bool is_email(const string& word)
 {
-    // define a regular expression
     const regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
 
-    // try to match the string with the regular expression
     return regex_match(word, pattern);
 }
 
@@ -415,9 +389,7 @@ bool contains_number(const string& word)
 bool starts_with(const string& word, const string& starting)
 {
     if(starting.length() > word.length() || starting.length() == 0)
-    {
         return false;
-    }
 
     return(word.substr(0,starting.length()) == starting);
 }
@@ -594,12 +566,9 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             Index month_number = 0;
 
             if(!month.empty())
-            {
                 for(Index i = 1; i < 13; i++)
-                {
-                    if(month[size_t(i)] != "") month_number = i;
-                }
-            }
+                    if(month[size_t(i)] != "") 
+                        month_number = i;
 
             time_structure.tm_year = stoi(matchs[29].str())-1900;
             time_structure.tm_mon = int(month_number) - 1;
@@ -620,13 +589,11 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             regex_search(date, month, months);
 
             Index month_number = 0;
+
             if(!month.empty())
-            {
-                for(Index i =1 ; i<13  ; i++)
-                {
-                    if(month[size_t(i)] != "") month_number = i;
-                }
-            }
+                for(Index i = 1 ; i < 13  ; i++)
+                    if(month[size_t(i)] != "") 
+                        month_number = i;
 
             time_structure.tm_year = stoi(matchs[35].str()) - 1900;
             time_structure.tm_mon = int(month_number) - 1;
@@ -647,13 +614,11 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             regex_search(date, month, months);
 
             Index month_number = 0;
+
             if(!month.empty())
-            {
-                for(Index i =1 ; i<13  ; i++)
-                {
-                    if(month[size_t(i)] != "") month_number = i;
-                }
-            }
+                for(Index i =1 ; i < 13  ; i++)
+                    if(month[size_t(i)] != "") 
+                        month_number = i;
 
             time_structure.tm_year = stoi(matchs[40].str())-1900;
             time_structure.tm_mon = int(month_number)-1;
@@ -676,12 +641,9 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             Index month_number = 0;
 
             if(!month.empty())
-            {
                 for(Index i =1 ; i<13  ; i++)
-                {
-                    if(month[size_t(i)] != "") month_number = i;
-                }
-            }
+                    if(month[size_t(i)] != "") 
+                        month_number = i;
 
             time_structure.tm_year = stoi(matchs[45].str())-1900;
             time_structure.tm_mon = int(month_number)-1;
@@ -723,13 +685,10 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         time_structure.tm_mday = stoi(matchs[52].str());
         time_structure.tm_min = stoi(matchs[55].str());
         time_structure.tm_sec = stoi(matchs[56].str());
-        if(matchs[57].str()=="PM"){
-            time_structure.tm_hour = stoi(matchs[54].str())+12;
-        }
-        else
-        {
-            time_structure.tm_hour = stoi(matchs[54].str());
-        }
+
+        time_structure.tm_hour = (matchs[57].str() == "PM")
+            ? stoi(matchs[54].str()) + 12
+            : stoi(matchs[54].str());
     }
     else if(matchs[58] != "") // yyyy
     {
@@ -795,12 +754,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
 bool contains_substring(const string& text, const string& sub_string)
 {
-    if(text.find(sub_string) != string::npos)
-    {
-        return true;
-    }
-
-    return false;
+    return text.find(sub_string) != string::npos;
 }
 
 
@@ -878,7 +832,6 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
         {
             buffer += to_replace;
             position += to_replace.size();
-
         }
         else
         {
@@ -895,179 +848,179 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
 
 string replace_non_allowed_programming_expressions(string& s)
 {
-        string out = "";
+    string out;
 
-        if(s[0] == '$')
-            out = s;
+    if(s[0] == '$')
+        out = s;
 
-        replace_all_appearances(s, "fn", "f_n");
-        replace_all_appearances(s, "if", "i_f");
-        replace_all_appearances(s, "do", "d_o");
-        replace_all_appearances(s, "or", "o_r");
-        replace_all_appearances(s, "is", "i_s");
-        replace_all_appearances(s, "as", "a_s");
-        replace_all_appearances(s, "or", "o_r");
-        replace_all_appearances(s, "if", "i_f");
-        replace_all_appearances(s, "in", "in_");
-        replace_all_appearances(s, "del", "del");
-        replace_all_appearances(s, "max","ma_x");
-        replace_all_appearances(s, "min","mi_n");
-        replace_all_appearances(s, "and", "an_d");
-        replace_all_appearances(s, "for", "fo_r");
-        replace_all_appearances(s, "die", "di_e");
-        replace_all_appearances(s, "int", "in_t");
-        replace_all_appearances(s, "new", "ne_w");
-        replace_all_appearances(s, "use", "us_e");
-        replace_all_appearances(s, "var", "va_r");
-        replace_all_appearances(s, "try", "tr_y");
-        replace_all_appearances(s, "xor", "xo_r");
-        replace_all_appearances(s, "def", "de_f");
-        replace_all_appearances(s, "for", "fo_r");
-        replace_all_appearances(s, "not", "no_t_");
-        replace_all_appearances(s, "rise","ri_se");
-        replace_all_appearances(s, "byte", "byt_e");
-        replace_all_appearances(s, "echo", "ech_o");
-        replace_all_appearances(s, "eval", "eva_l");
-        replace_all_appearances(s, "pass", "pa_ss");
-        replace_all_appearances(s, "form", "for_m");
-        replace_all_appearances(s, "else", "el_se");
-        replace_all_appearances(s, "with", "w_ith");
-        replace_all_appearances(s, "exit", "exi_t");
-        replace_all_appearances(s, "auto", "aut_o");
-        replace_all_appearances(s, "enum", "enu_m");
-        replace_all_appearances(s, "case", "cas_e");
-        replace_all_appearances(s, "char", "cha_r");
-        replace_all_appearances(s, "void", "voi_d");
-        replace_all_appearances(s, "goto", "got_o");
-        replace_all_appearances(s, "long", "lon_g");
-        replace_all_appearances(s, "else", "els_e");
-        replace_all_appearances(s, "goto", "got_o");
-        replace_all_appearances(s, "type", "ty_pe");
-        replace_all_appearances(s, "self", "se_lf");
-        replace_all_appearances(s, "list", "lis_t");
-        replace_all_appearances(s, "None", "No_ne");
-        replace_all_appearances(s, "elif", "el_if");
-        replace_all_appearances(s, "True", "t_rue_");
-        replace_all_appearances(s, "super","sup_er");
-        replace_all_appearances(s, "endif", "endi_f");
-        replace_all_appearances(s, "await", "awai_t");
-        replace_all_appearances(s, "catch", "catc_h");
-        replace_all_appearances(s, "class", "clas_s");
-        replace_all_appearances(s, "clone", "clon_e");
-        replace_all_appearances(s, "empty", "empt_y");
-        replace_all_appearances(s, "final", "fina_l");
-        replace_all_appearances(s, "break", "brea_k");
-        replace_all_appearances(s, "while", "whil_e");
-        replace_all_appearances(s, "float", "floa_t");
-        replace_all_appearances(s, "union", "unio_n");
-        replace_all_appearances(s, "short", "shor_t");
-        replace_all_appearances(s, "const", "cons_t");
-        replace_all_appearances(s, "match", "matc_h");
-        replace_all_appearances(s, "isset", "isse_t");
-        replace_all_appearances(s, "while", "whil_e");
-        replace_all_appearances(s, "yield", "yiel_d");
-        replace_all_appearances(s, "False", "Fa_lse");
-        replace_all_appearances(s, "unset", "unse_t");
-        replace_all_appearances(s, "print", "prin_t");
-        replace_all_appearances(s, "trait", "trai_t");
-        replace_all_appearances(s, "throw", "thro_w");
-        replace_all_appearances(s, "raise", "rai_se");
-        replace_all_appearances(s, "while", "wh_ile");
-        replace_all_appearances(s, "yield", "yi_eld");
-        replace_all_appearances(s, "break", "bre_ak");
-        replace_all_appearances(s, "class", "c_lass");
-        replace_all_appearances(s, "string","str_ing");
-        replace_all_appearances(s, "except", "exc_ept");
-        replace_all_appearances(s, "lambda", "lamb_da");
-        replace_all_appearances(s, "assert", "asser_t");
-        replace_all_appearances(s, "global", "glo_bal");
-        replace_all_appearances(s, "elseif", "elsei_f");
-        replace_all_appearances(s, "endfor", "endfo_r");
-        replace_all_appearances(s, "static", "stati_c");
-        replace_all_appearances(s, "switch", "switc_h");
-        replace_all_appearances(s, "struct", "struc_t");
-        replace_all_appearances(s, "double", "doubl_e");
-        replace_all_appearances(s, "sizeof", "sizeo_f");
-        replace_all_appearances(s, "extern", "exter_n");
-        replace_all_appearances(s, "signed", "signe_d");
-        replace_all_appearances(s, "return", "retur_n");
-        replace_all_appearances(s, "global", "globa_l");
-        replace_all_appearances(s, "public", "publi_c");
-        replace_all_appearances(s, "return", "retur_n");
-        replace_all_appearances(s, "static", "stati_c");
-        replace_all_appearances(s, "switch", "switc_h");
-        replace_all_appearances(s, "import", "imp_ort");
-        replace_all_appearances(s, "return", "retu_rn");
-        replace_all_appearances(s, "boolea", "boole_an");
-        replace_all_appearances(s, "import", "includ_e");
-        replace_all_appearances(s, "friend", "frie_end");
-        replace_all_appearances(s, "foreach", "foreac_h");
-        replace_all_appearances(s, "private", "privat_e");
-        replace_all_appearances(s, "require", "requir_e");
-        replace_all_appearances(s, "typedef", "typede_f");
-        replace_all_appearances(s, "_Packed", "_P_acked");
-        replace_all_appearances(s, "default", "defaul_t");
-        replace_all_appearances(s, "extends", "extend_s");
-        replace_all_appearances(s, "finally", "finall_y");
-        replace_all_appearances(s, "finally", "final_ly");
-        replace_all_appearances(s, "nonlocal", "nonlo_cal");
-        replace_all_appearances(s, "continue", "con_tinue");
-        replace_all_appearances(s, "continue", "continu_e");
-        replace_all_appearances(s, "volatile", "volatil_e");
-        replace_all_appearances(s, "unsigned", "unsigne_d");
-        replace_all_appearances(s, "abstract", "abstrac_t");
-        replace_all_appearances(s, "register", "registe_r");
-        replace_all_appearances(s, "endwhile", "endwhil_e");
-        replace_all_appearances(s, "function", "functio_n");
-        replace_all_appearances(s, "readonly", "readonl_y");
-        replace_all_appearances(s, "arguments", "argument_s");
-        replace_all_appearances(s, "endswitch", "endswitc_h");
-        replace_all_appearances(s, "protected", "protecte_d");
-        replace_all_appearances(s, "insteadof", "insteado_f");
-        replace_all_appearances(s, "interface", "interfac_e");
-        replace_all_appearances(s, "namespace", "namespac_e");
-        replace_all_appearances(s, "enddeclare", "enddeclar_e");
-        replace_all_appearances(s, "endforeach", "endforeac_h");
-        replace_all_appearances(s, "implements", "implement_s");
-        replace_all_appearances(s, "instanceof", "instanceo_f");
-        replace_all_appearances(s, "include_once", "include_on_ce_");
-        replace_all_appearances(s, "require_once", "require_on_ce_");
-        replace_all_appearances(s, "__halt_compiler", "__h_a_l_t_c_o_m_p_i_l_e_r_");
+    replace_all_appearances(s, "fn", "f_n");
+    replace_all_appearances(s, "if", "i_f");
+    replace_all_appearances(s, "do", "d_o");
+    replace_all_appearances(s, "or", "o_r");
+    replace_all_appearances(s, "is", "i_s");
+    replace_all_appearances(s, "as", "a_s");
+    replace_all_appearances(s, "or", "o_r");
+    replace_all_appearances(s, "if", "i_f");
+    replace_all_appearances(s, "in", "in_");
+    replace_all_appearances(s, "del", "del");
+    replace_all_appearances(s, "max","ma_x");
+    replace_all_appearances(s, "min","mi_n");
+    replace_all_appearances(s, "and", "an_d");
+    replace_all_appearances(s, "for", "fo_r");
+    replace_all_appearances(s, "die", "di_e");
+    replace_all_appearances(s, "int", "in_t");
+    replace_all_appearances(s, "new", "ne_w");
+    replace_all_appearances(s, "use", "us_e");
+    replace_all_appearances(s, "var", "va_r");
+    replace_all_appearances(s, "try", "tr_y");
+    replace_all_appearances(s, "xor", "xo_r");
+    replace_all_appearances(s, "def", "de_f");
+    replace_all_appearances(s, "for", "fo_r");
+    replace_all_appearances(s, "not", "no_t_");
+    replace_all_appearances(s, "rise","ri_se");
+    replace_all_appearances(s, "byte", "byt_e");
+    replace_all_appearances(s, "echo", "ech_o");
+    replace_all_appearances(s, "eval", "eva_l");
+    replace_all_appearances(s, "pass", "pa_ss");
+    replace_all_appearances(s, "form", "for_m");
+    replace_all_appearances(s, "else", "el_se");
+    replace_all_appearances(s, "with", "w_ith");
+    replace_all_appearances(s, "exit", "exi_t");
+    replace_all_appearances(s, "auto", "aut_o");
+    replace_all_appearances(s, "enum", "enu_m");
+    replace_all_appearances(s, "case", "cas_e");
+    replace_all_appearances(s, "char", "cha_r");
+    replace_all_appearances(s, "void", "voi_d");
+    replace_all_appearances(s, "goto", "got_o");
+    replace_all_appearances(s, "long", "lon_g");
+    replace_all_appearances(s, "else", "els_e");
+    replace_all_appearances(s, "goto", "got_o");
+    replace_all_appearances(s, "type", "ty_pe");
+    replace_all_appearances(s, "self", "se_lf");
+    replace_all_appearances(s, "list", "lis_t");
+    replace_all_appearances(s, "None", "No_ne");
+    replace_all_appearances(s, "elif", "el_if");
+    replace_all_appearances(s, "True", "t_rue_");
+    replace_all_appearances(s, "super","sup_er");
+    replace_all_appearances(s, "endif", "endi_f");
+    replace_all_appearances(s, "await", "awai_t");
+    replace_all_appearances(s, "catch", "catc_h");
+    replace_all_appearances(s, "class", "clas_s");
+    replace_all_appearances(s, "clone", "clon_e");
+    replace_all_appearances(s, "empty", "empt_y");
+    replace_all_appearances(s, "final", "fina_l");
+    replace_all_appearances(s, "break", "brea_k");
+    replace_all_appearances(s, "while", "whil_e");
+    replace_all_appearances(s, "float", "floa_t");
+    replace_all_appearances(s, "union", "unio_n");
+    replace_all_appearances(s, "short", "shor_t");
+    replace_all_appearances(s, "const", "cons_t");
+    replace_all_appearances(s, "match", "matc_h");
+    replace_all_appearances(s, "isset", "isse_t");
+    replace_all_appearances(s, "while", "whil_e");
+    replace_all_appearances(s, "yield", "yiel_d");
+    replace_all_appearances(s, "False", "Fa_lse");
+    replace_all_appearances(s, "unset", "unse_t");
+    replace_all_appearances(s, "print", "prin_t");
+    replace_all_appearances(s, "trait", "trai_t");
+    replace_all_appearances(s, "throw", "thro_w");
+    replace_all_appearances(s, "raise", "rai_se");
+    replace_all_appearances(s, "while", "wh_ile");
+    replace_all_appearances(s, "yield", "yi_eld");
+    replace_all_appearances(s, "break", "bre_ak");
+    replace_all_appearances(s, "class", "c_lass");
+    replace_all_appearances(s, "string","str_ing");
+    replace_all_appearances(s, "except", "exc_ept");
+    replace_all_appearances(s, "lambda", "lamb_da");
+    replace_all_appearances(s, "assert", "asser_t");
+    replace_all_appearances(s, "global", "glo_bal");
+    replace_all_appearances(s, "elseif", "elsei_f");
+    replace_all_appearances(s, "endfor", "endfo_r");
+    replace_all_appearances(s, "static", "stati_c");
+    replace_all_appearances(s, "switch", "switc_h");
+    replace_all_appearances(s, "struct", "struc_t");
+    replace_all_appearances(s, "double", "doubl_e");
+    replace_all_appearances(s, "sizeof", "sizeo_f");
+    replace_all_appearances(s, "extern", "exter_n");
+    replace_all_appearances(s, "signed", "signe_d");
+    replace_all_appearances(s, "return", "retur_n");
+    replace_all_appearances(s, "global", "globa_l");
+    replace_all_appearances(s, "public", "publi_c");
+    replace_all_appearances(s, "return", "retur_n");
+    replace_all_appearances(s, "static", "stati_c");
+    replace_all_appearances(s, "switch", "switc_h");
+    replace_all_appearances(s, "import", "imp_ort");
+    replace_all_appearances(s, "return", "retu_rn");
+    replace_all_appearances(s, "boolea", "boole_an");
+    replace_all_appearances(s, "import", "includ_e");
+    replace_all_appearances(s, "friend", "frie_end");
+    replace_all_appearances(s, "foreach", "foreac_h");
+    replace_all_appearances(s, "private", "privat_e");
+    replace_all_appearances(s, "require", "requir_e");
+    replace_all_appearances(s, "typedef", "typede_f");
+    replace_all_appearances(s, "_Packed", "_P_acked");
+    replace_all_appearances(s, "default", "defaul_t");
+    replace_all_appearances(s, "extends", "extend_s");
+    replace_all_appearances(s, "finally", "finall_y");
+    replace_all_appearances(s, "finally", "final_ly");
+    replace_all_appearances(s, "nonlocal", "nonlo_cal");
+    replace_all_appearances(s, "continue", "con_tinue");
+    replace_all_appearances(s, "continue", "continu_e");
+    replace_all_appearances(s, "volatile", "volatil_e");
+    replace_all_appearances(s, "unsigned", "unsigne_d");
+    replace_all_appearances(s, "abstract", "abstrac_t");
+    replace_all_appearances(s, "register", "registe_r");
+    replace_all_appearances(s, "endwhile", "endwhil_e");
+    replace_all_appearances(s, "function", "functio_n");
+    replace_all_appearances(s, "readonly", "readonl_y");
+    replace_all_appearances(s, "arguments", "argument_s");
+    replace_all_appearances(s, "endswitch", "endswitc_h");
+    replace_all_appearances(s, "protected", "protecte_d");
+    replace_all_appearances(s, "insteadof", "insteado_f");
+    replace_all_appearances(s, "interface", "interfac_e");
+    replace_all_appearances(s, "namespace", "namespac_e");
+    replace_all_appearances(s, "enddeclare", "enddeclar_e");
+    replace_all_appearances(s, "endforeach", "endforeac_h");
+    replace_all_appearances(s, "implements", "implement_s");
+    replace_all_appearances(s, "instanceof", "instanceo_f");
+    replace_all_appearances(s, "include_once", "include_on_ce_");
+    replace_all_appearances(s, "require_once", "require_on_ce_");
+    replace_all_appearances(s, "__halt_compiler", "__h_a_l_t_c_o_m_p_i_l_e_r_");
 
-        for(char& c: s)
-        {
-            if(c=='1'){ out+="_one_";   continue;}
-            if(c=='2'){ out+="_two_";   continue;}
-            if(c=='3'){ out+="_three_"; continue;}
-            if(c=='4'){ out+="_four_";  continue;}
-            if(c=='5'){ out+="_five_";  continue;}
-            if(c=='6'){ out+="_six_";   continue;}
-            if(c=='7'){ out+="_seven_"; continue;}
-            if(c=='8'){ out+="_eight_"; continue;}
-            if(c=='9'){ out+="_nine_";  continue;}
-            if(c=='0'){ out+="_zero_";  continue;}
+    for(char& c: s)
+    {
+        if(c=='1'){ out+="_one_";   continue;}
+        if(c=='2'){ out+="_two_";   continue;}
+        if(c=='3'){ out+="_three_"; continue;}
+        if(c=='4'){ out+="_four_";  continue;}
+        if(c=='5'){ out+="_five_";  continue;}
+        if(c=='6'){ out+="_six_";   continue;}
+        if(c=='7'){ out+="_seven_"; continue;}
+        if(c=='8'){ out+="_eight_"; continue;}
+        if(c=='9'){ out+="_nine_";  continue;}
+        if(c=='0'){ out+="_zero_";  continue;}
 
-            if(c=='.'){ out+="_dot_";   continue;}
-            if(c=='/'){ out+="_div_";   continue;}
-            if(c=='*'){ out+="_mul_";   continue;}
-            if(c=='+'){ out+="_sum_";   continue;}
-            if(c=='-'){ out+="_res_";   continue;}
-            if(c=='='){ out+="_equ_";   continue;}
-            if(c=='!'){ out+="_not_";   continue;}
-            if(c==','){ out+="_colon_"; continue;}
-            if(c==';'){ out+="_semic_"; continue;}
-            if(c=='\\'){ out+="_slash_";continue;}
+        if(c=='.'){ out+="_dot_";   continue;}
+        if(c=='/'){ out+="_div_";   continue;}
+        if(c=='*'){ out+="_mul_";   continue;}
+        if(c=='+'){ out+="_sum_";   continue;}
+        if(c=='-'){ out+="_res_";   continue;}
+        if(c=='='){ out+="_equ_";   continue;}
+        if(c=='!'){ out+="_not_";   continue;}
+        if(c==','){ out+="_colon_"; continue;}
+        if(c==';'){ out+="_semic_"; continue;}
+        if(c=='\\'){ out+="_slash_";continue;}
 
-            if(c=='&'){ out+="_amprsn_"; continue;}
-            if(c=='?'){ out+="_ntrgtn_"; continue;}
-            if(c=='<'){ out+="_lower_" ; continue;}
-            if(c=='>'){ out+="_higher_"; continue;}
+        if(c=='&'){ out+="_amprsn_"; continue;}
+        if(c=='?'){ out+="_ntrgtn_"; continue;}
+        if(c=='<'){ out+="_lower_" ; continue;}
+        if(c=='>'){ out+="_higher_"; continue;}
 
-            if(isalnum(c)!=0){ out += c; continue;}
-            if(isalnum(c)==0){ out+='_'; continue;}
-        }
+        if(isalnum(c)!=0){ out += c; continue;}
+        if(isalnum(c)==0){ out+='_'; continue;}
+    }
 
-        return out;
+    return out;
 }
 
 
@@ -1157,30 +1110,30 @@ void trim(string& text)
 
 void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label)
 {
-    if(!str.empty())
+    if (str.empty()) return;
+    
+    if(str[0] == target_char)
     {
-        if(str[0] == target_char)
-        {
-            string new_string = first_missing_label + target_char;
-            str.replace(0, 1, new_string);
-        }
-
-        if(str[str.length() - 1] == target_char)
-        {
-            string new_string = target_char + last_missing_label;
-            str.replace(str.length() - 1, 1, new_string);
-        }
+        string new_string = first_missing_label + target_char;
+        str.replace(0, 1, new_string);
     }
+
+    if(str[str.length() - 1] == target_char)
+    {
+        string new_string = target_char + last_missing_label;
+        str.replace(str.length() - 1, 1, new_string);
+    }    
 }
 
 
 void replace_double_char_with_label(string &str, const string &target_char, const string &missing_label)
 {
-    string target_pattern = target_char + target_char;
-    string new_pattern = target_char + missing_label + target_char;
+    const string target_pattern = target_char + target_char;
+    const string new_pattern = target_char + missing_label + target_char;
 
     size_t position = 0;
-    while((position = str.find(target_pattern, position)) != string::npos)
+
+    while(position = str.find(target_pattern, position) != string::npos)
     {
         str.replace(position, target_pattern.length(), new_pattern);
         position += new_pattern.length();
@@ -1192,7 +1145,7 @@ void replac_substring_within_quotes(string &str, const string &target, const str
 {
     regex r("\"([^\"]*)\"");
     smatch match;
-    string result = "";
+    string result;
     string prefix = str;
 
     while(regex_search(prefix, match, r))
@@ -1200,14 +1153,17 @@ void replac_substring_within_quotes(string &str, const string &target, const str
         string match_str = match.str();
         string replaced_str = match_str;
         size_t position = 0;
+
         while((position = replaced_str.find(target, position)) != string::npos)
         {
             replaced_str.replace(position, target.length(), replacement);
             position += replacement.length();
         }
+
         result += match.prefix().str() + replaced_str;
         prefix = match.suffix().str();
     }
+
     result += prefix;
     str = result;
 }
@@ -1259,9 +1215,8 @@ string prepend(const string& pre, const string& text)
 bool is_numeric_string_vector(const Tensor<string, 1>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
-    {
-        if(!is_numeric_string(string_list[i])) return false;
-    }
+        if(!is_numeric_string(string_list[i])) 
+            return false;
 
     return true;
 }
@@ -1270,9 +1225,8 @@ bool is_numeric_string_vector(const Tensor<string, 1>& string_list)
 bool has_numbers(const Tensor<string, 1>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
-    {
-        if(is_numeric_string(string_list[i])) return true;
-    }
+        if(is_numeric_string(string_list[i])) 
+            return true;
 
     return false;
 }
@@ -1281,9 +1235,8 @@ bool has_numbers(const Tensor<string, 1>& string_list)
 bool has_strings(const Tensor<string, 1>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
-    {
-        if(!is_numeric_string(string_list[i])) return true;
-    }
+        if(!is_numeric_string(string_list[i])) 
+            return true;
 
     return false;
 }
@@ -1292,9 +1245,8 @@ bool has_strings(const Tensor<string, 1>& string_list)
 bool is_not_numeric(const Tensor<string, 1>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
-    {
-        if(is_numeric_string(string_list[i])) return false;
-    }
+        if(is_numeric_string(string_list[i])) 
+            return false;
 
     return true;
 }
@@ -1306,25 +1258,11 @@ bool is_mixed(const Tensor<string, 1>& string_list)
     unsigned count_not_numeric = 0;
 
     for(Index i = 0; i < string_list.size(); i++)
-    {
-        if(is_numeric_string(string_list[i]))
-        {
-            count_numeric++;
-        }
-        else
-        {
-            count_not_numeric++;
-        }
-    }
+        is_numeric_string(string_list[i]) 
+            ? count_numeric++ 
+            : count_not_numeric++;
 
-    if(count_numeric > 0 && count_not_numeric > 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return count_numeric > 0 && count_not_numeric > 0;
 }
 
 
@@ -1387,11 +1325,8 @@ bool is_not_alnum(char &c)
 bool find_string_in_tensor(Tensor<string, 1>& t, const string& val)
 {
     for(Index i = 0; i < t.dimension(0); i++)
-    {
-        const string elem = t(i);
-
-        if(elem == val) return true;
-    }
+        if(t(i) == val) 
+            return true;
 
     return false;
 }
@@ -1399,19 +1334,13 @@ bool find_string_in_tensor(Tensor<string, 1>& t, const string& val)
 
 string get_word_from_token(string& token)
 {
-    string word = "";
+    string word;
 
     for(char& c : token)
-    {
         if(c != ' ' && c != '=')
-        {
             word += c;
-        }
         else
-        {
             break;
-        }
-    }
 
     return word;
 }
@@ -1452,7 +1381,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
     for(Index i = 0; i < tokens.dimension(0); i++)
     {
         string s = tokens(i);
-        string word = "";
+        string word;
 
         for(char& c : s)
         {
@@ -1461,9 +1390,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
         }
 
         if(word.size() > 1)
-        {
             push_back_string(found_tokens, word);
-        }
     }
 
     new_variable = found_tokens[found_tokens.size()-1];
@@ -1530,6 +1457,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
     return out;
 }
 
+
 Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_name,
                                                        Tensor<string, 1>& output_names,
                                                        ostringstream& buffer_)
@@ -1592,10 +1520,10 @@ string round_to_precision_string(type x, const int& precision)
 
     const type rounded_value = (round(factor*x))/factor;
 
-    stringstream ss;
-    ss << fixed << setprecision(precision) << rounded_value;
+    stringstream buffer;
+    buffer << fixed << setprecision(precision) << rounded_value;
 
-    const string result = ss.str();
+    const string result = buffer.str();
 
     return result;
 }
@@ -1613,10 +1541,10 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
         {
             const type rounded_value = (round(factor*matrix(i,j)))/factor;
 
-            stringstream ss;
-            ss << fixed << setprecision(precision) << rounded_value;
+            stringstream buffer;
+            buffer << fixed << setprecision(precision) << rounded_value;
 
-            const string result = ss.str();
+            const string result = buffer.str();
 
             matrix_rounded(i,j) = result;
         }
@@ -1640,9 +1568,7 @@ Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
     sort(tensor_as_vector.begin(), tensor_as_vector.end(), compare_string_length);
 
     for(int i = 0; i < tensor.size(); i++)
-    {
         tensor(i) = tensor_as_vector[i];
-    }
 
     return tensor;
 }
@@ -1701,10 +1627,8 @@ void display_progress_bar(const int& completed, const int& total)
     {
         if(i < position)
             cout << "=";
-
         else if(i == position)
             cout << ">";
-
         else cout << " ";
     }
     
@@ -1849,7 +1773,7 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
     if(tensor.dimension(1) != length)
         throw runtime_error("Tensor length must be equal to alphabet length.");
 
-    string result = "";
+    string result;
 
     for(Index i = 0; i < tensor.dimension(0); i++)
     {
@@ -1887,9 +1811,7 @@ Index count_tokens(const Tensor<Tensor<string, 1>, 1>& tokens)
     Index count = 0;
 
     for(Index i = 0; i < documents_number; i++)
-    {
         count += tokens(i).size();
-    }
 
     return count;
 }
@@ -1929,18 +1851,14 @@ void to_lower(Tensor<string, 1>& documents)
     const Index documents_number = documents.size();
 
     for(Index i = 0; i < documents_number; i++)
-    {
         to_lower(documents(i));
-    }
 }
 
 
 void to_lower(Tensor<Tensor<string, 1>, 1>& text)
 {
     for(Index i = 0; i < text.size(); i++)
-    {
         to_lower(text(i));
-    }
 }
 
 
@@ -1953,9 +1871,7 @@ Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents, cons
     //#pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
-    {
         tokens(i) = get_tokens(documents(i), separator);
-    }
 
     return tokens;
 }
@@ -2045,12 +1961,11 @@ vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
     vector<pair<string, int>> word_counts(count.begin(), count.end());
 
     sort(word_counts.begin(), word_counts.end(), [](const auto& a, const auto& b)
-        {
-            if(a.second != b.second)
-                return a.second > b.second;
-            else
-                return a.first < b.first;
-        }
+    {
+        return (a.second != b.second) 
+            ? a.second > b.second 
+            : a.first < b.first;
+    }
 );
 
     return word_counts;
@@ -2213,9 +2128,7 @@ void delete_non_alphanumeric(Tensor<string, 1>& documents)
     Tensor<string, 1> new_documents(documents);
 
     for(Index i = 0; i < documents.size(); i++)
-    {
         new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), is_not_alnum), new_documents[i].end());
-    }
 
     documents = new_documents;
 }
@@ -2241,9 +2154,7 @@ Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>& tokens)
     Tensor<string, 1> new_documents(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-    {
         new_documents[i] = to_string(tokens(i));
-    }
 
     return new_documents;
 }
@@ -2259,12 +2170,8 @@ void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& d
         string result;
 
         for(Index j = 0; j < tokens_number; j++)
-        {
             if(!contains(delete_words, tokens(j)))
-            {
                 result += tokens(j) + " ";
-            }
-        }
 
         document(i) = result;
     }
@@ -2314,9 +2221,7 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
             const Index length = documents_words(i)(j).length();
 
             if(length <= minimum_length || length >= maximum_length)
-            {
                 documents_words(i)(j).clear();
-            }
         }
     }
 }
@@ -2329,15 +2234,9 @@ void delete_numbers(Tensor<Tensor<string,1>,1>& documents_words)
     #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
-    {
         for(Index j = 0; j < documents_words(i).size(); j++)
-        {
             if(is_numeric_string(documents_words(i)(j)))
-            {
                 documents_words(i)(j).clear();
-            }
-        }
-    }
 }
 
 
@@ -2349,7 +2248,7 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string, 1> document = documents(i);
+        const Tensor<string, 1> document = documents(i);
 
         for(Index j = 0; j < document.size(); j++)
         {
@@ -2384,9 +2283,7 @@ void replace_accented_words(Tensor<Tensor<string,1>, 1>& documents)
         const Index document_size = documents(i).size();
 
         for(Index j = 0; j < document_size; j++)
-        {
             replace_accented_words(documents(i)(j));
-        }
     }
 }
 
@@ -2432,7 +2329,7 @@ Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
 {
     const Index word_length = word.length();
 
-    string r1 = "";
+    string r1;
 
     for(Index i = 1; i < word_length; i++)
     {
@@ -2445,7 +2342,7 @@ Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
 
     const Index r1_length = r1.length();
 
-    string r2 = "";
+    string r2;
 
     for(Index i = 1; i < r1_length; i++)
     {
@@ -2457,9 +2354,7 @@ Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
     }
 
     Tensor<string,1> r1_r2(2);
-
-    r1_r2[0] = r1;
-    r1_r2[1] = r2;
+    r1_r2.setValues({ r1, r2 });
 
     return r1_r2;
 }
@@ -2467,7 +2362,7 @@ Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
 
 string get_rv(const string& word, const Tensor<string,1>& vowels)
 {
-    string rv = "";
+    string rv;
 
     const Index word_lenght = word.length();
 
@@ -2732,9 +2627,7 @@ Tensor<Index, 1> get_words_number(const Tensor<Tensor<string,1>,1>& tokens)
     Tensor<Index, 1> words_number(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-    {
         words_number(i) = tokens(i).size();
-    }
 
     return words_number;
 }
@@ -2747,9 +2640,7 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
     Tensor<Index, 1> sentences_number(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-    {
         sentences_number(i) = count_tokens(documents(i), ".");
-    }
 
     return sentences_number;
 }
@@ -3201,7 +3092,7 @@ string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& te
     if(tensor.dimension(1) != length)
         throw runtime_error("Tensor length must be equal to alphabet length.");
 
-    string result = "";
+    string result;
 
     for(Index i = 0; i < tensor.dimension(0); i++)
     {
@@ -3238,9 +3129,7 @@ void print_tokens(const Tensor<Tensor<string,1>,1>& tokens)
     for(Index i = 0; i < tokens.size(); i++)
     {
         for(Index j = 0; j < tokens(i).size(); j++)
-        {
             cout << tokens(i)(j) << " - ";
-        }
 
         cout << endl;
     }
@@ -3263,12 +3152,14 @@ int measure(const string& word)
 {
     int count = 0;
     bool vowel_seen = false;
+
     for(char ch : word)
     {
         if(is_vowel(ch))
         {
             vowel_seen = true;
-        } else if(vowel_seen)
+        } 
+        else if(vowel_seen)
         {
             count++;
             vowel_seen = false;
@@ -3282,10 +3173,8 @@ int measure(const string& word)
 bool contains_vowel(const string& word)
 {
     for(char ch : word)
-    {
         if(is_vowel(ch))
             return true;
-    }
 
     return false;
 }
@@ -3295,9 +3184,9 @@ bool is_double_consonant(const string& word)
 {
     if(word.length() < 2) return false;
 
-    char last = word[word.length() - 1];
+    const char last = word[word.length() - 1];
 
-    char second_last = word[word.length() - 2];
+    const char second_last = word[word.length() - 2];
 
     return last == second_last && !is_vowel(last);
 }
@@ -3306,9 +3195,11 @@ bool is_double_consonant(const string& word)
 bool is_consonant_vowel_consonant(const string& word)
 {
     if(word.length() < 3) return false;
+
     char last = word[word.length() - 1];
     char second_last = word[word.length() - 2];
     char third_last = word[word.length() - 3];
+    
     return !is_vowel(last) && is_vowel(second_last) && !is_vowel(third_last) && last != 'w' && last != 'x' && last != 'y';
 }
 
@@ -3325,22 +3216,15 @@ string stem(const string& word)
     transform(result.begin(), result.end(), result.begin(), ::tolower);
 
     // Step 1a
-    if(ends_with(result, "sses"))
-    {
+
+    if (ends_with(result, "sses"))
         result = result.substr(0, result.length() - 2);
-    }
-    else if(ends_with(result, "ies"))
-    {
+    else if (ends_with(result, "ies"))
         result = result.substr(0, result.length() - 2);
-    }
-    else if(ends_with(result, "ss"))
-    {
-        // Do nothing
-    }
+    else if (ends_with(result, "ss"))
+        ;// Do nothing
     else if(ends_with(result, "s"))
-    {
         result = result.substr(0, result.length() - 1);
-    }
 
     // Step 1b
 
@@ -3355,26 +3239,19 @@ string stem(const string& word)
              && contains_vowel(result.substr(0, result.length() - 2)))
     {
         result = result.substr(0, result.length() - (ends_with(result, "ed") ? 2 : 3));
+
         if(ends_with(result, "at") || ends_with(result, "bl") || ends_with(result, "iz"))
-        {
             result += "e";
-        }
         else if(is_double_consonant(result))
-        {
             result = result.substr(0, result.length() - 1);
-        }
         else if(measure(result) == 1 && is_consonant_vowel_consonant(result))
-        {
             result += "e";
-        }
     }
 
     // Step 1c
 
     if(ends_with(result, "y") && contains_vowel(result.substr(0, result.length() - 1)))
-    {
         result[result.length() - 1] = 'i';
-    }
 
     // Additional steps can be added here following the Porter Stemmer algorithm
 

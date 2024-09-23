@@ -220,7 +220,6 @@ void AutoAssociationDataSet::save_auto_associative_data_binary(const string& bin
 
     file.close();
 
-
     cout << "Binary data file saved." << endl;
 }
 
