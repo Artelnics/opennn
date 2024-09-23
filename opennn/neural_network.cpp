@@ -337,33 +337,19 @@ NeuralNetwork::ModelType NeuralNetwork::get_model_type() const
 string NeuralNetwork::get_model_type_string() const
 {
     if(model_type == ModelType::AutoAssociation)
-    {
         return "AutoAssociation";
-    }
     else if(model_type == ModelType::Approximation)
-    {
         return "Approximation";
-    }
     else if(model_type == ModelType::Classification)
-    {
         return "Classification";
-    }
     else if(model_type == ModelType::Forecasting)
-    {
         return "Forecasting";
-    }
     else if(model_type == ModelType::TextClassification)
-    {
         return "TextClassification";
-    }
     else if(model_type == ModelType::ImageClassification)
-    {
         return "ImageClassification";
-    }
     else
-    {
         throw runtime_error("Unkown model type");
-    }
 }
 
 
@@ -382,9 +368,7 @@ string NeuralNetwork::get_output_name(const Index& index) const
 Index NeuralNetwork::get_output_index(const string& name) const
 {
     for(Index i = 0; i < output_names.size(); i++)
-    {
         if(output_names(i) == name) return i;
-    }
 
     return 0;
 }
@@ -407,10 +391,8 @@ Layer* NeuralNetwork::get_layer(const string& name) const
     const Tensor<string, 1> layer_names = get_layer_names();
 
     for(Index i = 0; i < layer_names.size(); i++)
-    {
         if(layer_names(i) == name)
             return layers(i);
-    }
 
     return nullptr;
 }
@@ -461,22 +443,14 @@ Index NeuralNetwork::get_layer_index(const string& name) const
     const Index layers_number = get_layers_number();
 
     if(name == "dataset" || name == "input")
-    {
         return -1;
-    }
 
     if(name == "context")
-    {
         return -2;
-    }
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers(i)->get_name() == name)
-        {
             return i;
-        }
-    }
 
     return 0;
 }
@@ -519,12 +493,8 @@ ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers[i]->get_type() == Layer::Type::Scaling2D)
-        {
             return dynamic_cast<ScalingLayer2D*>(layers[i]);
-        }
-    }
 
     throw runtime_error("No scaling layer 2d in neural network.\n");
 }
@@ -535,12 +505,8 @@ ScalingLayer4D* NeuralNetwork::get_scaling_layer_4d() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers[i]->get_type() == Layer::Type::Scaling4D)
-        {
             return dynamic_cast<ScalingLayer4D*>(layers[i]);
-        }
-    }
 
     throw runtime_error("No scaling layer in neural network.\n");
 }
@@ -551,12 +517,8 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers[i]->get_type() == Layer::Type::Unscaling)
-        {
             return dynamic_cast<UnscalingLayer*>(layers[i]);
-        }
-    }
 
     throw runtime_error("No unscaling layer in neural network.\n");
 }
@@ -567,12 +529,8 @@ BoundingLayer* NeuralNetwork::get_bounding_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers[i]->get_type() == Layer::Type::Bounding)
-        {
             return dynamic_cast<BoundingLayer*>(layers[i]);
-        }
-    }
 
     throw runtime_error("No bounding layer in neural network.\n");
 }
@@ -631,12 +589,8 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers[i]->get_type() == Layer::Type::Probabilistic)
-        {
             return dynamic_cast<ProbabilisticLayer*>(layers[i]);
-        }
-    }
 
     throw runtime_error("No probabilistic layer in neural network.\n");
 }
@@ -647,12 +601,8 @@ LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer() cons
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers[i]->get_type() == Layer::Type::LongShortTermMemory)
-        {
             return dynamic_cast<LongShortTermMemoryLayer*>(layers[i]);
-        }
-    }
 
     throw runtime_error("No long-short-term memory layer in neural network.\n");
 }
@@ -663,12 +613,8 @@ RecurrentLayer* NeuralNetwork::get_recurrent_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers[i]->get_type() == Layer::Type::Recurrent)
-        {
             return dynamic_cast<RecurrentLayer*>(layers[i]);
-        }
-    }
 
     throw runtime_error("No recurrent layer in neural network.\n");
 }
@@ -704,6 +650,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     const Index outputs_number = architecture[size-1];
 
     inputs_name.resize(inputs_number);
+
     for(Index i = 0; i < inputs_number; i++) inputs_name(i) = "input_" + to_string(i+1);
 
     ScalingLayer2D* scaling_layer_2d = new ScalingLayer2D(inputs_number);
@@ -881,38 +828,21 @@ void NeuralNetwork::set_model_type(const NeuralNetwork::ModelType& new_model_typ
 void NeuralNetwork::set_model_type_string(const string& new_model_type)
 {
     if(new_model_type == "Approximation")
-    {
         set_model_type(ModelType::Approximation);
-    }
     else if(new_model_type == "Classification")
-    {
         set_model_type(ModelType::Classification);
-    }
     else if(new_model_type == "Forecasting")
-    {
         set_model_type(ModelType::Forecasting);
-    }
     else if(new_model_type == "ImageClassification")
-    {
         set_model_type(ModelType::ImageClassification);
-    }
     else if(new_model_type == "TextClassification")
-    {
         set_model_type(ModelType::TextClassification);
-    }
     else if(new_model_type == "AutoAssociation")
-    {
         set_model_type(ModelType::AutoAssociation);
-    }
     else
-    {                
-        const string message =
-                "Neural Network class exception:\n"
-                "void set_model_type_string(const string&)\n"
-                "Unknown model type: " + new_model_type + "\n";
-
-        throw runtime_error(message);
-    }
+        throw runtime_error("Neural Network class exception:\n"
+                            "void set_model_type_string(const string&)\n"
+                            "Unknown model type: " + new_model_type + "\n");
 }
 
 
@@ -943,9 +873,7 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
     Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
 
     if(trainable_layers_number > 0)
-    {
         trainable_layers[0]->set_inputs_number(new_inputs_number);
-    }
 }
 
 
@@ -980,9 +908,7 @@ void NeuralNetwork::set_threads_number(const int& new_threads_number)
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         layers(i)->set_threads_number(new_threads_number);
-    }
 }
 
 
@@ -1054,12 +980,8 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
         if(layers(i)->get_type() == Layer::Type::Perceptron)
-        {
             return static_cast<PerceptronLayer*>(layers[i]);
-        }
-    }
 
     return nullptr;
 }
@@ -1114,9 +1036,7 @@ Tensor<Index, 1> NeuralNetwork::get_architecture() const
     Tensor<Index, 1> architecture(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {
         architecture(i) = layers(i)->get_neurons_number();
-    }
 
     return architecture;
 }
@@ -1129,16 +1049,10 @@ Index NeuralNetwork::get_parameters_number() const
     Index parameters_number = 0;
 
     for(Index i = 0; i < trainable_layers.size(); i++)
-    {
         if(trainable_layers[i] == nullptr)
-        {
             cout << "Layer " << i << " is nullptr." << endl;
-        }
         else
-        {
             parameters_number += trainable_layers[i]->get_parameters_number();
-        }
-    }
 
     return parameters_number;
 }
@@ -1163,9 +1077,7 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
         // @todo use memcpy
 
         for(Index j = 0; j < layer_parameters.size(); j++)
-        {
             parameters(j + position) = layer_parameters(j);
-        }
 
         position += layer_parameters.size();
     }
@@ -1181,9 +1093,7 @@ Tensor<Index, 1> NeuralNetwork::get_layers_parameters_numbers() const
     Tensor<Index, 1> layers_parameters_number(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {
         layers_parameters_number[i] = layers(i)->get_parameters_number();
-    }
 
     return layers_parameters_number;
 }
@@ -1198,9 +1108,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
     Tensor<Index, 1> trainable_layers_parameters_number(trainable_layers_number);
 
     for(Index i = 0; i < trainable_layers_number; i++)
-    {
         trainable_layers_parameters_number[i] = trainable_layers[i]->get_parameters_number();
-    }
 
     return trainable_layers_parameters_number;
 }
@@ -1429,6 +1337,7 @@ bool NeuralNetwork::is_input_layer(const Tensor<Index, 1>& layer_inputs_indices)
     return false;
 }
 
+
 bool NeuralNetwork::is_context_layer(const Tensor<Index, 1>& layer_inputs_indices) const
 {
     for(Index i = 0; i < layer_inputs_indices.size(); i++)
@@ -1448,9 +1357,7 @@ void NeuralNetwork::set_parameters_constant(const type& value) const
     #pragma omp parallel for
 
     for(Index i = 0; i < trainable_layers_number; i++)
-    {
         trainable_layers[i]->set_parameters_constant(value);
-    }
 }
 
 
@@ -1460,10 +1367,10 @@ void NeuralNetwork::set_parameters_random() const
 
     Tensor<Layer*, 1> layers = get_layers();
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < layers_number; i++)
-    {
         layers[i]->set_parameters_random();
-    }
 }
 
 
@@ -1622,9 +1529,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
         inputs(direction) = minimum + (maximum - minimum)*type(i)/type(points_number-1);
 
         for(Index j = 0; j < inputs_number; j++)
-        {
             directional_inputs(i,j) = inputs(j);
-        }
     }
 
     return directional_inputs;
@@ -2470,10 +2375,7 @@ string NeuralNetwork::write_expression_c() const
         const string word = get_word_from_token(t);
 
         if(word.size() > 1 && !find_string_in_tensor(found_tokens, word))
-        {
             push_back_string(found_tokens, word);
-        }
-
     }
 
     const string target_string0("Logistic");
@@ -2507,35 +2409,35 @@ string NeuralNetwork::write_expression_c() const
 
     if(logistic)
     {
-        buffer << "float Logistic (float x) {" << endl;
-        buffer << "float z = 1/(1+exp(-x));" << endl;
-        buffer << "return z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
+        buffer << "float Logistic (float x) {" << endl
+               << "float z = 1/(1+exp(-x));" << endl
+               << "return z;" << endl
+               << "}" << endl
+               << "\n" << endl;
     }
 
     if(ReLU)
     {
-        buffer << "float ReLU(float x) {" << endl;
-        buffer << "float z = max(0, x);" << endl;
-        buffer << "return z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
+        buffer << "float ReLU(float x) {" << endl
+               << "float z = max(0, x);" << endl
+               << "return z;" << endl
+               << "}" << endl
+               << "\n" << endl;
     }
 
     if(ExpLinear)
     {
-        buffer << "float ExponentialLinear(float x) {" << endl;
-        buffer << "float z;" << endl;
-        buffer << "float alpha = 1.67326;" << endl;
-        buffer << "if(x>0){" << endl;
-        buffer << "z = x;" << endl;
-        buffer << "}else{" << endl;
-        buffer << "z = alpha*(exp(x)-1);" << endl;
-        buffer << "}" << endl;
-        buffer << "return z;" << endl;
-        buffer << "}" << endl;
-        buffer << "\n" << endl;
+        buffer << "float ExponentialLinear(float x) {" << endl
+               << "float z;" << endl
+               << "float alpha = 1.67326;" << endl
+               << "if(x>0){" << endl
+               << "z = x;" << endl
+               << "}else{" << endl
+               << "z = alpha*(exp(x)-1);" << endl
+               << "}" << endl
+               << "return z;" << endl
+               << "}" << endl
+               << "\n" << endl;
     }
 
     if(SExpLinear)
@@ -2588,14 +2490,10 @@ string NeuralNetwork::write_expression_c() const
             const string token = found_tokens(i);
 
             if(token.find("cell_state") == 0)
-            {
                 cell_states_counter += 1;
-            }
 
             if(token.find("hidden_state") == 0)
-            {
                 hidden_state_counter += 1;
-            }
         }
 
         buffer << "struct LSTMMemory" << endl;
@@ -2646,9 +2544,7 @@ string NeuralNetwork::write_expression_c() const
         }
 
         for(int i = 0; i < cell_states_counter; i++)
-        {
             buffer << "\t\t" << "lstm.cell_states_" << to_string(i) << " = type(0);" << endl;
-        }
 
         buffer << "\t}" << endl;
     }
@@ -2657,23 +2553,19 @@ string NeuralNetwork::write_expression_c() const
 
     for(int i = 0; i < tokens.dimension(0); i++)
     {
-        string t = tokens(i);
+        const string t = tokens(i);
 
-        if(t.size()<=1)
-        {
+        if(t.size() <= 1)
             outputs_buffer << "" << endl;
-        }
         else
-        {
             outputs_buffer << "\t" << t << endl;
-        }
     }
 
     const string keyword = "double";
 
     string outputs_espresion = outputs_buffer.str();
 
-    replace_substring_in_string (found_tokens, outputs_espresion, keyword);
+    replace_substring_in_string(found_tokens, outputs_espresion, keyword);
 
     if(LSTM_number>0)
     {
@@ -2690,28 +2582,18 @@ string NeuralNetwork::write_expression_c() const
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "c");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
-    {
         buffer << fixed_outputs(i) << endl;
-    }
 
     buffer << "\t" << "vector<float> out(" << outputs.size() << ");" << endl;
 
     for(int i = 0; i < outputs.dimension(0); i++)
-    {
         if(outputs[i].empty())
-        {
             buffer << "\t" << "out[" << to_string(i) << "] = " << "output" << to_string(i) << ";"<< endl;
-        }
         else
-        {
             buffer << "\t" << "out[" << to_string(i) << "] = " << outputs[i] << ";" << endl;
-        }
-    }
 
     if(LSTM_number)
-    {
         buffer << "\n\t" << "lstm.time_step_counter += 1;" << endl;
-    }
 
     buffer << "\n\t" << "return out;" << endl;
     buffer << "}"  << endl;
