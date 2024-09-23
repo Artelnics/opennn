@@ -30,14 +30,9 @@ void CrossEntropyError::calculate_error(const Batch& batch,
 {      
     const Index outputs_number = neural_network->get_outputs_number();
 
-    if(outputs_number == 1)
-    {
-        calculate_binary_error(batch, forward_propagation, back_propagation);
-    }
-    else
-    {
-        calculate_multiple_error(batch, forward_propagation, back_propagation);
-    }
+    (outputs_number == 1)
+        ? calculate_binary_error(batch, forward_propagation, back_propagation)
+        : calculate_multiple_error(batch, forward_propagation, back_propagation);
 }
 
 
@@ -119,14 +114,9 @@ void CrossEntropyError::calculate_output_delta(const Batch& batch,
 {
      const Index outputs_number = neural_network->get_outputs_number();
 
-     if(outputs_number == 1)
-     {
-         calculate_binary_output_delta(batch, forward_propagation, back_propagation);
-     }
-     else
-     {
-         calculate_multiple_output_delta(batch, forward_propagation, back_propagation);
-     }
+     (outputs_number == 1)
+         ? calculate_binary_output_delta(batch, forward_propagation, back_propagation)
+         : calculate_multiple_output_delta(batch, forward_propagation, back_propagation);
 }
 
 
