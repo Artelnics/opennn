@@ -110,11 +110,11 @@ private:
 
     Tensor<string, 1> context_vocabulary;
 
-    string context_vocabulary_path = "";
+    string context_vocabulary_path;
 
     Tensor<string, 1> completion_vocabulary;
 
-    string completion_vocabulary_path = "";
+    string completion_vocabulary_path;
 
     Tensor<Index, 1> context_dimensions = Tensor<Index, 1>(1);
 

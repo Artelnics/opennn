@@ -34,10 +34,7 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
 
 bool ConvolutionalLayer::is_empty() const
 {
-    if(biases.size() == 0 && synaptic_weights.size() == 0)
-        return true;
-
-    return false;
+    return biases.size() == 0 && synaptic_weights.size() == 0;
 }
 
 
@@ -166,9 +163,7 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     Tensor<type, 1>& standard_deviations = convolutional_layer_forward_propagation->standard_deviations;
 
     if(is_training)
-    {
         means.device(*thread_pool_device) = outputs.mean(means_dimensions);
-    }
 
     const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
     const Index output_height = get_output_height();

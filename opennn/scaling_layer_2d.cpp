@@ -148,29 +148,17 @@ Tensor<string, 1> ScalingLayer2D::write_scalers() const
     for(Index i = 0; i < neurons_number; i++)
     {
         if(scalers[i] == Scaler::None)
-        {
             scaling_methods_strings[i] = "None";
-        }
         else if(scalers[i] == Scaler::MinimumMaximum)
-        {
             scaling_methods_strings[i] = "MinimumMaximum";
-        }
         else if(scalers[i] == Scaler::MeanStandardDeviation)
-        {
             scaling_methods_strings[i] = "MeanStandardDeviation";
-        }
         else if(scalers[i] == Scaler::StandardDeviation)
-        {
             scaling_methods_strings[i] = "StandardDeviation";
-        }
         else if(scalers[i] == Scaler::Logarithm)
-        {
             scaling_methods_strings[i] = "Logarithm";
-        }
         else
-        {
             throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-        }
     }
 
     return scaling_methods_strings;
@@ -193,29 +181,17 @@ Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
     for(Index i = 0; i < neurons_number; i++)
     {
         if(scalers[i] == Scaler::None)
-        {
             scaling_methods_strings[i] = "no scaling";
-        }
         else if(scalers[i] == Scaler::MeanStandardDeviation)
-        {
             scaling_methods_strings[i] = "mean and standard deviation";
-        }
         else if(scalers[i] == Scaler::StandardDeviation)
-        {
             scaling_methods_strings[i] = "standard deviation";
-        }
         else if(scalers[i] == Scaler::MinimumMaximum)
-        {
             scaling_methods_strings[i] = "minimum and maximum";
-        }
         else if(scalers[i] == Scaler::Logarithm)
-        {
             scaling_methods_strings[i] = "Logarithm";
-        }
         else
-        {
             throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-        }
     }
 
     return scaling_methods_strings;
@@ -427,29 +403,17 @@ void ScalingLayer2D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
     for(Index i = 0; i < neurons_number; i++)
     {
         if(new_scaling_methods_string(i) == "None")
-        {
             new_scaling_methods(i) = Scaler::None;
-        }
         else if(new_scaling_methods_string(i) == "MinimumMaximum")
-        {
             new_scaling_methods(i) = Scaler::MinimumMaximum;
-        }
         else if(new_scaling_methods_string(i) == "MeanStandardDeviation")
-        {
             new_scaling_methods(i) = Scaler::MeanStandardDeviation;
-        }
         else if(new_scaling_methods_string(i) == "StandardDeviation")
-        {
             new_scaling_methods(i) = Scaler::StandardDeviation;
-        }
         else if(new_scaling_methods_string(i) == "Logarithm")
-        {
             new_scaling_methods(i) = Scaler::Logarithm;
-        }
         else
-        {
             throw runtime_error("Unknown scaling method: " + new_scaling_methods_string[i] + ".\n");
-        }
     }
 
     set_scalers(new_scaling_methods);
@@ -465,29 +429,17 @@ void ScalingLayer2D::set_scaler(const Index& variable_index, const Scaler& new_s
 void ScalingLayer2D::set_scaler(const Index& variable_index, const string& new_scaler_string)
 {
     if(new_scaler_string == "None")
-    {
         scalers(variable_index) = Scaler::None;
-    }
     else if(new_scaler_string == "MeanStandardDeviation")
-    {
         scalers(variable_index) = Scaler::MeanStandardDeviation;
-    }
     else if(new_scaler_string == "MinimumMaximum")
-    {
         scalers(variable_index) = Scaler::MinimumMaximum;
-    }
     else if(new_scaler_string == "StandardDeviation")
-    {
         scalers(variable_index) = Scaler::StandardDeviation;
-    }
     else if(new_scaler_string == "Logarithm")
-    {
         scalers(variable_index) = Scaler::Logarithm;
-    }
     else
-    {
         throw runtime_error("Unknown scaling method: " + new_scaler_string + ".\n");
-    }
 }
 
 
@@ -530,16 +482,9 @@ void ScalingLayer2D::set_display(const bool& new_display)
 
 bool ScalingLayer2D::is_empty() const
 {
-    const Index inputs_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    if(inputs_number == 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return neurons_number == 0;
 }
 
 

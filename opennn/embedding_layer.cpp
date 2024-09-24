@@ -242,8 +242,9 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs) const
     {
         random = calculate_random_uniform(type(0), type(1));
 
-        if(random < dropout_rate)    outputs(i) = 0;
-        else    outputs(i) *= scaling_factor;
+        outputs(i) = (random < dropout_rate) 
+            ? 0 
+            : outputs(i) * scaling_factor;
     }
 }
 
@@ -324,9 +325,7 @@ void EmbeddingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
             sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
         for(Index j = 0; j < inputs_number; j++)
-        {
             embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device) += sample_deltas.chip(j, 0);
-        }
     }
 }
 
@@ -534,17 +533,12 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     const type half_depth = type(depth) / 2;
 
     #pragma omp parallel for
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        for(Index j = 0; j < Index(depth); j++)
-        {
-            if(j < Index(half_depth))
-                positional_encoding(i, j) = sin((i) / pow(10000, (j) / half_depth));
-            else
-                positional_encoding(i, j) = cos((i) / pow(10000, (j - Index(half_depth)) / half_depth));
-        }
-    }
 
+    for(Index i = 0; i < inputs_number; i++)
+        for(Index j = 0; j < Index(depth); j++)
+            positional_encoding(i, j) = (j < Index(half_depth))
+                ? sin(i / pow(10000, j / half_depth))
+                : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
 
     built_positional_encoding_matrix = true;
 }
