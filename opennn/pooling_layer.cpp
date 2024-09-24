@@ -359,14 +359,19 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
             PADDING_VALID,
             type(padding_width));
 
-    outputs.device(*thread_pool_device)
-        = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
-
-    // Extract maximum indices
     if (is_training)
     {
+        outputs.device(*thread_pool_device)
+            = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
 
+        Tensor<Index, 4>& inputs_maximal_indices = pooling_layer_forward_propagation->inputs_maximal_indices;
 
+        // @todo
+    }
+    else
+    {
+        outputs.device(*thread_pool_device)
+            = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
     }
 }
 
@@ -444,9 +449,7 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
         static_cast<PoolingLayerBackPropagation*>(back_propagation);
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
-
-    input_derivatives.setZero();
-
+    /*
     for (Index batch_index = 0; batch_index < batch_samples_number; ++batch_index)
     {
         for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
@@ -487,6 +490,7 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
             }
         }
     }
+    */
 }
 
 
@@ -498,15 +502,20 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     const Index input_height = inputs.dimension(1);
     const Index input_width = inputs.dimension(2);
-    const Index input_channels = inputs.dimension(3);
+    const Index channels = inputs.dimension(3);
 
     const Index output_height = deltas.dimension(1);
     const Index output_width = deltas.dimension(2);
 
-    const Index pool_size = pool_height*pool_width;
+    const Index pool_size = pool_height * pool_width;
 
-    const Eigen::array<Index, 4> extents = { 1, pool_height, pool_width, 1 };
-    Tensor<type, 4> gradient_tensor(extents);
+    const Eigen::array<Index, 4> grad_extents = { batch_samples_number, 1, 1, 1 };
+    Eigen::array<Index, 4> grad_offsets;
+
+    Eigen::array<Index, 4> broadcast_dims;
+
+    Eigen::array<Index, 4> offsets;
+    Eigen::array<Index, 4> extents;
 
     // Back propagation
 
@@ -515,32 +524,33 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
-    input_derivatives.setZero();
+    Tensor<type, 4> gradient_tensor = deltas / type(pool_size);
 
-    //#pragma omp paralell for
+    Tensor<type, 4> gradient_tensor_slice;
+    Tensor<type, 4> gradient;
 
-    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
+    for (Index channel_index = 0; channel_index < channels; channel_index++)
     {
-        for (Index channel_index = 0; channel_index < input_channels; channel_index++)
+        for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
         {
-            for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
+            const Index height_start = output_height_index * row_stride;
+            const Index height_end = min(height_start + pool_height, input_height);
+
+            for (Index output_width_index = 0; output_width_index < output_width; output_width_index++)
             {
-                const Index height_start = output_height_index * row_stride;
-                const Index height_end = min(height_start + pool_height, input_height);
+                const Index width_start = output_width_index * column_stride;
+                const Index width_end = min(width_start + pool_width, input_width);
 
-                for (Index output_width_index = 0; output_width_index < output_width; output_width_index++)
-                {
-                    const Index width_start = output_width_index * column_stride;
-                    const Index width_end = min(width_start + pool_width, input_width);
+                grad_offsets = { 0, output_height_index, output_width_index, channel_index };
+                gradient = gradient_tensor.slice(grad_offsets, grad_extents);
 
-                    const type gradient = deltas(batch_index, output_height_index, output_width_index, channel_index) / type(pool_size);
+                broadcast_dims = { 1, height_end - height_start, width_end - width_start, 1 };
+                gradient_tensor_slice = gradient.broadcast(broadcast_dims);
 
-                    const Eigen::array<Index, 4> offsets = { batch_index, height_start, width_start, channel_index };
+                offsets = { 0, height_start, width_start, channel_index };
+                extents = { batch_samples_number, height_end - height_start, width_end - width_start, 1 };
 
-                    gradient_tensor.setConstant(gradient);
-
-                    input_derivatives.slice(offsets, extents) += gradient_tensor;
-                }
+                input_derivatives.slice(offsets, extents) += gradient_tensor_slice;
             }
         }
     }
