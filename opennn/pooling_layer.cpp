@@ -325,21 +325,17 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training) const
 {
+    const Index batch_samples_number = inputs.dimension(0);
 
     const Index input_height = inputs.dimension(1);
     const Index input_width = inputs.dimension(2);
 
     const Index output_width = get_output_width();
     const Index output_height = get_output_height();
-    const Index output_channels = get_channels_number();
+    const Index channels = get_channels_number();
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
         = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
-
-    const Index batch_samples_number = pooling_layer_forward_propagation->batch_samples_number;
-
-    const Index in_rows_stride = 1;
-    const Index in_columns_stride = 1;
 
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
@@ -347,26 +343,37 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array({batch_samples_number,
                                                                output_height,
                                                                output_width,
-                                                               output_channels});
+                                                               channels});
 
-    image_patches.device(*thread_pool_device)
-        = inputs.extract_image_patches(pool_height,
-            pool_width,
-            row_stride,
-            column_stride,
-            in_rows_stride,
-            in_columns_stride,
-            PADDING_VALID,
-            type(padding_width));
+    image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
+        pool_height,
+        pool_width,
+        row_stride,
+        column_stride,
+        1,1,
+        PADDING_VALID,
+        type(padding_width));
 
     outputs.device(*thread_pool_device)
         = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
 
-    // Extract maximum indices
     if (is_training)
     {
+        const Index pool_size = pool_height * pool_width;
+        const Index output_size = output_height * output_width * channels;
+        const Eigen::array<ptrdiff_t, 3> outputs_dimensions({ output_height,output_width,channels });
 
+        Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
+        Tensor<type, 2> patches_flat;
+
+        for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
+        {
+            patches_flat = image_patches.chip(batch_index, 0)
+                .shuffle(Eigen::array<Index, 4>{0, 1, 2, 3}).reshape(Eigen::array<Index, 2>{ pool_size, output_size });
+
+            maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(outputs_dimensions);
+        }
     }
 }
 
@@ -391,18 +398,12 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                                             deltas_pair(0).second[2],
                                             deltas_pair(0).second[3]);
 
-    // Forward propagation
-
-    const PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
-          static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
-
-    const Tensor<type, 4> outputs = pooling_layer_forward_propagation->outputs;
-    
     switch(pooling_method)
     {
     case PoolingMethod::MaxPooling:
         back_propagate_max_pooling(inputs,
                                    deltas,
+                                   forward_propagation,
                                    back_propagation);
         break;
 
@@ -427,16 +428,26 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
 
 void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                               const Tensor<type, 4>& deltas,
+                                              LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
     const Index batch_samples_number = inputs.dimension(0);
 
     const Index input_height = inputs.dimension(1);
     const Index input_width = inputs.dimension(2);
-    const Index input_channels = inputs.dimension(3);
+    const Index channels = inputs.dimension(3);
 
     const Index output_height = deltas.dimension(1);
     const Index output_width = deltas.dimension(2);
+
+    const Index pool_size = pool_height * pool_width;
+
+    // Forward propagation
+
+    PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
+        static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
+
+    Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
     // Back propagation
 
@@ -445,44 +456,26 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
+    // Input derivatives
+
     input_derivatives.setZero();
 
-    for (Index batch_index = 0; batch_index < batch_samples_number; ++batch_index)
+    #pragma omp parallel for
+
+    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
     {
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+        for (Index channel_index = 0; channel_index < channels; channel_index++)
         {
-            for (Index output_height_index = 0; output_height_index < output_height; ++output_height_index)
+            for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
             {
-                const Index height_start = output_height_index * row_stride;
-                const Index height_end = min(height_start + pool_height, input_height);
-
-                for (Index output_width_index = 0; output_width_index < output_width; ++output_width_index)
+                for (Index output_width_index = 0; output_width_index < output_width; output_width_index++)
                 {
-                    
-                    const Index width_start = output_width_index * column_stride;
-                    const Index width_end = min(width_start + pool_width, input_width);
+                    const Index maximal_index = maximal_indices(batch_index, output_height_index, output_width_index, channel_index);
 
-                    // @todo calculate input maximal indices in forward propagate 
+                    const Index input_row = output_height_index * row_stride + maximal_index % pool_height;
+                    const Index input_column = output_width_index * column_stride + maximal_index / pool_width;
 
-                    type maximum = -numeric_limits<type>::infinity();
-                    Index maximal_height = height_start;
-                    Index maximal_width = width_start;
-
-                    for (Index height_index = height_start; height_index < height_end; ++height_index)
-                    {
-                        for (Index width_index = width_start; width_index < width_end; ++width_index)
-                        {
-                            if (inputs(batch_index, height_index, width_index, channel_index) > maximum)
-                            {
-                                maximum = inputs(batch_index, height_index, width_index, channel_index);
-                                maximal_height = height_index;
-                                maximal_width = width_index;
-                            }
-                        }
-                    }
-
-                    input_derivatives(batch_index, maximal_height, maximal_width, channel_index)
-                        += deltas(batch_index, output_height_index, output_width_index, channel_index);
+                    input_derivatives(batch_index, input_row, input_column, channel_index) += deltas(batch_index, output_height_index, output_width_index, channel_index);
                 }
             }
         }
@@ -498,15 +491,20 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     const Index input_height = inputs.dimension(1);
     const Index input_width = inputs.dimension(2);
-    const Index input_channels = inputs.dimension(3);
+    const Index channels = inputs.dimension(3);
 
     const Index output_height = deltas.dimension(1);
     const Index output_width = deltas.dimension(2);
 
-    const Index pool_size = pool_height*pool_width;
+    const Index pool_size = pool_height * pool_width;
 
-    const Eigen::array<Index, 4> extents = { 1, pool_height, pool_width, 1 };
-    Tensor<type, 4> gradient_tensor(extents);
+    const Eigen::array<Index, 4> grad_extents = { batch_samples_number, 1, 1, 1 };
+    Eigen::array<Index, 4> grad_offsets;
+
+    Eigen::array<Index, 4> broadcast_dims;
+
+    Eigen::array<Index, 4> offsets;
+    Eigen::array<Index, 4> extents;
 
     // Back propagation
 
@@ -515,32 +513,35 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
-    input_derivatives.setZero();
+    Tensor<type, 4> gradient_tensor = deltas / type(pool_size);
 
-    //#pragma omp paralell for
+    Tensor<type, 4> gradient_tensor_slice;
+    Tensor<type, 4> gradient;
 
-    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
+    // Input derivatives
+
+    for (Index channel_index = 0; channel_index < channels; channel_index++)
     {
-        for (Index channel_index = 0; channel_index < input_channels; channel_index++)
+        for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
         {
-            for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
+            const Index height_start = output_height_index * row_stride;
+            const Index height_end = min(height_start + pool_height, input_height);
+
+            for (Index output_width_index = 0; output_width_index < output_width; output_width_index++)
             {
-                const Index height_start = output_height_index * row_stride;
-                const Index height_end = min(height_start + pool_height, input_height);
+                const Index width_start = output_width_index * column_stride;
+                const Index width_end = min(width_start + pool_width, input_width);
 
-                for (Index output_width_index = 0; output_width_index < output_width; output_width_index++)
-                {
-                    const Index width_start = output_width_index * column_stride;
-                    const Index width_end = min(width_start + pool_width, input_width);
+                grad_offsets = { 0, output_height_index, output_width_index, channel_index };
+                gradient = gradient_tensor.slice(grad_offsets, grad_extents);
 
-                    const type gradient = deltas(batch_index, output_height_index, output_width_index, channel_index) / type(pool_size);
+                broadcast_dims = { 1, height_end - height_start, width_end - width_start, 1 };
+                gradient_tensor_slice = gradient.broadcast(broadcast_dims);
 
-                    const Eigen::array<Index, 4> offsets = { batch_index, height_start, width_start, channel_index };
+                offsets = { 0, height_start, width_start, channel_index };
+                extents = { batch_samples_number, height_end - height_start, width_end - width_start, 1 };
 
-                    gradient_tensor.setConstant(gradient);
-
-                    input_derivatives.slice(offsets, extents) += gradient_tensor;
-                }
+                input_derivatives.slice(offsets, extents) += gradient_tensor_slice;
             }
         }
     }
@@ -774,9 +775,9 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     pool.setConstant(type(1.0 / pool_size));
 
-    inputs_maximal_indices.resize(batch_samples_number,
-                                  input_height,
-                                  input_width,
+    maximal_indices.resize(batch_samples_number,
+                                  output_height,
+                                  output_width,
                                   channels);
 }
 
