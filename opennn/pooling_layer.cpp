@@ -360,13 +360,20 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     if (is_training)
     {
         const Index pool_size = pool_height * pool_width;
-        const Index output_size = batch_samples_number * output_height * output_width * channels;
+        const Index output_size = output_height * output_width * channels;
+        const Eigen::array<ptrdiff_t, 3> outputs_dimensions({ output_height,output_width,channels });
 
         Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
-        Tensor<type, 2> patches_flat = image_patches.shuffle(Eigen::array<Index, 5>{0, 1, 2, 4, 3}).reshape(Eigen::array<Index, 2>{output_size, pool_size});
+        Tensor<type, 2> patches_flat;
 
-        maximal_indices = patches_flat.argmax(1).reshape(outputs_dimensions_array);;
+        for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
+        {
+            patches_flat = image_patches.chip(batch_index, 0)
+                .shuffle(Eigen::array<Index, 4>{0, 1, 2, 3}).reshape(Eigen::array<Index, 2>{ pool_size, output_size });
+
+            maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(outputs_dimensions);
+        }
     }
 }
 
@@ -390,7 +397,7 @@ void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
                                             deltas_pair(0).second[1],
                                             deltas_pair(0).second[2],
                                             deltas_pair(0).second[3]);
-    
+
     switch(pooling_method)
     {
     case PoolingMethod::MaxPooling:
