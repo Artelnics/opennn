@@ -1539,14 +1539,14 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
     {
         for(int j = 0; j < matrix_rounded.dimension(1); j++)
         {
-            const type rounded_value = (round(factor*matrix(i,j)))/factor;
+            const type rounded_value = (round(factor*matrix(i, j)))/factor;
 
             stringstream buffer;
             buffer << fixed << setprecision(precision) << rounded_value;
 
             const string result = buffer.str();
 
-            matrix_rounded(i,j) = result;
+            matrix_rounded(i, j) = result;
         }
     }
 

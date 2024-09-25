@@ -127,6 +127,7 @@ public:
 
     void back_propagate_max_pooling(const Tensor<type, 4>&,
                                     const Tensor<type, 4>&,
+                                    LayerForwardPropagation*,
                                     LayerBackPropagation*) const;
 
     void back_propagate_average_pooling(const Tensor<type, 4>&,
@@ -189,7 +190,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 5> image_patches;
 
-    Tensor<Index, 4> inputs_maximal_indices;
+    Tensor<Index, 4> maximal_indices;
 };
 
 

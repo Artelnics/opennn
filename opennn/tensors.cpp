@@ -159,7 +159,7 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-           matrix(i,j) *= vector(j);
+           matrix(i, j) *= vector(j);
         }
     }
 }
@@ -884,7 +884,7 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     {
        for(Index j = 0; j < data_columns; j++)
        {
-           file << data(i,j);
+           file << data(i, j);
 
            if(j != data_columns -1)
            {
@@ -1711,7 +1711,7 @@ Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>& x, const Tensor<ty
 
         for(Index j = 0; j < y.dimension(1); j++)
         {
-            data(i, 1+j) = y(i,j);
+            data(i, 1+j) = y(i, j);
         }
     }
 
@@ -1732,7 +1732,7 @@ Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<ty
     {
         for(Index j = 0; j < x.dimension(1); j++)
         {
-            data(i, j) = x(i,j);
+            data(i, j) = x(i, j);
         }
 
         data(i, columns_number-1) = y(i);
@@ -1755,12 +1755,12 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
     {
         for(Index j = 0; j < x.dimension(1); j++)
         {
-            data(i,j) = x(i,j);
+            data(i, j) = x(i, j);
         }
 
         for(Index j = 0; j < y.dimension(1); j++)
         {
-            data(i, x.dimension(1) + j) = y(i,j);
+            data(i, x.dimension(1) + j) = y(i, j);
         }
     }
 
@@ -1887,7 +1887,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
    {
       for(Index j = 0; j < columns_number; j++)
       {
-          new_matrix(i,j) = tensor(i,j);
+          new_matrix(i, j) = tensor(i, j);
       }
    }
 
@@ -1897,7 +1897,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
    {
       for(Index j = 0; j < columns_number; j++)
       {
-         new_matrix(i-1,j) = tensor(i,j);
+         new_matrix(i-1,j) = tensor(i, j);
       }
    }
 
@@ -2086,42 +2086,35 @@ void swap_rows(Tensor<type, 2>& matrix, const Index& row_1, const Index& row_2)
 // }
 
 
-// Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Index, 1>& tensor_2)
-// {
-//     Index intersection_index_number = 0;
+Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Index, 1>& tensor_2)
+{
+    Index intersection_index_number = 0;
 
-//     for(Index i = 0; i < tensor_1.size(); i++)
-//     {
-//         for(Index j = 0; j < tensor_2.size(); j++)
-//         {
-//             if(tensor_1(i) == tensor_2(j)) {
-//                 intersection_index_number++;
-//             }
-//         }
-//     }
+    for(Index i = 0; i < tensor_1.size(); i++)
+        for(Index j = 0; j < tensor_2.size(); j++)
+            if(tensor_1(i) == tensor_2(j))
+                intersection_index_number++;
 
-//     if(intersection_index_number == 0)
-//     {
-//         return Tensor<Index, 1>(0);
-//     }
+    if(intersection_index_number == 0)
+        return Tensor<Index, 1>(0);
 
-//     Tensor<Index, 1> intersection(intersection_index_number);
-//     Index count = 0;
+    Tensor<Index, 1> intersection(intersection_index_number);
+    Index count = 0;
 
-//     for(Index i = 0; i < tensor_1.size(); i++)
-//     {
-//         for(Index j = 0; j < tensor_2.size(); j++)
-//         {
-//             if(tensor_1(i) == tensor_2(j))
-//             {
-//                 intersection(count) = tensor_2(j);
-//                 count++;
-//             }
-//         }
-//     }
+    for(Index i = 0; i < tensor_1.size(); i++)
+    {
+        for(Index j = 0; j < tensor_2.size(); j++)
+        {
+            if(tensor_1(i) == tensor_2(j))
+            {
+                intersection(count) = tensor_2(j);
+                count++;
+            }
+        }
+    }
 
-//     return intersection;
-// }
+    return intersection;
+}
 
 
 type round_to_precision(type x, const int& precision)
@@ -2142,7 +2135,7 @@ type round_to_precision(type x, const int& precision)
 //     {
 //         for(int j = 0; j < matrix.dimension(1); j++)
 //         {
-//             matrix_rounded(i,j) = (round(factor*matrix(i,j)))/factor;
+//             matrix_rounded(i, j) = (round(factor*matrix(i, j)))/factor;
 //         }
 //     }
 

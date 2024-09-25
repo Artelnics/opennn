@@ -134,7 +134,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_name, co
         {
             const type standard_deviation = descriptives(i).standard_deviation;
 
-            buffer << output_names[i] <<  "=" <<  inputs_name(i) << "*" << standard_deviation<<";\n";
+            buffer << output_names[i] << "=" <<  inputs_name(i) << "*" << standard_deviation<<";\n";
         }
         else if(scalers(i) == Scaler::Logarithm)
         {
