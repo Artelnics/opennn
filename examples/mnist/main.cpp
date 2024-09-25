@@ -30,7 +30,7 @@ int main()
     
         const Index kernel_height = 2;
         const Index kernel_width = 2;
-        const Index channels = 3;
+        const Index channels = 1;
         const Index kernels_number = 1;
 
         const Index pool_height = 2;
@@ -40,8 +40,8 @@ int main()
         
         //Random image data set 
         const Index samples_number = 2;
-        const Index image_height = 5;
-        const Index image_width = 5;
+        const Index image_height = 4;
+        const Index image_width = 4;
         ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 2);
         image_data_set.set_image_data_random();
         
@@ -49,15 +49,10 @@ int main()
         //ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
         //image_data_set.set_data_source_path("C:/mnist/train");
-        //image_data_set.set_data_source_path("C:/cifar10");
 
         //image_data_set.read_bmp();
 
-        //image_data_set.set_training();
-
         //image_data_set.print();
-
-        //image_data_set.print_data();
 
         // Neural network
 
@@ -66,34 +61,24 @@ int main()
         //ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
         //neural_network.add_layer(scaling_layer);
 
-        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
-        //                                                                { kernel_height, kernel_width, kernel_channels, kernels_number });
-        //neural_network.add_layer(convolutional_layer);
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
+                                                                        { kernel_height, kernel_width, channels, kernels_number });
+        neural_network.add_layer(convolutional_layer);
 
         //ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer->get_output_dimensions(),
-        //                                                                  { kernel_height, kernel_width, kernels_number, kernels_number } );
+        //                                                                  { kernel_height, kernel_width, channels, kernels_number } );
         //neural_network.add_layer(convolutional_layer_2);
 
-        //ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(convolutional_layer_2->get_output_dimensions(),
-        //                                                                  { kernel_height,kernel_width,kernels_number,kernels_number });
-        //neural_network.add_layer(convolutional_layer_3);
-
-        PoolingLayer* pooling_layer = new PoolingLayer(image_data_set.get_input_dimensions(),
+        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer->get_output_dimensions(),
                                                       { pool_height , pool_width } );
-        pooling_layer->set_pooling_method("MaxPooling");
         neural_network.add_layer(pooling_layer);
 
-        PoolingLayer* pooling_layer_2 = new PoolingLayer(pooling_layer->get_output_dimensions(),
-                                                        { pool_height , pool_width });
-        pooling_layer_2->set_pooling_method("AveragePooling");
-        neural_network.add_layer(pooling_layer_2);
+        //PoolingLayer* pooling_layer_2 = new PoolingLayer(pooling_layer->get_output_dimensions(),
+        //                                                { pool_height , pool_width });
+        //pooling_layer_2->set_pooling_method("MaxPooling");
+        //neural_network.add_layer(pooling_layer_2);
 
-        PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_output_dimensions(),
-                                                        { 2 , 2 });
-        pooling_layer_3->set_pooling_method("MaxPooling");
-        neural_network.add_layer(pooling_layer_3);
-
-        FlattenLayer* flatten_layer = new FlattenLayer(pooling_layer_3->get_output_dimensions());
+        FlattenLayer* flatten_layer = new FlattenLayer(pooling_layer->get_output_dimensions());
         neural_network.add_layer(flatten_layer);
 
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(flatten_layer->get_output_dimensions(),
