@@ -284,9 +284,9 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 }
 
 
-/*void DataSetTest::test_calculate_input_target_correlations()
+/*void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 {
-    cout << "test_calculate_input_target_correlations\n";
+    cout << "test_calculate_input_target_raw_variable_correlations\n";
 
     // Test 1 (numeric and numeric trivial case)
 
@@ -307,7 +307,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    Tensor<Correlation, 2> input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
     assert_true(input_target_correlations(0,0).r == 1, LOG);
     assert_true(input_target_correlations(1,0).r == 1, LOG);

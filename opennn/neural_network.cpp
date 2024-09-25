@@ -334,20 +334,23 @@ NeuralNetwork::ModelType NeuralNetwork::get_model_type() const
 
 string NeuralNetwork::get_model_type_string() const
 {
-    if(model_type == ModelType::AutoAssociation)
-        return "AutoAssociation";
-    else if(model_type == ModelType::Approximation)
-        return "Approximation";
-    else if(model_type == ModelType::Classification)
-        return "Classification";
-    else if(model_type == ModelType::Forecasting)
-        return "Forecasting";
-    else if(model_type == ModelType::TextClassification)
-        return "TextClassification";
-    else if(model_type == ModelType::ImageClassification)
-        return "ImageClassification";
-    else
-        throw runtime_error("Unkown model type");
+    switch (model_type)
+    {
+        case ModelType::AutoAssociation:
+            return "AutoAssociation";
+        case ModelType::Approximation:
+            return "Approximation";
+        case ModelType::Classification:
+            return "Classification";
+        case ModelType::Forecasting:
+            return "Forecasting";
+        case ModelType::TextClassification:
+            return "TextClassification";
+        case ModelType::ImageClassification:
+            return "ImageClassification";
+        default:
+            throw runtime_error("Unkown model type");
+    }
 }
 
 

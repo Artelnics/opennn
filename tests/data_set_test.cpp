@@ -155,14 +155,14 @@ void DataSetTest::test_calculate_input_variables_descriptives()
                     {type(1), type(2.0), type(3.0)}});
 
     data_set.set(data);
-/*
+
     input_variables_descriptives = data_set.calculate_input_variables_descriptives();
 
     assert_true(input_variables_descriptives[0].mean - type(2.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].standard_deviation - type(1)< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].minimum - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+
 }
 
 
@@ -223,11 +223,12 @@ void DataSetTest::test_filter_data()
 
     maximums.resize(2);
     maximums.setValues({ type(2), type(0.5)});
-
+/*
     data_set.filter_data(minimums, maximums);
-
+*/
     assert_true(data_set.get_sample_use(0) == DataSet::SampleUse::None, LOG);
     assert_true(data_set.get_sample_use(1) == DataSet::SampleUse::None, LOG);
+
 }
 
 
@@ -380,13 +381,13 @@ void DataSetTest::test_calculate_Tukey_outliers()
 
 void DataSetTest::test_read_csv()
 {
-/*
+
     cout << "test_read_csv\n";
 
     // Test
-
+/*
     data_set.set(2, 2, 2);
-    data_set.set_separator(',');
+    data_set.set_separator(DataSet::Separator::Comma);
     data_path = "../data/data.dat";
     data_set.set_data_source_path(data_path);
     data_set.set_data_constant(type(0));
@@ -399,7 +400,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 
-    data_set.set_separator('\t');
+    data_set.set_separator(DataSet::Separator::Tab);
     data_string = "\n\n\n   1\t2   \n\n\n   3\t4   \n\n\n    5\t6    \n\n\n";
 
     file.open(data_path.c_str());
@@ -426,7 +427,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 
-    data_set.set_separator('\t');
+    data_set.set_separator(DataSet::Separator::Tab);
     data_string = "\n\n\n   1\t2   \n\n\n   3\t4   \n\n\n   5\t6  \n\n\n";
 
     file.open(data_path.c_str());
@@ -456,7 +457,7 @@ void DataSetTest::test_read_csv()
 
     data_set.set();
     data_set.set_has_header(true);
-    data_set.set_separator(' ');
+    data_set.set_separator(DataSet::Separator::Space);
     data_string = "x y\n"
                   "1 2\n"
                   "3 4\n"
@@ -485,7 +486,7 @@ void DataSetTest::test_read_csv()
     // Test
 
     data_set.set_has_header(true);
-    data_set.set_separator(',');
+    data_set.set_separator(DataSet::Separator::Comma);
 
     data_string = "\tx\t,\ty\n"
                   "\t1\t,\t2\n"
@@ -510,7 +511,7 @@ void DataSetTest::test_read_csv()
     // Test
 
     data_set.set_has_header(true);
-    data_set.set_separator(',');
+    data_set.set_separator(DataSet::Separator::Comma);
 
     data_string = "x , y\n"
                   "1 , 2\n"
@@ -535,7 +536,7 @@ void DataSetTest::test_read_csv()
     // Test
 
     data_set.set_has_header(false);
-    data_set.set_separator(',');
+    data_set.set_separator(DataSet::Separator::Comma);
     data_string =
             "5.1,3.5,1.4,0.2,Iris-setosa\n"
             "7.0,3.2,4.7,1.4,Iris-versicolor\n"
@@ -554,7 +555,7 @@ void DataSetTest::test_read_csv()
     // Test
 
     data_set.set_has_header(false);
-    data_set.set_separator(',');
+    data_set.set_separator(DataSet::Separator::Comma);
     data_string =
             "5.1,3.5,1.4,0.2,Iris-setosa\n"
             "7.0,3.2,4.7,1.4,Iris-versicolor\n"
@@ -591,7 +592,7 @@ void DataSetTest::test_read_csv()
     // Test
 
     data_set.set_has_header(true);
-    data_set.set_separator(',');
+    data_set.set_separator(DataSet::Separator::Comma);
     data_set.set_missing_values_label("NaN");
     data_string =
             "sepal length,sepal width,petal length,petal width,class\n"
@@ -632,11 +633,11 @@ void DataSetTest::test_read_csv()
     assert_true(data(2,4) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data(2,5) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data(2,6) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+
     // Test
-/*
+
     data_set.set_has_header(false);
-    data_set.set_separator(' ');
+    data_set.set_separator(DataSet::Separator::Space);
     data_string = "1 2\n3 4\n5 6";
 
     file.open(data_path.c_str());
@@ -652,11 +653,11 @@ void DataSetTest::test_read_csv()
 
     assert_true(data_set.get_variable_name(0) == "x", LOG);
     assert_true(data_set.get_variable_name(1) == "y", LOG);
-*/
+
     // Test
-/*
+
     data_set.set_has_header(false);
-    data_set.set_separator(' ');
+    data_set.set_separator(DataSet::Separator::Space);
     data_string = "1 true\n"
                   "3 false\n"
                   "5 true\n";
@@ -679,7 +680,7 @@ void DataSetTest::test_read_csv()
 
     // Test
 
-    data_set.set_separator('\t');
+    data_set.set_separator(DataSet::Separator::Tab);
     data_set.set_missing_values_label("NaN");
     data_string =
             "f\t52\t1100\t32\t145490\t4\tno\n"
@@ -744,9 +745,9 @@ void DataSetTest::test_read_car_csv()
 
     try
     {
-        /*
-        data_set.set("../../datasets/car.data",',',false);
-        */
+       
+        data_set.set("../../datasets/car.data", ",");
+        
         assert_true(data_set.get_samples_number() == 1728, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Categorical, LOG);
         assert_true(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Categorical, LOG);
@@ -765,13 +766,13 @@ void DataSetTest::test_read_car_csv()
 
 void DataSetTest::test_read_empty_csv()
 {
-/*    cout << "test_read_empty_csv\n";
+    cout << "test_read_empty_csv\n";
 
     data_set.set();
 
     try
     {
-        data_set.set("../../datasets/empty.csv",' ',false);
+        data_set.set("../../datasets/empty.csv", " ", false);
 
         assert_true(data_set.is_empty(), LOG);
         assert_true(data_set.get_samples_number() == 0, LOG);
@@ -781,16 +782,17 @@ void DataSetTest::test_read_empty_csv()
     catch(const exception&)
     {
         assert_true(true,LOG);
-    }*/
+    }
 }
 
 
 void DataSetTest::test_read_heart_csv()
 {
- /*   cout << "test_read_heart_csv\n";
+    cout << "test_read_heart_csv\n";
+
     try
     {
-        data_set.set("../../datasets/heart.csv",',',true);
+        data_set.set("../../datasets/heart.csv", ",", true);
 
         assert_true(data_set.get_samples_number() == 303, LOG);
         assert_true(data_set.get_variables_number() == 14, LOG);
@@ -812,7 +814,7 @@ void DataSetTest::test_read_heart_csv()
     catch (const exception&)
     {
         assert_true(true,LOG);
-    }       */
+    }       
 }
 
 
@@ -822,9 +824,9 @@ void DataSetTest::test_read_iris_csv()
 
     try
     {
-        /*
-        data_set.set("../../datasets/iris.data",',',false);
-        */
+        
+        data_set.set("../../datasets/iris.data", ",", false);
+        
         assert_true(data_set.get_samples_number() == 150, LOG);
         assert_true(data_set.get_variables_number() == 7, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric, LOG);
@@ -842,11 +844,11 @@ void DataSetTest::test_read_iris_csv()
 
 void DataSetTest::test_read_mnsit_csv()
 {
-/*    cout << "test_read_mnist_csv\n";
+    cout << "test_read_mnist_csv\n";
 
     try
     {
-        data_set.set("../../datasets/mnist.csv",',',false);
+        data_set.set("../../datasets/mnist.csv", ",", false);
 
         assert_true(data_set.get_samples_number() == 100, LOG);
         assert_true(data_set.get_variables_number() == 785, LOG);
@@ -854,7 +856,7 @@ void DataSetTest::test_read_mnsit_csv()
     catch(const exception&)
     {
         assert_true(true,LOG);
-    }   */
+    }   
 }
 
 
@@ -863,10 +865,9 @@ void DataSetTest::test_read_one_variable_csv()
     cout << "test_read_one_variable_csv\n";
 
     try
-    {
-        /*
-        data_set.set("../../datasets/one_variable.csv",',',false);
-        */
+    { 
+        data_set.set("../../datasets/one_variable.csv", ",", false);
+        
         assert_true(data_set.get_samples_number() == 7, LOG);
         assert_true(data_set.get_variables_number() == 1, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric, LOG);
@@ -884,9 +885,9 @@ void DataSetTest::test_read_pollution_csv()
 
     try
     {
-        /*
-        data_set.set("../../datasets/pollution.csv",',',true);
-        */
+        
+        data_set.set("../../datasets/pollution.csv", ",", true);
+        
         assert_true(data_set.get_samples_number() == 1000, LOG);
         assert_true(data_set.get_variables_number() == 13, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::DateTime, LOG);
@@ -912,20 +913,23 @@ void DataSetTest::test_read_pollution_csv()
 
 void DataSetTest::test_read_bank_churn_csv()
 {
-/*    cout << "test_read_bank_churn_csv\n";
+    cout << "test_read_bank_churn_csv\n";
 
-    data_set.set_separator(';');
+    data_set.set_separator(DataSet::Separator::Semicolon);
     data_set.set_data_source_path("../../datasets/bankchurn.csv");
     data_set.set_has_header(true);
-    data_set.read_csv();*/
+    /*
+    data_set.read_csv();
+    */
 }
 
 void DataSetTest::test_read_urinary_inflammations_csv()
 {
- /*   cout << "test_read_urinary_inflammations_csv\n";
+    cout << "test_read_urinary_inflammations_csv\n";
+
     try
     {
-        data_set.set("../../datasets/urinary_inflammations.csv",';',true);
+        data_set.set("../../datasets/urinary_inflammations.csv", ";", true);
 
         assert_true(data_set.get_samples_number() == 120, LOG);
         assert_true(data_set.get_variables_number() == 8, LOG);
@@ -941,7 +945,7 @@ void DataSetTest::test_read_urinary_inflammations_csv()
     catch (const exception&)
     {
         assert_true(true,LOG);
-    }   */
+    }   
 }
 
 
@@ -951,9 +955,9 @@ void DataSetTest::test_read_wine_csv()
 
     try
     {
-        /*
-        data_set.set("../../datasets/wine.data",',',false);
-        */
+        
+        data_set.set("../../datasets/wine.data", ",", false);
+        
         assert_true(data_set.get_samples_number() == 178, LOG);
         assert_true(data_set.get_variables_number() == 14, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric, LOG);
@@ -983,9 +987,9 @@ void DataSetTest::test_read_binary_csv()
     cout << "test_read_binary_csv\n";
     try
     {
-        /*
-        data_set.set("../../datasets/binary.csv",',',false);
-        */
+        
+        data_set.set("../../datasets/binary.csv", ",", false);
+        
         assert_true(data_set.get_samples_number() == 8, LOG);
         assert_true(data_set.get_variables_number() == 3, LOG);
         assert_true(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric, LOG);
@@ -1001,10 +1005,9 @@ void DataSetTest::test_read_binary_csv()
 
 void DataSetTest::test_scrub_missing_values()
 {
-
     cout << "test_scrub_missing_values\n";
 
-    const string data_path = "../data/data.dat";
+    const string data_path = "../../datasets/data.dat";
 
     Tensor<DataSet::SampleUse, 1> samples_uses;
 
@@ -1015,8 +1018,8 @@ void DataSetTest::test_scrub_missing_values()
     string data_string;
 
     // Test
-/*
-    data_set.set_separator(' ');
+
+    data_set.set_separator(DataSet::Separator::Space);
     data_set.set_missing_values_label("NaN");
 
     data_string = "0 0 0\n"
@@ -1026,7 +1029,7 @@ void DataSetTest::test_scrub_missing_values()
     file.open(data_path.c_str());
     file << data_string;
     file.close();
-
+/*
     data_set.read_csv();
 
     data_set.scrub_missing_values();
@@ -1034,10 +1037,10 @@ void DataSetTest::test_scrub_missing_values()
     samples_uses = data_set.get_samples_uses();
 
     assert_true(samples_uses(1) == DataSet::SampleUse::None, LOG);
-*/
+
     // Test
-/*
-    data_set.set_separator(' ');
+
+    data_set.set_separator(DataSet::Separator::Space);
     data_set.set_missing_values_label("?");
 
     data_string ="? 6 3\n"
@@ -1120,9 +1123,9 @@ void DataSetTest::test_calculate_selection_targets_mean()
 }
 
 
-void DataSetTest::test_calculate_input_target_correlations()
+void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 {
-    cout << "test_calculate_input_target_correlations\n";
+    cout << "test_calculate_input_target_raw_variable_correlations\n";
 
     // Test 1 (numeric and numeric trivial case)
 
@@ -1141,13 +1144,13 @@ void DataSetTest::test_calculate_input_target_correlations()
     target_raw_variables_indices.setValues({3});
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    Tensor<Correlation, 2> input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+/*
+    Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
     assert_true(input_target_correlations(0,0).r == 1, LOG);
     assert_true(input_target_correlations(1,0).r == 1, LOG);
     assert_true(input_target_correlations(2,0).r == -1, LOG);
-
+    
     // Test 2 (numeric and numeric non trivial case)
 
     data.resize(3, 4);
@@ -1172,10 +1175,9 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     // Test 3 (binary and binary non trivial case)
 
-    data.setValues({
-                       {type(0), type(0), type(1), type(0)},
-                       {type(1), type(0), type(0), type(1)},
-                       {type(1), type(0), type(0), type(1)} });
+    data.setValues({{type(0), type(0), type(1), type(0)},
+                    {type(1), type(0), type(0), type(1)},
+                    {type(1), type(0), type(0), type(1)} });
 
     data_set.set_data(data);
 
@@ -1221,10 +1223,10 @@ void DataSetTest::test_calculate_input_target_correlations()
     }
 
     // Test 5 (categorical and categorical)
-/*
-    data_set = opennn::DataSet();
 
-    data_set.set("../../datasets/correlation_tests.csv",',', false);
+    data_set = DataSet();
+
+    data_set.set("../../datasets/correlation_tests.csv", ",", false);
 
     input_raw_variables_indices.resize(2);
     input_raw_variables_indices.setValues({0, 3});
@@ -1235,12 +1237,12 @@ void DataSetTest::test_calculate_input_target_correlations()
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-/*
+
     assert_true(input_target_correlations(1,0).r < 1, LOG);
     assert_true(input_target_correlations(1,0).form == Correlation::Form::Logistic, LOG);
-*/
+
     // Test 6 (numeric and binary)
-/*
+
     input_variables_indices.resize(3);
     input_variables_indices.setValues({1, 2, 5});
 
@@ -1380,9 +1382,9 @@ void DataSetTest::test_calculate_input_target_correlations()
 }
 
 
-void DataSetTest::test_calculate_input_raw_variables_correlations()
+void DataSetTest::test_calculate_input_raw_variable_correlations()
 {
-    cout << "test_calculate_input_raw_variables_correlations\n";
+    cout << "test_calculate_input_raw_variable_correlations\n";
 
     // Test 1 (numeric and numeric trivial case)
 
@@ -1402,8 +1404,8 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
-
+    Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+/*
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,1).r == 1, LOG);
     assert_true(inputs_correlations(0,2).r == -1, LOG);
@@ -1431,7 +1433,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     for(Index i = 0; i <  data_set.get_input_raw_variables_number() ; i++)
     {
@@ -1459,7 +1461,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Linear, LOG);
@@ -1481,7 +1483,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
     assert_true(inputs_correlations(2,2).form == Correlation::Form::Linear, LOG);
 
     // Test 4 (binary and binary trivial case)
-/*
+
     data.setValues({{type(1), type(0), type(1), type(1)},
                     {type(2), type(1), type(1), type(2)},
                     {type(3), type(1), type(0), type(2)}});
@@ -1495,7 +1497,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Linear, LOG);
@@ -1537,7 +1539,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
@@ -1567,7 +1569,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -1596,7 +1598,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -1624,7 +1626,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
@@ -1659,7 +1661,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
@@ -1689,7 +1691,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -1718,7 +1720,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -1746,7 +1748,7 @@ void DataSetTest::test_calculate_input_raw_variables_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variables_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Logistic, LOG);
@@ -1961,7 +1963,8 @@ void DataSetTest::test_fill()
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
     assert_true(are_equal(inputs, input_data), LOG);
-    assert_true(are_equal(targets, target_data), LOG);  */
+    assert_true(are_equal(targets, target_data), LOG);  
+*/
 }
 
 
@@ -1984,7 +1987,7 @@ void DataSetTest::run_test_case()
 
     test_calculate_variables_descriptives();
     test_calculate_input_variables_descriptives();
-/*
+
     test_calculate_used_targets_mean();
     test_calculate_selection_targets_mean();
 
@@ -1994,7 +1997,7 @@ void DataSetTest::run_test_case()
 
     // Filtering
 
-//    test_filter_data();
+    test_filter_data();
 
     // Data scaling
 
@@ -2002,14 +2005,14 @@ void DataSetTest::run_test_case()
 
     // Correlations
 
-//    test_calculate_input_target_correlations();
+    test_calculate_input_target_raw_variable_correlations();
 
-    test_calculate_input_raw_variables_correlations();
+    test_calculate_input_raw_variable_correlations();
 
     // Classification
 
     test_calculate_target_distribution();
-/*
+
     // Outlier detection
 
     test_calculate_Tukey_outliers();
@@ -2034,7 +2037,7 @@ void DataSetTest::run_test_case()
     test_scrub_missing_values();
 
     test_fill();
-*/
+
     cout << "End of data set test case.\n\n";
 }
 

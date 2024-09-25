@@ -54,8 +54,8 @@ public:
 
    // Correlation
 
-   void test_calculate_input_target_correlations();
-   void test_calculate_input_raw_variables_correlations();
+   void test_calculate_input_target_raw_variable_correlations();
+   void test_calculate_input_raw_variable_correlations();
 
    // Histrogram
 
