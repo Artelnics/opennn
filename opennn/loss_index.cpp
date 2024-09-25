@@ -1050,7 +1050,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
         for(Index i = 0; i < samples_number; i++)
         {
-            jacobian(i,j) = (error_terms_forward(i) - error_terms_backward(i))/(type(2.0)*h);
+            jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i))/(type(2.0)*h);
         }
     }
 

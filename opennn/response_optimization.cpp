@@ -552,9 +552,9 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     {
         for(Index j = 0; j < inputs_number; j++)
             if(inputs_conditions[j] == Condition::Minimum)
-                objective[i] += envelope(i,j);
+                objective[i] += envelope(i, j);
             else if(inputs_conditions[j] == Condition::Maximum)
-                objective[i] += -envelope(i,j);
+                objective[i] += -envelope(i, j);
 
         for(Index j = 0; j < outputs_number; j++)
             if(outputs_conditions[j] == Condition::Minimum)
