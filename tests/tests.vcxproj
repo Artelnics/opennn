@@ -321,8 +321,6 @@
     <ClCompile Include="neurons_selection_test.cpp" />
     <ClInclude Include="normalized_squared_error_test.h" />
     <ClCompile Include="normalized_squared_error_test.cpp" />
-    <ClInclude Include="numerical_differentiation_test.h" />
-    <ClCompile Include="numerical_differentiation_test.cpp" />
     <ClInclude Include="opennn_tests.h" />
     <ClInclude Include="perceptron_layer_test.h" />
     <ClCompile Include="perceptron_layer_test.cpp" />
