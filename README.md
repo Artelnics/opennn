@@ -22,38 +22,8 @@ OpenNN is a high-performance, open-source library for deep learning in C++. Some
 - **Testing & Validation**: Offers tools for evaluating the performance of neural networks using a separate testing dataset.
 - **Visualization**: Provides tools for visualizing network architecture, training progress, and performance metrics.
 
-## Quick Start
-Here’s a minimal example of how to create and train a neural network using OpenNN:
 
-```cpp
-#include <opennn/neural_network.h>
-#include <opennn/data_set.h>
-#include <opennn/training_strategy.h>
-
-using namespace OpenNN;
-
-int main()
-{
-    // Define the neural network structure
-    NeuralNetwork nn({2, 3, 1});
-
-    // Load dataset (replace with the path to your data)
-    DataSet data;
-    data.load_data("path_to_data.csv");
-
-    // Configure the training strategy
-    TrainingStrategy ts(&nn, &data);
-    ts.perform_training();
-
-    // Make predictions
-    Matrix<double> inputs = {{0.5, 0.7}, {0.2, 0.8}};
-    Matrix<double> outputs = nn.predict(inputs);
-
-    return 0;
-}
-
-
-#### 3. **Performance Tips & Best Practices**
+#### 2. **Performance Tips & Best Practices**
 This section provides useful insights into improving performance when using OpenNN, which is not directly available on the website.
 
 ```markdown
@@ -69,31 +39,25 @@ To maximize the performance of your neural networks using OpenNN, consider these
 ## Choosing the Right Neural Network Model
 Depending on the nature of your project, different neural network architectures and training strategies may be more appropriate:
 
-- **For Classification Tasks** (e.g., image recognition, text classification):
-  - Use a **multilayer perceptron** (MLP) with a softmax output layer for multi-class classification tasks.
+- For Classification Tasks (e.g., image recognition, text classification):
+  - Use a multilayer perceptron (MLP) with a softmax output layer for multi-class classification tasks.
   
-- **For Time Series Forecasting** (e.g., stock price prediction, weather forecasting):
-  - Consider using a **recurrent neural network** (RNN) or **long short-term memory** (LSTM) for sequential data and forecasting tasks.
+- For Time Series Forecasting (e.g., stock price prediction, weather forecasting):
+  - Consider using a recurrent neural network (RNN) or long short-term memory (LSTM) for sequential data and forecasting tasks.
 
-- **For Regression Problems** (e.g., predicting house prices, continuous outputs):
+- For Regression Problems (e.g., predicting house prices, continuous outputs):
   - Use a fully connected network with linear activation for regression problems, which map inputs to continuous outputs.
 
-- **Model Selection Tip**: Try multiple architectures and compare performance using OpenNN’s built-in model selection tools.
+- Model Selection Tip: Try multiple architectures and compare performance using OpenNN’s built-in model selection tools.
 
 ## Troubleshooting
 Here are some common issues you may encounter when using OpenNN and how to resolve them:
 
-- **Issue**: Compilation errors due to missing dependencies.
-  - **Solution**: Ensure that you have installed all required dependencies listed on the OpenNN website. For example, ensure you have a compatible C++ compiler and the necessary libraries.
+- Issue: Compilation errors due to missing dependencies.
+  - Solution: Ensure that you have installed all required dependencies listed on the OpenNN website. For example, ensure you have a compatible C++ compiler and the necessary libraries.
 
-- **Issue**: Slow training times with large datasets.
-  - **Solution**: Try batch training, or use the parallelization feature to speed up the process by utilizing multiple cores.
-
-- **Issue**: Neural network not converging during training.
-  - **Solution**: Check that your data is properly normalized, and consider adjusting the learning rate or using a different training strategy.
-
-- **Issue**: Out-of-memory errors when dealing with large datasets.
-  - **Solution**: Use batch processing to reduce memory usage or split your dataset into smaller chunks.
+- Issue: Slow training times with large datasets.
+  - Solution: Try batch training, or use the parallelization feature to speed up the process by utilizing multiple cores.
 
 The documentation is composed by tutorials and examples to offer a complete overview about the library. 
 
