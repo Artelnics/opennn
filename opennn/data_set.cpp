@@ -808,19 +808,19 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                 {
                     for(Index j = 0; j < batch_size;j++)
                     {
-                        batches(i,j) = buffer(j);
+                        batches(i, j) = buffer(j);
                     }
                 }
                 else //buffer_size < batch_size
                 {
                     for(Index j = 0; j < buffer_size; j++)
                     {
-                        batches(i,j) = buffer(j);
+                        batches(i, j) = buffer(j);
                     }
 
                     for(Index j = buffer_size; j < batch_size; j++)
                     {
-                        batches(i,j) = samples_indices(next_index);
+                        batches(i, j) = samples_indices(next_index);
 
                         next_index++;
                     }
@@ -3853,8 +3853,8 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
 
         for(Index j = 0; j < target_raw_variables_number; j++)
         {
-            if(!isnan(correlations(i,j).r)
-                && abs(correlations(i,j).r) < minimum_correlation
+            if(!isnan(correlations(i, j).r)
+                && abs(correlations(i, j).r) < minimum_correlation
                 && raw_variables(input_raw_variable_index).use != VariableUse::None)
             {
                 raw_variables(input_raw_variable_index).set_use(VariableUse::None);
@@ -4453,7 +4453,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_samples_indices);
 
-            correlations(i,j) = correlation(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -4485,7 +4485,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_samples_indices);
 
-            correlations(i,j) = correlation_spearman(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation_spearman(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -4548,7 +4548,7 @@ void DataSet::print_input_target_raw_variables_correlations() const
 
     for(Index j = 0; j < targets_number; j++)
         for(Index i = 0; i < inputs_number; i++)
-            cout << targets_name(j) << " - " << inputs_name(i) << ": " << correlations(i,j).r << endl;
+            cout << targets_name(j) << " - " << inputs_name(i) << ": " << correlations(i, j).r << endl;
 }
 
 
@@ -4570,7 +4570,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
 
     for(Index i = 0 ; i < inputs_number; i++)
         for(Index j = 0 ; j < targets_number ; j++)
-            top_correlation.insert(pair<type,string>(correlations(i,j), inputs_name(i) + " - " + targets_name(j)));
+            top_correlation.insert(pair<type,string>(correlations(i, j), inputs_name(i) + " - " + targets_name(j)));
 
     map<type,string>::iterator it;
 
@@ -4607,39 +4607,39 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
             {
                 if(calculate_pearson_correlations)
                 {
-                    correlations_pearson(i,j).r = type(1);
-                    correlations_pearson(i,j).b = type(1);
-                    correlations_pearson(i,j).a = type(0);
+                    correlations_pearson(i, j).r = type(1);
+                    correlations_pearson(i, j).b = type(1);
+                    correlations_pearson(i, j).a = type(0);
 
-                    correlations_pearson(i,j).upper_confidence = type(1);
-                    correlations_pearson(i,j).lower_confidence = type(1);
-                    correlations_pearson(i,j).form = Correlation::Form::Linear;
-                    correlations_pearson(i,j).method = Correlation::Method::Pearson;
+                    correlations_pearson(i, j).upper_confidence = type(1);
+                    correlations_pearson(i, j).lower_confidence = type(1);
+                    correlations_pearson(i, j).form = Correlation::Form::Linear;
+                    correlations_pearson(i, j).method = Correlation::Method::Pearson;
 
                     if(is_constant_matrix(input_i))
                     {
-                        correlations_pearson(i,j).r = NAN;
-                        correlations_pearson(i,j).b = NAN;
-                        correlations_pearson(i,j).a = NAN;
+                        correlations_pearson(i, j).r = NAN;
+                        correlations_pearson(i, j).b = NAN;
+                        correlations_pearson(i, j).a = NAN;
                     }
                 }
 
                 if(calculate_spearman_correlations)
                 {
-                    correlations_spearman(i,j).r = type(1);
-                    correlations_spearman(i,j).b = type(1);
-                    correlations_spearman(i,j).a = type(0);
+                    correlations_spearman(i, j).r = type(1);
+                    correlations_spearman(i, j).b = type(1);
+                    correlations_spearman(i, j).a = type(0);
 
-                    correlations_spearman(i,j).upper_confidence = type(1);
-                    correlations_spearman(i,j).lower_confidence = type(1);
-                    correlations_spearman(i,j).form = Correlation::Form::Linear;
-                    correlations_spearman(i,j).method = Correlation::Method::Spearman;
+                    correlations_spearman(i, j).upper_confidence = type(1);
+                    correlations_spearman(i, j).lower_confidence = type(1);
+                    correlations_spearman(i, j).form = Correlation::Form::Linear;
+                    correlations_spearman(i, j).method = Correlation::Method::Spearman;
 
                     if(is_constant_matrix(input_i))
                     {
-                        correlations_spearman(i,j).r = NAN;
-                        correlations_spearman(i,j).b = NAN;
-                        correlations_spearman(i,j).a = NAN;
+                        correlations_spearman(i, j).r = NAN;
+                        correlations_spearman(i, j).b = NAN;
+                        correlations_spearman(i, j).a = NAN;
                     }
                 }
             }
@@ -4651,18 +4651,18 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
 
                 if(calculate_pearson_correlations)
                 {
-                    correlations_pearson(i,j) = correlation(thread_pool_device, input_i, input_j);
+                    correlations_pearson(i, j) = correlation(thread_pool_device, input_i, input_j);
 
-                    if(correlations_pearson(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
-                       correlations_pearson(i,j).r =  type(1);
+                    if(correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
+                       correlations_pearson(i, j).r =  type(1);
                 }
 
                 if(calculate_spearman_correlations)
                 {
-                    correlations_spearman(i,j) = correlation_spearman(thread_pool_device, input_i, input_j);
+                    correlations_spearman(i, j) = correlation_spearman(thread_pool_device, input_i, input_j);
 
-                    if(correlations_spearman(i,j).r > type(1) - NUMERIC_LIMITS_MIN)
-                        correlations_spearman(i,j).r = type(1);
+                    if(correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
+                        correlations_spearman(i, j).r = type(1);
                 }
             }
         }
@@ -4671,12 +4671,12 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variables_correla
     if(calculate_pearson_correlations)
         for(Index i = 0; i < input_raw_variables_number; i++)
             for(Index j = 0; j < i; j++)
-                correlations_pearson(i,j) = correlations_pearson(j,i);
+                correlations_pearson(i, j) = correlations_pearson(j,i);
 
     if(calculate_spearman_correlations)
         for(Index i = 0; i < input_raw_variables_number; i++)
             for(Index j = 0; j < i; j++)
-                correlations_spearman(i,j) = correlations_spearman(j,i);
+                correlations_spearman(i, j) = correlations_spearman(j,i);
 
     correlations_list(0) = correlations_pearson;
     correlations_list(1) = correlations_spearman;
@@ -4727,7 +4727,7 @@ void DataSet::print_top_inputs_correlations() const
         {
             if(i == j) continue;
 
-            top_correlation.insert(pair<type,string>(variables_correlations(i,j), variables_name(i) + " - " + variables_name(j)));
+            top_correlation.insert(pair<type,string>(variables_correlations(i, j), variables_name(i) + " - " + variables_name(j)));
         }
     }
 
@@ -5032,9 +5032,9 @@ void DataSet::set_data_binary_random()
         for(Index j = input_variables_number; j < variables_number; j++)
         {
             if(target_variables_number == 1) 
-                data(i,j) = type(target_variable_index);
+                data(i, j) = type(target_variable_index);
             else 
-                data(i,j) = j == target_variable_index
+                data(i, j) = j == target_variable_index
                         ? type(1)
                         : type(0);
         }
@@ -5789,7 +5789,7 @@ void DataSet::save_data() const
 
         for(Index j = 0; j < variables_number; j++)
         {
-            file << data(i,j);
+            file << data(i, j);
 
             if(j != variables_number-1)
                 file << separator_string;
@@ -6121,7 +6121,7 @@ void DataSet::generate_sequential_data(const Index& samples_number, const Index&
 
     for(Index i = 0; i < samples_number; i++)
         for(Index j = 0; j < variables_number; j++)
-            data(i,j) = type(j);
+            data(i, j) = type(j);
 }
 
 
@@ -6141,7 +6141,7 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
-            const type value = data(i,j);
+            const type value = data(i, j);
             const type next_value = data(i, j+1);
 
             rosenbrock += (type(1) - value)*(type(1) - value) + type(100)*(next_value-value*value)*(next_value-value*value);
@@ -6191,7 +6191,7 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
         data(i,variables_number-1) = type(0);
 
         for(Index j = 0; j < variables_number-1; j++)
-            data(i,variables_number-1) += data(i,j);
+            data(i,variables_number-1) += data(i, j);
     }
 
     set(data);
@@ -7292,7 +7292,7 @@ void DataSet::shuffle()
         new_rows_labels(i) = samples_id(index);
 
         for(Index j = 0; j < data_raw_variables; j++)
-            new_data(i,j) = data(index,j);
+            new_data(i, j) = data(index,j);
     }
 
     data = new_data;
@@ -7545,7 +7545,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             for(Index j = 0; j < variables_number; j++)
                 for(Index i = 0; i < samples_number; i++)
                     if(isnan(input_data(i, j)))
-                        input_data(i,j) = means(j);
+                        input_data(i, j) = means(j);
         }
         else
         {
@@ -7559,7 +7559,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             for(Index j = 0; j < variables_number; j++)
                 for(Index i = 0; i < samples_number; i++)
                     if(isnan(input_data(i, j)))
-                        input_data(i,j) = medians(j);
+                        input_data(i, j) = medians(j);
         }
 
         return input_data;

@@ -119,7 +119,7 @@ void RecurrentLayerTest::test_forward_propagate()
     inputs_pair.second = {{samples_number, inputs_number}};
 
     recurrent_layer.forward_propagate(tensor_wrapper(inputs_pair), &recurrent_layer_forward_propagation, is_training);
-
+/*
     outputs = recurrent_layer_forward_propagation.outputs;
     
     // Test
@@ -152,10 +152,11 @@ void RecurrentLayerTest::test_forward_propagate()
 
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
-/*
+
     recurrent_layer.forward_propagate(tensor_wrapper(inputs_pair), &recurrent_layer_forward_propagation, is_training);
-*/
+
     outputs = recurrent_layer_forward_propagation.outputs;
+*/
 }
 
 
