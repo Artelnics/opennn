@@ -282,7 +282,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     {
        for(Index j = 0; j < outputs_number; j++)
        {
-           error_data(i,j) = difference_value(i,j)*type(100.0)/abs(outputs_maximum(j)-outputs_minimum(j));
+           error_data(i, j) = difference_value(i, j)*type(100.0)/abs(outputs_maximum(j)-outputs_minimum(j));
        }
     }
 
@@ -1847,8 +1847,8 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_precision() c
         for(Index j = 0; j < confusion_matrix.dimension(1); j++)
         {
             i == j
-                ? diagonal_sum += type(confusion_matrix(i,j))
-                : off_diagonal_sum += type(confusion_matrix(i,j));
+                ? diagonal_sum += type(confusion_matrix(i, j))
+                : off_diagonal_sum += type(confusion_matrix(i, j));
         }
     }
 
@@ -1891,11 +1891,11 @@ void TestingAnalysis::save_confusion(const string& confusion_file_name) const
         {
             if(j == raw_variables_number - 1)
             {
-                confusion_file << confusion(i,j) << endl;
+                confusion_file << confusion(i, j) << endl;
             }
             else
             {
-                confusion_file << confusion(i,j) << ",";
+                confusion_file << confusion(i, j) << ",";
             }
         }
     }
@@ -1948,7 +1948,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
     {
         for(Index j = 0; j < targets_number; j++)
         {
-            multiple_classification_rates(i,j).resize(confusion(i,j));
+            multiple_classification_rates(i, j).resize(confusion(i, j));
         }
     }
 

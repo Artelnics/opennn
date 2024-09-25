@@ -108,8 +108,8 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
 
 void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
-                                               ForwardPropagation& forward_propagation,
-                                               BackPropagation& back_propagation) const
+                                                 ForwardPropagation& forward_propagation,
+                                                 BackPropagation& back_propagation) const
 {
     // ProbabilisticLayer3D does not have deltas. Error combinations derivatives are calculated directly.
 }

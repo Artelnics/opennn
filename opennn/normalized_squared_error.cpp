@@ -114,7 +114,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
     {
         for(Index j = 0; j < target_variables_number; j++)
         {
-            normalization_coefficient += (targets_t_1(i,j) - targets_t(i,j)) * (targets_t_1(i,j) - targets_t(i,j));
+            normalization_coefficient += (targets_t_1(i, j) - targets_t(i, j)) * (targets_t_1(i, j) - targets_t(i, j));
         }
     }
 
