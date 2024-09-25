@@ -1023,7 +1023,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_uses_element->GetText())
     {
-        set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
+        set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
     }
 
     // Display
