@@ -326,7 +326,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
         if(not_NAN_row(i))
         {
             for(Index j = 0; j < y_columns_number; j++)
-                new_y(index, j) = y(i,j);
+                new_y(index, j) = y(i, j);
 
             new_x(index) = x(i);
 
@@ -361,7 +361,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         {
             for(Index j = 0; j < x_columns_number; j++)
             {
-                if(isnan(x(i,j)))
+                if(isnan(x(i, j)))
                 {
                     not_NAN_row(i) = false;
                     break;
@@ -383,7 +383,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         if(not_NAN_row(i))
         {
             for(Index j = 0; j < y_columns_number; j++)
-                new_y(index, j) = y(i,j);
+                new_y(index, j) = y(i, j);
 
             for(Index j = 0; j < x_columns_number; j++)
                 new_x(index, j) = x(i, j);
@@ -406,7 +406,7 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            values(i,j) = correlations(i,j).r;
+            values(i, j) = correlations(i, j).r;
         }
     }
 

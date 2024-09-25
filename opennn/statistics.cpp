@@ -1860,9 +1860,9 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
     {
         for(Index i = 0; i < rows_number; i++)
         {
-            if(!isnan(matrix(i,j)))
+            if(!isnan(matrix(i, j)))
             {
-                mean(j) += matrix(i,j);
+                mean(j) += matrix(i, j);
             }
         }
 
@@ -2493,9 +2493,9 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            if(!isnan(matrix(i,j)) && matrix(i,j) < minimum)
+            if(!isnan(matrix(i, j)) && matrix(i, j) < minimum)
             {
-                minimum = matrix(i,j);
+                minimum = matrix(i, j);
                 minimal_indices(0) = i;
                 minimal_indices(1) = j;
             }
@@ -2520,9 +2520,9 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            if(!isnan(matrix(i,j)) && matrix(i,j) > maximum)
+            if(!isnan(matrix(i, j)) && matrix(i, j) > maximum)
             {
-                maximum = matrix(i,j);
+                maximum = matrix(i, j);
                 maximal_indices(0) = i;
                 maximal_indices(1) = j;
             }
@@ -2561,7 +2561,7 @@ Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>& matrix, const Ind
             }
 
             column(maximal_index) = columns_minimums(j)-type(1);
-            maximal_column_indices(i,j) = maximal_index;
+            maximal_column_indices(i, j) = maximal_index;
         }
     }
 

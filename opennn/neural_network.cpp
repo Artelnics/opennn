@@ -1527,7 +1527,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
         inputs(direction) = minimum + (maximum - minimum)*type(i)/type(points_number-1);
 
         for(Index j = 0; j < inputs_number; j++)
-            directional_inputs(i,j) = inputs(j);
+            directional_inputs(i, j) = inputs(j);
     }
 
     return directional_inputs;
@@ -4096,7 +4096,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     {
         for(Index j = 0; j < outputs_number; j++)
         {
-            file << outputs(i,j);
+            file << outputs(i, j);
 
             if(j != outputs_number-1) file << ";";
         }
