@@ -822,7 +822,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     if(samples_uses_element->GetText())
     {
-        set_samples_uses(get_tokens(samples_uses_element->GetText(), " "));
+        set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
     }
 
     // Missing values
