@@ -110,9 +110,7 @@ Tensor<type, 1> ScalingLayer4D::get_means() const
     Tensor<type, 1> means(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
-    {
         means[i] = descriptives[i].mean;
-    }
 
     return means;
 }
@@ -125,9 +123,7 @@ Tensor<type, 1> ScalingLayer4D::get_standard_deviations() const
     Tensor<type, 1> standard_deviations(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
-    {
         standard_deviations[i] = descriptives[i].standard_deviation;
-    }
 
     return standard_deviations;
 }
@@ -148,29 +144,17 @@ Tensor<string, 1> ScalingLayer4D::write_scalers() const
     for(Index i = 0; i < neurons_number; i++)
     {
         if(scalers[i] == Scaler::None)
-        {
             scaling_methods_strings[i] = "None";
-        }
         else if(scalers[i] == Scaler::MinimumMaximum)
-        {
             scaling_methods_strings[i] = "MinimumMaximum";
-        }
         else if(scalers[i] == Scaler::MeanStandardDeviation)
-        {
             scaling_methods_strings[i] = "MeanStandardDeviation";
-        }
         else if(scalers[i] == Scaler::StandardDeviation)
-        {
             scaling_methods_strings[i] = "StandardDeviation";
-        }
         else if(scalers[i] == Scaler::Logarithm)
-        {
             scaling_methods_strings[i] = "Logarithm";
-        }
         else
-        {
             throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-        }
     }
 
     return scaling_methods_strings;
@@ -193,29 +177,17 @@ Tensor<string, 1> ScalingLayer4D::write_scalers_text() const
     for(Index i = 0; i < neurons_number; i++)
     {
         if(scalers[i] == Scaler::None)
-        {
             scaling_methods_strings[i] = "no scaling";
-        }
         else if(scalers[i] == Scaler::MeanStandardDeviation)
-        {
             scaling_methods_strings[i] = "mean and standard deviation";
-        }
         else if(scalers[i] == Scaler::StandardDeviation)
-        {
             scaling_methods_strings[i] = "standard deviation";
-        }
         else if(scalers[i] == Scaler::MinimumMaximum)
-        {
             scaling_methods_strings[i] = "minimum and maximum";
-        }
         else if(scalers[i] == Scaler::Logarithm)
-        {
             scaling_methods_strings[i] = "Logarithm";
-        }
         else
-        {
             throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-        }
     }
 
     return scaling_methods_strings;
@@ -426,29 +398,17 @@ void ScalingLayer4D::set_scaler(const Index& variable_index, const Scaler& new_s
 void ScalingLayer4D::set_scaler(const Index& variable_index, const string& new_scaler_string)
 {
     if(new_scaler_string == "None")
-    {
         scalers(variable_index) = Scaler::None;
-    }
     else if(new_scaler_string == "MeanStandardDeviation")
-    {
         scalers(variable_index) = Scaler::MeanStandardDeviation;
-    }
     else if(new_scaler_string == "MinimumMaximum")
-    {
         scalers(variable_index) = Scaler::MinimumMaximum;
-    }
     else if(new_scaler_string == "StandardDeviation")
-    {
         scalers(variable_index) = Scaler::StandardDeviation;
-    }
     else if(new_scaler_string == "Logarithm")
-    {
         scalers(variable_index) = Scaler::Logarithm;
-    }
     else
-    {
         throw runtime_error("Unknown scaling method: " + new_scaler_string + ".\n");
-    }
 }
 
 
@@ -468,29 +428,17 @@ void ScalingLayer4D::set_scalers(const string& new_scaling_methods_string)
     for(Index i = 0; i < neurons_number; i++)
     {
         if(new_scaling_methods_string == "None")
-        {
             new_scaling_methods(i) = Scaler::None;
-        }
         else if(new_scaling_methods_string == "MeanStandardDeviation")
-        {
             new_scaling_methods(i) = Scaler::MeanStandardDeviation;
-        }
         else if(new_scaling_methods_string == "MinimumMaximum")
-        {
             new_scaling_methods(i) = Scaler::MinimumMaximum;
-        }
         else if(new_scaling_methods_string == "StandardDeviation")
-        {
             new_scaling_methods(i) = Scaler::StandardDeviation;
-        }
         else if(new_scaling_methods_string == "Logarithm")
-        {
             new_scaling_methods(i) = Scaler::Logarithm;
-        }
         else
-        {
             throw runtime_error("Unknown scaling method: " + to_string(new_scaling_methods_string[i]) + ".\n");
-        }
     }
 
     set_scalers(new_scaling_methods);
@@ -502,9 +450,7 @@ void ScalingLayer4D::set_scalers(const Scaler& new_scaling_method)
     const Index neurons_number = get_neurons_number();
 
     for(Index i = 0; i < neurons_number; i++)
-    {
         scalers(i) = new_scaling_method;
-    }
 }
 
 

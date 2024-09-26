@@ -114,8 +114,6 @@ public:
     Tensor<type, 1> get_parameters() const final;
     Index get_parameters_number() const final;
 
-    bool get_is_before_flatten() const;
-
     // Set
 
     void set(const dimensions&, const dimensions&);
@@ -141,8 +139,6 @@ public:
     void set_column_stride(const Index&);
 
     void set_inputs_dimensions(const dimensions&);
-
-    void set_is_before_flatten(const bool&);
 
     // Initialization
 
@@ -223,9 +219,6 @@ protected:
    Tensor<type, 1> offsets;
 
    Tensor<type, 4> empty;
-
-   bool is_before_flatten = false;
-
 };
 
 

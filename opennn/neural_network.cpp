@@ -106,7 +106,7 @@ void NeuralNetwork::delete_layers()
 }
 
 
-void NeuralNetwork::add_layer(Layer* layer)
+void NeuralNetwork::add_layer(Layer* layer, const string& name)
 {
     const Layer::Type layer_type = layer->get_type();
 
@@ -135,20 +135,20 @@ void NeuralNetwork::add_layer(Layer* layer)
 
     layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
 
-    if (layer_type == Layer::Type::Flatten)
-    {
-        if (old_layers_number > 0)
-        {
-            Layer* previous_layer = old_layers(old_layers_number - 1);
+    // if (layer_type == Layer::Type::Flatten)
+    // {
+    //     if (old_layers_number > 0)
+    //     {
+    //         Layer* previous_layer = old_layers(old_layers_number - 1);
 
-            if (previous_layer->get_type() == Layer::Type::Convolutional)
-            {
-                ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(previous_layer);
+    //         if (previous_layer->get_type() == Layer::Type::Convolutional)
+    //         {
+    //             ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(previous_layer);
+    //         }
+    //     }
+    // }
 
-                convolutional_layer->set_is_before_flatten(true);
-            }
-        }
-    }
+//    layer.set_layer .set_layer_name(name);
 }
 
 
@@ -646,75 +646,46 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
 
     inputs_name.resize(inputs_number);
 
-    for(Index i = 0; i < inputs_number; i++) inputs_name(i) = "input_" + to_string(i+1);
-
-    ScalingLayer2D* scaling_layer_2d = new ScalingLayer2D(inputs_number);
-    add_layer(scaling_layer_2d);
+    for(Index i = 0; i < inputs_number; i++)
+        inputs_name(i) = "input_" + to_string(i+1);
 
     if(model_type == ModelType::Approximation)
     {
+        add_layer(new ScalingLayer2D(inputs_number));
+
         for(Index i = 0; i < size-1; i++)
-        {
-            PerceptronLayer* perceptron_layer = new PerceptronLayer(architecture[i], architecture[i+1]);
-            perceptron_layer->set_name("perceptron_layer_" + to_string(i+1));
+            (i != size-2)
+                ? add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::HyperbolicTangent), "perceptron_layer_" + to_string(i+1))
+                : add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(i+1));
 
-            add_layer(perceptron_layer);
-            if(i == size-2) perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-        }
+        add_layer(new UnscalingLayer(outputs_number));
 
-        UnscalingLayer* unscaling_layer = new UnscalingLayer(outputs_number);
-
-        add_layer(unscaling_layer);
-
-        BoundingLayer* bounding_layer = new BoundingLayer(outputs_number);
-
-        add_layer(bounding_layer);
+        add_layer(new BoundingLayer(outputs_number));
     }
     else if(model_type == ModelType::Classification || model_type == ModelType::TextClassification)
     {
         for(Index i = 0; i < size-2; i++)
-        {
-            PerceptronLayer* perceptron_layer = new PerceptronLayer(architecture[i], architecture[i+1]);
+            add_layer(new PerceptronLayer(architecture[i], architecture[i+1]), "perceptron_layer_" + to_string(i+1));
 
-            perceptron_layer->set_name("perceptron_layer_" + to_string(i+1));
-
-            add_layer(perceptron_layer);
-        }
-
-        ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(architecture[size-2], architecture[size-1]);
-
-        add_layer(probabilistic_layer);
+        add_layer(new ProbabilisticLayer(architecture[size-2], architecture[size-1]));
     }
     else if(model_type == ModelType::Forecasting)
     {
-        // architecture[2] must be time_steps
-
-        LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1], architecture[2]);
-        // RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
-
-        add_layer(long_short_term_memory_layer);
+        add_layer(new LongShortTermMemoryLayer(architecture[0], architecture[1], architecture[2]));
 
         for(Index i = 2 ; i < size-1 ; i++)
-        {
-            PerceptronLayer* perceptron_layer = new PerceptronLayer(architecture[i], architecture[i+1]);
+            (i != size-2)
+                ? add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::HyperbolicTangent), "perceptron_layer_" + to_string(i+1))
+                : add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(i+1));
 
-            perceptron_layer->set_name("perceptron_layer_" + to_string(i+1));
+        add_layer(new UnscalingLayer(architecture[size-1]));
 
-            add_layer(perceptron_layer);
-
-            if(i == size-2) perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-        }
-
-        UnscalingLayer* unscaling_layer = new UnscalingLayer(architecture[size-1]);
-
-        add_layer(unscaling_layer);
-
-        BoundingLayer* bounding_layer = new BoundingLayer(outputs_number);
-
-        add_layer(bounding_layer);
+        add_layer(new BoundingLayer(outputs_number));
     }
     else if(model_type == ModelType::ImageClassification)
     {
+        add_layer(new ScalingLayer4D(inputs_number));
+
         // Use the set mode build specifically for image classification
     }
     else if(model_type == ModelType::AutoAssociation)
@@ -723,25 +694,25 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
         const Index bottle_neck_neurons_number = architecture[1];
         const Index target_variables_number = architecture[2];
 
-        PerceptronLayer *mapping_layer = new PerceptronLayer(architecture[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-        mapping_layer->set_name("mapping_layer");
-        PerceptronLayer *bottle_neck_layer = new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear);
-        bottle_neck_layer->set_name("bottle_neck_layer");
-        PerceptronLayer *demapping_layer = new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-        demapping_layer->set_name("demapping_layer");
-        PerceptronLayer *output_layer = new PerceptronLayer(mapping_neurons_number, target_variables_number, PerceptronLayer::ActivationFunction::Linear);
-        output_layer->set_name("output_layer");
-        UnscalingLayer *unscaling_layer = new UnscalingLayer(target_variables_number);
+        add_layer(new PerceptronLayer(architecture[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+                  "mapping_layer");
 
-        add_layer(mapping_layer);
-        add_layer(bottle_neck_layer);
-        add_layer(demapping_layer);
-        add_layer(output_layer);
-        add_layer(unscaling_layer);
+        add_layer(new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
+                  "bottleneck_layer");
+
+        add_layer(new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+                  "demapping_layer");
+
+        add_layer(new PerceptronLayer(mapping_neurons_number, target_variables_number, PerceptronLayer::ActivationFunction::Linear),
+                  "output_layer");
+
+        add_layer(new UnscalingLayer(target_variables_number));
     }
 
     output_names.resize(outputs_number);
-    for(Index i = 0; i < outputs_number; i++) output_names(i) = "output_" + to_string(i+1);
+
+    for(Index i = 0; i < outputs_number; i++)
+        output_names(i) = "output_" + to_string(i+1);
 
     set_default();
 }
@@ -1477,7 +1448,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     ForwardPropagation forward_propagation(batch_samples_number, this);
 
-    const pair<type*, dimensions> inputs_pair((type*)inputs.data(), { {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)} });
+    const pair<type*, dimensions> inputs_pair((type*)inputs.data(), { {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}});
 
     forward_propagate(tensor_wrapper(inputs_pair), forward_propagation);
 

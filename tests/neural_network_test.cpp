@@ -631,7 +631,7 @@ void NeuralNetworkTest::test_forward_propagate()
         bool is_training = false;
 
         data.resize(batch_samples_number, inputs_number + outputs_number);
-        data.setValues({ {-1,1,-1,1,1,0},{-2,2,3,1,1,0},{-3,3,5,1,1,0} });
+        data.setValues({{-1,1,-1,1,1,0},{-2,2,3,1,1,0},{-3,3,5,1,1,0} });
         data_set.set(data);
         data_set.set_target();
         data_set.set_training();

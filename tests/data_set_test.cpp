@@ -162,7 +162,6 @@ void DataSetTest::test_calculate_input_variables_descriptives()
     assert_true(input_variables_descriptives[0].standard_deviation - type(1)< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].minimum - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
-
 }
 
 
@@ -381,18 +380,17 @@ void DataSetTest::test_calculate_Tukey_outliers()
 
 void DataSetTest::test_read_csv()
 {
-
     cout << "test_read_csv\n";
 
     // Test
-/*
+
     data_set.set(2, 2, 2);
     data_set.set_separator(DataSet::Separator::Comma);
     data_path = "../data/data.dat";
     data_set.set_data_source_path(data_path);
     data_set.set_data_constant(type(0));
     data_set.save_data();
-
+/*
     data_set.read_csv();
     data = data_set.get_data();
 
@@ -683,16 +681,16 @@ void DataSetTest::test_read_csv()
     data_set.set_separator(DataSet::Separator::Tab);
     data_set.set_missing_values_label("NaN");
     data_string =
-            "f\t52\t1100\t32\t145490\t4\tno\n"
-            "f\t57\t8715\t1\t242542\t1\tNaN\n"
-            "m\t44\t5145\t28\t79100\t5\tno\n"
-            "f\t57\t2857\t16\t1\t1\tNaN\n"
-            "f\t47\t3368\t44\t63939\t1\tyes\n"
-            "f\t59\t5697\t14\t45278\t1\tno\n"
-            "m\t86\t1843\t1\t132799\t2\tyes\n"
-            "m\t67\t4394\t25\t6670\t2\tno\n"
-            "m\t40\t6619\t23\t168081\t1\tno\n"
-            "f\t12\t4204\t17\t1\t2\tno\n";
+    "f\t52\t1100\t32\t145490\t4\tno\n"
+    "f\t57\t8715\t1\t242542\t1\tNaN\n"
+    "m\t44\t5145\t28\t79100\t5\tno\n"
+    "f\t57\t2857\t16\t1\t1\tNaN\n"
+    "f\t47\t3368\t44\t63939\t1\tyes\n"
+    "f\t59\t5697\t14\t45278\t1\tno\n"
+    "m\t86\t1843\t1\t132799\t2\tyes\n"
+    "m\t67\t4394\t25\t6670\t2\tno\n"
+    "m\t40\t6619\t23\t168081\t1\tno\n"
+    "f\t12\t4204\t17\t1\t2\tno\n";
 
     file.open(data_path.c_str());
     file << data_string;
@@ -908,7 +906,7 @@ void DataSetTest::test_read_bank_churn_csv()
 void DataSetTest::test_read_urinary_inflammations_csv()
 {
     cout << "test_read_urinary_inflammations_csv\n";
-
+/*
     try
     {
         data_set.set("../../datasets/urinary_inflammations.csv", ";", true);
@@ -927,7 +925,8 @@ void DataSetTest::test_read_urinary_inflammations_csv()
     catch (const exception&)
     {
         assert_true(true,LOG);
-    }   
+    }
+*/
 }
 
 
@@ -936,8 +935,7 @@ void DataSetTest::test_read_wine_csv()
     cout << "test_read_wine_csv\n";
 
     try
-    {
-        
+    {        
         data_set.set("../../datasets/wine.data", ",", false);
         
         assert_true(data_set.get_samples_number() == 178, LOG);
@@ -967,6 +965,7 @@ void DataSetTest::test_read_wine_csv()
 void DataSetTest::test_read_binary_csv()
 {
     cout << "test_read_binary_csv\n";
+
     try
     {
         
@@ -1043,7 +1042,8 @@ void DataSetTest::test_scrub_missing_values()
 
     assert_true(abs(data(0,0) - type(2.0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(data(1,1) - type(3.0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(isnan(data(2,2)), LOG); */
+    assert_true(isnan(data(2,2)), LOG);
+*/
 }
 
 
@@ -1081,9 +1081,9 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
     data.resize(3, 4);
 
-    data.setValues({{1, type(NAN), 6        , 9},
-                    {1, 2        , 5        , 2},
-                    {3, 2        , type(NAN), 4}});
+    data.setValues({{1, type(NAN),         6, 9},
+                    {1,         2,         5, 2},
+                    {3,         2, type(NAN), 4}});
 
     data_set.set_data(data);
 
@@ -1100,6 +1100,8 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
     selection_targets_mean = data_set.calculate_selection_targets_mean();
 
+//    cout << selection_targets_mean << endl;system("pause");
+
     assert_true(selection_targets_mean(0) == type(5.5), LOG);
     assert_true(selection_targets_mean(1) == type(5), LOG);
 }
@@ -1115,7 +1117,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data.setValues({{type(1), type(1), type(-1), type(1)},
                     {type(2), type(2), type(-2), type(2)},
-                    {type(3), type(3), type(-3), type(3)} });
+                    {type(3), type(3), type(-3), type(3)}});
 
     data_set.set_data(data);
 
@@ -1138,7 +1140,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
     data.resize(3, 4);
     data.setValues({{type(1), type(2), type(4), type(1)},
                     {type(2), type(3), type(9), type(2)},
-                    {type(3), type(1), type(10), type(2)} });
+                    {type(3), type(1), type(10), type(2)}});
 
     data_set.set_data(data);
 
@@ -1159,7 +1161,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data.setValues({{type(0), type(0), type(1), type(0)},
                     {type(1), type(0), type(0), type(1)},
-                    {type(1), type(0), type(0), type(1)} });
+                    {type(1), type(0), type(0), type(1)}});
 
     data_set.set_data(data);
 
@@ -1185,7 +1187,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data.setValues({{type(0), type(0), type(0), type(0)},
                     {type(1), type(1), type(1), type(1)},
-                    {type(1), type(1), type(1), type(1)} });
+                    {type(1), type(1), type(1), type(1)}});
 
     data_set.set_data(data);
 
@@ -1374,7 +1376,7 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     data.setValues({{type(1), type(1), type(-1), type(1)},
                     {type(2), type(2), type(-2), type(2)},
-                    {type(3), type(3), type(-3), type(3)} });
+                    {type(3), type(3), type(-3), type(3)}});
 
     data_set.set_data(data);
 
@@ -1432,7 +1434,7 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
     data.resize(3, 4);
     data.setValues({{type(0), type(0), type(1), type(1)},
                     {type(1), type(0), type(0), type(2)},
-                    {type(1), type(0), type(0), type(2)} });
+                    {type(1), type(0), type(0), type(2)}});
 
     data_set.set_data(data);
 

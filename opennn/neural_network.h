@@ -81,7 +81,7 @@ public:
 
    void delete_layers();
 
-   void add_layer(Layer*);
+   void add_layer(Layer*, const string& name = "layer");
 
    bool validate_layer_type(const Layer::Type);
 

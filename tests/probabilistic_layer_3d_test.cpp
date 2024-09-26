@@ -171,7 +171,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         probabilistic_layer_3d.set(inputs_number, inputs_depth, neurons_number);
 
         combinations.resize(samples_number, inputs_number, neurons_number);
-        combinations.setValues({ {{1}, {2}, {3}} });
+        combinations.setValues({{{1}, {2}, {3}}});
 
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
@@ -331,7 +331,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
 
         synaptic_weights.setValues({ {type(1),type(-1),type(0),type(1)},
                                     {type(2),type(-2),type(0),type(2)},
-                                    {type(3),type(-3),type(0),type(3)} });
+                                    {type(3),type(-3),type(0),type(3)}});
         
         probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
         probabilistic_layer_3d.set_biases(biases);

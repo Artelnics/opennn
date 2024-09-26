@@ -681,12 +681,6 @@ Index ConvolutionalLayer::get_parameters_number() const
 }
 
 
-bool ConvolutionalLayer::get_is_before_flatten() const
-{
-    return is_before_flatten;
-}
-
-
 void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions)
 {
@@ -848,12 +842,6 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
-}
-
-
-void ConvolutionalLayer::set_is_before_flatten(const bool& new_is_before_flatten)
-{
-    is_before_flatten = new_is_before_flatten;
 }
 
 

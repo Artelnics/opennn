@@ -183,11 +183,10 @@ void TimeSeriesDataSetTest::test_set_time_series_data()
 
     data.resize(4,2);
 
-    data.setValues({
-                       {type(0),type(0)},
-                       {type(1),type(10)},
-                       {type(2),type(20)},
-                       {type(3),type(30)}});
+    data.setValues({{type(0),type(0)},
+                    {type(1),type(10)},
+                    {type(2),type(20)},
+                    {type(3),type(30)}});
 
     data_set.set_data(data);
 
@@ -197,12 +196,11 @@ void TimeSeriesDataSetTest::test_set_time_series_data()
     data_set.transform_time_series();
 
     data.resize(5,3);
-    data.setValues({
-                       {type(15),type(14),type(13)},
-                       {type(12),type(11),type(10)},
-                       {type(9),type(8),type(7)},
-                       {type(6),type(5),type(4)},
-                       {type(3),type(2),type(1)}});
+    data.setValues({{type(15),type(14),type(13)},
+                    {type(12),type(11),type(10)},
+                    {type(9),type(8),type(7)},
+                    {type(6),type(5),type(4)},
+                    {type(3),type(2),type(1)}});
 
     data_set.set_time_series_data(data);
 
@@ -292,10 +290,9 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 
     data.resize(3, 4);
 
-    data.setValues({
-                       {type(1), type(1), type(-1), type(1)},
-                       {type(2), type(2), type(-2), type(2)},
-                       {type(3), type(3), type(-3), type(3)} });
+    data.setValues({{type(1), type(1), type(-1), type(1)},
+                    {type(2), type(2), type(-2), type(2)},
+                    {type(3), type(3), type(-3), type(3)}});
 
     data_set.set_data(data);
 
@@ -316,10 +313,9 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     // Test 2 (numeric and numeric non trivial case)
 
     data.resize(3, 4);
-    data.setValues({
-                       {type(1), type(2), type(4), type(1)},
-                       {type(2), type(3), type(9), type(2)},
-                       {type(3), type(1), type(10), type(2)} });
+    data.setValues({{type(1), type(2), type(4), type(1)},
+                    {type(2), type(3), type(9), type(2)},
+                    {type(3), type(1), type(10), type(2)}});
 
     data_set.set_data(data);
 
@@ -338,10 +334,9 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 
     // Test 3 (binary and binary non trivial case)
 
-    data.setValues({
-                       {type(0), type(0), type(1), type(0)},
-                       {type(1), type(0), type(0), type(1)},
-                       {type(1), type(0), type(0), type(1)} });
+    data.setValues({{type(0), type(0), type(1), type(0)},
+                    {type(1), type(0), type(0), type(1)},
+                    {type(1), type(0), type(0), type(1)}});
 
     data_set.set_data(data);
 
@@ -365,10 +360,9 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 
     // Test 4 (binary and binary trivial case)
 
-    data.setValues({
-                       {type(0), type(0), type(0), type(0)},
-                       {type(1), type(1), type(1), type(1)},
-                       {type(1), type(1), type(1), type(1)} });
+    data.setValues({{type(0), type(0), type(0), type(0)},
+                    {type(1), type(1), type(1), type(1)},
+                    {type(1), type(1), type(1), type(1)}});
 
     data_set.set_data(data);
 

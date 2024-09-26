@@ -243,7 +243,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setValues({ {type(0),type(0)},
-                      {type(2),type(2)} });
+                      {type(2),type(2)}});
 
     initialize_sequential(all_indices, 0, 1, inputs_number - 1);
 
