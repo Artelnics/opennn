@@ -26,16 +26,11 @@ public:
 
    virtual ~PoolingLayerTest();
 
-   // Constructor and destructor
-
    void test_constructor();
    void test_destructor();
-//   void test_calculate_max_pooling_outputs();
-//   void test_calculate_average_pooling_outputs();
+
    void test_forward_propagate_average_pooling();
    void test_forward_propagate_max_pooling();
-
-   // Unit testing
 
    void run_test_case();
 

@@ -28,29 +28,14 @@ public:
 
     virtual ~TransformerTest();
 
-    // Constructor and destructor
-
     void test_constructor();
-
     void test_destructor();
-
-    // Parameters norm / descriptives / histogram
-
-    void test_calculate_parameters_norm();
-
-    // Output
-
-    void test_calculate_outputs();
-
-    void test_calculate_directional_inputs();
-
-    // Forward propagation
 
     void test_forward_propagate();
 
-    bool check_activations_sums(const Tensor<type, 3>&);
+    void test_calculate_outputs();
 
-    // Unit testing
+    bool check_activations_sums(const Tensor<type, 3>&);
 
     void run_test_case();
 

@@ -668,6 +668,9 @@ public:
 
     void read_csv();
 
+    void prepare_line(string&) const;
+    void process_tokens(Tensor<string, 1>&);
+
     void open_file(const string&, ifstream&) const;
     void open_file(const string&, ofstream&) const;
 

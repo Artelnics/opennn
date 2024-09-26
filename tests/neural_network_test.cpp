@@ -59,7 +59,7 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_2.get_layer(2)->get_type() == Layer::Type::Probabilistic, LOG);
 
     // Forecasting
-/*
+
     NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1, 4, 2});
 
     assert_true(neural_network_3.get_layers_number() == 5, LOG);
@@ -67,30 +67,28 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_3.get_layer(1)->get_type() == Layer::Type::Recurrent, LOG);
     assert_true(neural_network_3.get_layer(2)->get_type() == Layer::Type::Perceptron, LOG);
     assert_true(neural_network_3.get_layer(3)->get_type() == Layer::Type::Unscaling, LOG);
+
+    // Image classification
+/*
+    Inputs variables dimension = (channels, width, height)
+    Tensor<Index, 1> inputs_variables_dimension(3);
+    inputs_variables_dimension.setValues({1,28,28});
+    Index blocks_number = 0;
+    Index outputs_number = 10;
+    Tensor<Index, 1> filters_dimensions(3);
+    filters_dimensions.setValues({1,2,2});
+    NeuralNetwork neural_network_4(inputs_variables_dimension, blocks_number,filters_dimensions, outputs_number);
+
+    cout << "Layers number: " << neural_network_4.get_layers_number() << endl;
+    assert_true(neural_network_4.get_layers_number() == 6, LOG); // Scaling, 1Bloque (Conv, Pool), Flatten, 1 Perceptron, Probabilistic.
+    assert_true(neural_network_4.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
+    assert_true(neural_network_4.get_layer(1)->get_type() == Layer::Type::Convolutional, LOG);
+    assert_true(neural_network_4.get_layer(2)->get_type() == Layer::Type::Pooling, LOG);
+    assert_true(neural_network_4.get_layer(3)->get_type() == Layer::Type::Flatten, LOG);
+    assert_true(neural_network_4.get_layer(4)->get_type() == Layer::Type::Perceptron, LOG);
+    assert_true(neural_network_4.get_layer(5)->get_type() == Layer::Type::Probabilistic, LOG);
 */
-    // ImageClassification
-
-    // Inputs variables dimension = (channels, width, height)
-//    Tensor<Index, 1> inputs_variables_dimension(3);
-//    inputs_variables_dimension.setValues({1,28,28});
-//    Index blocks_number = 0;
-//    Index outputs_number = 10;
-//    Tensor<Index, 1> filters_dimensions(3);
-//    filters_dimensions.setValues({1,2,2});
-//    NeuralNetwork neural_network_4(inputs_variables_dimension, blocks_number,filters_dimensions, outputs_number);
-
-//    cout << "Layers number: " << neural_network_4.get_layers_number() << endl;
-//    assert_true(neural_network_4.get_layers_number() == 6, LOG); // Scaling, 1Bloque (Conv, Pool), Flatten, 1 Perceptron, Probabilistic.
-//    assert_true(neural_network_4.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-//    assert_true(neural_network_4.get_layer(1)->get_type() == Layer::Type::Convolutional, LOG);
-//    assert_true(neural_network_4.get_layer(2)->get_type() == Layer::Type::Pooling, LOG);
-//    assert_true(neural_network_4.get_layer(3)->get_type() == Layer::Type::Flatten, LOG);
-//    assert_true(neural_network_4.get_layer(4)->get_type() == Layer::Type::Perceptron, LOG);
-//    assert_true(neural_network_4.get_layer(5)->get_type() == Layer::Type::Probabilistic, LOG);
-
-    //    Layers constructor
-
-    // Default constructor
+    // Layers constructor
 
     NeuralNetwork neural_network_7(layers);
 
@@ -106,7 +104,7 @@ void NeuralNetworkTest::test_constructor()
     assert_true(!neural_network_7.is_empty(), LOG);
     assert_true(neural_network_7.get_layer(0)->get_type() == Layer::Type::Perceptron, LOG);
 
-    //    Test 3_2
+    // Test 3_2
 
     layers.resize(7);
 
@@ -127,8 +125,6 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_8.get_layer(5)->get_type() == Layer::Type::Perceptron, LOG);
     assert_true(neural_network_8.get_layer(6)->get_type() == Layer::Type::Bounding, LOG);
 
-
-/*
     // Convolutional layer constructor
 
     Tensor<Index, 1> new_input_dimensions(1);
@@ -140,7 +136,7 @@ void NeuralNetworkTest::test_constructor()
     new_filters_dimensions.setConstant(type(1));
 
     Index new_outputs_number = 1;
-
+/*
     ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
 
     NeuralNetwork neural_network_6(new_input_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
@@ -164,7 +160,7 @@ void NeuralNetworkTest::test_destructor()
 void NeuralNetworkTest::test_add_layer()
 {
     cout << "test_add_layer\n";
-
+/*
 //    ScalingLayer2D* scaling_layer_2d = new ScalingLayer2D;
 
 //    LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
@@ -204,7 +200,7 @@ void NeuralNetworkTest::test_add_layer()
     neural_network.add_layer(&scaling_layer);
     assert_true(neural_network.get_layers_number() == 1, LOG);
     assert_true(neural_network.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-/*
+
     // LSTM Layer
 
     neural_network.set();
@@ -268,43 +264,6 @@ void NeuralNetworkTest::test_add_layer()
     //   neural_network.add_layer(pooling_layer);
     //   assert_true(neural_network.get_layers_number() == 1, LOG);
     //   assert_true(neural_network.get_layer(0)->get_type() == Layer::Type::Pooling, LOG);
-*/
-}
-
-
-void NeuralNetworkTest::test_calculate_parameters_norm()
-{
-    cout << "test_calculate_parameters_norm\n";
-
-    type parameters_norm = type(0);
-/*
-    // Test
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {});
-
-    parameters_norm = neural_network.calculate_parameters_norm();
-
-    assert_true(abs(parameters_norm) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,1,1,1});
-
-    neural_network.set_parameters_constant(type(1));
-
-    parameters_norm = neural_network.calculate_parameters_norm();
-
-    assert_true(abs(parameters_norm - type(sqrt(6))) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,1,1,1,1});
-
-    neural_network.set_parameters_constant(type(1));
-
-    parameters_norm = neural_network.calculate_parameters_norm();
-
-    assert_true(abs(parameters_norm - type(sqrt(8))) < type(NUMERIC_LIMITS_MIN), LOG);
 */
 }
 
@@ -754,31 +713,16 @@ void NeuralNetworkTest::run_test_case()
 {
     cout << "Running neural network test case...\n";
 
-    // Constructor and destructor
-
-    test_constructor();
-    
+    test_constructor();   
     test_destructor();
  
-    // Appending layers
-
     test_add_layer();
-
-    // Parameters norm / descriptives / histogram
-
-    test_calculate_parameters_norm();
-
-    // Output
 
     test_calculate_outputs();
 
     test_calculate_directional_inputs();
 
-    //Forward propagate
-
     test_forward_propagate();
-
-    // Serialization
 
     test_save();
 

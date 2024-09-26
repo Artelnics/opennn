@@ -77,12 +77,6 @@ NeuralNetwork::NeuralNetwork(const string& file_name)
 }
 
 
-NeuralNetwork::NeuralNetwork(const tinyxml2::XMLDocument& document)
-{
-    from_XML(document);
-}
-
-
 NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers)
 {
     set();
@@ -1375,18 +1369,6 @@ void NeuralNetwork::set_parameters_random() const
 }
 
 
-type NeuralNetwork::calculate_parameters_norm() const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    Tensor<type, 0> parameters_norm;
-
-    parameters_norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
-
-    return parameters_norm(0);
-}
-
-
 void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
@@ -1471,17 +1453,17 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     const Index batch_samples_number = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
-    ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
+    ForwardPropagation forward_propagation(batch_samples_number, this);
 
     const pair<type*, dimensions> inputs_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
-    forward_propagate(tensor_wrapper(inputs_pair), neural_network_forward_propagation);
+    forward_propagate(tensor_wrapper(inputs_pair), forward_propagation);
 
     const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return Tensor<type, 2>();
     
-    const pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
@@ -1493,17 +1475,17 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
     const Index batch_samples_number = inputs.dimension(0);
 
-    ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
+    ForwardPropagation forward_propagation(batch_samples_number, this);
 
     const pair<type*, dimensions> inputs_pair((type*)inputs.data(), { {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)} });
 
-    forward_propagate(tensor_wrapper(inputs_pair), neural_network_forward_propagation);
+    forward_propagate(tensor_wrapper(inputs_pair), forward_propagation);
 
     const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return Tensor<type, 2>();
 
-    const pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 

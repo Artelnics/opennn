@@ -1781,11 +1781,9 @@ void TextDataSet::read_txt()
 
     string line;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
@@ -1803,11 +1801,9 @@ void TextDataSet::read_txt()
 
     Index index = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 

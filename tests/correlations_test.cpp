@@ -355,8 +355,6 @@ void CorrelationsTest::run_test_case()
 {
     cout << "Running correlation analysis test case...\n";
 
-    // Correlation
-
     test_linear_correlation();
 
     test_spearman_correlation();
@@ -369,13 +367,11 @@ void CorrelationsTest::run_test_case()
 
     test_power_correlation();
 
-    // Time series correlation
-
     test_autocorrelations();
 
     test_cross_correlations();
 
-    cout << "End of correlation analysis test case.\n\n";
+    cout << "End of correlations test case.\n\n";
 }
 
 }

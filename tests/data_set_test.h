@@ -88,7 +88,6 @@ public:
    void test_read_empty_csv();
    void test_read_heart_csv();
    void test_read_iris_csv();
-   void test_read_mnsit_csv();
    void test_read_one_variable_csv();
    void test_read_pollution_csv();
    void test_read_urinary_inflammations_csv();

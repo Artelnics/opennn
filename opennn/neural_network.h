@@ -71,8 +71,6 @@ public:
 
    explicit NeuralNetwork(const string&);
 
-   explicit NeuralNetwork(const tinyxml2::XMLDocument&);
-
    explicit NeuralNetwork(const Tensor<Layer*, 1>&);
 
    // Destructor
@@ -215,10 +213,6 @@ public:
    void set_parameters_constant(const type&) const;
 
    void set_parameters_random() const;
-
-   // Parameters
-
-   type calculate_parameters_norm() const;
 
    // Output
 

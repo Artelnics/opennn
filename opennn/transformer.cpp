@@ -329,7 +329,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     input.setZero();
     input(0) = start_indicator;
 
-    ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
+    ForwardPropagation forward_propagation(batch_samples_number, this);
     
     pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
     pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
@@ -341,7 +341,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
 
     const Index layers_number = get_layers_number();
 
-    pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+    pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
     TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[1], outputs_pair.second[2]);
 
@@ -350,7 +350,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     
     for(Index i = 1; i < input_length; i++)
     {
-        forward_propagate(inputs_pairs, neural_network_forward_propagation);
+        forward_propagate(inputs_pairs, forward_propagation);
 
         current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
 

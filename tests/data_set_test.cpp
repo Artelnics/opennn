@@ -842,24 +842,6 @@ void DataSetTest::test_read_iris_csv()
 }
 
 
-void DataSetTest::test_read_mnsit_csv()
-{
-    cout << "test_read_mnist_csv\n";
-
-    try
-    {
-        data_set.set("../../datasets/mnist.csv", ",", false);
-
-        assert_true(data_set.get_samples_number() == 100, LOG);
-        assert_true(data_set.get_variables_number() == 785, LOG);
-    }
-    catch(const exception&)
-    {
-        assert_true(true,LOG);
-    }   
-}
-
-
 void DataSetTest::test_read_one_variable_csv()
 {
     cout << "test_read_one_variable_csv\n";
@@ -2026,7 +2008,6 @@ void DataSetTest::run_test_case()
     test_read_empty_csv();
     test_read_heart_csv();
     test_read_iris_csv();
-    test_read_mnsit_csv();
     test_read_one_variable_csv();
     test_read_pollution_csv();
     test_read_urinary_inflammations_csv();

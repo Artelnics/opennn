@@ -2442,8 +2442,6 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
 
 void DataSet::set_binary_raw_variables()
 {
-    if(display) cout << "Setting binary raw variables..." << endl;
-
     Index variable_index = 0;
 
     const Index raw_variables_number = get_raw_variables_number();
@@ -2479,8 +2477,6 @@ void DataSet::set_binary_raw_variables()
 
 void DataSet::unuse_constant_raw_variables()
 {
-    if(display) cout << "Setting constant raw variables..." << endl;
-
     Index variable_index = 0;
 
     const Index raw_variables_number = get_raw_variables_number();
@@ -6196,13 +6192,62 @@ void DataSet::scrub_missing_values()
 }
 
 
+void DataSet::prepare_line(string& line) const
+{
+    decode(line);
+    trim(line);
+    erase(line, '"');
+}
+
+
+void DataSet::process_tokens(Tensor<string, 1>& tokens)
+{
+    const Index raw_variables_number = tokens.size();
+
+    #pragma omp parallel for reduction(+:missing_values_number)
+
+    for(Index i = 0; i < raw_variables_number; i++)
+    {
+        const RawVariableType type = raw_variables(i).type;
+
+        const string token = has_samples_id ? tokens(i+1) : tokens(i);
+
+        if(token.empty() || token == missing_values_label)
+        {
+            missing_values_number++;
+            continue;
+        }
+        else if(is_numeric_string(token))
+        {
+            if(type == RawVariableType::None)
+                raw_variables(i).type = RawVariableType::Numeric;
+
+            if(type == RawVariableType::Categorical)
+                throw runtime_error("Error: Found number in categorical variable: " + raw_variables(i).name);
+        }
+        else if(is_date_time_string(token))
+        {
+            if(type == RawVariableType::None)
+                raw_variables(i).type = RawVariableType::DateTime;
+        }
+        else // is string
+        {
+            if(type == RawVariableType::None)
+                raw_variables(i).type = RawVariableType::Categorical;
+
+            if(!contains(raw_variables(i).categories, token))
+                push_back_string(raw_variables(i).categories, token);
+        }
+    }
+}
+
+
 void DataSet::read_csv()
 {
     if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
-    ifstream file;
-    file.open(data_path.c_str());
+    ifstream file(data_path.c_str());
 
     if(!file.is_open())
         throw runtime_error("Error: Cannot open file " + data_path + "\n");
@@ -6222,16 +6267,13 @@ void DataSet::read_csv()
 
     // Read first line
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        decode(line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
-        check_separators(line);
+//        check_separators(line);
 
         tokens = get_tokens(line, separator_string);
 
@@ -6253,11 +6295,11 @@ void DataSet::read_csv()
         if(has_numbers(tokens))
             throw runtime_error("Error: Some header names are numeric: " + line + "\n");
 
-        if(!has_samples_id)
-            set_raw_variables_names(tokens);
-        else
+        if(has_samples_id)
             for(Index i = 0; i < raw_variables_number; i++)
                 raw_variables(i).name = tokens(i+1);
+        else
+            set_raw_variables_names(tokens);
     }
     else
     {
@@ -6267,55 +6309,20 @@ void DataSet::read_csv()
 
     // Rest of lines
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        decode(line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
+
         if(line.empty()) continue;
-        check_separators(line);
+
+        //check_separators(line);
 
         tokens = get_tokens(line, separator_string);
 
         if(tokens.size() != columns_number)
             throw runtime_error("Tokens number is not equal to columns number.");
 
-        //#pragma omp parallel for reduction(+:missing_values_number)
-
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            const RawVariableType type = raw_variables(i).type;
-
-            const string token = has_samples_id ? tokens(i+1) : tokens(i);
-
-            if(token.empty() || token == missing_values_label)
-            {
-                missing_values_number++;
-                continue;
-            }
-            else if(is_numeric_string(token))
-            {
-                if(type == RawVariableType::None)
-                    raw_variables(i).type = RawVariableType::Numeric;
-
-                if(type == RawVariableType::Categorical)
-                    throw runtime_error("Error: Found number in categorical variable: " + raw_variables(i).name);
-            }
-            else if(is_date_time_string(token))
-            {
-                if(type == RawVariableType::None)
-                    raw_variables(i).type = RawVariableType::DateTime;
-            }
-            else // is string
-            {
-                if(type == RawVariableType::None)
-                    raw_variables(i).type = RawVariableType::Categorical;
-
-                if(!contains(raw_variables(i).categories, token))
-                    push_back_string(raw_variables(i).categories, token);
-            }
-        }
+        process_tokens(tokens);
 
         samples_number++;
     }
@@ -6348,12 +6355,10 @@ void DataSet::read_csv()
 
     if(has_header)
     {
-        while(file.good())
+        while(getline(file, line))
         {
-            getline(file, line);
-            decode(line);
-            trim(line);
-            erase(line, '"');
+            prepare_line(line);
+
             if(line.empty()) continue;
             break;
         }
@@ -6361,12 +6366,10 @@ void DataSet::read_csv()
 
     Index sample_index = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        decode(line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
+
         if(line.empty()) continue;
         check_separators(line);
 
@@ -6590,15 +6593,9 @@ void DataSet::read_data_file_preview(ifstream& file)
 
     Index lines_count = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
-        decode(line);
-
-        trim(line);
-
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
@@ -7026,15 +7023,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     if(model_type == ModelType::AutoAssociation)
         input_raw_variables_number = get_raw_variables_number() - get_target_raw_variables_number() - get_unused_raw_variables_number()/2;
 
-    while(file.good())
+    while(getline(file, line))
     {
+        prepare_line(line);
+
         line_number++;
-
-        getline(file, line);
-
-        trim(line);
-
-        erase(line, '"');
 
         if(line.empty()) continue;
 
@@ -7072,13 +7065,9 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     const bool is_float = is_same<type, float>::value;
     bool has_missing_values = false;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
-        trim(line);
-
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 

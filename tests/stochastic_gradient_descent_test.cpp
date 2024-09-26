@@ -110,9 +110,6 @@ void StochasticGradientDescentTest::test_perform_training()
 
     assert_true(error <= old_error, LOG);
 
-    cout << "old_error: " << endl << old_error << endl;
-    cout << "error: " << endl << error << endl;
-
     // Loss goal
 
     neural_network.set_parameters_constant(type(-1));

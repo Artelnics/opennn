@@ -22,45 +22,26 @@ class ConvolutionalLayerTest : public UnitTesting
 
 public:
 
-   explicit ConvolutionalLayerTest();
+    explicit ConvolutionalLayerTest();
 
-   virtual ~ConvolutionalLayerTest();
+    virtual ~ConvolutionalLayerTest();
 
-   void test_eigen_convolution();
+    void test_eigen_convolution();
 
-   // Constructor and destructor
+    void test_constructor();
+    void test_destructor();
 
-   void test_constructor();
-   void test_destructor();
+    void test_calculate_convolutions();
 
+    void test_calculate_activations();
 
-   // Combinations
+    void test_insert_padding();
 
-   void test_calculate_convolutions();
+    void test_forward_propagate();
 
-   // Activation
+    void test_back_propagate();
 
-   void test_calculate_activations();
-
-  // Outputs
-
-  void test_insert_padding();
-
-  // Forward propagate
-
-  void test_forward_propagate();
-
-  //Back propagate
-
-  void test_back_propagate();
-
-  // Utils
-
-  void test_memcpy_approach();
-
-  // Unit testing
-
-  void run_test_case();
+    void run_test_case();
 
 private:
 

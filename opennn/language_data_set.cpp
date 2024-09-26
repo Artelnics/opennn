@@ -1314,10 +1314,8 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
     string line;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
         if(line.empty()) continue;
 
         vocabulary_size++;
@@ -1332,10 +1330,8 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
     Index count = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
         if(line.empty()) continue;
 
         vocabulary(count) = line;
@@ -1785,11 +1781,9 @@ void LanguageDataSet::load_documents(const string& path)
 
     string line;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
@@ -1810,10 +1804,8 @@ void LanguageDataSet::load_documents(const string& path)
     string delimiter = "";
     const string separator = get_separator_string();
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
         if(line.empty()) continue;
 
         if(line[0] == '"')
@@ -1911,15 +1903,9 @@ void LanguageDataSet::read_csv_3_language_model()
     Index sample_index = 0;
     Index raw_variable_index = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
-        decode(line);
-
-        trim(line);
-
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 

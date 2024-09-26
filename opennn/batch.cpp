@@ -117,6 +117,12 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 }
 
 
+bool Batch::is_empty() const
+{
+    return get_batch_samples_number() == 0;
+}
+
+
 void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 {        
     batch_size = new_batch_size;
