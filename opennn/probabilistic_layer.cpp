@@ -407,12 +407,26 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
+
+    { // DEBUG
+        //cout << "first image:\n" << inputs.chip(0, 0) << endl;
+        //system("pause");
+    }
+
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     calculate_combinations(inputs, outputs);
+
+    { // DEBUG
+        //cout << "synaptic_weights:\n" << synaptic_weights << endl;
+        //cout << outputs.dimension(0) << "   " << outputs.dimension(1) << endl;
+        //cout << "outputs:\n" << outputs << endl;
+
+        //system("pause");
+    }
 
     if (neurons_number == 1 && !is_training)
     {
@@ -423,6 +437,8 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
         Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
         logistic(outputs, activations_derivatives);
+
+        //cout << "probabilistic outputs" << outputs << endl;
     }
     else if (neurons_number > 1)
     {

@@ -127,6 +127,8 @@ void ImageDataSet::set(const Index& new_images_number,
                        const Index& new_channels,
                        const Index& new_targets_number)
 {
+    set_default();
+
     model_type = ModelType::ImageClassification;
 
     const Index target_number = (new_targets_number == 2) ? 1 : new_targets_number;
@@ -1032,6 +1034,33 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));
+}
+
+
+Tensor<Descriptives, 1> ImageDataSet::scale_input_variables()
+{
+    const Tensor<Descriptives, 1> input_variables_descriptives;// = calculate_input_variables_descriptives();
+
+    TensorMap<Tensor<type, 4>> inputs_data(data.data(),
+                                           get_samples_number(),
+                                           input_dimensions[0],
+                                           input_dimensions[1],
+                                           input_dimensions[2]);
+
+    inputs_data.device(*thread_pool_device) = inputs_data / type(255);
+
+    return input_variables_descriptives;
+}
+
+
+Tensor<Descriptives, 1> ImageDataSet::scale_target_variables()
+{
+    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_target_variables_descriptives();
+
+    // @todo not implemented yet
+
+
+    return target_variables_descriptives;
 }
 
 

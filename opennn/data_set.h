@@ -567,8 +567,8 @@ public:
 
     Tensor<Descriptives, 1> scale_data();
 
-    Tensor<Descriptives, 1> scale_input_variables();
-    Tensor<Descriptives, 1> scale_target_variables();
+    virtual Tensor<Descriptives, 1> scale_input_variables();
+    virtual Tensor<Descriptives, 1> scale_target_variables();
 
     // Data unscaling
 

@@ -192,10 +192,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
-    
+
     const Index training_samples_number = data_set->get_training_samples_number();
     const Index selection_samples_number = data_set->get_selection_samples_number();
-    
+
     training_samples_number < batch_samples_number
             ? training_batch_samples_number = training_samples_number
             : training_batch_samples_number = batch_samples_number;
@@ -212,7 +212,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     
     Tensor<Index, 2> training_batches(training_batches_number, training_batch_samples_number);
     Tensor<Index, 2> selection_batches(selection_batches_number, selection_batch_samples_number);
-    
+
     // Neural network
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -310,6 +310,18 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // Neural network
 
             inputs_pair = training_batch.get_inputs_pair();
+
+            { //DEBUG 
+                const TensorMap<Tensor<type, 4>> images(inputs_pair(0).first,
+                    inputs_pair(0).second[0],
+                    inputs_pair(0).second[1],
+                    inputs_pair(0).second[2],
+                    inputs_pair(0).second[3]);
+
+                //cout << "first_image (300x300x3):\n" << images.chip(0, 0) << endl;
+
+                //system("pause");
+            }
 
             neural_network->forward_propagate(inputs_pair,
                                               training_forward_propagation,

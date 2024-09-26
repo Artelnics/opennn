@@ -125,7 +125,7 @@ Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)
     return scaled_x;
 }
 
-
+/*
 void scale_image_minimum_maximum(Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
     #pragma omp parallel for
@@ -135,7 +135,7 @@ void scale_image_minimum_maximum(Tensor<type, 2>& matrix, const Index& raw_varia
         matrix(i, raw_variable_index) /= type(255);
     }
 }
-
+*/
 
 Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 {
