@@ -163,7 +163,7 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
         for(Index i = 0; i < rows_number; i++)
         {
-            scaled_x(i,j) = slope*x(i,j)+intercept;
+            scaled_x(i, j) = slope*x(i, j)+intercept;
         }
     }
 

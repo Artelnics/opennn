@@ -282,10 +282,10 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 //        #pragma omp parallel for
 //        for(Index i = 0; i < rows_number; i++)
 //            for(Index j = 0; j < raw_variables_number; j++)
-//                if(inputs(i,j) < lower_bounds(j))
-//                    outputs(i,j) = lower_bounds(j);
-//                else if(inputs(i,j) > upper_bounds(j))
-//                    outputs(i,j) = upper_bounds(j);
+//                if(inputs(i, j) < lower_bounds(j))
+//                    outputs(i, j) = lower_bounds(j);
+//                else if(inputs(i, j) > upper_bounds(j))
+//                    outputs(i, j) = upper_bounds(j);
     }
     else
     {

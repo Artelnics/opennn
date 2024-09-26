@@ -115,6 +115,10 @@ public:
 
         // Methods
 
+        string get_use_string() const;
+        string get_type_string() const;
+        string get_scaler_string() const;
+
         Index get_categories_number() const;
 
         void set_scaler(const Scaler&);
@@ -139,7 +143,7 @@ public:
 
     ModelType get_model_type() const;
 
-    string get_model_type_string(const DataSet::ModelType&) const;
+    string get_model_type_string() const;
 
     // Samples get
 
@@ -177,7 +181,6 @@ public:
 
     Tensor<RawVariable, 1> get_raw_variables() const;
     Tensor<RawVariable, 1> get_input_raw_variables() const;
-    //Tensor<bool, 1> get_input_raw_variables_binary() const;
     Tensor<RawVariable, 1> get_target_raw_variables() const;
     Tensor<RawVariable, 1> get_used_raw_variables() const;
 
@@ -319,11 +322,6 @@ public:
     const string& get_missing_values_label() const;
 
     static Tensor<string, 1> get_default_raw_variables_names(const Index&);
-    static string get_raw_variable_type_string(const RawVariableType&);
-    static string get_raw_variable_use_string(const VariableUse&);
-    static string get_raw_variable_scaler_string(const Scaler&);
-
-    static Scaler get_scaling_unscaling_method(const string&);
 
     Index get_gmt() const;
 
@@ -341,7 +339,7 @@ public:
     void set(const tinyxml2::XMLDocument&);
     void set(const string&);
 //    void set(const string&, const char&, const bool&);
-    void set(const string&, const string&, const bool&, const bool&, const DataSet::Codification&);
+    void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
     void set(const Tensor<type, 1>&, const Index&);
     void set_default();
 
@@ -368,9 +366,9 @@ public:
     void set_sample_use(const Index&, const SampleUse&);
     void set_sample_use(const Index&, const string&);
 
-    void set_samples_uses(const Tensor<SampleUse, 1>&);
-    void set_samples_uses(const Tensor<string, 1>&);
-    void set_samples_uses(const Tensor<Index, 1>&, const SampleUse);
+    void set_sample_uses(const Tensor<SampleUse, 1>&);
+    void set_sample_uses(const Tensor<string, 1>&);
+    void set_sample_uses(const Tensor<Index, 1>&, const SampleUse);
 
     // Raw variables set
 
@@ -384,7 +382,6 @@ public:
     void set_raw_variables_uses(const Tensor<string, 1>&);
     void set_raw_variables_uses(const Tensor<VariableUse, 1>&);
     void set_raw_variables_unused();
-    void set_raw_variables_types(const Tensor<string, 1>&);
     void set_input_target_raw_variables_indices(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
     void set_input_target_raw_variables_indices(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_raw_variables_unused();
@@ -487,7 +484,6 @@ public:
     // Unusing
 
     Tensor<Index, 1> unuse_repeated_samples();
-    Tensor<string, 1> get_raw_variables_types() const;
 
     Tensor<string, 1> unuse_uncorrelated_raw_variables(const type& = type(0.25));
     Tensor<string, 1> unuse_multicollinear_raw_variables(Tensor<Index, 1>&, Tensor<Index, 1>&);
@@ -542,8 +538,12 @@ public:
 
     // Inputs correlations
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variables_correlations(const bool& = true,
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_correlations(const bool& = true,
                                                                                  const bool& = false) const;
+
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_pearson_correlations() const;
+
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_spearman_correlations() const;
 
     void print_inputs_correlations() const;
 
@@ -612,9 +612,6 @@ public:
     void load(const string&);
 
     void print_raw_variables() const;
-    void print_raw_variables_types() const;
-    void print_raw_variables_uses() const;
-    void print_raw_variables_scalers() const;
 
     void print_data() const;
     void print_data_preview() const;

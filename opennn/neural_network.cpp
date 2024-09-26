@@ -334,20 +334,23 @@ NeuralNetwork::ModelType NeuralNetwork::get_model_type() const
 
 string NeuralNetwork::get_model_type_string() const
 {
-    if(model_type == ModelType::AutoAssociation)
-        return "AutoAssociation";
-    else if(model_type == ModelType::Approximation)
-        return "Approximation";
-    else if(model_type == ModelType::Classification)
-        return "Classification";
-    else if(model_type == ModelType::Forecasting)
-        return "Forecasting";
-    else if(model_type == ModelType::TextClassification)
-        return "TextClassification";
-    else if(model_type == ModelType::ImageClassification)
-        return "ImageClassification";
-    else
-        throw runtime_error("Unkown model type");
+    switch (model_type)
+    {
+        case ModelType::AutoAssociation:
+            return "AutoAssociation";
+        case ModelType::Approximation:
+            return "Approximation";
+        case ModelType::Classification:
+            return "Classification";
+        case ModelType::Forecasting:
+            return "Forecasting";
+        case ModelType::TextClassification:
+            return "TextClassification";
+        case ModelType::ImageClassification:
+            return "ImageClassification";
+        default:
+            throw runtime_error("Unkown model type");
+    }
 }
 
 
@@ -1527,7 +1530,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
         inputs(direction) = minimum + (maximum - minimum)*type(i)/type(points_number-1);
 
         for(Index j = 0; j < inputs_number; j++)
-            directional_inputs(i,j) = inputs(j);
+            directional_inputs(i, j) = inputs(j);
     }
 
     return directional_inputs;
@@ -4096,7 +4099,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     {
         for(Index j = 0; j < outputs_number; j++)
         {
-            file << outputs(i,j);
+            file << outputs(i, j);
 
             if(j != outputs_number-1) file << ";";
         }

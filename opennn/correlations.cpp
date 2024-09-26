@@ -55,16 +55,9 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
 {      
-    Correlation correlation;
 
     if(is_constant_matrix(x) || is_constant_matrix(y))
-    {
-        correlation.a = NAN;
-        correlation.b = NAN;
-        correlation.r = NAN;
-
-        return correlation;
-    }
+        return Correlation();
 
     const Index x_rows = x.dimension(0);
     const Index x_columns = x.dimension(1);
@@ -77,67 +70,49 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(x_columns == 1 && y_columns == 1)
     {
+        const Tensor<type, 1> x_vector = x.reshape(vector);
+        const Tensor<type, 1> y_vector = y.reshape(vector);
+
         if(!x_binary && !y_binary)
         {
             const Correlation linear_correlation
-                    = opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+                    = opennn::linear_correlation(thread_pool_device, x_vector, y_vector);
 
             const Correlation exponential_correlation
-                    = opennn::exponential_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+                    = opennn::exponential_correlation(thread_pool_device, x_vector, y_vector);
 
             const Correlation logarithmic_correlation
-                    = opennn::logarithmic_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+                    = opennn::logarithmic_correlation(thread_pool_device, x_vector, y_vector);
 
             const Correlation power_correlation
-                    = opennn::power_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+                    = opennn::power_correlation(thread_pool_device, x_vector, y_vector);
 
-            Correlation strongest_correlation = linear_correlation;
-
-            strongest_correlation = std::max({ linear_correlation, exponential_correlation, logarithmic_correlation, power_correlation },
+            return max({linear_correlation, exponential_correlation, logarithmic_correlation, power_correlation},
                 [](const Correlation& a, const Correlation& b) {
                     return abs(a.r) < abs(b.r);
                 });
-
-            return strongest_correlation;
         }
 
-        else if(!x_binary && y_binary)
-        {
-            return logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
-        }
+        if(!x_binary && y_binary)
+            return logistic_correlation_vector_vector(thread_pool_device, x_vector, y_vector);
 
-        else if(x_binary && !y_binary)
-        {
-            return logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
-        }
+        if(x_binary && !y_binary)
+            return logistic_correlation_vector_vector(thread_pool_device, y_vector, x_vector);
 
-        else if(x_binary && y_binary)
-        {
-            return opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
-        }
+        if(x_binary && y_binary)
+            return opennn::linear_correlation(thread_pool_device, x_vector, y_vector);
     }
 
-    else if(x_columns != 1 && y_columns == 1)
-    {
+    if(x_columns != 1 && y_columns == 1)
         return logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
-    }
 
-    else if(x_columns == 1 && y_columns != 1)
-    {
+    if(x_columns == 1 && y_columns != 1)
         return logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
-    }
 
-    else if(x_columns != 1 && y_columns != 1)
-    {
+    if(x_columns != 1 && y_columns != 1)
         return logistic_correlation_matrix_matrix(thread_pool_device, x, y);
-    }
 
-    else
-    {
-        throw runtime_error("Correlations Exception: Unknown case.");
-    }
-
-    return correlation;
+    throw runtime_error("Correlations Exception: Unknown case.");
 }
 
 
@@ -326,7 +301,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
         if(not_NAN_row(i))
         {
             for(Index j = 0; j < y_columns_number; j++)
-                new_y(index, j) = y(i,j);
+                new_y(index, j) = y(i, j);
 
             new_x(index) = x(i);
 
@@ -361,7 +336,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         {
             for(Index j = 0; j < x_columns_number; j++)
             {
-                if(isnan(x(i,j)))
+                if(isnan(x(i, j)))
                 {
                     not_NAN_row(i) = false;
                     break;
@@ -383,7 +358,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         if(not_NAN_row(i))
         {
             for(Index j = 0; j < y_columns_number; j++)
-                new_y(index, j) = y(i,j);
+                new_y(index, j) = y(i, j);
 
             for(Index j = 0; j < x_columns_number; j++)
                 new_x(index, j) = x(i, j);
@@ -406,7 +381,7 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            values(i,j) = correlations(i,j).r;
+            values(i, j) = correlations(i, j).r;
         }
     }
 
