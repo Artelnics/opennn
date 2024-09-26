@@ -63,11 +63,7 @@ public:
 
    explicit NeuralNetwork();
 
-   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const Tensor<Index, 1>&);
-
-   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const initializer_list<Index>&);
-
-   explicit NeuralNetwork(const dimensions&, const Index&, const Tensor<Index, 1>&, const Index&);
+   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const dimensions&, const Index&, const Index&);
 
    explicit NeuralNetwork(const string&);
 
@@ -139,9 +135,7 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ModelType&, const Tensor<Index, 1>&);
-   void set(const NeuralNetwork::ModelType&, const initializer_list<Index>&);
-   void set(const dimensions&, const Index&, const Tensor<Index, 1>&, const Index&);
+   void set(const NeuralNetwork::ModelType&, const dimensions&, const Index&, const Index&);
 
    void set(const string&);
 

@@ -881,16 +881,6 @@ Tensor<Descriptives, 1> ImageDataSet::scale_input_variables()
 }
 
 
-Tensor<Descriptives, 1> ImageDataSet::scale_target_variables()
-{
-    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_target_variables_descriptives();
-
-    // @todo not implemented yet
-
-    return target_variables_descriptives;
-}
-
-
 void ImageDataSet::read_bmp()
 {
     vector<path> directory_path;
@@ -977,11 +967,8 @@ void ImageDataSet::read_bmp()
             }
         }
 
-        if(display)
-        {
-            if(i % 1000 == 0)
-                display_progress_bar(i, samples_number - 1000);
-        }
+        if(display && i % 1000 == 0)
+            display_progress_bar(i, samples_number - 1000);
     }
 
     if(display)

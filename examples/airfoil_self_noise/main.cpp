@@ -6,13 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
-
 #include <iostream>
 #include <string>
 #include <time.h>
-
-// OpenNN includes
 
 #include "../../opennn/data_set.h"
 #include "../../opennn/neural_network.h"
@@ -46,7 +42,7 @@ int main()
         const Index neurons_number = 10;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                     {input_variables_number, neurons_number, target_variables_number});
+                                     {input_variables_number}, neurons_number, target_variables_number);
 
         //neural_network.save("../data/neural_network.xml");
         //neural_network.load("../data/neural_network.xml");

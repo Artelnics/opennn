@@ -47,27 +47,12 @@ NeuralNetwork::NeuralNetwork()
 }
 
 
-NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, const Tensor<Index, 1>& architecture)
+NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, 
+                             const dimensions& input_dimensions,
+                             const Index& complexity,
+                             const Index& outputs_number)
 {
-    set(model_type, architecture);
-}
-
-
-NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, const initializer_list<Index>& architecture_list)
-{
-    Tensor<Index, 1> architecture(architecture_list.size());
-    architecture.setValues(architecture_list);
-
-    set(model_type, architecture);
-}
-
-
-NeuralNetwork::NeuralNetwork(const dimensions& new_input_dimensions,
-                             const Index& new_blocks_number,
-                             const Tensor<Index, 1>& new_filters_dimensions,
-                             const Index& new_outputs_number)
-{
-    set(new_input_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
+    set(model_type, input_dimensions, complexity, outputs_number);
 }
 
 
@@ -613,30 +598,31 @@ void NeuralNetwork::set()
 
 
 void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, 
-                        const Tensor<Index, 1>& architecture)
+                        const dimensions& input_dimensions, 
+                        const Index& complexity, 
+                        const Index& outputs_number)
 {
     delete_layers();
 
-    if(architecture.size() <= 1) return;
-
-    const Index size = architecture.size();
-
-    const Index inputs_number = architecture[0];
-    const Index outputs_number = architecture[size-1];
+    Index inputs_number = 1;
+    for (Index i = 0; i < input_dimensions.size(); i++)
+        inputs_number *= input_dimensions[i];
 
     inputs_name.resize(inputs_number);
 
     for(Index i = 0; i < inputs_number; i++)
         inputs_name(i) = "input_" + to_string(i+1);
 
+    dimensions output_dimensions;
+
     if(model_type == ModelType::Approximation)
     {
         add_layer(new ScalingLayer2D(inputs_number));
 
-        for(Index i = 0; i < size-1; i++)
-            (i != size-2)
-                ? add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::HyperbolicTangent), "perceptron_layer_" + to_string(i+1))
-                : add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(i+1));
+//        for(Index i = 0; i < size; i++)
+//            (i != size-2)
+//                ? add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::HyperbolicTangent), "perceptron_layer_" + to_string(i+1))
+//                : add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(i+1));
 
         add_layer(new UnscalingLayer(outputs_number));
 
@@ -644,60 +630,62 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type,
     }
     else if(model_type == ModelType::Classification || model_type == ModelType::TextClassification)
     {
-        for(Index i = 0; i < size-2; i++)
-            add_layer(new PerceptronLayer(architecture[i], architecture[i+1]), "perceptron_layer_" + to_string(i+1));
+//        for(Index i = 0; i < size-2; i++)
+//            add_layer(new PerceptronLayer(architecture[i], architecture[i+1]), "perceptron_layer_" + to_string(i+1));
 
-        add_layer(new ProbabilisticLayer(architecture[size-2], architecture[size-1]));
+        output_dimensions = get_output_dimensions();
+
+        add_layer(new ProbabilisticLayer(output_dimensions[0], outputs_number));
     }
     else if(model_type == ModelType::Forecasting)
     {
-        add_layer(new LongShortTermMemoryLayer(architecture[0], architecture[1], architecture[2]));
+//        add_layer(new LongShortTermMemoryLayer(architecture[0], architecture[1], architecture[2]));
 
-        for(Index i = 2 ; i < size-1 ; i++)
-            (i != size-2)
-                ? add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::HyperbolicTangent), "perceptron_layer_" + to_string(i+1))
-                : add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(i+1));
+//        for(Index i = 2 ; i < size-1 ; i++)
+//            (i != size-2)
+//                ? add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::HyperbolicTangent), "perceptron_layer_" + to_string(i+1))
+//                : add_layer(new PerceptronLayer(architecture[i], architecture[i+1], PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(i+1));
 
-        add_layer(new UnscalingLayer(architecture[size-1]));
+        add_layer(new UnscalingLayer(outputs_number));
 
         add_layer(new BoundingLayer(outputs_number));
     }
     else if(model_type == ModelType::ImageClassification)
     {
-        add_layer(new ScalingLayer4D());
+        add_layer(new ScalingLayer4D(input_dimensions));
 
         Index blocks_number;
 
-        for(Index i = 0; i < blocks_number; i++)
+        for(Index i = 0; i < complexity; i++)
         {
-            add_layer(new ConvolutionalLayer());
-            add_layer(new PoolingLayer());
+            add_layer(new ConvolutionalLayer(get_output_dimensions()));
+            add_layer(new PoolingLayer(get_output_dimensions()));
         }
 
-        add_layer(new FlattenLayer());
+        add_layer(new FlattenLayer(get_output_dimensions()));
 
 
         // Use the set mode build specifically for image classification
     }
     else if(model_type == ModelType::AutoAssociation)
     {
-        const Index mapping_neurons_number = 10;
-        const Index bottle_neck_neurons_number = architecture[1];
-        const Index target_variables_number = architecture[2];
+//        const Index mapping_neurons_number = 10;
+//        const Index bottle_neck_neurons_number = architecture[1];
+//        const Index target_variables_number = architecture[2];
 
-        add_layer(new PerceptronLayer(architecture[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                  "mapping_layer");
+//        add_layer(new PerceptronLayer(architecture[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+//                  "mapping_layer");
 
-        add_layer(new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
-                  "bottleneck_layer");
+//        add_layer(new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
+//                  "bottleneck_layer");
 
-        add_layer(new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                  "demapping_layer");
+//        add_layer(new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+//                  "demapping_layer");
 
-        add_layer(new PerceptronLayer(mapping_neurons_number, target_variables_number, PerceptronLayer::ActivationFunction::Linear),
-                  "output_layer");
+//        add_layer(new PerceptronLayer(mapping_neurons_number, target_variables_number, PerceptronLayer::ActivationFunction::Linear),
+//                  "output_layer");
 
-        add_layer(new UnscalingLayer(target_variables_number));
+//        add_layer(new UnscalingLayer(target_variables_number));
     }
 
     output_names.resize(outputs_number);
@@ -706,65 +694,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type,
         output_names(i) = "output_" + to_string(i+1);
 
     set_default();
-}
-
-
-void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const initializer_list<Index>& architecture_list)
-{
-    Tensor<Index, 1> architecture(architecture_list.size());
-    architecture.setValues(architecture_list);
-
-    set_model_type(model_type);
-
-    set(model_type, architecture);
-}
-
-
-void NeuralNetwork::set(const dimensions& input_dimensions,
-                        const Index& blocks_number,
-                        const Tensor<Index, 1>& kernel_dimensions,
-                        const Index& outputs_number)
-{
-    delete_layers();
-
-    ScalingLayer4D* scaling_layer = new ScalingLayer4D(input_dimensions);
-    add_layer(scaling_layer);
-
-    dimensions output_dimensions = scaling_layer->get_output_dimensions();  
-
-//    for(Index i = 0; i < blocks_number; i++)
-//    {
-        // Check convolutional
-        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(output_dimensions, kernel_dimensions);
-        //convolutional_layer->set_name("convolutional_layer_1" + to_string(1));
-
-    //add_layer(convolutional_layer);
-    //output_dimensions = convolutional_layer->get_output_dimensions();
-
-//        // PoolingLayer layer 1
-
-//        PoolingLayer* pooling_layer = new PoolingLayer(output_dimensions);
-//        pooling_layer->set_name("pooling_layer_" + to_string(i+1));
-
-//        add_layer(pooling_layer);
-
-//        output_dimensions = pooling_layer->get_output_dimensions();
-
-    FlattenLayer* flatten_layer = new FlattenLayer(output_dimensions);
-    add_layer(flatten_layer);
-
-    output_dimensions = flatten_layer->get_output_dimensions();
-
-    const Index product = output_dimensions[0] * output_dimensions[1] * output_dimensions[2] * output_dimensions[3];
-
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(product, 3);
-    perceptron_layer->set_name("perceptron_layer_1");
-    add_layer(perceptron_layer);
-
-    const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
-
-    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer_outputs, outputs_number);
-    add_layer(probabilistic_layer);
 }
 
 
