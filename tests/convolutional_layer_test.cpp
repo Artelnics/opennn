@@ -287,94 +287,6 @@ void ConvolutionalLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
 
-    ConvolutionalLayer convolutional_layer;
-
-    Tensor<type, 4> inputs;
-    Tensor<type, 4> activations;
-
-    dimensions input_dimensions;
-    dimensions kernel_dimensions;
-
-    inputs.resize(2,2,2,2);
-
-    input_dimensions = {2, 2, 2};
-    kernel_dimensions = {2, 2, 2, 2};
-
-    convolutional_layer.set(input_dimensions, kernel_dimensions);
-
-    inputs(0,0,0,0) = type(type(-1.111f));
-    inputs(0,0,0,1) = type(type(-1.112));
-    inputs(0,0,1,0) = type(type(-1.121));
-    inputs(0,0,1,1) = type(-1.122f);
-    inputs(0,1,0,0) = type(1.211f);
-    inputs(0,1,0,1) = type(1.212f);
-    inputs(0,1,1,0) = type(1.221f);
-    inputs(0,1,1,1) = type(1.222f);
-    inputs(1,0,0,0) = type(-2.111f);
-    inputs(1,0,0,1) = type(-2.112f);
-    inputs(1,0,1,0) = type(-2.121f);
-    inputs(1,0,1,1) = type(-2.122f);
-    inputs(1,1,0,0) = type(2.211f);
-    inputs(1,1,0,1) = type(2.212f);
-    inputs(1,1,1,0) = type(2.221f);
-    inputs(1,1,1,1) = type(2.222f);
-
-    activations.resize(2,2,2,2);
-
-    // Test
-
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
-/*
-    convolutional_layer.calculate_activations(inputs, activations);
-
-    assert_true(abs(activations(0,0,0,0) - type(-0.804416f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,0,0,1) - type(-0.804768f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,0,1,0) - type(-0.807916f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,0,1,1) - type(-0.808263f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,1,0,0) - type(0.836979f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,1,0,1) - type(0.837278f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,1,1,0) - type(0.839949f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,1,1,1) - type(0.840243f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,0,0,0) - type(-0.971086f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,0,0,1) - type(-0.971143f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,0,1,0) - type(-0.971650f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,0,1,1) - type(-0.971706f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,1,0,0) - type(0.976265f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,1,0,1) - type(0.976312f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,1,1,0) - type(0.976729f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,1,1,1) - type(0.976775f)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
-    convolutional_layer.calculate_activations(inputs, activations);
-
-    assert_true(activations(0,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN),LOG);
-
-    assert_true(activations(0,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,0,0,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,0,1,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,0,1,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,0,0) - type(1.211f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,0,1) - type(1.212f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,1,0) - type(1.221f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,1,1) - type(1.222f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,0,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,1,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,1,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,0,0) - type(2.211f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,0,1) - type(2.212f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,1,0) - type(2.221f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,1,1) - type(2.222f) <type(NUMERIC_LIMITS_MIN), LOG);
-*/
-}
-
-
-void ConvolutionalLayerTest::test_calculate_activations_derivatives()
-{
-    cout << "test_calculate_activations_derivatives\n";
-
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations;
     Tensor<type, 4> activations_derivatives;
@@ -947,7 +859,6 @@ void ConvolutionalLayerTest::run_test_case()
     // Activation
 
     test_calculate_activations();
-    test_calculate_activations_derivatives();
 
     // Padding
 

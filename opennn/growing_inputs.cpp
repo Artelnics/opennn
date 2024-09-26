@@ -127,7 +127,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     Tensor<string, 1> input_raw_variables_names;
 
-    const Tensor<type, 2> correlations = get_correlation_values(data_set->calculate_input_target_raw_variables_correlations());
+    const Tensor<type, 2> correlations = get_correlation_values(data_set->calculate_input_target_raw_variables_pearson_correlations());
 
     const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
 

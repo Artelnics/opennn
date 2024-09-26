@@ -377,27 +377,6 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations,
-                                               Tensor<type, 2>& activations,
-                                               Tensor<type, 1>& aux_rows) const
-{
-/*
-    switch(activation_function)
-    {
-    case ActivationFunction::Binary: binary(combinations, activations); return;
-
-    case ActivationFunction::Logistic: logistic(activations); return;
-
-    case ActivationFunction::Competitive: competitive(combinations, activations); return;
-
-    case ActivationFunction::Softmax: softmax(combinations, activations, aux_rows); return;
-
-    default: return;
-    }
-*/
-}
-
-
 void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations,
                                                            Tensor<type, 2>& activations,
                                                            Tensor<type, 2>& activations_derivatives) const

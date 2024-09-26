@@ -538,12 +538,9 @@ public:
 
     // Inputs correlations
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_correlations(const bool& = true,
-                                                                                 const bool& = false) const;
+    Tensor<Correlation, 2> calculate_input_raw_variable_pearson_correlations() const;
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_pearson_correlations() const;
-
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_spearman_correlations() const;
+    Tensor<Correlation, 2> calculate_input_raw_variable_spearman_correlations() const;
 
     void print_inputs_correlations() const;
 
@@ -551,8 +548,8 @@ public:
 
     // Inputs-targets correlations
 
-    Tensor<Correlation, 2> calculate_input_target_raw_variables_correlations() const;
-    Tensor<Correlation, 2> calculate_input_target_raw_variables_correlations_spearman() const;
+    Tensor<Correlation, 2> calculate_input_target_raw_variables_pearson_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_raw_variables_spearman_correlations() const;
 
     void print_input_target_raw_variables_correlations() const;
 

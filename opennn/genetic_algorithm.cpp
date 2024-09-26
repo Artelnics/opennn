@@ -441,13 +441,13 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
 
     const Index raw_variables_number = data_set->get_input_raw_variables_number();
 
-    Tensor<Correlation, 2> correlations_matrix = data_set->calculate_input_target_raw_variables_correlations();
+    const Tensor<Correlation, 2> correlations_matrix = data_set->calculate_input_target_raw_variables_pearson_correlations();
 
-    Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
+    const Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
-    Tensor<type, 1> correlations_abs = correlations.abs();
+    const Tensor<type, 1> correlations_abs = correlations.abs();
 
-    Tensor<Index, 1> rank = calculate_rank_greater(correlations_abs);
+    const Tensor<Index, 1> rank = calculate_rank_greater(correlations_abs);
 
     Tensor<type, 1> fitness_correlations(raw_variables_number);
 
@@ -509,9 +509,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
                 if(arrow >= inputs_activation_probabilities(j - 1)
                 && arrow < inputs_activation_probabilities(j)
                 && !individual_raw_variables(j))
-                {
                     individual_raw_variables(j) = true;
-                }
             }
         }
 

@@ -68,9 +68,9 @@ void RecurrentLayerTest::test_destructor()
 }
 
 
-void RecurrentLayerTest::test_calculate_activations_derivatives()
+void RecurrentLayerTest::test_calculate_activations()
 {
-    cout << "test_calculate_activations_derivatives\n";
+    cout << "test_calculate_activations\n";
 
     Tensor<type, 1> combinations;
     Tensor<type, 1> activations;
@@ -170,11 +170,7 @@ void RecurrentLayerTest::run_test_case()
 
     test_destructor();
 
-    // Activation Derivatives
-
-    test_calculate_activations_derivatives();
-
-    // Forward propagate
+    test_calculate_activations();
 
     test_forward_propagate();
 

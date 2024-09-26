@@ -187,7 +187,6 @@ void CrossEntropyErrorTest::test_back_propagate()
             image_data_set.print();
             cout << image_data_set.get_data() << endl;
             neural_network.print();
-            system("pause");
         }*/
 
         forward_propagation.set(samples_number, &neural_network);
@@ -263,7 +262,6 @@ void CrossEntropyErrorTest::test_back_propagate()
             image_data_set.print();
             cout << image_data_set.get_data() << endl;
             neural_network.print();
-            system("pause");
         }*/
 
         forward_propagation.set(samples_number, &neural_network);
@@ -344,7 +342,6 @@ void CrossEntropyErrorTest::test_back_propagate()
             image_data_set.print();
             cout << image_data_set.get_data() << endl;
             neural_network.print();
-            system("pause");
         }*/
 
         forward_propagation.set(samples_number, &neural_network);

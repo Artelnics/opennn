@@ -310,8 +310,10 @@ void DataSet::RawVariable::print() const
          << "Name: " << name << endl
          << "Use: " << get_use_string() << endl
          << "Type: " << get_type_string() << endl
-         << "Scaler: " << get_scaler_string() << endl
-         << "Categories: " << categories << endl;
+         << "Scaler: " << get_scaler_string() << endl;
+
+    if(categories.size() != 0)
+         cout << "Categories: " << categories << endl;
 }
 
 
@@ -2071,7 +2073,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
             else
                 variable_index++;
 
-//            continue;
+            continue;
         }
 
         if(raw_variables(i).type == RawVariableType::Categorical)
@@ -3659,7 +3661,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
 {
     Tensor<string, 1> unused_raw_variables;
 
-    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_pearson_correlations();
 
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -3673,8 +3675,8 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
         for(Index j = 0; j < target_raw_variables_number; j++)
         {
             if(!isnan(correlations(i, j).r)
-                && abs(correlations(i, j).r) < minimum_correlation
-                && raw_variables(input_raw_variable_index).use != VariableUse::None)
+            && abs(correlations(i, j).r) < minimum_correlation
+            && raw_variables(input_raw_variable_index).use != VariableUse::None)
             {
                 raw_variables(input_raw_variable_index).set_use(VariableUse::None);
 
@@ -4232,7 +4234,7 @@ void DataSet::set_gmt(Index& new_gmt)
 }
 
 
-Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlations() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_pearson_correlations() const
 {
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -4269,7 +4271,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 }
 
 
-Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlations_spearman() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_spearman_correlations() const
 {
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -4350,7 +4352,7 @@ void DataSet::print_input_target_raw_variables_correlations() const
     const Tensor<string, 1> inputs_name = get_input_raw_variable_names();
     const Tensor<string, 1> targets_name = get_target_raw_variables_names();
 
-    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_pearson_correlations();
 
     for(Index j = 0; j < targets_number; j++)
         for(Index i = 0; i < inputs_number; i++)
@@ -4366,7 +4368,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     const Tensor<string, 1> inputs_name = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variables_correlations());
+    const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variables_pearson_correlations());
 
     Tensor<type, 1> target_correlations(inputs_number);
 
@@ -4385,125 +4387,15 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
 }
 
 
-Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variable_correlations(const bool& calculate_pearson_correlations,
-                                                                                     const bool& calculate_spearman_correlations) const
+Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlations() const
 {
     // list to return
-
-    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
 
     const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
 
     const Index input_raw_variables_number = get_input_raw_variables_number();
 
     Tensor<Correlation, 2> correlations_pearson(input_raw_variables_number, input_raw_variables_number);
-    Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
-
-    for(Index i = 0; i < input_raw_variables_number; i++)
-    {
-        const Index current_input_index_i = input_raw_variables_indices(i);
-
-        const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
-
-        //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
-
-        for(Index j = i; j < input_raw_variables_number; j++)
-        {
-            if(j == i)
-            {
-                if(calculate_pearson_correlations)
-                {
-                    correlations_pearson(i, j).r = type(1);
-                    correlations_pearson(i, j).b = type(1);
-                    correlations_pearson(i, j).a = type(0);
-
-                    correlations_pearson(i, j).upper_confidence = type(1);
-                    correlations_pearson(i, j).lower_confidence = type(1);
-                    correlations_pearson(i, j).form = Correlation::Form::Linear;
-                    correlations_pearson(i, j).method = Correlation::Method::Pearson;
-
-                    if(is_constant_matrix(input_i))
-                    {
-                        correlations_pearson(i, j).r = NAN;
-                        correlations_pearson(i, j).b = NAN;
-                        correlations_pearson(i, j).a = NAN;
-                    }
-                }
-
-                if(calculate_spearman_correlations)
-                {
-                    correlations_spearman(i, j).r = type(1);
-                    correlations_spearman(i, j).b = type(1);
-                    correlations_spearman(i, j).a = type(0);
-
-                    correlations_spearman(i, j).upper_confidence = type(1);
-                    correlations_spearman(i, j).lower_confidence = type(1);
-                    correlations_spearman(i, j).form = Correlation::Form::Linear;
-                    correlations_spearman(i, j).method = Correlation::Method::Spearman;
-
-                    if(is_constant_matrix(input_i))
-                    {
-                        correlations_spearman(i, j).r = NAN;
-                        correlations_spearman(i, j).b = NAN;
-                        correlations_spearman(i, j).a = NAN;
-                    }
-                }
-            }
-            else
-            {
-                const Index current_input_index_j = input_raw_variables_indices(j);
-
-                const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-
-                if(calculate_pearson_correlations)
-                {
-                    correlations_pearson(i, j) = correlation(thread_pool_device, input_i, input_j);
-
-                    if(correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
-                       correlations_pearson(i, j).r =  type(1);
-                }
-
-                if(calculate_spearman_correlations)
-                {
-                    correlations_spearman(i, j) = correlation_spearman(thread_pool_device, input_i, input_j);
-
-                    if(correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
-                        correlations_spearman(i, j).r = type(1);
-                }
-            }
-        }
-    }
-
-    if(calculate_pearson_correlations)
-        for(Index i = 0; i < input_raw_variables_number; i++)
-            for(Index j = 0; j < i; j++)
-                correlations_pearson(i, j) = correlations_pearson(j,i);
-
-    if(calculate_spearman_correlations)
-        for(Index i = 0; i < input_raw_variables_number; i++)
-            for(Index j = 0; j < i; j++)
-                correlations_spearman(i, j) = correlations_spearman(j,i);
-
-    correlations_list(0) = correlations_pearson;
-    correlations_list(1) = correlations_spearman;
-
-    return correlations_list;
-}
-
-/*
-Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variable_correlations(const bool& calculate_pearson_correlations,
-    const bool& calculate_spearman_correlations) const
-{
-    // list to return
-
-    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
-
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
-
-    const Index input_raw_variables_number = get_input_raw_variables_number();
-
-    Tensor<Correlation, 2> correlations_pearson(input_raw_variables_number, input_raw_variables_number);
-    Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
@@ -4513,93 +4405,72 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variable_correlat
 
         //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
 
-        for (Index j = i; j < input_raw_variables_number; j++)
+        if (is_constant_matrix(input_i)) continue;
+
+        correlations_pearson(i, i).set_perfect();
+        correlations_pearson(i, i).method = Correlation::Method::Pearson;
+
+        for (Index j = i+1; j < input_raw_variables_number; j++)
         {
-            if (j == i)
-            {
-                if (calculate_pearson_correlations)
-                {
-                    correlations_pearson(i, j).r = type(1);
-                    correlations_pearson(i, j).b = type(1);
-                    correlations_pearson(i, j).a = type(0);
+            const Index current_input_index_j = input_raw_variables_indices(j);
 
-                    correlations_pearson(i, j).upper_confidence = type(1);
-                    correlations_pearson(i, j).lower_confidence = type(1);
-                    correlations_pearson(i, j).form = Correlation::Form::Linear;
-                    correlations_pearson(i, j).method = Correlation::Method::Pearson;
+            const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
+                correlations_pearson(i, j) = correlation(thread_pool_device, input_i, input_j);
 
-                    if (is_constant_matrix(input_i))
-                    {
-                        correlations_pearson(i, j).r = NAN;
-                        correlations_pearson(i, j).b = NAN;
-                        correlations_pearson(i, j).a = NAN;
-                    }
-                }
+            if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
+                correlations_pearson(i, j).r = type(1);
 
-                if (calculate_spearman_correlations)
-                {
-                    correlations_spearman(i, j).r = type(1);
-                    correlations_spearman(i, j).b = type(1);
-                    correlations_spearman(i, j).a = type(0);
-
-                    correlations_spearman(i, j).upper_confidence = type(1);
-                    correlations_spearman(i, j).lower_confidence = type(1);
-                    correlations_spearman(i, j).form = Correlation::Form::Linear;
-                    correlations_spearman(i, j).method = Correlation::Method::Spearman;
-
-                    if (is_constant_matrix(input_i))
-                    {
-                        correlations_spearman(i, j).r = NAN;
-                        correlations_spearman(i, j).b = NAN;
-                        correlations_spearman(i, j).a = NAN;
-                    }
-                }
-            }
-            else
-            {
-                const Index current_input_index_j = input_raw_variables_indices(j);
-
-                const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-
-                if (calculate_pearson_correlations)
-                {
-                    correlations_pearson(i, j) = correlation(thread_pool_device, input_i, input_j);
-
-                    if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
-                        correlations_pearson(i, j).r = type(1);
-                }
-
-                if (calculate_spearman_correlations)
-                {
-                    correlations_spearman(i, j) = correlation_spearman(thread_pool_device, input_i, input_j);
-
-                    if (correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
-                        correlations_spearman(i, j).r = type(1);
-                }
-            }
+            correlations_pearson(j, i) = correlations_pearson(i, j);
         }
     }
 
-    if (calculate_pearson_correlations)
-        for (Index i = 0; i < input_raw_variables_number; i++)
-            for (Index j = 0; j < i; j++)
-                correlations_pearson(i, j) = correlations_pearson(j, i);
-
-    if (calculate_spearman_correlations)
-        for (Index i = 0; i < input_raw_variables_number; i++)
-            for (Index j = 0; j < i; j++)
-                correlations_spearman(i, j) = correlations_spearman(j, i);
-
-    correlations_list(0) = correlations_pearson;
-    correlations_list(1) = correlations_spearman;
-
-    return correlations_list;
+    return correlations_pearson;
 }
-*/
+
+
+Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlations() const
+{
+    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
+
+    const Index input_raw_variables_number = get_input_raw_variables_number();
+
+    Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
+
+    for(Index i = 0; i < input_raw_variables_number; i++)
+    {
+        const Index input_raw_variable_index_i = input_raw_variables_indices(i);
+
+        const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
+
+        //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
+
+        if (is_constant_matrix(input_i)) continue;
+
+        correlations_spearman(i, i).set_perfect();
+        correlations_spearman(i, i).method = Correlation::Method::Spearman;
+
+        for(Index j = i + 1; j < input_raw_variables_number; j++)
+        {
+            const Index input_raw_variable_index_j = input_raw_variables_indices(j);
+
+            const Tensor<type, 2> input_j = get_raw_variable_data(input_raw_variable_index_j);
+
+            correlations_spearman(i, j) = correlation_spearman(thread_pool_device, input_i, input_j);
+
+            if(correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
+                correlations_spearman(i, j).r = type(1);
+
+            correlations_spearman(j, i) = correlations_spearman(i, j);
+        }
+    }
+
+    return correlations_spearman;
+}
+
 
 void DataSet::print_inputs_correlations() const
 {
-    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_raw_variable_correlations()(0));
+    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_raw_variable_pearson_correlations());
 
     cout << inputs_correlations << endl;
 }
@@ -4625,7 +4496,7 @@ void DataSet::print_top_inputs_correlations() const
 
     const Tensor<string, 1> variables_name = get_input_variables_names();
 
-    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_raw_variable_correlations()(0));
+    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_raw_variable_pearson_correlations());
 
     const Index correlations_number = variables_number*(variables_number-1)/2;
 

@@ -210,10 +210,6 @@ public:
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
 
-    void calculate_activations(const Tensor<type, 2>&,
-                               Tensor<type, 2>&,
-                               Tensor<type, 1>&) const;
-
     void calculate_activations_derivatives(const Tensor<type, 2>&,
                                            Tensor<type, 2>&,
                                            Tensor<type, 2>&) const;

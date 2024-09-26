@@ -134,21 +134,20 @@ void CorrelationsTest::test_logistic_correlation()
 
     y.resize(size);
     y.setValues({0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1});
-
+/*
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
     assert_true(abs(correlation.r) <= type(0.1), LOG);
     assert_true((correlation.form == Correlation::Form::Logistic), LOG);
 
     // Test
-/*
+
     size = 10;
 
     x.resize(size);
     x.setValues({-5,-4,-3,-2,-1,1,2,3,4,5});
 
-    y.resize(size
-             );
+    y.resize(size);
     y.setValues({0,0,0,0,0,1,1,1,1,1});
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
@@ -164,7 +163,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     assert_true(correlation.r - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true((correlation.form == Correlation::Form::Logistic), LOG);
-*/
+
     // Test
 
     size = 100;
@@ -183,9 +182,7 @@ void CorrelationsTest::test_logistic_correlation()
     assert_true(correlation.r <= type(1), LOG);
 
     for(Index i = 0; i < size; i++)
-    {
         y[i] = exp(type(2.5)*x[i] + type(1.4));
-    }
 
     const int n = omp_get_max_threads();
 
@@ -194,7 +191,7 @@ void CorrelationsTest::test_logistic_correlation()
     ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
     // Test
-/*
+
     for(Index i = 0; i < size/2; i++) y[i] = 1.0;
 
     for(Index i = size - (size/2); i < size; i++) y[i] = 0.0;

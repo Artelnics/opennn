@@ -28,7 +28,7 @@ int main()
     try
     {
         srand(unsigned(time(nullptr)));
-/*
+
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
@@ -36,8 +36,8 @@ int main()
         // data_set.save("../data/data_set.xml");
         // data_set.load("../data/data_set.xml");
 
-//        data_set.print();
-
+        data_set.print();
+/*
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -74,7 +74,7 @@ int main()
         // training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
-
+/*
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);

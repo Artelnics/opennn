@@ -1403,9 +1403,9 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
     target_raw_variables_indices.setValues({3});
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 /*
+    Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
+
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,1).r == 1, LOG);
     assert_true(inputs_correlations(0,2).r == -1, LOG);

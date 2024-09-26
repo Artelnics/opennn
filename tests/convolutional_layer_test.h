@@ -42,8 +42,6 @@ public:
 
    void test_calculate_activations();
 
-   void test_calculate_activations_derivatives();
-
   // Outputs
 
   void test_insert_padding();
