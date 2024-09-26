@@ -1945,12 +1945,8 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
     const Tensor<Index, 2> confusion = calculate_confusion_multiple_classification(targets, outputs);
 
     for(Index i = 0; i < targets_number; i++)
-    {
         for(Index j = 0; j < targets_number; j++)
-        {
             multiple_classification_rates(i, j).resize(confusion(i, j));
-        }
-    }
 
     // Save indices
 

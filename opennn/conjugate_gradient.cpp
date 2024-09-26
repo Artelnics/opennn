@@ -416,7 +416,7 @@ TrainingResults ConjugateGradient::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(neural_network->has_scaling_layer())
+    if(neural_network->has_scaling_layer_2d())
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
         scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);

@@ -59,8 +59,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
 
-    // Empty test does not work
-    // weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+    weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     // Test binary classification trivial
     {
@@ -160,12 +159,8 @@ void WeightedSquaredErrorTest::run_test_case()
 {
     cout << "Running weighted squared error test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
     test_destructor();
-
-    // Back-propagation
 
     test_back_propagate();
 

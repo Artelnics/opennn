@@ -164,8 +164,6 @@ void Layer::set_neurons_number(const Index&)
 }
 
 
-
-
 void Layer::competitive(Tensor<type, 2>& y) const
 {
         Tensor<Index, 1> maximum_indices = y.argmax(1);

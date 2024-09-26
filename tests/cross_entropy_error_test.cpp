@@ -48,7 +48,6 @@ void CrossEntropyErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
 
-    // Empty test does not work
     cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
     
     // Test binary classification trivial

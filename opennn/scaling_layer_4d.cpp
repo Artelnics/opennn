@@ -21,14 +21,6 @@ ScalingLayer4D::ScalingLayer4D() : Layer()
 }
 
 
-ScalingLayer4D::ScalingLayer4D(const Index& new_neurons_number) : Layer()
-{
-    set(new_neurons_number);
-
-    name = "scaling_layer";
-}
-
-
 ScalingLayer4D::ScalingLayer4D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -57,140 +49,7 @@ Index ScalingLayer4D::get_inputs_number() const
 
 Index ScalingLayer4D::get_neurons_number() const
 {
-    return descriptives.size();
-}
-
-
-Tensor<Descriptives, 1> ScalingLayer4D::get_descriptives() const
-{
-    return descriptives;
-}
-
-
-Descriptives ScalingLayer4D::get_descriptives(const Index& index) const
-{
-    return descriptives(index);
-}
-
-
-Tensor<type, 1> ScalingLayer4D::get_minimums() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> minimums(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        minimums[i] = descriptives[i].minimum;
-    }
-
-    return minimums;
-}
-
-
-Tensor<type, 1> ScalingLayer4D::get_maximums() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> maximums(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        maximums[i] = descriptives[i].maximum;
-    }
-
-    return maximums;
-}
-
-
-Tensor<type, 1> ScalingLayer4D::get_means() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> means(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-        means[i] = descriptives[i].mean;
-
-    return means;
-}
-
-
-Tensor<type, 1> ScalingLayer4D::get_standard_deviations() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> standard_deviations(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-        standard_deviations[i] = descriptives[i].standard_deviation;
-
-    return standard_deviations;
-}
-
-
-Tensor<Scaler, 1> ScalingLayer4D::get_scaling_methods() const
-{
-    return scalers;
-}
-
-
-Tensor<string, 1> ScalingLayer4D::write_scalers() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        if(scalers[i] == Scaler::None)
-            scaling_methods_strings[i] = "None";
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            scaling_methods_strings[i] = "MinimumMaximum";
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            scaling_methods_strings[i] = "MeanStandardDeviation";
-        else if(scalers[i] == Scaler::StandardDeviation)
-            scaling_methods_strings[i] = "StandardDeviation";
-        else if(scalers[i] == Scaler::Logarithm)
-            scaling_methods_strings[i] = "Logarithm";
-        else
-            throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-    }
-
-    return scaling_methods_strings;
-}
-
-
-Tensor<string, 1> ScalingLayer4D::write_scalers_text() const
-{
-    const Index neurons_number = get_neurons_number();
-
-#ifdef OPENNN_DEBUG
-
-    if(neurons_number == 0)
-        throw runtime_error("Neurons number must be greater than 0.\n");
-
-#endif
-
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        if(scalers[i] == Scaler::None)
-            scaling_methods_strings[i] = "no scaling";
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            scaling_methods_strings[i] = "mean and standard deviation";
-        else if(scalers[i] == Scaler::StandardDeviation)
-            scaling_methods_strings[i] = "standard deviation";
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            scaling_methods_strings[i] = "minimum and maximum";
-        else if(scalers[i] == Scaler::Logarithm)
-            scaling_methods_strings[i] = "Logarithm";
-        else
-            throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-    }
-
-    return scaling_methods_strings;
+    return 0;
 }
 
 
@@ -202,60 +61,16 @@ const bool& ScalingLayer4D::get_display() const
 
 void ScalingLayer4D::set()
 {
-    descriptives.resize(0);
-
-    scalers.resize(0);
-
     set_default();
 }
 
-
-void ScalingLayer4D::set(const Index& new_inputs_number)
-{
-    descriptives.resize(new_inputs_number);
-
-    scalers.resize(new_inputs_number);
-
-    scalers.setConstant(Scaler::MeanStandardDeviation);
-
-    set_default();
-}
 
 
 void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
-    const Index inputs_number = get_inputs_number();
-
-    descriptives.resize(inputs_number);
-
-    scalers.resize(inputs_number);
-    scalers.setConstant(Scaler::MinimumMaximum);
-
     set_default();
-}
-
-
-void ScalingLayer4D::set(const Tensor<Descriptives, 1>& new_descriptives)
-{
-    descriptives = new_descriptives;
-
-    scalers.resize(new_descriptives.size());
-
-    scalers.setConstant(Scaler::MeanStandardDeviation);
-
-    set_neurons_number(new_descriptives.size());
-
-    set_default();
-}
-
-
-void ScalingLayer4D::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
-{
-    descriptives = new_descriptives;
-
-    scalers = new_scalers;
 }
 
 
@@ -267,31 +82,9 @@ void ScalingLayer4D::set(const tinyxml2::XMLDocument& new_scaling_layer_document
 }
 
 
-void ScalingLayer4D::set_inputs_number(const Index& new_inputs_number)
-{
-    descriptives.resize(new_inputs_number);
-
-    scalers.resize(new_inputs_number);
-
-    scalers.setConstant(Scaler::MeanStandardDeviation);
-}
-
-
-void ScalingLayer4D::set_neurons_number(const Index& new_neurons_number)
-{
-    descriptives.resize(new_neurons_number);
-
-    scalers.resize(new_neurons_number);
-
-    scalers.setConstant(Scaler::MeanStandardDeviation);
-}
-
-
 void ScalingLayer4D::set_default()
 {
     name = "scaling_layer";
-
-    set_scalers(Scaler::MinimumMaximum);
 
     set_min_max_range(type(0), type(255));
 
@@ -308,152 +101,6 @@ void ScalingLayer4D::set_min_max_range(const type& min, const type& max)
 }
 
 
-void ScalingLayer4D::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
-{
-
-#ifdef OPENNN_DEBUG
-
-    const Index new_descriptives_size = new_descriptives.size();
-
-    const Index neurons_number = get_neurons_number();
-
-    if(new_descriptives_size != neurons_number)
-        throw runtime_error("Size of descriptives (" + to_string(new_descriptives_size) + ") is not equal to number of scaling neurons (" + to_string(neurons_number) + ").\n");
-
-#endif
-
-    descriptives = new_descriptives;
-}
-
-
-void ScalingLayer4D::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
-{
-    descriptives(i) = item_descriptives;
-}
-
-
-void ScalingLayer4D::set_minimum(const Index& i, const type& new_minimum)
-{
-    descriptives(i).set_minimum(new_minimum);
-}
-
-
-void ScalingLayer4D::set_maximum(const Index& i, const type& new_maximum)
-{
-    descriptives(i).set_maximum(new_maximum);
-}
-
-
-void ScalingLayer4D::set_mean(const Index& i, const type& new_mean)
-{
-    descriptives(i).set_mean(new_mean);
-}
-
-
-void ScalingLayer4D::set_standard_deviation(const Index& i, const type& new_standard_deviation)
-{
-    descriptives(i).set_standard_deviation(new_standard_deviation);
-}
-
-
-void ScalingLayer4D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
-{
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(neurons_number == 0)
-        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
-
-#endif
-
-    scalers = new_scaling_methods;
-}
-
-
-void ScalingLayer4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_string)
-{
-    const Index neurons_number = get_neurons_number();
-
-#ifdef OPENNN_DEBUG
-
-    if(neurons_number == 0)
-        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
-
-#endif
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        set_scaler(i, new_scaling_methods_string(i));
-    }
-}
-
-
-void ScalingLayer4D::set_scaler(const Index& variable_index, const Scaler& new_scaler)
-{
-    scalers(variable_index) = new_scaler;
-}
-
-
-void ScalingLayer4D::set_scaler(const Index& variable_index, const string& new_scaler_string)
-{
-    if(new_scaler_string == "None")
-        scalers(variable_index) = Scaler::None;
-    else if(new_scaler_string == "MeanStandardDeviation")
-        scalers(variable_index) = Scaler::MeanStandardDeviation;
-    else if(new_scaler_string == "MinimumMaximum")
-        scalers(variable_index) = Scaler::MinimumMaximum;
-    else if(new_scaler_string == "StandardDeviation")
-        scalers(variable_index) = Scaler::StandardDeviation;
-    else if(new_scaler_string == "Logarithm")
-        scalers(variable_index) = Scaler::Logarithm;
-    else
-        throw runtime_error("Unknown scaling method: " + new_scaler_string + ".\n");
-}
-
-
-void ScalingLayer4D::set_scalers(const string& new_scaling_methods_string)
-{
-    const Index neurons_number = get_neurons_number();
-
-#ifdef OPENNN_DEBUG
-
-    if(neurons_number == 0)
-        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
-
-#endif
-
-    Tensor<Scaler, 1> new_scaling_methods(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        if(new_scaling_methods_string == "None")
-            new_scaling_methods(i) = Scaler::None;
-        else if(new_scaling_methods_string == "MeanStandardDeviation")
-            new_scaling_methods(i) = Scaler::MeanStandardDeviation;
-        else if(new_scaling_methods_string == "MinimumMaximum")
-            new_scaling_methods(i) = Scaler::MinimumMaximum;
-        else if(new_scaling_methods_string == "StandardDeviation")
-            new_scaling_methods(i) = Scaler::StandardDeviation;
-        else if(new_scaling_methods_string == "Logarithm")
-            new_scaling_methods(i) = Scaler::Logarithm;
-        else
-            throw runtime_error("Unknown scaling method: " + to_string(new_scaling_methods_string[i]) + ".\n");
-    }
-
-    set_scalers(new_scaling_methods);
-}
-
-
-void ScalingLayer4D::set_scalers(const Scaler& new_scaling_method)
-{
-    const Index neurons_number = get_neurons_number();
-
-    for(Index i = 0; i < neurons_number; i++)
-        scalers(i) = new_scaling_method;
-}
-
-
 void ScalingLayer4D::set_display(const bool& new_display)
 {
     display = new_display;
@@ -466,34 +113,6 @@ bool ScalingLayer4D::is_empty() const
 
     return inputs_number == 0;
 }
-
-
-// void ScalingLayer4D::check_range(const Tensor<type, 1>& inputs) const
-// {
-//     const Index inputs_number = get_neurons_number();
-
-//     // Check inputs
-
-//     if(display)
-//     {
-//         for(Index i = 0; i < inputs_number; i++)
-//         {
-//             if(inputs(i) < descriptives(i).minimum)
-//             {
-//                 cout << "OpenNN Warning: Scaling4D class.\n"
-//                      << "void check_range(const Tensor<type, 1>&) const method.\n"
-//                      << "Input value " << i << " is less than corresponding minimum.\n";
-//             }
-
-//             if(inputs(i) > descriptives(i).maximum)
-//             {
-//                 cout << "OpenNN Warning: Scaling4D class.\n"
-//                      << "void check_range(const Tensor<type, 1>&) const method.\n"
-//                      << "Input value " << i << " is greater than corresponding maximum.\n";
-//             }
-//         }
-//     }
-// }
 
 
 void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
@@ -523,16 +142,6 @@ void ScalingLayer4D::print() const
 
     print_dimensions(input_dimensions);
 
-    const Tensor<string, 1> scalers_text = write_scalers_text();
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        // cout << "Neuron " << i << endl;
-
-        // cout << "Scaler " << scalers_text(i) << endl;
-
-        // descriptives(i).print();
-    }
 }
 
 
@@ -554,26 +163,12 @@ void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Scaling neurons
 
-    const Tensor<string, 1> scaling_methods_string = write_scalers();
-
     for(Index i = 0; i < neurons_number; i++)
     {
         // Scaling neuron
 
         file_stream.OpenElement("ScalingNeuron");
         file_stream.PushAttribute("Index", int(i+1));
-
-        //Descriptives
-
-        file_stream.OpenElement("Descriptives");
-        file_stream.PushText(tensor_to_string(descriptives(i).to_tensor()).c_str());
-        file_stream.CloseElement();
-
-        // Scaler
-
-        file_stream.OpenElement("Scaler");
-        file_stream.PushText(scaling_methods_string(i).c_str());
-        file_stream.CloseElement();
 
         // Scaling neuron (end tag)
 
@@ -623,24 +218,6 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
         if(index != i+1)
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
 
-        // Descriptives
-
-        const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
-
-        if(!descriptives_element)
-            throw runtime_error("Descriptives element " + to_string(i+1) + " is nullptr.\n");
-
-        if(descriptives_element->GetText())
-        {
-            const char* new_descriptives_element = descriptives_element->GetText();
-
-            const Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, "\\");
-
-            descriptives[i].minimum = type(stof(splitted_descriptives[0]));
-            descriptives[i].maximum = type(stof(splitted_descriptives[1]));
-            descriptives[i].mean = type(stof(splitted_descriptives[2]));
-            descriptives[i].standard_deviation = type(stof(splitted_descriptives[3]));
-        }
 
         // Scaling method
 
@@ -648,8 +225,6 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 
         if(!scaling_method_element)
             throw runtime_error("Scaling method element " + to_string(i+1) + " is nullptr.\n");
-
-        set_scaler(i, scaling_method_element->GetText());
     }
 
     // Display

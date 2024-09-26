@@ -10,13 +10,9 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
 
-// System includes
-
 #include <iostream>
 #include <string>
 #include <exception>
-
-// OpenNN includes
 
 #include "../../opennn/opennn.h"
 

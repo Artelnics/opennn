@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
+#include <iostream>tes
 
 #include "tensor_utilities_test.h"
 #include "../opennn/tensors.h"
@@ -24,9 +24,9 @@ TensorsTest::~TensorsTest()
 }
 
 
-void TensorsTest::test_fill_submatrix()
+void TensorsTest::test_fill_tensor_data()
 {
-    cout << "test_fill_submatrix\n";
+    cout << "test_fill_tensor_data\n";
 
     Tensor<type, 2> submatrix;
 
@@ -71,13 +71,13 @@ void TensorsTest::test_calculate_rank()
 
 void TensorsTest::run_test_case()
 {
-    cout << "Running tensor utilities test case...\n";
+    cout << "Running tensors test case...\n";
 
-    test_fill_submatrix();
+    test_fill_tensor_data();
 
     test_calculate_rank();
 
-    cout << "End of tensor utilities test case.\n\n";
+    cout << "End of tensors test case.\n\n";
 }
 
 }

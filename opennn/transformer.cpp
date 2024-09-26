@@ -41,19 +41,12 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
 void Transformer::set(const Tensor<Index, 1>& architecture)
 {
     input_length = architecture(0);
-
     context_length = architecture(1);
-
     input_dimensions = architecture(2);
-
     context_dimension = architecture(3);
-
     embedding_depth = architecture(4);
-
     perceptron_depth = architecture(5);
-
     heads_number = architecture(6);
-
     layers_number = architecture(7);
 
     set(input_length,
@@ -76,13 +69,18 @@ void Transformer::set(const initializer_list<Index>& architecture_list)
 }
 
 
-void Transformer::set(const Index& input_length, const Index& context_length, const Index& input_dimensions, const Index& context_dimension,
-                      const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number)
+void Transformer::set(const Index& input_length, 
+                      const Index& context_length, 
+                      const Index& input_dimensions, 
+                      const Index& context_dimension,
+                      const Index& embedding_depth, 
+                      const Index& perceptron_depth, 
+                      const Index& heads_number, 
+                      const Index& layers_number)
 {
     delete_layers();
     
     inputs_name.resize(input_length + context_length);
-
 
     // Embedding Layers
     
@@ -93,7 +91,6 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     add_layer(input_embedding_layer);
     set_layer_inputs_indices("input_embedding", "input");
     
-
     EmbeddingLayer* context_embedding_layer = new EmbeddingLayer(context_dimension, context_length, embedding_depth, true);
 
     context_embedding_layer->set_dropout_rate(dropout_rate);
@@ -101,7 +98,6 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     add_layer(context_embedding_layer);
     set_layer_inputs_indices("context_embedding", "context");
 
-    
     // Encoder
 
     for(Index i = 0; i < layers_number; i++)
@@ -188,7 +184,6 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         set_layer_inputs_indices("encoder_perceptron_normalization_" + to_string(i+1), "encoder_perceptron_addition_" + to_string(i+1));
     }
     
-
     // Decoder
 
     for(Index i = 0; i < layers_number; i++)

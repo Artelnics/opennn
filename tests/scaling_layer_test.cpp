@@ -311,12 +311,8 @@ void ScalingLayer2DTest::run_test_case()
 {
     cout << "Running scaling layer test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
     test_destructor();
-
-    // Scaling and unscaling
 
     test_forward_propagate();
 

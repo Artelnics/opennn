@@ -26,7 +26,7 @@ public:
 
     virtual ~TensorsTest();
 
-    void test_fill_submatrix();
+    void test_fill_tensor_data();
 
     void test_calculate_rank();
 

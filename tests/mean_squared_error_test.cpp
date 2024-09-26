@@ -879,9 +879,9 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //       const Index kernel_height = 2;
 //       const Index kernel_width = 2;
 
-//       data_set.set_data_file_name("../../blank/test-6px-python-bmp/");
+//       data_set.set_data_source_path("../../blank/test-6px-python-bmp/");
 
-//       data_set.read_bmp();
+//       image_data_set.read_bmp();
 
 //       const Index samples_number = data_set.get_training_samples_number();
 

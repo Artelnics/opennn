@@ -79,8 +79,6 @@ public:
 
     void set(const dimensions&, const dimensions&);
 
-    void set_inputs_number(const Index&) {}
-    void set_neurons_number(const Index&) {}
     void set_name(const string&);
 
     void set_inputs_dimensions(const dimensions&);

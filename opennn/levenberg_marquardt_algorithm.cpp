@@ -257,7 +257,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     neural_network->set_inputs_names(inputs_name);
     neural_network->set_output_namess(targets_names);
 
-    if(neural_network->has_scaling_layer())
+    if(neural_network->has_scaling_layer_2d())
     {
         input_variables_descriptives = data_set->scale_input_variables();
 
@@ -444,7 +444,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         
     }
 
-    if(neural_network->has_scaling_layer())
+    if(neural_network->has_scaling_layer_2d())
         data_set->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network->has_unscaling_layer())

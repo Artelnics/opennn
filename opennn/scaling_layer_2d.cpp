@@ -235,8 +235,6 @@ void ScalingLayer2D::set(const Tensor<Index, 1>& new_input_dimensions)
     scalers.resize(dimension_product(0));
     scalers.setConstant(Scaler::MeanStandardDeviation);
 
-    input_dimensions.resize(new_input_dimensions.size());
-
     input_dimensions = new_input_dimensions;
 
     set_default();

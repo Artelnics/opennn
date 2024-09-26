@@ -87,8 +87,8 @@ public:
 
    // Get
 
-   bool has_scaling_layer() const;
-   bool has_scaling_4d_layer() const;
+   bool has_scaling_layer_2d() const;
+   bool has_scaling_layer_4d() const;
    bool has_long_short_term_memory_layer() const;
    bool has_recurrent_layer() const;
    bool has_unscaling_layer() const;

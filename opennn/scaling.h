@@ -23,7 +23,6 @@ namespace opennn
     void scale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
     void scale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
     void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const type& = type(-1), const type& = type(1));
-    //void scale_image_minimum_maximum(Tensor<type, 2>&, const Index&);
 
     Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
     Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>&);

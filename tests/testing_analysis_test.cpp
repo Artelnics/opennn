@@ -360,8 +360,6 @@ void TestingAnalysisTest::test_calculate_confusion()
     assert_true(confusion(3,2) == confusion(0,2) + confusion(1,2) + confusion(2,2), LOG);
 
     assert_true(confusion(3,3) == 4, LOG);
-
-
 }
 
 
@@ -1117,7 +1115,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     testing_indices.resize(9);
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
-/*
+
     multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
     assert_true(multiple_classification_rates.size() == 9, LOG);
@@ -1131,7 +1129,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     assert_true(multiple_classification_rates(2,0)(0) == 8, LOG);
     assert_true(multiple_classification_rates(2,1)(0) == 5, LOG);
     assert_true(multiple_classification_rates(2,2)(0) == 2, LOG);
-*/
+
 }
 
 

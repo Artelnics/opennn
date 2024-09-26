@@ -154,47 +154,34 @@ void NeuralNetwork::add_layer(Layer* layer, const string& name)
 
 bool NeuralNetwork::validate_layer_type(const Layer::Type layer_type)
 {
-/*
     const Index layers_number = layers.size();
 
     if(has_bounding_layer())
-    {
-        print();
-
         throw runtime_error("No layers can be added after a bounding layer.\n");
-    }
 
-    if(layers_number > 1 && layer_type == Layer::Type::LongShortTermMemory)
-    {
-        return false;
-    }
-*/
     return true;
 }
 
 
-bool NeuralNetwork::has_scaling_layer() const
+bool NeuralNetwork::has_scaling_layer_2d() const
 {
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Scaling2D) return true;
-        if(layers[i]->get_type() == Layer::Type::Scaling4D) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::Scaling2D) 
+            return true;
 
     return false;
 }
 
 
-bool NeuralNetwork::has_scaling_4d_layer() const
+bool NeuralNetwork::has_scaling_layer_4d() const
 {
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Scaling4D) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::Scaling4D) 
+            return true;
 
     return false;
 }
@@ -205,9 +192,8 @@ bool NeuralNetwork::has_long_short_term_memory_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::LongShortTermMemory) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::LongShortTermMemory) 
+            return true;
 
     return false;
 }
@@ -218,9 +204,8 @@ bool NeuralNetwork::has_convolutional_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Convolutional) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::Convolutional) 
+            return true;
 
     return false;
 }
@@ -231,9 +216,8 @@ bool NeuralNetwork::has_flatten_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Flatten) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::Flatten) 
+            return true;
 
     return false;
 }
@@ -244,9 +228,8 @@ bool NeuralNetwork::has_recurrent_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Recurrent) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::Recurrent) 
+            return true;
 
     return false;
 }
@@ -257,9 +240,8 @@ bool NeuralNetwork::has_unscaling_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Unscaling) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::Unscaling) 
+            return true;
 
     return false;
 }
@@ -270,9 +252,8 @@ bool NeuralNetwork::has_bounding_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Bounding) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::Bounding) 
+            return true;
 
     return false;
 }
@@ -283,9 +264,8 @@ bool NeuralNetwork::has_probabilistic_layer() const
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers[i]->get_type() == Layer::Type::Probabilistic) return true;
-    }
+        if(layers[i]->get_type() == Layer::Type::Probabilistic) 
+            return true;
 
     return false;
 }
@@ -312,9 +292,8 @@ string NeuralNetwork::get_input_name(const Index& index) const
 Index NeuralNetwork::get_input_index(const string& name) const
 {
     for(Index i = 0; i < inputs_name.size(); i++)
-    {
-        if(inputs_name(i) == name) return i;
-    }
+        if(inputs_name(i) == name) 
+            return i;
 
     return 0;
 }
@@ -633,7 +612,8 @@ void NeuralNetwork::set()
 }
 
 
-void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor<Index, 1>& architecture)
+void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, 
+                        const Tensor<Index, 1>& architecture)
 {
     delete_layers();
 
@@ -684,7 +664,18 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     }
     else if(model_type == ModelType::ImageClassification)
     {
-        add_layer(new ScalingLayer4D(inputs_number));
+        add_layer(new ScalingLayer4D());
+
+        Index blocks_number;
+
+        for(Index i = 0; i < blocks_number; i++)
+        {
+            add_layer(new ConvolutionalLayer());
+            add_layer(new PoolingLayer());
+        }
+
+        add_layer(new FlattenLayer());
+
 
         // Use the set mode build specifically for image classification
     }
@@ -828,7 +819,7 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_name.resize(new_inputs_number);
 
-    if(has_scaling_layer())
+    if(has_scaling_layer_2d())
     {
         ScalingLayer2D* scaling_layer_2d = get_scaling_layer_2d();
 
@@ -3204,7 +3195,7 @@ string NeuralNetwork::write_expression_javascript() const
            << "\n" << endl
            << "INPUTS" << endl;
 
-    if(has_scaling_layer())
+    if(has_scaling_layer_2d())
     {
         const Tensor<Descriptives, 1> inputs_descriptives = get_scaling_layer_2d()->get_descriptives();
 

@@ -732,7 +732,7 @@ protected:
 
     bool has_header = false;
 
-    bool has_samples_id = false;
+    bool has_sample_ids = false;
 
     Codification codification = Codification::UTF8;
 
