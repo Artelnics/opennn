@@ -4865,9 +4865,9 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
             scale_logarithmic(data, input_variables_indices(i));
             break;
 
-        case Scaler::ImageMinMax:
-            scale_image_minimum_maximum(data, input_variables_indices(i));
-            break;
+        //case Scaler::ImageMinMax:
+        //    scale_image_minimum_maximum(data, input_variables_indices(i));
+        //    break;
 
         default:
             throw runtime_error("Unknown scaling inputs method: " + to_string(int(input_variables_scalers(i))) + "\n");
@@ -5590,11 +5590,11 @@ void DataSet::print() const
    
     const Index raw_variables_number = get_raw_variables_number();
 
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        cout << endl;
-        raw_variables(i).print();
-    }
+    //for(Index i = 0; i < raw_variables_number; i++)
+    //{
+    //    cout << endl;
+    //    raw_variables(i).print();
+    //}
 }
 
 
