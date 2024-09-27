@@ -47,20 +47,33 @@ int main()
         //image_data_set.set_data_source_path("C:/mnist/train");
         //image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
-        image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small");
+        image_data_set.set_data_source_path("C:/Users/Roberto Lopez/Documents/melanoma_dataset_bmp_small");
 
         image_data_set.read_bmp();
 
         //image_data_set.set_training();
 
-        image_data_set.print();
+//        image_data_set.print();
 
         // Neural network
 
-        NeuralNetwork neural_network;
+        cout << "image_data_set.get_input_dimensions()[0]: " << image_data_set.get_input_dimensions()[0] << endl;
+        cout << "image_data_set.get_input_dimensions()[1]: " << image_data_set.get_input_dimensions()[1] << endl;
+        cout << "image_data_set.get_input_dimensions()[1]: " << image_data_set.get_input_dimensions()[1] << endl;
 
-        ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
-        neural_network.add_layer(scaling_layer);
+        print_dimensions(image_data_set.get_input_dimensions());
+        print_dimensions(image_data_set.get_target_dimensions());
+
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+                                     image_data_set.get_input_dimensions(),
+                                     {32, 16},
+                                     image_data_set.get_target_dimensions());
+
+        neural_network.print();
+
+/*
+        //ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
+        //neural_network.add_layer(scaling_layer);
 
         //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
         //                                                                { kernel_height, kernel_width, channels, kernels_number });
@@ -109,7 +122,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+*/
         cout << "Bye!" << endl;
         
         return 0;

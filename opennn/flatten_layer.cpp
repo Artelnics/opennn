@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "flatten_layer.h"
 
 namespace opennn
@@ -200,6 +201,18 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     const Index input_channels = Index(atoi(input_channels_number_element->GetText()));
 
     set({input_height, input_width, input_channels, 0});
+}
+
+
+void FlattenLayer::print() const
+{
+    cout << "Flatten layer" << endl;
+
+    cout << "Input dimensions: " << endl;
+    print_dimensions(input_dimensions);
+
+    cout << "Output dimensions: " << endl;
+    print_dimensions(get_output_dimensions());
 }
 
 

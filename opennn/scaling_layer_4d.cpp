@@ -16,16 +16,12 @@ namespace opennn
 ScalingLayer4D::ScalingLayer4D() : Layer()
 {    
     set();
-
-    name = "scaling_layer";
 }
 
 
 ScalingLayer4D::ScalingLayer4D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
-
-    name = "scaling_layer";
 }
 
 
@@ -65,7 +61,6 @@ void ScalingLayer4D::set()
 }
 
 
-
 void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
@@ -84,13 +79,13 @@ void ScalingLayer4D::set(const tinyxml2::XMLDocument& new_scaling_layer_document
 
 void ScalingLayer4D::set_default()
 {
-    name = "scaling_layer";
-
     set_min_max_range(type(0), type(255));
 
-    set_display(true);
+    display = true;
 
     layer_type = Type::Scaling4D;
+
+    name = "scaling_layer";
 }
 
 
@@ -136,12 +131,9 @@ void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
 void ScalingLayer4D::print() const
 {
-    cout << "Scaling layer" << endl;
-
-    const Index inputs_number = get_inputs_number();
+    cout << "Scaling layer 4D" << endl;
 
     print_dimensions(input_dimensions);
-
 }
 
 

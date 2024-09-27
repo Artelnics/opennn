@@ -594,12 +594,14 @@ void NeuralNetwork::set()
 }
 
 
-void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, 
+void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                         const dimensions& input_dimensions, 
                         const dimensions& complexity_dimensions,
                         const dimensions& output_dimensions)
 {
     delete_layers();
+
+    model_type = new_model_type;
 
     const Index complexity_size = complexity_dimensions.size();
 
@@ -646,8 +648,15 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type,
 
         for(Index i = 0; i < complexity_size; i++)
         {
-            add_layer(new ConvolutionalLayer(get_output_dimensions()), "convolutional_layer_" + to_string(i+1));
-            add_layer(new PoolingLayer(get_output_dimensions()), "pooling_layer_" + to_string(i+1));
+            const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
+
+            add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                      "convolutional_layer_" + to_string(i+1));
+
+            const dimensions pool_dimensions = {2, 2};
+
+            add_layer(new PoolingLayer(get_output_dimensions(), pool_dimensions),
+                      "pooling_layer_" + to_string(i+1));
         }
 
         add_layer(new FlattenLayer(get_output_dimensions()));
@@ -1945,8 +1954,11 @@ void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl;
 
-    cout << "Inputs:" << endl
-         << get_input_names() << endl;
+    if(model_type != ModelType::ImageClassification)
+    {
+        cout << "Inputs:" << endl
+             << get_input_names() << endl;
+    }
 
     const Index layers_number = get_layers_number();       
 
@@ -1954,12 +1966,17 @@ void NeuralNetwork::print() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i << ": " << layers[i]->get_neurons_number()
-             << " " << layers[i]->get_type_string() << " neurons" << endl;
+        cout << endl
+             << "Layer " << i << ": " << endl;
+        layers[i]->print();
+
     }
 
     cout << "Outputs:" << endl
          << get_output_names() << endl;
+
+    cout << "Parameters:" << endl
+         << get_parameters_number() << endl;
 }
 
 

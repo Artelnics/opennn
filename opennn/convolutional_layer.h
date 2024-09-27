@@ -182,6 +182,8 @@ public:
    void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
+   void print() const;
+
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
     #endif

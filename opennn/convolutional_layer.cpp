@@ -612,14 +612,10 @@ Index ConvolutionalLayer::get_padding_width() const
     switch(convolution_type)
     {
     case ConvolutionType::Valid:
-    {
         return 0;
-    }
 
     case ConvolutionType::Same:
-    {
         return column_stride*(input_dimensions[2] - 1) - input_dimensions[2] + get_kernel_width();
-    }
     }
 
     return 0;
@@ -631,14 +627,10 @@ Index ConvolutionalLayer::get_padding_height() const
     switch(convolution_type)
     {
     case ConvolutionType::Valid:
-    {
         return 0;
-    }
 
     case ConvolutionType::Same:
-    {
         return row_stride*(input_dimensions[1] - 1) - input_dimensions[1] + get_kernel_height();
-    }
     }
 
     return 0;
@@ -711,6 +703,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                             kernel_width,
                             kernel_channels,
                             kernels_number);
+
     set_random(synaptic_weights);
 
     moving_means.resize(kernels_number);
@@ -995,6 +988,19 @@ void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training
     }
 }
 */
+
+
+void ConvolutionalLayer::print() const
+{
+    cout << "Convolutional layer" << endl;
+
+    cout << "Input dimensions: " << endl;
+    print_dimensions(input_dimensions);
+
+    cout << "Output dimensions: " << endl;
+    print_dimensions(get_output_dimensions());
+}
+
 
 void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
