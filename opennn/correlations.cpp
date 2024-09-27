@@ -133,39 +133,29 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
 
     if(x_columns == 1 && y_columns == 1)
     {
+        const Tensor<type, 1> x_vector = x.reshape(vector);
+        const Tensor<type, 1> y_vector = y.reshape(vector);
+
         if(!x_binary && !y_binary)
-        {
-            return opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
-        }
+            return opennn::linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
         else if(!x_binary && y_binary)
-        {
-            return opennn::logistic_correlation_vector_vector_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
-        }
+            return opennn::logistic_correlation_vector_vector_spearman(thread_pool_device, x_vector, y_vector);
         else if(x_binary && !y_binary)
-        {
-            return opennn::logistic_correlation_vector_vector_spearman(thread_pool_device, y.reshape(vector), x.reshape(vector));
-        }
+            return opennn::logistic_correlation_vector_vector_spearman(thread_pool_device, y_vector, x_vector);
         else if(x_binary && y_binary)
-        {
-            return opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
-        }
+            return opennn::linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
     }
-    else if(x_columns != 1 && y_columns == 1)
-    {
+
+    if(x_columns != 1 && y_columns == 1)
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
-    }
-    else if(x_columns == 1 && y_columns != 1)
-    {
+
+    if(x_columns == 1 && y_columns != 1)
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
-    }
-    else if(x_columns != 1 && y_columns != 1)
-    {
+
+    if(x_columns != 1 && y_columns != 1)
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
-    }
-    else
-    {
-        throw runtime_error("Correlations Exception: Unknown case.");
-    }
+
+    throw runtime_error("Correlations Exception: Unknown case.");
 
     return correlation;
 }
@@ -250,7 +240,6 @@ pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const
         return make_pair(x, y);
 
     Tensor<type, 1> new_x(new_size);
-
     Tensor<type, 1> new_y(new_size);
 
     Index index = 0;
@@ -291,8 +280,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
     }
 
     Tensor<type, 1> new_x(new_rows_number);
-
-    Tensor<type, 2> new_y(new_rows_number,y_columns_number);
+    Tensor<type, 2> new_y(new_rows_number, y_columns_number);
 
     Index index = 0;
 
@@ -378,12 +366,8 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
     Tensor<type, 2> values(rows_number, columns_number);
 
     for(Index i = 0; i < rows_number; i++)
-    {
         for(Index j = 0; j < columns_number; j++)
-        {
             values(i, j) = correlations(i, j).r;
-        }
-    }
 
     return values;
 }
@@ -571,9 +555,7 @@ Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
     vector<pair<type, size_t> > sorted_vector(n);
 
     for(size_t i = 0U; i < n; i++)
-    {
         sorted_vector[i] = make_pair(x[i], i);
-    }
 
     sort(sorted_vector.begin(), sorted_vector.end());
 
@@ -588,9 +570,7 @@ Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
         for(size_t j = i + 1U; j < sorted_vector.size() && sorted_vector[j].first == sorted_vector[i].first; j++, repeated++);
 
         for(size_t k = 0; k < repeated; k++)
-        {
             x_rank_vector[sorted_vector[i + k].second] = rank + type(repeated - 1) / type(2);
-        }
 
         i += repeated - 1;
 
@@ -665,14 +645,12 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type, 1> x_filtered = filtered_elements.first;
     const Tensor<type, 1> y_filtered = filtered_elements.second;
 
-    if(x_filtered.size() == 0
-    || is_constant_vector(x_filtered)
-    || is_constant_vector(y_filtered))
+    if (x_filtered.size() == 0
+        || is_constant_vector(x_filtered)
+        || is_constant_vector(y_filtered))
     {
         correlation.r = type(NAN);
-
         correlation.form = Correlation::Form::Logistic;
-
         return correlation;
     }
 
@@ -682,7 +660,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1,1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
     neural_network.get_scaling_layer_2d()->set_display(false);
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
@@ -727,7 +705,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);
+    if(correlation.b < type(0))
+        correlation.r *= type(-1);
 
     return correlation;
 }
@@ -762,7 +741,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1,1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1}, {}, {1});
     neural_network.get_scaling_layer_2d()->set_display(false);
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
@@ -859,7 +838,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                 {input_variables_number, target_variables_number-1, target_variables_number});
+                                 { input_variables_number }, {}, {target_variables_number});
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_2d()->set_display(false);
@@ -978,7 +957,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                 {input_variables_number, target_variables_number-1,target_variables_number});
+                                 {input_variables_number }, {}, {target_variables_number});
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 

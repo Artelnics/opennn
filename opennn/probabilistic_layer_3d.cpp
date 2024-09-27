@@ -220,9 +220,14 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
 
-    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights_number*sizeof(type));
 
-    memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number*sizeof(type));
+        #pragma omp section
+        memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number*sizeof(type));
+    }
 }
 
 

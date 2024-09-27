@@ -147,6 +147,8 @@ public:
         return string();
     }
 
+    virtual void print() const {}
+
 protected:
 
     ThreadPool* thread_pool = nullptr;

@@ -19,7 +19,8 @@ ProbabilisticLayer::ProbabilisticLayer()
 }
 
 
-ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Index& new_neurons_number)
+ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number,
+                                       const Index& new_neurons_number)
 {
     set(new_inputs_number, new_neurons_number);
 
@@ -374,27 +375,6 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
     sum_columns(thread_pool_device, biases, combinations);
-}
-
-
-void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations,
-                                               Tensor<type, 2>& activations,
-                                               Tensor<type, 1>& aux_rows) const
-{
-/*
-    switch(activation_function)
-    {
-    case ActivationFunction::Binary: binary(combinations, activations); return;
-
-    case ActivationFunction::Logistic: logistic(activations); return;
-
-    case ActivationFunction::Competitive: competitive(combinations, activations); return;
-
-    case ActivationFunction::Softmax: softmax(combinations, activations, aux_rows); return;
-
-    default: return;
-    }
-*/
 }
 
 

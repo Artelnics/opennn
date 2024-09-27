@@ -89,7 +89,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
     batch.set(samples_number, &data_set);
     forward_propagation.set(samples_number, &neural_network);
@@ -149,7 +149,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     data_set.set(1, 1, 1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
     initial_learning_rate = 0.001;
@@ -166,7 +166,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     data_set.set(3, 1, 1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
     initial_learning_rate = 0.001;
@@ -231,7 +231,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     indices.setValues({inputs_number,targets_number,samples_number-1});
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number,neurons_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {targets_number}, {neurons_number});
     neural_network.set_parameters_constant(type(1));
 
     // @todo loss_index.calculate_training_loss not available

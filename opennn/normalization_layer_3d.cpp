@@ -231,9 +231,9 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
     Tensor<type, 3>& standard_deviations = normalization_layer_3d_forward_propagation->standard_deviations;
     const type& epsilon = normalization_layer_3d_forward_propagation->epsilon;
 
-    const Eigen::array<Index, 1> normalization_axis{ { 2 } };
-    const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 } };
-    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth } };
+    const Eigen::array<Index, 1> normalization_axis{ { 2 }};
+    const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 }};
+    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth }};
     
     means.device(*thread_pool_device) = inputs.mean(normalization_axis)
                                        .reshape(range_3).broadcast(expand_normalization_axis);

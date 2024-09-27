@@ -115,163 +115,13 @@ void ProbabilisticLayer3DTest::test_calculate_combinations()
         combinations.dimension(1) == 1 &&
         combinations.dimension(2) == 1, LOG);
     assert_true(abs(combinations(0, 0, 0) - type(7)) < type(1e-5), LOG);
-
 }
 
 
 void ProbabilisticLayer3DTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
-
-    Tensor<type, 1> biases;
-    Tensor<type, 2> synaptic_weights;
-    Tensor<type, 1> parameters;
-
-    Tensor<type, 3> inputs;
-    Tensor<type, 3> combinations;
-    Tensor<type, 3> activations;
-
-    {
-        // Test 1
-
-        inputs_number = 1;
-        inputs_depth = 1;
-        neurons_number = 1;
-        samples_number = 1;
-
-        probabilistic_layer_3d.set(inputs_number, inputs_depth, neurons_number);
-
-        biases.resize(neurons_number);
-        biases.setConstant(type(0));
-
-        synaptic_weights.resize(inputs_depth, neurons_number);
-        synaptic_weights.setConstant(type(0));
-
-        probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
-        probabilistic_layer_3d.set_biases(biases);
-
-        inputs.resize(samples_number, inputs_number, inputs_depth);
-        inputs.setConstant(type(0));
-
-        combinations.resize(samples_number, inputs_number, neurons_number);
-        combinations.setConstant(type(0));
-
-        probabilistic_layer_3d.calculate_combinations(inputs, combinations);
-
-        activations.resize(samples_number, inputs_number, neurons_number);
-        activations.setConstant(type(0));
 /*
-        probabilistic_layer_3d.calculate_activations(combinations, activations);
-*/
-        assert_true(
-            activations.rank() == 3 &&
-            activations.dimension(0) == samples_number &&
-            activations.dimension(1) == inputs_number &&
-            activations.dimension(2) == neurons_number, LOG);
-
-        assert_true(Index(activations(0, 0, 0)) == type(1), LOG);
-    }
-
-    {
-        // Test 2
-
-        inputs_number = 1;
-        inputs_depth = 1;
-        neurons_number = 2;
-        samples_number = 1;
-
-        probabilistic_layer_3d.set(inputs_number, inputs_depth, neurons_number);
-
-        biases.resize(neurons_number);
-        biases.setConstant(type(1));
-
-        synaptic_weights.resize(inputs_depth, neurons_number);
-        synaptic_weights.setConstant(type(1));
-
-        probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
-        probabilistic_layer_3d.set_biases(biases);
-
-        inputs.resize(samples_number, inputs_number, inputs_depth);
-        inputs.setConstant(type(1));
-
-        combinations.resize(samples_number, inputs_number, neurons_number);
-        combinations.setConstant(type(0));
-
-        probabilistic_layer_3d.calculate_combinations(inputs, combinations);
-
-        activations.resize(samples_number, inputs_number, neurons_number);
-        activations.setConstant(type(0));
-/*
-        probabilistic_layer_3d.calculate_activations(combinations, activations);
-*/
-        assert_true(
-            activations.rank() == 3 &&
-            activations.dimension(0) == samples_number &&
-            activations.dimension(1) == inputs_number &&
-            activations.dimension(2) == neurons_number, LOG);
-
-        assert_true(activations(0, 0, 0) == type(0.5) && activations(0, 0, 1) == type(0.5), LOG);
-    }
-
-    {
-        // Test 3
-
-        inputs_number = 2;
-        inputs_depth = 2;
-        neurons_number = 3;
-        samples_number = 2;
-
-        probabilistic_layer_3d.set(inputs_number, inputs_depth, neurons_number);
-
-        biases.resize(neurons_number);
-        biases.setConstant(type(1));
-
-        synaptic_weights.resize(inputs_depth, neurons_number);
-        synaptic_weights.setConstant(type(1));
-
-        probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
-        probabilistic_layer_3d.set_biases(biases);
-
-        inputs.resize(samples_number, inputs_number, inputs_depth);
-        inputs.setConstant(type(1));
-
-        combinations.resize(samples_number, inputs_number, neurons_number);
-        combinations.setConstant(type(0));
-
-        probabilistic_layer_3d.calculate_combinations(inputs, combinations);
-
-        activations.resize(samples_number, inputs_number, neurons_number);
-        activations.setConstant(type(0));
-/*
-        probabilistic_layer_3d.calculate_activations(combinations, activations);
-*/
-        assert_true(
-            activations.rank() == 3 &&
-            activations.dimension(0) == samples_number &&
-            activations.dimension(1) == inputs_number &&
-            activations.dimension(2) == neurons_number, LOG);
-
-        assert_true(
-            abs(activations(0, 0, 0) - type(0.333)) < type(1e-3) &&
-            abs(activations(0, 0, 1) - type(0.333)) < type(1e-3) &&
-            abs(activations(0, 0, 2) - type(0.333)) < type(1e-3) &&
-            abs(activations(0, 1, 0) - type(0.333)) < type(1e-3) &&
-            abs(activations(0, 1, 1) - type(0.333)) < type(1e-3) &&
-            abs(activations(0, 1, 2) - type(0.333)) < type(1e-3) &&
-            abs(activations(1, 0, 0) - type(0.333)) < type(1e-3) &&
-            abs(activations(1, 0, 1) - type(0.333)) < type(1e-3) &&
-            abs(activations(1, 0, 2) - type(0.333)) < type(1e-3) &&
-            abs(activations(1, 1, 0) - type(0.333)) < type(1e-3) &&
-            abs(activations(1, 1, 1) - type(0.333)) < type(1e-3) &&
-            abs(activations(1, 1, 2) - type(0.333)) < type(1e-3), LOG);
-    }
-}
-
-
-void ProbabilisticLayer3DTest::test_calculate_activations_derivatives()
-{/*
-    cout << "test_calculate_activations_derivatives\n";
-
     Tensor<type, 3> combinations;
     Tensor<type, 3> activations;
     Tensor<type, 4> activations_derivatives;
@@ -321,7 +171,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations_derivatives()
         probabilistic_layer_3d.set(inputs_number, inputs_depth, neurons_number);
 
         combinations.resize(samples_number, inputs_number, neurons_number);
-        combinations.setValues({ {{1}, {2}, {3}} });
+        combinations.setValues({{{1}, {2}, {3}}});
 
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
@@ -481,7 +331,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
 
         synaptic_weights.setValues({ {type(1),type(-1),type(0),type(1)},
                                     {type(2),type(-2),type(0),type(2)},
-                                    {type(3),type(-3),type(0),type(3)} });
+                                    {type(3),type(-3),type(0),type(3)}});
         
         probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
         probabilistic_layer_3d.set_biases(biases);
@@ -533,7 +383,6 @@ void ProbabilisticLayer3DTest::run_test_case()
 
     test_calculate_combinations();
     test_calculate_activations();
-    //test_calculate_activations_derivatives();
 
     test_forward_propagate();
 

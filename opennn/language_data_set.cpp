@@ -410,7 +410,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         buffer.str("");
 
-        buffer << has_samples_id;
+        buffer << has_sample_ids;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -480,7 +480,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Samples id
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         const Index rows_labels_number = samples_id.size();
 
@@ -1008,7 +1008,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         // Samples id begin tag
 
@@ -1314,10 +1314,8 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
     string line;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
         if(line.empty()) continue;
 
         vocabulary_size++;
@@ -1332,10 +1330,8 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
 
     Index count = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
         if(line.empty()) continue;
 
         vocabulary(count) = line;
@@ -1785,11 +1781,9 @@ void LanguageDataSet::load_documents(const string& path)
 
     string line;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
@@ -1810,10 +1804,8 @@ void LanguageDataSet::load_documents(const string& path)
     string delimiter = "";
     const string separator = get_separator_string();
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
         if(line.empty()) continue;
 
         if(line[0] == '"')
@@ -1898,28 +1890,22 @@ void LanguageDataSet::read_csv_3_language_model()
 
     // Read data
 
-    const Index raw_variables_number = has_samples_id ? get_raw_variables_number() + 1 : get_raw_variables_number();
+    const Index raw_variables_number = has_sample_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
 
     Tensor<string, 1> tokens(raw_variables_number);
 
     const Index samples_number = data.dimension(0);
 
-    if(has_samples_id) samples_id.resize(samples_number);
+    if(has_sample_ids) samples_id.resize(samples_number);
 
     if(display) cout << "Reading data..." << endl;
 
     Index sample_index = 0;
     Index raw_variable_index = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
-        decode(line);
-
-        trim(line);
-
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
@@ -1929,7 +1915,7 @@ void LanguageDataSet::read_csv_3_language_model()
         {
             trim(tokens(j));
 
-            if(has_samples_id && j == 0)
+            if(has_sample_ids && j == 0)
             {
                 samples_id(sample_index) = tokens(j);
             }

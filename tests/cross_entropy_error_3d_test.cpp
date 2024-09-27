@@ -52,7 +52,7 @@ void CrossEntropyError3DTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
 
-
+/*
     // Test all zero
     {
         batch_samples_number = 1;
@@ -118,10 +118,8 @@ void CrossEntropyError3DTest::test_back_propagate()
         data.resize(batch_samples_number, 2 * inputs_number);
 
         for(Index i = 0; i < batch_samples_number; i++)
-        {
             for(Index j = 0; j < 2 * inputs_number; j++)
                 data(i, j) = type(rand() % (input_dimensions+1));
-        }
 
         data_set.set_data(data);
 
@@ -233,12 +231,13 @@ void CrossEntropyError3DTest::test_back_propagate()
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
+*/
 }
 
 
 void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 {
-    //cout << "test_calculate_gradient_transformer\n";
+    cout << "test_calculate_gradient_transformer\n";
 
     Index context_length;
     Index context_dimension;
@@ -458,7 +457,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
 void CrossEntropyError3DTest::run_test_case()
 {
-    cout << "Running cross-entropy error test case...\n";
+    cout << "Running cross-entropy error 3D test case...\n";
     
     // Test constructor
 

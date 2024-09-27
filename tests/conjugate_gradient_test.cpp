@@ -60,7 +60,7 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 
     Index size = 2*(1 + rand()%10);
 
-    PerceptronLayer *pl = new PerceptronLayer(1, size/2);
+    PerceptronLayer *pl = new PerceptronLayer({1}, {size/2});
     neural_network.add_layer(pl);
 
     // Test
@@ -87,7 +87,7 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 
     Index size = 2*(1 + rand()%10);
 
-    PerceptronLayer *pl = new PerceptronLayer(1, size/2);
+    PerceptronLayer *pl = new PerceptronLayer({1}, {size/2});
     neural_network.add_layer(pl);
 
     // Test
@@ -129,7 +129,7 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
 
     parameters_number = neural_network.get_parameters_number();
 
@@ -171,7 +171,7 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
 
     parameters_number = neural_network.get_parameters_number();
 
@@ -209,7 +209,7 @@ void ConjugateGradientTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(type(1));
 
     conjugate_gradient.set_maximum_epochs_number(1);
@@ -223,7 +223,7 @@ void ConjugateGradientTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(-1);
 
     conjugate_gradient.set_maximum_epochs_number(1);

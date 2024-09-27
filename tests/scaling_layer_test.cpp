@@ -78,7 +78,7 @@ void ScalingLayer2DTest::test_forward_propagate()
     inputs.resize(samples_number, inputs_number);
     inputs.setRandom();
 
-    scaling_layer.set(inputs_number);
+    scaling_layer.set({inputs_number});
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::None);
 
@@ -106,7 +106,7 @@ void ScalingLayer2DTest::test_forward_propagate()
     inputs.resize(samples_number, inputs_number);
     inputs.setRandom();
 
-    scaling_layer.set(inputs_number);
+    scaling_layer.set({inputs_number});
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::None);
 
@@ -137,7 +137,7 @@ void ScalingLayer2DTest::test_forward_propagate()
     inputs.resize(samples_number, inputs_number);
     inputs.setRandom();
 
-    scaling_layer.set(inputs_number);
+    scaling_layer.set({inputs_number});
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
@@ -162,13 +162,13 @@ void ScalingLayer2DTest::test_forward_propagate()
     inputs_number = 3;
     samples_number = 3;
 
-    inputs.resize(samples_number,inputs_number);
+    inputs.resize(samples_number, inputs_number);
 
     inputs.setValues({{type(1),type(1),type(1)},
                     {type(2),type(2),type(2)},
                     {type(3),type(3),type(3)}});
 
-    scaling_layer.set(inputs_number);
+    scaling_layer.set({inputs_number});
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
@@ -201,7 +201,7 @@ void ScalingLayer2DTest::test_forward_propagate()
     inputs_number = 2;
     samples_number = 2;
 
-    scaling_layer.set(inputs_number);
+    scaling_layer.set({inputs_number});
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
@@ -237,13 +237,13 @@ void ScalingLayer2DTest::test_forward_propagate()
     inputs_number = 2;
     samples_number = 2;
 
-    scaling_layer.set(inputs_number);
+    scaling_layer.set({inputs_number});
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
     inputs.resize(samples_number, inputs_number);
     inputs.setValues({ {type(0),type(0)},
-                      {type(2),type(2)} });
+                      {type(2),type(2)}});
 
     initialize_sequential(all_indices, 0, 1, inputs_number - 1);
 
@@ -273,7 +273,7 @@ void ScalingLayer2DTest::test_forward_propagate()
     inputs_number = 2 + rand()%10;
     samples_number = 1;
 
-    scaling_layer.set(inputs_number);
+    scaling_layer.set({inputs_number});
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
@@ -311,12 +311,8 @@ void ScalingLayer2DTest::run_test_case()
 {
     cout << "Running scaling layer test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
     test_destructor();
-
-    // Scaling and unscaling
 
     test_forward_propagate();
 

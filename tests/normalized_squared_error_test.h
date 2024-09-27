@@ -28,32 +28,23 @@ public:
 
     virtual ~NormalizedSquaredErrorTest();
 
-    // Constructor and destructor
-
     void test_constructor();
-
     void test_destructor();
 
-    // Normalization coefficient
-
     void test_calculate_normalization_coefficient();
-
-    // Back-propagation
 
     void test_back_propagate();
 
     void test_back_propagate_lm();
 
-    // Unit testing
-
     void run_test_case();
 
 private:
 
-    Index samples_number;
-    Index inputs_number;
-    Index outputs_number;
-    Index neurons_number;
+    Index samples_number = 0;
+    Index inputs_number = 0;
+    Index outputs_number = 0;
+    Index neurons_number = 0;
 
     Tensor<Index, 1> training_samples_indices;
     Tensor<Index, 1> input_variables_indices;

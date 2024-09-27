@@ -94,6 +94,8 @@ public:
 
     void to_XML(tinyxml2::XMLPrinter&) const final;
 
+    void print() const;
+
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
     #endif

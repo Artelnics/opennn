@@ -164,8 +164,6 @@ void Layer::set_neurons_number(const Index&)
 }
 
 
-
-
 void Layer::competitive(Tensor<type, 2>& y) const
 {
         Tensor<Index, 1> maximum_indices = y.argmax(1);
@@ -179,12 +177,12 @@ void Layer::competitive(Tensor<type, 2>& y) const
 
 void Layer::softmax(Tensor<type, 2>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ { 1 } };
+    const Eigen::array<Index, 1> softmax_dimension{ { 1 }};
     
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     
-    const Eigen::array<Index, 2> range_2{ { rows_number, 1 } };
+    const Eigen::array<Index, 2> range_2{ { rows_number, 1 }};
     const Eigen::array<Index, 2> expand_softmax_dim{ { 1, columns_number} };
 
     y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
@@ -203,14 +201,14 @@ void Layer::softmax(Tensor<type, 2>& y) const
 
 void Layer::softmax(Tensor<type, 3>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ { 2 } }; 
+    const Eigen::array<Index, 1> softmax_dimension{ { 2 }}; 
     
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     const Index channels = y.dimension(2);
     
-    const Eigen::array<Index, 3> range_3{ { rows_number, columns_number, 1 } };
-    const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels } };
+    const Eigen::array<Index, 3> range_3{ { rows_number, columns_number, 1 }};
+    const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels }};
 
     y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
                                          .eval()
@@ -233,9 +231,9 @@ void Layer::softmax(Tensor<type, 4>& y) const
     const Index channels = y.dimension(2);
     const Index blocks_number = y.dimension(3);
 
-    const Eigen::array<Index, 1> softmax_dimension{ { 0 } };
-    const Eigen::array<Index, 4> range_4{ { 1, columns_number, channels, blocks_number } };
-    const Eigen::array<Index, 4> expand_softmax_dim{ { rows_number, 1, 1, 1 } };
+    const Eigen::array<Index, 1> softmax_dimension{ { 0 }};
+    const Eigen::array<Index, 4> range_4{ { 1, columns_number, channels, blocks_number }};
+    const Eigen::array<Index, 4> expand_softmax_dim{ { rows_number, 1, 1, 1 }};
 
     y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
                                          .eval()

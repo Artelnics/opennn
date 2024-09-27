@@ -102,7 +102,6 @@ public:
     void set_random_vertical_translation_maximum(const type&);
 
     Tensor<Descriptives, 1> scale_input_variables() final;
-    Tensor<Descriptives, 1> scale_target_variables() final;
 
     void read_bmp();
 

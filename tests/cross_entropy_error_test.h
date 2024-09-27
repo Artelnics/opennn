@@ -31,14 +31,9 @@ public:
     virtual ~CrossEntropyErrorTest();
 
     void test_constructor();
-
     void test_destructor();
 
-    // Back-propagation
-
     void test_back_propagate();
-
-    // Unit testing
 
     void run_test_case();
 

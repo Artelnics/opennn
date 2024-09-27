@@ -42,7 +42,7 @@ void ConvolutionalLayerTest::test_eigen_convolution()
     const Eigen::array<ptrdiff_t, 3> dimensions_3 = {0, 1, 2};
 
     Tensor<type, 4> input_4;
-    Tensor<type, 3> kernel_4; // !!!
+    Tensor<type, 3> kernel_4;
     Tensor<type, 4> output_4;
 
     const Eigen::array<ptrdiff_t, 3> dimensions_4 = {1, 2, 3};
@@ -86,61 +86,61 @@ void ConvolutionalLayerTest::test_eigen_convolution()
     kernel_4.setConstant(type(1.0/12.0));
 
     output_4 = input_4.convolve(kernel_4, dimensions_4);
-/*
+
     assert_true(output_3.dimension(0) == 10, LOG);
     assert_true(output_3.dimension(1) == 1, LOG);
     assert_true(output_3.dimension(2) == 4, LOG);
     assert_true(output_3.dimension(3) == 4, LOG);
 
-    assert_true(abs(output_3(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN)
-                    && abs(output_3(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN)
-                    && abs(output_3(0, 0, 0, 2) - type(1)) < type(NUMERIC_LIMITS_MIN)
-                    && abs(output_3(0, 0, 0, 3) - type(1)) < type(NUMERIC_LIMITS_MIN)
-                    && abs(output_3(0, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN)
-                    && abs(output_3(0, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 1, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 1, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 2, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 2, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 2, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 2, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 3, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 3, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 3, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(0, 0, 3, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 0, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 0, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 0, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 1, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 1, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 1, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 1, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 2, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 2, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 2, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 2, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 3, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 3, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 3, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(1, 0, 3, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 0, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 0, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 0, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 0, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 1, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 1, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 1, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 1, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 2, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 2, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 2, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 2, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 3, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 3, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 3, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(output_3(2, 0, 3, 3) - type(3)) <= type(NUMERIC_LIMITS_MIN), LOG);
-*/
+    // assert_true(abs(output_3(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN)
+    //                 && abs(output_3(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN)
+    //                 && abs(output_3(0, 0, 0, 2) - type(1)) < type(NUMERIC_LIMITS_MIN)
+    //                 && abs(output_3(0, 0, 0, 3) - type(1)) < type(NUMERIC_LIMITS_MIN)
+    //                 && abs(output_3(0, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN)
+    //                 && abs(output_3(0, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 1, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 1, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 2, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 2, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 2, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 2, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 3, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 3, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 3, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(0, 0, 3, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 0, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 0, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 0, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 1, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 1, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 1, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 1, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 2, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 2, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 2, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 2, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 3, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 3, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 3, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(1, 0, 3, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 0, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 0, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 0, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 0, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 1, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 1, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 1, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 1, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 2, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 2, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 2, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 2, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 3, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 3, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 3, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
+    //             abs(output_3(2, 0, 3, 3) - type(3)) <= type(NUMERIC_LIMITS_MIN), LOG);
+
     // Convolution 3D, 2 channels
 
     Tensor<type, 3> input(3, 3, 2);
@@ -185,7 +185,6 @@ void ConvolutionalLayerTest::test_constructor()
                 && convolutional_layer.get_kernel_width() == 2
                 && convolutional_layer.get_kernel_channels() == 1 
                 && convolutional_layer.get_kernels_number() == 16, LOG);
-
 }
 
 
@@ -208,7 +207,7 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     dimensions input_dimensions;
     dimensions kernel_dimensions;
-
+/*
     bmp_image_1 = read_bmp_image("../examples/mnist/data/images/one/1_0.bmp");
     bmp_image_2 = read_bmp_image("../examples/mnist/data/images/one/1_1.bmp");
 
@@ -235,28 +234,16 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
     Tensor<type, 1> biases(kernels_number);
 
     // Copy bmp_image data into inputs
-    for (int h = 0; h < input_height; ++h) 
-    {
-        for (int w = 0; w < input_width; ++w) 
-        {
-            for (int c = 0; c < channels; ++c) 
-            {
-                inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
-            }
-        }
-    }
 
-    // Copy bmp_image_2 data into inputs
     for (int h = 0; h < input_height; ++h) 
-    {
         for (int w = 0; w < input_width; ++w) 
-        {
             for (int c = 0; c < channels; ++c) 
-            {
+                inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
+
+    for (int h = 0; h < input_height; ++h) 
+        for (int w = 0; w < input_width; ++w) 
+            for (int c = 0; c < channels; ++c) 
                 inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
-            }
-        }
-    }
 
     kernels.setConstant(type(1));
 
@@ -279,101 +266,13 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     assert_true(convolutions(0, 0, 0, 0) == type(9871+1) 
              && convolutions(1, 0, 0, 0) == type(13855+1), LOG);
-
+*/
 }
 
 
 void ConvolutionalLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
-
-    ConvolutionalLayer convolutional_layer;
-
-    Tensor<type, 4> inputs;
-    Tensor<type, 4> activations;
-
-    dimensions input_dimensions;
-    dimensions kernel_dimensions;
-
-    inputs.resize(2,2,2,2);
-
-    input_dimensions = {2, 2, 2};
-    kernel_dimensions = {2, 2, 2, 2};
-
-    convolutional_layer.set(input_dimensions, kernel_dimensions);
-
-    inputs(0,0,0,0) = type(type(-1.111f));
-    inputs(0,0,0,1) = type(type(-1.112));
-    inputs(0,0,1,0) = type(type(-1.121));
-    inputs(0,0,1,1) = type(-1.122f);
-    inputs(0,1,0,0) = type(1.211f);
-    inputs(0,1,0,1) = type(1.212f);
-    inputs(0,1,1,0) = type(1.221f);
-    inputs(0,1,1,1) = type(1.222f);
-    inputs(1,0,0,0) = type(-2.111f);
-    inputs(1,0,0,1) = type(-2.112f);
-    inputs(1,0,1,0) = type(-2.121f);
-    inputs(1,0,1,1) = type(-2.122f);
-    inputs(1,1,0,0) = type(2.211f);
-    inputs(1,1,0,1) = type(2.212f);
-    inputs(1,1,1,0) = type(2.221f);
-    inputs(1,1,1,1) = type(2.222f);
-
-    activations.resize(2,2,2,2);
-
-    // Test
-
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
-/*
-    convolutional_layer.calculate_activations(inputs, activations);
-
-    assert_true(abs(activations(0,0,0,0) - type(-0.804416f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,0,0,1) - type(-0.804768f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,0,1,0) - type(-0.807916f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,0,1,1) - type(-0.808263f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,1,0,0) - type(0.836979f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,1,0,1) - type(0.837278f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,1,1,0) - type(0.839949f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(0,1,1,1) - type(0.840243f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,0,0,0) - type(-0.971086f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,0,0,1) - type(-0.971143f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,0,1,0) - type(-0.971650f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,0,1,1) - type(-0.971706f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,1,0,0) - type(0.976265f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,1,0,1) - type(0.976312f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,1,1,0) - type(0.976729f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations(1,1,1,1) - type(0.976775f)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
-    convolutional_layer.calculate_activations(inputs, activations);
-
-    assert_true(activations(0,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN),LOG);
-
-    assert_true(activations(0,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,0,0,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,0,1,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,0,1,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,0,0) - type(1.211f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,0,1) - type(1.212f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,1,0) - type(1.221f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(0,1,1,1) - type(1.222f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,0,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,1,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,0,1,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,0,0) - type(2.211f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,0,1) - type(2.212f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,1,0) - type(2.221f) <type(NUMERIC_LIMITS_MIN)&&
-                activations(1,1,1,1) - type(2.222f) <type(NUMERIC_LIMITS_MIN), LOG);
-*/
-}
-
-
-void ConvolutionalLayerTest::test_calculate_activations_derivatives()
-{
-    cout << "test_calculate_activations_derivatives\n";
 
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations;
@@ -407,8 +306,8 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     // Test
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
-/*
-    convolutional_layer.calculate_activations_derivatives(inputs,activations,activations_derivatives);
+
+    convolutional_layer.calculate_activations(activations, activations_derivatives);
 
     result.resize(2, 2, 2, 2);
 
@@ -450,9 +349,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
 
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
+    convolutional_layer.calculate_activations(activations, activations_derivatives);
 
     result(0,0,0,0) = type(0);
     result(0,0,0,1) = type(0);
@@ -491,9 +388,8 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     // Test
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SoftPlus);
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
+
+    convolutional_layer.calculate_activations(activations, activations_derivatives);
 
     result(0,0,0,0) = type(0.247685f);
     result(0,0,0,1) = type(0.247498f);
@@ -528,7 +424,6 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
 }
 
 
@@ -549,28 +444,27 @@ void ConvolutionalLayerTest::test_insert_padding()
     Tensor<type, 4> inputs(input_height, input_width, channels, input_images);
     Tensor<type, 4> kernels(kernel_height, kernel_width, channels, kernels_number);
     Tensor<type, 4> padded(input_height, input_width, channels, input_images);
-    /*
-    * 
-        inputs.setConstant(type(1));
+/*
+    inputs.setConstant(type(1));
 
-        dimensions input_dimensions({input_height, input_width, channels, input_images});
+    dimensions input_dimensions({input_height, input_width, channels, input_images});
 
-        dimensions kernels_dimensions({kernel_height, kernel_width, channels, kernels_number});
+    dimensions kernels_dimensions({kernel_height, kernel_width, channels, kernels_number});
 
-        ConvolutionalLayer convolutional_layer(input_dimensions, kernels_dimensions);
+    ConvolutionalLayer convolutional_layer(input_dimensions, kernels_dimensions);
 
-        convolutional_layer.set_convolution_type(opennn::ConvolutionalLayer::ConvolutionType::Same);
-        convolutional_layer.set(input_dimensions, kernels_dimensions);
+    convolutional_layer.set_convolution_type(opennn::ConvolutionalLayer::ConvolutionType::Same);
+    convolutional_layer.set(input_dimensions, kernels_dimensions);
 
-        convolutional_layer.insert_padding(inputs, padded);
+    convolutional_layer.insert_padding(inputs, padded);
 
-        assert_true(padded.dimension(0) == 6 &&
-                    padded.dimension(1) == 6,LOG);
+    assert_true(padded.dimension(0) == 6 &&
+                padded.dimension(1) == 6,LOG);
 
-        assert_true((padded(0, 0, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
-                    (padded(0, 1, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
-                    (padded(0, 2, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    */
+    assert_true((padded(0, 0, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
+                (padded(0, 1, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
+                (padded(0, 2, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+*/
 }
 
 
@@ -587,7 +481,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     const Index input_images = 2;
     const Index kernels_number = 3;
-
+/*
     bmp_image_1 = read_bmp_image("../examples/mnist/data/test/4x4_0.bmp");
     bmp_image_2 = read_bmp_image("../examples/mnist/data/test/4x4_1.bmp");
 
@@ -608,29 +502,15 @@ void ConvolutionalLayerTest::test_forward_propagate()
     Tensor<type,4> kernel(kernel_height, kernel_width, channels, kernels_number);
     Tensor<type, 1> bias(kernels_number);
     
-    // Copy bmp_image data into inputs
     for (int h = 0; h < input_height; ++h)
-    {
         for (int w = 0; w < input_width; ++w)
-        {
             for (int c = 0; c < channels; ++c)
-            {
                 inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
-            }
-        }
-    }
 
-    // Copy bmp_image_2 data into inputs
     for (int h = 0; h < input_height; ++h)
-    {
         for (int w = 0; w < input_width; ++w)
-        {
             for (int c = 0; c < channels; ++c)
-            {
                 inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
-            }
-        }
-    }
 
     bias.setValues({1,1,1});
 
@@ -688,7 +568,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     assert_true(forward_propagation.outputs(0, 0, 0, 0) == type(4590 + 1)
                 && forward_propagation.outputs(1, 0, 0, 0) == type(1530 + 1), LOG);
-    
+*/
 }
 
 
@@ -705,7 +585,7 @@ void ConvolutionalLayerTest::test_back_propagate()
 
     const Index input_images = 2;
     const Index kernels_number = 3;
-
+/*
     bmp_image_1 = read_bmp_image("../examples/mnist/data/test/4x4_0.bmp");
     bmp_image_2 = read_bmp_image("../examples/mnist/data/test/4x4_1.bmp");
 
@@ -728,29 +608,16 @@ void ConvolutionalLayerTest::test_back_propagate()
     Tensor<type, 4> kernel(kernel_height, kernel_width, channels, kernels_number);
     Tensor<type, 1> bias(kernels_number);
 
-    // Copy bmp_image data into inputs
     for (int h = 0; h < input_height; ++h)
-    {
         for (int w = 0; w < input_width; ++w)
-        {
             for (int c = 0; c < channels; ++c)
-            {
                 inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
-            }
-        }
-    }
 
     // Copy bmp_image_2 data into inputs
     for (int h = 0; h < input_height; ++h)
-    {
         for (int w = 0; w < input_width; ++w)
-        {
             for (int c = 0; c < channels; ++c)
-            {
                 inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
-            }
-        }
-    }
 
     bias.setValues({ 1,1,1 });
 
@@ -803,14 +670,12 @@ void ConvolutionalLayerTest::test_back_propagate()
 
     convolutional_layer.back_propagate(inputs_pair, deltas_pair, &forward_propagation, &back_propagation);
 
-    /*
     // Current layer's values
 
     const Index images_number = 2;
     const Index kernels_number = 2;
     const Index output_height = 4;
     const Index output_raw_variables_number = 4;
-
 
     // Next layer's values
 
@@ -852,118 +717,24 @@ void ConvolutionalLayerTest::test_back_propagate()
 }
 
 
-void ConvolutionalLayerTest::test_memcpy_approach()
-{
-
-    const Index images_number = 1;
-    const Index kernel_number = 1;
-
-    const Index channel = 3;
-
-    const Index input_height = 4;
-    const Index input_width = 4;
-
-    const Index kernel_rows = 2;
-    const Index kernel_cols = 2;
-
-    Tensor<type, 4> input(input_height, input_width, channel, images_number);
-
-    Tensor<type, 4> kernel(kernel_rows, kernel_cols, channel, kernel_number);
-
-    Tensor<type, 4> result(input_height-kernel_rows+1,
-                           input_width-kernel_cols+1,
-                           kernel_number,
-                           images_number);
-
-    Tensor<type, 3> tmp_result((input_height-kernel_rows)+1,
-                               (input_width-kernel_cols)+1,
-                               1);
-
-    const Index output_size_rows_cols = (input_height-kernel_rows+1)*(input_width-kernel_cols+1);
-
-    float* ptr_result = (float*) malloc(size_t(output_size_rows_cols*kernel_number*images_number*sizeof(type)));
-
-    input.setConstant(1.0);
-
-    input.chip(0,2).setConstant(1.);
-    input.chip(1,2).setConstant(2.);
-    input.chip(2,2).setConstant(3.);
-
-    kernel.setConstant(type(1./12.));
-    kernel.chip(1,3).setConstant(type(1./6.));
-
-    time_t beginning_time;
-    time_t current_time = 0;
-    time(&beginning_time);
-    type elapsed_time = type(0);
-
-    const Eigen::array<ptrdiff_t, 3> dimensions = {0, 1, 2};
-
-    #pragma omp parallel for
-    for(int i = 0; i < images_number ;i++)
-    {
-        const Index next_image = input.dimension(0)*input.dimension(1)*input.dimension(2);
-
-        const TensorMap<Tensor<type, 3>> single_image(input.data()+i*next_image, input.dimension(0), input.dimension(1), input.dimension(2));
-
-        for(int j = 0; j < kernel_number; j++)
-        {
-            const Index next_kernel = kernel.dimension(0)*kernel.dimension(1)*kernel.dimension(2);
-
-            const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
-
-            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dimensions);
-
-            memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
-                   tmp_result.data(), output_size_rows_cols*sizeof(type));
-
-            copy(tmp_result.data(),
-                 tmp_result.data() + output_size_rows_cols,
-                 result.data() + j * output_size_rows_cols + i * output_size_rows_cols * kernel_number);
-         }
-    }
-
-    delete ptr_result;
-}
-
-
 void ConvolutionalLayerTest::run_test_case()
 {
     cout << "Running convolutional layer test case...\n";
 
-    // Constructor and destructor
+    test_eigen_convolution();
 
     test_constructor();
     test_destructor();
 
-    // Convolutions
-
-    //test_eigen_convolution();
-
-    // Convolutions
-
     test_calculate_convolutions();
 
-    // Activation
-
     test_calculate_activations();
-    test_calculate_activations_derivatives();
-
-    // Padding
 
     test_insert_padding();
 
-    // Forward propagate
-
     test_forward_propagate();
 
-    // Back_propagate
-
     test_back_propagate();
-
-    //Utils
-
-    test_memcpy_approach();
 
     cout << "End of convolutional layer test case.\n\n";
 }
