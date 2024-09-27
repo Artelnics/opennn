@@ -2071,7 +2071,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
             else
                 variable_index++;
 
-//            continue;
+           continue;
         }
 
         if(raw_variables(i).type == RawVariableType::Categorical)

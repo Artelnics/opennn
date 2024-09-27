@@ -416,7 +416,7 @@ void TrainingResults::save(const string& file_name) const
 {
     Tensor<string, 2> final_results = write_final_results();
 
-    ofstream file;
+    std::ofstream file;
     file.open(file_name);
 
     if(file)

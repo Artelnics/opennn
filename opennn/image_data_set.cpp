@@ -10,9 +10,9 @@
 #include "images.h"
 #include "tensors.h"
 #include "strings_utilities.h"
-#include "filesystem"
 
-using namespace std::filesystem;
+
+using namespace fs;
 
 namespace opennn
 {
@@ -1066,10 +1066,12 @@ Tensor<Descriptives, 1> ImageDataSet::scale_target_variables()
 
 void ImageDataSet::read_bmp()
 {
-    vector<path> directory_path;
-    vector<path> image_path;
+    vector<fs::path> directory_path;
+    vector<string> image_path;
 
-    for(const directory_entry& current_directory : directory_iterator(data_path))
+    const fs::path path = data_path;
+
+    for(const fs::directory_entry& current_directory : fs::directory_iterator(path))
     {
         if(is_directory(current_directory))
         {
@@ -1086,7 +1088,7 @@ void ImageDataSet::read_bmp()
 
     for(Index i = 0; i < folders_number; i++)
     {
-        for(const directory_entry& current_directory : directory_iterator(directory_path[i]))
+        for(const fs::directory_entry& current_directory : fs::directory_iterator(directory_path[i]))
         {
             if(current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
@@ -1098,7 +1100,7 @@ void ImageDataSet::read_bmp()
         images_number[i+1] = samples_number;
     }
 
-    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0].string());
+    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0]/*.string()*/);
 
     const Index height = image_data.dimension(0);
     const Index width = image_data.dimension(1);
@@ -1127,7 +1129,7 @@ void ImageDataSet::read_bmp()
     #pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
-        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i].string());
+        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i]/*.string()*/);
 
         if(pixels_number != image_data.size())
             throw runtime_error("Different image sizes.\n");
@@ -1168,7 +1170,7 @@ void ImageDataSet::read_bmp()
     }
 
     if(display)
-        cout << endl << "Image data set loaded." << endl;
+        cout << endl << "Image data set loaded." << endl;        
 }
 
 } // opennn namespace
