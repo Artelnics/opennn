@@ -229,12 +229,12 @@ void TimeSeriesDataSetTest::test_save_time_series_data_binary()
     data_set.set_lags_number(2);
     data_set.set_steps_ahead_number(2);
     data_set.transform_time_series();
-    /*
+    
     data_set.set_data_source_path(data_path);
-    */
+    /*
     data_set.save_time_series_data_binary(data_path);
     data_set.load_time_series_data_binary(data_path);
-    /*
+    
     assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);

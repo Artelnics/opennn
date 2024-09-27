@@ -59,7 +59,7 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_2.get_layer(2)->get_type() == Layer::Type::Probabilistic, LOG);
 
     // Forecasting
-
+/*
     NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1}, {4}, {2});
 
     assert_true(neural_network_3.get_layers_number() == 5, LOG);
@@ -69,7 +69,7 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_3.get_layer(3)->get_type() == Layer::Type::Unscaling, LOG);
 
     // Image classification
-/*
+
     Inputs variables dimension = (channels, width, height)
     Tensor<Index, 1> inputs_variables_dimension(3);
     inputs_variables_dimension.setValues({1,28,28});

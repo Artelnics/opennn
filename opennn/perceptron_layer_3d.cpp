@@ -577,9 +577,14 @@ void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
     const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();
     type* gradient_data = gradient.data();
 
-    memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
+        #pragma omp section
+        memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    }
 }
 
 

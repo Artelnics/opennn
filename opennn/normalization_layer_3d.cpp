@@ -358,9 +358,14 @@ void NormalizationLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const type* betas_derivatives_data = normalization_layer_3d_back_propagation->betas_derivatives.data();
     type* gradient_data = gradient.data();
 
-    memcpy(gradient_data + index, gammas_derivatives_data, gammas_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(gradient_data + index, gammas_derivatives_data, gammas_number * sizeof(type));
 
-    memcpy(gradient_data + index + gammas_number, betas_derivatives_data, betas_number*sizeof(type));
+        #pragma omp section
+        memcpy(gradient_data + index + gammas_number, betas_derivatives_data, betas_number * sizeof(type));
+    }
 }
 
 

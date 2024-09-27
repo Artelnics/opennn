@@ -1466,7 +1466,7 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
 
     const type* matrix_data = matrix.data();
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for (Index j = 0; j < columns_number; j++)
     {

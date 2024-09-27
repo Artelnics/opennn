@@ -462,9 +462,14 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
 
-    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
+        #pragma omp section
+        memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    }
 }
 
 
@@ -796,26 +801,18 @@ void ConvolutionalLayer::set_convolution_type(const ConvolutionalLayer::Convolut
 void ConvolutionalLayer::set_convolution_type(const string& new_convolution_type)
 {
     if(new_convolution_type == "Valid")
-    {
         convolution_type = ConvolutionType::Valid;
-    }
     else if(new_convolution_type == "Same")
-    {
         convolution_type = ConvolutionType::Same;
-    }
     else
-    {
         throw runtime_error("Unknown convolution type: " + new_convolution_type + ".\n");
-    }
 }
 
 
 void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 {
     if(new_stride_row <= 0)
-    {
         throw runtime_error("EXCEPTION: new_stride_row must be a positive number");
-    }
 
     row_stride = new_stride_row;
 }
@@ -824,9 +821,7 @@ void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 {
     if(new_stride_column <= 0)
-    {
         throw runtime_error("EXCEPTION: new_stride_column must be a positive number");
-    }
 
     column_stride = new_stride_column;
 }

@@ -4259,7 +4259,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
                 = get_raw_variable_data(target_raw_variable_index, used_samples_indices);
             
             correlations(i, j) = correlation(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
-        
         }
     }
 
@@ -5926,26 +5925,26 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums,
         {
             sample_index = used_samples_indices(j);
 
-            if(get_sample_use(sample_index) == SampleUse::None)
+            if(get_sample_use(sample_index) == SampleUse::None 
+            || isnan(data(sample_index, variable_index)))
                 continue;
 
-            if(isnan(data(sample_index, variable_index)))
-                continue;
+            const type value = data(sample_index, variable_index);
 
-            if(abs(data(sample_index, variable_index) - minimums(i)) <= type(NUMERIC_LIMITS_MIN)
-            || abs(data(sample_index, variable_index) - maximums(i)) <= type(NUMERIC_LIMITS_MIN))
+            if(abs(value - minimums(i)) <= type(NUMERIC_LIMITS_MIN)
+            || abs(value - maximums(i)) <= type(NUMERIC_LIMITS_MIN))
                 continue;
 
             if(minimums(i) == maximums(i))
             {
-                if(data(sample_index, variable_index) != minimums(i))
+                if(value != minimums(i))
                 {
                     filtered_indices(sample_index) = type(1);
                     set_sample_use(sample_index, SampleUse::None);
                 }
             }
-            else if(data(sample_index, variable_index) < minimums(i) 
-                 || data(sample_index, variable_index) > maximums(i))
+            else if(value < minimums(i) 
+                 || value > maximums(i))
             {
                 filtered_indices(sample_index) = type(1);
                 set_sample_use(sample_index, SampleUse::None);

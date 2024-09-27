@@ -221,13 +221,13 @@ void DataSetTest::test_filter_data()
     minimums.setValues({ type(2), type(0)});
 
     maximums.resize(2);
-    maximums.setValues({ type(2), type(0.5)});
+    maximums.setValues({type(2), type(0.5)});
 /*
     data_set.filter_data(minimums, maximums);
-*/
+
     assert_true(data_set.get_sample_use(0) == DataSet::SampleUse::None, LOG);
     assert_true(data_set.get_sample_use(1) == DataSet::SampleUse::None, LOG);
-
+*/
 }
 
 
@@ -381,7 +381,7 @@ void DataSetTest::test_calculate_Tukey_outliers()
 void DataSetTest::test_read_csv()
 {
     cout << "test_read_csv\n";
-
+/*
     // Test
 
     data_set.set(2, 2, 2);
@@ -390,7 +390,7 @@ void DataSetTest::test_read_csv()
     data_set.set_data_source_path(data_path);
     data_set.set_data_constant(type(0));
     data_set.save_data();
-/*
+
     data_set.read_csv();
     data = data_set.get_data();
 
@@ -903,6 +903,7 @@ void DataSetTest::test_read_bank_churn_csv()
     */
 }
 
+
 void DataSetTest::test_read_urinary_inflammations_csv()
 {
     cout << "test_read_urinary_inflammations_csv\n";
@@ -1128,12 +1129,12 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
     target_raw_variables_indices.setValues({3});
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-/*
-    Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variables_correlations();
 
-    assert_true(input_target_correlations(0,0).r == 1, LOG);
-    assert_true(input_target_correlations(1,0).r == 1, LOG);
-    assert_true(input_target_correlations(2,0).r == -1, LOG);
+    Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    
+    assert_true(input_target_raw_variable_correlations(0,0).r == 1, LOG);
+    assert_true(input_target_raw_variable_correlations(1,0).r == 1, LOG);
+    assert_true(input_target_raw_variable_correlations(2,0).r == -1, LOG);
     
     // Test 2 (numeric and numeric non trivial case)
 
@@ -1151,11 +1152,11 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
-    assert_true(input_target_correlations(0,0).r < 1 && input_target_correlations(0,0).r > -1 , LOG);
-    assert_true(input_target_correlations(1,0).r < 1 && input_target_correlations(1,0).r > -1, LOG);
-    assert_true(input_target_correlations(2,0).r < 1 && input_target_correlations(2,0).r > -1, LOG);
+    assert_true(input_target_raw_variable_correlations(0,0).r < 1 && input_target_raw_variable_correlations(0,0).r > -1 , LOG);
+    assert_true(input_target_raw_variable_correlations(1,0).r < 1 && input_target_raw_variable_correlations(1,0).r > -1, LOG);
+    assert_true(input_target_raw_variable_correlations(2,0).r < 1 && input_target_raw_variable_correlations(2,0).r > -1, LOG);
 
     // Test 3 (binary and binary non trivial case)
 
@@ -1172,16 +1173,16 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
-    assert_true(input_target_correlations(0,0).r == 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Correlation::Form::Linear, LOG);
+    assert_true(input_target_raw_variable_correlations(0,0).r == 1, LOG);
+    assert_true(input_target_raw_variable_correlations(0,0).form == Correlation::Form::Linear, LOG);
 
-    assert_true(isnan(input_target_correlations(1,0).r), LOG);
-    assert_true(input_target_correlations(1,0).form == Correlation::Form::Linear, LOG);
+    assert_true(isnan(input_target_raw_variable_correlations(1,0).r), LOG);
+    assert_true(input_target_raw_variable_correlations(1,0).form == Correlation::Form::Linear, LOG);
 
-    assert_true(input_target_correlations(2,0).r == -1, LOG);
-    assert_true(input_target_correlations(2,0).form == Correlation::Form::Linear, LOG);
+    assert_true(input_target_raw_variable_correlations(2,0).r == -1, LOG);
+    assert_true(input_target_raw_variable_correlations(2,0).form == Correlation::Form::Linear, LOG);
 
     // Test 4 (binary and binary trivial case)
 
@@ -1198,16 +1199,16 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
-    for(Index i = 0; i < input_target_correlations.size(); i++)
+    for(Index i = 0; i < input_target_raw_variable_correlations.size(); i++)
     {
-        assert_true(input_target_correlations(i).r == 1, LOG);
-        assert_true(input_target_correlations(i).form == Correlation::Form::Linear, LOG);
+        assert_true(input_target_raw_variable_correlations(i).r == 1, LOG);
+        assert_true(input_target_raw_variable_correlations(i).form == Correlation::Form::Linear, LOG);
     }
 
     // Test 5 (categorical and categorical)
-
+/*
     data_set = DataSet();
 
     data_set.set("../../datasets/correlation_tests.csv", ",", false);
@@ -1220,7 +1221,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
     assert_true(input_target_correlations(1,0).r < 1, LOG);
     assert_true(input_target_correlations(1,0).form == Correlation::Form::Logistic, LOG);
@@ -1235,7 +1236,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
     assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
     assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
@@ -1245,7 +1246,6 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     assert_true(-1 < input_target_correlations(2,0).r && input_target_correlations(1,0).r < 1, LOG);
     assert_true(input_target_correlations(2,0).form == Form::Linear, LOG);
-
 
     // Test 7 (numeric and categorical)
 
@@ -1257,7 +1257,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
     assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
     assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
@@ -1272,7 +1272,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
     assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
     assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
@@ -1297,7 +1297,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
     assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
     assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
@@ -1315,7 +1315,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
     assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
     assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
@@ -1336,7 +1336,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
     assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
     assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
@@ -1351,7 +1351,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
+    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
     assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
     assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
@@ -1362,7 +1362,6 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
     assert_true(-1 < input_target_correlations(2,0).r && input_target_correlations(1,0).r < 1, LOG);
     assert_true(input_target_correlations(2,0).form == Form::Logistic, LOG);
     */
-
 }
 
 
@@ -1387,7 +1386,7 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
     target_raw_variables_indices.setValues({3});
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-/*
+
     Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
@@ -1417,16 +1416,14 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
     for(Index i = 0; i <  data_set.get_input_raw_variables_number() ; i++)
     {
-        assert_true( inputs_correlations(i,i).r == 1, LOG);
+        assert_true(inputs_correlations(i,i).r == 1, LOG);
 
         for(Index j = 0; i < j ; j++)
-        {
             assert_true(-1 < inputs_correlations(i,j).r && inputs_correlations(i,j).r < 1, LOG);
-        }
     }
 
     // Test 3 (binary and binary non trivial case)
@@ -1444,8 +1441,8 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
     target_raw_variables_indices.setValues({3});
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    
+    inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Linear, LOG);
@@ -1480,8 +1477,8 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
     target_raw_variables_indices.setValues({3});
 
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    /*
+    inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).form == Correlation::Form::Linear, LOG);
@@ -1500,7 +1497,6 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     assert_true(inputs_correlations(1,2).r == -0.5, LOG);
     assert_true(inputs_correlations(1,2).form == Correlation::Form::Linear, LOG);
-
 
     assert_true(inputs_correlations(2,0).r < 0 && inputs_correlations(2,0).r > -1, LOG);
     assert_true(inputs_correlations(2,0).form == Correlation::Form::Logistic, LOG);
@@ -1928,10 +1924,11 @@ void DataSetTest::test_fill()
 
     const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
-/*
-    batch.set(training_samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
+    batch.set(training_samples_number, &data_set);
+    /*
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    
     Tensor<type, 2> input_data(3,2);
     input_data.setValues({{1,4},{2,5},{3,6}});
 

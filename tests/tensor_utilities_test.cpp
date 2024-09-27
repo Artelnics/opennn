@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>tes
+#include <iostream>
 
 #include "tensor_utilities_test.h"
 #include "../opennn/tensors.h"
@@ -62,7 +62,7 @@ void TensorsTest::test_calculate_rank()
     // Test
 
     vector.resize(3);
-    vector.setValues({ type(4),type(2),type(3)});
+    vector.setValues({type(4),type(2),type(3)});
 
     rank_greater = calculate_rank_greater(vector);
     rank_less = calculate_rank_less(vector);

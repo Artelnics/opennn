@@ -113,15 +113,15 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
         return logistic_correlation_matrix_matrix(thread_pool_device, x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
+
+    return Correlation();
 }
 
 
 Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
-                        const Tensor<type, 2>& x,
-                        const Tensor<type, 2>& y)
+                                 const Tensor<type, 2>& x,
+                                 const Tensor<type, 2>& y)
 {
-    Correlation correlation;
-
     const Index x_rows = x.dimension(0);
     const Index x_columns = x.dimension(1);
     const Index y_columns = y.dimension(1);
@@ -137,27 +137,26 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
         const Tensor<type, 1> y_vector = y.reshape(vector);
 
         if(!x_binary && !y_binary)
-            return opennn::linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
+            return linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
         else if(!x_binary && y_binary)
-            return opennn::logistic_correlation_vector_vector_spearman(thread_pool_device, x_vector, y_vector);
+            return logistic_correlation_vector_vector_spearman(thread_pool_device, x_vector, y_vector);
         else if(x_binary && !y_binary)
-            return opennn::logistic_correlation_vector_vector_spearman(thread_pool_device, y_vector, x_vector);
+            return logistic_correlation_vector_vector_spearman(thread_pool_device, y_vector, x_vector);
         else if(x_binary && y_binary)
-            return opennn::linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
+            return linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
     }
 
-    if(x_columns != 1 && y_columns == 1)
-        return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
+    if(x_columns == 1)
+        return logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
 
-    if(x_columns == 1 && y_columns != 1)
-        return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
+    if(y_columns == 1)
+        return logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
 
     if(x_columns != 1 && y_columns != 1)
-        return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
+        return logistic_correlation_matrix_matrix(thread_pool_device, x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
 
-    return correlation;
 }
 
 
@@ -234,7 +233,8 @@ pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const
     Index new_size = 0;
 
     for(Index i = 0; i < x.size(); i++)
-        if(!isnan(x(i)) && !isnan(y(i))) new_size++;
+        if(!isnan(x(i)) && !isnan(y(i))) 
+            new_size++;
 
     if(new_size == x.size())
         return make_pair(x, y);
@@ -255,7 +255,7 @@ pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const
         }
     }
 
-    return make_pair(new_x, new_y);
+    return {new_x, new_y};
 }
 
 
@@ -297,7 +297,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
         }
     }
 
-    return make_pair(new_x, new_y);
+    return {new_x, new_y};
 }
 
 
@@ -355,7 +355,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         }
     }
 
-    return make_pair(new_x, new_y);
+    return {new_x, new_y};
 }
 
 
@@ -377,57 +377,12 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
                                const Tensor<type, 1>& x,
                                const Tensor<type, 1>& y)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index x_size = x.size();
-
-    if(x_size != y.size())
+    if(x.size() != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
 
-#endif
-
-    Correlation linear_correlation;
-    linear_correlation.form = Correlation::Form::Linear;
-
-    if(is_constant_vector(x) && !is_constant_vector(y))
-    {
-        cout << "Warning: column X is constant." << endl;
-        linear_correlation.a = type(NAN);
-        linear_correlation.b = type(NAN);
-        linear_correlation.r = type(NAN);
-
-        linear_correlation.lower_confidence = type(NAN);
-        linear_correlation.upper_confidence = type(NAN);
-
-        return linear_correlation;
-    }
-    else if(!is_constant_vector(x) && is_constant_vector(y))
-    {
-        cout << "Warning: column Y is constant." << endl;
-
-        linear_correlation.a = y(0);
-        linear_correlation.b = type(0);
-        linear_correlation.r = type(NAN);
-
-        linear_correlation.lower_confidence = type(NAN);
-        linear_correlation.upper_confidence = type(NAN);
-
-        return linear_correlation;
-    }
-    else if(is_constant_vector(x) && is_constant_vector(y))
-    {
-        cout << "Warning: column X and column Y are constant." << endl;
-
-        linear_correlation.a = type(NAN);
-        linear_correlation.b = type(NAN);
-        linear_correlation.r = type(NAN);
-
-        linear_correlation.lower_confidence = type(NAN);
-        linear_correlation.upper_confidence = type(NAN);
-
-        return linear_correlation;
-    }
-
+    if(is_constant_vector(x) || !is_constant_vector(y))
+        return Correlation();
+    
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();
@@ -436,80 +391,42 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     const Index n = x_filter.size();
 
     if(x_filter.size() == 0)
-    {
-        cout << "Warning: column X and Y hasn't common rows." << endl;
-
-        linear_correlation.a = type(NAN);
-        linear_correlation.b = type(NAN);
-        linear_correlation.r = type(NAN);
-
-        linear_correlation.lower_confidence = type(NAN);
-        linear_correlation.upper_confidence = type(NAN);
-
-        return linear_correlation;
-    }
+        return Correlation();
 
     Tensor<double, 0> s_x;
+    s_x.device(*thread_pool_device) = x_filter.sum();
+
     Tensor<double, 0> s_y;
+    s_y.device(*thread_pool_device) = y_filter.sum();
 
     Tensor<double, 0> s_xx;
+    s_xx.device(*thread_pool_device) = x_filter.square().sum();
+
     Tensor<double, 0> s_yy;
+    s_yy.device(*thread_pool_device) = y_filter.square().sum();
 
     Tensor<double, 0> s_xy;
-
-    s_x.device(*thread_pool_device) = x_filter.sum();
-    s_y.device(*thread_pool_device) = y_filter.sum();
-    s_xx.device(*thread_pool_device) = x_filter.square().sum();
-    s_yy.device(*thread_pool_device) = y_filter.square().sum();
     s_xy.device(*thread_pool_device) = (y_filter*x_filter).sum();
 
-    if(abs(s_x()) < NUMERIC_LIMITS_MIN
-    && abs(s_y()) < NUMERIC_LIMITS_MIN
-    && abs(s_xx()) < NUMERIC_LIMITS_MIN
-        && abs(s_yy()) < NUMERIC_LIMITS_MIN
-    && abs(s_xy()) < NUMERIC_LIMITS_MIN)
-    {
-        linear_correlation.a = type(0);
+    const double denominator = sqrt((double(n) * s_xx() - s_x() * s_x()) * (double(n) * s_yy() - s_y() * s_y()));
 
-        linear_correlation.b = type(0);
+    if (denominator < NUMERIC_LIMITS_MIN)
+        return Correlation();
 
-        linear_correlation.r = type(1);
+    Correlation linear_correlation;
+    linear_correlation.form = Correlation::Form::Linear;
 
-        linear_correlation.lower_confidence = type(1);
+    linear_correlation.a = type(s_y() * s_xx() - s_x() * s_xy()) / type(double(n) * s_xx() - s_x() * s_x());
+    linear_correlation.b = type(double(n) * s_xy() - s_x() * s_y()) / type(double(n) * s_xx() - s_x() * s_x());
+    linear_correlation.r = type(double(n) * s_xy() - s_x() * s_y()) / type(denominator);
 
-        linear_correlation.upper_confidence = type(1);
-    }
-    else
-    {
-        linear_correlation.a = type(s_y() * s_xx() - s_x() * s_xy()) / type(double(n) * s_xx() - s_x() * s_x());
-        linear_correlation.b = type(double(n) * s_xy() - s_x() * s_y()) / type(double(n) * s_xx() - s_x() * s_x());
+    const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
 
-        const double denominator = sqrt((double(n) * s_xx() - s_x() * s_x()) *(double(n) * s_yy() - s_y() * s_y()));
+    const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, n);
 
-        if(denominator < NUMERIC_LIMITS_MIN)
-        {
-            linear_correlation.r = type(NAN);
-            linear_correlation.lower_confidence = type(NAN);
-            linear_correlation.upper_confidence = type(NAN);
-        }
-        else
-        {
-            linear_correlation.r
-                    = type(double(n) * s_xy() - s_x() * s_y()) / type(denominator);
-
-            const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
-
-            const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, n);
-
-            linear_correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
-
-            linear_correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
-        }
-
-        linear_correlation.r = bound(linear_correlation.r, type(-1), type(1));
-        linear_correlation.lower_confidence = bound(linear_correlation.lower_confidence, type(-1), type(1));
-        linear_correlation.upper_confidence = bound(linear_correlation.upper_confidence, type(-1), type(1));
-    }
+    linear_correlation.lower_confidence = bound(z_correlation_to_r_correlation(confidence_interval_z(0)), type(-1), type(1));
+    linear_correlation.upper_confidence = bound(z_correlation_to_r_correlation(confidence_interval_z(1)), type(-1), type(1));
+    linear_correlation.r = bound(linear_correlation.r, type(-1), type(1));
 
     return linear_correlation;
 }

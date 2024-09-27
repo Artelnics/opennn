@@ -358,15 +358,15 @@ void ProbabilisticLayer::set_parameters_random()
 }
 
 
-void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
-{
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+//void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
+//{
+//    const Index biases_number = get_biases_number();
+//    const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
+//    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
 
-    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
-}
+//    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
+//}
 
 
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
@@ -518,9 +518,14 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
 
-    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
+        #pragma omp section
+        memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    }
 }
 
 
