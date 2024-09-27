@@ -441,7 +441,7 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
 
     const Index raw_variables_number = data_set->get_input_raw_variables_number();
 
-    const Tensor<Correlation, 2> correlations_matrix = data_set->calculate_input_target_raw_variables_pearson_correlations();
+    const Tensor<Correlation, 2> correlations_matrix = data_set->calculate_input_target_raw_variable_pearson_correlations();
 
     const Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
@@ -1089,7 +1089,11 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     neural_network->set_inputs_names(data_set->get_input_variables_names());
 
     if(neural_network->has_scaling_layer_2d())
-        neural_network->get_scaling_layer_2d()->set(input_variables_descriptives, input_variables_scalers);
+    {
+        ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
+        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_scalers(input_variables_scalers);
+    }
 
     neural_network->set_parameters(inputs_selection_results.optimal_parameters);
 

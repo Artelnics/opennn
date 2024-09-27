@@ -548,8 +548,8 @@ public:
 
     // Inputs-targets correlations
 
-    Tensor<Correlation, 2> calculate_input_target_raw_variables_pearson_correlations() const;
-    Tensor<Correlation, 2> calculate_input_target_raw_variables_spearman_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_raw_variable_pearson_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_raw_variable_spearman_correlations() const;
 
     void print_input_target_raw_variables_correlations() const;
 

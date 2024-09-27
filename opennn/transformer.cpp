@@ -204,21 +204,19 @@ void Transformer::set(const Index& input_length,
             set_layer_inputs_indices("input_self_attention_" + to_string(i+1), {"decoder_perceptron_normalization_" + to_string(i), "decoder_perceptron_normalization_" + to_string(i)});
         }
 
-
         AdditionLayer3D* input_self_attention_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         input_self_attention_addition_layer->set_name("input_self_attention_addition_" + to_string(i+1));
         add_layer(input_self_attention_addition_layer);
+
         if(i == 0)
             set_layer_inputs_indices("input_self_attention_addition_" + to_string(i+1), { "input_embedding", "input_self_attention_" + to_string(i+1) });
         else
             set_layer_inputs_indices("input_self_attention_addition_" + to_string(i+1), { "decoder_perceptron_normalization_" + to_string(i), "input_self_attention_" + to_string(i+1) });
 
-
         NormalizationLayer3D* input_self_attention_normalization_layer = new NormalizationLayer3D(input_length, embedding_depth);
         input_self_attention_normalization_layer->set_name("input_self_attention_normalization_" + to_string(i+1));
         add_layer(input_self_attention_normalization_layer);
         set_layer_inputs_indices("input_self_attention_normalization_" + to_string(i+1), "input_self_attention_addition_" + to_string(i+1));
-
 
         MultiheadAttentionLayer* cross_attention_layer =
                 new MultiheadAttentionLayer(input_length, context_length, embedding_depth, heads_number);
@@ -227,7 +225,6 @@ void Transformer::set(const Index& input_length,
         cross_attention_layer->set_name("cross_attention_" + to_string(i+1));
         add_layer(cross_attention_layer);
         set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(layers_number)});
-
 
         AdditionLayer3D* cross_attention_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         cross_attention_addition_layer->set_name("cross_attention_addition_" + to_string(i+1));

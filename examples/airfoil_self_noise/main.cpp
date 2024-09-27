@@ -42,12 +42,13 @@ int main()
         const Index neurons_number = 10;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                     {input_variables_number}, neurons_number, target_variables_number);
+                                     {input_variables_number}, {neurons_number}, {target_variables_number});
 
-        //neural_network.save("../data/neural_network.xml");
-        //neural_network.load("../data/neural_network.xml");
 
-        //neural_network.print();
+        neural_network.save("../data/neural_network.xml");
+        neural_network.load("../data/neural_network.xml");
+
+        neural_network.print();
 
         // Training strategy
 
@@ -94,8 +95,6 @@ int main()
         cout << inputs << endl;
 
         const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
-
-
 
 //        cout << outputs << endl;
 

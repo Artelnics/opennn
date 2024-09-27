@@ -19,7 +19,8 @@ ProbabilisticLayer::ProbabilisticLayer()
 }
 
 
-ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Index& new_neurons_number)
+ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number,
+                                       const Index& new_neurons_number)
 {
     set(new_inputs_number, new_neurons_number);
 

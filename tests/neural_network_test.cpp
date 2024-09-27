@@ -40,7 +40,7 @@ void NeuralNetworkTest::test_constructor()
 
     //  Approximation
 
-    NeuralNetwork neural_network_1(NeuralNetwork::ModelType::Approximation, {1, 4, 2});
+    NeuralNetwork neural_network_1(NeuralNetwork::ModelType::Approximation, {1}, {4}, {2});
 
     assert_true(neural_network_1.get_layers_number() == 5, LOG);
     assert_true(neural_network_1.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
@@ -51,7 +51,7 @@ void NeuralNetworkTest::test_constructor()
 
     // Classification
 
-    NeuralNetwork neural_network_2(NeuralNetwork::ModelType::Classification, {1, 4, 2});
+    NeuralNetwork neural_network_2(NeuralNetwork::ModelType::Classification, {1}, {4}, {2});
 
     assert_true(neural_network_2.get_layers_number() == 3, LOG);
     assert_true(neural_network_2.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
@@ -60,7 +60,7 @@ void NeuralNetworkTest::test_constructor()
 
     // Forecasting
 
-    NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1, 4, 2});
+    NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1}, {4}, {2});
 
     assert_true(neural_network_3.get_layers_number() == 5, LOG);
     assert_true(neural_network_3.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
@@ -97,7 +97,7 @@ void NeuralNetworkTest::test_constructor()
 
     // Perceptron Layer
 
-    PerceptronLayer* perceptron_layer_7 = new PerceptronLayer(1, 1);
+    PerceptronLayer* perceptron_layer_7 = new PerceptronLayer({1}, {1});
 
     neural_network_7.add_layer(perceptron_layer_7);
 
@@ -292,7 +292,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     neurons_number = 2;
     outputs_number = 3;
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
     neural_network.set_parameters_constant(type(0));
 
     inputs.resize(batch_samples_number, inputs_number);
@@ -313,7 +313,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     neurons_number = 4;
     outputs_number = 5;
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
 
     neural_network.set_parameters_constant(type(0));
 
@@ -389,7 +389,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     neurons_number = 1;
     outputs_number = 1;
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
 
     neural_network.set_parameters_constant(type(0));
 
@@ -530,7 +530,7 @@ void NeuralNetworkTest::test_save()
     neurons_number = 1;
     outputs_number = 1;
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
     neural_network.save(file_name); */
 }
 

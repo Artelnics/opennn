@@ -19,9 +19,9 @@ BoundingLayer::BoundingLayer() : Layer()
 }
 
 
-BoundingLayer::BoundingLayer(const Index& neurons_number) : Layer()
+BoundingLayer::BoundingLayer(const dimensions& neurons_number) : Layer()
 {
-    set(neurons_number);
+    set(neurons_number[0]);
 
     set_default();
 }
@@ -282,7 +282,6 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
         outputs = inputs.minimum(lower_bounds.broadcast(broadcast_dimensions))
                         .maximum(upper_bounds.broadcast(broadcast_dimensions));
 
-
         const int rows_number = inputs.dimension(0);
         const Index columns_number = inputs.dimension(1);
 
@@ -299,8 +298,6 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
     {
         outputs.device(*thread_pool_device) = inputs;
     }
-
-
 }
 
 

@@ -76,7 +76,7 @@ void TrainingStrategyTest::test_perform_training()
     data_set.set_data(data);
     data_set.set_training();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_random();
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);

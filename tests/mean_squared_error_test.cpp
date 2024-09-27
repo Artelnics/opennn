@@ -460,7 +460,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -513,7 +513,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -565,7 +565,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -673,7 +673,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -713,7 +713,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -758,7 +758,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -1124,7 +1124,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //        // Neural network
 
-//        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+//        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
 //        neural_network.set_parameters_random();
 
 //        forward_propagation.set(samples_number, &neural_network);

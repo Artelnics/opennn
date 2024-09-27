@@ -134,16 +134,16 @@ class ProbabilisticLayer : public Layer
 
 public:
 
+    // Enumerations
+
+    enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
+
     // Constructors
 
     explicit ProbabilisticLayer();
 
     explicit ProbabilisticLayer(const Index&, const Index&);
     explicit ProbabilisticLayer(const dimensions&, const dimensions&);
-
-    // Enumerations
-
-    enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
 
     // Get
 

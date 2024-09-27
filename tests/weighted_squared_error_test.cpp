@@ -82,7 +82,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -132,7 +132,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);

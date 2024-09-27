@@ -62,7 +62,7 @@ void TestingAnalysisTest::test_calculate_error_data()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_error_data();
@@ -90,7 +90,7 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_percentage_error_data();
@@ -117,7 +117,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_absolute_errors_descriptives();
@@ -146,7 +146,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_percentage_errors_descriptives();
@@ -172,7 +172,7 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data_statistics = testing_analysis.calculate_error_data_descriptives();
@@ -206,7 +206,7 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data_histograms = testing_analysis.calculate_error_data_histograms();
@@ -232,7 +232,7 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     maximal_errors = testing_analysis.calculate_maximal_errors(2);
@@ -261,7 +261,7 @@ void TestingAnalysisTest::test_linear_regression()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     linear_correlation = testing_analysis.linear_correlation();
@@ -302,7 +302,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     // Neural Network
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     // Testing Analysis
@@ -377,7 +377,7 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
     // Neural Network
 
-    neural_network.set(NeuralNetwork::ModelType::Classification, {1, 1, 1});
+    neural_network.set(NeuralNetwork::ModelType::Classification, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(0));
 
     // Testing Analysis

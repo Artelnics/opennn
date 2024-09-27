@@ -262,7 +262,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         input_variables_descriptives = data_set->scale_input_variables();
 
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
-        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
+        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
     if(neural_network->has_unscaling_layer())

@@ -85,7 +85,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -131,7 +131,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -174,7 +174,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -224,7 +224,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -369,7 +369,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -420,7 +420,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -471,7 +471,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -534,7 +534,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
     Eigen::array<int, 1> dimensions({0});
     targets_mean = target_data.mean(dimensions);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, 2, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {2}, {outputs_number});
     neural_network.set_parameters_random();
 
     type normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);

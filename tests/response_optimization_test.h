@@ -69,9 +69,7 @@ private:
         data.setRandom();
 
         for(Index i = 0; i < data.dimension(0); i++)
-        {
             data(i,2) = data(i,0) * data(i,0) + data(i,1) * data(i,1) + 1;
-        }
 
         data_set.set(data);
 
@@ -81,7 +79,7 @@ private:
         data_set.set_training();
 
         neural_network.set(NeuralNetwork::ModelType::Approximation,
-                                     { input_variables_number, hidden_neurons_number, target_variables_number});
+                           {input_variables_number}, {hidden_neurons_number}, {target_variables_number});
 
         training_strategy.set(&neural_network, &data_set);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
@@ -115,7 +113,7 @@ private:
         data_set.set_input_target_raw_variables_indices(inputs_index,outputs_index);
 
         neural_network_2.set(NeuralNetwork::ModelType::Approximation,
-                                     { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
+                             { data_set.get_input_variables_number()}, {2}, {data_set.get_target_variables_number()});
 
         training_strategy.set(&neural_network_2, &data_set);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);

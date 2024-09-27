@@ -3657,7 +3657,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
 {
     Tensor<string, 1> unused_raw_variables;
 
-    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_pearson_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variable_pearson_correlations();
 
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -4230,7 +4230,7 @@ void DataSet::set_gmt(Index& new_gmt)
 }
 
 
-Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_pearson_correlations() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_correlations() const
 {
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -4267,7 +4267,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_pearson_cor
 }
 
 
-Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_spearman_correlations() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_correlations() const
 {
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -4348,7 +4348,7 @@ void DataSet::print_input_target_raw_variables_correlations() const
     const Tensor<string, 1> inputs_name = get_input_raw_variable_names();
     const Tensor<string, 1> targets_name = get_target_raw_variables_names();
 
-    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_pearson_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variable_pearson_correlations();
 
     for(Index j = 0; j < targets_number; j++)
         for(Index i = 0; i < inputs_number; i++)
@@ -4364,7 +4364,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     const Tensor<string, 1> inputs_name = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variables_pearson_correlations());
+    const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variable_pearson_correlations());
 
     Tensor<type, 1> target_correlations(inputs_number);
 

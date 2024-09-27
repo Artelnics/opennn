@@ -660,7 +660,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, 0, 1);
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
     neural_network.get_scaling_layer_2d()->set_display(false);
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
@@ -705,7 +705,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);
+    if(correlation.b < type(0))
+        correlation.r *= type(-1);
 
     return correlation;
 }
@@ -740,7 +741,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, 0, 1);
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1}, {}, {1});
     neural_network.get_scaling_layer_2d()->set_display(false);
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
@@ -837,7 +838,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-        { input_variables_number }, 0, target_variables_number);
+                                 { input_variables_number }, {}, {target_variables_number});
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_2d()->set_display(false);
@@ -956,7 +957,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                 {input_variables_number }, 0,target_variables_number);
+                                 {input_variables_number }, {}, {target_variables_number});
 
     neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
