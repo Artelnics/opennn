@@ -148,7 +148,7 @@ void QuasiNewtonMethod::set_default()
 
     minimum_loss_decrease = type(0);
     training_loss_goal = type(0);
-    maximum_selection_failures = numeric_limits<Index>::max();
+    maximum_selection_failures = 1000;
 
     maximum_epochs_number = 1000;
     maximum_time = type(3600.0);

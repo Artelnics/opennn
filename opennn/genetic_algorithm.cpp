@@ -1580,7 +1580,7 @@ void GeneticAlgorithm::save(const string& file_name) const
 {
     try
     {
-        ofstream file(file_name);
+         std::ofstream file(file_name);
 
         if (file.is_open())
         {
