@@ -33,10 +33,10 @@ public:
 
    explicit UnscalingLayer();
 
-   explicit UnscalingLayer(const Index&);
-
+   explicit UnscalingLayer(const dimensions&);
+/*
    explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
-
+*/
    // Get  
 
    Index get_inputs_number() const final;

@@ -130,7 +130,7 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {3,2,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {3}, {2}, {1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -152,7 +152,7 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {3,2,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {3}, {2}, {1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -420,7 +420,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2}, {6}, {1});
 
     genetic_algorithm.set_display(false);
 

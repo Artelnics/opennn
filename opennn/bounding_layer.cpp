@@ -19,9 +19,9 @@ BoundingLayer::BoundingLayer() : Layer()
 }
 
 
-BoundingLayer::BoundingLayer(const Index& neurons_number) : Layer()
+BoundingLayer::BoundingLayer(const dimensions& neurons_number) : Layer()
 {
-    set(neurons_number);
+    set(neurons_number[0]);
 
     set_default();
 }
@@ -271,28 +271,33 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        const int rows_number = inputs.dimension(0);
-        const Index raw_variables_number = inputs.dimension(1);
-
         // @todo 
+
+        outputs.device(*thread_pool_device) = inputs;
 /*
-        outputs = inputs.cwiseMax(lower_bounds.broadcast(Eigen::array<int, 2>{rows_number, 1}))
-                        .cwiseMin(upper_bounds.broadcast(Eigen::array<int, 2>{rows_number, 1}));
+        const int rows_number = inputs.dimension(0);
+
+        auto broadcast_dimensions = Eigen::array<int, 2>{rows_number, 1};
+
+        outputs = inputs.minimum(lower_bounds.broadcast(broadcast_dimensions))
+                        .maximum(upper_bounds.broadcast(broadcast_dimensions));
+
+        const int rows_number = inputs.dimension(0);
+        const Index columns_number = inputs.dimension(1);
+
+        #pragma omp parallel for
+        for(Index i = 0; i < rows_number; i++)
+            for(Index j = 0; j < columns_number; j++)
+                if(inputs(i, j) < lower_bounds(j))
+                    outputs(i, j) = lower_bounds(j);
+                else if(inputs(i, j) > upper_bounds(j))
+                    outputs(i, j) = upper_bounds(j);
 */
-//        #pragma omp parallel for
-//        for(Index i = 0; i < rows_number; i++)
-//            for(Index j = 0; j < raw_variables_number; j++)
-//                if(inputs(i, j) < lower_bounds(j))
-//                    outputs(i, j) = lower_bounds(j);
-//                else if(inputs(i, j) > upper_bounds(j))
-//                    outputs(i, j) = upper_bounds(j);
     }
     else
     {
         outputs.device(*thread_pool_device) = inputs;
     }
-
-
 }
 
 

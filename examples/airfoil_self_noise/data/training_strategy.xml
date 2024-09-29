@@ -1,6 +1,6 @@
 <TrainingStrategy>
    <LossIndex>
-      <LossMethod>NORMALIZED_SQUARED_ERROR</LossMethod>
+      <LossMethod>MEAN_SQUARED_ERROR</LossMethod>
       <MeanSquaredError/>
       <NormalizedSquaredError/>
       <MinkowskiError>
@@ -16,7 +16,7 @@
       </Regularization>
    </LossIndex>
    <OptimizationAlgorithm>
-      <OptimizationMethod>QUASI_NEWTON_METHOD</OptimizationMethod>
+      <OptimizationMethod>ADAPTIVE_MOMENT_ESTIMATION</OptimizationMethod>
       <GradientDescent>
          <LearningRateAlgorithm>
             <LearningRateMethod>BrentMethod</LearningRateMethod>

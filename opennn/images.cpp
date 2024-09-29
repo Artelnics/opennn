@@ -50,15 +50,9 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
     const Index xxx = width * channels + padding;
 
     for(Index i = 0; i < height; i++)
-    {
         for(Index j = 0; j < width; ++j)
-        {
             for(Index k = 0; k < channels; ++k)
-            {
                 image(i, j, k) = raw_image[i*xxx  + j*channels + k];
-            }
-        }
-    }
     
     return image;
 }
@@ -139,9 +133,7 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
             else
             {
                 for(Index channel = 0; channel < channels; channel++)
-                {
                     output(x, y, channel) = type(0);
-                }
             }
         }
     }
@@ -226,189 +218,6 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
 void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&)
 {
 
-}
-
-
-Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
-                                      const Index &width,
-                                      const Index &height,
-                                      const Index &channels)
-{
-    /*
-    const fs::path path = data_path;
-
-    if(data_path.empty())
-        throw runtime_error("Data source path is empty.\n");
-
-    has_header = true;
-    has_samples_id = true;
-
-    separator = Separator::None;
-
-    vector<fs::path> folder_paths;
-    vector<fs::path> image_paths;
-
-    int classes_number = 0;
-    int images_total_number = 0;
-
-    for(const auto & entry_path : fs::directory_iterator(path))
-    {
-        if(entry_path.path().string().find(".DS_Store") != string::npos)
-        {
-            cout << ".DS_Store found in : " << entry_path << endl;
-        }
-        else
-        {
-            fs::path actual_directory = entry_path.path().string();
-
-            folder_paths.emplace_back(actual_directory);
-            classes_number++;
-
-            for(const auto & entry_image : fs::directory_iterator(actual_directory))
-            {
-                if(entry_image.path().string().find(".DS_Store") != string::npos)
-                {
-                    cout << ".DS_Store found in : " << entry_image.path() << endl;
-                }
-                else
-                {
-                    image_paths.emplace_back(entry_image.path().string());
-                    images_total_number++;
-                }
-            }
-        }
-    }
-
-    images_number = images_total_number;
-
-    const int image_size = width * height * channels;
-
-    Tensor<type, 2> imageDataAux(image_data.dimension(0), image_data.dimension(1));
-    imageDataAux = image_data;
-
-    if(classes_number == 2)
-    {
-        Index binary_columns_number = 1;
-        data.resize(images_number, image_size + binary_columns_number);
-        imageDataAux.resize(images_number, image_size + binary_columns_number);
-    }
-    else
-    {
-        data.resize(images_number, image_size + classes_number);
-        imageDataAux.resize(images_number, image_size + classes_number);
-    }
-
-//    memcpy(data.data(), image_data.data(), images_number * image_size*sizeof(type));
-
-    copy(execution::par,
-    image_data.data(), image_data.data() + images_number * image_size, data.data());
-
-    samples_id.resize(images_number);
-
-    Index row_index = 0;
-
-    for(Index i = 0; i < classes_number; i++)
-    {
-        vector<string> images_paths;
-        Index images_in_folder = 0;
-
-        for(const auto & entry : fs::directory_iterator(folder_paths[i]))
-        {
-            if(entry.path().string().find(".DS_Store") != string::npos)
-            {
-                cout << ".DS_Store found in : " << entry << endl;
-            }
-            else
-            {
-                images_paths.emplace_back(entry.path().string());
-                images_in_folder++;
-            }
-        }
-
-        for(Index j = 0; j < images_in_folder; j++)
-        {
-
-            if(classes_number == 2 && i == 0)
-            {
-                data(row_index, image_size) = 1;
-            }
-            else if(classes_number == 2 && i == 1)
-            {
-                data(row_index, image_size) = type(0);
-            }
-            else
-            {
-                data(row_index, image_size + i) = 1;
-            }
-
-            samples_id(row_index) = images_paths[j];
-
-            row_index++;
-        }
-    }
-
-    columns.resize(image_size + 1);
-
-    // Input columns
-
-    Index raw_variable_index = 0;
-
-    for(Index i = 0; i < channels; i++)
-    {
-        for(Index j = 0; j < width; j++)
-        {
-            for(Index k = 0; k < height ; k++)
-            {
-                columns(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                columns(raw_variable_index).type = RawVariableType::Numeric;
-                columns(raw_variable_index).use = VariableUse::Input;
-                columns(raw_variable_index).scaler = Scaler::MinimumMaximum;
-                raw_variable_index++;
-            }
-        }
-    }
-
-    // Target columns
-
-    columns(image_size).name = "class";
-
-    if(classes_number == 1)
-        throw runtime_error("Invalid number of categories. The minimum is 2 and you have 1.\n");
-
-    Tensor<string, 1> categories(classes_number);
-
-    for(Index i = 0 ; i < classes_number; i++)
-    {
-        categories(i) = folder_paths[i].filename().string();
-    }
-
-    columns(image_size).use = VariableUse::Target;
-    columns(image_size).categories = categories;
-
-    columns(image_size).categories_uses.resize(classes_number);
-    columns(image_size).categories_uses.setConstant(VariableUse::Target);
-
-    if(classes_number == 2)
-    {
-        columns(image_size).type = RawVariableType::Binary;
-    }
-    else
-    {
-        columns(image_size).type = RawVariableType::Categorical;
-    }
-
-    samples_uses.resize(images_number);
-    split_samples_random();
-
-    width = width;
-    height = height;
-    channels = channels;
-
-    input_dimensions.resize(3);
-    input_dimensions.setValues({channels, width, height});
-    */
-
-    return Tensor<unsigned char, 1>();
 }
 
 } // namespace opennn

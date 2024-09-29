@@ -486,7 +486,7 @@ void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 {
     sum_squared_error.set_data_set(new_data_set);
     mean_squared_error.set_data_set(new_data_set);
-    //normalized_squared_error.set_data_set(new_data_set);
+    normalized_squared_error.set_data_set(new_data_set);
     cross_entropy_error.set_data_set(new_data_set);
     cross_entropy_error_3d.set_data_set(new_data_set);
     weighted_squared_error.set_data_set(new_data_set);

@@ -36,7 +36,6 @@ public:
 
     void test_calculate_combinations();
     void test_calculate_activations();
-    void test_calculate_activations_derivatives();
 
     bool check_softmax_derivatives(Tensor<type, 3>&, Tensor<type, 4>&) const;
 

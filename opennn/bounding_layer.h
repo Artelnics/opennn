@@ -33,7 +33,7 @@ public:
 
    explicit BoundingLayer();
 
-   explicit BoundingLayer(const Index&);
+   explicit BoundingLayer(const dimensions&);
 
    // Enumerations
 

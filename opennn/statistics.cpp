@@ -640,7 +640,7 @@ Index maximum(const Tensor<Index, 1>& vector)
 }
 
 
-Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
+Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix,
                                  const Tensor<Index, 1>& row_indices,
                                  const Tensor<Index, 1>& column_indices)
 {
@@ -1643,7 +1643,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 }
 
 
-Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix,
+Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
                                  const Tensor<Index, 1>& row_indices,
                                  const Tensor<Index, 1>& column_indices)
 {
@@ -1706,7 +1706,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix,
 }
 
 
-Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& column_indices)
+Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& column_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -2540,7 +2540,7 @@ Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>& matrix, const Ind
 
     Tensor<Index, 2> maximal_column_indices(maximum_number, columns_number);
 
-    Tensor<type, 1> columns_minimums = opennn::columns_minimums(matrix);
+    Tensor<type, 1> column_minimums = opennn::column_minimums(matrix);
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -2560,7 +2560,7 @@ Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>& matrix, const Ind
                 }
             }
 
-            column(maximal_index) = columns_minimums(j)-type(1);
+            column(maximal_index) = column_minimums(j)-type(1);
             maximal_column_indices(i, j) = maximal_index;
         }
     }
