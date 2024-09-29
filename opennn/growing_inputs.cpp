@@ -127,7 +127,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     Tensor<string, 1> input_raw_variables_names;
 
-    const Tensor<type, 2> correlations = get_correlation_values(data_set->calculate_input_target_raw_variables_correlations());
+    const Tensor<type, 2> correlations = get_correlation_values(data_set->calculate_input_target_raw_variable_pearson_correlations());
 
     const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
 
@@ -345,8 +345,12 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     neural_network->set_inputs_names(data_set->get_input_variables_names());
 
-    if(neural_network->has_scaling_layer())
-        neural_network->get_scaling_layer_2d()->set(input_variables_descriptives, input_variables_scalers);
+    if(neural_network->has_scaling_layer_2d())
+    {
+        ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
+        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_scalers(input_variables_scalers);
+    }
 
     neural_network->set_parameters(inputs_selection_results.optimal_parameters);
 

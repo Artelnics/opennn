@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <numeric>
+
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
 #include "tensors.h"
@@ -19,13 +21,7 @@ ScalingLayer2D::ScalingLayer2D() : Layer()
 }
 
 
-ScalingLayer2D::ScalingLayer2D(const Index& new_neurons_number) : Layer()
-{
-    set(new_neurons_number);
-}
-
-
-ScalingLayer2D::ScalingLayer2D(const Tensor<Index, 1>& new_input_dimensions) : Layer()
+ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
 }
@@ -33,13 +29,15 @@ ScalingLayer2D::ScalingLayer2D(const Tensor<Index, 1>& new_input_dimensions) : L
 
 ScalingLayer2D::ScalingLayer2D(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
 {
+/*
     set(new_descriptives);
+*/
 }
 
 
 dimensions ScalingLayer2D::get_output_dimensions() const
 {
-    return { input_dimensions(0), input_dimensions(1), input_dimensions(2) };
+    return input_dimensions;
 }
 
 
@@ -51,7 +49,7 @@ Index ScalingLayer2D::get_inputs_number() const
 
 dimensions ScalingLayer2D::get_input_dimensions() const
 {
-    return { input_dimensions(0), input_dimensions(1), input_dimensions(2) };
+    return input_dimensions;
 }
 
 
@@ -80,9 +78,7 @@ Tensor<type, 1> ScalingLayer2D::get_minimums() const
     Tensor<type, 1> minimums(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
-    {
         minimums[i] = descriptives[i].minimum;
-    }
 
     return minimums;
 }
@@ -95,9 +91,7 @@ Tensor<type, 1> ScalingLayer2D::get_maximums() const
     Tensor<type, 1> maximums(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
-    {
         maximums[i] = descriptives[i].maximum;
-    }
 
     return maximums;
 }
@@ -110,9 +104,7 @@ Tensor<type, 1> ScalingLayer2D::get_means() const
     Tensor<type, 1> means(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
-    {
         means[i] = descriptives[i].mean;
-    }
 
     return means;
 }
@@ -125,9 +117,7 @@ Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
     Tensor<type, 1> standard_deviations(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
-    {
         standard_deviations[i] = descriptives[i].standard_deviation;
-    }
 
     return standard_deviations;
 }
@@ -214,35 +204,21 @@ void ScalingLayer2D::set()
 }
 
 
-void ScalingLayer2D::set(const Index& new_inputs_number)
+void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 {
+    const Index new_inputs_number = accumulate(new_input_dimensions.begin(), new_input_dimensions.end(), 1, multiplies<Index>());
+
     descriptives.resize(new_inputs_number);
 
     scalers.resize(new_inputs_number);
-
     scalers.setConstant(Scaler::MeanStandardDeviation);
-
-    set_default();
-}
-
-
-void ScalingLayer2D::set(const Tensor<Index, 1>& new_input_dimensions)
-{
-    const Tensor<Index,0> dimension_product = new_input_dimensions.prod();
-
-    descriptives.resize(dimension_product(0));
-
-    scalers.resize(dimension_product(0));
-    scalers.setConstant(Scaler::MeanStandardDeviation);
-
-    input_dimensions.resize(new_input_dimensions.size());
 
     input_dimensions = new_input_dimensions;
 
     set_default();
 }
 
-
+/*
 void ScalingLayer2D::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
     descriptives = new_descriptives;
@@ -271,7 +247,7 @@ void ScalingLayer2D::set(const tinyxml2::XMLDocument& new_scaling_layer_document
 
     from_XML(new_scaling_layer_document);
 }
-
+*/
 
 void ScalingLayer2D::set_inputs_number(const Index& new_inputs_number)
 {
@@ -937,7 +913,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
 
-    set(neurons_number);
+    set({neurons_number});
 
     unsigned index = 0; // Index does not work
 

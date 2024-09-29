@@ -72,7 +72,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         data_set.set(1, 1, 1);
         data_set.set_data_constant(type(1));
 
-        neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_constant(type(1));
 
         adaptive_moment_estimation.set_maximum_epochs_number(1);
@@ -90,7 +90,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
 
-        neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_constant(-1);
 
         adaptive_moment_estimation.set_maximum_epochs_number(1);
@@ -125,7 +125,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         data_set.set_data_random();
         //data_set.set_testing();
 
-        neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_random();
 
         type training_loss_goal = type(0.05);

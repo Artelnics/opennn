@@ -29,25 +29,16 @@ public:
 
     virtual ~TrainingStrategyTest();
 
-    // Constructor and destructor
-
     void test_constructor();
-
     void test_destructor();
 
-    // Training
-
     void test_perform_training();
-
-    // Serialization
 
     void test_to_XML();
     void test_from_XML();
 
     void test_save();
     void test_load();
-
-    // Unit testing
 
     void run_test_case();
 

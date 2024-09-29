@@ -183,11 +183,10 @@ void TimeSeriesDataSetTest::test_set_time_series_data()
 
     data.resize(4,2);
 
-    data.setValues({
-                       {type(0),type(0)},
-                       {type(1),type(10)},
-                       {type(2),type(20)},
-                       {type(3),type(30)}});
+    data.setValues({{type(0),type(0)},
+                    {type(1),type(10)},
+                    {type(2),type(20)},
+                    {type(3),type(30)}});
 
     data_set.set_data(data);
 
@@ -197,12 +196,11 @@ void TimeSeriesDataSetTest::test_set_time_series_data()
     data_set.transform_time_series();
 
     data.resize(5,3);
-    data.setValues({
-                       {type(15),type(14),type(13)},
-                       {type(12),type(11),type(10)},
-                       {type(9),type(8),type(7)},
-                       {type(6),type(5),type(4)},
-                       {type(3),type(2),type(1)}});
+    data.setValues({{type(15),type(14),type(13)},
+                    {type(12),type(11),type(10)},
+                    {type(9),type(8),type(7)},
+                    {type(6),type(5),type(4)},
+                    {type(3),type(2),type(1)}});
 
     data_set.set_time_series_data(data);
 
@@ -231,12 +229,12 @@ void TimeSeriesDataSetTest::test_save_time_series_data_binary()
     data_set.set_lags_number(2);
     data_set.set_steps_ahead_number(2);
     data_set.transform_time_series();
+    
+    data_set.set_data_source_path(data_path);
     /*
-    data_set.set_data_file_name(data_path);
-    */
     data_set.save_time_series_data_binary(data_path);
     data_set.load_time_series_data_binary(data_path);
-    /*
+    
     assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -282,273 +280,6 @@ void TimeSeriesDataSetTest::test_set_lags_number()
 
     assert_true(data_set.get_steps_ahead() == 2, LOG);
 }
-
-
-/*void DataSetTest::test_calculate_input_target_raw_variable_correlations()
-{
-    cout << "test_calculate_input_target_raw_variable_correlations\n";
-
-    // Test 1 (numeric and numeric trivial case)
-
-    data.resize(3, 4);
-
-    data.setValues({
-                       {type(1), type(1), type(-1), type(1)},
-                       {type(2), type(2), type(-2), type(2)},
-                       {type(3), type(3), type(-3), type(3)} });
-
-    data_set.set_data(data);
-
-    Tensor<Index, 1> input_raw_variables_indices(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
-
-    Tensor<Index, 1> target_raw_variables_indices(1);
-    target_raw_variables_indices.setValues({3});
-
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(input_target_correlations(0,0).r == 1, LOG);
-    assert_true(input_target_correlations(1,0).r == 1, LOG);
-    assert_true(input_target_correlations(2,0).r == -1, LOG);
-
-    // Test 2 (numeric and numeric non trivial case)
-
-    data.resize(3, 4);
-    data.setValues({
-                       {type(1), type(2), type(4), type(1)},
-                       {type(2), type(3), type(9), type(2)},
-                       {type(3), type(1), type(10), type(2)} });
-
-    data_set.set_data(data);
-
-    input_raw_variables_indices.setValues({0, 1});
-
-    target_raw_variables_indices.resize(2);
-    target_raw_variables_indices.setValues({2,3});
-
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(input_target_correlations(0,0).r < 1 && input_target_correlations(0,0).r > -1 , LOG);
-    assert_true(input_target_correlations(1,0).r < 1 && input_target_correlations(1,0).r > -1, LOG);
-    assert_true(input_target_correlations(2,0).r < 1 && input_target_correlations(2,0).r > -1, LOG);
-
-    // Test 3 (binary and binary non trivial case)
-
-    data.setValues({
-                       {type(0), type(0), type(1), type(0)},
-                       {type(1), type(0), type(0), type(1)},
-                       {type(1), type(0), type(0), type(1)} });
-
-    data_set.set_data(data);
-
-    input_raw_variables_indices.resize(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
-
-    target_raw_variables_indices.setValues({3});
-
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(input_target_correlations(0,0).r == 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Correlation::Form::Linear, LOG);
-
-    assert_true(isnan(input_target_correlations(1,0).r), LOG);
-    assert_true(input_target_correlations(1,0).form == Correlation::Form::Linear, LOG);
-
-    assert_true(input_target_correlations(2,0).r == -1, LOG);
-    assert_true(input_target_correlations(2,0).form == Correlation::Form::Linear, LOG);
-
-    // Test 4 (binary and binary trivial case)
-
-    data.setValues({
-                       {type(0), type(0), type(0), type(0)},
-                       {type(1), type(1), type(1), type(1)},
-                       {type(1), type(1), type(1), type(1)} });
-
-    data_set.set_data(data);
-
-    input_raw_variables_indices.resize(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
-
-    target_raw_variables_indices.setValues({3});
-
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    for(Index i = 0; i < input_target_correlations.size(); i++)
-    {
-        assert_true(input_target_correlations(i).r == 1, LOG);
-        assert_true(input_target_correlations(i).form == Correlation::Form::Linear, LOG);
-    }
-
-
-    // Test 5 (categorical and categorical)
-
-    data_set = opennn::DataSet();
-
-    data_set.set("../../datasets/correlation_tests.csv",',', false);
-
-    cout << "Correlation tests datafile read" << endl;
-//    data_set.print_data();
-
-//    input_raw_variables_indices.resize(2);
-//    input_raw_variables_indices.setValues({0, 3});
-
-//    target_raw_variables_indices.resize(1);
-//    target_raw_variables_indices.setValues({4});
-
-//    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-//    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-//    assert_true(input_target_correlations(1,0).r < 1, LOG);
-//    assert_true(input_target_correlations(1,0).form == Form::Logistic, LOG);
-
-    // Test 6 (numeric and binary)
-
-    input_variables_indices.resize(3);
-    input_variables_indices.setValues({1, 2, 5});
-
-    target_variables_indices.resize(1);
-    target_variables_indices.setValues({6});
-
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
-
-    assert_true(-1 < input_target_correlations(1,0).r && input_target_correlations(1,0).r < 1, LOG);
-    assert_true(input_target_correlations(1,0).form == Form::Linear, LOG);
-
-    assert_true(-1 < input_target_correlations(2,0).r && input_target_correlations(1,0).r < 1, LOG);
-    assert_true(input_target_correlations(2,0).form == Form::Linear, LOG);
-
-
-    // Test 7 (numeric and categorical)
-
-    input_variables_indices.resize(1);
-    input_variables_indices.setValues({1});
-
-    target_variables_indices.resize(1);
-    target_variables_indices.setValues({0});
-
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
-
-    // Test 8 (binary and categorical)
-
-    input_variables_indices.resize(3);
-    input_variables_indices.setValues({2,5,6});
-
-    target_variables_indices.resize(1);
-    target_variables_indices.setValues({0});
-
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
-
-    assert_true(-1 < input_target_correlations(1,0).r && input_target_correlations(1,0).r < 1, LOG);
-    assert_true(input_target_correlations(1,0).form == Form::Logistic, LOG);
-
-    assert_true(-1 < input_target_correlations(2,0).r && input_target_correlations(1,0).r < 1, LOG);
-    assert_true(input_target_correlations(2,0).form == Form::Logistic, LOG);
-
-    // With missing values or NAN
-
-    // Test 9 (categorical and categorical)
-
-    data_set.set("../../../opennn/datasets/correlation_tests_with_nan.csv",',', false);
-
-    input_raw_variables_indices.resize(2);
-    input_raw_variables_indices.setValues({0, 3});
-
-    target_raw_variables_indices.resize(1);
-    target_raw_variables_indices.setValues({4});
-
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
-
-    assert_true(-1 < input_target_correlations(1,0).r && input_target_correlations(1,0).r < 1, LOG);
-    assert_true(input_target_correlations(1,0).form == Form::Logistic, LOG);
-
-    // Test 10 (numeric and binary)
-
-    input_variables_indices.resize(3);
-    input_variables_indices.setValues({1, 2, 5});
-
-    target_variables_indices.resize(1);
-    target_variables_indices.setValues({6});
-
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
-
-    assert_true(-1 < input_target_correlations(1,0).r && input_target_correlations(1,0).r < 1, LOG);
-    assert_true(input_target_correlations(1,0).form == Form::Linear, LOG);
-
-    assert_true(-1 < input_target_correlations(2,0).r && input_target_correlations(2,0).r < 1, LOG);
-    assert_true(input_target_correlations(2,0).form == Form::Linear, LOG);
-
-    // Test 11 (numeric and categorical)
-
-    input_variables_indices.resize(1);
-    input_variables_indices.setValues({1});
-
-    target_variables_indices.resize(1);
-    target_variables_indices.setValues({0});
-
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
-
-    // Test 12 (binary and categorical)
-
-    input_variables_indices.resize(3);
-    input_variables_indices.setValues({1, 2, 5});
-
-    target_variables_indices.resize(1);
-    target_variables_indices.setValues({0});
-
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
-
-    input_target_correlations = data_set.calculate_input_target_raw_variables_correlations();
-
-    assert_true(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1, LOG);
-    assert_true(input_target_correlations(0,0).form == Form::Logistic, LOG);
-
-    assert_true(-1 < input_target_correlations(1,0).r && input_target_correlations(1,0).r < 1, LOG);
-    assert_true(input_target_correlations(1,0).form == Form::Logistic, LOG);
-
-    assert_true(-1 < input_target_correlations(2,0).r && input_target_correlations(1,0).r < 1, LOG);
-    assert_true(input_target_correlations(2,0).form == Form::Logistic, LOG);
-
-
-}*/
 
 
 void TimeSeriesDataSetTest::run_test_case()

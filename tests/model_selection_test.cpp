@@ -55,7 +55,7 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     data_set.generate_sum_data(20,2);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 2, 1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1}, {2}, {1});
 
     training_strategy.set_display(false);
 

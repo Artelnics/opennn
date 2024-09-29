@@ -20,6 +20,17 @@ struct Correlation
 
     explicit Correlation() {}
 
+    void set_perfect()
+    {
+        r = type(1);
+        a = type(0);
+        b = type(1);
+
+        upper_confidence = type(1);
+        lower_confidence = type(1);
+        form = Correlation::Form::Linear;
+    }
+
     string write_type() const
     {
         switch(form)
@@ -36,19 +47,17 @@ struct Correlation
 
     void print() const
     {
-        cout << "Correlation" << endl;
-        cout << "Type: " << write_type() << endl;
-        cout << "a: " << a << endl;
-        cout << "b: " << b << endl;
-        cout << "r: " << r << endl;
-        cout << "Lower confidence: " << lower_confidence << endl;
-        cout << "Upper confidence: " << upper_confidence << endl;
+        cout << "Correlation" << endl
+             << "Type: " << write_type() << endl
+             << "a: " << a << endl
+             << "b: " << b << endl
+             << "r: " << r << endl
+             << "Lower confidence: " << lower_confidence << endl
+             << "Upper confidence: " << upper_confidence << endl;
     }
 
     type a = type(NAN);
-
     type b = type(NAN);
-
     type r = type(NAN);
 
     type lower_confidence = type(NAN);

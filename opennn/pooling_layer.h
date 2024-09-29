@@ -79,8 +79,6 @@ public:
 
     void set(const dimensions&, const dimensions&);
 
-    void set_inputs_number(const Index&) {}
-    void set_neurons_number(const Index&) {}
     void set_name(const string&);
 
     void set_inputs_dimensions(const dimensions&);
@@ -138,6 +136,8 @@ public:
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void to_XML(tinyxml2::XMLPrinter&) const final;
+
+    void print() const;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"

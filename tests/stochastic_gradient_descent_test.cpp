@@ -72,7 +72,7 @@ void StochasticGradientDescentTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(type(1));
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
@@ -86,7 +86,7 @@ void StochasticGradientDescentTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(-1);
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
@@ -109,9 +109,6 @@ void StochasticGradientDescentTest::test_perform_training()
     error = training_results.get_training_error();
 
     assert_true(error <= old_error, LOG);
-
-    cout << "old_error: " << endl << old_error << endl;
-    cout << "error: " << endl << error << endl;
 
     // Loss goal
 

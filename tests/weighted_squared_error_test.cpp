@@ -59,8 +59,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
 
-    // Empty test does not work
-    // weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+    weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     // Test binary classification trivial
     {
@@ -83,7 +82,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -133,7 +132,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -160,12 +159,8 @@ void WeightedSquaredErrorTest::run_test_case()
 {
     cout << "Running weighted squared error test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
     test_destructor();
-
-    // Back-propagation
 
     test_back_propagate();
 

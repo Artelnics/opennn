@@ -134,16 +134,16 @@ class ProbabilisticLayer : public Layer
 
 public:
 
+    // Enumerations
+
+    enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
+
     // Constructors
 
     explicit ProbabilisticLayer();
 
     explicit ProbabilisticLayer(const Index&, const Index&);
     explicit ProbabilisticLayer(const dimensions&, const dimensions&);
-
-    // Enumerations
-
-    enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
 
     // Get
 
@@ -203,16 +203,12 @@ public:
 
     void set_parameters_random() final;
 
-    void insert_parameters(const Tensor<type, 1>&, const Index&);
+    //void insert_parameters(const Tensor<type, 1>&, const Index&);
 
     // Forward propagation
 
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
-
-    void calculate_activations(const Tensor<type, 2>&,
-                               Tensor<type, 2>&,
-                               Tensor<type, 1>&) const;
 
     void calculate_activations_derivatives(const Tensor<type, 2>&,
                                            Tensor<type, 2>&,

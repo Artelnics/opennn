@@ -9,13 +9,8 @@
 #ifndef TRANSFORMER_H
 #define TRANSFORMER_H
 
-// System includes
-
-
 #include <string>
 #include <sstream>
-
-// OpenNN includes
 
 #include "neural_network.h"
 #include "neural_network_forward_propagation.h"
@@ -99,17 +94,13 @@ struct TransformerForwardPropagation : ForwardPropagation
         set(new_batch_samples, new_neural_network);
     }
 
-
     // Destructor
 
     virtual ~TransformerForwardPropagation();
 
-
     void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network);
 
-
     void print() const;
-
 
     Index batch_samples_number = 0;
 
