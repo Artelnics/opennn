@@ -109,24 +109,19 @@ namespace opennn
         {
         }
 
-
         explicit AdditionLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
             : LayerForwardPropagation()
         {
             set(new_batch_samples_number, new_layer);
         }
 
-
         virtual ~AdditionLayer3DForwardPropagation()
         {
         }
 
-
         pair<type*, dimensions> get_outputs_pair() const final;
 
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
         void print() const
         {

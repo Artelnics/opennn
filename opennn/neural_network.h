@@ -63,15 +63,9 @@ public:
 
    explicit NeuralNetwork();
 
-   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const Tensor<Index, 1>&);
-
-   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const initializer_list<Index>&);
-
-   explicit NeuralNetwork(const dimensions&, const Index&, const Tensor<Index, 1>&, const Index&);
+   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
 
    explicit NeuralNetwork(const string&);
-
-   explicit NeuralNetwork(const tinyxml2::XMLDocument&);
 
    explicit NeuralNetwork(const Tensor<Layer*, 1>&);
 
@@ -83,14 +77,14 @@ public:
 
    void delete_layers();
 
-   void add_layer(Layer*);
+   void add_layer(Layer*, const string& name = "layer");
 
    bool validate_layer_type(const Layer::Type);
 
    // Get
 
-   bool has_scaling_layer() const;
-   bool has_scaling_4d_layer() const;
+   bool has_scaling_layer_2d() const;
+   bool has_scaling_layer_4d() const;
    bool has_long_short_term_memory_layer() const;
    bool has_recurrent_layer() const;
    bool has_unscaling_layer() const;
@@ -141,9 +135,7 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ModelType&, const Tensor<Index, 1>&);
-   void set(const NeuralNetwork::ModelType&, const initializer_list<Index>&);
-   void set(const dimensions&, const Index&, const Tensor<Index, 1>&, const Index&);
+   void set(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
 
    void set(const string&);
 
@@ -215,10 +207,6 @@ public:
    void set_parameters_constant(const type&) const;
 
    void set_parameters_random() const;
-
-   // Parameters
-
-   type calculate_parameters_norm() const;
 
    // Output
 

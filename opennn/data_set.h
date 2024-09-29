@@ -538,12 +538,9 @@ public:
 
     // Inputs correlations
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_correlations(const bool& = true,
-                                                                                 const bool& = false) const;
+    Tensor<Correlation, 2> calculate_input_raw_variable_pearson_correlations() const;
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_pearson_correlations() const;
-
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variable_spearman_correlations() const;
+    Tensor<Correlation, 2> calculate_input_raw_variable_spearman_correlations() const;
 
     void print_inputs_correlations() const;
 
@@ -551,8 +548,8 @@ public:
 
     // Inputs-targets correlations
 
-    Tensor<Correlation, 2> calculate_input_target_raw_variables_correlations() const;
-    Tensor<Correlation, 2> calculate_input_target_raw_variables_correlations_spearman() const;
+    Tensor<Correlation, 2> calculate_input_target_raw_variable_pearson_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_raw_variable_spearman_correlations() const;
 
     void print_input_target_raw_variables_correlations() const;
 
@@ -570,8 +567,8 @@ public:
 
     Tensor<Descriptives, 1> scale_data();
 
-    Tensor<Descriptives, 1> scale_input_variables();
-    Tensor<Descriptives, 1> scale_target_variables();
+    virtual Tensor<Descriptives, 1> scale_input_variables();
+    virtual Tensor<Descriptives, 1> scale_target_variables();
 
     // Data unscaling
 
@@ -671,6 +668,9 @@ public:
 
     void read_csv();
 
+    void prepare_line(string&) const;
+    void process_tokens(Tensor<string, 1>&);
+
     void open_file(const string&, ifstream&) const;
     void open_file(const string&, ofstream&) const;
 
@@ -732,7 +732,7 @@ protected:
 
     bool has_header = false;
 
-    bool has_samples_id = false;
+    bool has_sample_ids = false;
 
     Codification codification = Codification::UTF8;
 

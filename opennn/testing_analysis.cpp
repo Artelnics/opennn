@@ -157,7 +157,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 {
     check();
 
-    const Index outputs_number = neural_network->get_outputs_number();
+    // Data set
 
     const Index testing_samples_number = data_set->get_testing_samples_number();
 
@@ -170,9 +170,11 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     // Neural network
 
+    const Index outputs_number = neural_network->get_outputs_number();
+
     const Tensor<type, 2> testing_outputs = neural_network->calculate_outputs(testing_inputs);
 
-    // Approximation testing stuff
+    // Testing analysis
 
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
@@ -197,9 +199,7 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
     const Tensor<GoodnessOfFitAnalysis, 1> linear_regression_analysis = perform_goodness_of_fit_analysis();
 
     for(Index i = 0; i < linear_regression_analysis.size(); i++)
-    {
         linear_regression_analysis(i).print();
-    }
 }
 
 
@@ -1945,12 +1945,8 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
     const Tensor<Index, 2> confusion = calculate_confusion_multiple_classification(targets, outputs);
 
     for(Index i = 0; i < targets_number; i++)
-    {
         for(Index j = 0; j < targets_number; j++)
-        {
             multiple_classification_rates(i, j).resize(confusion(i, j));
-        }
-    }
 
     // Save indices
 
@@ -2472,8 +2468,8 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
     {
         true_positives = confusion(target_index, target_index);
 
-        Tensor<Index,0> row_sum = confusion.chip(target_index,0).sum();
-        Tensor<Index,0> column_sum = confusion.chip(target_index,1).sum();
+        const Tensor<Index,0> row_sum = confusion.chip(target_index,0).sum();
+        const Tensor<Index,0> column_sum = confusion.chip(target_index,1).sum();
 
         false_negatives = row_sum(0) - true_positives;
         false_positives= column_sum(0) - true_positives;
@@ -2534,9 +2530,7 @@ type TestingAnalysis::calculate_logloss() const
     type logloss = type(0);
 
     for(Index i = 0; i < testing_samples_number; i++)
-    {
         logloss += targets(i,0)*log(outputs(i,0)) + (type(1) - targets(i,0))*log(type(1) - outputs(i,0));
-    }
 
     return -logloss/type(testing_samples_number);
 }

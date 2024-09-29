@@ -148,7 +148,7 @@ void QuasiNewtonMethod::set_default()
 
     minimum_loss_decrease = type(0);
     training_loss_goal = type(0);
-    maximum_selection_failures = numeric_limits<Index>::max();
+    maximum_selection_failures = 1000;
 
     maximum_epochs_number = 1000;
     maximum_time = type(3600.0);
@@ -465,12 +465,14 @@ TrainingResults QuasiNewtonMethod::perform_training()
     neural_network->set_inputs_names(inputs_name);
     neural_network->set_output_namess(targets_names);
 
-    if(neural_network->has_scaling_layer())
+    if(neural_network->has_scaling_layer_2d())
     {
         input_variables_descriptives = data_set->scale_input_variables();
 
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
-        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
+
+        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
     if(neural_network->has_unscaling_layer())

@@ -99,53 +99,6 @@ void TransformerTest::test_destructor()
 }
 
 
-void TransformerTest::test_calculate_parameters_norm()
-{
-    cout << "test_calculate_parameters_norm\n";
-
-    type parameters_norm = type(0);
-    
-    // Test
-    {
-        input_length = 1;
-        context_length = 1;
-        perceptron_depth = 1;
-        heads_number = 1;
-
-        input_dimensions = -1;
-        context_dimension = 0;
-        embedding_depth = 0;
-        number_of_layers = 0;
-
-        transformer.set({ input_length, context_length, input_dimensions, context_dimension,
-                          embedding_depth, perceptron_depth, heads_number, number_of_layers });
-
-        parameters_norm = transformer.calculate_parameters_norm();
-
-        assert_true(abs(parameters_norm) < type(NUMERIC_LIMITS_MIN), LOG);
-    }
-    // Test
-    
-    {
-        input_dimensions = 1;
-        context_dimension = 1;
-        embedding_depth = 1;
-        number_of_layers = 1;
-
-        transformer.set({ input_length, context_length, input_dimensions, context_dimension,
-                          embedding_depth, perceptron_depth, heads_number, number_of_layers });
-
-        transformer.set_parameters_constant(type(1));
-
-        parameters_norm = transformer.calculate_parameters_norm();
-
-        Index parameters_number = transformer.get_parameters_number();
-
-        assert_true(abs(parameters_norm - sqrt(type(parameters_number))) < type(NUMERIC_LIMITS_MIN), LOG);
-    }   
-}
-
-
 void TransformerTest::test_calculate_outputs()
 {/*
     cout << "test_calculate_outputs\n";
@@ -322,66 +275,6 @@ void TransformerTest::test_calculate_outputs()
 */}
 
 
-void TransformerTest::test_calculate_directional_inputs()
-{/*
-    cout << "test_calculate_directional_inputs\n";
-
-    Tensor<type, 2> inputs;
-    Tensor<type, 2> outputs;
-    Tensor<type, 2> trainable_outputs;
-
-    Tensor<type, 1> parameters;
-
-    Tensor<type, 1> point;
-
-    Tensor<type, 2> directional_inputs;
-
-    // Test
-
-    transformer.set(Transformer::ModelType::Approximation, { 3, 4, 2 });
-    transformer.set_parameters_constant(type(0));
-
-    inputs.resize(2, 3);
-    inputs.setValues({ {type(-5),type(-1),-type(3)},
-                      {type(7),type(3),type(1)} });
-
-    point.resize(3);
-    point.setValues({ type(0),type(0),type(0) });
-
-    directional_inputs = transformer.calculate_directional_inputs(0, point, type(0), type(0), 0);
-
-    assert_true(directional_inputs.rank() == 2, LOG);
-    assert_true(directional_inputs.dimension(0) == 0, LOG);
-
-    // Test
-
-    point.setValues({ type(1), type(2), type(3) });
-
-    directional_inputs = transformer.calculate_directional_inputs(2, point, type(-1), type(1), 3);
-
-    assert_true(directional_inputs.rank() == 2, LOG);
-    assert_true(directional_inputs.dimension(0) == 3, LOG);
-    assert_true(directional_inputs.dimension(1) == 3, LOG);
-    assert_true(abs(directional_inputs(0, 2) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(1, 2) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(2, 2) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    point.setValues({ type(1), type(2), type(3) });
-
-    directional_inputs = transformer.calculate_directional_inputs(0, point, type(-4), type(0), 5);
-
-    assert_true(directional_inputs.rank() == 2, LOG);
-    assert_true(directional_inputs.dimension(0) == 5, LOG);
-    assert_true(directional_inputs.dimension(1) == 3, LOG);
-    assert_true(abs(directional_inputs(0, 0) + type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(1, 0) + type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(2, 0) + type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(3, 0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(4, 0) + type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/}
-
 
 void TransformerTest::test_forward_propagate()
 {
@@ -542,24 +435,12 @@ void TransformerTest::run_test_case()
 {
     cout << "Running transformer test case...\n";
 
-    // Constructor and destructor
     test_constructor();
-
     test_destructor();
 
-    // Parameters norm / descriptives / histogram
-
-    test_calculate_parameters_norm();
-
-    // Output
-    /*
-    test_calculate_outputs();
-
-    test_calculate_directional_inputs();
-    */
-    //Forward propagate
-
     test_forward_propagate();
+
+    test_calculate_outputs();
 
     cout << "End of transformer test case.\n\n";
 }

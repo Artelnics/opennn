@@ -28,36 +28,19 @@ public:
 
     virtual ~NeuralNetworkTest();
 
-    // Constructor and destructor
-
     void test_constructor();
-
     void test_destructor();
 
-    // Appending layers
-
     void test_add_layer();
-
-    // Parameters norm / descriptives / histogram
-
-    void test_calculate_parameters_norm();
-
-    // Output
 
     void test_calculate_outputs();
 
     void test_calculate_directional_inputs();
 
-    // Forward propagation
-
     void test_forward_propagate();
-
-    // Serialization
 
     void test_save();
     void test_load();
-
-    // Unit testing
 
     void run_test_case();
 
