@@ -41,19 +41,12 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
 void Transformer::set(const Tensor<Index, 1>& architecture)
 {
     input_length = architecture(0);
-
     context_length = architecture(1);
-
     input_dimensions = architecture(2);
-
     context_dimension = architecture(3);
-
     embedding_depth = architecture(4);
-
     perceptron_depth = architecture(5);
-
     heads_number = architecture(6);
-
     layers_number = architecture(7);
 
     set(input_length,
@@ -76,13 +69,18 @@ void Transformer::set(const initializer_list<Index>& architecture_list)
 }
 
 
-void Transformer::set(const Index& input_length, const Index& context_length, const Index& input_dimensions, const Index& context_dimension,
-                      const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number)
+void Transformer::set(const Index& input_length, 
+                      const Index& context_length, 
+                      const Index& input_dimensions, 
+                      const Index& context_dimension,
+                      const Index& embedding_depth, 
+                      const Index& perceptron_depth, 
+                      const Index& heads_number, 
+                      const Index& layers_number)
 {
     delete_layers();
     
     inputs_name.resize(input_length + context_length);
-
 
     // Embedding Layers
     
@@ -93,7 +91,6 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     add_layer(input_embedding_layer);
     set_layer_inputs_indices("input_embedding", "input");
     
-
     EmbeddingLayer* context_embedding_layer = new EmbeddingLayer(context_dimension, context_length, embedding_depth, true);
 
     context_embedding_layer->set_dropout_rate(dropout_rate);
@@ -101,7 +98,6 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     add_layer(context_embedding_layer);
     set_layer_inputs_indices("context_embedding", "context");
 
-    
     // Encoder
 
     for(Index i = 0; i < layers_number; i++)
@@ -188,7 +184,6 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         set_layer_inputs_indices("encoder_perceptron_normalization_" + to_string(i+1), "encoder_perceptron_addition_" + to_string(i+1));
     }
     
-
     // Decoder
 
     for(Index i = 0; i < layers_number; i++)
@@ -209,21 +204,19 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
             set_layer_inputs_indices("input_self_attention_" + to_string(i+1), {"decoder_perceptron_normalization_" + to_string(i), "decoder_perceptron_normalization_" + to_string(i)});
         }
 
-
         AdditionLayer3D* input_self_attention_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         input_self_attention_addition_layer->set_name("input_self_attention_addition_" + to_string(i+1));
         add_layer(input_self_attention_addition_layer);
+
         if(i == 0)
             set_layer_inputs_indices("input_self_attention_addition_" + to_string(i+1), { "input_embedding", "input_self_attention_" + to_string(i+1) });
         else
             set_layer_inputs_indices("input_self_attention_addition_" + to_string(i+1), { "decoder_perceptron_normalization_" + to_string(i), "input_self_attention_" + to_string(i+1) });
 
-
         NormalizationLayer3D* input_self_attention_normalization_layer = new NormalizationLayer3D(input_length, embedding_depth);
         input_self_attention_normalization_layer->set_name("input_self_attention_normalization_" + to_string(i+1));
         add_layer(input_self_attention_normalization_layer);
         set_layer_inputs_indices("input_self_attention_normalization_" + to_string(i+1), "input_self_attention_addition_" + to_string(i+1));
-
 
         MultiheadAttentionLayer* cross_attention_layer =
                 new MultiheadAttentionLayer(input_length, context_length, embedding_depth, heads_number);
@@ -232,7 +225,6 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
         cross_attention_layer->set_name("cross_attention_" + to_string(i+1));
         add_layer(cross_attention_layer);
         set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(layers_number)});
-
 
         AdditionLayer3D* cross_attention_addition_layer = new AdditionLayer3D(input_length, embedding_depth);
         cross_attention_addition_layer->set_name("cross_attention_addition_" + to_string(i+1));
@@ -329,7 +321,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     input.setZero();
     input(0) = start_indicator;
 
-    ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
+    ForwardPropagation forward_propagation(batch_samples_number, this);
     
     pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
     pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
@@ -341,7 +333,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
 
     const Index layers_number = get_layers_number();
 
-    pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+    pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
     TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[1], outputs_pair.second[2]);
 
@@ -350,7 +342,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     
     for(Index i = 1; i < input_length; i++)
     {
-        forward_propagate(inputs_pairs, neural_network_forward_propagation);
+        forward_propagate(inputs_pairs, forward_propagation);
 
         current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
 

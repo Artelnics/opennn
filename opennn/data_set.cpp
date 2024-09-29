@@ -74,10 +74,10 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 DataSet::DataSet(const string& data_path,
                  const string& separator,
                  const bool& has_header,
-                 const bool& has_samples_id,
+                 const bool& has_sample_ids,
                  const Codification& data_codification)
 {
-    set(data_path, separator, has_header, has_samples_id, data_codification);
+    set(data_path, separator, has_header, has_sample_ids, data_codification);
 }
 
 
@@ -310,8 +310,10 @@ void DataSet::RawVariable::print() const
          << "Name: " << name << endl
          << "Use: " << get_use_string() << endl
          << "Type: " << get_type_string() << endl
-         << "Scaler: " << get_scaler_string() << endl
-         << "Categories: " << categories << endl;
+         << "Scaler: " << get_scaler_string() << endl;
+
+    if(categories.size() != 0)
+         cout << "Categories: " << categories << endl;
 }
 
 
@@ -2071,7 +2073,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
             else
                 variable_index++;
 
-//            continue;
+            continue;
         }
 
         if(raw_variables(i).type == RawVariableType::Categorical)
@@ -2440,8 +2442,6 @@ void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
 
 void DataSet::set_binary_raw_variables()
 {
-    if(display) cout << "Setting binary raw variables..." << endl;
-
     Index variable_index = 0;
 
     const Index raw_variables_number = get_raw_variables_number();
@@ -2477,8 +2477,6 @@ void DataSet::set_binary_raw_variables()
 
 void DataSet::unuse_constant_raw_variables()
 {
-    if(display) cout << "Setting constant raw variables..." << endl;
-
     Index variable_index = 0;
 
     const Index raw_variables_number = get_raw_variables_number();
@@ -2597,7 +2595,7 @@ const bool& DataSet::get_header_line() const
 
 const bool& DataSet::get_has_ids() const
 {
-    return has_samples_id;
+    return has_sample_ids;
 }
 
 
@@ -3508,7 +3506,7 @@ void DataSet::set_has_header(const bool& new_has_header)
 
 void DataSet::set_has_ids(const bool& new_has_ids)
 {
-    has_samples_id = new_has_ids;
+    has_sample_ids = new_has_ids;
 }
 
 
@@ -3659,7 +3657,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
 {
     Tensor<string, 1> unused_raw_variables;
 
-    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variable_pearson_correlations();
 
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -3673,8 +3671,8 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
         for(Index j = 0; j < target_raw_variables_number; j++)
         {
             if(!isnan(correlations(i, j).r)
-                && abs(correlations(i, j).r) < minimum_correlation
-                && raw_variables(input_raw_variable_index).use != VariableUse::None)
+            && abs(correlations(i, j).r) < minimum_correlation
+            && raw_variables(input_raw_variable_index).use != VariableUse::None)
             {
                 raw_variables(input_raw_variable_index).set_use(VariableUse::None);
 
@@ -4172,31 +4170,31 @@ Tensor<Descriptives, 1> DataSet::calculate_testing_target_variables_descriptives
 
 Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
 {
-    return columns_minimums(data, get_used_samples_indices(), get_input_variables_indices());
+    return column_minimums(data, get_used_samples_indices(), get_input_variables_indices());
 }
 
 
 Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 {
-    return columns_minimums(data, get_used_samples_indices(), get_target_variables_indices());
+    return column_minimums(data, get_used_samples_indices(), get_target_variables_indices());
 }
 
 
 Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
 {
-    return columns_maximums(data, get_used_samples_indices(), get_input_variables_indices());
+    return column_maximums(data, get_used_samples_indices(), get_input_variables_indices());
 }
 
 
 Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 {
-    return columns_maximums(data, get_used_samples_indices(), get_target_variables_indices());
+    return column_maximums(data, get_used_samples_indices(), get_target_variables_indices());
 }
 
 
 Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
 {
-    return columns_minimums(data, get_used_samples_indices(), get_used_variables_indices());
+    return column_minimums(data, get_used_samples_indices(), get_used_variables_indices());
 }
 
 
@@ -4232,7 +4230,7 @@ void DataSet::set_gmt(Index& new_gmt)
 }
 
 
-Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlations() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_correlations() const
 {
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -4261,7 +4259,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
                 = get_raw_variable_data(target_raw_variable_index, used_samples_indices);
             
             correlations(i, j) = correlation(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
-        
         }
     }
 
@@ -4269,7 +4266,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlation
 }
 
 
-Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variables_correlations_spearman() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_correlations() const
 {
     const Index input_raw_variables_number = get_input_raw_variables_number();
     const Index target_raw_variables_number = get_target_raw_variables_number();
@@ -4350,7 +4347,7 @@ void DataSet::print_input_target_raw_variables_correlations() const
     const Tensor<string, 1> inputs_name = get_input_raw_variable_names();
     const Tensor<string, 1> targets_name = get_target_raw_variables_names();
 
-    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variable_pearson_correlations();
 
     for(Index j = 0; j < targets_number; j++)
         for(Index i = 0; i < inputs_number; i++)
@@ -4366,7 +4363,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     const Tensor<string, 1> inputs_name = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variables_correlations());
+    const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variable_pearson_correlations());
 
     Tensor<type, 1> target_correlations(inputs_number);
 
@@ -4385,125 +4382,15 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
 }
 
 
-Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variable_correlations(const bool& calculate_pearson_correlations,
-                                                                                     const bool& calculate_spearman_correlations) const
+Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlations() const
 {
     // list to return
-
-    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
 
     const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
 
     const Index input_raw_variables_number = get_input_raw_variables_number();
 
     Tensor<Correlation, 2> correlations_pearson(input_raw_variables_number, input_raw_variables_number);
-    Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
-
-    for(Index i = 0; i < input_raw_variables_number; i++)
-    {
-        const Index current_input_index_i = input_raw_variables_indices(i);
-
-        const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
-
-        //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
-
-        for(Index j = i; j < input_raw_variables_number; j++)
-        {
-            if(j == i)
-            {
-                if(calculate_pearson_correlations)
-                {
-                    correlations_pearson(i, j).r = type(1);
-                    correlations_pearson(i, j).b = type(1);
-                    correlations_pearson(i, j).a = type(0);
-
-                    correlations_pearson(i, j).upper_confidence = type(1);
-                    correlations_pearson(i, j).lower_confidence = type(1);
-                    correlations_pearson(i, j).form = Correlation::Form::Linear;
-                    correlations_pearson(i, j).method = Correlation::Method::Pearson;
-
-                    if(is_constant_matrix(input_i))
-                    {
-                        correlations_pearson(i, j).r = NAN;
-                        correlations_pearson(i, j).b = NAN;
-                        correlations_pearson(i, j).a = NAN;
-                    }
-                }
-
-                if(calculate_spearman_correlations)
-                {
-                    correlations_spearman(i, j).r = type(1);
-                    correlations_spearman(i, j).b = type(1);
-                    correlations_spearman(i, j).a = type(0);
-
-                    correlations_spearman(i, j).upper_confidence = type(1);
-                    correlations_spearman(i, j).lower_confidence = type(1);
-                    correlations_spearman(i, j).form = Correlation::Form::Linear;
-                    correlations_spearman(i, j).method = Correlation::Method::Spearman;
-
-                    if(is_constant_matrix(input_i))
-                    {
-                        correlations_spearman(i, j).r = NAN;
-                        correlations_spearman(i, j).b = NAN;
-                        correlations_spearman(i, j).a = NAN;
-                    }
-                }
-            }
-            else
-            {
-                const Index current_input_index_j = input_raw_variables_indices(j);
-
-                const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-
-                if(calculate_pearson_correlations)
-                {
-                    correlations_pearson(i, j) = correlation(thread_pool_device, input_i, input_j);
-
-                    if(correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
-                       correlations_pearson(i, j).r =  type(1);
-                }
-
-                if(calculate_spearman_correlations)
-                {
-                    correlations_spearman(i, j) = correlation_spearman(thread_pool_device, input_i, input_j);
-
-                    if(correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
-                        correlations_spearman(i, j).r = type(1);
-                }
-            }
-        }
-    }
-
-    if(calculate_pearson_correlations)
-        for(Index i = 0; i < input_raw_variables_number; i++)
-            for(Index j = 0; j < i; j++)
-                correlations_pearson(i, j) = correlations_pearson(j,i);
-
-    if(calculate_spearman_correlations)
-        for(Index i = 0; i < input_raw_variables_number; i++)
-            for(Index j = 0; j < i; j++)
-                correlations_spearman(i, j) = correlations_spearman(j,i);
-
-    correlations_list(0) = correlations_pearson;
-    correlations_list(1) = correlations_spearman;
-
-    return correlations_list;
-}
-
-/*
-Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variable_correlations(const bool& calculate_pearson_correlations,
-    const bool& calculate_spearman_correlations) const
-{
-    // list to return
-
-    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
-
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
-
-    const Index input_raw_variables_number = get_input_raw_variables_number();
-
-    Tensor<Correlation, 2> correlations_pearson(input_raw_variables_number, input_raw_variables_number);
-    Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
@@ -4513,93 +4400,72 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_raw_variable_correlat
 
         //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
 
-        for (Index j = i; j < input_raw_variables_number; j++)
+        if (is_constant_matrix(input_i)) continue;
+
+        correlations_pearson(i, i).set_perfect();
+        correlations_pearson(i, i).method = Correlation::Method::Pearson;
+
+        for (Index j = i+1; j < input_raw_variables_number; j++)
         {
-            if (j == i)
-            {
-                if (calculate_pearson_correlations)
-                {
-                    correlations_pearson(i, j).r = type(1);
-                    correlations_pearson(i, j).b = type(1);
-                    correlations_pearson(i, j).a = type(0);
+            const Index current_input_index_j = input_raw_variables_indices(j);
 
-                    correlations_pearson(i, j).upper_confidence = type(1);
-                    correlations_pearson(i, j).lower_confidence = type(1);
-                    correlations_pearson(i, j).form = Correlation::Form::Linear;
-                    correlations_pearson(i, j).method = Correlation::Method::Pearson;
+            const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
+                correlations_pearson(i, j) = correlation(thread_pool_device, input_i, input_j);
 
-                    if (is_constant_matrix(input_i))
-                    {
-                        correlations_pearson(i, j).r = NAN;
-                        correlations_pearson(i, j).b = NAN;
-                        correlations_pearson(i, j).a = NAN;
-                    }
-                }
+            if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
+                correlations_pearson(i, j).r = type(1);
 
-                if (calculate_spearman_correlations)
-                {
-                    correlations_spearman(i, j).r = type(1);
-                    correlations_spearman(i, j).b = type(1);
-                    correlations_spearman(i, j).a = type(0);
-
-                    correlations_spearman(i, j).upper_confidence = type(1);
-                    correlations_spearman(i, j).lower_confidence = type(1);
-                    correlations_spearman(i, j).form = Correlation::Form::Linear;
-                    correlations_spearman(i, j).method = Correlation::Method::Spearman;
-
-                    if (is_constant_matrix(input_i))
-                    {
-                        correlations_spearman(i, j).r = NAN;
-                        correlations_spearman(i, j).b = NAN;
-                        correlations_spearman(i, j).a = NAN;
-                    }
-                }
-            }
-            else
-            {
-                const Index current_input_index_j = input_raw_variables_indices(j);
-
-                const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-
-                if (calculate_pearson_correlations)
-                {
-                    correlations_pearson(i, j) = correlation(thread_pool_device, input_i, input_j);
-
-                    if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
-                        correlations_pearson(i, j).r = type(1);
-                }
-
-                if (calculate_spearman_correlations)
-                {
-                    correlations_spearman(i, j) = correlation_spearman(thread_pool_device, input_i, input_j);
-
-                    if (correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
-                        correlations_spearman(i, j).r = type(1);
-                }
-            }
+            correlations_pearson(j, i) = correlations_pearson(i, j);
         }
     }
 
-    if (calculate_pearson_correlations)
-        for (Index i = 0; i < input_raw_variables_number; i++)
-            for (Index j = 0; j < i; j++)
-                correlations_pearson(i, j) = correlations_pearson(j, i);
-
-    if (calculate_spearman_correlations)
-        for (Index i = 0; i < input_raw_variables_number; i++)
-            for (Index j = 0; j < i; j++)
-                correlations_spearman(i, j) = correlations_spearman(j, i);
-
-    correlations_list(0) = correlations_pearson;
-    correlations_list(1) = correlations_spearman;
-
-    return correlations_list;
+    return correlations_pearson;
 }
-*/
+
+
+Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlations() const
+{
+    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
+
+    const Index input_raw_variables_number = get_input_raw_variables_number();
+
+    Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
+
+    for(Index i = 0; i < input_raw_variables_number; i++)
+    {
+        const Index input_raw_variable_index_i = input_raw_variables_indices(i);
+
+        const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
+
+        //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
+
+        if (is_constant_matrix(input_i)) continue;
+
+        correlations_spearman(i, i).set_perfect();
+        correlations_spearman(i, i).method = Correlation::Method::Spearman;
+
+        for(Index j = i + 1; j < input_raw_variables_number; j++)
+        {
+            const Index input_raw_variable_index_j = input_raw_variables_indices(j);
+
+            const Tensor<type, 2> input_j = get_raw_variable_data(input_raw_variable_index_j);
+
+            correlations_spearman(i, j) = correlation_spearman(thread_pool_device, input_i, input_j);
+
+            if(correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
+                correlations_spearman(i, j).r = type(1);
+
+            correlations_spearman(j, i) = correlations_spearman(i, j);
+        }
+    }
+
+    return correlations_spearman;
+}
+
 
 void DataSet::print_inputs_correlations() const
 {
-    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_raw_variable_correlations()(0));
+    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_raw_variable_pearson_correlations());
 
     cout << inputs_correlations << endl;
 }
@@ -4625,7 +4491,7 @@ void DataSet::print_top_inputs_correlations() const
 
     const Tensor<string, 1> variables_name = get_input_variables_names();
 
-    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_raw_variable_correlations()(0));
+    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_raw_variable_pearson_correlations());
 
     const Index correlations_number = variables_number*(variables_number-1)/2;
 
@@ -4774,10 +4640,6 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 
         case Scaler::Logarithm:
             scale_logarithmic(data, input_variables_indices(i));
-            break;
-
-        case Scaler::ImageMinMax:
-            scale_image_minimum_maximum(data, input_variables_indices(i));
             break;
 
         default:
@@ -4991,7 +4853,7 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Has Ids
 
     file_stream.OpenElement("HasSamplesId");
-    file_stream.PushText(to_string(has_samples_id).c_str());
+    file_stream.PushText(to_string(has_sample_ids).c_str());
     file_stream.CloseElement();
 
     // Missing values label
@@ -5048,7 +4910,7 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Samples id
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         file_stream.OpenElement("SamplesId");
         file_stream.PushText(string_tensor_to_string(samples_id).c_str());
@@ -5311,7 +5173,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has Ids
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         // Samples id begin tag
 
@@ -5496,11 +5358,11 @@ void DataSet::print() const
    
     const Index raw_variables_number = get_raw_variables_number();
 
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        cout << endl;
-        raw_variables(i).print();
-    }
+    //for(Index i = 0; i < raw_variables_number; i++)
+    //{
+    //    cout << endl;
+    //    raw_variables(i).print();
+    //}
 }
 
 
@@ -5607,7 +5469,7 @@ void DataSet::save_data() const
 
     const string separator_string = get_separator_string();
 
-    if(has_samples_id)
+    if(has_sample_ids)
         file << "id" << separator_string;
 
     for(Index j = 0; j < variables_number; j++)
@@ -5622,7 +5484,7 @@ void DataSet::save_data() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(has_samples_id)
+        if(has_sample_ids)
             file << samples_id(i) << separator_string;
 
         for(Index j = 0; j < variables_number; j++)
@@ -6063,26 +5925,26 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums,
         {
             sample_index = used_samples_indices(j);
 
-            if(get_sample_use(sample_index) == SampleUse::None)
+            if(get_sample_use(sample_index) == SampleUse::None 
+            || isnan(data(sample_index, variable_index)))
                 continue;
 
-            if(isnan(data(sample_index, variable_index)))
-                continue;
+            const type value = data(sample_index, variable_index);
 
-            if(abs(data(sample_index, variable_index) - minimums(i)) <= type(NUMERIC_LIMITS_MIN)
-            || abs(data(sample_index, variable_index) - maximums(i)) <= type(NUMERIC_LIMITS_MIN))
+            if(abs(value - minimums(i)) <= type(NUMERIC_LIMITS_MIN)
+            || abs(value - maximums(i)) <= type(NUMERIC_LIMITS_MIN))
                 continue;
 
             if(minimums(i) == maximums(i))
             {
-                if(data(sample_index, variable_index) != minimums(i))
+                if(value != minimums(i))
                 {
                     filtered_indices(sample_index) = type(1);
                     set_sample_use(sample_index, SampleUse::None);
                 }
             }
-            else if(data(sample_index, variable_index) < minimums(i) 
-                 || data(sample_index, variable_index) > maximums(i))
+            else if(value < minimums(i) 
+                 || value > maximums(i))
             {
                 filtered_indices(sample_index) = type(1);
                 set_sample_use(sample_index, SampleUse::None);
@@ -6325,13 +6187,62 @@ void DataSet::scrub_missing_values()
 }
 
 
+void DataSet::prepare_line(string& line) const
+{
+    decode(line);
+    trim(line);
+    erase(line, '"');
+}
+
+
+void DataSet::process_tokens(Tensor<string, 1>& tokens)
+{
+    const Index raw_variables_number = tokens.size();
+
+    //#pragma omp parallel for reduction(+:missing_values_number)
+
+    for(Index i = 0; i < raw_variables_number; i++)
+    {
+        const RawVariableType type = raw_variables(i).type;
+
+        const string token = has_sample_ids ? tokens(i+1) : tokens(i);
+
+        if(token.empty() || token == missing_values_label)
+        {
+            missing_values_number++;
+            continue;
+        }
+        else if(is_numeric_string(token))
+        {
+            if(type == RawVariableType::None)
+                raw_variables(i).type = RawVariableType::Numeric;
+
+            if(type == RawVariableType::Categorical)
+                throw runtime_error("Error: Found number in categorical variable: " + raw_variables(i).name);
+        }
+        else if(is_date_time_string(token))
+        {
+            if(type == RawVariableType::None)
+                raw_variables(i).type = RawVariableType::DateTime;
+        }
+        else // is string
+        {
+            if(type == RawVariableType::None)
+                raw_variables(i).type = RawVariableType::Categorical;
+
+            if(!contains(raw_variables(i).categories, token))
+                push_back_string(raw_variables(i).categories, token);
+        }
+    }
+}
+
+
 void DataSet::read_csv()
 {
     if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
-    ifstream file;
-    file.open(data_path.c_str());
+    ifstream file(data_path.c_str());
 
     if(!file.is_open())
         throw runtime_error("Error: Cannot open file " + data_path + "\n");
@@ -6351,16 +6262,13 @@ void DataSet::read_csv()
 
     // Read first line
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        decode(line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
-        check_separators(line);
+//        check_separators(line);
 
         tokens = get_tokens(line, separator_string);
 
@@ -6369,7 +6277,7 @@ void DataSet::read_csv()
         if(columns_number != 0) break;
     }
 
-    const Index raw_variables_number = has_samples_id
+    const Index raw_variables_number = has_sample_ids
             ? columns_number - 1
             : columns_number;
 
@@ -6382,11 +6290,11 @@ void DataSet::read_csv()
         if(has_numbers(tokens))
             throw runtime_error("Error: Some header names are numeric: " + line + "\n");
 
-        if(!has_samples_id)
-            set_raw_variables_names(tokens);
-        else
+        if(has_sample_ids)
             for(Index i = 0; i < raw_variables_number; i++)
                 raw_variables(i).name = tokens(i+1);
+        else
+            set_raw_variables_names(tokens);
     }
     else
     {
@@ -6396,55 +6304,20 @@ void DataSet::read_csv()
 
     // Rest of lines
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        decode(line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
+
         if(line.empty()) continue;
-        check_separators(line);
+
+        //check_separators(line);
 
         tokens = get_tokens(line, separator_string);
 
         if(tokens.size() != columns_number)
             throw runtime_error("Tokens number is not equal to columns number.");
 
-        //#pragma omp parallel for reduction(+:missing_values_number)
-
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            const RawVariableType type = raw_variables(i).type;
-
-            const string token = has_samples_id ? tokens(i+1) : tokens(i);
-
-            if(token.empty() || token == missing_values_label)
-            {
-                missing_values_number++;
-                continue;
-            }
-            else if(is_numeric_string(token))
-            {
-                if(type == RawVariableType::None)
-                    raw_variables(i).type = RawVariableType::Numeric;
-
-                if(type == RawVariableType::Categorical)
-                    throw runtime_error("Error: Found number in categorical variable: " + raw_variables(i).name);
-            }
-            else if(is_date_time_string(token))
-            {
-                if(type == RawVariableType::None)
-                    raw_variables(i).type = RawVariableType::DateTime;
-            }
-            else // is string
-            {
-                if(type == RawVariableType::None)
-                    raw_variables(i).type = RawVariableType::Categorical;
-
-                if(!contains(raw_variables(i).categories, token))
-                    push_back_string(raw_variables(i).categories, token);
-            }
-        }
+        process_tokens(tokens);
 
         samples_number++;
     }
@@ -6477,12 +6350,10 @@ void DataSet::read_csv()
 
     if(has_header)
     {
-        while(file.good())
+        while(getline(file, line))
         {
-            getline(file, line);
-            decode(line);
-            trim(line);
-            erase(line, '"');
+            prepare_line(line);
+
             if(line.empty()) continue;
             break;
         }
@@ -6490,12 +6361,10 @@ void DataSet::read_csv()
 
     Index sample_index = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        decode(line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
+
         if(line.empty()) continue;
         check_separators(line);
 
@@ -6516,7 +6385,7 @@ void DataSet::read_csv()
             }
         }
 
-        if(has_samples_id) samples_id(sample_index) = tokens(0);
+        if(has_sample_ids) samples_id(sample_index) = tokens(0);
 
         #pragma omp parallel for
 
@@ -6524,7 +6393,7 @@ void DataSet::read_csv()
         {
             const RawVariableType raw_variable_type = raw_variables(raw_variable_index).type;
 
-            const string token = has_samples_id ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
+            const string token = has_sample_ids ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
 
             const Tensor<Index, 1> variable_indices = get_variable_indices(raw_variable_index);
 
@@ -6719,15 +6588,9 @@ void DataSet::read_data_file_preview(ifstream& file)
 
     Index lines_count = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
-        decode(line);
-
-        trim(line);
-
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
@@ -7108,7 +6971,7 @@ void DataSet::shuffle()
 
 bool DataSet::get_has_rows_labels() const
 {
-    return has_samples_id;
+    return has_sample_ids;
 }
 
 
@@ -7133,7 +6996,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const string& separator_string,
                                         const string& missing_values_label,
                                         const bool& has_raw_variables_name,
-                                        const bool& has_samples_id) const
+                                        const bool& has_sample_ids) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -7155,15 +7018,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     if(model_type == ModelType::AutoAssociation)
         input_raw_variables_number = get_raw_variables_number() - get_target_raw_variables_number() - get_unused_raw_variables_number()/2;
 
-    while(file.good())
+    while(getline(file, line))
     {
+        prepare_line(line);
+
         line_number++;
-
-        getline(file, line);
-
-        trim(line);
-
-        erase(line, '"');
 
         if(line.empty()) continue;
 
@@ -7196,18 +7055,14 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     line_number = 0;
     Index variable_index = 0;
     Index token_index = 0;
-    bool is_ID = has_samples_id;
+    bool is_ID = has_sample_ids;
 
     const bool is_float = is_same<type, float>::value;
     bool has_missing_values = false;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-
-        trim(line);
-
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
@@ -7215,7 +7070,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         variable_index = 0;
         token_index = 0;
-        is_ID = has_samples_id;
+        is_ID = has_sample_ids;
 
         for(Index i = 0; i < raw_variables_number; i++)
         {

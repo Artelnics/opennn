@@ -41,16 +41,16 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 
     if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
     {
-        outputs_minimums.resize(outputs_number);
-        outputs_minimums.setZero();
+        output_minimums.resize(outputs_number);
+        output_minimums.setZero();
 
-        outputs_maximums.resize(outputs_number);
-        outputs_maximums.setConstant({type(1)});
+        output_maximums.resize(outputs_number);
+        output_maximums.setConstant({type(1)});
     }
     else // Approximation and forecasting
     {
-        outputs_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
-        outputs_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
+        output_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
+        output_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
     }
 }
 
@@ -73,16 +73,16 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 
     if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
     {
-        outputs_minimums.resize(outputs_number);
-        outputs_minimums.setZero();
+        output_minimums.resize(outputs_number);
+        output_minimums.setZero();
 
-        outputs_maximums.resize(outputs_number);
-        outputs_maximums.setConstant({type(1)});
+        output_maximums.resize(outputs_number);
+        output_maximums.setConstant({type(1)});
     }
     else // Approximation and forecasting
     {
-        outputs_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
-        outputs_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
+        output_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
+        output_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
     }
 }
 
@@ -124,13 +124,13 @@ Tensor<type, 1> ResponseOptimization::get_inputs_maximums() const
 
 Tensor<type, 1> ResponseOptimization::get_outputs_minimums() const
 {
-    return outputs_minimums;
+    return output_minimums;
 }
 
 
 Tensor<type, 1> ResponseOptimization::get_outputs_maximums() const
 {
-    return outputs_maximums;
+    return output_maximums;
 }
 
 void ResponseOptimization::set_input_condition(const string& name,
@@ -247,7 +247,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
         throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
-        outputs_maximums[index] = values[0];
+        output_maximums[index] = values[0];
 
         return;
 
@@ -256,7 +256,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
         if(values.size() != 1)
             throw runtime_error("For GreaterEqualTo condition, size of values must be 1.\n");
 
-        outputs_minimums[index] = values[0];
+        output_minimums[index] = values[0];
 
         return;
 
@@ -265,8 +265,8 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
         if(values.size() != 2)
             throw runtime_error("For Between condition, size of values must be 2.\n");
 
-        outputs_minimums[index] = values[0];
-        outputs_maximums[index] = values[1];
+        output_minimums[index] = values[0];
+        output_maximums[index] = values[1];
 
         return;
 
@@ -417,8 +417,8 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
                 current_values[1] = inputs_maximums(i);
             }else
             {
-                current_values[0] = outputs_minimums(i);
-                current_values[1] = outputs_maximums(i);
+                current_values[0] = output_minimums(i);
+                current_values[1] = output_maximums(i);
             }
 
             values_conditions[i] = current_values;
@@ -519,7 +519,7 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
     for(Index i = 0; i < outputs_number; i++)
     {
         if(envelope.size() != 0)
-            envelope = filter_column_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
+            envelope = filter_column_minimum_maximum(envelope, inputs_number + i, output_minimums(i), output_maximums(i));
         else
             return Tensor<type,2>();
     }

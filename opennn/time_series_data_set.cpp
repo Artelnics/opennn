@@ -23,12 +23,12 @@ TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
                                      const string& separator,
                                      const bool& has_header,
-                                     const bool& has_samples_id,
+                                     const bool& has_sample_ids,
                                      const Index& new_lags_number,
                                      const Index& new_steps_ahead,
                                      const Codification& data_codification)
 {
-    set(data_path, separator, has_header, has_samples_id, data_codification);
+    set(data_path, separator, has_header, has_sample_ids, data_codification);
 
     lags_number = new_lags_number;
     steps_ahead = new_steps_ahead;
@@ -495,7 +495,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Samples id
 
     file_stream.OpenElement("HasSamplesId");
-    file_stream.PushText(to_string(has_samples_id).c_str());
+    file_stream.PushText(to_string(has_sample_ids).c_str());
     file_stream.CloseElement();
 
     // Missing values label
@@ -601,7 +601,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Ids
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         file_stream.OpenElement("HasSamplesId");
         file_stream.PushText(string_tensor_to_string(get_sample_ids()).c_str());
@@ -1042,7 +1042,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         // Samples id begin tag
 

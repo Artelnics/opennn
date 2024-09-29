@@ -63,7 +63,7 @@ int main()
    "statistics | st\n"
    "stochastic_gradient_descent | sgd\n"
    "sum_squared_error | sse\n"
-   "tensor_utilities | tu\n"
+   "tensors | t\n"
    "testing_analysis | ta\n"
    "time_series_data_set | tsds\n"
    "training_strategy | ts\n"
@@ -429,13 +429,13 @@ int main()
         tests_failed_count += genetic_algorithm_test.get_tests_failed_count();
       }
 
-      else if(test == "tensor_utilities" || test == "tu")
+      else if(test == "tensors" || test == "t")
       {
-        TensorsTest tensor_utilities_test;
-        tensor_utilities_test.run_test_case();
-        tests_count += tensor_utilities_test.get_tests_count();
-        tests_passed_count += tensor_utilities_test.get_tests_passed_count();
-        tests_failed_count += tensor_utilities_test.get_tests_failed_count();
+        TensorsTest tensors_test;
+        tensors_test.run_test_case();
+        tests_count += tensors_test.get_tests_count();
+        tests_passed_count += tensors_test.get_tests_passed_count();
+        tests_failed_count += tensors_test.get_tests_failed_count();
       }
 
       else if(test == "testing_analysis" || test == "ta")
@@ -483,7 +483,7 @@ int main()
 
       else if(test == "suite"/* || test == ""*/)
       {
-          // tensor utilities
+          // tensors
 
           TensorsTest tensor_utilites_test;
           tensor_utilites_test.run_test_case();

@@ -10,9 +10,9 @@
 #include "images.h"
 #include "tensors.h"
 #include "strings_utilities.h"
-#include "filesystem"
 
-using namespace std::filesystem;
+
+using namespace fs;
 
 namespace opennn
 {
@@ -127,6 +127,8 @@ void ImageDataSet::set(const Index& new_images_number,
                        const Index& new_channels,
                        const Index& new_targets_number)
 {
+    set_default();
+
     model_type = ModelType::ImageClassification;
 
     const Index target_number = (new_targets_number == 2) ? 1 : new_targets_number;
@@ -136,10 +138,8 @@ void ImageDataSet::set(const Index& new_images_number,
 
     // Dimensions
 
-    input_dimensions.resize(3);
     input_dimensions = { new_height, new_width, new_channels };
 
-    target_dimensions.resize(1);
     target_dimensions = { target_number };
 
     // Data
@@ -166,7 +166,6 @@ void ImageDataSet::set(const Index& new_images_number,
         raw_variables(raw_variables_number-1).type = RawVariableType::Binary;
         raw_variables(raw_variables_number-1).use = VariableUse::Target;
         raw_variables(raw_variables_number-1).name = "target";
-
         raw_variables(raw_variables_number-1).set_categories(categories);
     }
     else
@@ -177,7 +176,6 @@ void ImageDataSet::set(const Index& new_images_number,
         raw_variables(raw_variables_number-1).type = RawVariableType::Categorical;
         raw_variables(raw_variables_number-1).use = VariableUse::Target;
         raw_variables(raw_variables_number-1).name = "target";
-
         raw_variables(raw_variables_number-1).set_categories(categories);
     }
 
@@ -209,9 +207,8 @@ void ImageDataSet::set_image_data_random()
         for (Index i = 0; i < samples_number; i++)
         {
             for (Index j = 0; j < inputs_number; j++)
-            {
                 data(i, j) = rand() % 256;
-            }
+
             data(i, inputs_number) = (i < half_samples) ? 0 : 1;
         }
     }
@@ -226,6 +223,7 @@ void ImageDataSet::set_image_data_random()
         for (Index i = 0; i < targets_number; i++)
         {
             images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
+
             if (remainder > 0) remainder--;
         }
 
@@ -236,9 +234,7 @@ void ImageDataSet::set_image_data_random()
             for (Index i = 0; i < images_number[k]; i++)
             {
                 for (Index j = 0; j < inputs_number; j++)
-                {
                     data(current_sample, j) = rand() % 256;
-                }
 
                 data(current_sample, k + inputs_number) = 1;
                 current_sample++;
@@ -273,12 +269,6 @@ void ImageDataSet::set_image_padding(const int& new_padding)
 {
     padding = new_padding;
 }
-
-
-// void ImageDataSet::set_images_number(const Index & new_classes_number)
-// {
-//     images_number = new_classes_number;
-// }
 
 
 void ImageDataSet::set_augmentation(const bool& new_augmentation)
@@ -337,7 +327,6 @@ void ImageDataSet::set_random_vertical_translation_maximum(const type& new_rando
 
 void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-
     file_stream.OpenElement("ImageDataSet");
 
     // Data file
@@ -359,7 +348,7 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Samples id
 
     file_stream.OpenElement("HasSamplesId");
-    file_stream.PushText(to_string(has_samples_id).c_str());
+    file_stream.PushText(to_string(has_sample_ids).c_str());
     file_stream.CloseElement();
 
     // Channels
@@ -458,7 +447,7 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Samples id
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         file_stream.OpenElement("Ids");
         file_stream.PushText(string_tensor_to_string(samples_id).c_str());
@@ -781,166 +770,9 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-//    // Time series raw_variables
-
-//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
-
-//    if(!time_series_raw_variables_element)
-//    {
-//        // do nothing
-//    }
-//    else
-//    {
-//        // Time series raw_variables number
-
-//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
-
-//        if(!time_series_raw_variables_number_element)
-//        {
-//            buffer << "OpenNN Exception: DataSet class.\n"
-//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                   << "Time seires raw_variables number element is nullptr.\n";
-
-//            throw runtime_error(buffer.str());
-//        }
-
-//        Index time_series_new_raw_variables_number = 0;
-
-//        if(time_series_raw_variables_number_element->GetText())
-//        {
-//            time_series_new_raw_variables_number = Index(atoi(time_series_raw_variables_number_element->GetText()));
-
-//            set_time_series_raw_variables_number(time_series_new_raw_variables_number);
-//        }
-
-//        // Time series raw_variables
-
-//        const tinyxml2::XMLElement* time_series_start_element = time_series_raw_variables_number_element;
-
-//        if(time_series_new_raw_variables_number > 0)
-//        {
-//            for(Index i = 0; i < time_series_new_raw_variables_number; i++)
-//            {
-//                const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
-//                time_series_start_element = time_series_raw_variable_element;
-
-//                if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series raw_variable item number (" << i+1 << ") does not match (" << time_series_raw_variable_element->Attribute("Item") << ").\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                // Name
-
-//                const tinyxml2::XMLElement* time_series_name_element = time_series_raw_variable_element->FirstChildElement("Name");
-
-//                if(!time_series_name_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series name element is nullptr.\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                if(time_series_name_element->GetText())
-//                {
-//                    const string time_series_new_name = time_series_name_element->GetText();
-
-//                    time_series_raw_variables(i).name = time_series_new_name;
-//                }
-
-//                // Scaler
-
-//                const tinyxml2::XMLElement* time_series_scaler_element = time_series_raw_variable_element->FirstChildElement("Scaler");
-
-//                if(!time_series_scaler_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series scaler element is nullptr.\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                if(time_series_scaler_element->GetText())
-//                {
-//                    const string time_series_new_scaler = time_series_scaler_element->GetText();
-
-//                    time_series_raw_variables(i).set_scaler(time_series_new_scaler);
-//                }
-
-//                // raw_variable use
-
-//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("Use");
-
-//                if(!time_series_raw_variable_use_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series raw_variable use element is nullptr.\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                if(time_series_raw_variable_use_element->GetText())
-//                {
-//                    const string time_series_new_raw_variable_use = time_series_raw_variable_use_element->GetText();
-
-//                    time_series_raw_variables(i).set_use(time_series_new_raw_variable_use);
-//                }
-
-//                // Type
-
-//                const tinyxml2::XMLElement* time_series_type_element = time_series_raw_variable_element->FirstChildElement("Type");
-
-//                if(!time_series_type_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series type element is nullptr.\n";
-
-//                    throw runtime_error(buffer.str());
-//                }
-
-//                if(time_series_type_element->GetText())
-//                {
-//                    const string time_series_new_type = time_series_type_element->GetText();
-//                    time_series_raw_variables(i).set_type(time_series_new_type);
-//                }
-
-//                if(time_series_raw_variables(i).type == RawVariableType::Categorical || time_series_raw_variables(i).type == RawVariableType::Binary)
-//                {
-//                    // Categories
-
-//                    const tinyxml2::XMLElement* time_series_categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
-
-//                    if(!time_series_categories_element)
-//                    {
-//                        buffer << "OpenNN Exception: DataSet class.\n"
-//                               << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                               << "Time series categories element is nullptr.\n";
-
-//                        throw runtime_error(buffer.str());
-//                    }
-
-//                    if(time_series_categories_element->GetText())
-//                    {
-//                        const string time_series_new_categories = time_series_categories_element->GetText();
-
-//                        time_series_raw_variables(i).categories = get_tokens(time_series_new_categories, ";);
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     // Rows label
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         // Samples id begin tag
 
@@ -1035,18 +867,31 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
+Tensor<Descriptives, 1> ImageDataSet::scale_input_variables()
+{
+    TensorMap<Tensor<type, 4>> inputs_data(data.data(),
+                                           get_samples_number(),
+                                           input_dimensions[0],
+                                           input_dimensions[1],
+                                           input_dimensions[2]);
+
+    inputs_data.device(*thread_pool_device) = inputs_data / type(255);
+
+    return Tensor<Descriptives, 1>();
+}
+
+
 void ImageDataSet::read_bmp()
 {
-    vector<path> directory_path;
-    vector<path> image_path;
+    vector<fs::path> directory_path;
+    vector<string> image_path;
 
-    for(const directory_entry& current_directory : directory_iterator(data_path))
+    const fs::path path = data_path;
+
+    for(const fs::directory_entry& current_directory : fs::directory_iterator(path))
     {
         if(is_directory(current_directory))
-        {
             directory_path.emplace_back(current_directory.path().string());
-        }
-    }
 
     const Index folders_number = directory_path.size();
 
@@ -1057,7 +902,7 @@ void ImageDataSet::read_bmp()
 
     for(Index i = 0; i < folders_number; i++)
     {
-        for(const directory_entry& current_directory : directory_iterator(directory_path[i]))
+        for(const fs::directory_entry& current_directory : fs::directory_iterator(directory_path[i]))
         {
             if(current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
@@ -1069,7 +914,7 @@ void ImageDataSet::read_bmp()
         images_number[i+1] = samples_number;
     }
 
-    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0].string());
+    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0]/*.string()*/);
 
     const Index height = image_data.dimension(0);
     const Index width = image_data.dimension(1);
@@ -1080,16 +925,16 @@ void ImageDataSet::read_bmp()
 
     const Index pixels_number = height * width * image_channels;
 
-    const Index targets_number = (folders_number == 2) ? folders_number -1 : folders_number;
+    const Index targets_number = (folders_number == 2) 
+        ? folders_number -1 
+        : folders_number;
 
     set(samples_number, height, width, image_channels, targets_number);
 
     Tensor<string, 1> categories(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-    {
         categories(i) = directory_path[i].filename().string();
-    }
 
     raw_variables(raw_variables_number-1).set_categories(categories);
 
@@ -1098,26 +943,20 @@ void ImageDataSet::read_bmp()
     #pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
-        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i].string());
+        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i]/*.string()*/);
 
         if(pixels_number != image_data.size())
             throw runtime_error("Different image sizes.\n");
 
         for(Index j = 0; j < pixels_number; j++)
-        {
             data(i, j) = image_data(j);
-        }
 
         if (targets_number == 1)
         {
             if (i >= images_number[0] && i < images_number[1])
-            {
                 data(i, pixels_number) = 0;
-            }
             else
-            {
                 data(i, pixels_number) = 1;
-            }
         }
         else
         {
@@ -1131,15 +970,12 @@ void ImageDataSet::read_bmp()
             }
         }
 
-        if(display)
-        {
-            if(i % 1000 == 0)
-                display_progress_bar(i, samples_number - 1000);
-        }
+        if(display && i % 1000 == 0)
+            display_progress_bar(i, samples_number - 1000);
     }
 
     if(display)
-        cout << endl << "Image data set loaded." << endl;
+        cout << endl << "Image data set loaded." << endl;        
 }
 
 } // opennn namespace

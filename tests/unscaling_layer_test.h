@@ -9,8 +9,6 @@
 #ifndef UNSCALINGLAYERTEST_H
 #define UNSCALINGLAYERTEST_H
 
-// Unit testing includes
-
 #include "../opennn/unit_testing.h"
 #include "../opennn/unscaling_layer.h"
 
@@ -26,24 +24,8 @@ public:
 
     virtual ~UnscalingLayerTest();
 
-    // Constructor and destructor
-
     void test_constructor();
-
     void test_destructor();
-
-    // Outputs unscaling
-
-    void test_calculate_minimum_maximum_outputs();
-    void test_calculate_mean_standard_deviation_outputs();
-    void test_calculate_logarithmic_outputs();
-
-    // Serialization
-
-    void test_to_XML();
-    void test_from_XML();
-
-    // Unit testing
 
     void run_test_case();
 
@@ -55,8 +37,8 @@ private:
 
     Tensor<Descriptives, 1> descriptives;
 
-    Index samples_number;
-    Index inputs_number;
+    Index samples_number = 0;
+    Index inputs_number = 0;
 };
 
 }

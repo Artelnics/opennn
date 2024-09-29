@@ -286,9 +286,14 @@ void PerceptronLayer3D::set_synaptic_weights(const Tensor<type, 2>& new_synaptic
 
 void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights.size()*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights.size()*sizeof(type));
 
-    std::memcpy(biases.data(), new_parameters.data() + index + synaptic_weights.size(), biases.size()*sizeof(type));
+        #pragma omp section
+        memcpy(biases.data(), new_parameters.data() + index + synaptic_weights.size(), biases.size()*sizeof(type));
+    }
 }
 
 
@@ -572,9 +577,14 @@ void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
     const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();
     type* gradient_data = gradient.data();
 
-    memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
+        #pragma omp section
+        memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    }
 }
 
 

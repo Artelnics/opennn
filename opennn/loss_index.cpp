@@ -269,6 +269,8 @@ void LossIndex::back_propagate(const Batch& batch,
                                ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
 {
+    if(batch.is_empty()) return;
+
     // Loss index
 
     calculate_error(batch, forward_propagation, back_propagation);
@@ -283,8 +285,7 @@ void LossIndex::back_propagate(const Batch& batch,
 
     // Regularization
     
-    add_regularization(back_propagation);
-    
+    add_regularization(back_propagation);   
 }
 
 

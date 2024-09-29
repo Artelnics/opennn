@@ -9,12 +9,8 @@
 #ifndef ScalingLayer4D_H
 #define ScalingLayer4D_H
 
-// System includes
-
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "scaling.h"
 #include "layer.h"
@@ -32,7 +28,6 @@ public:
 
    explicit ScalingLayer4D();
 
-   explicit ScalingLayer4D(const Index&);
    explicit ScalingLayer4D(const dimensions&);
 
    // Get
@@ -43,23 +38,6 @@ public:
    dimensions get_input_dimensions() const;
    Index get_neurons_number() const final;
 
-   // Inputs descriptives
-
-   Tensor<Descriptives, 1> get_descriptives() const;
-   Descriptives get_descriptives(const Index&) const;
-
-   Tensor<type, 1> get_minimums() const;
-   Tensor<type, 1> get_maximums() const;
-   Tensor<type, 1> get_means() const;
-   Tensor<type, 1> get_standard_deviations() const;
-
-   // Variables scaling and unscaling
-
-   Tensor<Scaler, 1> get_scaling_methods() const;
-
-   Tensor<string, 1> write_scalers() const;
-   Tensor<string, 1> write_scalers_text() const;
-
    // Display messages
 
    const bool& get_display() const;
@@ -67,40 +45,14 @@ public:
    // Set
 
    void set();
-   void set(const Index&);
    void set(const dimensions&);
-   void set(const Tensor<Descriptives, 1>&);
-   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
-
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
 
    void set_default();
 
    // Descriptives
 
-   void set_descriptives(const Tensor<Descriptives, 1>&);
-   void set_item_descriptives(const Index&, const Descriptives&);
-
-   void set_minimum(const Index&, const type&);
-   void set_maximum(const Index&, const type&);
-   void set_mean(const Index&, const type&);
-   void set_standard_deviation(const Index&, const type&);
-
    void set_min_max_range(const type& min, const type& max);
-
-   // Scaling method
-
-   void set_scalers(const Tensor<Scaler, 1>&);
-   void set_scalers(const Tensor<string, 1>&);
-
-   void set_scalers(const Scaler&);
-   void set_scalers(const string&);
-
-   void set_scaler(const Index&, const Scaler&);
-   void set_scaler(const Index&, const string&);
-
 
    // Display messages
 
@@ -110,9 +62,9 @@ public:
 
    bool is_empty() const;
 
-   //void check_range(const Tensor<type, 1>&) const;
-
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
+                          LayerForwardPropagation*, 
+                          const bool&) final;
 
    // Serialization
 
@@ -125,10 +77,6 @@ public:
 protected:
 
    dimensions input_dimensions;
-
-   Tensor<Descriptives, 1> descriptives;
-
-   Tensor<Scaler, 1> scalers;
 
    type min_range;
    type max_range;
