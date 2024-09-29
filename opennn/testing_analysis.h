@@ -47,8 +47,11 @@ public:
 
        void print() const
        {
-           cout << "Goodness-of-fit analysis" << endl;
-           cout << "Determination: " << determination << endl;
+           cout << "Goodness-of-fit analysis" << endl
+                << "Determination: " << determination << endl;
+
+           // cout << targets << endl;
+           // cout << outputs << endl;
        }
     };
 

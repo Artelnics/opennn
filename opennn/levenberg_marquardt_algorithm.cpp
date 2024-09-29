@@ -257,12 +257,13 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     neural_network->set_inputs_names(inputs_name);
     neural_network->set_output_namess(targets_names);
 
-    if(neural_network->has_scaling_layer())
+    if(neural_network->has_scaling_layer_2d())
     {
         input_variables_descriptives = data_set->scale_input_variables();
 
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
-        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
+        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
     if(neural_network->has_unscaling_layer())
@@ -444,7 +445,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         
     }
 
-    if(neural_network->has_scaling_layer())
+    if(neural_network->has_scaling_layer_2d())
         data_set->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network->has_unscaling_layer())

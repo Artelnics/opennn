@@ -1115,7 +1115,7 @@ pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_p
 
     const Index depth = multihead_attention_layer->get_depth();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, input_size, depth } });
+    return pair<type*, dimensions>(outputs_data, {{ batch_samples_number, input_size, depth }});
 }
 
 

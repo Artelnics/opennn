@@ -43,8 +43,7 @@ int main()
         const Index hidden_neurons_number = 5;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                     {input_variables_number, hidden_neurons_number, target_variables_number});
-
+                                     {input_variables_number}, {hidden_neurons_number}, {target_variables_number});
 
         neural_network.save("../data/neural_network.xml");
         neural_network.load("../data/neural_network.xml");

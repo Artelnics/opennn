@@ -29,6 +29,8 @@ struct Batch
 
     Index get_batch_samples_number() const;
 
+    bool is_empty() const;
+
     void set(const Index&, DataSet*);
 
     void fill(const Tensor<Index, 1>&, 

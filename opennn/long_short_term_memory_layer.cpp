@@ -24,7 +24,9 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
 }
 
 
-LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps) : Layer()
+LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_number, 
+                                                   const Index& new_neurons_number, 
+                                                   const Index& new_timesteps) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_timesteps);
 

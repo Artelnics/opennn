@@ -58,11 +58,9 @@ public:
 
     explicit PerceptronLayer();
 
-    explicit PerceptronLayer(const Index&,
-        const Index&,
-        const ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
-
-    explicit PerceptronLayer(const dimensions&, const dimensions&);
+    explicit PerceptronLayer(const dimensions&,
+                             const dimensions&,
+                             const ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
     // Get
 

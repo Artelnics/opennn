@@ -19,7 +19,8 @@ ProbabilisticLayer::ProbabilisticLayer()
 }
 
 
-ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Index& new_neurons_number)
+ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number,
+                                       const Index& new_neurons_number)
 {
     set(new_inputs_number, new_neurons_number);
 
@@ -357,15 +358,15 @@ void ProbabilisticLayer::set_parameters_random()
 }
 
 
-void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
-{
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+//void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
+//{
+//    const Index biases_number = get_biases_number();
+//    const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
+//    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
 
-    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
-}
+//    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
+//}
 
 
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
@@ -374,27 +375,6 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
     sum_columns(thread_pool_device, biases, combinations);
-}
-
-
-void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations,
-                                               Tensor<type, 2>& activations,
-                                               Tensor<type, 1>& aux_rows) const
-{
-/*
-    switch(activation_function)
-    {
-    case ActivationFunction::Binary: binary(combinations, activations); return;
-
-    case ActivationFunction::Logistic: logistic(activations); return;
-
-    case ActivationFunction::Competitive: competitive(combinations, activations); return;
-
-    case ActivationFunction::Softmax: softmax(combinations, activations, aux_rows); return;
-
-    default: return;
-    }
-*/
 }
 
 
@@ -428,12 +408,26 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
+
+    { // DEBUG
+        //cout << "first image:\n" << inputs.chip(0, 0) << endl;
+        //system("pause");
+    }
+
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     calculate_combinations(inputs, outputs);
+
+    { // DEBUG
+        //cout << "synaptic_weights:\n" << synaptic_weights << endl;
+        //cout << outputs.dimension(0) << "   " << outputs.dimension(1) << endl;
+        //cout << "outputs:\n" << outputs << endl;
+
+        //system("pause");
+    }
 
     if (neurons_number == 1 && !is_training)
     {
@@ -444,6 +438,8 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
         Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
         logistic(outputs, activations_derivatives);
+
+        //cout << "probabilistic outputs" << outputs << endl;
     }
     else if (neurons_number > 1)
     {
@@ -522,9 +518,14 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
 
-    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
+        #pragma omp section
+        memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    }
 }
 
 

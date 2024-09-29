@@ -127,7 +127,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Samples id
 
     file_stream.OpenElement("HasSamplesId");
-    file_stream.PushText(to_string(has_samples_id).c_str());
+    file_stream.PushText(to_string(has_sample_ids).c_str());
     file_stream.CloseElement();
 
     // Missing values label
@@ -194,7 +194,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Samples id
 /*
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         const Index rows_labels_number = ids.size();
 
@@ -740,7 +740,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Rows label
 
-    if(has_samples_id)
+    if(has_sample_ids)
     {
         // Samples id begin tag
 
@@ -1781,11 +1781,9 @@ void TextDataSet::read_txt()
 
     string line;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 
@@ -1803,11 +1801,9 @@ void TextDataSet::read_txt()
 
     Index index = 0;
 
-    while(file.good())
+    while(getline(file, line))
     {
-        getline(file, line);
-        trim(line);
-        erase(line, '"');
+        prepare_line(line);
 
         if(line.empty()) continue;
 

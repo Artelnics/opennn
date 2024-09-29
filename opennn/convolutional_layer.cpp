@@ -462,9 +462,14 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
 
-    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
+        #pragma omp section
+        memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    }
 }
 
 
@@ -612,14 +617,10 @@ Index ConvolutionalLayer::get_padding_width() const
     switch(convolution_type)
     {
     case ConvolutionType::Valid:
-    {
         return 0;
-    }
 
     case ConvolutionType::Same:
-    {
         return column_stride*(input_dimensions[2] - 1) - input_dimensions[2] + get_kernel_width();
-    }
     }
 
     return 0;
@@ -631,14 +632,10 @@ Index ConvolutionalLayer::get_padding_height() const
     switch(convolution_type)
     {
     case ConvolutionType::Valid:
-    {
         return 0;
-    }
 
     case ConvolutionType::Same:
-    {
         return row_stride*(input_dimensions[1] - 1) - input_dimensions[1] + get_kernel_height();
-    }
     }
 
     return 0;
@@ -681,12 +678,6 @@ Index ConvolutionalLayer::get_parameters_number() const
 }
 
 
-bool ConvolutionalLayer::get_is_before_flatten() const
-{
-    return is_before_flatten;
-}
-
-
 void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions)
 {
@@ -717,6 +708,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                             kernel_width,
                             kernel_channels,
                             kernels_number);
+
     set_random(synaptic_weights);
 
     moving_means.resize(kernels_number);
@@ -809,26 +801,18 @@ void ConvolutionalLayer::set_convolution_type(const ConvolutionalLayer::Convolut
 void ConvolutionalLayer::set_convolution_type(const string& new_convolution_type)
 {
     if(new_convolution_type == "Valid")
-    {
         convolution_type = ConvolutionType::Valid;
-    }
     else if(new_convolution_type == "Same")
-    {
         convolution_type = ConvolutionType::Same;
-    }
     else
-    {
         throw runtime_error("Unknown convolution type: " + new_convolution_type + ".\n");
-    }
 }
 
 
 void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 {
     if(new_stride_row <= 0)
-    {
         throw runtime_error("EXCEPTION: new_stride_row must be a positive number");
-    }
 
     row_stride = new_stride_row;
 }
@@ -837,9 +821,7 @@ void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 {
     if(new_stride_column <= 0)
-    {
         throw runtime_error("EXCEPTION: new_stride_column must be a positive number");
-    }
 
     column_stride = new_stride_column;
 }
@@ -851,29 +833,16 @@ void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_input_dimen
 }
 
 
-void ConvolutionalLayer::set_is_before_flatten(const bool& new_is_before_flatten)
-{
-    is_before_flatten = new_is_before_flatten;
-}
-
-
 void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    // const Index kernel_height = get_kernel_height();
-    // const Index kernel_width = get_kernel_width();
-    // const Index kernel_channels = get_kernel_channels();
-    // const Index kernels_number = get_kernels_number();
-
-    //synaptic_weights.resize(kernel_height,
-        //kernel_width,
-        //kernel_channels,
-        //        kernels_number);
-
-//    biases.resize(kernels_number);
-
+    #pragma omp parallel sections
+    {
+    #pragma omp section
     memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights.size()*sizeof(type));
-
+    
+    #pragma omp section
     memcpy(biases.data(), new_parameters.data() + index + synaptic_weights.size(), biases.size()*sizeof(type));
+    }
 }
 
 
@@ -1014,6 +983,19 @@ void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training
     }
 }
 */
+
+
+void ConvolutionalLayer::print() const
+{
+    cout << "Convolutional layer" << endl;
+
+    cout << "Input dimensions: " << endl;
+    print_dimensions(input_dimensions);
+
+    cout << "Output dimensions: " << endl;
+    print_dimensions(get_output_dimensions());
+}
+
 
 void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {

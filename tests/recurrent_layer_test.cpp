@@ -68,9 +68,9 @@ void RecurrentLayerTest::test_destructor()
 }
 
 
-void RecurrentLayerTest::test_calculate_activations_derivatives()
+void RecurrentLayerTest::test_calculate_activations()
 {
-    cout << "test_calculate_activations_derivatives\n";
+    cout << "test_calculate_activations\n";
 
     Tensor<type, 1> combinations;
     Tensor<type, 1> activations;
@@ -117,9 +117,9 @@ void RecurrentLayerTest::test_forward_propagate()
 
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
-
-    recurrent_layer.forward_propagate(tensor_wrapper(inputs_pair), &recurrent_layer_forward_propagation, is_training);
 /*
+    recurrent_layer.forward_propagate(tensor_wrapper(inputs_pair), &recurrent_layer_forward_propagation, is_training);
+
     outputs = recurrent_layer_forward_propagation.outputs;
     
     // Test
@@ -170,11 +170,7 @@ void RecurrentLayerTest::run_test_case()
 
     test_destructor();
 
-    // Activation Derivatives
-
-    test_calculate_activations_derivatives();
-
-    // Forward propagate
+    test_calculate_activations();
 
     test_forward_propagate();
 

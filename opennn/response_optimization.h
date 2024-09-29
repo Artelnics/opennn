@@ -89,8 +89,8 @@ private:
     Tensor<type, 1> inputs_minimums;
     Tensor<type, 1> inputs_maximums;
 
-    Tensor<type, 1> outputs_minimums;
-    Tensor<type, 1> outputs_maximums;
+    Tensor<type, 1> output_minimums;
+    Tensor<type, 1> output_maximums;
 
     Index evaluations_number = 1000;
 };

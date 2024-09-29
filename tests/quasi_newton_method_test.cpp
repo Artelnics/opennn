@@ -65,7 +65,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
     data_set.set(samples_number, inputs_number, outputs_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
 
     // Test
 
@@ -89,7 +89,7 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
     outputs_number = 1;
     neurons_number = 1;
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(type(1));
 
     sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
@@ -124,7 +124,7 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
     data_set.set(samples_number, inputs_number, outputs_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
 
     quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::DFP);
 
@@ -167,7 +167,7 @@ void QuasiNewtonMethodTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(type(1));
 
     quasi_newton_method.set_maximum_epochs_number(1);
@@ -181,7 +181,7 @@ void QuasiNewtonMethodTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(-1);
 
     quasi_newton_method.set_maximum_epochs_number(1);
