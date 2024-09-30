@@ -11,7 +11,6 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 
-
 using namespace fs;
 
 namespace opennn
