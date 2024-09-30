@@ -11,12 +11,10 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 
-
 using namespace fs;
 
 namespace opennn
 {
-
 
 ImageDataSet::ImageDataSet() : DataSet()
 {
@@ -889,7 +887,6 @@ void ImageDataSet::read_bmp()
     const fs::path path = data_path;
 
     for(const fs::directory_entry& current_directory : fs::directory_iterator(path))
-    {
         if(is_directory(current_directory))
             directory_path.emplace_back(current_directory.path().string());
 

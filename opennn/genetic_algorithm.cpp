@@ -1132,7 +1132,7 @@ void GeneticAlgorithm::check_categorical_raw_variables()
             {
                 const Tensor<bool, 1> individual = population.chip(j, 0);
 
-                if(!(find(individual.data() + i, individual.data() + i + categories_number, 1) == (individual.data() + i + categories_number)))
+                if(!(find(individual.data() + i, individual.data() + i + categories_number, 1) == individual.data() + i + categories_number))
                 {
                     const Index random_index = rand() % categories_number;
 

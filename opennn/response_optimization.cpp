@@ -38,7 +38,7 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 
     inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
     inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
-
+/*
     if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
     {
         output_minimums.resize(outputs_number);
@@ -52,11 +52,12 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
         output_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
         output_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
     }
+*/
 }
 
 
 void ResponseOptimization::set(NeuralNetwork* new_neural_network)
-{
+{   
     neural_network = new_neural_network;
 
     const Index inputs_number = neural_network->get_inputs_number();
@@ -70,7 +71,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 
     inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
     inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
-
+/*
     if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
     {
         output_minimums.resize(outputs_number);
@@ -84,6 +85,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
         output_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
         output_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
     }
+*/
 }
 
 

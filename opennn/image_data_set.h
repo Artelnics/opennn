@@ -35,7 +35,6 @@
 // namespace fs = ghc::filesystem;
 // #endif
 
-
 #ifdef _WIN32
     // Windows-specific includes
     #include <filesystem>
@@ -46,11 +45,10 @@
     namespace fs = ghc::filesystem;
 #endif
 
-
 // #include "filesystem.h"
 // namespace fs = ghc::filesystem;
 
-using namespace fs;
+//using namespace fs;
 
 namespace opennn
 {

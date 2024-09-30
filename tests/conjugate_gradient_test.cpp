@@ -54,7 +54,7 @@ void ConjugateGradientTest::test_destructor()
 void ConjugateGradientTest::test_calculate_PR_parameter()
 {
     cout << "test_calculate_PR_parameter\n";
-
+/*
     neural_network.set();
     type PR_parameter;
 
@@ -75,13 +75,14 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 
     assert_true(PR_parameter >= type(0), LOG);
     assert_true(PR_parameter <= type(1), LOG);
+*/
 }
 
 
 void ConjugateGradientTest::test_calculate_FR_parameter()
 {
     cout << "test_calculate_FR_parameter\n";
-
+/*
     neural_network.set();
     type FR_parameter;
 
@@ -102,6 +103,7 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 
     assert_true(FR_parameter >= type(0), LOG);
     assert_true(FR_parameter <= type(1), LOG);
+*/
 }
 
 

@@ -27,7 +27,7 @@ void TransformerTest::test_constructor()
 {
     cout << "test_constructor\n";
     
-    Tensor<Layer*, 1> layers;
+    Tensor<unique_ptr<Layer>, 1> layers;
 
     // Default constructor
 
