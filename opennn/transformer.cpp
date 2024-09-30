@@ -78,7 +78,7 @@ void Transformer::set(const Index& input_length,
                       const Index& heads_number, 
                       const Index& layers_number)
 {
-    delete_layers();
+    layers.resize(0);
     
     inputs_name.resize(input_length + context_length);
 
@@ -567,7 +567,7 @@ TransformerForwardPropagation::~TransformerForwardPropagation()
 
     for(Index i = 0; i < layers_number; i++)
     {
-        delete layers(i);
+        delete layers[i];
     }
 }
 
@@ -578,7 +578,7 @@ void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNe
 
     batch_samples_number = new_batch_samples;
 
-    const Tensor<unique_ptr<Layer>, 1> neural_network_layers = neural_network->get_layers();
+    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
 
     const Index layers_number = layers.size();
 
@@ -586,22 +586,22 @@ void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNe
 
     for(Index i = 0; i < layers_number; i++)
     {
-        switch (neural_network_layers(i)->get_type())
+        switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Embedding:
-            layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers(i).get());
+            layers[i] = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::MultiheadAttention:
-            layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers(i).get());
+            layers[i] = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::PerceptronLayer3D:
-            layers(i) = new PerceptronLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i).get());
+            layers[i] = new PerceptronLayer3DForwardPropagation(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Probabilistic3D:
-            layers(i) = new ProbabilisticLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i).get());
+            layers[i] = new ProbabilisticLayer3DForwardPropagation(batch_samples_number, neural_network_layers[i].get());
         break;
 
         default: break;
@@ -620,9 +620,9 @@ void TransformerForwardPropagation::print() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i + 1 << ": " << layers(i)->layer->get_name() << endl;
+        cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
 
-        layers(i)->print();
+        layers[i]->print();
     }
 }
 

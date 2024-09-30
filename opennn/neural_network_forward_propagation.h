@@ -26,7 +26,7 @@ struct ForwardPropagation
 
         for(Index i = 0; i < layers_number; i++)
         {
-            delete layers(i);
+            delete layers[i];
         }
     }
 
@@ -46,9 +46,9 @@ struct ForwardPropagation
 
         for(Index i = 0; i < layers_number; i++)
         {
-            cout << "Layer " << i + 1 << ": " << layers(i)->layer->get_name() << endl;
+            cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
 
-            layers(i)->print();
+            layers[i]->print();
         }
     }
 

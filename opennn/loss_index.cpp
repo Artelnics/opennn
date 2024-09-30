@@ -352,8 +352,8 @@ void LossIndex::back_propagate_lm(const Batch& batch,
 void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
                                                             ForwardPropagation& forward_propagation,
                                                             BackPropagationLM& back_propagation_lm) const
-{  
-    const Tensor<unique_ptr<Layer>, 1> layers = neural_network->get_layers();
+{
+    const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
 
     const Index layers_number = layers.size();
 
@@ -384,9 +384,9 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {        
-        layer = layers(i).get();
+        layer = layers[i].get();
 
-        layer_forward_propagation = forward_propagation.layers(i);
+        layer_forward_propagation = forward_propagation.layers[i];
         layer_back_propagation = back_propagation_lm.neural_network.layers(i - first_trainable_layer_index);
         
         if(i == last_trainable_layer_index)
@@ -433,7 +433,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
 
     for(Index i = 0; i < last_trainable_layer_index - first_trainable_layer_index; i++)
     {
-        layer_back_propagation = back_propagation_lm.neural_network.layers(i);
+        layer_back_propagation = back_propagation_lm.neural_network.layers[i];
         
         layer->insert_squared_errors_Jacobian_lm(layer_back_propagation,
                                                  memory_index,
@@ -547,7 +547,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                                                 ForwardPropagation& forward_propagation,
                                                 BackPropagation& back_propagation) const
 {
-    const Tensor<unique_ptr<Layer>, 1> layers = neural_network->get_layers();
+    const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
 
     const Index layers_number = layers.size();
 
@@ -574,10 +574,10 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
-        layer = layers(i).get();
+        layer = layers[i].get();
 
-        layer_forward_propagation = forward_propagation.layers(i);
-        layer_back_propagation = back_propagation.neural_network.layers(i);
+        layer_forward_propagation = forward_propagation.layers[i];
+        layer_back_propagation = back_propagation.neural_network.layers[i];
 
         if(i == last_trainable_layer_index)
         {
@@ -631,7 +631,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
 void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation) const
 {
-    const Tensor<unique_ptr<Layer>, 1> layers = neural_network->get_layers();
+    const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
 
     const Index layers_number = neural_network->get_layers_number();
 
@@ -641,7 +641,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     for(Index i = 0; i < layers_number; i++)
     {
-        layers(i)->insert_gradient(back_propagation.neural_network.layers(i),
+        layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
                                    index,
                                    back_propagation.gradient);
 

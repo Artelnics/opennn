@@ -70,7 +70,7 @@ public:
 
    // APPENDING LAYERS
 
-   void delete_layers();
+//   void delete_layers();
 
    void add_layer(unique_ptr<Layer>, const string& name = "layer");
 
@@ -100,7 +100,7 @@ public:
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
-   Tensor<unique_ptr<Layer>, 1> get_layers() const;
+   const vector<unique_ptr<Layer>>& get_layers() const;
    const unique_ptr<Layer>& get_layer(const Index&) const;
    const unique_ptr<Layer>& get_layer(const string&) const;
    Tensor<Layer*, 1> get_trainable_layers() const;
@@ -121,7 +121,6 @@ public:
    LongShortTermMemoryLayer* get_long_short_term_memory_layer() const;
    RecurrentLayer* get_recurrent_layer() const;
 
-   const unique_ptr<Layer>& get_last_trainable_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
 
    const bool& get_display() const;
@@ -270,7 +269,7 @@ protected:
 
    Tensor<string, 1> output_names;
 
-   Tensor<unique_ptr<Layer>, 1> layers;
+   vector<unique_ptr<Layer>> layers;
 
    Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
 
