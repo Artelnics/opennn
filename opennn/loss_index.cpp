@@ -353,7 +353,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
                                                             ForwardPropagation& forward_propagation,
                                                             BackPropagationLM& back_propagation_lm) const
 {  
-    const Tensor<Layer*, 1> layers = neural_network->get_layers();
+    const Tensor<unique_ptr<Layer>, 1> layers = neural_network->get_layers();
 
     const Index layers_number = layers.size();
 
@@ -384,7 +384,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {        
-        layer = layers(i);
+        layer = layers(i).get();
 
         layer_forward_propagation = forward_propagation.layers(i);
         layer_back_propagation = back_propagation_lm.neural_network.layers(i - first_trainable_layer_index);
@@ -547,7 +547,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                                                 ForwardPropagation& forward_propagation,
                                                 BackPropagation& back_propagation) const
 {
-    const Tensor<Layer*, 1> layers = neural_network->get_layers();
+    const Tensor<unique_ptr<Layer>, 1> layers = neural_network->get_layers();
 
     const Index layers_number = layers.size();
 
@@ -574,7 +574,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
-        layer = layers(i);
+        layer = layers(i).get();
 
         layer_forward_propagation = forward_propagation.layers(i);
         layer_back_propagation = back_propagation.neural_network.layers(i);
@@ -631,7 +631,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
 void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation) const
 {
-    const Tensor<Layer*, 1> layers = neural_network->get_layers();
+    const Tensor<unique_ptr<Layer>, 1> layers = neural_network->get_layers();
 
     const Index layers_number = neural_network->get_layers_number();
 

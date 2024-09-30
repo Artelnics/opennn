@@ -9,11 +9,8 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
+#include <memory>
 
 #include "config.h"
 #include "layer.h"
@@ -67,8 +64,6 @@ public:
 
    explicit NeuralNetwork(const string&);
 
-   explicit NeuralNetwork(const Tensor<Layer*, 1>&);
-
    // Destructor
 
    virtual ~NeuralNetwork();
@@ -77,7 +72,7 @@ public:
 
    void delete_layers();
 
-   void add_layer(Layer*, const string& name = "layer");
+   void add_layer(unique_ptr<Layer>, const string& name = "layer");
 
    bool validate_layer_type(const Layer::Type);
 
@@ -105,9 +100,9 @@ public:
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
-   Tensor<Layer*, 1> get_layers() const;
-   Layer* get_layer(const Index&) const;
-   Layer* get_layer(const string&) const;
+   Tensor<unique_ptr<Layer>, 1> get_layers() const;
+   const unique_ptr<Layer>& get_layer(const Index&) const;
+   const unique_ptr<Layer>& get_layer(const string&) const;
    Tensor<Layer*, 1> get_trainable_layers() const;
 //   Tensor<Index, 1> get_trainable_layers_indices() const;
 
@@ -126,7 +121,7 @@ public:
    LongShortTermMemoryLayer* get_long_short_term_memory_layer() const;
    RecurrentLayer* get_recurrent_layer() const;
 
-   Layer* get_last_trainable_layer() const;
+   const unique_ptr<Layer>& get_last_trainable_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
 
    const bool& get_display() const;
@@ -140,7 +135,6 @@ public:
    void set(const string&);
 
    void set_layers_number(const Index&);
-   void set_layers(Tensor<Layer*, 1>&);
 
    void set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
    void set_layer_inputs_indices(const Index&, const Tensor<Index, 1>&);
@@ -276,7 +270,7 @@ protected:
 
    Tensor<string, 1> output_names;
 
-   Tensor<Layer*, 1> layers;
+   Tensor<unique_ptr<Layer>, 1> layers;
 
    Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
 
