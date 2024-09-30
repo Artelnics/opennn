@@ -139,7 +139,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // Loss index
 
-        Tensor<Layer*,1> trainable_layers = neural_network.get_trainable_layers();
+        Tensor<Layer*, 1> trainable_layers = neural_network.get_trainable_layers();
 
         back_propagation.set(samples_number, &minkowski_error);
 

@@ -26,7 +26,7 @@ struct NeuralNetworkBackPropagationLM
 
         for(Index i = 0; i < layers_number; i++)
         {
-            delete layers(i);
+            delete layers[i];
         }
     }
 
@@ -44,7 +44,7 @@ struct NeuralNetworkBackPropagationLM
         {
             cout << "Layer " << i + 1 << endl;
 
-            layers(i)->print();
+            layers[i]->print();
         }
     }
 
