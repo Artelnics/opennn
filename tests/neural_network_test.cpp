@@ -87,7 +87,7 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_4.get_layer(3)->get_type() == Layer::Type::Flatten, LOG);
     assert_true(neural_network_4.get_layer(4)->get_type() == Layer::Type::Perceptron, LOG);
     assert_true(neural_network_4.get_layer(5)->get_type() == Layer::Type::Probabilistic, LOG);
-*/
+
     // Layers constructor
 
     NeuralNetwork neural_network_7(layers);
@@ -97,7 +97,7 @@ void NeuralNetworkTest::test_constructor()
 
     // Perceptron Layer
 
-    PerceptronLayer* perceptron_layer_7 = new PerceptronLayer({1}, {1});
+    unique_ptr<PerceptronLayer> perceptron_layer_7 = make_unique<PerceptronLayer>({1}, {1});
 
     neural_network_7.add_layer(perceptron_layer_7);
 
@@ -136,7 +136,7 @@ void NeuralNetworkTest::test_constructor()
     new_filters_dimensions.setConstant(type(1));
 
     Index new_outputs_number = 1;
-/*
+
     ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
 
     NeuralNetwork neural_network_6(new_input_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
@@ -677,7 +677,7 @@ void NeuralNetworkTest::test_forward_propagate()
         synaptic_weights_probabilistic.setConstant(type(1));
         probabilistic_layer->set_synaptic_weights(synaptic_weights_probabilistic);
 
-        Tensor<Layer*, 1> layers(2);
+        Tensor<unique_ptr<Layer>, 1> layers(2);
         layers.setValues({ perceptron_layer, probabilistic_layer });
         neural_network.set_layers(layers);
 
