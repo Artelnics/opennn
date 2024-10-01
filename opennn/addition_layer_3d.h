@@ -59,7 +59,6 @@ namespace opennn
         void set(const Index&, const Index&);
 
         void set_default();
-        void set_name(const string&);
 
         void set_inputs_depth(const Index&);
 

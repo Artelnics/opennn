@@ -65,8 +65,6 @@ public:
 
     void set_default();
 
-    void set_name(const string&);
-
     // Display messages
 
 //    void set_display(const bool&);

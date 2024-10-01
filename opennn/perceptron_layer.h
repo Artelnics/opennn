@@ -99,7 +99,6 @@ public:
         const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
     void set_default();
-    void set_name(const string&);
 
     // Architecture
 
@@ -124,9 +123,6 @@ public:
     void set_display(const bool&);
 
     // Parameters initialization
-
-    
-    
 
     void set_parameters_constant(const type&) final;
 

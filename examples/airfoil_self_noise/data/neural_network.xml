@@ -8,9 +8,9 @@
       <Input Index="5">input_5</Input>
    </Inputs>
    <Layers>
-      <LayersNumber>4</LayersNumber>
+      <LayersNumber>5</LayersNumber>
       <ScalingLayer2D>
-         <Name>scaling_layer</Name>
+         <Name>layer</Name>
          <NeuronsNumber>5</NeuronsNumber>
          <ScalingNeuron Index="1">
             <Descriptives>-1 1 0 1 </Descriptives>
@@ -34,11 +34,18 @@
          </ScalingNeuron>
       </ScalingLayer2D>
       <PerceptronLayer>
-         <Name>perceptron_layer</Name>
+         <Name>perceptron_layer_1</Name>
          <InputsNumber>5</InputsNumber>
+         <NeuronsNumber>10</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>0.0442498 0.0381946 -0.0932666 -0.0966463 -0.0208645 0.0693451 -0.0937971 0.0694084 -0.011351 -0.0101036 0.0570553 -0.0440933 -0.0371221 0.0678858 0.0282953 0.0883416 0.07955 -0.0818958 0.096415 -0.0929989 -0.0185554 0.0777483 0.039887 0.00768926 -0.0420968 -0.00639667 0.0690308 0.00838827 -0.0580144 0.032344 0.0948305 0.0671588 -0.0629047 0.0511861 -0.017902 -0.00775119 -0.0645319 -0.0786567 -0.0216736 -0.0827318 0.0223428 -0.0310771 0.0610307 0.0974572 -0.0894529 0.0963244 0.00757343 0.0630273 -0.00968327 0.0746338 0.0516406 -0.0426903 0.0216195 0.038813 0.0275129 0.0855848 0.0606036 -0.0269474 -0.0261178 0.0818008 </Parameters>
+      </PerceptronLayer>
+      <PerceptronLayer>
+         <Name>perceptron_layer_2</Name>
+         <InputsNumber>10</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-         <Parameters>0.0751882 -0.0105227 -0.0467053 -0.0961759 -0.0143192 0.0419988 </Parameters>
+         <Parameters>0.0920875 0.00951363 0.056676 0.0923169 0.0657678 0.0330262 -0.058233 0.0368893 -0.0237963 -0.0036094 -0.0764132 </Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>

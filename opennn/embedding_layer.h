@@ -70,7 +70,6 @@ public:
     void set(const Index&, const Index&, const Index&, const bool& = false);
 
     void set_default();
-    void set_name(const string&);
 
     // Architecture
 

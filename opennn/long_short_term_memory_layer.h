@@ -99,7 +99,6 @@ public:
    void set(const LongShortTermMemoryLayer&);
 
    void set_default();
-   void set_name(const string&);
 
    // Architecture
 

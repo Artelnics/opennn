@@ -149,12 +149,6 @@ void EmbeddingLayer::set_default()
 }
 
 
-void EmbeddingLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
 {
     input_dimensions = new_inputs_dimension;

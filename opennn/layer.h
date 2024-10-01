@@ -88,6 +88,8 @@ public:
 
     string get_type_string() const;
 
+    void set_name(const string&);
+
     // Parameters initialization
 
     virtual void set_parameters_constant(const type&);

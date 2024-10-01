@@ -721,12 +721,6 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 }
 
 
-void ConvolutionalLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void ConvolutionalLayer::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);

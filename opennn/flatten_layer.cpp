@@ -34,12 +34,6 @@ dimensions FlattenLayer::get_input_dimensions() const
 }
 
 
-void FlattenLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 Index FlattenLayer::get_outputs_number() const
 {
     return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];

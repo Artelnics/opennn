@@ -130,12 +130,6 @@ void NormalizationLayer3D::set_default()
 }
 
 
-void NormalizationLayer3D::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void NormalizationLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number = new_inputs_number;

@@ -115,7 +115,7 @@ public:
 
    bool has_selection() const;
 
-   Index find_input_index(const Tensor<Index, 1>&, const Index) const;
+   Index find_input_index(const vector<Index>&, const Index&) const;
 
    // Numerical differentiation
 
@@ -255,7 +255,7 @@ struct BackPropagationLM
 
     void print() const;
     
-    void set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
+    void set_layers_outputs_indices(const vector<vector<Index>>&);
 
     pair<type*, dimensions> get_output_deltas_pair() const;
 

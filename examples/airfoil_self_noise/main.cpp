@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <time.h>
+#include <memory>
 
 #include "../../opennn/data_set.h"
 #include "../../opennn/neural_network.h"
@@ -23,7 +24,8 @@ int main()
 {
     try
     {
-        srand(unsigned(time(nullptr)));
+        srand(unsigned(time(nullptr)));                           
+
 
         // Data set
 

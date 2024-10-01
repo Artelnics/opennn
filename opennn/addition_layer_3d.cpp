@@ -73,12 +73,6 @@ void AdditionLayer3D::set_default()
 }
 
 
-void AdditionLayer3D::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void AdditionLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
     inputs_depth = new_inputs_depth;

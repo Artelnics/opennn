@@ -84,7 +84,6 @@ public:
     void set(const Index&, const Index&, const Index&, const Index&);
 
     void set_default();
-    void set_name(const string&);
 
     // Architecture
 
