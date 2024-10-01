@@ -118,8 +118,6 @@ public:
 
     void set(const dimensions&, const dimensions&);
 
-    void set_name(const string&);
-
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
 

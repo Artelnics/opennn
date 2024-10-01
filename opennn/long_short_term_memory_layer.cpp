@@ -322,12 +322,6 @@ void LongShortTermMemoryLayer::set_default()
 }
 
 
-void LongShortTermMemoryLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();

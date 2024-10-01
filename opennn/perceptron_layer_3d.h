@@ -94,7 +94,6 @@ public:
             const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
    void set_default();
-   void set_name(const string&);
 
    // Architecture
 

@@ -235,11 +235,6 @@ void MultiheadAttentionLayer::set_default()
 }
 
 
-void MultiheadAttentionLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
 
 void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {

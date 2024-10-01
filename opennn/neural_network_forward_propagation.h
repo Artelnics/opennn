@@ -1,7 +1,7 @@
 #ifndef FORWARDPROPAGATION_H
 #define FORWARDPROPAGATION_H
 
-#include <string>
+//#include <string>
 
 #include "neural_network.h"
 
@@ -25,16 +25,12 @@ struct ForwardPropagation
         const Index layers_number = layers.size();
 
         for(Index i = 0; i < layers_number; i++)
-        {
             delete layers[i];
-        }
     }
-
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network);
 
     pair<type*, dimensions> get_last_trainable_layer_outputs_pair() const;
-
 
     void print() const
     {

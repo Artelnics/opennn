@@ -177,12 +177,6 @@ void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_l
 }
 
 
-void ProbabilisticLayer3D::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void ProbabilisticLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number = new_inputs_number;

@@ -190,12 +190,6 @@ void PoolingLayer::set(const dimensions& new_input_dimensions, const dimensions&
 }
 
 
-void PoolingLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void PoolingLayer::set_inputs_dimensions(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;

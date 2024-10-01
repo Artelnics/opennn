@@ -71,7 +71,7 @@ NeuralNetwork::~NeuralNetwork()
 //}
 
 
-void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name)
+void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const vector<Index>& input_indices)
 {
     const Layer::Type layer_type = layer->get_type();
 
@@ -79,33 +79,16 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name)
 
     const Index old_layers_number = get_layers_number();
 
-    const vector<unique_ptr<Layer>>& old_layers = get_layers();
+    layers.push_back(std::move(layer));
 
-    const Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_input_indices();
+    layers_inputs_indices.push_back(input_indices.empty() ? std::vector<Index>(1, old_layers_number - 1) : input_indices);
 
-    layers.resize(old_layers_number + 1);
-/*
-    for(Index i = 0; i < old_layers_number; i++)
-        layers[i] = old_layers(i);
-*/
-    layers[old_layers_number] = move(layer);
-
-    layers_inputs_indices.resize(old_layers_number+1);
-/*
-    for(Index i = 0; i < old_layers_number; i++)
-        layers_inputs_indices(i) = old_layers_inputs_indices(i);
-*/
-    Tensor<Index, 1> new_layer_inputs_indices(1);
-    new_layer_inputs_indices(0) = old_layers_number-1;
-
-    layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
+    layers[old_layers_number]->set_name(name);
 }
 
 
 bool NeuralNetwork::validate_layer_type(const Layer::Type layer_type)
 {
-    const Index layers_number = layers.size();
-
     if(has_bounding_layer())
         throw runtime_error("No layers can be added after a bounding layer.\n");
 
@@ -318,7 +301,7 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& name) const
         if(layer_names(i) == name)
             return layers[i];
 
-    return nullptr;
+    throw runtime_error("Layer not found in neural network");
 }
 
 
@@ -391,7 +374,7 @@ Index NeuralNetwork::get_layer_index(const string& name) const
 // }
 
 
-const Tensor<Tensor<Index, 1>, 1>& NeuralNetwork::get_layers_input_indices() const
+const vector<vector<Index>>& NeuralNetwork::get_layers_input_indices() const
 {
     return layers_inputs_indices;
 }
@@ -568,11 +551,15 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     if(model_type == ModelType::Approximation)
     {
         add_layer(make_unique<ScalingLayer2D>(input_dimensions));
-/*
+
         for(Index i = 0; i < complexity_size; i++)
-            add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), {complexity_dimensions[i]}, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+        {
+            const dimensions neurons_number = {complexity_dimensions[i]};
+
+            add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
                       "perceptron_layer_" + to_string(i+1));
-*/
+        }
+
         add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), output_dimensions, PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(complexity_size+1));
 
         add_layer(make_unique<UnscalingLayer>(output_dimensions));
@@ -581,13 +568,11 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     }
     else if(model_type == ModelType::Classification || model_type == ModelType::TextClassification)
     {
-
         for (Index i = 0; i < complexity_size; i++)
         {
             const dimensions neurons_number = { complexity_dimensions[i] };
             add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
                 "perceptron_layer_" + to_string(i + 1));
-
         }
 
         add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
@@ -764,15 +749,15 @@ void NeuralNetwork::set_layers_number(const Index& new_layers_number)
 }
 
 
-void NeuralNetwork::set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>& new_layers_inputs_indices)
+void NeuralNetwork::set_layers_inputs_indices(const vector<vector<Index>>& new_layers_inputs_indices)
 {
     layers_inputs_indices = new_layers_inputs_indices;
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const Tensor<Index, 1>& new_layer_inputs_indices)
+void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const vector<Index>& new_layer_input_indices)
 {
-    layers_inputs_indices(layer_index) = new_layer_inputs_indices;
+    layers_inputs_indices[layer_index] = new_layer_input_indices;
 }
 
 
@@ -782,14 +767,12 @@ void NeuralNetwork::set_layer_inputs_indices(const string& name, const Tensor<st
 
     const Index size = new_layer_inputs_names.size();
 
-    Tensor<Index, 1> new_layer_inputs_indices(size);
+    vector<Index> new_layer_input_indices(size);
 
     for(Index i = 0; i < size; i++)
-    {
-        new_layer_inputs_indices(i) = get_layer_index(new_layer_inputs_names(i));
-    }
+        new_layer_input_indices[i] = get_layer_index(new_layer_inputs_names(i));
 
-    layers_inputs_indices(layer_index) = new_layer_inputs_indices;
+    layers_inputs_indices[layer_index] = new_layer_input_indices;
 }
 
 
@@ -806,11 +789,11 @@ void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& n
 {
     const Index layer_index = get_layer_index(name);
 
-    Tensor<Index, 1> new_layer_inputs_indices(1);
+    vector<Index> new_layer_input_indices(1);
 
-    new_layer_inputs_indices(0) = get_layer_index(new_layer_inputs_name);
+    new_layer_input_indices[0] = get_layer_index(new_layer_inputs_name);
 
-    layers_inputs_indices(layer_index) = new_layer_inputs_indices;
+    layers_inputs_indices[layer_index] = new_layer_input_indices;
 }
 
 
@@ -886,10 +869,7 @@ Index NeuralNetwork::get_parameters_number() const
     Index parameters_number = 0;
 
     for(Index i = 0; i < layers.size(); i++)
-        if(layers[i] == nullptr)
-            cout << "Layer " << i << " is nullptr." << endl;
-        else
-            parameters_number += layers[i]->get_parameters_number();
+        parameters_number += layers[i]->get_parameters_number();
 
     return parameters_number;
 }
@@ -1163,20 +1143,24 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 }
 
 
-bool NeuralNetwork::is_input_layer(const Tensor<Index, 1>& layer_inputs_indices) const
+bool NeuralNetwork::is_input_layer(const vector<Index>& layer_inputs_indices) const
 {
-    for(Index i = 0; i < layer_inputs_indices.size(); i++)
-        if(layer_inputs_indices(i) == -1) 
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+        if(layer_inputs_indices[i] == -1)
             return true;
 
     return false;
 }
 
 
-bool NeuralNetwork::is_context_layer(const Tensor<Index, 1>& layer_inputs_indices) const
-{
-    for(Index i = 0; i < layer_inputs_indices.size(); i++)
-        if(layer_inputs_indices(i) == -2) 
+bool NeuralNetwork::is_context_layer(const vector<Index>& layer_inputs_indices) const
+{   
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+        if(layer_inputs_indices[i] == -2)
             return true;
 
     return false;
@@ -1185,9 +1169,11 @@ bool NeuralNetwork::is_context_layer(const Tensor<Index, 1>& layer_inputs_indice
 
 void NeuralNetwork::set_parameters_constant(const type& value) const
 {
+    const Index layers_number = get_layers_number();
+
     #pragma omp parallel for
 
-    for(Index i = 0; i < layers.size(); i++)
+    for(Index i = 0; i < layers_number; i++)
         layers[i]->set_parameters_constant(value);
 }
 
@@ -1213,7 +1199,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 
     const vector<unique_ptr<Layer>>& layers = get_layers();
 
-    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = get_layers_input_indices();
+    const vector<vector<Index>> layers_inputs_indices = get_layers_input_indices();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
@@ -1236,7 +1222,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
     
     for(Index i = first_layer_index; i <= last_layer_index; i++)
     {
-        const Tensor<Index, 1> layer_input_indices = layers_inputs_indices(i);
+        const vector<Index> layer_input_indices = layers_inputs_indices[i];
         const Index layer_inputs_number = layer_input_indices.size();
 
         if(i == first_layer_index || is_input_layer(layer_input_indices))
@@ -1257,7 +1243,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 
             for(Index j = 0; j < layer_inputs_number; j++)
             {
-                layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
+                layer_inputs(j) = forward_propagation.layers(layers_inputs_indices[i][j])->get_outputs_pair();
             }
         }
 
@@ -1533,7 +1519,7 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.PushAttribute("LayerIndex", to_string(i+1).c_str());
 
-        const Tensor<Index, 1>& indices = layers_inputs_indices(i);
+        const Tensor<Index, 1>& indices = layers_inputs_indices[i];
 
         buffer.str("");
 
@@ -1728,97 +1714,97 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         {
             unique_ptr<ScalingLayer2D> scaling_layer = make_unique<ScalingLayer2D>();
             scaling_layer->from_XML(layer_document);
-            add_layer(move(scaling_layer));
+            add_layer(std::move(scaling_layer));
         }
         else if(layer_type == "Scaling4D")
         {
             unique_ptr<ScalingLayer4D> scaling_layer = make_unique<ScalingLayer4D>();
             scaling_layer->from_XML(layer_document);
-            add_layer(move(scaling_layer));
+            add_layer(std::move(scaling_layer));
         }
         else if(layer_type == "ConvolutionalLayer")
         {
             unique_ptr<ConvolutionalLayer> convolutional_layer = make_unique<ConvolutionalLayer>();
             convolutional_layer->from_XML(layer_document);
-            add_layer(move(convolutional_layer));
+            add_layer(std::move(convolutional_layer));
         }
         else if(layer_type == "PerceptronLayer")
         {
             unique_ptr<PerceptronLayer> perceptron_layer = make_unique<PerceptronLayer>();
             perceptron_layer->from_XML(layer_document);
-            add_layer(move(perceptron_layer));
+            add_layer(std::move(perceptron_layer));
         }
         else if(layer_type == "PerceptronLayer3D")
         {
             unique_ptr<PerceptronLayer3D> perceptron_layer_3d = make_unique<PerceptronLayer3D>();
             perceptron_layer_3d->from_XML(layer_document);
-            add_layer(move(perceptron_layer_3d));
+            add_layer(std::move(perceptron_layer_3d));
         }
         else if(layer_type == "PoolingLayer")
         {
             unique_ptr<PoolingLayer> pooling_layer = make_unique<PoolingLayer>();
             pooling_layer->from_XML(layer_document);
-            add_layer(move(pooling_layer));
+            add_layer(std::move(pooling_layer));
         }
         else if(layer_type == "ProbabilisticLayer")
         {
             unique_ptr<ProbabilisticLayer> probabilistic_layer = make_unique<ProbabilisticLayer>();
             probabilistic_layer->from_XML(layer_document);
-            add_layer(move(probabilistic_layer));
+            add_layer(std::move(probabilistic_layer));
         }
         else if(layer_type == "ProbabilisticLayer3D")
         {
             unique_ptr<ProbabilisticLayer3D> probabilistic_layer_3d = make_unique<ProbabilisticLayer3D>();
             probabilistic_layer_3d->from_XML(layer_document);
-            add_layer(move(probabilistic_layer_3d));
+            add_layer(std::move(probabilistic_layer_3d));
         }
         else if(layer_type == "LongShortTermMemoryLayer")
         {
             unique_ptr<LongShortTermMemoryLayer> long_short_term_memory_layer = make_unique<LongShortTermMemoryLayer>();
             long_short_term_memory_layer->from_XML(layer_document);
-            add_layer(move(long_short_term_memory_layer));
+            add_layer(std::move(long_short_term_memory_layer));
         }
         else if(layer_type == "RecurrentLayer")
         {
             unique_ptr<RecurrentLayer> recurrent_layer = make_unique<RecurrentLayer>();
             recurrent_layer->from_XML(layer_document);
-            add_layer(move(recurrent_layer));
+            add_layer(std::move(recurrent_layer));
         }
         else if(layer_type == "UnscalingLayer")
         {
             unique_ptr<UnscalingLayer> unscaling_layer = make_unique<UnscalingLayer>();
             unscaling_layer->from_XML(layer_document);
-            add_layer(move(unscaling_layer));
+            add_layer(std::move(unscaling_layer));
         }
         else if(layer_type == "BoundingLayer")
         {
             unique_ptr<BoundingLayer> bounding_layer = make_unique<BoundingLayer>();
             bounding_layer->from_XML(layer_document);
-            add_layer(move(bounding_layer));
+            add_layer(std::move(bounding_layer));
         }
         else if(layer_type == "EmbeddingLayer")
         {
             unique_ptr<EmbeddingLayer> embedding_layer = make_unique<EmbeddingLayer>();
             embedding_layer->from_XML(layer_document);
-            add_layer(move(embedding_layer));
+            add_layer(std::move(embedding_layer));
         }
         else if(layer_type == "MultiheadAttentionLayer")
         {
             unique_ptr<MultiheadAttentionLayer> multihead_attention_layer = make_unique<MultiheadAttentionLayer>();
             multihead_attention_layer->from_XML(layer_document);
-            add_layer(move(multihead_attention_layer));
+            add_layer(std::move(multihead_attention_layer));
         }
         else if(layer_type == "AdditionLayer3D")
         {
             unique_ptr<AdditionLayer3D> addition_layer_3d = make_unique<AdditionLayer3D>();
             addition_layer_3d->from_XML(layer_document);
-            add_layer(move(addition_layer_3d));
+            add_layer(std::move(addition_layer_3d));
         }
         else if(layer_type == "NormalizationLayer3D")
         {
             unique_ptr<NormalizationLayer3D> normalization_layer_3d = make_unique<NormalizationLayer3D>();
             normalization_layer_3d->from_XML(layer_document);
-            add_layer(move(normalization_layer_3d));
+            add_layer(std::move(normalization_layer_3d));
         }
         else
         {
@@ -1845,7 +1831,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         {
 //            const Index layer_index = Index(stoi(layer_inputs_indices_element->Attribute("LayerIndex"))) - 1;
 //            const string indices_string = layer_inputs_indices_element->GetText();
-//            layers_inputs_indices(layer_index) = to_type_vector(indices_string, ' ').cast<Index>();
+//            layers_inputs_indices[layer_index] = to_type_vector(indices_string, ' ').cast<Index>();
         }
     }
 */

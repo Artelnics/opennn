@@ -91,6 +91,12 @@ string Layer::get_type_string() const
 }
 
 
+void Layer::set_name(const string& new_name)
+{
+    name = new_name;
+}
+
+
 void Layer::set_threads_number(const int& new_threads_number)
 {
     if(thread_pool != nullptr) delete thread_pool;

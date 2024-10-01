@@ -42,12 +42,6 @@ ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions, c
 }
 
 
-void ProbabilisticLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 Index ProbabilisticLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);
