@@ -50,27 +50,13 @@ const bool& LossIndex::get_display() const
 
 bool LossIndex::has_neural_network() const
 {
-    if(neural_network)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return neural_network != nullptr;
 }
 
 
 bool LossIndex::has_data_set() const
 {
-    if(data_set)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return data_set != nullptr;
 }
 
 
@@ -168,21 +154,13 @@ void LossIndex::set_default()
 void LossIndex::set_regularization_method(const string& new_regularization_method)
 {
     if(new_regularization_method == "L1_NORM")
-    {
         set_regularization_method(RegularizationMethod::L1);
-    }
     else if(new_regularization_method == "L2_NORM")
-    {
         set_regularization_method(RegularizationMethod::L2);
-    }
     else if(new_regularization_method == "NO_REGULARIZATION")
-    {
         set_regularization_method(RegularizationMethod::NoRegularization);
-    }
     else
-    {
         throw runtime_error("Unknown regularization method: " + new_regularization_method + ".");
-    }
 }
 
 
@@ -227,8 +205,6 @@ void LossIndex::check() const
 {
     if(!neural_network)
         throw runtime_error("Pointer to neural network is nullptr.\n");
-
-    // Data set
 
     if(!data_set)
         throw runtime_error("Pointer to data set is nullptr.\n");
@@ -490,13 +466,17 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 {   
     switch(regularization_method)
     {
-        case RegularizationMethod::NoRegularization: return type(0);
+        case RegularizationMethod::NoRegularization: 
+            return type(0);
 
-        case RegularizationMethod::L1: return l1_norm(thread_pool_device, parameters);
+        case RegularizationMethod::L1: 
+            return l1_norm(thread_pool_device, parameters);
 
-        case RegularizationMethod::L2: return l2_norm(thread_pool_device, parameters);
+        case RegularizationMethod::L2: 
+            return l2_norm(thread_pool_device, parameters);
 
-        default: return type(0);
+        default: 
+            return type(0);
     }
 
     return type(0);
@@ -697,24 +677,19 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
     switch(regularization_method)
     {
     case RegularizationMethod::L1:
-    {
         file_stream.PushAttribute("Type", "L1_NORM");
-    }
     break;
 
     case RegularizationMethod::L2:
-    {
         file_stream.PushAttribute("Type", "L2_NORM");
-    }
     break;
 
     case RegularizationMethod::NoRegularization:
-    {
         file_stream.PushAttribute("Type", "NO_REGULARIZATION");
-    }
     break;
 
-    default: break;
+    default: 
+    break;
     }
 
     // Regularization weight
@@ -1075,29 +1050,23 @@ type LossIndex::calculate_h(const type& x) const
 }
 
 
-void BackPropagationLM::print() const {
-    cout << "Loss index back-propagation LM" << endl;
-    
-    cout << "Errors:" << endl;
-    cout << errors << endl;
-    
-    cout << "Squared errors:" << endl;
-    cout << squared_errors << endl;
-    
-    cout << "Squared errors Jacobian:" << endl;
-    cout << squared_errors_jacobian << endl;
-    
-    cout << "Error:" << endl;
-    cout << error << endl;
-    
-    cout << "Loss:" << endl;
-    cout << loss << endl;
-    
-    cout << "Gradient:" << endl;
-    cout << gradient << endl;
-    
-    cout << "Hessian:" << endl;
-    cout << hessian << endl;
+void BackPropagationLM::print() const 
+{
+    cout << "Loss index back-propagation LM" << endl    
+         << "Errors:" << endl
+         << errors << endl
+         << "Squared errors:" << endl
+         << squared_errors << endl
+         << "Squared errors Jacobian:" << endl
+         << squared_errors_jacobian << endl
+         << "Error:" << endl
+         << error << endl
+         << "Loss:" << endl
+         << loss << endl
+         << "Gradient:" << endl
+         << gradient << endl
+         << "Hessian:" << endl
+         << hessian << endl;
 }
 
 void BackPropagationLM::set_layers_outputs_indices(const vector<vector<Index>>& layer_inputs_indices)
@@ -1177,8 +1146,8 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
     hessian.resize(parameters_number, parameters_number);
     
     regularization_hessian.resize(parameters_number, parameters_number);
-    regularization_hessian.setZero();
-    
+    regularization_hessian.setZero();   
+
     errors.resize(batch_samples_number, outputs_number);
     
     squared_errors.resize(batch_samples_number);
@@ -1209,9 +1178,9 @@ BackPropagationLM::BackPropagationLM()
 {
 }
 
-}
- // namespace opennn
-//  // namespace opennnOpenNN: Open Neural // namespace  // namespace opennnopennn Networks Library.
+} // namespace opennn
+
+// OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
