@@ -477,10 +477,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
         = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, 
-                                            batch_size,
-                                            time_steps,
-                                            inputs_number);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(inputs_pair(0));
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -532,10 +529,7 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     // Forward propagation
 
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, 
-                                            samples_number,
-                                            time_steps,
-                                            inputs_number);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(inputs_pair(0));
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -545,10 +539,7 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     // Back propagation
 
-    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first, 
-                                            samples_number, 
-                                            time_steps,
-                                            neurons_number);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair(0));
 
     const bool& is_first_layer = recurrent_layer_back_propagation->is_first_layer;
 

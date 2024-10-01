@@ -408,8 +408,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 {
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
 
     { // DEBUG
         //cout << "first image:\n" << inputs.chip(0, 0) << endl;
@@ -463,8 +462,8 @@ void ProbabilisticLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     const Index samples_number = inputs_pair(0).second[0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_pair(0).second[1]);
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, samples_number, deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair(0));
 
     // Forward propagation
 

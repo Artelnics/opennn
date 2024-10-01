@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "bounding_layer.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -262,7 +263,7 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
                                       LayerForwardPropagation* forward_propagation,
                                       const bool& is_training)
 {
-    const TensorMap<Tensor<type,2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(inputs_pair(0));
 
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation
             = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);

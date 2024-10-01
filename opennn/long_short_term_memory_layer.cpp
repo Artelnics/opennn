@@ -717,7 +717,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_number);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
     Tensor<type, 1>& current_inputs = long_short_term_memory_layer_forward_propagation->current_inputs;
 
     Tensor<type, 2, RowMajor>& forget_activations = long_short_term_memory_layer_forward_propagation->forget_activations;
@@ -885,9 +885,9 @@ void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimension
                                               LayerBackPropagation* back_propagation) const
 {
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
 
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair(0));
 
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
             static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);

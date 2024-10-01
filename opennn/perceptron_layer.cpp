@@ -373,7 +373,7 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
@@ -408,8 +408,8 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair(0));
 
     // Forward propagation
 
@@ -449,8 +449,8 @@ void PerceptronLayer::back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>
                                         LayerForwardPropagation* forward_propagation,
                                         LayerBackPropagationLM* back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair(0));
 
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();

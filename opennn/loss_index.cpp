@@ -184,10 +184,7 @@ void LossIndex::set_display(const bool& new_display)
 
 bool LossIndex::has_selection() const
 {
-    if(data_set->get_selection_samples_number() != 0)
-        return true;
-    else
-        return false;
+    return data_set->get_selection_samples_number() != 0;
 }
 
 
@@ -223,7 +220,7 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 }
@@ -922,7 +919,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
-    TensorMap<Tensor<type, 1>> inputs_vector(inputs_pair(0).first, inputs_number);
+    TensorMap<Tensor<type, 1>> inputs_vector = tensor_map_1(inputs_pair(0));
 
     for (Index i = 0; i < inputs_number; i++)
     {

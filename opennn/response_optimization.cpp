@@ -299,13 +299,13 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(contains(inputs_name,names[i]))
+        if(contains(inputs_name, names[i]))
         {
             index = neural_network->get_input_index(names[i]);
 
             set_input_condition(index, conditions[i], values_conditions[i]);
         }
-        else if(contains(output_names,names[i]))
+        else if(contains(output_names, names[i]))
         {
             index = neural_network->get_output_index(names[i]);
 
@@ -332,14 +332,14 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
         else if(conditions_string[i] == "Between")
             conditions[i] = Condition::Between;
         else if(conditions_string[i] == ">="
-                || conditions_string[i] == ">"
-                || conditions_string[i] == "GreaterEqualTo"
-                || conditions_string[i] == "GreaterThan")
+             || conditions_string[i] == ">"
+             || conditions_string[i] == "GreaterEqualTo"
+             || conditions_string[i] == "GreaterThan")
             conditions[i] = Condition::GreaterEqualTo;
         else if(conditions_string[i] == "<="
-                || conditions_string[i] == "<"
-                || conditions_string[i] == "LessEqualTo"
-                || conditions_string[i] == "LessThan")
+             || conditions_string[i] == "<"
+             || conditions_string[i] == "LessEqualTo"
+             || conditions_string[i] == "LessThan")
             conditions[i] = Condition::LessEqualTo;
         else
             conditions[i] = Condition::None;
@@ -417,7 +417,8 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
             {
                 current_values[0] = inputs_minimums(i);
                 current_values[1] = inputs_maximums(i);
-            }else
+            }
+            else
             {
                 current_values[0] = output_minimums(i);
                 current_values[1] = output_maximums(i);
@@ -462,7 +463,6 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 inputs(i,index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
                 index++;
             }
-
             else if(column_type == DataSet::RawVariableType::Binary)
             {
                 inputs(i, index) = (inputs_conditions(index) == ResponseOptimization::Condition::EqualTo)
@@ -471,7 +471,6 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
                 index++;
             }
-
             else if(column_type == DataSet::RawVariableType::Categorical)
             {
                 const Index categories_number = data_set->get_raw_variables()(used_raw_variable_index).get_categories_number();

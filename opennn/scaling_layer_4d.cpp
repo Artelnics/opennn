@@ -117,11 +117,7 @@ void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation
             = static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
-                                            inputs_pair(0).second[0],
-                                            inputs_pair(0).second[1],
-                                            inputs_pair(0).second[2],
-                                            inputs_pair(0).second[3]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(inputs_pair(0));
 
     Tensor<type, 4>& outputs = scaling_layer_forward_propagation->outputs;
 
