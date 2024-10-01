@@ -119,7 +119,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     //loss = sum_squared_error.calculate_training_loss();
     //training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
 
-    initial_learning_rate = 0.01;
+    initial_learning_rate = static_cast<type>(0.01);
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -132,7 +132,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     neural_network.set_parameters_constant(type(0));
 
-    initial_learning_rate = 0.01;
+    initial_learning_rate = static_cast<type>(0.01);
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -140,7 +140,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     neural_network.set_parameters_constant(type(1));
 
-    initial_learning_rate = 0.0;
+    initial_learning_rate = static_cast<type>(0.0);
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -152,7 +152,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
-    initial_learning_rate = 0.001;
+    initial_learning_rate = static_cast<type>(0.001);
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -169,7 +169,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
-    initial_learning_rate = 0.001;
+    initial_learning_rate = static_cast<type>(0.001);
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -240,7 +240,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     Tensor<type, 1> training_direction = gradient*(type(-1.0));
 */
-    type initial_learning_rate = 0.001;
+    type initial_learning_rate = static_cast<type>(0.001);
 /*
     pair<type, type> directional_point
            = learning_rate_algorithm.calculate_directional_point(1e-2, training_direction, initial_learning_rate);

@@ -46,7 +46,7 @@ public:
 
    // Enumerations
 
-   enum class ActivationFunction{Softmax, Competitive};
+   enum class ActivationFunction{Softmax, Competitive, Binary, Logistic};
 
    // Get
 
