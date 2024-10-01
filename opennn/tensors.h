@@ -16,24 +16,8 @@ type calculate_random_uniform(const type& = type(0), const type& = type(1));
 
 bool calculate_random_bool();
 
-// void set_random(Tensor<type, 1>&, const type& = type(-0.1), const type& = type(0.1));
-// void set_random(Tensor<type, 2>&, const type& = type(-0.1), const type& = type(0.1));
-// void set_random(Tensor<type, 3>&, const type& = type(-0.1), const type& = type(0.1));
-// void set_random(Tensor<type, 4>&, const type& = type(-0.1), const type& = type(0.1));
-
 template<int Dimension>
-void set_random(Tensor<type, Dimension>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)
-{
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<type> dist(minimum, maximum);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); i++)
-    {
-        tensor(i) = dist(gen);
-    }
-}
+void set_random(Tensor<type, Dimension>& tensor, const type& minimum = -0.1, const type& maximum = 0.1);
 
 type bound(const type& value, const type& minimum, const type& maximum);
 

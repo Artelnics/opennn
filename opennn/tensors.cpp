@@ -62,53 +62,42 @@ bool calculate_random_bool()
 }
 
 
-// void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum)
-// {
-//     random_device rd;
-//     mt19937 gen(rd());
-//     uniform_real_distribution<type> dist(minimum, maximum);
+template<int Dimension>
+void set_random(Tensor<type, Dimension>& tensor, const type& minimum, const type& maximum)
+{
+    random_device rd;
+    mt19937 gen(rd());
 
-//     for(Index i = 0; i < tensor.size(); i++)
-//     {
-//         tensor(i) = dist(gen);
-//     }
-// }
+    size_t N = tensor.size();
+    size_t half = N / 2;
 
+    vector<type> values(N);
 
-// void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum)
-// {
-//     //#pragma omp parallel for
-//     for(Index i = 0; i < tensor.size(); i++)
-//     {
-//         const type random = type(rand()/(RAND_MAX+1.0));
+    uniform_real_distribution<type> dist(minimum, maximum);
 
-//         tensor(i) = minimum + (maximum - minimum)*random;
-//     }
-// }
+    for (size_t i = 0; i < half; ++i) 
+    {
+        values[i] = dist(gen);
+        values[i + half] = -values[i];
+    }
 
+    if (N % 2 != 0) 
+    {
+        values[N - 1] = 0;
+    }
 
-// void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum)
-// {
-//     //#pragma omp parallel for
-//     for(Index i = 0; i < tensor.size(); i++)
-//     {
-//         const type random = type(rand()/(RAND_MAX+1.0));
+    std::shuffle(values.begin(), values.end(), gen);
 
-//         tensor(i) = minimum + (maximum - minimum)*random;
-//     }
-// }
+    for (Index i = 0; i < tensor.size(); ++i) 
+    {
+        tensor(i) = values[i];
+    }
+}
 
-
-// void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum)
-// {
-//     //#pragma omp parallel for
-//     for(Index i = 0; i < tensor.size(); i++)
-//     {
-//         const type random = type(rand()/(RAND_MAX+1.0));
-
-//         tensor(i) = minimum + (maximum - minimum)*random;
-//     }
-// }
+template void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum);
+template void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum);
+template void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum);
+template void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum);
 
 
 void initialize_sequential(Tensor<type, 1>& vector)
