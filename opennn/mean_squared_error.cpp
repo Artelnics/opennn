@@ -62,7 +62,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     
     error = sum_squared_error(0)*coefficient;
     
-   // if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -154,17 +154,17 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                   BackPropagationLM& back_propagation_lm) const
 {
-     const Index outputs_number = neural_network->get_outputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
-     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
+    const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
-     const type coefficient = type(2.0)/type(batch_samples_number);
+    const type coefficient = type(2.0)/type(batch_samples_number);
 
-     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
+    Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
-     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
+    const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-     hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
 }
 
 

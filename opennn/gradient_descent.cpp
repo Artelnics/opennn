@@ -534,10 +534,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     if(learning_rate_algorithm_element)
     {
         tinyxml2::XMLDocument learning_rate_algorithm_document;
-        tinyxml2::XMLNode* element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
-
-        learning_rate_algorithm_document.InsertFirstChild(element_clone);
-
+        learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 
