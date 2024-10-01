@@ -43,6 +43,7 @@ void PoolingLayerTest::test_constructor()
                 && pooling_layer.get_pool_width() == 2, LOG);
 }
 
+
 void PoolingLayerTest::test_destructor()
 {
    cout << "test_destructor\n";
@@ -94,29 +95,15 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
         input_width,
         input_channels);
 
-    // Copy bmp_image data into inputs
     for (int h = 0; h < input_height; ++h)
-    {
         for (int w = 0; w < input_width; ++w)
-        {
             for (int c = 0; c < input_channels; ++c)
-            {
                 inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
-            }
-        }
-    }
 
-    // Copy bmp_image_2 data into inputs
     for (int h = 0; h < input_height; ++h)
-    {
         for (int w = 0; w < input_width; ++w)
-        {
             for (int c = 0; c < input_channels; ++c)
-            {
                 inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
-            }
-        }
-    }
 
     pooling_layer.forward_propagate_max_pooling(inputs,
                                                 &pooling_layer_forward_propagation,
@@ -136,8 +123,6 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
 
     assert_true(outputs(0, 0, 0, 0) == type(255)
                 && outputs(1, 0, 0, 0) == type(254), LOG);
-
-    //cout << "outputs:" << endl << "Image 1 (0,0,0): " << round(outputs(0, 0, 0, 0)) << endl << "Image 2 (0,0,0): " << round(outputs(1, 0, 0, 0)) << endl;
 
     // 2 images 3 channels
 
@@ -164,29 +149,15 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
         input_width,
         input_channels);
 
-    // Copy bmp_image data into inputs
     for (int h = 0; h < input_height; ++h)
-    {
         for (int w = 0; w < input_width; ++w)
-        {
             for (int c = 0; c < input_channels; ++c)
-            {
                 inputs(0, h, w, c) = type(bmp_image_1(h, w, c));
-            }
-        }
-    }
 
-    // Copy bmp_image_2 data into inputs
     for (int h = 0; h < input_height; ++h)
-    {
         for (int w = 0; w < input_width; ++w)
-        {
             for (int c = 0; c < input_channels; ++c)
-            {
                 inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
-            }
-        }
-    }
 
     pooling_layer_2.forward_propagate_max_pooling(inputs,
         &pooling_layer_forward_propagation_2,

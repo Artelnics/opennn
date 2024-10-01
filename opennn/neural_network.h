@@ -9,11 +9,8 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
+#include <memory>
 
 #include "config.h"
 #include "layer.h"
@@ -63,17 +60,9 @@ public:
 
    explicit NeuralNetwork();
 
-   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const Tensor<Index, 1>&);
-
-   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const initializer_list<Index>&);
-
-   explicit NeuralNetwork(const dimensions&, const Index&, const Tensor<Index, 1>&, const Index&);
+   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
 
    explicit NeuralNetwork(const string&);
-
-   explicit NeuralNetwork(const tinyxml2::XMLDocument&);
-
-   explicit NeuralNetwork(const Tensor<Layer*, 1>&);
 
    // Destructor
 
@@ -81,16 +70,16 @@ public:
 
    // APPENDING LAYERS
 
-   void delete_layers();
+//   void delete_layers();
 
-   void add_layer(Layer*);
+   void add_layer(unique_ptr<Layer>, const string& name = "layer");
 
    bool validate_layer_type(const Layer::Type);
 
    // Get
 
-   bool has_scaling_layer() const;
-   bool has_scaling_4d_layer() const;
+   bool has_scaling_layer_2d() const;
+   bool has_scaling_layer_4d() const;
    bool has_long_short_term_memory_layer() const;
    bool has_recurrent_layer() const;
    bool has_unscaling_layer() const;
@@ -111,9 +100,9 @@ public:
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
-   Tensor<Layer*, 1> get_layers() const;
-   Layer* get_layer(const Index&) const;
-   Layer* get_layer(const string&) const;
+   const vector<unique_ptr<Layer>>& get_layers() const;
+   const unique_ptr<Layer>& get_layer(const Index&) const;
+   const unique_ptr<Layer>& get_layer(const string&) const;
    Tensor<Layer*, 1> get_trainable_layers() const;
 //   Tensor<Index, 1> get_trainable_layers_indices() const;
 
@@ -132,7 +121,6 @@ public:
    LongShortTermMemoryLayer* get_long_short_term_memory_layer() const;
    RecurrentLayer* get_recurrent_layer() const;
 
-   Layer* get_last_trainable_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
 
    const bool& get_display() const;
@@ -141,14 +129,11 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ModelType&, const Tensor<Index, 1>&);
-   void set(const NeuralNetwork::ModelType&, const initializer_list<Index>&);
-   void set(const dimensions&, const Index&, const Tensor<Index, 1>&, const Index&);
+   void set(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
 
    void set(const string&);
 
    void set_layers_number(const Index&);
-   void set_layers(Tensor<Layer*, 1>&);
 
    void set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
    void set_layer_inputs_indices(const Index&, const Tensor<Index, 1>&);
@@ -215,10 +200,6 @@ public:
    void set_parameters_constant(const type&) const;
 
    void set_parameters_random() const;
-
-   // Parameters
-
-   type calculate_parameters_norm() const;
 
    // Output
 
@@ -288,7 +269,7 @@ protected:
 
    Tensor<string, 1> output_names;
 
-   Tensor<Layer*, 1> layers;
+   vector<unique_ptr<Layer>> layers;
 
    Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
 

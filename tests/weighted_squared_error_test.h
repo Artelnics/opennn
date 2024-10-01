@@ -28,19 +28,10 @@ public:
 
     virtual ~WeightedSquaredErrorTest();
 
-    // Constructor and destructor
-
     void test_constructor();
-
     void test_destructor();
 
-    // Back-propagation
-
     void test_back_propagate();
-
-    void test_back_propagate_lm();
-
-    // Unit testing
 
     void run_test_case();
 

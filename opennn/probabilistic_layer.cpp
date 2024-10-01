@@ -19,7 +19,8 @@ ProbabilisticLayer::ProbabilisticLayer()
 }
 
 
-ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Index& new_neurons_number)
+ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number,
+                                       const Index& new_neurons_number)
 {
     set(new_inputs_number, new_neurons_number);
 
@@ -357,15 +358,15 @@ void ProbabilisticLayer::set_parameters_random()
 }
 
 
-void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
-{
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+//void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
+//{
+//    const Index biases_number = get_biases_number();
+//    const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
+//    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
 
-    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
-}
+//    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
+//}
 
 
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
@@ -382,27 +383,6 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     sum_columns(thread_pool_device, biases, combinations);
 
     //cout << "combinations: " << combinations << endl;
-}
-
-
-void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations,
-                                               Tensor<type, 2>& activations,
-                                               Tensor<type, 1>& aux_rows) const
-{
-/*
-    switch(activation_function)
-    {
-    case ActivationFunction::Binary: binary(combinations, activations); return;
-
-    case ActivationFunction::Logistic: logistic(activations); return;
-
-    case ActivationFunction::Competitive: competitive(combinations, activations); return;
-
-    case ActivationFunction::Softmax: softmax(combinations, activations, aux_rows); return;
-
-    default: return;
-    }
-*/
 }
 
 
@@ -547,9 +527,14 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
 
-    memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number*sizeof(type));
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
 
-    memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number*sizeof(type));
+        #pragma omp section
+        memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+    }
 }
 
 

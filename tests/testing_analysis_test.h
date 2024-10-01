@@ -92,10 +92,10 @@ public:
 
 private:
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-    Index neurons_number;
+    Index samples_number = 0;
+    Index inputs_number = 0;
+    Index targets_number = 0;
+    Index neurons_number = 0;
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;

@@ -145,12 +145,8 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
-    {
         for(Index j = 0; j < columns_number; j++)
-        {
            matrix(i, j) *= vector(j);
-        }
-    }
 }
 
 
@@ -1459,7 +1455,7 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
 
     const type* matrix_data = matrix.data();
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for (Index j = 0; j < columns_number; j++)
     {

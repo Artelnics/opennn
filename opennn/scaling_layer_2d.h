@@ -32,8 +32,7 @@ public:
 
    explicit ScalingLayer2D();
 
-   explicit ScalingLayer2D(const Index&);
-   explicit ScalingLayer2D(const Tensor<Index, 1>&);
+   explicit ScalingLayer2D(const dimensions&);
 
    explicit ScalingLayer2D(const Tensor<Descriptives, 1>&);
 
@@ -69,11 +68,10 @@ public:
    // Set
 
    void set();
-   void set(const Index&);
-   void set(const Tensor<Index, 1>&);
-   void set(const Tensor<Descriptives, 1>&);
-   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
-   void set(const tinyxml2::XMLDocument&);
+   void set(const dimensions&);
+   // void set(const Tensor<Descriptives, 1>&);
+   // void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
+   // void set(const tinyxml2::XMLDocument&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -138,7 +136,7 @@ public:
 
 protected:
 
-   Tensor<Index, 1> input_dimensions;
+   dimensions input_dimensions;
 
    Tensor<Descriptives, 1> descriptives;
 

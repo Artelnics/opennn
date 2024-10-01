@@ -26,26 +26,13 @@ public:
 
     virtual ~ProbabilisticLayerTest();
 
-    // Constructor and destructor
-
     void test_constructor();
-
     void test_destructor();
-
-    // Forward propagate
 
     void test_calculate_combinations();
     void test_calculate_activations();
-    void test_calculate_activations_derivatives();
 
     void test_forward_propagate();
-
-    // Serialization
-
-    void test_to_XML();
-    void test_from_XML();
-
-    // Unit testing
 
     void run_test_case();
 

@@ -21,21 +21,34 @@
 // Filesystem namespace
 
 // #ifdef __APPLE__
-//  #include <Availability.h> // for deployment target to support pre-catalina targets without fs
+// #include <Availability.h> // for deployment target to support pre-catalina targets without std::fs
 // #endif
-// #if((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
+// #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
 // #if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
 // #define GHC_USE_STD_FS
 // #include <filesystem>
-// namespace fs = filesystem;
-//  #endif
+// namespace fs = std::filesystem;
 // #endif
-//  #ifndef GHC_USE_STD_FS
-//  #include "filesystem.h"
-//  namespace fs = ghc::filesystem;
+// #endif
+// #ifndef GHC_USE_STD_FS
+// #include "filesystem.h"
+// namespace fs = ghc::filesystem;
 // #endif
 
-// using namespace fs;
+#ifdef _WIN32
+    // Windows-specific includes
+    #include <filesystem>
+    namespace fs = std::filesystem;
+#else
+    // AlmaLinux-specific includes
+    #include "filesystem.h"  // Assuming `ghc::filesystem` is a separate header
+    namespace fs = ghc::filesystem;
+#endif
+
+// #include "filesystem.h"
+// namespace fs = ghc::filesystem;
+
+//using namespace fs;
 
 namespace opennn
 {
@@ -87,7 +100,6 @@ public:
     void set_random_vertical_translation_maximum(const type&);
 
     Tensor<Descriptives, 1> scale_input_variables() final;
-    Tensor<Descriptives, 1> scale_target_variables() final;
 
     void read_bmp();
 

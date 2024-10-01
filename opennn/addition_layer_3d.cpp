@@ -14,18 +14,12 @@ namespace opennn
 AdditionLayer3D::AdditionLayer3D() : Layer()
 {
     set();
-
-    layer_type = Type::Addition3D;
 }
 
 
 AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth) : Layer()
 {
     set(new_inputs_number, new_inputs_depth);
-
-    layer_type = Type::Addition3D;
-
-    name = "addition_layer_3d";
 }
 
 

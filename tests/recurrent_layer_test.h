@@ -26,21 +26,13 @@ public:
 
     virtual ~RecurrentLayerTest();
 
-    // Constructor and destructor
-
     void test_constructor();
 
     void test_destructor();
 
-    // Parameters
-
-    void test_calculate_activations_derivatives();
-
-    // Forward propagate
+    void test_calculate_activations();
 
     void test_forward_propagate();
-
-    // Unit testing
 
     void run_test_case();
 

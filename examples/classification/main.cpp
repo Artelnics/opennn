@@ -66,7 +66,8 @@ int main()
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {variables_number, hidden_neurons_number, classes_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+                                     {variables_number}, {hidden_neurons_number}, {classes_number});
 
         cout << "Number of parameters: " << neural_network.get_parameters_number() << endl;
 
@@ -85,7 +86,6 @@ int main()
         training_strategy.perform_training();
 
         cout << "End Classification" << endl;
-
 
         return 0;
     }
