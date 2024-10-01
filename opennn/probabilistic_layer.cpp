@@ -382,7 +382,6 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
     sum_columns(thread_pool_device, biases, combinations);
 
-    //cout << "combinations: " << combinations << endl;
 }
 
 
@@ -415,12 +414,6 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     const Index neurons_number = get_neurons_number();
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-
-
-    { // DEBUG
-        //cout << "first image:\n" << inputs.chip(0, 0) << endl;
-        //system("pause");
-    }
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);

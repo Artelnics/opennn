@@ -24,13 +24,13 @@ int main()
     {   
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
-        const Index kernel_height = 5;
-        const Index kernel_width = 5;
+        const Index kernel_height = 3;
+        const Index kernel_width = 3;
         const Index channels = 3;
         const Index kernels_number = 3;
 
-        const Index pool_height = 2;
-        const Index pool_width = 2;
+        const Index pool_height = 3;
+        const Index pool_width = 3;
 
         // Data set
         
@@ -58,48 +58,44 @@ int main()
 
         // Neural network
 
-        cout << "image_data_set.get_input_dimensions()[0]: " << image_data_set.get_input_dimensions()[0] << endl;
-        cout << "image_data_set.get_input_dimensions()[1]: " << image_data_set.get_input_dimensions()[1] << endl;
-        cout << "image_data_set.get_input_dimensions()[1]: " << image_data_set.get_input_dimensions()[1] << endl;
-
-        print_dimensions(image_data_set.get_input_dimensions());
-        print_dimensions(image_data_set.get_target_dimensions());
-
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-                                     image_data_set.get_input_dimensions(),
-                                     {32, 16},
-                                     image_data_set.get_target_dimensions());
+            image_data_set.get_input_dimensions(),
+            { 32, 16 },
+            image_data_set.get_target_dimensions());
 
         neural_network.print();
 
-/*
-        //ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
-        //neural_network.add_layer(scaling_layer);
+        /*
+        ScalingLayer4D* scaling_layer = new ScalingLayer4D(image_data_set.get_input_dimensions());
+        neural_network.add_layer(scaling_layer);
+        
+        ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
+                                                                          { kernel_height, kernel_width, channels, 32 }); // 32 kernels
+        convolutional_layer_1->set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+        neural_network.add_layer(convolutional_layer_1);
 
-        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(),
-        //                                                                { kernel_height, kernel_width, channels, kernels_number });
-        //neural_network.add_layer(convolutional_layer);
+        PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_1->get_output_dimensions(),
+                                                        { pool_height, pool_width });
+        pooling_layer_1->set_pooling_method("MaxPooling");
+        neural_network.add_layer(pooling_layer_1);
 
-        //ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(neural_network.get_output_dimensions(),
-        //                                                                  { kernel_height, kernel_width, channels, kernels_number } );
-        //neural_network.add_layer(convolutional_layer_2);
+        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(pooling_layer_1->get_output_dimensions(),
+                                                                          { kernel_height, kernel_width, channels, 64 }); // 64 kernels
+        convolutional_layer_2->set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+        neural_network.add_layer(convolutional_layer_2);
 
-        //PoolingLayer* pooling_layer = new PoolingLayer(neural_network.get_output_dimensions(),
-        //                                              { pool_height , pool_width } );
-        //neural_network.add_layer(pooling_layer);
-
-        //PoolingLayer* pooling_layer_2 = new PoolingLayer(neural_network.get_output_dimensions(),
-        //                                                { pool_height , pool_width });
-        //pooling_layer_2->set_pooling_method("MaxPooling");
-        //neural_network.add_layer(pooling_layer_2);
-
+        PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_2->get_output_dimensions(),
+                                                        { pool_height, pool_width });
+        pooling_layer_2->set_pooling_method("MaxPooling");
+        neural_network.add_layer(pooling_layer_2);
+        
         FlattenLayer* flatten_layer = new FlattenLayer(image_data_set.get_input_dimensions());
         neural_network.add_layer(flatten_layer);
 
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(neural_network.get_output_dimensions(),
                                                                          image_data_set.get_target_dimensions());
         neural_network.add_layer(probabilistic_layer);
-
+        */
         //neural_network.print();
 
         // Training strategy
@@ -123,7 +119,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-*/
+
         cout << "Bye!" << endl;
         
         return 0;

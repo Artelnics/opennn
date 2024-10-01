@@ -763,19 +763,25 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     const type pool_size = type(pool_height * pool_width);
 
-    const dimensions input_dimensions = pooling_layer->get_input_dimensions();
+    const Index input_height = pooling_layer->get_input_height();
 
-    const Index input_height = input_dimensions[1];
+    const Index input_width = pooling_layer->get_input_width();
 
-    const Index input_width = input_dimensions[2];
+    cout << "input_height: " << input_height << endl;
+    cout << "input_width: " << input_width << endl;
 
+    cout << "channels: " << channels << endl;
+
+    cout << "output_height: " << output_height << endl;
+    cout << "output_width: " << output_width << endl;
+    
     outputs.resize(batch_samples_number,
                    output_height,
                    output_width,
                    channels);
 
     outputs_data = outputs.data();
-
+    
     image_patches.resize(batch_samples_number,
                          pool_height,
                          pool_width,
@@ -785,11 +791,12 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
     pool.resize(1, pool_height, pool_width, 1);
 
     pool.setConstant(type(1.0 / pool_size));
-
+    
     maximal_indices.resize(batch_samples_number,
-                                  output_height,
-                                  output_width,
-                                  channels);
+                           output_height,
+                           output_width,
+                           channels);
+    
 }
 
 

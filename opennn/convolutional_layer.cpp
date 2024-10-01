@@ -1203,6 +1203,13 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
 
+    cout << "input_height: " << input_height << endl;
+    cout << "input_width: " << input_width << endl;
+    cout << "input_channels: " << input_channels << endl;
+    cout << "kernels_number: " << kernels_number << endl;
+    cout << "output_height: " << output_height << endl;
+    cout << "output_width: " << output_width << endl;
+    
     preprocessed_inputs.resize(batch_samples_number,
                                input_height,
                                input_width,
@@ -1223,6 +1230,7 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                                    kernels_number);
 
     outputs_data = outputs.data();
+    
 }
 
 
