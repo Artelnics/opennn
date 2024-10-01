@@ -154,8 +154,9 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
     const Index output_height = get_output_height();
     const Index output_width = get_output_width();
-    const Index kernels_number = get_kernels_number();
     const Index single_output_size = batch_samples_number*output_height*output_width;
+
+    const Index kernels_number = get_kernels_number();
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {

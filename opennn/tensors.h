@@ -237,7 +237,6 @@ TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair);
 
 TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair);
 
-
 void print_dimensions(const dimensions&);
 
 template<class T, int n>

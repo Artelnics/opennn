@@ -87,7 +87,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const
 }
 
 
-bool NeuralNetwork::validate_layer_type(const Layer::Type layer_type)
+bool NeuralNetwork::validate_layer_type(const Layer::Type layer_type) const
 {
     if(has_bounding_layer())
         throw runtime_error("No layers can be added after a bounding layer.\n");
