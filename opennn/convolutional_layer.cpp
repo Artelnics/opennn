@@ -87,23 +87,12 @@ bool ConvolutionalLayer::get_batch_normalization() const
 void ConvolutionalLayer::preprocess_inputs(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& preprocessed_inputs) const
 {
-    if(convolution_type == ConvolutionType::Same)
-    {
-        const Eigen::array<pair<Index, Index>, 4> paddings = get_paddings();
-
-        preprocessed_inputs.device(*thread_pool_device) = inputs.pad(paddings);
-    }
-    else
-    {
-        preprocessed_inputs.device(*thread_pool_device) = inputs;
-    }
+    convolution_type == ConvolutionType::Same
+        ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
+        : preprocessed_inputs.device(*thread_pool_device) = inputs;
 
     if(row_stride != 1 || column_stride != 1)
-    {
-        const Eigen::array<ptrdiff_t, 4> strides = get_strides();
-
-        preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(strides);
-    }
+        preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(get_strides());
 }
 
 
@@ -147,17 +136,14 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 }
 
 
-// Batch normalization
-
 void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propagation,
                                    const bool& is_training)
 {
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
-    type* outputs_data = convolutional_layer_forward_propagation->outputs.data();
-
     Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
+    type* outputs_data = outputs.data();
 
     Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
     Tensor<type, 1>& standard_deviations = convolutional_layer_forward_propagation->standard_deviations;
