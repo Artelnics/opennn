@@ -45,16 +45,19 @@ int main()
         ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
         //image_data_set.set_data_source_path("C:/mnist/train");
-        //image_data_set.set_data_source_path("C:/binary_mnist");
+        image_data_set.set_data_source_path("C:/binary_mnist_test");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
-        image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
+        //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
 
         image_data_set.read_bmp();
 
         //image_data_set.set_training();
 
-        //image_data_set.print();
+        image_data_set.print_data();
+        image_data_set.print();
+
+        system("pause");
 
         // Neural network
 
@@ -62,6 +65,21 @@ int main()
             image_data_set.get_input_dimensions(),
             { 32, 16 },
             image_data_set.get_target_dimensions());
+
+        const vector<unique_ptr<Layer>>& neural_network_layers = neural_network.get_layers();
+
+        const Index layers_number = neural_network_layers.size();
+
+        for (Index i = 0; i < layers_number; i++)
+        {
+            if (neural_network_layers[i]->get_type() == Layer::Type::Pooling)
+            {
+                PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(neural_network_layers[i].get());
+
+                pooling_layer->set_row_stride(2);
+                pooling_layer->set_column_stride(2);
+            }
+        }
 
         neural_network.print();
 

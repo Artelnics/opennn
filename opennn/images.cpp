@@ -23,8 +23,6 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
                        ? 3
                        : 1;
     
-    //const Index channels = channels;
-    
     Index padding = 0;
 
     const Index width = width_no_padding;
@@ -47,12 +45,12 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     Tensor<unsigned char, 3> image(height, width, channels);
 
-    const Index xxx = width * channels + padding;
+    const Index image_pixels = width * channels + padding;
 
     for(Index i = 0; i < height; i++)
         for(Index j = 0; j < width; ++j)
             for(Index k = 0; k < channels; ++k)
-                image(i, j, k) = raw_image[i*xxx  + j*channels + k];
+                image(i, j, k) = raw_image[i*image_pixels + j*channels + k];
     
     return image;
 }

@@ -942,11 +942,59 @@ void ImageDataSet::read_bmp()
     {
         const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i]/*.string()*/);
 
-        if(pixels_number != image_data.size())
-            throw runtime_error("Different image sizes.\n");
+        const Index current_height = image_data.dimension(0);
+        const Index current_width = image_data.dimension(1);
+        const Index current_channels = image_data.dimension(2);
 
-        for(Index j = 0; j < pixels_number; j++)
-            data(i, j) = image_data(j);
+        if (current_channels != image_channels)
+        {
+            throw runtime_error("Different number of channels in image: " + image_path[i] + "\n");
+        }
+
+        if (current_height == height && current_width == width)
+        {
+            for (Index j = 0; j < pixels_number; j++)
+                data(i, j) = image_data(j);
+        }
+        else
+        {
+            if (current_height < height || current_width < width) // Smaller image
+            {
+                Eigen::array<pair<int, int>, 3> paddings;
+
+                paddings[0] = make_pair((height - current_height) / 2, height - current_height - (height - current_height) / 2);
+                paddings[1] = make_pair((width - current_width) / 2, width - current_width - (width - current_width) / 2);
+                paddings[2] = make_pair(0, 0);
+
+                Tensor<unsigned char, 3> image_data_padded = image_data.pad(paddings);
+
+                if (image_data_padded.dimension(0) != height || image_data_padded.dimension(1) != width)
+                {
+                    throw runtime_error("Error adjusting the image: " + image_path[i] + "\n");
+                }
+
+                for (Index j = 0; j < pixels_number; j++)
+                    data(i, j) = image_data_padded(j);
+            }
+            else if (current_height > height || current_width > width) // Bigger image
+            {
+                Index height_offset = (current_height - height) / 2;
+                Index width_offset = (current_width - width) / 2;
+                
+                Eigen::array<Index, 3> offsets = { height_offset, width_offset, 0 };
+                Eigen::array<Index, 3> extents = { height, width, image_channels };
+
+                Tensor<unsigned char, 3> image_data_sliced = image_data.slice(offsets, extents);
+
+                if (image_data_sliced.dimension(0) != height || image_data_sliced.dimension(1) != width)
+                {
+                    throw runtime_error("Error adjusting the image: " + image_path[i] + "\n");
+                }
+
+                for (Index j = 0; j < pixels_number; j++)
+                    data(i, j) = image_data_sliced(j);
+            }
+        }
 
         if (targets_number == 1)
         {
