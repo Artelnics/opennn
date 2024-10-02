@@ -29,7 +29,8 @@ int main()
 
         // Data set
 
-        DataSet data_set("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true);
+        //        DataSet data_set("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true);
+        DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
         //data_set.save("../data/data_set.xml");
         //data_set.load("../data/data_set.xml");
@@ -45,7 +46,6 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
-
 
         // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
         // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
