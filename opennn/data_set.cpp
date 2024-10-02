@@ -3879,12 +3879,8 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_categories
     Index class_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-    {
-        const Index sample_index = used_samples_indices(i);
-
-        if(abs(data(sample_index, class_index) - type(1)) < type(NUMERIC_LIMITS_MIN)) 
+        if(abs(data(used_samples_indices(i), class_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
             class_samples_number++;
-    }
 
     // Get used class samples indices
 
@@ -4252,7 +4248,8 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlatio
 
 void DataSet::print_inputs_correlations() const
 {
-    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_raw_variable_pearson_correlations());
+    const Tensor<type, 2> inputs_correlations 
+        = get_correlation_values(calculate_input_raw_variable_pearson_correlations());
 
     cout << inputs_correlations << endl;
 }
@@ -4305,19 +4302,15 @@ void DataSet::print_top_inputs_correlations() const
 
 void DataSet::set_default_raw_variables_scalers()
 {
-    if(model_type == ModelType::ImageClassification)
-    {
-        set_raw_variables_scalers(Scaler::ImageMinMax);
-    }
-    else
-    {
-        const Index raw_variables_number = raw_variables.size();
+    const Index raw_variables_number = raw_variables.size();
 
+    if(model_type == ModelType::ImageClassification)
+        set_raw_variables_scalers(Scaler::ImageMinMax);
+    else
         for(Index i = 0; i < raw_variables_number; i++)
             raw_variables(i).scaler = (raw_variables(i).type == RawVariableType::Numeric)
                 ? Scaler::MeanStandardDeviation
                 : Scaler::MinimumMaximum;
-    }
 }
 
 
@@ -4589,14 +4582,12 @@ void DataSet::set_data_binary_random()
             : rand() % (variables_number - input_variables_number) + input_variables_number;
 
         for(Index j = input_variables_number; j < variables_number; j++)
-        {
             if(target_variables_number == 1) 
                 data(i, j) = type(target_variable_index);
             else 
                 data(i, j) = (j == target_variable_index)
                         ? type(1)
                         : type(0);
-        }
     }
 }
 
@@ -5210,8 +5201,6 @@ void DataSet::print_data_preview() const
 
         for(int i = 0; i< first_sample.dimension(0); i++)
             cout  << first_sample(i) << "  ";
-
-        cout << endl;
     }
 
     if(samples_number > 1)
@@ -5222,8 +5211,6 @@ void DataSet::print_data_preview() const
 
         for(int i = 0; i< second_sample.dimension(0); i++)
             cout  << second_sample(i) << "  ";
-
-        cout << endl;
     }
 
     if(samples_number > 2)
@@ -5234,9 +5221,9 @@ void DataSet::print_data_preview() const
 
         for(int i = 0; i< last_sample.dimension(0); i++)
             cout  << last_sample(i) << "  ";
-
-        cout << endl;
     }
+
+    cout << endl;
 }
 
 
@@ -5411,8 +5398,8 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
     Tensor<Tensor<Index, 1>, 1> return_values(2);
 
-    return_values(0) = Tensor<Index, 1>(samples_number);
-    return_values(1) = Tensor<Index, 1>(used_raw_variables_number);
+    return_values(0).resize(samples_number);
+    return_values(1).resize(used_raw_variables_number);
 
     return_values(0).setZero();
     return_values(1).setZero();
@@ -5499,8 +5486,8 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 
     Tensor<Tensor<Index, 1>, 1> return_values(2);
 
-    return_values(0) = Tensor<Index, 1>(samples_number);
-    return_values(1) = Tensor<Index, 1>(used_raw_variables_number);
+    return_values(0).resize(samples_number);
+    return_values(1).resize(used_raw_variables_number);
 
     return_values(0).setZero();
     return_values(1).setZero();
@@ -5877,7 +5864,7 @@ void DataSet::impute_missing_values_interpolate()
     Index current_variable;
     Index current_sample;
 
-#pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
         current_variable = input_variables_indices(j);
@@ -6030,15 +6017,16 @@ void DataSet::read_csv()
         throw runtime_error("Error: Cannot open file " + data_path + "\n");
 
     const string separator_string = get_separator_string();
-    string line;
-
-    Tensor<string, 1> tokens;
-
+    
     Tensor<string, 1> positive_words(4);
     positive_words.setValues({"yes", "positive", "+", "true"});
 
     Tensor<string, 1> negative_words(4);
     negative_words.setValues({"no", "negative", "-", "false"});
+
+    string line;
+
+    Tensor<string, 1> tokens;
 
     Index columns_number = 0;
 
@@ -6258,22 +6246,16 @@ string DataSet::RawVariable::get_type_string() const
     {
     case RawVariableType::None:
         return "None";
-
     case RawVariableType::Numeric:
         return "Numeric";
-
     case RawVariableType::Constant:
         return "Constant";
-
     case RawVariableType::Binary:
         return "Binary";
-
     case RawVariableType::Categorical:
         return "Categorical";
-
     case RawVariableType::DateTime:
         return "DateTime";
-
     default:
         throw runtime_error("Unknown raw variable type");
     }
@@ -6286,20 +6268,14 @@ string DataSet::RawVariable::get_scaler_string() const
     {
     case Scaler::None:
         return "None";
-
     case Scaler::MinimumMaximum:
         return "MinimumMaximum";
-
     case Scaler::MeanStandardDeviation:
         return "MeanStandardDeviation";
-
     case Scaler::StandardDeviation:
         return "StandardDeviation";
-        break;
-
     case Scaler::Logarithm:
         return "Logarithm";
-
     default:
         return "";
     }
@@ -6557,7 +6533,8 @@ Index DataSet::count_rows_with_nan() const
             }
         }
 
-        if(has_nan) rows_with_nan++;
+        if(has_nan) 
+            rows_with_nan++;
     }
 
     return rows_with_nan;
@@ -6735,6 +6712,8 @@ void DataSet::shuffle()
     Tensor<string, 1> new_rows_labels(data_rows);
 
     Index index = 0;
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < data_rows; i++)
     {
@@ -6967,46 +6946,40 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     file.close();
 
     if(!has_missing_values)
-    {
         return input_data;
+
+    // Scrub missing values
+
+    const MissingValuesMethod missing_values_method = get_missing_values_method();
+
+    const Index samples_number = input_data.dimension(0);
+    const Index variables_number = input_data.dimension(1);
+
+    if(missing_values_method == MissingValuesMethod::Unuse 
+    || missing_values_method == MissingValuesMethod::Mean)
+    {
+        const Tensor<type, 1> means = mean(input_data);
+
+        #pragma omp parallel for schedule(dynamic)
+
+        for(Index j = 0; j < variables_number; j++)
+            for(Index i = 0; i < samples_number; i++)
+                if(isnan(input_data(i, j)))
+                    input_data(i, j) = means(j);
     }
     else
     {
-        // Scrub missing values
+        const Tensor<type, 1> medians = median(input_data);
 
-        const MissingValuesMethod missing_values_method = get_missing_values_method();
+        #pragma omp parallel for schedule(dynamic)
 
-        if(missing_values_method == MissingValuesMethod::Unuse || missing_values_method == MissingValuesMethod::Mean)
-        {
-            const Tensor<type, 1> means = mean(input_data);
-
-            const Index samples_number = input_data.dimension(0);
-            const Index variables_number = input_data.dimension(1);
-
-            #pragma omp parallel for schedule(dynamic)
-
-            for(Index j = 0; j < variables_number; j++)
-                for(Index i = 0; i < samples_number; i++)
-                    if(isnan(input_data(i, j)))
-                        input_data(i, j) = means(j);
-        }
-        else
-        {
-            const Tensor<type, 1> medians = median(input_data);
-
-            const Index samples_number = input_data.dimension(0);
-            const Index variables_number = input_data.dimension(1);
-
-            #pragma omp parallel for schedule(dynamic)
-
-            for(Index j = 0; j < variables_number; j++)
-                for(Index i = 0; i < samples_number; i++)
-                    if(isnan(input_data(i, j)))
-                        input_data(i, j) = medians(j);
-        }
-
-        return input_data;
+        for(Index j = 0; j < variables_number; j++)
+            for(Index i = 0; i < samples_number; i++)
+                if(isnan(input_data(i, j)))
+                    input_data(i, j) = medians(j);
     }
+
+    return input_data;
 }
 
 
