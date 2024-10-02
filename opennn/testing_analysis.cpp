@@ -1715,15 +1715,8 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
-    {
-        //Tensor<Index, 1> copy;
-
         if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
-        {
-            true_positives_indices_copy(index) = testing_indices(i);
-            index++;
-        }
-    }
+            true_positives_indices_copy(index++) = testing_indices(i);
 
     Tensor<Index, 1> true_positives_indices(index);
 
@@ -1747,13 +1740,8 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
-    {
         if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
-        {
-            false_positives_indices_copy(index) = testing_indices(i);
-            index++;
-        }
-    }
+            false_positives_indices_copy(index++) = testing_indices(i);
 
     Tensor<Index, 1> false_positives_indices(index);
 
@@ -1777,13 +1765,8 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
-    {
         if(targets(i,0) > decision_threshold && outputs(i,0) < decision_threshold)
-        {
-            false_negatives_indices_copy(index) = testing_indices(i);
-            index++;
-        }
-    }
+            false_negatives_indices_copy(index++) = testing_indices(i);
 
     Tensor<Index, 1> false_negatives_indices(index);
 
@@ -1807,13 +1790,8 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<t
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
-    {
         if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
-        {
-            true_negatives_indices_copy(index) = testing_indices(i);
-            index++;
-        }
-    }
+            true_negatives_indices_copy(index++) = testing_indices(i);
 
     Tensor<Index, 1> true_negatives_indices(index);
 

@@ -172,18 +172,19 @@ void Layer::set_neurons_number(const Index&)
 
 void Layer::competitive(Tensor<type, 2>& y) const
 {
-        Tensor<Index, 1> maximum_indices = y.argmax(1);
+    const Tensor<Index, 1> maximum_indices = y.argmax(1);
 
-        y.setZero();
+    y.setZero();
 
-        #pragma omp parallel for
-        for(Index i = 0; i < y.dimension(0); i++){y(i, Index(maximum_indices(i))) = type(1);}
+    #pragma omp parallel for
+    for(Index i = 0; i < y.dimension(0); i++)
+        y(i, Index(maximum_indices(i))) = type(1);
 }
 
 
 void Layer::softmax(Tensor<type, 2>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ { 1 }};
+    const Eigen::array<Index, 1> softmax_dimension{{1}};
     
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
@@ -284,6 +285,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 
             const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows_number);
             const TensorMap<Tensor<type, 1>> tensor_vector(tensor_vector_data, rows_number);
+
             TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
 
             aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;

@@ -129,7 +129,7 @@ public:
 
         void set_type(const string&);
 
-        void add_category(const string&);
+        //void add_category(const string&);
 
         void set_categories(const Tensor<string, 1>&);
 
@@ -412,7 +412,6 @@ public:
     // Variables set
 
     void set_variables_names(const Tensor<string, 1>&);
-    void set_variables_names_from_raw_variables(const Tensor<string, 1>&, const Tensor<DataSet::RawVariable, 1>&);
     void set_variable_name(const Index&, const string&);
 
     void set_input();

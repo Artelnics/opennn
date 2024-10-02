@@ -982,13 +982,8 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Inde
     Index index = 0;
 
     for(Index i  = type(0); i < vector.size(); i++)
-    {
-         if(vector(i) < bound)
-         {
-             indices(index) = i;
-             index++;
-         }
-    }
+        if(vector(i) < bound)
+            indices(index++) = i;
 
     return indices;
 }
@@ -1018,13 +1013,8 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
     Index index = 0;
 
     for(Index i  = type(0); i < vector.size(); i++)
-    {
          if(vector(i) < bound)
-         {
-             indices(index) = i;
-             index++;
-         }
-    }
+             indices(index++) = i;
 
     return indices;
 }
@@ -1053,13 +1043,8 @@ Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const 
     Index index = 0;
 
     for(Index i  = type(0); i < vector.size(); i++)
-    {
          if(vector(i) > bound)
-         {
-             indices(index) = vector(i);
-             index++;
-         }
-    }
+             indices(index++) = vector(i);
 
     return indices;
 }
@@ -1095,13 +1080,8 @@ void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
     Index index = 0;
 
     for(Index i = 0; i < original_size; i++)
-    {
         if(!contains(indices, i))
-        {
-            vector(index) = vector_copy(i);
-            index++;
-        }
-    }
+            vector(index++) = vector_copy(i);
 }
 
 
@@ -1118,13 +1098,8 @@ void delete_indices(Tensor<Index,1>& vector, const Tensor<Index,1>& indices)
     Index index = 0;
 
     for(Index i = 0; i < original_size; i++)
-    {
         if(!contains(indices, i))
-        {
-            vector(index) = vector_copy(i);
-            index++;
-        }
-    }
+            vector(index++) = vector_copy(i);
 }
 
 
@@ -1141,13 +1116,8 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
     Index index = 0;
 
     for(Index i = 0; i < original_size; i++)
-    {
         if(!contains(indices, i))
-        {
-            vector(index) = vector_copy(i);
-            index++;
-        }
-    }
+            vector(index++) = vector_copy(i);
 }
 
 
@@ -2087,16 +2057,9 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
     Index count = 0;
 
     for(Index i = 0; i < tensor_1.size(); i++)
-    {
         for(Index j = 0; j < tensor_2.size(); j++)
-        {
             if(tensor_1(i) == tensor_2(j))
-            {
-                intersection(count) = tensor_2(j);
-                count++;
-            }
-        }
-    }
+                intersection(count++) = tensor_2(j);
 
     return intersection;
 }
