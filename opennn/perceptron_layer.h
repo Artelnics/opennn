@@ -144,13 +144,13 @@ public:
 
     // Gradient
 
-    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                        const Tensor<pair<type*, dimensions>, 1>&,
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
                         LayerForwardPropagation*,
                         LayerBackPropagation*) const final;
 
-    void back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>&,
-                           const Tensor<pair<type*, dimensions>, 1>&,
+    void back_propagate_lm(const vector<pair<type*, dimensions>>&,
+                           const vector<pair<type*, dimensions>>&,
                            LayerForwardPropagation*,
                            LayerBackPropagationLM*) const final;
 
@@ -169,6 +169,8 @@ public:
     string write_activation_function_expression() const;
 
     // Serialization
+
+    void print() const;
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void to_XML(tinyxml2::XMLPrinter&) const final;

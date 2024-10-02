@@ -259,6 +259,42 @@ struct BackPropagationLM
 
     pair<type*, dimensions> get_output_deltas_pair() const;
 
+    vector<vector<pair<type*, dimensions>>> get_layers_deltas(const Index last_trainable_layer_index, const Index first_trainable_layer_index) const
+{
+    vector<vector<pair<type*, dimensions>>> layers_deltas(neural_network.get_layers().size());
+
+    const auto& layers_outputs_indices = this->layers_outputs_indices; // Output indices for each layer
+    const auto& layers_inputs_indices = neural_network.get_neural_network()->get_layers_input_indices();
+
+    for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; --i)
+    {
+        if (i == last_trainable_layer_index)
+        {
+            // For the last layer, use the output deltas
+            layers_deltas[i].push_back(get_output_deltas_pair());
+        }
+        else
+        {
+            // For other layers, determine the deltas based on the input derivatives of the next layers
+            layers_deltas[i].resize(layers_outputs_indices[i].size());
+
+            for (Index j = 0; j < layers_outputs_indices[i].size(); ++j)
+            {
+                Index output_index = layers_outputs_indices[i][j];
+                Index input_index = loss_index->find_input_index(layers_inputs_indices[output_index], i);
+
+                LayerBackPropagationLM* layer_back_propagation = neural_network.get_layers()[output_index];
+
+                // Access the input derivatives using the appropriate index
+                layers_deltas[i][j] = layer_back_propagation->get_inputs_derivatives_pair()[input_index];
+            }
+        }
+    }
+
+    return layers_deltas;
+}
+
+
     Index batch_samples_number = 0;
 
     Tensor<Tensor<Index, 1>, 1> layers_outputs_indices;

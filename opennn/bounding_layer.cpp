@@ -343,6 +343,16 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, con
 }
 
 
+void BoundingLayer::print() const
+{
+    cout << "Bounding layer" << endl;
+
+    cout << "Lower bounds: " << lower_bounds << endl;
+
+    cout << "Upper bounds: " << upper_bounds << endl;
+}
+
+
 void BoundingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("BoundingLayer");

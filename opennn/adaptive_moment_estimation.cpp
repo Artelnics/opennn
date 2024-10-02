@@ -155,7 +155,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
-
+    
     // Data set
 
     DataSet* data_set = loss_index->get_data_set();

@@ -879,15 +879,14 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
 }
 
 
-void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                              const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void LongShortTermMemoryLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                              const vector<pair<type*, dimensions>>& deltas_pair,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair[0].first, inputs_pair[0].second[0], inputs_pair[0].second[1]);
+    const TensorMap<Tensor<type, 2>> deltas(deltas_pair[0].first, deltas_pair[0].second[0], deltas_pair[0].second[1]);
 
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
             static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
@@ -2611,8 +2610,8 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
     input_derivatives.resize(batch_samples_number, inputs_number);
 
     inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
+    inputs_derivatives[0].first = input_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, inputs_number };
 }
 
 

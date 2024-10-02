@@ -307,8 +307,8 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 }
 
 
-void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                        const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                        const vector<pair<type*, dimensions>>& deltas_pair,
                                         LayerForwardPropagation* forward_propagation,
                                         LayerBackPropagation* back_propagation) const
 {
@@ -328,17 +328,17 @@ void ConvolutionalLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>
     const Index output_height = get_output_height();
     const Index output_width = get_output_width();
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
-                                            inputs_pair(0).second[0],
-                                            inputs_pair(0).second[1],
-                                            inputs_pair(0).second[2],
-                                            inputs_pair(0).second[3]);
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair[0].first,
+                                            inputs_pair[0].second[0],
+                                            inputs_pair[0].second[1],
+                                            inputs_pair[0].second[2],
+                                            inputs_pair[0].second[3]);
 
-    const TensorMap<Tensor<type, 4>> deltas(deltas_pair(0).first,
-                                            deltas_pair(0).second[0],
-                                            deltas_pair(0).second[1],
-                                            deltas_pair(0).second[2],
-                                            deltas_pair(0).second[3]);
+    const TensorMap<Tensor<type, 4>> deltas(deltas_pair[0].first,
+                                            deltas_pair[0].second[0],
+                                            deltas_pair[0].second[1],
+                                            deltas_pair[0].second[2],
+                                            deltas_pair[0].second[3]);
 
     // Forward propagation
 
@@ -1295,8 +1295,8 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                              channels);
 
     inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, input_height, input_width, channels };
+    inputs_derivatives[0].first = input_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, input_height, input_width, channels };
 }
 
 void ConvolutionalLayerBackPropagation::print() const

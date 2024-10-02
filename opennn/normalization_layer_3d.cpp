@@ -245,24 +245,24 @@ void NormalizationLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 }
 
 
-void NormalizationLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                                    const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                                    const vector<pair<type*, dimensions>>& deltas_pair,
                                                     LayerForwardPropagation* forward_propagation,
                                                     LayerBackPropagation* back_propagation) const
 {
-    Index batch_samples_number = inputs_pair(0).second[0];
+    Index batch_samples_number = inputs_pair[0].second[0];
 
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first,
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair[0].first,
                                             batch_samples_number,
-                                            inputs_pair(0).second[1],
-                                            inputs_pair(0).second[2]);
+                                            inputs_pair[0].second[1],
+                                            inputs_pair[0].second[2]);
 
     if(deltas_pair.size() > 1)     add_deltas(deltas_pair);
 
-    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
-                                            deltas_pair(0).second[0],
-                                            deltas_pair(0).second[1],
-                                            deltas_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> deltas(deltas_pair[0].first,
+                                            deltas_pair[0].second[0],
+                                            deltas_pair[0].second[1],
+                                            deltas_pair[0].second[2]);
 
     // Forward propagation
 
@@ -319,19 +319,19 @@ void NormalizationLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 
 }
 
 
-void NormalizationLayer3D::add_deltas(const Tensor<pair<type*, dimensions>, 1>& deltas_pair) const
+void NormalizationLayer3D::add_deltas(const vector<pair<type*, dimensions>>& deltas_pair) const
 {
-    TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
-                                      deltas_pair(0).second[0],
-                                      deltas_pair(0).second[1],
-                                      deltas_pair(0).second[2]);
+    TensorMap<Tensor<type, 3>> deltas(deltas_pair[0].first,
+                                      deltas_pair[0].second[0],
+                                      deltas_pair[0].second[1],
+                                      deltas_pair[0].second[2]);
 
     for(Index i = 1; i < deltas_pair.size(); i++)
     {
-        const TensorMap<Tensor<type, 3>> other_deltas(deltas_pair(i).first,
-                                                      deltas_pair(i).second[0],
-                                                      deltas_pair(i).second[1],
-                                                      deltas_pair(i).second[2]);
+        const TensorMap<Tensor<type, 3>> other_deltas(deltas_pair[i].first,
+                                                      deltas_pair[i].second[0],
+                                                      deltas_pair[i].second[1],
+                                                      deltas_pair[i].second[2]);
 
         deltas.device(*thread_pool_device) += other_deltas;
     }
@@ -508,8 +508,8 @@ void NormalizationLayer3DBackPropagation::set(const Index& new_batch_samples_num
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 
     inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
+    inputs_derivatives[0].first = input_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, inputs_number, inputs_depth };
 }
 
 }

@@ -383,25 +383,25 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 }
 
 
-void PoolingLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                  const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void PoolingLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                  const vector<pair<type*, dimensions>>& deltas_pair,
                                   LayerForwardPropagation* forward_propagation,
                                   LayerBackPropagation* back_propagation) const
 {
 
     // Inputs
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
-                                            inputs_pair(0).second[0],
-                                            inputs_pair(0).second[1],
-                                            inputs_pair(0).second[2],
-                                            inputs_pair(0).second[3]);
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair[0].first,
+                                            inputs_pair[0].second[0],
+                                            inputs_pair[0].second[1],
+                                            inputs_pair[0].second[2],
+                                            inputs_pair[0].second[3]);
 
-    const TensorMap<Tensor<type, 4>> deltas(deltas_pair(0).first,
-                                            deltas_pair(0).second[0],
-                                            deltas_pair(0).second[1],
-                                            deltas_pair(0).second[2],
-                                            deltas_pair(0).second[3]);
+    const TensorMap<Tensor<type, 4>> deltas(deltas_pair[0].first,
+                                            deltas_pair[0].second[0],
+                                            deltas_pair[0].second[1],
+                                            deltas_pair[0].second[2],
+                                            deltas_pair[0].second[3]);
 
     switch(pooling_method)
     {
@@ -830,8 +830,8 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
     input_derivatives.resize(batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 
     inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2] };
+    inputs_derivatives[0].first = input_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2] };
 }
 
 

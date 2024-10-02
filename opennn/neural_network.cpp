@@ -380,6 +380,43 @@ const vector<vector<Index>>& NeuralNetwork::get_layers_input_indices() const
 }
 
 
+vector<vector<Index>> NeuralNetwork::get_layers_output_indices() const
+{
+    const Index layers_number = layers_inputs_indices.size();
+
+    vector<vector<Index>> layers_outputs_indices(layers_number);
+
+    Index layer_count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        for(Index j = 0; j < layers_number; j++)
+            for(Index k = 0; k < layers_inputs_indices[j].size(); k++)
+                if(layers_inputs_indices[j][k] == i)
+                    layer_count++;
+
+        layers_outputs_indices[i].resize(layer_count);
+        layer_count = 0;
+
+        for(Index j = 0; j < layers_number; j++)
+        {
+            for(Index k = 0; k < layers_inputs_indices[j].size(); k++)
+            {
+                if(layers_inputs_indices[j][k] == i)
+                {
+                    layers_outputs_indices[i][layer_count] = j;
+                    layer_count++;
+                }
+            }
+        }
+
+        layer_count = 0;
+    }
+
+    return layers_outputs_indices;
+}
+
+
 ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
 {
     const Index layers_number = get_layers_number();
@@ -997,9 +1034,7 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
         && layer_type != Layer::Type::Scaling4D
         && layer_type != Layer::Type::Unscaling
         && layer_type != Layer::Type::Bounding)
-        {
             return i;
-        }
     }
 
     return 0;
