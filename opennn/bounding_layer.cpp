@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "bounding_layer.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -262,7 +263,7 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
                                       LayerForwardPropagation* forward_propagation,
                                       const bool& is_training)
 {
-    const TensorMap<Tensor<type,2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(inputs_pair(0));
 
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation
             = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);
@@ -304,17 +305,11 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 string BoundingLayer::get_bounding_method_string() const
 {
     if(bounding_method == BoundingMethod::Bounding)
-    {
         return "BoundingLayer";
-    }
     else if(bounding_method == BoundingMethod::NoBounding)
-    {
         return "NoBounding";
-    }
     else
-    {
         throw runtime_error("Unknown bounding method.\n");
-    }
 }
 
 
@@ -333,10 +328,6 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, con
             buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_name[i] << ")\n";
             buffer << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
         }
-    }
-    else
-    {
-        buffer << "";
     }
 
     return buffer.str();
@@ -369,7 +360,6 @@ void BoundingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     for(Index i = 0; i < neurons_number; i++)
     {
         file_stream.OpenElement("Item");
-
         file_stream.PushAttribute("Index", unsigned(i+1));
 
         // Lower bound

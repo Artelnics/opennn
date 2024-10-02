@@ -9,12 +9,8 @@
 #ifndef ADDITIONLAYER3D_H
 #define ADDITIONLAYER3D_H
 
-// System includes
-
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "layer.h"

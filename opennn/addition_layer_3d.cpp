@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
+
 #include "addition_layer_3d.h"
 
 namespace opennn
@@ -89,15 +91,9 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> input_1(inputs_pair(0).first,
-                                             inputs_pair(0).second[0],
-                                             inputs_pair(0).second[1],
-                                             inputs_pair(0).second[2]);
-
-    const TensorMap<Tensor<type, 3>> input_2(inputs_pair(1).first,
-                                             inputs_pair(1).second[0],
-                                             inputs_pair(1).second[1],
-                                             inputs_pair(1).second[2]);
+    const TensorMap<Tensor<type, 3>> input_1 = tensor_map_3(inputs_pair(0));
+    
+    const TensorMap<Tensor<type, 3>> input_2 = tensor_map_3(inputs_pair(1));
 
     AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
         static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation);
@@ -113,10 +109,7 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> deltas(deltas_pair[0].first,
-                                            deltas_pair[0].second[0],
-                                            deltas_pair[0].second[1],
-                                            deltas_pair[0].second[2]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
 
     // Back propagation
 

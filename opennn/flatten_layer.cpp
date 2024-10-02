@@ -114,7 +114,7 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_
     const Index batch_samples_number = inputs_pair[0].second[0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair[0].first, deltas_pair[0].second[0], deltas_pair[0].second[1]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
 
     // Back propagation
 

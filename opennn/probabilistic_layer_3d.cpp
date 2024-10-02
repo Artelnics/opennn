@@ -355,7 +355,7 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
                                              LayerForwardPropagation* forward_propagation,
                                              const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(inputs_pair(0));
 
     ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
@@ -375,10 +375,7 @@ void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
                                           LayerForwardPropagation* forward_propagation,
                                           LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair[0].first, 
-                                            inputs_pair[0].second[0], 
-                                            inputs_pair[0].second[1], 
-                                            inputs_pair[0].second[2]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(inputs_pair[0]);
 
     // Forward propagation
 

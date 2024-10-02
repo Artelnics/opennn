@@ -268,11 +268,7 @@ void PoolingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
-                                            inputs_pair(0).second[0],
-                                            inputs_pair(0).second[1],
-                                            inputs_pair(0).second[2],
-                                            inputs_pair(0).second[3]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(inputs_pair(0));
 
     switch(pooling_method)
     {
@@ -391,17 +387,8 @@ void PoolingLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_
 
     // Inputs
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair[0].first,
-                                            inputs_pair[0].second[0],
-                                            inputs_pair[0].second[1],
-                                            inputs_pair[0].second[2],
-                                            inputs_pair[0].second[3]);
-
-    const TensorMap<Tensor<type, 4>> deltas(deltas_pair[0].first,
-                                            deltas_pair[0].second[0],
-                                            deltas_pair[0].second[1],
-                                            deltas_pair[0].second[2],
-                                            deltas_pair[0].second[3]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(inputs_pair[0]);
+    const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(deltas_pair[0]);
 
     switch(pooling_method)
     {

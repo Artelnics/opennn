@@ -37,9 +37,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const Index outputs_number = targets_pair.second[1];
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first,
-                                             batch_samples_number,
-                                             outputs_number);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
     
     // Forward propagation
     
@@ -148,13 +146,8 @@ void CrossEntropyError3D::from_XML(const tinyxml2::XMLDocument& document)
     // Regularization
 
     tinyxml2::XMLDocument regularization_document;
-
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-
-    tinyxml2::XMLNode* element_clone = regularization_element->DeepClone(&regularization_document);
-
-    regularization_document.InsertFirstChild(element_clone);
-
+    regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
     regularization_from_XML(regularization_document);
 }
 

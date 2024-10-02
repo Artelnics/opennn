@@ -40,14 +40,7 @@ TrainingStrategy* ModelSelection::get_training_strategy() const
 
 bool ModelSelection::has_training_strategy() const
 {   
-    if(training_strategy)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return training_strategy != nullptr;
 }
 
 
@@ -117,13 +110,9 @@ void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsS
 void ModelSelection::set_neurons_selection_method(const string& new_neurons_selection_method)
 {
     if(new_neurons_selection_method == "GROWING_NEURONS")
-    {
         set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS);
-    }
     else
-    {
         throw runtime_error("Unknown neurons selection type: " + new_neurons_selection_method + ".\n");
-    }
 }
 
 
@@ -136,17 +125,11 @@ void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSel
 void ModelSelection::set_inputs_selection_method(const string& new_inputs_selection_method)
 {
     if(new_inputs_selection_method == "GROWING_INPUTS")
-    {
         set_inputs_selection_method(InputsSelectionMethod::GROWING_INPUTS);
-    }
     else if(new_inputs_selection_method == "GENETIC_ALGORITHM")
-    {
         set_inputs_selection_method(InputsSelectionMethod::GENETIC_ALGORITHM);
-    }
     else
-    {
         throw runtime_error("Unknown inputs selection type: " + new_inputs_selection_method + ".\n");
-    }
 }
 
 
@@ -206,13 +189,9 @@ void ModelSelection::check() const
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
     if(neurons_selection_method == NeuronsSelectionMethod::GROWING_NEURONS)
-    {
         return growing_neurons.perform_neurons_selection();
-    }
     else
-    {
         return NeuronsSelectionResults();
-    }
 }
 
 
@@ -298,10 +277,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             tinyxml2::XMLElement* growing_neurons_element_copy = growing_neurons_document.NewElement("GrowingNeurons");
 
             for(const tinyxml2::XMLNode* node = growing_neurons_element->FirstChild(); node; node = node->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = node->DeepClone(&growing_neurons_document );
-                growing_neurons_element_copy->InsertEndChild(copy );
-            }
+                growing_neurons_element_copy->InsertEndChild(node->DeepClone(&growing_neurons_document));
 
             growing_neurons_document.InsertEndChild(growing_neurons_element_copy);
 
@@ -330,10 +306,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 tinyxml2::XMLElement* growing_inputs_element_copy = growing_inputs_document.NewElement("GrowingInputs");
 
                 for(const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-                {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&growing_inputs_document );
-                    growing_inputs_element_copy->InsertEndChild(copy );
-                }
+                    growing_inputs_element_copy->InsertEndChild(nodeFor->DeepClone(&growing_inputs_document));
 
                 growing_inputs_document.InsertEndChild(growing_inputs_element_copy);
 
@@ -351,13 +324,9 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 tinyxml2::XMLElement* genetic_algorithm_element_copy = genetic_algorithm_document.NewElement("GeneticAlgorithm");
 
                 for(const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-                {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&genetic_algorithm_document );
-                    genetic_algorithm_element_copy->InsertEndChild(copy );
-                }
+                    genetic_algorithm_element_copy->InsertEndChild(nodeFor->DeepClone(&genetic_algorithm_document));
 
                 genetic_algorithm_document.InsertEndChild(genetic_algorithm_element_copy);
-
                 genetic_algorithm.from_XML(genetic_algorithm_document);
             }
         }
@@ -368,13 +337,9 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 string ModelSelection::write_neurons_selection_method() const
 {
     if(neurons_selection_method ==  NeuronsSelectionMethod::GROWING_NEURONS)
-    {
         return "GROWING_NEURONS";
-    }
     else
-    {
         return string();
-    }
 }
 
 
