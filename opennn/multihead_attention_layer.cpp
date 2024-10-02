@@ -659,28 +659,11 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
                                                        LayerForwardPropagation* forward_propagation,
                                                        LayerBackPropagation* back_propagation) const
 {
-<<<<<<< HEAD
-    const TensorMap<Tensor<type, 3>> input(inputs_pair[0].first,
-                                           inputs_pair[0].second[0],
-                                           inputs_pair[0].second[1],
-                                           inputs_pair[0].second[2]);
+    const TensorMap<Tensor<type, 3>> input = tensor_map_3(inputs_pair[0]);
 
-    const TensorMap<Tensor<type, 3>> context(inputs_pair[1].first,
-                                             inputs_pair[1].second[0],
-                                             inputs_pair[1].second[1],
-                                             inputs_pair[1].second[2]);
+    const TensorMap<Tensor<type, 3>> context = tensor_map_3(inputs_pair[1]);
 
-    const TensorMap<Tensor<type, 3>> deltas(deltas_pair[0].first,
-                                            deltas_pair[0].second[0],
-                                            deltas_pair[0].second[1],
-                                            deltas_pair[0].second[2]);
-=======
-    const TensorMap<Tensor<type, 3>> input = tensor_map_3(inputs_pair(0));
-
-    const TensorMap<Tensor<type, 3>> context = tensor_map_3(inputs_pair(1));
-
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair(0));
->>>>>>> e76c7e0830dbed707c7af443ebfc37d0d8fa395e
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
 
     Index batch_samples_number = inputs_pair[0].second[0];
 
