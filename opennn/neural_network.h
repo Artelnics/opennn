@@ -74,7 +74,7 @@ public:
 
    void add_layer(unique_ptr<Layer>, const string& name = "layer", const vector<Index>& = vector<Index>());
 
-   bool validate_layer_type(const Layer::Type);
+   bool validate_layer_type(const Layer::Type) const;
 
    // Get
 
@@ -109,6 +109,7 @@ public:
    Index get_layer_index(const string&) const;
 
    const vector<vector<Index>>& get_layers_input_indices() const;
+   vector<vector<Index>> get_layers_output_indices() const;
 
    ScalingLayer2D* get_scaling_layer_2d() const;
    ScalingLayer4D* get_scaling_layer_4d() const;

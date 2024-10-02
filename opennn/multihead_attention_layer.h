@@ -131,8 +131,8 @@ public:
 
     // Gradient
 
-    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                  const Tensor<pair<type*, dimensions>, 1>&,
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                                  const vector<pair<type*, dimensions>>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
 

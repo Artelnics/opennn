@@ -9,6 +9,7 @@
 #include "cross_entropy_error.h"
 #include "neural_network_forward_propagation.h"
 #include "back_propagation.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -46,7 +47,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
@@ -81,7 +82,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
@@ -136,7 +137,7 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
@@ -149,7 +150,7 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device)
             = (-targets/outputs + (type(1) - targets)/(type(1) - outputs))/type(batch_samples_number);
@@ -166,7 +167,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
@@ -174,7 +175,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     const type coefficient = -type(1) / type(batch_samples_number);
 
@@ -216,10 +217,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
     tinyxml2::XMLDocument regularization_document;
 
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-
-    tinyxml2::XMLNode* element_clone = regularization_element->DeepClone(&regularization_document);
-
-    regularization_document.InsertFirstChild(element_clone);
+    regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
 
     regularization_from_XML(regularization_document);
 }

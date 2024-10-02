@@ -612,15 +612,9 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 3>> input(inputs_pair(0).first,
-                                           inputs_pair(0).second[0],
-                                           inputs_pair(0).second[1],
-                                           inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> input = tensor_map_3(inputs_pair(0));
 
-    const TensorMap<Tensor<type, 3>> context(inputs_pair(1).first,
-                                             inputs_pair(1).second[0],
-                                             inputs_pair(1).second[1],
-                                             inputs_pair(1).second[2]);
+    const TensorMap<Tensor<type, 3>> context = tensor_map_3(inputs_pair(1));
 
     Tensor<type, 4>& query = multihead_attention_layer_forward_propagation->query;
     Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
@@ -660,27 +654,18 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
 }
 
 
-void MultiheadAttentionLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                                       const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                                       const vector<pair<type*, dimensions>>& deltas_pair,
                                                        LayerForwardPropagation* forward_propagation,
                                                        LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> input(inputs_pair(0).first,
-                                           inputs_pair(0).second[0],
-                                           inputs_pair(0).second[1],
-                                           inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> input = tensor_map_3(inputs_pair[0]);
 
-    const TensorMap<Tensor<type, 3>> context(inputs_pair(1).first,
-                                             inputs_pair(1).second[0],
-                                             inputs_pair(1).second[1],
-                                             inputs_pair(1).second[2]);
+    const TensorMap<Tensor<type, 3>> context = tensor_map_3(inputs_pair[1]);
 
-    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
-                                            deltas_pair(0).second[0],
-                                            deltas_pair(0).second[1],
-                                            deltas_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
 
-    Index batch_samples_number = inputs_pair(0).second[0];
+    Index batch_samples_number = inputs_pair[0].second[0];
 
     type* query_weights_data = (type*)query_weights.data();
     type* key_weights_data = (type*)key_weights.data();
@@ -1195,10 +1180,10 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
     context_derivatives.resize(batch_samples_number, context_size, depth);
 
     inputs_derivatives.resize(2);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, input_size, depth };
-    inputs_derivatives(1).first = context_derivatives.data();
-    inputs_derivatives(1).second = { batch_samples_number, context_size, depth };
+    inputs_derivatives[0].first = input_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, input_size, depth };
+    inputs_derivatives[1].first = context_derivatives.data();
+    inputs_derivatives[1].second = { batch_samples_number, context_size, depth };
 }
 
 }

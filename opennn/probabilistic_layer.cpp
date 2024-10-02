@@ -407,6 +407,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 {
     const Index neurons_number = get_neurons_number();
 
+
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
@@ -448,16 +449,16 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 }
 
 
-void ProbabilisticLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                                  const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                                  const vector<pair<type*, dimensions>>& deltas_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
-    const Index samples_number = inputs_pair(0).second[0];
+    const Index samples_number = inputs_pair[0].second[0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_pair(0).second[1]);
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, samples_number, deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair[0]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
 
     // Forward propagation
 
@@ -928,8 +929,8 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
     input_derivatives.resize(batch_samples_number, inputs_number);
 
     inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
+    inputs_derivatives[0].first = input_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, inputs_number };
 }
 
 

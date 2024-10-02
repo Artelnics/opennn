@@ -17,7 +17,7 @@ struct LayerBackPropagation
 
     virtual ~LayerBackPropagation() {}
     
-    Tensor<pair<type*, dimensions>, 1>& get_inputs_derivatives_pair()
+    vector<pair<type*, dimensions>>& get_inputs_derivatives_pair()
     {
         return inputs_derivatives;
     }
@@ -30,7 +30,7 @@ struct LayerBackPropagation
 
     Layer* layer = nullptr;
 
-    Tensor<pair<type*, dimensions>, 1> inputs_derivatives;
+    vector<pair<type*, dimensions>> inputs_derivatives;
 
     bool is_first_layer = false;
 };

@@ -87,7 +87,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const
 }
 
 
-bool NeuralNetwork::validate_layer_type(const Layer::Type layer_type)
+bool NeuralNetwork::validate_layer_type(const Layer::Type layer_type) const
 {
     if(has_bounding_layer())
         throw runtime_error("No layers can be added after a bounding layer.\n");
@@ -380,6 +380,43 @@ const vector<vector<Index>>& NeuralNetwork::get_layers_input_indices() const
 }
 
 
+vector<vector<Index>> NeuralNetwork::get_layers_output_indices() const
+{
+    const Index layers_number = layers_inputs_indices.size();
+
+    vector<vector<Index>> layers_outputs_indices(layers_number);
+
+    Index layer_count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        for(Index j = 0; j < layers_number; j++)
+            for(Index k = 0; k < layers_inputs_indices[j].size(); k++)
+                if(layers_inputs_indices[j][k] == i)
+                    layer_count++;
+
+        layers_outputs_indices[i].resize(layer_count);
+        layer_count = 0;
+
+        for(Index j = 0; j < layers_number; j++)
+        {
+            for(Index k = 0; k < layers_inputs_indices[j].size(); k++)
+            {
+                if(layers_inputs_indices[j][k] == i)
+                {
+                    layers_outputs_indices[i][layer_count] = j;
+                    layer_count++;
+                }
+            }
+        }
+
+        layer_count = 0;
+    }
+
+    return layers_outputs_indices;
+}
+
+
 ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
 {
     const Index layers_number = get_layers_number();
@@ -449,12 +486,8 @@ BoundingLayer* NeuralNetwork::get_bounding_layer() const
 //    const Index layers_number = get_layers_number();
 //
 //    for(Index i = 0; i < layers_number; i++)
-//    {
 //        if(layers[i]->get_type() == Layer::Type::Convolutional)
-//        {
 //            return dynamic_cast<ConvolutionalLayer*>(layers[i]);
-//        }
-//    }
 //
 //    throw runtime_error("No convolutional layer in neural network.\n");
 //}
@@ -465,12 +498,8 @@ BoundingLayer* NeuralNetwork::get_bounding_layer() const
 //     const Index layers_number = get_layers_number();
 
 //     for(Index i = 0; i < layers_number; i++)
-//     {
 //         if(layers[i]->get_type() == Layer::Type::PoolingLayer)
-//         {
 //             return dynamic_cast<PoolingLayer*>(layers[i]);
-//         }
-//     }
 
 //     throw runtime_error("No pooling layer in neural network.\n");
 // }
@@ -997,9 +1026,7 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
         && layer_type != Layer::Type::Scaling4D
         && layer_type != Layer::Type::Unscaling
         && layer_type != Layer::Type::Bounding)
-        {
             return i;
-        }
     }
 
     return 0;
@@ -3299,16 +3326,13 @@ string NeuralNetwork::write_expression_javascript() const
         for(int i = 0; i < found_mathematical_expressions.dimension(0); i++)
         {
             string key_word = found_mathematical_expressions(i);
-            string new_word;
-
-            new_word = sufix + key_word;
+            string new_word = sufix + key_word;
             replace_all_appearances(t, key_word, new_word);
         }
 
-        if(t.size() <= 1)
-            buffer << "" << endl;
-        else
-            buffer << "\t" << "var " << t << endl;
+        t.size() <= 1
+            ? buffer << "" << endl
+            : buffer << "\t" << "var " << t << endl;
     }
 
     if(LSTM_number>0)
@@ -3885,7 +3909,7 @@ void NeuralNetwork::save_expression_python(const string& file_name) const
 
 void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_name)
 {
-    Tensor<type, 2> outputs = calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
     ofstream file(file_name.c_str());
 
@@ -3901,7 +3925,8 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     {
         file << output_names[i];
 
-        if(i != output_names.size()-1) file << ";";
+        if(i != output_names.size()-1) 
+            file << ";";
     }
 
     file << "\n";

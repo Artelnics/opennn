@@ -29,7 +29,7 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
+        DataSet data_set("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true);
 
         //data_set.save("../data/data_set.xml");
         //data_set.load("../data/data_set.xml");
@@ -47,8 +47,8 @@ int main()
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
 
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.load("../data/neural_network.xml");
+        // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+        // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
         neural_network.print();
 
@@ -82,12 +82,12 @@ int main()
 
         // Save results
         
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression_c("../data/airfoil_self_noise.c");
+        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
 
         // Deploy
 
-        NeuralNetwork new_neural_network("../data/neural_network.xml");
+        NeuralNetwork new_neural_network("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
         Tensor<type, 2> inputs(1, input_variables_number);
         inputs.setRandom();

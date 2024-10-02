@@ -63,7 +63,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
@@ -96,7 +96,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
    
     const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair);
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 

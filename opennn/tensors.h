@@ -229,6 +229,14 @@ type round_to_precision(type, const int&);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 
+TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair);
+
+TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair);
+
+TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair);
+
+TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair);
+
 void print_dimensions(const dimensions&);
 
 template<class T, int n>
