@@ -368,14 +368,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
-    cout << "synaptic_weights.dimensions(): " << synaptic_weights.dimensions() << endl;
-    cout << "inputs.dimensions(): " << inputs.dimensions() << endl;
-    cout << "combinations.dimensions(): " << combinations.dimensions() << endl;
-
-    cout << "combinations: " << combinations << endl;
-
     sum_columns(thread_pool_device, biases, combinations);
-
 }
 
 
@@ -417,15 +410,6 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     calculate_combinations(inputs, outputs);
 
-    { // DEBUG
-        cout << "synaptic_weights:\n" << synaptic_weights.sum() << endl;
-        
-        //cout << outputs.dimension(0) << "   " << outputs.dimension(1) << endl;
-        //cout << "outputs:\n" << outputs << endl;
-
-        system("pause");
-    }
-
     if (neurons_number == 1 && !is_training)
     {
         logistic(outputs, empty);
@@ -435,8 +419,6 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
         Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
         logistic(outputs, activations_derivatives);
-
-        cout << "probabilistic outputs" << outputs << endl;
     }
     else if (neurons_number > 1)
     {

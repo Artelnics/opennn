@@ -29,6 +29,9 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions, const dimensi
     pool_height = new_pool_dimensions[0];
     pool_width = new_pool_dimensions[1];
 
+    //row_stride = new_pool_dimensions[0];
+    //column_stride = new_pool_dimensions[1];
+
     set_default();
 }
 
@@ -747,14 +750,6 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
     const Index input_height = pooling_layer->get_input_height();
 
     const Index input_width = pooling_layer->get_input_width();
-
-    cout << "input_height: " << input_height << endl;
-    cout << "input_width: " << input_width << endl;
-
-    cout << "channels: " << channels << endl;
-
-    cout << "output_height: " << output_height << endl;
-    cout << "output_width: " << output_width << endl;
     
     outputs.resize(batch_samples_number,
                    output_height,
