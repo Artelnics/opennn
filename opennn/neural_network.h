@@ -233,19 +233,6 @@ public:
    Tensor<string, 1> get_layer_names() const;
    Tensor<string, 1> get_layer_types_string() const;
 
-   // Expression
-
-   string write_expression() const;
-
-   string write_expression_python() const;
-   string write_expression_c() const;
-   string write_expression_api() const;
-   string write_expression_javascript() const;
-
-   void save_expression_c(const string&) const;
-   void save_expression_python(const string&) const;
-   void save_expression_api(const string&) const;
-   void save_expression_javascript(const string&) const;
    void save_outputs(Tensor<type, 2>&, const string&);
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
@@ -255,6 +242,12 @@ public:
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
+
+   void save_expression_c(const string&) const;
+   void save_expression_python(const string&) const;
+   void save_expression_api(const string&) const;
+   void save_expression_javascript(const string&) const;
+
 
 #ifdef OPENNN_CUDA
 #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"

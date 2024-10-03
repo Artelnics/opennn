@@ -395,14 +395,8 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
     Tensor<type, 1> minimal_centers(minimal_indices_size);
 
     for(Index i = 0; i < frequencies.size(); i++)
-    {
         if(frequencies(i) == minimum_frequency)
-        {
-            minimal_centers(index) = type(centers(i));
-
-            index++;
-        }
-    }
+            minimal_centers(index++) = type(centers(i));
 
     return minimal_centers;
 }
@@ -434,14 +428,8 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
     Tensor<type, 1> maximal_centers(maximal_indices_size);
 
     for(Index i = 0; i < frequencies.size(); i++)
-    {
         if(maximum_frequency == frequencies(i))
-        {
-            maximal_centers(index) = type(centers(i));
-
-            index++;
-        }
-    }
+            maximal_centers(index++) = type(centers(i));
 
     return maximal_centers;
 }
@@ -1773,17 +1761,12 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
     Index index = 0;
 
     for(Index i = 0; i < vector.size(); i++)
-    {
         if(!isnan(vector(i)))
-        {
-            new_vector(index) = vector(i);
-            index++;
-        }
-    }
+            new_vector(index++) = vector(i);
 
     Tensor<type, 1> sorted_vector(new_vector);
 
-    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
+    std::sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
     const Descriptives descriptives = opennn::descriptives(vector);
 
@@ -2604,17 +2587,12 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
     Tensor<type, 1> new_vector(new_size);
 
     for(Index i = 0; i < size; i++)
-    {
         if(!isnan(vector(i)))
-        {
-            new_vector(index) = vector(i);
-            index++;
-        }
-    }
+            new_vector(index++) = vector(i);
 
     Tensor<type, 1> sorted_vector(new_vector);
 
-    sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
+    std::sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
     Tensor<type, 1> percentiles(10);
 

@@ -291,9 +291,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
             for(Index j = 0; j < y_columns_number; j++)
                 new_y(index, j) = y(i, j);
 
-            new_x(index) = x(i);
-
-            index++;
+            new_x(index++) = x(i);
         }
     }
 

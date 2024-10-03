@@ -37,7 +37,7 @@ class PoolingLayer : public Layer
 
 public:
 
-    enum class PoolingMethod{NoPooling, MaxPooling, AveragePooling};
+    enum class PoolingMethod{MaxPooling, AveragePooling};
 
     // Constructors
 
@@ -102,10 +102,6 @@ public:
                            LayerForwardPropagation*,
                            const bool&) final;
 
-    void forward_propagate_no_pooling(const Tensor<type, 4>&,
-                                      LayerForwardPropagation*,
-                                      const bool&);
-
     void forward_propagate_max_pooling(const Tensor<type, 4>&,
                                        LayerForwardPropagation*,
                                        const bool&) const;
@@ -161,8 +157,6 @@ protected:
 
     const Eigen::array<ptrdiff_t, 4> average_pooling_dimensions = {0, 1, 2, 3}; // For average pooling
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
-
-
 };
 
 

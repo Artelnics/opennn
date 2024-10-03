@@ -94,7 +94,7 @@ void fill_tokens(const string& text, const string& separator, Tensor<string, 1>&
 
         if(last_position - old_position != 1 && index != 0)
         {
-            tokens[index] = "";
+            tokens[index++] = "";
             index++;
             old_position++;
             continue;
@@ -1894,10 +1894,7 @@ void delete_blanks(Tensor<string, 1>& words)
         trim(vector_copy(i));
 
         if(!vector_copy(i).empty())
-        {
-            words(index) = vector_copy(i);
-            index++;
-        }
+            words(index++) = vector_copy(i);
     }
 }
 
@@ -1917,13 +1914,8 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
         Index index = 0;
 
         for(Index j = 0; j < documents_tokens(i).size(); j++)
-        {
             if(!documents_tokens(i)(j).empty())
-            {
-                new_document_tokens(index) = documents_tokens(i)(j);
-                index++;
-            }
-        }
+                new_document_tokens(index++) = documents_tokens(i)(j);
 
         documents_tokens(i) = new_document_tokens;
     }
@@ -2716,9 +2708,8 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
                     word += " " + words[j+k];
                 }
 
-                combinated_words[index] = word;
+                combinated_words[index++] = word;
 
-                index++;
             }
         }
     }

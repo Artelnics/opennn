@@ -460,7 +460,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
             if(column_type == DataSet::RawVariableType::Numeric || column_type == DataSet::RawVariableType::Constant)
             {
-                inputs(i,index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
+                inputs(i,index++) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
                 index++;
             }
             else if(column_type == DataSet::RawVariableType::Binary)

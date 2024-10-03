@@ -218,7 +218,8 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
                                                  output_width,
                                                  1);
 
-        kernel_output.device(*thread_pool_device) = kernel_output * scales(kernel_index) + offsets(kernel_index);
+        kernel_output.device(*thread_pool_device) 
+            = kernel_output * scales(kernel_index) + offsets(kernel_index);
     }
 }
 
@@ -255,7 +256,6 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
 {
-
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(inputs_pair(0));
     
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
@@ -280,13 +280,9 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
     }
 
     if(is_training)
-    {
         calculate_activations(outputs, activations_derivatives);
-    }
     else
-    {
         calculate_activations(outputs, empty);
-    }
 }
 
 
@@ -341,7 +337,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
     const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = {0, 1, 2};
-    const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = { 0, 1 };
+    const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = {0, 1};
 
     Tensor<type, 3>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
 
@@ -360,7 +356,9 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index pad_bottom = pad_height - pad_top;
     const Index pad_left = pad_width / 2;
     const Index pad_right = pad_width - pad_left;
-    const Eigen::array<pair<Index, Index>, 2> paddings = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
+
+    const Eigen::array<pair<Index, Index>, 2> paddings 
+        = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
 
     // Convolutions derivatives
 
@@ -370,17 +368,17 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {       
-        
-        TensorMap<Tensor<type, 3>> kernel_synaptic_weights(synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
-                                                           kernel_height,
-                                                           kernel_width,
-                                                           kernel_channels);
+        TensorMap<Tensor<type, 3>> kernel_synaptic_weights(
+                                   synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
+                                   kernel_height,
+                                   kernel_width,
+                                   kernel_channels);
 
         TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
-                                                           convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
-                                                           batch_samples_number,
-                                                           output_height,
-                                                           output_width);
+                                   convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
+                                   batch_samples_number,
+                                   output_height,
+                                   output_width);
         
         // Biases derivatives
 
@@ -402,13 +400,15 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         
         for (Index image_index = 0; image_index < batch_samples_number; ++image_index)
         {
-            image_kernel_convolutions_derivatives_padded = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
+            image_kernel_convolutions_derivatives_padded 
+                = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
 
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             {
                 rotated_kernel_slice = rotated_kernel_synaptic_weights.chip(channel_index, 2);
 
-                channel_convolution.device(*thread_pool_device) = image_kernel_convolutions_derivatives_padded.convolve(rotated_kernel_slice, convolution_dimensions_2d);
+                channel_convolution.device(*thread_pool_device) 
+                    = image_kernel_convolutions_derivatives_padded.convolve(rotated_kernel_slice, convolution_dimensions_2d);
 
                 #pragma omp parallel for
                 for(Index x = 0; x < input_height; ++x)
@@ -522,9 +522,9 @@ dimensions ConvolutionalLayer::get_input_dimensions() const
 
 dimensions ConvolutionalLayer::get_output_dimensions() const
 {
-    Index rows_number = get_output_height();
-    Index columns_number = get_output_width();
-    Index kernels_number = get_kernels_number();
+    const Index rows_number = get_output_height();
+    const Index columns_number = get_output_width();
+    const Index kernels_number = get_kernels_number();
 
     return { rows_number, columns_number, kernels_number };
 }
@@ -846,20 +846,17 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         return make_pair(pad_rows, pad_columns);
     }
     default:
-    {
         throw runtime_error("Unknown convolution type.\n");
-    }
     }
 }
 
 
 Eigen::array<pair<Index, Index>, 4> ConvolutionalLayer::get_paddings() const
 {
-    Eigen::array<pair<Index, Index>, 4> paddings;
-
     const Index pad_rows = get_padding().first;
     const Index pad_columns = get_padding().second;
 
+    Eigen::array<pair<Index, Index>, 4> paddings;
     paddings[0] = make_pair(0, 0);
     paddings[1] = make_pair(pad_rows, pad_rows);
     paddings[2] = make_pair(pad_columns, pad_columns);
@@ -897,61 +894,6 @@ Index ConvolutionalLayer::get_input_channels() const
 {
     return input_dimensions[2];
 }
-
-//void ConvolutionalLayer::calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const
-//{
-//    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
-//            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
-
-//    const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
-//    const Index output_height = get_output_height();
-//    const Index outputs_raw_variables_number = get_outputs_raw_variables_number();
-//    const Index kernels_number = get_kernels_number();
-//    const Index single_output_size = batch_samples_number * output_height * outputs_raw_variables_number;
-
-//    Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
-
-//    Tensor<type, 1>& variaces = convolutional_layer_forward_propagation->standard_deviations;
-
-//    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
-
-//    Tensor<type, 0> standard_deviation;
-
-//    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-//    {
-//        const TensorMap<Tensor<type, 1>> single_kernel_output(outputs_data + kernel_index * single_output_size,
-//                                                               single_output_size);
-
-//        standard_deviation.device(*thread_pool_device) = (single_kernel_output - means(kernel_index)).square().mean().sqrt();
-
-//        standard_deviations(kernel_index) = standard_deviation();
-//    }
-//}
-
-
-/*
-void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training)
-{
-    const Index batch_samples_number = inputs.dimension(0);
-    const Index channels = get_kernels_number();
-
-    if(is_training)
-    {
-        calculate_means(inputs);
-
-        calculate_standard_deviations(inputs, current_means);
-
-        normalize_and_shift(inputs, is_training);
-
-        moving_means = moving_means * momentum + current_means * (1 - momentum);
-        moving_standard_deviations = moving_standard_deviations * momentum + current_standard_deviations * (1 - momentum);
-    }
-    else
-    {
-        normalize_and_shift(inputs, is_training);
-    }
-}
-*/
 
 
 void ConvolutionalLayer::print() const
@@ -1191,20 +1133,17 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                                    output_width,
                                    kernels_number);
 
-    outputs_data = outputs.data();
-    
+    outputs_data = outputs.data();    
 }
 
 
 void ConvolutionalLayerForwardPropagation::print() const
 {
-    cout << "Convolutional layer" << endl;
-
-    cout << "Outputs aaaaaa:" << endl;
-    cout << outputs << endl;
-
-    cout << "Activations derivatives:" << endl;
-    cout << activations_derivatives << endl;
+    cout << "Convolutional layer" << endl
+         << "Outputs:" << endl
+         << outputs << endl
+         << "Activations derivatives:" << endl
+         << activations_derivatives << endl;
 }
 
 
@@ -1247,9 +1186,9 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     const Index output_width = convolutional_layer->get_output_width();
 
     convolutions_derivatives.resize(batch_samples_number,
-                                          output_height,
-                                          output_width,
-                                          kernels_number);
+                                    output_height,
+                                    output_width,
+                                    kernels_number);
 
     biases_derivatives.resize(kernels_number);
 
@@ -1263,7 +1202,9 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                                kernel_width,
                                                kernel_channels);
 
-    image_convolutions_derivatives.resize(output_height, output_width, 1);
+    image_convolutions_derivatives.resize(output_height, 
+                                          output_width, 
+                                          1);
 
     input_derivatives.resize(batch_samples_number,
                              input_height,
@@ -1272,21 +1213,18 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
 
     inputs_derivatives.resize(1);
     inputs_derivatives[0].first = input_derivatives.data();
-    inputs_derivatives[0].second = { batch_samples_number, input_height, input_width, channels };
+    inputs_derivatives[0].second = {batch_samples_number, input_height, input_width, channels};
 }
+
 
 void ConvolutionalLayerBackPropagation::print() const
 {
-    cout << "Convolutional layer back propagation" << endl;
-
-    cout << "Biases derivatives:\n" << endl;
-    cout << biases_derivatives << endl;
-
-    cout << "Synaptic weights derivatives:\n" << endl;
-    cout << synaptic_weights_derivatives << endl;
-
+    cout << "Convolutional layer back propagation" << endl
+         << "Biases derivatives:\n" << endl
+         << biases_derivatives << endl
+         << "Synaptic weights derivatives:\n" << endl
+         << synaptic_weights_derivatives << endl;
 }
-
 
 }
 
