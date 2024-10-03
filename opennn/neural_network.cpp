@@ -755,6 +755,8 @@ void NeuralNetwork::set_default()
 {
     display = true;
 
+    layers_inputs_indices = vector<vector<Index>>();
+
     const int n = omp_get_max_threads();
 
     thread_pool = new ThreadPool(n);
