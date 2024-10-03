@@ -131,9 +131,9 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
    void print() const
    {
-       cout << "Outputs:" << endl;
+       cout << "Flatten Outputs:" << endl;
 
-       cout << outputs << endl;
+       cout << outputs.dimensions() << endl;
    }
 
 

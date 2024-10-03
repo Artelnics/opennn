@@ -1170,11 +1170,11 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
                                                       const Tensor<type, 2>& targets,
                                                       const Index& outputs_number) const
 {
-    if(outputs_number == 1)
+    if (outputs_number == 1)
     {
         const type decision_threshold = (neural_network->get_probabilistic_layer() != nullptr)
-                                       ? neural_network->get_probabilistic_layer()->get_decision_threshold()
-                                       : type(0.5);
+                                        ? neural_network->get_probabilistic_layer()->get_decision_threshold()
+                                        : type(0.5);
 
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
     }

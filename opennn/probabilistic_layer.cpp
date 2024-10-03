@@ -400,7 +400,6 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 {
     const Index neurons_number = get_neurons_number();
 
-
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
@@ -432,13 +431,13 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
 
 void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
-                                                  const vector<pair<type*, dimensions>>& deltas_pair,
-                                                  LayerForwardPropagation* forward_propagation,
-                                                  LayerBackPropagation* back_propagation) const
+                                        const vector<pair<type*, dimensions>>& deltas_pair,
+                                        LayerForwardPropagation* forward_propagation,
+                                        LayerBackPropagation* back_propagation) const
 {
     const Index samples_number = inputs_pair[0].second[0];
     const Index neurons_number = get_neurons_number();
-
+    
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair[0]);
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
 
@@ -854,16 +853,16 @@ void ProbabilisticLayerForwardPropagation::print() const
 {
     cout << "Probabilistic layer forward-propagation" << endl;
 
-    cout << "Outputs:" << endl;
-    cout << outputs << endl;
+    cout << "Outputs dimensions:" << endl;
+    cout << outputs.dimensions() << endl;
 
     const Index neurons_number = layer->get_neurons_number();
 
-    if(neurons_number == 1)
-    {
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
-    }
+    //if(neurons_number == 1)
+    //{
+     //   cout << "Activations derivatives:" << endl;
+      //  cout << activations_derivatives << endl;
+    //}
 }
 
 

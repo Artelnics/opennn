@@ -304,14 +304,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             inputs_pair = training_batch.get_inputs_pair();
 
-            { //DEBUG 
-                const TensorMap<Tensor<type, 4>> images = tensor_map_4(inputs_pair(0));
-
-                //cout << "first_image (300x300x3):\n" << images.chip(0, 0) << endl;
-
-                //system("pause");
-            }
-
             neural_network->forward_propagate(inputs_pair,
                                               training_forward_propagation,
                                               is_training);

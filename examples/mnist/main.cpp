@@ -26,7 +26,7 @@ int main()
 
         const Index kernel_height = 3;
         const Index kernel_width = 3;
-        const Index channels = 3;
+        const Index channels = 1;
         const Index kernels_number = 3;
 
         const Index pool_height = 3;
@@ -36,16 +36,16 @@ int main()
         
         /* //Random image data set 
         const Index samples_number = 2;
-        const Index image_height = 4;
-        const Index image_width = 4;
-        ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 2);
+        const Index image_height = 3;
+        const Index image_width = 3;
+        ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 1);
         image_data_set.set_image_data_random();
         */
 
         ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        image_data_set.set_data_source_path("C:/mnist/train");
-        //image_data_set.set_data_source_path("C:/binary_mnist_test");
+        //image_data_set.set_data_source_path("C:/mnist/train");
+        image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
@@ -54,14 +54,13 @@ int main()
 
         //image_data_set.set_training();
 
-        //image_data_set.print_data();
-        //image_data_set.print();
+        image_data_set.print();
 
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
-            { 32, 16 },
+            { 1 },
             image_data_set.get_target_dimensions());
 
         neural_network.print();
@@ -101,13 +100,14 @@ int main()
 
         // Training strategy
 
+         
         TrainingStrategy training_strategy(&neural_network, &image_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(20);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         //training_strategy.get_adaptive_moment_estimation()->set_learning_rate(type(0.02));
         training_strategy.set_display_period(1);
 

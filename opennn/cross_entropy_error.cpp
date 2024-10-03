@@ -55,8 +55,6 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
-    cout << "Outputs: " << outputs << endl;
-
     // Back propagation
 
     type& error = back_propagation.error;

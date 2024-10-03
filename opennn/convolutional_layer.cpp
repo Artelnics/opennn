@@ -1200,7 +1200,7 @@ void ConvolutionalLayerForwardPropagation::print() const
 {
     cout << "Convolutional layer" << endl;
 
-    cout << "Outputs:" << endl;
+    cout << "Outputs aaaaaa:" << endl;
     cout << outputs << endl;
 
     cout << "Activations derivatives:" << endl;
