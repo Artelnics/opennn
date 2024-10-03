@@ -1172,9 +1172,9 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 
 bool NeuralNetwork::is_input_layer(const vector<Index>& layer_inputs_indices) const
 {
-    const Index layers_number = get_layers_number();
+    const Index input_layers_number = layer_inputs_indices.size();
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < input_layers_number; i++)
         if(layer_inputs_indices[i] == -1)
             return true;
 
