@@ -68,29 +68,11 @@ void set_random(Tensor<type, Dimension>& tensor, const type& minimum, const type
     random_device rd;
     mt19937 gen(rd());
 
-    size_t N = tensor.size();
-    size_t half = N / 2;
+    uniform_real_distribution<type> distribution(minimum, maximum);
 
-    vector<type> values(N);
-
-    uniform_real_distribution<type> dist(minimum, maximum);
-
-    for (size_t i = 0; i < half; ++i) 
+    for (Index i = 0; i < tensor.size(); ++i)
     {
-        values[i] = dist(gen);
-        values[i + half] = -values[i];
-    }
-
-    if (N % 2 != 0) 
-    {
-        values[N - 1] = 0;
-    }
-
-    std::shuffle(values.begin(), values.end(), gen);
-
-    for (Index i = 0; i < tensor.size(); ++i) 
-    {
-        tensor(i) = values[i];
+        tensor(i) = distribution(gen);
     }
 }
 
@@ -2151,10 +2133,10 @@ TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair)
 TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair)
 {
     return TensorMap<Tensor<type, 4>>(x_pair.first,
-        x_pair.second[0],
-        x_pair.second[1],
-        x_pair.second[2],
-        x_pair.second[3]);
+                                      x_pair.second[0],
+                                      x_pair.second[1],
+                                      x_pair.second[2],
+                                      x_pair.second[3]);
 }
 
 

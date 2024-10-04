@@ -564,6 +564,8 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                         const dimensions& complexity_dimensions,
                         const dimensions& output_dimensions)
 {
+    set_default();
+
     layers.resize(0);
 
     model_type = new_model_type;
@@ -616,18 +618,18 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     }
     else if(model_type == ModelType::ImageClassification)
     {
-        add_layer(make_unique<ScalingLayer4D>(input_dimensions));
-
+        //add_layer(make_unique<ScalingLayer4D>(input_dimensions));
+        
         for(Index i = 0; i < complexity_size; i++)
         {
-            const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
+            //const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
 
-            add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(), kernel_dimensions),
-                      "convolutional_layer_" + to_string(i+1));
+            //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(), kernel_dimensions),
+            //          "convolutional_layer_" + to_string(i+1));
 
             const dimensions pool_dimensions = {2, 2};
 
-            add_layer(make_unique<PoolingLayer>(get_output_dimensions(), pool_dimensions),
+            add_layer(make_unique<PoolingLayer>(/*get_output_dimensions()*/ input_dimensions, pool_dimensions),
                       "pooling_layer_" + to_string(i+1));
         }
 
@@ -666,7 +668,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     for(Index i = 0; i < outputs_number; i++)
         output_names(i) = "output_" + to_string(i+1);
 
-    set_default();
 }
 
 
@@ -1257,7 +1258,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
         if(i == first_layer_index || is_input_layer(layer_input_indices))
         {
             layer_inputs.resize(1);
-
+           
             layer_inputs(0) = inputs_pair(0);
         }
         else if(is_context_layer(layer_input_indices))
