@@ -610,7 +610,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     }
     else if(model_type == ModelType::Forecasting)
     {
-        add_layer(make_unique<ScalingLayer2D>(inputs_number));
+        add_layer(make_unique<ScalingLayer2D>(input_dimensions));
 
         add_layer(make_unique<UnscalingLayer>(output_dimensions));
 

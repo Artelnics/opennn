@@ -39,14 +39,6 @@ void UnscalingLayerTest::test_constructor()
 
     assert_true(unscaling_layer_2.get_descriptives().size() == 3, LOG);
 
-    // Test
-/*
-    descriptives.resize(2);
-
-    UnscalingLayer unscaling_layer_3(descriptives);
-
-    assert_true(unscaling_layer_3.get_descriptives().size() == 2, LOG);
-*/
 }
 
 

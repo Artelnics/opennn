@@ -27,14 +27,6 @@ ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
 }
 
 
-ScalingLayer2D::ScalingLayer2D(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
-{
-/*
-    set(new_descriptives);
-*/
-}
-
-
 dimensions ScalingLayer2D::get_output_dimensions() const
 {
     return input_dimensions;

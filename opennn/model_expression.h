@@ -1792,3 +1792,181 @@ string write_expression_python() const
 
     return out;
 }
+
+string replace_non_allowed_programming_expressions(string& s)
+{
+    string out;
+
+    if(s[0] == '$')
+        out = s;
+
+    replace_all_appearances(s, "fn", "f_n");
+    replace_all_appearances(s, "if", "i_f");
+    replace_all_appearances(s, "do", "d_o");
+    replace_all_appearances(s, "or", "o_r");
+    replace_all_appearances(s, "is", "i_s");
+    replace_all_appearances(s, "as", "a_s");
+    replace_all_appearances(s, "or", "o_r");
+    replace_all_appearances(s, "if", "i_f");
+    replace_all_appearances(s, "in", "in_");
+    replace_all_appearances(s, "del", "del");
+    replace_all_appearances(s, "max","ma_x");
+    replace_all_appearances(s, "min","mi_n");
+    replace_all_appearances(s, "and", "an_d");
+    replace_all_appearances(s, "for", "fo_r");
+    replace_all_appearances(s, "die", "di_e");
+    replace_all_appearances(s, "int", "in_t");
+    replace_all_appearances(s, "new", "ne_w");
+    replace_all_appearances(s, "use", "us_e");
+    replace_all_appearances(s, "var", "va_r");
+    replace_all_appearances(s, "try", "tr_y");
+    replace_all_appearances(s, "xor", "xo_r");
+    replace_all_appearances(s, "def", "de_f");
+    replace_all_appearances(s, "for", "fo_r");
+    replace_all_appearances(s, "not", "no_t_");
+    replace_all_appearances(s, "rise","ri_se");
+    replace_all_appearances(s, "byte", "byt_e");
+    replace_all_appearances(s, "echo", "ech_o");
+    replace_all_appearances(s, "eval", "eva_l");
+    replace_all_appearances(s, "pass", "pa_ss");
+    replace_all_appearances(s, "form", "for_m");
+    replace_all_appearances(s, "else", "el_se");
+    replace_all_appearances(s, "with", "w_ith");
+    replace_all_appearances(s, "exit", "exi_t");
+    replace_all_appearances(s, "auto", "aut_o");
+    replace_all_appearances(s, "enum", "enu_m");
+    replace_all_appearances(s, "case", "cas_e");
+    replace_all_appearances(s, "char", "cha_r");
+    replace_all_appearances(s, "void", "voi_d");
+    replace_all_appearances(s, "goto", "got_o");
+    replace_all_appearances(s, "long", "lon_g");
+    replace_all_appearances(s, "else", "els_e");
+    replace_all_appearances(s, "goto", "got_o");
+    replace_all_appearances(s, "type", "ty_pe");
+    replace_all_appearances(s, "self", "se_lf");
+    replace_all_appearances(s, "list", "lis_t");
+    replace_all_appearances(s, "None", "No_ne");
+    replace_all_appearances(s, "elif", "el_if");
+    replace_all_appearances(s, "True", "t_rue_");
+    replace_all_appearances(s, "super","sup_er");
+    replace_all_appearances(s, "endif", "endi_f");
+    replace_all_appearances(s, "await", "awai_t");
+    replace_all_appearances(s, "catch", "catc_h");
+    replace_all_appearances(s, "class", "clas_s");
+    replace_all_appearances(s, "clone", "clon_e");
+    replace_all_appearances(s, "empty", "empt_y");
+    replace_all_appearances(s, "final", "fina_l");
+    replace_all_appearances(s, "break", "brea_k");
+    replace_all_appearances(s, "while", "whil_e");
+    replace_all_appearances(s, "float", "floa_t");
+    replace_all_appearances(s, "union", "unio_n");
+    replace_all_appearances(s, "short", "shor_t");
+    replace_all_appearances(s, "const", "cons_t");
+    replace_all_appearances(s, "match", "matc_h");
+    replace_all_appearances(s, "isset", "isse_t");
+    replace_all_appearances(s, "while", "whil_e");
+    replace_all_appearances(s, "yield", "yiel_d");
+    replace_all_appearances(s, "False", "Fa_lse");
+    replace_all_appearances(s, "unset", "unse_t");
+    replace_all_appearances(s, "print", "prin_t");
+    replace_all_appearances(s, "trait", "trai_t");
+    replace_all_appearances(s, "throw", "thro_w");
+    replace_all_appearances(s, "raise", "rai_se");
+    replace_all_appearances(s, "while", "wh_ile");
+    replace_all_appearances(s, "yield", "yi_eld");
+    replace_all_appearances(s, "break", "bre_ak");
+    replace_all_appearances(s, "class", "c_lass");
+    replace_all_appearances(s, "string","str_ing");
+    replace_all_appearances(s, "except", "exc_ept");
+    replace_all_appearances(s, "lambda", "lamb_da");
+    replace_all_appearances(s, "assert", "asser_t");
+    replace_all_appearances(s, "global", "glo_bal");
+    replace_all_appearances(s, "elseif", "elsei_f");
+    replace_all_appearances(s, "endfor", "endfo_r");
+    replace_all_appearances(s, "static", "stati_c");
+    replace_all_appearances(s, "switch", "switc_h");
+    replace_all_appearances(s, "struct", "struc_t");
+    replace_all_appearances(s, "double", "doubl_e");
+    replace_all_appearances(s, "sizeof", "sizeo_f");
+    replace_all_appearances(s, "extern", "exter_n");
+    replace_all_appearances(s, "signed", "signe_d");
+    replace_all_appearances(s, "return", "retur_n");
+    replace_all_appearances(s, "global", "globa_l");
+    replace_all_appearances(s, "public", "publi_c");
+    replace_all_appearances(s, "return", "retur_n");
+    replace_all_appearances(s, "static", "stati_c");
+    replace_all_appearances(s, "switch", "switc_h");
+    replace_all_appearances(s, "import", "imp_ort");
+    replace_all_appearances(s, "return", "retu_rn");
+    replace_all_appearances(s, "boolea", "boole_an");
+    replace_all_appearances(s, "import", "includ_e");
+    replace_all_appearances(s, "friend", "frie_end");
+    replace_all_appearances(s, "foreach", "foreac_h");
+    replace_all_appearances(s, "private", "privat_e");
+    replace_all_appearances(s, "require", "requir_e");
+    replace_all_appearances(s, "typedef", "typede_f");
+    replace_all_appearances(s, "_Packed", "_P_acked");
+    replace_all_appearances(s, "default", "defaul_t");
+    replace_all_appearances(s, "extends", "extend_s");
+    replace_all_appearances(s, "finally", "finall_y");
+    replace_all_appearances(s, "finally", "final_ly");
+    replace_all_appearances(s, "nonlocal", "nonlo_cal");
+    replace_all_appearances(s, "continue", "con_tinue");
+    replace_all_appearances(s, "continue", "continu_e");
+    replace_all_appearances(s, "volatile", "volatil_e");
+    replace_all_appearances(s, "unsigned", "unsigne_d");
+    replace_all_appearances(s, "abstract", "abstrac_t");
+    replace_all_appearances(s, "register", "registe_r");
+    replace_all_appearances(s, "endwhile", "endwhil_e");
+    replace_all_appearances(s, "function", "functio_n");
+    replace_all_appearances(s, "readonly", "readonl_y");
+    replace_all_appearances(s, "arguments", "argument_s");
+    replace_all_appearances(s, "endswitch", "endswitc_h");
+    replace_all_appearances(s, "protected", "protecte_d");
+    replace_all_appearances(s, "insteadof", "insteado_f");
+    replace_all_appearances(s, "interface", "interfac_e");
+    replace_all_appearances(s, "namespace", "namespac_e");
+    replace_all_appearances(s, "enddeclare", "enddeclar_e");
+    replace_all_appearances(s, "endforeach", "endforeac_h");
+    replace_all_appearances(s, "implements", "implement_s");
+    replace_all_appearances(s, "instanceof", "instanceo_f");
+    replace_all_appearances(s, "include_once", "include_on_ce_");
+    replace_all_appearances(s, "require_once", "require_on_ce_");
+    replace_all_appearances(s, "__halt_compiler", "__h_a_l_t_c_o_m_p_i_l_e_r_");
+
+    for(char& c: s)
+    {
+        if(c=='1'){ out+="_one_";   continue;}
+        if(c=='2'){ out+="_two_";   continue;}
+        if(c=='3'){ out+="_three_"; continue;}
+        if(c=='4'){ out+="_four_";  continue;}
+        if(c=='5'){ out+="_five_";  continue;}
+        if(c=='6'){ out+="_six_";   continue;}
+        if(c=='7'){ out+="_seven_"; continue;}
+        if(c=='8'){ out+="_eight_"; continue;}
+        if(c=='9'){ out+="_nine_";  continue;}
+        if(c=='0'){ out+="_zero_";  continue;}
+
+        if(c=='.'){ out+="_dot_";   continue;}
+        if(c=='/'){ out+="_div_";   continue;}
+        if(c=='*'){ out+="_mul_";   continue;}
+        if(c=='+'){ out+="_sum_";   continue;}
+        if(c=='-'){ out+="_res_";   continue;}
+        if(c=='='){ out+="_equ_";   continue;}
+        if(c=='!'){ out+="_not_";   continue;}
+        if(c==','){ out+="_colon_"; continue;}
+        if(c==';'){ out+="_semic_"; continue;}
+        if(c=='\\'){ out+="_slash_";continue;}
+
+        if(c=='&'){ out+="_amprsn_"; continue;}
+        if(c=='?'){ out+="_ntrgtn_"; continue;}
+        if(c=='<'){ out+="_lower_" ; continue;}
+        if(c=='>'){ out+="_higher_"; continue;}
+
+        if(isalnum(c)!=0){ out += c; continue;}
+        if(isalnum(c)==0){ out+='_'; continue;}
+    }
+
+    return out;
+}
+

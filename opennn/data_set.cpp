@@ -5884,22 +5884,20 @@ void DataSet::impute_missing_values_interpolate()
 
                 for(Index k = i - 1; k >= 0; k--)
                 {
-                    if(!isnan(data(used_samples_indices(k), current_variable)))
-                    {
-                        x1 = type(used_samples_indices(k));
-                        y1 = data(x1, current_variable);
-                        break;
-                    }
+                    if (isnan(data(used_samples_indices(k), current_variable))) continue;
+
+                    x1 = type(used_samples_indices(k));
+                    y1 = data(x1, current_variable);
+                    break;
                 }
 
                 for(Index k = i + 1; k < samples_number; k++)
                 {
-                    if(!isnan(data(used_samples_indices(k), current_variable)))
-                    {
-                        x2 = type(used_samples_indices(k));
-                        y2 = data(x2, current_variable);
-                        break;
-                    }
+                    if (isnan(data(used_samples_indices(k), current_variable))) continue;
+                    
+                    x2 = type(used_samples_indices(k));
+                    y2 = data(x2, current_variable);
+                    break;                    
                 }
 
                 if(x2 != x1)

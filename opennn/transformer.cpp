@@ -549,15 +549,6 @@ void Transformer::load_transformer(const string& path)
     cout << "Loading transformer model..." << endl;
 
     load(path);
-/*
-    MultiheadAttentionLayer* cross_attention_layer = static_cast<MultiheadAttentionLayer*>(get_layer("cross_attention_1"));
-
-    const Index new_context_length = cross_attention_layer->get_context_size();
-    const Index new_input_length = cross_attention_layer->get_input_size();
-
-    context_length = new_context_length;
-    input_length = new_input_length;
-*/
 }
 
 

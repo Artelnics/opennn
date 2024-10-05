@@ -252,11 +252,11 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
-/*
+
     probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
-*/
+
     Tensor<type, 2> outputs_test_2 = probabilistic_layer_forward_propagation.outputs;
 
     assert_true(outputs_test_2.dimension(0) == 1, LOG);
