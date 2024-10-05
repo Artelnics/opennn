@@ -116,8 +116,8 @@ struct ScalingLayer4DForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
+        cout << "Scaling Outputs:" << endl;
+        cout << outputs.dimensions() << endl;
     }
 
     Tensor<type, 4> outputs;

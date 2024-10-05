@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
+
 #include "addition_layer_3d.h"
 
 namespace opennn
@@ -73,12 +75,6 @@ void AdditionLayer3D::set_default()
 }
 
 
-void AdditionLayer3D::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void AdditionLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
     inputs_depth = new_inputs_depth;
@@ -95,15 +91,9 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> input_1(inputs_pair(0).first,
-                                             inputs_pair(0).second[0],
-                                             inputs_pair(0).second[1],
-                                             inputs_pair(0).second[2]);
-
-    const TensorMap<Tensor<type, 3>> input_2(inputs_pair(1).first,
-                                             inputs_pair(1).second[0],
-                                             inputs_pair(1).second[1],
-                                             inputs_pair(1).second[2]);
+    const TensorMap<Tensor<type, 3>> input_1 = tensor_map_3(inputs_pair(0));
+    
+    const TensorMap<Tensor<type, 3>> input_2 = tensor_map_3(inputs_pair(1));
 
     AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
         static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation);
@@ -114,15 +104,12 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 }
 
 
-void AdditionLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                               const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                               const vector<pair<type*, dimensions>>& deltas_pair,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
-                                            deltas_pair(0).second[0],
-                                            deltas_pair(0).second[1],
-                                            deltas_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
 
     // Back propagation
 
@@ -252,11 +239,11 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
     input_2_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 
     inputs_derivatives.resize(2);
-    inputs_derivatives(0).first = input_1_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
+    inputs_derivatives[0].first = input_1_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, inputs_number, inputs_depth };
 
-    inputs_derivatives(1).first = input_2_derivatives.data();
-    inputs_derivatives(1).second = { batch_samples_number, inputs_number, inputs_depth };
+    inputs_derivatives[1].first = input_2_derivatives.data();
+    inputs_derivatives[1].second = { batch_samples_number, inputs_number, inputs_depth };
 }
 
 }

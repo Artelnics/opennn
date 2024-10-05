@@ -118,8 +118,6 @@ public:
 
     void set(const dimensions&, const dimensions&);
 
-    void set_name(const string&);
-
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
 
@@ -170,8 +168,8 @@ public:
 
    // Back propagation
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                                 const vector<pair<type*, dimensions>>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 

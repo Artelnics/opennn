@@ -111,13 +111,9 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     numerator.device(*thread_pool_device) = gradient.contract(gradient, AT_B);
     denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
 
-    // Prevent a possible division by 0
-
     FR_parameter = (abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
         ? type(0)
         : numerator(0) / denominator(0);
-
-    // Bound the Fletcher-Reeves parameter between 0 and 1
 
     FR_parameter = clamp(FR_parameter, type(0), type(1));
 
@@ -196,15 +192,12 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     Tensor<type, 0> denominator;
 
     numerator.device(*thread_pool_device) = (gradient-old_gradient).contract(gradient, AT_B);
-    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
 
-    // Prevent a possible division by 0
+    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
 
     PR_parameter = (abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
         ? type(0)
         : numerator(0) / denominator(0);
-
-    // Bound the Polak-Ribiere parameter between 0 and 1
 
     PR_parameter = std::clamp(PR_parameter, type(0), type(1));
 
@@ -576,7 +569,8 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Update stuff
 
-        if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) 
+            neural_network->save(neural_network_file_name);
     }
 
     data_set->unscale_input_variables(input_variables_descriptives);
@@ -594,42 +588,26 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(8, 2);
 
-    // Training direction method
-
     labels_values(0,0) = "Training direction method";
     labels_values(0,1) = write_training_direction_method();
-
-    // Learning rate method
 
     labels_values(1,0) = "Learning rate method";
     labels_values(1,1) = learning_rate_algorithm.write_learning_rate_method();
 
-    // Learning rate tolerance
-
     labels_values(2,0) = "Learning rate tolerance";
     labels_values(2,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
-
-    // Minimum loss decrease
 
     labels_values(3,0) = "Minimum loss decrease";
     labels_values(3,1) = to_string(double(minimum_loss_decrease));
 
-    // Loss goal
-
     labels_values(4,0) = "Loss goal";
     labels_values(4,1) = to_string(double(training_loss_goal));
-
-    // Maximum selection failures
 
     labels_values(5,0) = "Maximum selection error increases";
     labels_values(5,1) = to_string(maximum_selection_failures);
 
-    // Maximum epochs number
-
     labels_values(6,0) = "Maximum epochs number";
     labels_values(6,1) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels_values(7,0) = "Maximum time";
     labels_values(7,1) = write_time(maximum_time);
@@ -695,25 +673,25 @@ void ConjugateGradient::update_parameters(
     }
     else
     {
+        const type epsilon = std::numeric_limits<type>::epsilon();
+
         const Index parameters_number = back_propagation.parameters.size();
+
+        #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (std::abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
                 optimization_data.parameters_increment(i) = type(0);
             }
-            else if(back_propagation.gradient(i) > type(0))
+            else
             {
-                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
+                optimization_data.parameters_increment(i) = (back_propagation.gradient(i) > type(0)) 
+                    ? -epsilon 
+                    : epsilon;
 
-                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
-            }
-            else if(back_propagation.gradient(i) < type(0))
-            {
-                back_propagation.parameters(i) += numeric_limits<type>::epsilon();
-
-                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+                back_propagation.parameters(i) += optimization_data.parameters_increment(i);
             }
         }
 
@@ -762,9 +740,7 @@ void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Training direction method
 
     file_stream.OpenElement("TrainingDirectionMethod");
-
     file_stream.PushText(write_training_direction_method().c_str());
-
     file_stream.CloseElement();
 
     // Learning rate algorithm
@@ -826,11 +802,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     if(learning_rate_algorithm_element)
     {
         tinyxml2::XMLDocument learning_rate_algorithm_document;
-
-        tinyxml2::XMLNode* element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
-
-        learning_rate_algorithm_document.InsertFirstChild(element_clone);
-
+        learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 

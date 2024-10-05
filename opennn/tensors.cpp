@@ -62,53 +62,24 @@ bool calculate_random_bool()
 }
 
 
-// void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum)
-// {
-//     random_device rd;
-//     mt19937 gen(rd());
-//     uniform_real_distribution<type> dist(minimum, maximum);
+template<int Dimension>
+void set_random(Tensor<type, Dimension>& tensor, const type& minimum, const type& maximum)
+{
+    random_device rd;
+    mt19937 gen(rd());
 
-//     for(Index i = 0; i < tensor.size(); i++)
-//     {
-//         tensor(i) = dist(gen);
-//     }
-// }
+    uniform_real_distribution<type> distribution(minimum, maximum);
 
+    for (Index i = 0; i < tensor.size(); ++i)
+    {
+        tensor(i) = distribution(gen);
+    }
+}
 
-// void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum)
-// {
-//     //#pragma omp parallel for
-//     for(Index i = 0; i < tensor.size(); i++)
-//     {
-//         const type random = type(rand()/(RAND_MAX+1.0));
-
-//         tensor(i) = minimum + (maximum - minimum)*random;
-//     }
-// }
-
-
-// void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum)
-// {
-//     //#pragma omp parallel for
-//     for(Index i = 0; i < tensor.size(); i++)
-//     {
-//         const type random = type(rand()/(RAND_MAX+1.0));
-
-//         tensor(i) = minimum + (maximum - minimum)*random;
-//     }
-// }
-
-
-// void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum)
-// {
-//     //#pragma omp parallel for
-//     for(Index i = 0; i < tensor.size(); i++)
-//     {
-//         const type random = type(rand()/(RAND_MAX+1.0));
-
-//         tensor(i) = minimum + (maximum - minimum)*random;
-//     }
-// }
+template void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum);
+template void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum);
+template void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum);
+template void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum);
 
 
 void initialize_sequential(Tensor<type, 1>& vector)
@@ -993,13 +964,8 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Inde
     Index index = 0;
 
     for(Index i  = type(0); i < vector.size(); i++)
-    {
-         if(vector(i) < bound)
-         {
-             indices(index) = i;
-             index++;
-         }
-    }
+        if(vector(i) < bound)
+            indices(index++) = i;
 
     return indices;
 }
@@ -1029,13 +995,8 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
     Index index = 0;
 
     for(Index i  = type(0); i < vector.size(); i++)
-    {
          if(vector(i) < bound)
-         {
-             indices(index) = i;
-             index++;
-         }
-    }
+             indices(index++) = i;
 
     return indices;
 }
@@ -1064,13 +1025,8 @@ Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const 
     Index index = 0;
 
     for(Index i  = type(0); i < vector.size(); i++)
-    {
          if(vector(i) > bound)
-         {
-             indices(index) = vector(i);
-             index++;
-         }
-    }
+             indices(index++) = vector(i);
 
     return indices;
 }
@@ -1106,13 +1062,8 @@ void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
     Index index = 0;
 
     for(Index i = 0; i < original_size; i++)
-    {
         if(!contains(indices, i))
-        {
-            vector(index) = vector_copy(i);
-            index++;
-        }
-    }
+            vector(index++) = vector_copy(i);
 }
 
 
@@ -1129,13 +1080,8 @@ void delete_indices(Tensor<Index,1>& vector, const Tensor<Index,1>& indices)
     Index index = 0;
 
     for(Index i = 0; i < original_size; i++)
-    {
         if(!contains(indices, i))
-        {
-            vector(index) = vector_copy(i);
-            index++;
-        }
-    }
+            vector(index++) = vector_copy(i);
 }
 
 
@@ -1152,13 +1098,8 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
     Index index = 0;
 
     for(Index i = 0; i < original_size; i++)
-    {
         if(!contains(indices, i))
-        {
-            vector(index) = vector_copy(i);
-            index++;
-        }
-    }
+            vector(index++) = vector_copy(i);
 }
 
 
@@ -2098,16 +2039,9 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
     Index count = 0;
 
     for(Index i = 0; i < tensor_1.size(); i++)
-    {
         for(Index j = 0; j < tensor_2.size(); j++)
-        {
             if(tensor_1(i) == tensor_2(j))
-            {
-                intersection(count) = tensor_2(j);
-                count++;
-            }
-        }
-    }
+                intersection(count++) = tensor_2(j);
 
     return intersection;
 }
@@ -2170,6 +2104,42 @@ void print_dimensions(const dimensions& new_dimensions)
 
     cout << endl;
 }
+
+
+TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair)
+{
+    return TensorMap<Tensor<type, 1>>(x_pair.first,
+                                      x_pair.second[0]);
+}
+
+
+TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair)
+{
+    return TensorMap<Tensor<type, 2>>(x_pair.first,
+                                      x_pair.second[0],
+                                      x_pair.second[1]);
+}
+
+
+TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair)
+{
+    return TensorMap<Tensor<type, 3>>(x_pair.first,
+                                      x_pair.second[0],
+                                      x_pair.second[1],
+                                      x_pair.second[2]);
+}
+
+
+TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair)
+{
+    return TensorMap<Tensor<type, 4>>(x_pair.first,
+                                      x_pair.second[0],
+                                      x_pair.second[1],
+                                      x_pair.second[2],
+                                      x_pair.second[3]);
+}
+
+
 
 }
 

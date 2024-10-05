@@ -73,8 +73,6 @@ public:
    void set(const Index&, const Index&, const Index&);
    void set(const ProbabilisticLayer3D&);
 
-   void set_name(const string&);
-
    void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;
@@ -125,8 +123,8 @@ public:
 
    // Gradient
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                                 const vector<pair<type*, dimensions>>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 

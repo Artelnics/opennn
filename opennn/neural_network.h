@@ -72,9 +72,9 @@ public:
 
 //   void delete_layers();
 
-   void add_layer(unique_ptr<Layer>, const string& name = "layer");
+   void add_layer(unique_ptr<Layer>, const string& name = "layer", const vector<Index>& = vector<Index>());
 
-   bool validate_layer_type(const Layer::Type);
+   bool validate_layer_type(const Layer::Type) const;
 
    // Get
 
@@ -108,7 +108,8 @@ public:
 
    Index get_layer_index(const string&) const;
 
-   const Tensor<Tensor<Index, 1>, 1>& get_layers_input_indices() const;
+   const vector<vector<Index>>& get_layers_input_indices() const;
+   vector<vector<Index>> get_layers_output_indices() const;
 
    ScalingLayer2D* get_scaling_layer_2d() const;
    ScalingLayer4D* get_scaling_layer_4d() const;
@@ -135,8 +136,8 @@ public:
 
    void set_layers_number(const Index&);
 
-   void set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
-   void set_layer_inputs_indices(const Index&, const Tensor<Index, 1>&);
+   void set_layers_inputs_indices(const vector<vector<Index>>&);
+   void set_layer_inputs_indices(const Index&, const vector<Index>&);
 
    void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
    void set_layer_inputs_indices(const string&, const initializer_list<string>&);
@@ -171,8 +172,8 @@ public:
    Index get_long_short_term_memory_layers_number() const;
    Index get_recurrent_layers_number() const;
 
-   bool is_input_layer(const Tensor<Index, 1>&) const;
-   bool is_context_layer(const Tensor<Index, 1>&) const;
+   bool is_input_layer(const vector<Index>&) const;
+   bool is_context_layer(const vector<Index>&) const;
 
    // Architecture
 
@@ -232,19 +233,6 @@ public:
    Tensor<string, 1> get_layer_names() const;
    Tensor<string, 1> get_layer_types_string() const;
 
-   // Expression
-
-   string write_expression() const;
-
-   string write_expression_python() const;
-   string write_expression_c() const;
-   string write_expression_api() const;
-   string write_expression_javascript() const;
-
-   void save_expression_c(const string&) const;
-   void save_expression_python(const string&) const;
-   void save_expression_api(const string&) const;
-   void save_expression_javascript(const string&) const;
    void save_outputs(Tensor<type, 2>&, const string&);
 
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
@@ -254,6 +242,12 @@ public:
    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
+
+   void save_expression_c(const string&) const;
+   void save_expression_python(const string&) const;
+   void save_expression_api(const string&) const;
+   void save_expression_javascript(const string&) const;
+
 
 #ifdef OPENNN_CUDA
 #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
@@ -271,7 +265,7 @@ protected:
 
    vector<unique_ptr<Layer>> layers;
 
-   Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
+   vector<vector<Index>> layers_inputs_indices;
 
    ThreadPool* thread_pool;
    ThreadPoolDevice* thread_pool_device;

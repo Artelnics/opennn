@@ -177,12 +177,6 @@ void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_l
 }
 
 
-void ProbabilisticLayer3D::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void ProbabilisticLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number = new_inputs_number;
@@ -361,7 +355,7 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
                                              LayerForwardPropagation* forward_propagation,
                                              const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(inputs_pair(0));
 
     ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
@@ -376,15 +370,12 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 }
 
 
-void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                          const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                          const vector<pair<type*, dimensions>>& deltas_pair,
                                           LayerForwardPropagation* forward_propagation,
                                           LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, 
-                                            inputs_pair(0).second[0], 
-                                            inputs_pair(0).second[1], 
-                                            inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(inputs_pair[0]);
 
     // Forward propagation
 
@@ -677,8 +668,8 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 
     inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
+    inputs_derivatives[0].first = input_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, inputs_number, inputs_depth };
 }
 
 }

@@ -65,7 +65,6 @@ namespace opennn
         void set(const Index&, const Index&);
 
         void set_default();
-        void set_name(const string&);
 
         // Architecture
 
@@ -100,12 +99,12 @@ namespace opennn
 
         // Gradient
 
-        void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                      const Tensor<pair<type*, dimensions>, 1>&,
+        void back_propagate(const vector<pair<type*, dimensions>>&,
+                                      const vector<pair<type*, dimensions>>&,
                                       LayerForwardPropagation*,
                                       LayerBackPropagation*) const final;
 
-        void add_deltas(const Tensor<pair<type*, dimensions>, 1>& deltas_pair) const;
+        void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
         void insert_gradient(LayerBackPropagation*,
                              const Index&,

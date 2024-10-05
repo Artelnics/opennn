@@ -346,13 +346,8 @@ void GeneticAlgorithm::initialize_population_random()
     original_unused_raw_variables_indices.resize(unused_number);
 
     for(Index i = 0; i < raw_variables.size(); i++)
-    {
         if(raw_variables(i).use == DataSet::VariableUse::None)
-        {
-            original_unused_raw_variables_indices(index) = i;
-            index++;
-        }
-    }
+            original_unused_raw_variables_indices(index++) = i;
 
     const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
 
@@ -1215,18 +1210,13 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_
         inputs_pre_indexes(original_input_index) = true;
     }
 
-    Index count = 0;
+    Index index = 0;
 
     Tensor<Index ,1> indexes(indexes_dimension);
 
     for(Index i = 0; i < individual_raw_variables.size(); i++)
-    {
         if(inputs_pre_indexes(i))
-        {
-            indexes(count) = i;
-            count++;
-        }
-    }
+            indexes(index) = i;
 
     return indexes;
 }

@@ -9,12 +9,8 @@
 #ifndef ADDITIONLAYER3D_H
 #define ADDITIONLAYER3D_H
 
-// System includes
-
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "layer.h"
@@ -59,7 +55,6 @@ namespace opennn
         void set(const Index&, const Index&);
 
         void set_default();
-        void set_name(const string&);
 
         void set_inputs_depth(const Index&);
 
@@ -75,8 +70,8 @@ namespace opennn
 
         // Gradient
 
-        void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                            const Tensor<pair<type*, dimensions>, 1>&,
+        void back_propagate(const vector<pair<type*, dimensions>>&,
+                            const vector<pair<type*, dimensions>>&,
                             LayerForwardPropagation*,
                             LayerBackPropagation*) const final;
 

@@ -42,12 +42,6 @@ ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions, c
 }
 
 
-void ProbabilisticLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 Index ProbabilisticLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);
@@ -408,26 +402,12 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
-
-    { // DEBUG
-        //cout << "first image:\n" << inputs.chip(0, 0) << endl;
-        //system("pause");
-    }
-
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     calculate_combinations(inputs, outputs);
-
-    { // DEBUG
-        //cout << "synaptic_weights:\n" << synaptic_weights << endl;
-        //cout << outputs.dimension(0) << "   " << outputs.dimension(1) << endl;
-        //cout << "outputs:\n" << outputs << endl;
-
-        //system("pause");
-    }
 
     if (neurons_number == 1 && !is_training)
     {
@@ -438,8 +418,6 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
         Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
 
         logistic(outputs, activations_derivatives);
-
-        //cout << "probabilistic outputs" << outputs << endl;
     }
     else if (neurons_number > 1)
     {
@@ -452,16 +430,16 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 }
 
 
-void ProbabilisticLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                                  const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
-                                                  LayerForwardPropagation* forward_propagation,
-                                                  LayerBackPropagation* back_propagation) const
+void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+                                        const vector<pair<type*, dimensions>>& deltas_pair,
+                                        LayerForwardPropagation* forward_propagation,
+                                        LayerBackPropagation* back_propagation) const
 {
-    const Index samples_number = inputs_pair(0).second[0];
+    const Index samples_number = inputs_pair[0].second[0];
     const Index neurons_number = get_neurons_number();
-
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_pair(0).second[1]);
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, samples_number, deltas_pair(0).second[1]);
+    
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair[0]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
 
     // Forward propagation
 
@@ -875,16 +853,16 @@ void ProbabilisticLayerForwardPropagation::print() const
 {
     cout << "Probabilistic layer forward-propagation" << endl;
 
-    cout << "Outputs:" << endl;
-    cout << outputs << endl;
+    cout << "Outputs dimensions:" << endl;
+    cout << outputs.dimensions() << endl;
 
     const Index neurons_number = layer->get_neurons_number();
 
-    if(neurons_number == 1)
-    {
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
-    }
+    //if(neurons_number == 1)
+    //{
+     //   cout << "Activations derivatives:" << endl;
+      //  cout << activations_derivatives << endl;
+    //}
 }
 
 
@@ -932,8 +910,8 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
     input_derivatives.resize(batch_samples_number, inputs_number);
 
     inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
+    inputs_derivatives[0].first = input_derivatives.data();
+    inputs_derivatives[0].second = { batch_samples_number, inputs_number };
 }
 
 

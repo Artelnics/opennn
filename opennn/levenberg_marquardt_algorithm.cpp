@@ -109,18 +109,7 @@ void LevenbergMarquardtAlgorithm::set_default()
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const type& new_damping_parameter)
 {
-    if(new_damping_parameter <= minimum_damping_parameter)
-    {
-        damping_parameter = minimum_damping_parameter;
-    }
-    else if(new_damping_parameter >= maximum_damping_parameter)
-    {
-        damping_parameter = maximum_damping_parameter;
-    }
-    else
-    {
-        damping_parameter = new_damping_parameter;
-    }
+    damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
 }
 
 
@@ -422,15 +411,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         if(stop_training)
         {
             results.loss = training_back_propagation_lm.loss;
-
             results.loss_decrease = loss_decrease;
-
             results.selection_failures = selection_failures;
-
             results.resize_training_error_history(epoch+1);
-
             results.resize_selection_error_history(has_selection ? epoch + 1 : 0);
-
             results.elapsed_time = write_time(elapsed_time);
 
             break;
@@ -536,25 +520,20 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     if(!success)
     {
+        const type epsilon = numeric_limits<type>::epsilon();
+
         #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
                 parameters_increment(i) = type(0);
             }
-            else if(gradient(i) > type(0))
+            else
             {
-                parameters(i) -= numeric_limits<type>::epsilon();
-
-                parameters_increment(i) = -numeric_limits<type>::epsilon();
-            }
-            else if(gradient(i) < type(0))
-            {
-                parameters(i) += numeric_limits<type>::epsilon();
-
-                parameters_increment(i) = numeric_limits<type>::epsilon();
+                parameters_increment(i) = (gradient(i) > type(0)) ? -epsilon : epsilon;
+                parameters(i) += parameters_increment(i);
             }
         }
     }

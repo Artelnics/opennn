@@ -182,17 +182,19 @@ void GradientDescent::update_parameters(
     }
     else
     {
+        const type epsilon = std::numeric_limits<type>::epsilon();
+
         const Index parameters_number = neural_network->get_parameters_number();
 
-        for(Index i = 0; i < parameters_number; i++)
-            if(abs(back_propagation.gradient(i)) >= type(NUMERIC_LIMITS_MIN))
-                if(back_propagation.gradient(i) > type(0))
-                    back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
-                else if(back_propagation.gradient(i) < type(0))
-                    back_propagation.parameters(i) += numeric_limits<type>::epsilon();
+        #pragma omp parallel for
 
+        for (Index i = 0; i < parameters_number; i++)
+            if (std::abs(back_propagation.gradient(i)) >= type(NUMERIC_LIMITS_MIN))
+                back_propagation.parameters(i) += (back_propagation.gradient(i) > type(0)) 
+                    ? -epsilon 
+                    : epsilon;
+        
         optimization_data.learning_rate = optimization_data.old_learning_rate;
-
     }
 
     // Update parameters
@@ -438,37 +440,23 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(7, 2);
 
-    // Learning rate method
-
     labels_values(0,0) = "Learning rate method";
     labels_values(0,1) = learning_rate_algorithm.write_learning_rate_method();
-
-    // Loss tolerance
 
     labels_values(1,0) = "Learning rate tolerance";
     labels_values(1,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
 
-    // Minimum loss decrease
-
     labels_values(2,0) = "Minimum loss decrease";
     labels_values(2,1) = to_string(double(minimum_loss_decrease));
-
-    // Loss goal
 
     labels_values(3,0) = "Loss goal";
     labels_values(3,1) = to_string(double(training_loss_goal));
 
-    // Maximum selection failures
-
     labels_values(4,0) = "Maximum selection error increases";
     labels_values(4,1) = to_string(maximum_selection_failures);
 
-    // Maximum epochs number
-
     labels_values(5,0) = "Maximum epochs number";
     labels_values(5,1) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels_values(6,0) = "Maximum time";
     labels_values(6,1) = write_time(maximum_time);
@@ -534,10 +522,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     if(learning_rate_algorithm_element)
     {
         tinyxml2::XMLDocument learning_rate_algorithm_document;
-        tinyxml2::XMLNode* element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
-
-        learning_rate_algorithm_document.InsertFirstChild(element_clone);
-
+        learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 
