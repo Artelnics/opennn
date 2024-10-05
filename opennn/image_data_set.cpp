@@ -150,6 +150,7 @@ void ImageDataSet::set(const Index& new_images_number,
 
     for(Index i = 0; i < inputs_number; i++)
     {
+        // @todo use set method
         raw_variables(i).name = "p_" + to_string(i+1);
         raw_variables(i).use = VariableUse::Input;
         raw_variables(i).type = RawVariableType::Numeric;
@@ -161,6 +162,7 @@ void ImageDataSet::set(const Index& new_images_number,
         Tensor<string, 1> categories(target_number);
         categories.setConstant("ABC");
 
+        // @todo use set methods
         raw_variables(raw_variables_number-1).type = RawVariableType::Binary;
         raw_variables(raw_variables_number-1).use = VariableUse::Target;
         raw_variables(raw_variables_number-1).name = "target";
@@ -171,6 +173,7 @@ void ImageDataSet::set(const Index& new_images_number,
         Tensor<string, 1> categories(target_number);
         categories.setConstant("ABC");
 
+        // @todo use set methods
         raw_variables(raw_variables_number-1).type = RawVariableType::Categorical;
         raw_variables(raw_variables_number-1).use = VariableUse::Target;
         raw_variables(raw_variables_number-1).name = "target";
@@ -449,7 +452,6 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Ids");
         file_stream.PushText(string_tensor_to_string(samples_id).c_str());
-
         file_stream.CloseElement();
     }
 
@@ -794,12 +796,12 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) {
+                    && new_rows_labels.find(";") != string::npos) 
+            {
                 separator = ';';
             }
 
             samples_id = get_tokens(new_rows_labels, separator);
-
         }
     }
 
@@ -831,9 +833,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_number_element->GetText())
     {
-        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
-
-        samples_uses.resize(new_samples_number);
+        samples_uses.resize(Index(atoi(samples_number_element->GetText())));
 
         set_training();
     }
@@ -852,9 +852,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     }
 
     if(samples_uses_element->GetText())
-    {
         set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
-    }
 
     // Display
 
@@ -947,9 +945,7 @@ void ImageDataSet::read_bmp()
         const Index current_channels = image_data.dimension(2);
 
         if (current_channels != image_channels)
-        {
             throw runtime_error("Different number of channels in image: " + image_path[i] + "\n");
-        }
 
         if (current_height == height && current_width == width)
         {
@@ -960,37 +956,34 @@ void ImageDataSet::read_bmp()
         {
             if (current_height < height || current_width < width) // Smaller image
             {
-                Eigen::array<pair<int, int>, 3> paddings;
+                const Eigen::array<pair<int, int>, 3> paddings = {
+                make_pair((height - current_height) / 2, height - current_height - (height - current_height) / 2),
+                make_pair((width - current_width) / 2, width - current_width - (width - current_width) / 2),
+                make_pair(0, 0) };
 
-                paddings[0] = make_pair((height - current_height) / 2, height - current_height - (height - current_height) / 2);
-                paddings[1] = make_pair((width - current_width) / 2, width - current_width - (width - current_width) / 2);
-                paddings[2] = make_pair(0, 0);
-
-                Tensor<unsigned char, 3> image_data_padded = image_data.pad(paddings);
+                const Tensor<unsigned char, 3> image_data_padded = image_data.pad(paddings);
 
                 if (image_data_padded.dimension(0) != height || image_data_padded.dimension(1) != width)
-                {
                     throw runtime_error("Error adjusting the image: " + image_path[i] + "\n");
-                }
 
+                #pragma omp parallel for
                 for (Index j = 0; j < pixels_number; j++)
                     data(i, j) = image_data_padded(j);
             }
             else if (current_height > height || current_width > width) // Bigger image
             {
-                Index height_offset = (current_height - height) / 2;
-                Index width_offset = (current_width - width) / 2;
+                const Index height_offset = (current_height - height) / 2;
+                const Index width_offset = (current_width - width) / 2;
                 
-                Eigen::array<Index, 3> offsets = { height_offset, width_offset, 0 };
-                Eigen::array<Index, 3> extents = { height, width, image_channels };
+                const Eigen::array<Index, 3> offsets = { height_offset, width_offset, 0 };
+                const Eigen::array<Index, 3> extents = { height, width, image_channels };
 
-                Tensor<unsigned char, 3> image_data_sliced = image_data.slice(offsets, extents);
+                const Tensor<unsigned char, 3> image_data_sliced = image_data.slice(offsets, extents);
 
                 if (image_data_sliced.dimension(0) != height || image_data_sliced.dimension(1) != width)
-                {
                     throw runtime_error("Error adjusting the image: " + image_path[i] + "\n");
-                }
 
+                #pragma omp parallel for
                 for (Index j = 0; j < pixels_number; j++)
                     data(i, j) = image_data_sliced(j);
             }

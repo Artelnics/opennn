@@ -101,39 +101,6 @@ const Tensor<type, 2>& PerceptronLayer3D::get_synaptic_weights() const
     return synaptic_weights;
 }
 
-/*
-Tensor<type, 2> PerceptronLayer3D::get_synaptic_weights(const Tensor<type, 1>& parameters) const
-{
-    const Index inputs_depth = get_inputs_depth();
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index synaptic_weights_number = get_synaptic_weights_number();
-
-    const Index parameters_size = parameters.size();
-
-    const Index start_synaptic_weights_number = (parameters_size - synaptic_weights_number);
-
-    const Tensor<type, 1> new_synaptic_weights = parameters.slice(Eigen::array<Index, 1>({start_synaptic_weights_number}), Eigen::array<Index, 1>({synaptic_weights_number}));
-
-    const Eigen::array<Index, 2> two_dim{{inputs_depth, neurons_number}};
-
-    return new_synaptic_weights.reshape(two_dim);
-}
-
-
-Tensor<type, 2> PerceptronLayer3D::get_biases(const Tensor<type, 1>& parameters) const
-{
-    const Index biases_number = biases.size();
-
-    const Tensor<type, 1> new_biases = parameters.slice(Eigen::array<Index, 1>({0}), Eigen::array<Index, 1>({biases_number}));
-
-    const Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
-
-    return new_biases.reshape(two_dim);
-
-}
-*/
 
 Tensor<type, 1> PerceptronLayer3D::get_parameters() const
 {
@@ -730,9 +697,8 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives[0].first = input_derivatives.data();
-    inputs_derivatives[0].second = { batch_samples_number, inputs_number, inputs_depth };
+    inputs_derivatives = {{input_derivatives.data(), 
+                          {batch_samples_number, inputs_number, inputs_depth}}};
 }
 
 }

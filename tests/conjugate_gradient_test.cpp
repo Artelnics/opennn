@@ -51,17 +51,18 @@ void ConjugateGradientTest::test_destructor()
     delete conjugate_gradient;
 }
 
+
 void ConjugateGradientTest::test_calculate_PR_parameter()
 {
     cout << "test_calculate_PR_parameter\n";
-/*
+
     neural_network.set();
     type PR_parameter;
 
     Index size = 2*(1 + rand()%10);
-
+/*
     PerceptronLayer *pl = new PerceptronLayer({1}, {size/2});
-    neural_network.add_layer(pl);
+    neural_network.add_layer(make_unique<PerceptronLayer>({ 1 }, { size / 2 }));
 
     // Test
 

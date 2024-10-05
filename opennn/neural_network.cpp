@@ -618,7 +618,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     }
     else if(model_type == ModelType::ImageClassification)
     {
-        //add_layer(make_unique<ScalingLayer4D>(input_dimensions));
+        add_layer(make_unique<ScalingLayer4D>(input_dimensions));
         
         for(Index i = 0; i < complexity_size; i++)
         {
@@ -639,25 +639,25 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     }
     else if(model_type == ModelType::AutoAssociation)
     {
-/*
-        add_layer(new ScalingLayer2D(inputs_number));
+        /*
+        add_layer(make_unique<ScalingLayer2D>(inputs_number));
 
         const Index mapping_neurons_number = 10;
         const Index bottle_neck_neurons_number = complexity_dimensions[0];
 
-        add_layer(new PerceptronLayer(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+        add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
                   "mapping_layer");
 
-        add_layer(new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
+        add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
                   "bottleneck_layer");
 
-        add_layer(new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+        add_layer(make_unique<PerceptronLayer>(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
                   "demapping_layer");
 
-        add_layer(new PerceptronLayer(mapping_neurons_number, output_dimensions[0], PerceptronLayer::ActivationFunction::Linear),
+        add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, output_dimensions[0], PerceptronLayer::ActivationFunction::Linear),
                   "output_layer");
 
-        add_layer(new UnscalingLayer(output_dimensions[0]));
+        add_layer(make_unique<UnscalingLayer>(output_dimensions[0]));
 */
     }
 
@@ -667,7 +667,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
 
     for(Index i = 0; i < outputs_number; i++)
         output_names(i) = "output_" + to_string(i+1);
-
 }
 
 
@@ -871,7 +870,8 @@ Index NeuralNetwork::get_outputs_number() const
 
 dimensions NeuralNetwork::get_output_dimensions() const
 {
-    if(layers.size() == 0) return {};
+    if(layers.size() == 0) 
+        return {};
 
     const Layer* last_layer = layers[layers.size() - 1].get();
 
@@ -882,10 +882,10 @@ dimensions NeuralNetwork::get_output_dimensions() const
 Tensor<Index, 1> NeuralNetwork::get_architecture() const
 {
     const Index layers_number = get_layers_number();
-
     const Index inputs_number = get_inputs_number();
 
-    if(layers_number == 0 || inputs_number == 0) return Tensor<Index, 1>();
+    if(layers_number == 0 || inputs_number == 0) 
+        return Tensor<Index, 1>();
 
     Tensor<Index, 1> architecture(layers_number);
 
@@ -1006,9 +1006,7 @@ Index NeuralNetwork::get_trainable_layers_number() const
         && layers[i]->get_type() != Layer::Type::Scaling4D
         && layers[i]->get_type() != Layer::Type::Unscaling
         && layers[i]->get_type() != Layer::Type::Bounding)
-        {
             count++;
-        }
     }
 
     return count;
@@ -1050,9 +1048,7 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
         && layer_type != Layer::Type::Scaling4D
         && layer_type != Layer::Type::Unscaling
         && layer_type != Layer::Type::Bounding)
-        {
             return i;
-        }
     }
 
     return 0;
@@ -1202,7 +1198,6 @@ void NeuralNetwork::set_parameters_constant(const type& value) const
     const Index layers_number = get_layers_number();
 
     #pragma omp parallel for
-
     for(Index i = 0; i < layers_number; i++)
         layers[i]->set_parameters_constant(value);
 }
@@ -1215,7 +1210,6 @@ void NeuralNetwork::set_parameters_random() const
     const vector<unique_ptr<Layer>>& layers = get_layers();
 
     #pragma omp parallel for
-
     for(Index i = 0; i < layers_number; i++)
         layers[i]->set_parameters_random();
 }
@@ -1272,9 +1266,7 @@ void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
             layer_inputs.resize(layer_inputs_number);
 
             for(Index j = 0; j < layer_inputs_number; j++)
-            {
                 layer_inputs(j) = forward_propagation.layers(layers_inputs_indices[i][j])->get_outputs_pair();
-            }
         }
 
         layers[i]->forward_propagate(layer_inputs,
@@ -1373,7 +1365,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 
 Tensor<string, 2> NeuralNetwork::get_information() const
 {
-/*
+
     const Index trainable_layers_number = get_trainable_layers_number();
 
     Tensor<string, 2> information(trainable_layers_number, 3);
@@ -1418,8 +1410,6 @@ Tensor<string, 2> NeuralNetwork::get_information() const
     }
 
     return information;
-*/
-    return Tensor<string, 2>();
 }
 
 
@@ -2308,7 +2298,7 @@ pair<type*, dimensions> ForwardPropagation::get_last_trainable_layer_outputs_pai
 
 void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
-/*
+
     batch_samples_number = new_batch_samples_number;
 
     neural_network = new_neural_network;
@@ -2317,7 +2307,7 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
     layers.resize(trainable_layers_number);
-
+/*
     for(Index i = 0; i < trainable_layers_number; i++)
     {
         switch (trainable_layers(i)->get_type())

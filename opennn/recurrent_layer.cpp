@@ -571,10 +571,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     const Eigen::array<IndexPair<Index>, 1> combinations_weights_indices = { IndexPair<Index>(2, 0) };
 
     for (Index time_step = 0; time_step < time_steps; time_step++)
-    {
         current_inputs = inputs.chip(time_step, 1);
-
-    }
 
 /*
     for(Index sample_index = 0; sample_index < samples_number; sample_index++)

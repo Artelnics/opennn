@@ -133,9 +133,8 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
-    probabilistic_layer.calculate_activations_derivatives(combinations,
-                                                          activations,
-                                                          activations_derivatives);
+    probabilistic_layer.calculate_activations(combinations,
+                                              activations_derivatives);
 
     assert_true(abs(activations(0, 0) - type(0.175)) < type(1e-2), LOG);
 

@@ -210,36 +210,6 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
     set_default();
 }
 
-/*
-void ScalingLayer2D::set(const Tensor<Descriptives, 1>& new_descriptives)
-{
-    descriptives = new_descriptives;
-
-    scalers.resize(new_descriptives.size());
-
-    scalers.setConstant(Scaler::MeanStandardDeviation);
-
-    set_neurons_number(new_descriptives.size());
-
-    set_default();
-}
-
-
-void ScalingLayer2D::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
-{
-    descriptives = new_descriptives;
-
-    scalers = new_scalers;
-}
-
-
-void ScalingLayer2D::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
-{
-    set_default();
-
-    from_XML(new_scaling_layer_document);
-}
-*/
 
 void ScalingLayer2D::set_inputs_number(const Index& new_inputs_number)
 {

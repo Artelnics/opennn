@@ -352,17 +352,6 @@ void ProbabilisticLayer::set_parameters_random()
 }
 
 
-//void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
-//{
-//    const Index biases_number = get_biases_number();
-//    const Index synaptic_weights_number = get_synaptic_weights_number();
-
-//    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
-
-//    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
-//}
-
-
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                                 Tensor<type, 2>& combinations) const
 {
@@ -372,25 +361,20 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-                                                           Tensor<type, 2>& activations,
-                                                           Tensor<type, 2>& activations_derivatives) const
+void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations,
+                                               Tensor<type, 2>& activations_derivatives) const
 {
-/*
     switch(activation_function)
     {
     case ActivationFunction::Logistic:
-        
-        logistic_derivatives(activations,
-                             activations_derivatives);
-
+        /*
+        logistic(combinations, activations_derivatives);
+        */
         return;
 
     default:
-
         return;
     }
-*/
 }
 
 

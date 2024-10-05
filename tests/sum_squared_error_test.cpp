@@ -302,8 +302,8 @@ void SumSquaredErrorTest::test_back_propagate()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-        /*
-        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, neurons_number, outputs_number});
+        
+        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number}, {neurons_number}, {outputs_number});
 
         neural_network.set_parameters_random();
 

@@ -106,8 +106,6 @@ public:
    void set_parameters_random() final;
    void set_parameters_glorot();
 
-   //void insert_parameters(const Tensor<type, 1>&, const Index&);
-
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 3>&,
