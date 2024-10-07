@@ -238,12 +238,8 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
     input_1_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
     input_2_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 
-    inputs_derivatives.resize(2);
-    inputs_derivatives[0].first = input_1_derivatives.data();
-    inputs_derivatives[0].second = { batch_samples_number, inputs_number, inputs_depth };
-
-    inputs_derivatives[1].first = input_2_derivatives.data();
-    inputs_derivatives[1].second = { batch_samples_number, inputs_number, inputs_depth };
+    inputs_derivatives = {{input_1_derivatives.data(), {batch_samples_number, inputs_number, inputs_depth}},
+                          {input_2_derivatives.data(), {batch_samples_number, inputs_number, inputs_depth}}};
 }
 
 }

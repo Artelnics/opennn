@@ -45,10 +45,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const Index outputs_depth = outputs_pair.second[2];
     
-    const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
-                                             batch_samples_number,
-                                             outputs_number,
-                                             outputs_depth);
+    const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
     
     // Back propagation
 

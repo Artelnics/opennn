@@ -53,26 +53,12 @@ public:
 
    inline NeuralNetwork* get_neural_network() const 
    {
-        #ifdef OPENNN_DEBUG
-
-        if(!neural_network)
-             throw runtime_error("Neural network pointer is nullptr.\n");
-
-        #endif
-
       return neural_network;
    }
 
 
    inline DataSet* get_data_set() const 
    {
-        #ifdef OPENNN_DEBUG
-
-        if(!data_set)
-             throw runtime_error("DataSet pointer is nullptr.\n");
-
-        #endif
-
       return data_set;
    }
 
@@ -263,32 +249,31 @@ struct BackPropagationLM
 {
     vector<vector<pair<type*, dimensions>>> layers_deltas(neural_network.get_layers().size());
 
-    const auto& layers_outputs_indices = this->layers_outputs_indices; // Output indices for each layer
+    const auto& layers_outputs_indices = this->layers_outputs_indices; 
     const auto& layers_inputs_indices = neural_network.get_neural_network()->get_layers_input_indices();
 
-    for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; --i)
+    for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
+        const Index layer_output_connections = layers_outputs_indices[i].size();
+
         if (i == last_trainable_layer_index)
         {
-            // For the last layer, use the output deltas
             layers_deltas[i].push_back(get_output_deltas_pair());
+
+            continue;
         }
-        else
+                
+        layers_deltas[i].resize(layer_output_connections);
+
+        for (Index j = 0; j < layer_output_connections; ++j)
         {
-            // For other layers, determine the deltas based on the input derivatives of the next layers
-            layers_deltas[i].resize(layers_outputs_indices[i].size());
+            const Index output_index = layers_outputs_indices[i][j];
+            const Index input_index = loss_index->find_input_index(layers_inputs_indices[output_index], i);
 
-            for (Index j = 0; j < layers_outputs_indices[i].size(); ++j)
-            {
-                Index output_index = layers_outputs_indices[i][j];
-                Index input_index = loss_index->find_input_index(layers_inputs_indices[output_index], i);
+            LayerBackPropagationLM* layer_back_propagation = neural_network.get_layers()[output_index];
 
-                LayerBackPropagationLM* layer_back_propagation = neural_network.get_layers()[output_index];
-
-                // Access the input derivatives using the appropriate index
-                layers_deltas[i][j] = layer_back_propagation->get_inputs_derivatives_pair()[input_index];
-            }
-        }
+            layers_deltas[i][j] = layer_back_propagation->get_inputs_derivatives_pair()[input_index];
+        }        
     }
 
     return layers_deltas;

@@ -104,7 +104,6 @@ public:
    const unique_ptr<Layer>& get_layer(const Index&) const;
    const unique_ptr<Layer>& get_layer(const string&) const;
    Tensor<Layer*, 1> get_trainable_layers() const;
-//   Tensor<Index, 1> get_trainable_layers_indices() const;
 
    Index get_layer_index(const string&) const;
 

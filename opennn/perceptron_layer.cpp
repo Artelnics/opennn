@@ -831,9 +831,8 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
 
     input_derivatives.resize(batch_samples_number, inputs_number);
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives[0].first = input_derivatives.data();
-    inputs_derivatives[0].second = { batch_samples_number, inputs_number };
+    inputs_derivatives = {{input_derivatives.data(),
+                          {batch_samples_number, inputs_number}}};
 }
 
 
@@ -888,8 +887,8 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_batch_samples_number
     input_derivatives.resize(batch_samples_number, inputs_number);
 
     inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
+    inputs_derivatives(0) = {input_derivatives.data(),
+                            { batch_samples_number, inputs_number} };
 }
 
 

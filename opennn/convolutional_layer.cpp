@@ -856,11 +856,11 @@ Eigen::array<pair<Index, Index>, 4> ConvolutionalLayer::get_paddings() const
     const Index pad_rows = get_padding().first;
     const Index pad_columns = get_padding().second;
 
-    Eigen::array<pair<Index, Index>, 4> paddings;
-    paddings[0] = make_pair(0, 0);
-    paddings[1] = make_pair(pad_rows, pad_rows);
-    paddings[2] = make_pair(pad_columns, pad_columns);
-    paddings[3] = make_pair(0, 0);
+    const Eigen::array<pair<Index, Index>, 4> paddings =
+        { make_pair(0, 0),
+          make_pair(pad_rows, pad_rows),
+          make_pair(pad_columns, pad_columns),
+          make_pair(0, 0) };
 
     return paddings;
 }
@@ -1211,9 +1211,8 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                              input_width,
                              channels);
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives[0].first = input_derivatives.data();
-    inputs_derivatives[0].second = {batch_samples_number, input_height, input_width, channels};
+    inputs_derivatives = {{input_derivatives.data(), 
+                          {batch_samples_number, input_height, input_width, channels}}};
 }
 
 

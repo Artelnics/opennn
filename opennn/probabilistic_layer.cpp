@@ -384,7 +384,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 {
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
@@ -893,9 +893,8 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
 
     input_derivatives.resize(batch_samples_number, inputs_number);
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives[0].first = input_derivatives.data();
-    inputs_derivatives[0].second = { batch_samples_number, inputs_number };
+    inputs_derivatives = {{input_derivatives.data(),
+                          {batch_samples_number, inputs_number}}};
 }
 
 

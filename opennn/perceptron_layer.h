@@ -229,8 +229,6 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     void print() const;
 
-    //Tensor<type, 2> deltas;
-
     Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;
 

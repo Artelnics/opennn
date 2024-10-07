@@ -314,6 +314,7 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers() const
     const Index layers_number = get_layers_number();
 
     Index index = 0;
+
     for (Index i = 0; i < layers_number; i++)
     {
         const Layer::Type layer_type = layers[i]->get_type();
@@ -336,8 +337,7 @@ Index NeuralNetwork::get_layer_index(const string& name) const
 
     if(name == "dataset" || name == "input")
         return -1;
-
-    if(name == "context")
+    else if(name == "context")
         return -2;
 
     for(Index i = 0; i < layers_number; i++)
@@ -346,32 +346,6 @@ Index NeuralNetwork::get_layer_index(const string& name) const
 
     return 0;
 }
-
-
-// Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
-// {
-//     const Index layers_number = get_layers_number();
-
-//     const Index trainable_layers_number = get_trainable_layers_number();
-
-//     Tensor<Index, 1> trainable_layers_indices(trainable_layers_number);
-
-//     Index trainable_layer_index = 0;
-
-//     for(Index i = 0; i < layers_number; i++)
-//     {
-//         if(layers[i]->get_type() != Layer::Type::Scaling2D
-//         && layers[i]->get_type() != Layer::Type::Scaling4D
-//         && layers[i]->get_type() != Layer::Type::Unscaling
-//         && layers[i]->get_type() != Layer::Type::Bounding)
-//         {
-//             trainable_layers_indices[trainable_layer_index] = i;
-//             trainable_layer_index++;
-//         }
-//     }
-
-//     return trainable_layers_indices;
-// }
 
 
 const vector<vector<Index>>& NeuralNetwork::get_layers_input_indices() const
@@ -386,6 +360,15 @@ vector<vector<Index>> NeuralNetwork::get_layers_output_indices() const
 
     vector<vector<Index>> layers_outputs_indices(layers_number);
 
+    for (Index j = 0; j < layers_number; j++)
+    {
+        for (Index k = 0; k < layers_inputs_indices[j].size(); k++)
+        {
+            const Index input_index = layers_inputs_indices[j][k];
+            layers_outputs_indices[input_index].push_back(j);
+        }
+    }
+/*
     Index layer_count = 0;
 
     for(Index i = 0; i < layers_number; i++)
@@ -396,6 +379,7 @@ vector<vector<Index>> NeuralNetwork::get_layers_output_indices() const
                     layer_count++;
 
         layers_outputs_indices[i].resize(layer_count);
+
         layer_count = 0;
 
         for(Index j = 0; j < layers_number; j++)
@@ -404,15 +388,14 @@ vector<vector<Index>> NeuralNetwork::get_layers_output_indices() const
             {
                 if(layers_inputs_indices[j][k] == i)
                 {
-                    layers_outputs_indices[i][layer_count] = j;
-                    layer_count++;
+                    layers_outputs_indices[i][layer_count++] = j;
                 }
             }
         }
 
         layer_count = 0;
     }
-
+*/
     return layers_outputs_indices;
 }
 
@@ -1307,11 +1290,10 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     if(layers_number == 0) return Tensor<type, 2>();
     
-    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair 
+        = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
-
-    return outputs;
+    return tensor_map_2(outputs_pair);
 }
 
 
@@ -1331,9 +1313,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
-
-    return outputs;
+    return tensor_map_2(outputs_pair);
 }
 
 
