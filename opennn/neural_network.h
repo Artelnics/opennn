@@ -208,6 +208,11 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
 
+   Tensor<type, 2> calculate_scaled_outputs(const Tensor<type, 2>&)
+   {
+       return Tensor<type, 2>();
+   }
+
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
    // Serialization
