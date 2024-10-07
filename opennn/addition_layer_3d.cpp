@@ -105,9 +105,9 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 
 
 void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
-                                               const vector<pair<type*, dimensions>>& deltas_pair,
-                                               LayerForwardPropagation* forward_propagation,
-                                               LayerBackPropagation* back_propagation) const
+                                     const vector<pair<type*, dimensions>>& deltas_pair,
+                                     LayerForwardPropagation* forward_propagation,
+                                     LayerBackPropagation* back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
 

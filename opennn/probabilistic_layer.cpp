@@ -436,8 +436,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
             static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
-
-    const Tensor<type, 2>& targets = probabilistic_layer_back_propagation->targets;
+    
     Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation->input_derivatives;
 
     Tensor<type, 2>& combinations_derivatives = probabilistic_layer_back_propagation->combinations_derivatives;
@@ -450,6 +449,8 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     }
     else
     {
+        const Tensor<type, 2>& targets = probabilistic_layer_back_propagation->targets;
+
         combinations_derivatives.device(*thread_pool_device) = outputs - targets;
     }
 
@@ -827,18 +828,15 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
     activations_derivatives.resize(0, 0);
 
     if(neurons_number == 1)
-    {
         activations_derivatives.resize(batch_samples_number, neurons_number);
-    }
 }
 
 
 void ProbabilisticLayerForwardPropagation::print() const 
 {
-    cout << "Probabilistic layer forward-propagation" << endl;
-
-    cout << "Outputs dimensions:" << endl;
-    cout << outputs.dimensions() << endl;
+    cout << "Probabilistic layer forward-propagation" << endl
+         << "Outputs dimensions:" << endl
+         << outputs.dimensions() << endl;
 
     const Index neurons_number = layer->get_neurons_number();
 

@@ -167,8 +167,8 @@ namespace opennn
 
         void print() const
         {
-            cout << "Outputs:" << endl;
-            cout << outputs << endl;
+            cout << "Outputs:" << endl
+                 << outputs << endl;
         }
 
         Tensor<type, 3> outputs;
@@ -207,11 +207,10 @@ namespace opennn
 
         void print() const
         {
-            cout << "Gammas derivatives:" << endl;
-            cout << gammas_derivatives << endl;
-
-            cout << "Betas derivatives:" << endl;
-            cout << betas_derivatives << endl;
+            cout << "Gammas derivatives:" << endl
+                 << gammas_derivatives << endl
+                 << "Betas derivatives:" << endl
+                 << betas_derivatives << endl;
         }
 
         Tensor<type, 1> gammas_derivatives;
@@ -229,7 +228,6 @@ namespace opennn
         #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_forward_propagation_cuda.h"
         #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_back_propagation_cuda.h"
     #endif
-
 
 }
 
