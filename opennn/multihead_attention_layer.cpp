@@ -1180,10 +1180,10 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
     context_derivatives.resize(batch_samples_number, context_size, depth);
 
     inputs_derivatives.resize(2);
-    inputs_derivatives[0].first = input_derivatives.data();
-    inputs_derivatives[0].second = { batch_samples_number, input_size, depth };
-    inputs_derivatives[1].first = context_derivatives.data();
-    inputs_derivatives[1].second = { batch_samples_number, context_size, depth };
+    inputs_derivatives[0] = {input_derivatives.data(),
+                            { batch_samples_number, input_size, depth } };
+    inputs_derivatives[1] = { context_derivatives.data(),
+                            { batch_samples_number, context_size, depth } };
 }
 
 }

@@ -147,7 +147,7 @@ void TransformerTest::test_calculate_outputs()
     neurons_number = 4;
     outputs_number = 5;
 
-    transformer.set(Transformer::ModelType::Approximation, { inputs_number, neurons_number, outputs_number });
+    transformer.set(Transformer::ModelType::Approximation, { inputs_number}, {neurons_number}, {outputs_number });
 
     transformer.set_parameters_constant(type(0));
 
@@ -223,7 +223,7 @@ void TransformerTest::test_calculate_outputs()
     neurons_number = 1;
     outputs_number = 1;
 
-    transformer.set(Transformer::ModelType::Approximation, { inputs_number, neurons_number, outputs_number });
+    transformer.set(Transformer::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
 
     transformer.set_parameters_constant(type(0));
 

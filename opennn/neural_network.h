@@ -104,7 +104,6 @@ public:
    const unique_ptr<Layer>& get_layer(const Index&) const;
    const unique_ptr<Layer>& get_layer(const string&) const;
    Tensor<Layer*, 1> get_trainable_layers() const;
-//   Tensor<Index, 1> get_trainable_layers_indices() const;
 
    Index get_layer_index(const string&) const;
 
@@ -207,6 +206,11 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
+
+   Tensor<type, 2> calculate_scaled_outputs(const Tensor<type, 2>&)
+   {
+       return Tensor<type, 2>();
+   }
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 

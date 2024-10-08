@@ -39,6 +39,7 @@ struct NeuralNetworkBackPropagationLM
         return layers;
     }
 
+
     NeuralNetwork* get_neural_network() const
     {
         return neural_network;

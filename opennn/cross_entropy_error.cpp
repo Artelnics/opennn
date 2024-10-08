@@ -53,7 +53,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
@@ -86,7 +86,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
     
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
@@ -101,7 +101,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0> cross_entropy_error;
 
-    cross_entropy_error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1/**batch_samples_number*/);
+    cross_entropy_error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1/*batch_samples_number*/);
 
     error = cross_entropy_error();
 
@@ -169,7 +169,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 

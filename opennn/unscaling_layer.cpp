@@ -24,12 +24,6 @@ UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions) : Layer()
     set(new_input_dimensions[0]);
 }
 
-/*
-UnscalingLayer::UnscalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
-{
-    set(new_descriptives);
-}
-*/
 
 Index UnscalingLayer::get_inputs_number() const
 {

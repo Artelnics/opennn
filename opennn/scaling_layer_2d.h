@@ -34,8 +34,6 @@ public:
 
    explicit ScalingLayer2D(const dimensions&);
 
-   explicit ScalingLayer2D(const Tensor<Descriptives, 1>&);
-
    // Get
 
    dimensions get_output_dimensions() const;
@@ -69,9 +67,6 @@ public:
 
    void set();
    void set(const dimensions&);
-   // void set(const Tensor<Descriptives, 1>&);
-   // void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
-   // void set(const tinyxml2::XMLDocument&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -146,7 +141,6 @@ protected:
    type max_range;
 
    bool display = true;
-
 };
 
 

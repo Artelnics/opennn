@@ -103,6 +103,13 @@ public:
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const Tensor<string, 1>& = Tensor<string, 1>());
 
+        void set(const string&,
+            const DataSet::VariableUse&,
+            const DataSet::RawVariableType & = DataSet::RawVariableType::Numeric,
+            const Scaler & = Scaler::MeanStandardDeviation,
+            const Tensor<string, 1> & = Tensor<string, 1>());
+
+
         string name;
 
         DataSet::VariableUse use = DataSet::VariableUse::None;

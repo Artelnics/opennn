@@ -571,10 +571,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     const Eigen::array<IndexPair<Index>, 1> combinations_weights_indices = { IndexPair<Index>(2, 0) };
 
     for (Index time_step = 0; time_step < time_steps; time_step++)
-    {
         current_inputs = inputs.chip(time_step, 1);
-
-    }
 
 /*
     for(Index sample_index = 0; sample_index < samples_number; sample_index++)
@@ -880,9 +877,7 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     input_derivatives.resize(batch_samples_number, time_steps, inputs_number);
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives[0].first = input_derivatives.data();
-    inputs_derivatives[0].second = { batch_samples_number, inputs_number };
+    inputs_derivatives = {{input_derivatives.data(), {batch_samples_number, inputs_number}}};
 }
 
 }

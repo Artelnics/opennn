@@ -36,16 +36,10 @@ void ScalingLayer2DTest::test_constructor()
     assert_true(scaling_layer_1.get_type() == Layer::Type::Scaling2D, LOG);
     assert_true(scaling_layer_1.get_neurons_number() == 0, LOG);
 
-    ScalingLayer2D scaling_layer_2(3);
+    ScalingLayer2D scaling_layer_2({ 3 });
 
     assert_true(scaling_layer_2.get_descriptives().size() == 3, LOG);
     assert_true(scaling_layer_2.get_scaling_methods().size() == 3, LOG);
-
-    descriptives.resize(2);
-
-    ScalingLayer2D scaling_layer_3(descriptives);
-
-    assert_true(scaling_layer_3.get_descriptives().size() == 2, LOG);
 }
 
 

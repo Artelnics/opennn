@@ -339,9 +339,9 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
 
     const Index layers_number = get_layers_number();
 
-    pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
-    TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[1], outputs_pair.second[2]);
+    TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     Tensor<type, 1> current_outputs(outputs_pair.second[2]);
     Tensor<Index, 0> prediction;
@@ -382,11 +382,9 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
     forward_propagate(inputs_pair, forward_propagation, false);
 
-    pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1], outputs_pair.second[2]);
-
-    return outputs;
+    return tensor_map_3(outputs_pair);
 }
 
 
@@ -549,15 +547,6 @@ void Transformer::load_transformer(const string& path)
     cout << "Loading transformer model..." << endl;
 
     load(path);
-/*
-    MultiheadAttentionLayer* cross_attention_layer = static_cast<MultiheadAttentionLayer*>(get_layer("cross_attention_1"));
-
-    const Index new_context_length = cross_attention_layer->get_context_size();
-    const Index new_input_length = cross_attention_layer->get_input_size();
-
-    context_length = new_context_length;
-    input_length = new_input_length;
-*/
 }
 
 

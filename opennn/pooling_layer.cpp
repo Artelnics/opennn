@@ -771,9 +771,8 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     input_derivatives.resize(batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives[0].first = input_derivatives.data();
-    inputs_derivatives[0].second = { batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2] };
+    inputs_derivatives = {{input_derivatives.data(),
+                          {batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]}}};
 }
 
 
