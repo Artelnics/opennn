@@ -676,6 +676,8 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     const Index kernel_channels = new_kernel_dimensions[2];
     const Index kernels_number = new_kernel_dimensions[3];
 
+    set_activation_function("RectifiedLinear");
+
     biases.resize(kernels_number);
     set_random(biases);
 

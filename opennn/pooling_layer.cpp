@@ -414,7 +414,7 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
     // Input derivatives
-
+    
     input_derivatives.setZero();
 
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
@@ -469,7 +469,9 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
-    Tensor<type, 4> gradient_tensor = deltas / type(pool_size);
+    Tensor<type, 4>& gradient_tensor = pooling_layer_back_propagation->gradient_tensor;
+
+    gradient_tensor.device(*thread_pool_device) = deltas / type(pool_size);
 
     Tensor<type, 4> gradient_tensor_slice;
     Tensor<type, 4> gradient;
@@ -763,6 +765,9 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
     const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
     const dimensions& input_dimensions = pooling_layer->get_input_dimensions();
+    const dimensions& output_dimensions = pooling_layer->get_output_dimensions();
+
+    gradient_tensor.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
 
     input_derivatives.resize(batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 

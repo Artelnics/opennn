@@ -618,22 +618,25 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     }
     else if(model_type == ModelType::ImageClassification)
     {
-        //add_layer(make_unique<ScalingLayer4D>(input_dimensions));
+        add_layer(make_unique<ScalingLayer4D>(input_dimensions));
         
-        for(Index i = 0; i < complexity_size; i++)
+        for (Index i = 0; i < complexity_size; i++)
         {
-            //const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
+            const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
 
-            //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(), kernel_dimensions),
-            //          "convolutional_layer_" + to_string(i+1));
+            add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(), kernel_dimensions),
+                      "convolutional_layer_" + to_string(i+1));
 
-            const dimensions pool_dimensions = {2, 2};
+            const dimensions pool_dimensions = {1, 1};
 
-            add_layer(make_unique<PoolingLayer>(/*get_output_dimensions()*/ input_dimensions, pool_dimensions),
-                      "pooling_layer_" + to_string(i+1));
+            add_layer(make_unique<PoolingLayer>(get_output_dimensions(), pool_dimensions),
+                "pooling_layer_" + to_string(i + 1));
         }
 
         add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
+
+        //const dimensions neurons_number = { complexity_dimensions[complexity_dimensions.size()]*2 };
+        //add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::RectifiedLinear), "perceptron_layer");
 
         add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
     }

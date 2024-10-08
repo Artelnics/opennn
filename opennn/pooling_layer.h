@@ -198,6 +198,8 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
     void print() const;
 
+    Tensor<type, 4> gradient_tensor;
+
     Tensor<type, 4> input_derivatives;
 
 };

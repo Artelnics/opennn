@@ -293,6 +293,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
+            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
             training_batch.fill(training_batches.chip(iteration, 0),
