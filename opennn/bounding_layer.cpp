@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "bounding_layer.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -258,11 +259,11 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                       LayerForwardPropagation* forward_propagation,
                                       const bool& is_training)
 {
-    const TensorMap<Tensor<type,2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation
             = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);
@@ -304,17 +305,11 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 string BoundingLayer::get_bounding_method_string() const
 {
     if(bounding_method == BoundingMethod::Bounding)
-    {
         return "BoundingLayer";
-    }
     else if(bounding_method == BoundingMethod::NoBounding)
-    {
         return "NoBounding";
-    }
     else
-    {
         throw runtime_error("Unknown bounding method.\n");
-    }
 }
 
 
@@ -334,12 +329,18 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, con
             buffer << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
         }
     }
-    else
-    {
-        buffer << "";
-    }
 
     return buffer.str();
+}
+
+
+void BoundingLayer::print() const
+{
+    cout << "Bounding layer" << endl;
+
+    cout << "Lower bounds: " << lower_bounds << endl;
+
+    cout << "Upper bounds: " << upper_bounds << endl;
 }
 
 
@@ -359,7 +360,6 @@ void BoundingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     for(Index i = 0; i < neurons_number; i++)
     {
         file_stream.OpenElement("Item");
-
         file_stream.PushAttribute("Index", unsigned(i+1));
 
         // Lower bound
@@ -465,7 +465,7 @@ pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() cons
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
+    return { outputs_data, { batch_samples_number, neurons_number } };
 }
 
 

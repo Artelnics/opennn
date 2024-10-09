@@ -58,18 +58,8 @@ void ImageDataSetTest::run_test_case()
 {
     cout << "Running image data set test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
     test_destructor();
-
-    // Preprocessing
-
-    /*
-
-    // Reading and writing
-
-    test_XML();*/
 
     cout << "End of image data set test case.\n\n";
 }

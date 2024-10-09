@@ -34,12 +34,6 @@ dimensions FlattenLayer::get_input_dimensions() const
 }
 
 
-void FlattenLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 Index FlattenLayer::get_outputs_number() const
 {
     return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
@@ -90,7 +84,7 @@ void FlattenLayer::set(const dimensions& new_input_dimensions)
 }
 
 
-void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
@@ -104,23 +98,23 @@ void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& i
     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
 
     memcpy(outputs_data,
-           inputs_pair(0).first,
+           input_pairs[0].first,
            batch_samples_number*neurons_number*sizeof(type));
 
-    flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(inputs_pair(0).first, batch_samples_number, neurons_number);
+    flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_samples_number, neurons_number);
 
 }
 
 
-void FlattenLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                            const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                            const vector<pair<type*, dimensions>>& deltas_pair,
                                             LayerForwardPropagation* forward_propagation,
                                             LayerBackPropagation* back_propagation) const
 {
-    const Index batch_samples_number = inputs_pair(0).second[0];
+    const Index batch_samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
 
     // Back propagation
 
@@ -130,7 +124,7 @@ void FlattenLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inpu
     Tensor<type, 4>& input_derivatives = flatten_layer_back_propagation->input_derivatives;
 
     memcpy(input_derivatives.data(),
-           deltas_pair(0).first,
+           deltas_pair[0].first,
            Index(batch_samples_number * neurons_number * sizeof(type)));
 }
 
@@ -220,7 +214,7 @@ pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
+    return {outputs_data, {batch_samples_number, neurons_number}};
 }
 
 
@@ -246,17 +240,25 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     const FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
 
-    dimensions input_dimensions = flatten_layer->get_input_dimensions();
+    const dimensions input_dimensions = flatten_layer->get_input_dimensions();
 
     input_derivatives.resize(batch_samples_number,
                              input_dimensions[0],
                              input_dimensions[1],
                              input_dimensions[2]);
-
-    inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2] };
 }
+
+
+vector<pair<type*, dimensions>> FlattenLayerBackPropagation::get_input_derivative_pairs() const
+{
+    const FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
+
+    const dimensions input_dimensions = flatten_layer->get_input_dimensions();
+
+    return {{(type*)(input_derivatives.data()),
+            {batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]}}};
+}
+
 
 }
 

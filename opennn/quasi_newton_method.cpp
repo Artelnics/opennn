@@ -118,17 +118,11 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(
 void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& new_inverse_hessian_approximation_method_name)
 {
     if(new_inverse_hessian_approximation_method_name == "DFP")
-    {
         inverse_hessian_approximation_method = InverseHessianApproximationMethod::DFP;
-    }
     else if(new_inverse_hessian_approximation_method_name == "BFGS")
-    {
         inverse_hessian_approximation_method = InverseHessianApproximationMethod::BFGS;
-    }
     else
-    {
         throw runtime_error("Unknown inverse hessian approximation method: " + new_inverse_hessian_approximation_method_name + ".\n");
-    }
 }
 
 
@@ -329,24 +323,20 @@ void QuasiNewtonMethod::update_parameters(
 
     // Get training direction
 
-    if(optimization_data.epoch == 0 || is_zero(parameters_difference) || is_zero(gradient_difference))
-    {
+    if(optimization_data.epoch == 0 
+    || is_zero(parameters_difference) 
+    || is_zero(gradient_difference))
         set_identity(inverse_hessian);
-    }
     else
-    {
         calculate_inverse_hessian_approximation(optimization_data);
-    }
 
     training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, A_B);
 
     training_slope.device(*thread_pool_device) = gradient.contract(training_direction, AT_B);
 
     if(training_slope(0) >= type(0))
-    {
         training_direction.device(*thread_pool_device) = -gradient;
-    }
-
+ 
     // Get learning rate
 
     optimization_data.epoch == 0
@@ -371,27 +361,22 @@ void QuasiNewtonMethod::update_parameters(
     }
     else
     {
+        const type epsilon = std::numeric_limits<type>::epsilon();
+
         const Index parameters_number = parameters.size();
 
         #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
                 parameters_increment(i) = type(0);
             }
-            else if(gradient(i) > type(0))
+            else
             {
-                parameters(i) -= numeric_limits<type>::epsilon();
-
-                parameters_increment(i) = -numeric_limits<type>::epsilon();
-            }
-            else if(gradient(i) < type(0))
-            {
-                parameters(i) += numeric_limits<type>::epsilon();
-
-                parameters_increment(i) = numeric_limits<type>::epsilon();
+                parameters_increment(i) = (gradient(i) > type(0)) ? -epsilon : epsilon;
+                parameters(i) += parameters_increment(i);
             }
         }
 
@@ -525,7 +510,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
+        neural_network->forward_propagate(training_batch.get_input_pairs(), training_forward_propagation, is_training);
         
         // Loss index
 
@@ -541,7 +526,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(has_selection)
         {            
-            neural_network->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
+            neural_network->forward_propagate(selection_batch.get_input_pairs(), selection_forward_propagation, is_training);
 
             // Loss Index
 
@@ -770,10 +755,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
     if(learning_rate_algorithm_element)
     {
         tinyxml2::XMLDocument learning_rate_algorithm_document;
-        tinyxml2::XMLNode* element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
-
-        learning_rate_algorithm_document.InsertFirstChild(element_clone);
-
+        learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 

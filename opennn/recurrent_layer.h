@@ -140,7 +140,7 @@ public:
    void calculate_activations(Tensor<type, 2>&,
                               Tensor<type, 2>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
                           LayerForwardPropagation*,
                           const bool&) final;
 
@@ -150,8 +150,8 @@ public:
                         const Index& ,
                         Tensor<type, 1>&) const final;
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                                 const vector<pair<type*, dimensions>>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -234,6 +234,8 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     {
         set(new_batch_samples_number, new_layer);
     }
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

@@ -73,8 +73,6 @@ public:
    void set(const Index&, const Index&, const Index&);
    void set(const ProbabilisticLayer3D&);
 
-   void set_name(const string&);
-
    void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;
@@ -108,8 +106,6 @@ public:
    void set_parameters_random() final;
    void set_parameters_glorot();
 
-   //void insert_parameters(const Tensor<type, 1>&, const Index&);
-
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 3>&,
@@ -119,16 +115,16 @@ public:
 
    // Outputs
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
                           LayerForwardPropagation*,
                           const bool&) final;
 
    // Gradient
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                       const vector<pair<type*, dimensions>>&,
+                       LayerForwardPropagation*,
+                       LayerBackPropagation*) const final;
 
    void calculate_combinations_derivatives(const Tensor<type, 3>&,
                                                  const Tensor<type, 2>&,
@@ -227,8 +223,9 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
         set(new_batch_samples_number, new_layer);
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
     void print() const
     {

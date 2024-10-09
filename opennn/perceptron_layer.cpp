@@ -192,12 +192,6 @@ void PerceptronLayer::set_default()
 }
 
 
-void PerceptronLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
@@ -375,11 +369,11 @@ void PerceptronLayer::calculate_activations(Tensor<type, 2>& activations,
 }
 
 
-void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
@@ -409,13 +403,13 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 }
 
 
-void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                               const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                               const vector<pair<type*, dimensions>>& deltas_pair,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
 
     // Forward propagation
 
@@ -450,13 +444,13 @@ void PerceptronLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& i
 }
 
 
-void PerceptronLayer::back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                        const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
+void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
+                                        const vector<pair<type*, dimensions>>& deltas_pair,
                                         LayerForwardPropagation* forward_propagation,
                                         LayerBackPropagationLM* back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
 
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
@@ -584,6 +578,18 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_name,
     }
 
     return buffer.str();
+}
+
+
+void PerceptronLayer::print() const
+{
+    cout << "Perceptron layer" << endl;
+
+    cout << "Inputs number: " << get_inputs_number() << endl;
+
+    cout << "Neurons number: " << get_neurons_number() << endl;
+
+    cout << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
 }
 
 
@@ -824,10 +830,14 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
     synaptic_weights_derivatives.setZero();
 
     input_derivatives.resize(batch_samples_number, inputs_number);
+}
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
+
+vector<pair<type*, dimensions>> PerceptronLayerBackPropagation::get_input_derivative_pairs() const
+{
+    const Index inputs_number = layer->get_inputs_number();
+
+    return { {(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
 }
 
 
@@ -880,10 +890,14 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_batch_samples_number
     combinations_derivatives.resize(batch_samples_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number);
+}
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
+
+vector<pair<type*, dimensions>> PerceptronLayerBackPropagationLM::get_input_derivative_pairs() const
+{
+    const Index inputs_number = layer->get_inputs_number();
+
+    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}}};
 }
 
 

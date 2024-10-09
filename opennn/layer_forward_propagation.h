@@ -1,8 +1,6 @@
 #ifndef LAYERFORWARDPROPAGATION_H
 #define LAYERFORWARDPROPAGATION_H
 
-//#include <string>
-
 #include "layer.h"
 #include "config.h"
 

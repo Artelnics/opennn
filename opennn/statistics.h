@@ -99,11 +99,6 @@ namespace opennn
  Tensor<Histogram, 1> histograms(const Tensor<type, 2>&, const Index& = 10);
  Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&);
 
- // Distribution
- Index perform_distribution_distance_analysis(const Tensor<type, 1>&);
- type normal_distribution_distance(const Tensor<type, 1>&);
- type half_normal_distribution_distance(const Tensor<type, 1>&);
- type uniform_distribution_distance(const Tensor<type, 1>&);
 
  // Minimal indices
  Index minimal_index(const Tensor<type, 1>&);
@@ -116,8 +111,7 @@ namespace opennn
  Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
  Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>&, const Index&);
- Tensor<type, 1> variation_percentage(const Tensor<type, 1>&);
-
+ 
  // Percentiles
  Tensor<type, 1> percentiles(const Tensor<type, 1>&);
 

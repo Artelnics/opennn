@@ -118,8 +118,6 @@ public:
 
     void set(const dimensions&, const dimensions&);
 
-    void set_name(const string&);
-
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
 
@@ -164,14 +162,14 @@ public:
 
     void calculate_activations(Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
    // Back propagation
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                                 const vector<pair<type*, dimensions>>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -258,6 +256,8 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
 
    virtual ~ConvolutionalLayerBackPropagation();
+
+   vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
    void set(const Index&, Layer*) final;
 
