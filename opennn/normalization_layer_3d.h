@@ -93,16 +93,16 @@ namespace opennn
 
         // Forward propagation
 
-        void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+        void forward_propagate(const vector<pair<type*, dimensions>>&,
                                LayerForwardPropagation*,
                                const bool&) final;
 
         // Gradient
 
         void back_propagate(const vector<pair<type*, dimensions>>&,
-                                      const vector<pair<type*, dimensions>>&,
-                                      LayerForwardPropagation*,
-                                      LayerBackPropagation*) const final;
+                            const vector<pair<type*, dimensions>>&,
+                            LayerForwardPropagation*,
+                            LayerBackPropagation*) const final;
 
         void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
@@ -202,8 +202,9 @@ namespace opennn
         {
         }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+        vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
         void print() const
         {

@@ -166,7 +166,8 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     // Forward propagation
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
+    LayerForwardPropagation* output_layer_forward_propagation 
+        = forward_propagation.layers[last_trainable_layer_index];
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
@@ -381,7 +382,8 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
 
     // Forward propagation
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
+    LayerForwardPropagation* output_layer_forward_propagation 
+        = forward_propagation.layers[last_trainable_layer_index];
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);

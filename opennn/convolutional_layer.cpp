@@ -252,11 +252,11 @@ void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Ten
 
 
 
-void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
 {
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(inputs_pair(0));
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
     
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
@@ -286,7 +286,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 }
 
 
-void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         const vector<pair<type*, dimensions>>& deltas_pair,
                                         LayerForwardPropagation* forward_propagation,
                                         LayerBackPropagation* back_propagation) const
@@ -307,7 +307,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index output_height = get_output_height();
     const Index output_width = get_output_width();
 
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(inputs_pair[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
     const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(deltas_pair[0]);
 
@@ -1094,7 +1094,7 @@ pair<type*, dimensions> ConvolutionalLayerForwardPropagation::get_outputs_pair()
     const Index output_width = convolutional_layer->get_output_width();
     const Index kernels_number = convolutional_layer->get_kernels_number();
 
-    return pair<type*, dimensions>(outputs_data, {batch_samples_number, output_height, output_width, kernels_number});
+    return {outputs_data, {batch_samples_number, output_height, output_width, kernels_number}};
 }
 
 
@@ -1212,9 +1212,18 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                              input_height,
                              input_width,
                              channels);
+}
 
-    inputs_derivatives = {{input_derivatives.data(), 
-                          {batch_samples_number, input_height, input_width, channels}}};
+
+vector<pair<type*, dimensions>> ConvolutionalLayerBackPropagation::get_input_derivative_pairs() const
+{
+    const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
+
+    const Index input_height = convolutional_layer->get_input_height();
+    const Index input_width = convolutional_layer->get_input_width();
+    const Index channels = convolutional_layer->get_input_channels();
+
+    return {{(type*)(input_derivatives.data()), {batch_samples_number, input_height, input_width, channels}}};
 }
 
 

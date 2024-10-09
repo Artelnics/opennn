@@ -253,11 +253,11 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 }
 
 
-void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        LayerForwardPropagation* layer_forward_propagation,
                                        const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
         = static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation);
@@ -282,15 +282,15 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                               const vector<pair<type*, dimensions>>& deltas_pair,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
-    const Index batch_samples_number = inputs_pair[0].second[0];
-    const Index inputs_number = inputs_pair[0].second[1];
+    const Index batch_samples_number = input_pairs[0].second[0];
+    const Index inputs_number = input_pairs[0].second[1];
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     if(deltas_pair.size() > 1)     
         add_deltas(deltas_pair);
@@ -477,7 +477,7 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 
     const Index depth = embedding_layer->get_depth();
     
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, depth });
+    return {outputs_data, {batch_samples_number, inputs_number, depth}};
 }
 
 
@@ -542,8 +542,6 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension, depth);
-
-    inputs_derivatives.resize(0); // Always input layer
 }
 
 }

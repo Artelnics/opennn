@@ -336,7 +336,7 @@ void TransformerTest::test_forward_propagate()
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
 
-        transformer.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
         
         ProbabilisticLayer3DForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.layers[transformer.get_layers_number() - 1]);
@@ -406,7 +406,7 @@ void TransformerTest::test_forward_propagate()
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
 
-        transformer.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         ProbabilisticLayer3DForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.layers[transformer.get_layers_number() - 1]);

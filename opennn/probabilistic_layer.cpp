@@ -378,13 +378,13 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 }
 
 
-void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                            LayerForwardPropagation* forward_propagation,
                                            const bool& is_training)
 {
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
@@ -414,15 +414,15 @@ void ProbabilisticLayer::forward_propagate(const Tensor<pair<type*, dimensions>,
 }
 
 
-void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         const vector<pair<type*, dimensions>>& deltas_pair,
                                         LayerForwardPropagation* forward_propagation,
                                         LayerBackPropagation* back_propagation) const
 {
-    const Index samples_number = inputs_pair[0].second[0];
+    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
     
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
 
     // Forward propagation
@@ -890,9 +890,14 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
     combinations_derivatives.resize(batch_samples_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number);
+}
 
-    inputs_derivatives = {{input_derivatives.data(),
-                          {batch_samples_number, inputs_number}}};
+
+vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagation::get_input_derivative_pairs() const
+{
+    const Index inputs_number = layer->get_inputs_number();
+
+    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
 }
 
 

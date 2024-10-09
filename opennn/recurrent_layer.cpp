@@ -466,18 +466,18 @@ void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
-    const Index batch_size = inputs_pair(0).second[0];
-    const Index time_steps = inputs_pair(0).second[1];
-    const Index inputs_number = inputs_pair(0).second[2];
+    const Index batch_size = input_pairs[0].second[0];
+    const Index time_steps = input_pairs[0].second[1];
+    const Index inputs_number = input_pairs[0].second[2];
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
         = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(inputs_pair(0));
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -512,12 +512,12 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
+void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                     const vector<pair<type*, dimensions>>& deltas_pair,
                                     LayerForwardPropagation* forward_propagation,
                                     LayerBackPropagation* back_propagation) const
 {
-    const Index samples_number = inputs_pair[0].second[0];
+    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
@@ -529,7 +529,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     // Forward propagation
 
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(inputs_pair[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -824,7 +824,7 @@ pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { {batch_samples_number, neurons_number} });
+    return {outputs_data, {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -876,8 +876,14 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
     const Index time_steps = 0;
 
     input_derivatives.resize(batch_samples_number, time_steps, inputs_number);
+}
 
-    inputs_derivatives = {{input_derivatives.data(), {batch_samples_number, inputs_number}}};
+
+vector<pair<type*, dimensions>> RecurrentLayerBackPropagation::get_input_derivative_pairs() const
+{
+    const Index inputs_number = layer->get_inputs_number();
+
+    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}}};
 }
 
 }

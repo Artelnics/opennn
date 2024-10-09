@@ -140,7 +140,7 @@ dimensions Layer::get_output_dimensions() const
 }
 
 
-void Layer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&)
+void Layer::forward_propagate(const vector<pair<type*, dimensions>>&, LayerForwardPropagation*, const bool&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }

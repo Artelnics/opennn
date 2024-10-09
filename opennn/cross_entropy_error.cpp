@@ -140,7 +140,7 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
     // Forward propagation
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(last_trainable_layer_index));
+            = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers[last_trainable_layer_index]);
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
@@ -167,7 +167,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
-    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers[last_trainable_layer_index]->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 

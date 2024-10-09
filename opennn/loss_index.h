@@ -100,8 +100,6 @@ public:
 
    bool has_selection() const;
 
-   Index find_input_index(const vector<Index>&, const Index&) const;
-
    // Numerical differentiation
 
    type calculate_eta() const;
@@ -238,15 +236,15 @@ struct BackPropagationLM
 
     void print() const;
     
-    void set_layers_outputs_indices(const vector<vector<Index>>&);
+    void set_layer_output_indices(const vector<vector<Index>>&);
 
     pair<type*, dimensions> get_output_deltas_pair() const;
 
-    vector<vector<pair<type*, dimensions>>> get_layers_deltas(const Index&, const Index&) const;
+    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs(const Index&, const Index&) const;
 
     Index batch_samples_number = 0;
 
-    Tensor<Tensor<Index, 1>, 1> layers_outputs_indices;
+    Tensor<Tensor<Index, 1>, 1> layer_output_indices;
 
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;

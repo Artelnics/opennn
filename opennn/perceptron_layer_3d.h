@@ -129,7 +129,7 @@ public:
    void calculate_activations(Tensor<type, 3>&,
                               Tensor<type, 3>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
                           LayerForwardPropagation*,
                           const bool&) final;
 
@@ -219,7 +219,6 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
     }
 
-
     explicit PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
@@ -231,6 +230,7 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     {
     }
 
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

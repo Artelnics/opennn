@@ -168,10 +168,10 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair),
+    probabilistic_layer.forward_propagate({input_pairs},
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
@@ -209,10 +209,10 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair),
+    probabilistic_layer.forward_propagate({input_pairs},
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
@@ -249,10 +249,10 @@ void ProbabilisticLayerTest::test_forward_propagate()
     Tensor<type, 2> inputs_test_2_tensor(samples_number,inputs_number);
     inputs_test_2_tensor.setConstant(type(1));
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair),
+    probabilistic_layer.forward_propagate({input_pairs},
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
@@ -290,10 +290,10 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair), &probabilistic_layer_forward_propagation, is_training);
+    probabilistic_layer.forward_propagate({input_pairs}, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = probabilistic_layer_forward_propagation.outputs;
 
@@ -324,10 +324,10 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair), &probabilistic_layer_forward_propagation, is_training);
+    probabilistic_layer.forward_propagate({input_pairs}, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = probabilistic_layer_forward_propagation.outputs;
     

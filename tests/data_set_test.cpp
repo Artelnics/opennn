@@ -1935,9 +1935,9 @@ void DataSetTest::test_fill()
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
 
-    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
+    const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map(inputs_pair(0));
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map(input_pairs[0]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 

@@ -65,6 +65,8 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     explicit ProbabilisticLayerBackPropagation(const Index&, Layer*);
 
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+
     void set(const Index&, Layer*) final;
 
     void print() const;
@@ -211,7 +213,7 @@ public:
 
     // Outputs
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 

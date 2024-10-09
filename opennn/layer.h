@@ -108,7 +108,7 @@ public:
 
     // Forward propagation
 
-    virtual void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+    virtual void forward_propagate(const vector<pair<type*, dimensions>>&,
                                    LayerForwardPropagation*,
                                    const bool&) = 0;
 
