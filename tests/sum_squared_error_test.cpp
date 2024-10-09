@@ -89,7 +89,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -133,7 +133,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -173,7 +173,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -219,7 +219,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -263,7 +263,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -302,13 +302,13 @@ void SumSquaredErrorTest::test_back_propagate()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-        /*
-        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, neurons_number, outputs_number});
+        
+        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number}, {neurons_number}, {outputs_number});
 
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        //neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        //neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -360,7 +360,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -411,7 +411,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -466,7 +466,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 

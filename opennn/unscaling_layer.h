@@ -34,9 +34,7 @@ public:
    explicit UnscalingLayer();
 
    explicit UnscalingLayer(const dimensions&);
-/*
-   explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
-*/
+   
    // Get  
 
    Index get_inputs_number() const final;
@@ -104,7 +102,9 @@ public:
 
    // Forward propagation
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const vector<pair<type*, dimensions>>&, 
+                          LayerForwardPropagation*, 
+                          const bool&) final;
 
    // Serialization
 

@@ -34,8 +34,6 @@ public:
 
    explicit ScalingLayer2D(const dimensions&);
 
-   explicit ScalingLayer2D(const Tensor<Descriptives, 1>&);
-
    // Get
 
    dimensions get_output_dimensions() const;
@@ -69,9 +67,6 @@ public:
 
    void set();
    void set(const dimensions&);
-   // void set(const Tensor<Descriptives, 1>&);
-   // void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
-   // void set(const tinyxml2::XMLDocument&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -110,7 +105,9 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const vector<pair<type*, dimensions>>&, 
+                          LayerForwardPropagation*, 
+                          const bool&) final;
 
    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
@@ -146,7 +143,6 @@ protected:
    type max_range;
 
    bool display = true;
-
 };
 
 

@@ -510,7 +510,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
+        neural_network->forward_propagate(training_batch.get_input_pairs(), training_forward_propagation, is_training);
         
         // Loss index
 
@@ -526,7 +526,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(has_selection)
         {            
-            neural_network->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
+            neural_network->forward_propagate(selection_batch.get_input_pairs(), selection_forward_propagation, is_training);
 
             // Loss Index
 

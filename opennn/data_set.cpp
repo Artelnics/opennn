@@ -118,6 +118,20 @@ DataSet::RawVariable::RawVariable(const string& new_name,
 }
 
 
+void DataSet::RawVariable::set(const string& new_name,
+    const VariableUse& new_raw_variable_use,
+    const RawVariableType& new_type,
+    const Scaler& new_scaler,
+    const Tensor<string, 1>& new_categories)
+{
+    name = new_name;
+    scaler = new_scaler;
+    use = new_raw_variable_use;
+    type = new_type;
+    categories = new_categories;
+}
+
+
 void DataSet::RawVariable::set_scaler(const Scaler& new_scaler)
 {
     scaler = new_scaler;
@@ -627,19 +641,15 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     Index buffer_size = new_buffer_size;
     Index batches_number;
-    Index batch_size = batch_samples_number;
 
-    // When samples_number is less than 100 (small sample)
+    const Index batch_size = std::min(batch_samples_number, samples_number);
 
     if(buffer_size > samples_number)
         buffer_size = samples_number;
 
-    // Check batch size and samples number
-
     if(samples_number < batch_size)
     {
         batches_number = 1;
-        batch_size = samples_number;
         buffer_size = batch_size;
     }
     else
@@ -666,130 +676,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     }
 
     return batches;
-    
-/*
-    Tensor<Index, 1> buffer(buffer_size);
-
-    for(Index i = 0; i < buffer_size; i++) 
-        buffer(i) = i;
-
-    Index next_index = buffer_size;
-    Index random_index = 0;
-    Index leftover_batch_samples = batch_size;
-
-    // Heuristic cases for batch shuffling
-    
-    if(batch_size < buffer_size)
-    {
-        Index diff = buffer_size/ batch_size;
-
-        // Main Loop
-
-        for(Index i = 0; i < batches_number; i++)
-        {
-            // Last batch
-
-            if(i == batches_number-diff)
-            {
-                Index buffer_index = 0;
-
-                for(Index j = leftover_batch_samples; j < batch_size; j++)
-                {
-                    batches(i - 1, j) = buffer(buffer_index);
-
-                    buffer_index++;
-                }
-
-                for(Index k = batches_number-diff; k < batches_number; k++)
-                {
-                    for(Index j = 0; j < batch_size; j++)
-                    {
-                        batches(k,j) = buffer(buffer_index);
-
-                        buffer_index++;
-                    }
-                }
-
-                break;
-            }
-
-            // Shuffle batches
-
-            for(Index j = 0; j < batch_size; j++)
-            {
-                random_index = Index(rand()%buffer_size);
-
-                batches(i, j) = buffer(random_index);
-
-                buffer(random_index) = samples_indices(next_index);
-
-                next_index++;
-
-                if(next_index == samples_number)
-                {
-                    leftover_batch_samples = j + 1;
-                    break;
-                }
-            }
-        }
-
-        return batches;
-    }
-    else // buffer_size <= batch_size
-    {
-        // Main Loop
-
-        for(Index i = 0; i < batches_number; i++)
-        {
-            // Last batch
-
-            if(i == batches_number-1)
-            {
-                std::shuffle(buffer.data(), buffer.data() +  buffer.size(), urng);
-
-                if(batch_size <= buffer_size)
-                {
-                    for(Index j = 0; j < batch_size;j++)
-                    {
-                        batches(i, j) = buffer(j);
-                    }
-                }
-                else //buffer_size < batch_size
-                {
-                    for(Index j = 0; j < buffer_size; j++)
-                    {
-                        batches(i, j) = buffer(j);
-                    }
-
-                    for(Index j = buffer_size; j < batch_size; j++)
-                    {
-                        batches(i, j) = samples_indices(next_index);
-
-                        next_index++;
-                    }
-                }
-
-                break;
-            }
-
-            // Shuffle batches
-
-            for(Index j = 0; j < batch_size; j++)
-            {
-                random_index = Index(rand()%buffer_size);
-
-                batches(i, j) = buffer(random_index);
-
-                buffer(random_index) = samples_indices(next_index);
-
-                next_index++;
-            }
-        }
-    }
-
-    std::shuffle(batches.data(), batches.data() + batches.size(), urng);
-    return batches;
-*/
 }
 
 
@@ -5884,22 +5770,20 @@ void DataSet::impute_missing_values_interpolate()
 
                 for(Index k = i - 1; k >= 0; k--)
                 {
-                    if(!isnan(data(used_samples_indices(k), current_variable)))
-                    {
-                        x1 = type(used_samples_indices(k));
-                        y1 = data(x1, current_variable);
-                        break;
-                    }
+                    if (isnan(data(used_samples_indices(k), current_variable))) continue;
+
+                    x1 = type(used_samples_indices(k));
+                    y1 = data(x1, current_variable);
+                    break;
                 }
 
                 for(Index k = i + 1; k < samples_number; k++)
                 {
-                    if(!isnan(data(used_samples_indices(k), current_variable)))
-                    {
-                        x2 = type(used_samples_indices(k));
-                        y2 = data(x2, current_variable);
-                        break;
-                    }
+                    if (isnan(data(used_samples_indices(k), current_variable))) continue;
+                    
+                    x2 = type(used_samples_indices(k));
+                    y2 = data(x2, current_variable);
+                    break;                    
                 }
 
                 if(x2 != x1)

@@ -166,14 +166,15 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     // Forward propagation
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
+    LayerForwardPropagation* output_layer_forward_propagation 
+        = forward_propagation.layers[last_trainable_layer_index];
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
     const pair<type*, dimensions> outputs_pair = probabilistic_layer_forward_propagation->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
@@ -381,14 +382,15 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
 
     // Forward propagation
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
+    LayerForwardPropagation* output_layer_forward_propagation 
+        = forward_propagation.layers[last_trainable_layer_index];
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
     const pair<type*, dimensions> outputs_pair = probabilistic_layer_forward_propagation->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 

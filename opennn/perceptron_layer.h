@@ -138,9 +138,9 @@ public:
     void calculate_activations(Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-        LayerForwardPropagation*,
-        const bool&) final;
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           LayerForwardPropagation*,
+                           const bool&) final;
 
     // Gradient
 
@@ -225,11 +225,11 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     virtual ~PerceptronLayerBackPropagation();
 
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+
     void set(const Index&, Layer*) final;
 
     void print() const;
-
-    //Tensor<type, 2> deltas;
 
     Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;
@@ -248,6 +248,8 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     explicit PerceptronLayerBackPropagationLM(const Index&, Layer*);
 
     virtual ~PerceptronLayerBackPropagationLM();
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index&, Layer*) final;
 

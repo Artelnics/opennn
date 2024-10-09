@@ -53,8 +53,6 @@ public:
 
    // Get
 
-   bool is_empty() const;
-
    Index get_inputs_number() const final;
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
@@ -65,9 +63,6 @@ public:
 
    const Tensor<type, 1>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
-
-   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
@@ -127,8 +122,6 @@ public:
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 3>&,
-                               const Tensor<type, 1>&,
-                               const Tensor<type, 2>&,
                                Tensor<type, 3>&) const;
 
    void dropout(Tensor<type, 3>&) const;
@@ -136,7 +129,7 @@ public:
    void calculate_activations(Tensor<type, 3>&,
                               Tensor<type, 3>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
                           LayerForwardPropagation*,
                           const bool&) final;
 
@@ -177,6 +170,8 @@ protected:
    type dropout_rate = type(0);
 
    bool display = true;
+
+   Tensor<type, 3> empty;
 };
 
 
@@ -224,7 +219,6 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
     }
 
-
     explicit PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
@@ -236,6 +230,7 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     {
     }
 
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

@@ -238,7 +238,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
 
-    Tensor<pair<type*, dimensions>, 1> inputs_pair;
+    vector<pair<type*, dimensions>> input_pairs;
 
     // Loss index
 
@@ -293,6 +293,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
+            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
             training_batch.fill(training_batches.chip(iteration, 0),
@@ -302,9 +303,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
 
-            inputs_pair = training_batch.get_inputs_pair();
+            input_pairs = training_batch.get_input_pairs();
 
-            neural_network->forward_propagate(inputs_pair,
+            neural_network->forward_propagate(input_pairs,
                                               training_forward_propagation,
                                               is_training);
 
@@ -356,9 +357,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      context_variables_indices);               
                 // Neural network
                 
-                inputs_pair = selection_batch.get_inputs_pair();
+                input_pairs = selection_batch.get_input_pairs();
 
-                neural_network->forward_propagate(inputs_pair,
+                neural_network->forward_propagate(input_pairs,
                                                   selection_forward_propagation,
                                                   is_training);
                 

@@ -24,12 +24,6 @@ UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions) : Layer()
     set(new_input_dimensions[0]);
 }
 
-/*
-UnscalingLayer::UnscalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
-{
-    set(new_descriptives);
-}
-*/
 
 Index UnscalingLayer::get_inputs_number() const
 {
@@ -536,17 +530,17 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
-    const Index samples_number = inputs_pair(0).second[0];
+    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation
             = static_cast<UnscalingLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(inputs_pair(0));
+    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
     Tensor<type,2>& outputs = unscaling_layer_forward_propagation->outputs;
 
@@ -782,7 +776,7 @@ pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
+    return { outputs_data, { batch_samples_number, neurons_number } };
 }
 
 

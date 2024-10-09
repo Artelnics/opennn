@@ -23,56 +23,11 @@ struct BackPropagation
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
 
-    //void set_layers_outputs_indices(const vector<vector<Index>>&);
-
-    vector<vector<pair<type*, dimensions>>> get_layers_deltas(const Index last_trainable_layer_index, const Index first_trainable_layer_index) const 
-    {
-        vector<vector<pair<type*, dimensions>>> layers_deltas(neural_network.get_neural_network()->get_layers().size());
-
-        for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; --i)
-        {
-            if (i == last_trainable_layer_index)
-            {
-                // Use output deltas as initial deltas
-                layers_deltas[i].push_back(get_output_deltas_pair());
-            }
-            else
-            {
-                for (Index j = 0; j < neural_network.get_neural_network()->get_layers_output_indices()[i].size(); ++j)
-                {
-                    Index output_index = neural_network.get_neural_network()->get_layers_output_indices()[i][j];
-                    Index input_index = loss_index->find_input_index(neural_network.get_neural_network()->get_layers_input_indices()[output_index], i);
-                    
-                    // Use the input derivatives from the previous layer as the deltas for the current layer
-                    layers_deltas[i].push_back(neural_network.get_layers()[output_index]->get_inputs_derivatives_pair()[input_index]);
-                }
-            }
-        }
-
-        return layers_deltas;
-    }
-
+    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs(const Index&, const Index&) const;
 
     pair<type*, dimensions> get_output_deltas_pair() const;
 
-    void print() const
-    {
-        cout << "Back-propagation" << endl
-             << "Errors:" << endl
-             << errors << endl
-             << "Error:" << endl
-             << error << endl
-             << "Regularization:" << endl
-             << regularization << endl
-             << "Loss:" << endl
-             << loss << endl
-             << "Gradient:" << endl
-             << gradient << endl;
-
-        neural_network.print();
-    }
-
-    //vector<vector<Index>> layers_outputs_indices;
+    void print() const;
 
     Index batch_samples_number = 0;
 

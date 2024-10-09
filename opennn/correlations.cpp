@@ -935,14 +935,8 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < x.dimension(0); i++)
     {
-        if(!isnan(x(i)) && x(i) <= type(0))
-        {
-            power_correlation.r = type(NAN);
-
-            return power_correlation;
-        }
-
-        if(!isnan(y(i)) && y(i) <= type(0))
+        if(!isnan(x(i)) && x(i) <= type(0) 
+        || !isnan(y(i)) && y(i) <= type(0))
         {
             power_correlation.r = type(NAN);
 

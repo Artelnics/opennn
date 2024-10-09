@@ -85,7 +85,7 @@ public:
 
    // Lower and upper bounds
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
+   void forward_propagate(const vector<pair<type*, dimensions>>&, 
                           LayerForwardPropagation*, 
                           const bool&) final;
 

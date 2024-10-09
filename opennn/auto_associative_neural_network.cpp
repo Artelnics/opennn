@@ -443,9 +443,7 @@ Tensor<type, 2> AutoAssociativeNeuralNetwork::calculate_multivariate_distances(t
             const type distance = l2_distance(variable_input_value, variable_output_value);
 
             if(!isnan(distance))
-            {
                 testing_samples_distances(i, j) = distance;
-            }
         }
     }
 

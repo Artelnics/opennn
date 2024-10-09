@@ -98,7 +98,7 @@ public:
 
     // First order activations
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
@@ -187,16 +187,21 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
 struct PoolingLayerBackPropagation : LayerBackPropagation
 {
-
     explicit PoolingLayerBackPropagation();
 
     explicit PoolingLayerBackPropagation(const Index&, Layer*);
 
     virtual ~PoolingLayerBackPropagation();
 
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+
     void set(const Index&, Layer*) final;
 
     void print() const;
+
+    // @todo What is this?
+
+    Tensor<type, 4> gradient_tensor;
 
     Tensor<type, 4> input_derivatives;
 

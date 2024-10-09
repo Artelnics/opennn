@@ -64,7 +64,7 @@ namespace opennn
 
         // Forward propagation
 
-        void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+        void forward_propagate(const vector<pair<type*, dimensions>>&,
                                LayerForwardPropagation*,
                                const bool&) final;
 
@@ -149,8 +149,9 @@ namespace opennn
         {
         }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+        vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
         void print() const
         {

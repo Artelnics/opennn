@@ -98,7 +98,7 @@ public:
 
     // Embedding layer outputs
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&layer,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
@@ -169,25 +169,19 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
         
         pair<type*, dimensions> get_outputs_pair() const final;
 
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
         void print() const
         {
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores.dimensions() << endl;
-
 //            cout << "Outputs dimensions:" << endl;
 //            cout << output_dimensions << endl;
-
 //            cout << "Outputs:" << endl;
 //            cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores << endl;
         }
-
 
         void build_positional_encoding_matrix();
 
@@ -222,8 +216,12 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
         {
         }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+        vector<pair<type*, dimensions>> get_input_derivative_pairs() const
+        {
+            return vector<pair<type*, dimensions>>();
+        }
 
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
         void print() const
         {
