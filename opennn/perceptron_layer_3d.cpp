@@ -481,7 +481,7 @@ void PerceptronLayer3D::add_deltas(const vector<pair<type*, dimensions>>& deltas
 {
     TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
 
-    for(Index i = 1; i < deltas_pair.size(); i++)
+    for(Index i = 1; i < static_cast<Index>(deltas_pair.size()); i++)
     {
         const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(deltas_pair[i]);
 

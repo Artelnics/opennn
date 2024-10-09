@@ -546,7 +546,7 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     buffer.str("");
 
-    for(Index i = 0; i < layers.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(layers.size()); i++)
     {
         buffer << layers[i]->get_type_string();
         if(i != layers.size()-1) buffer << " ";
@@ -558,7 +558,7 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     // Layers information
 
-    for(Index i = 0; i < layers.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(layers.size()); i++)
     {
         layers[i]->to_XML(file_stream);
     }
