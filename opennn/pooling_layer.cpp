@@ -360,12 +360,12 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
 
 void PoolingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                  const vector<pair<type*, dimensions>>& deltas_pair,
+                                  const vector<pair<type*, dimensions>>& delta_pairs,
                                   LayerForwardPropagation* forward_propagation,
                                   LayerBackPropagation* back_propagation) const
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-    const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(deltas_pair[0]);
+    const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
 
     switch(pooling_method)
     {
@@ -726,14 +726,11 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
 void PoolingLayerForwardPropagation::print() const
 {
-    cout << "PoolingLayer layer forward propagation" << endl;
-
-    cout << "Outputs:" << endl;
-
-    cout << outputs(0) << endl;
-
-    cout << "Image patches" << endl;
-    cout << image_patches << endl;
+    cout << "PoolingLayer layer forward propagation" << endl
+         << "Outputs:" << endl
+         << outputs(0) << endl
+         << "Image patches" << endl
+         << image_patches << endl;
 }
 
 
@@ -785,7 +782,6 @@ vector<pair<type*, dimensions>> PoolingLayerBackPropagation::get_input_derivativ
 void PoolingLayerBackPropagation::print() const
 {
     cout << "PoolingLayer layer back propagation" << endl;
-
 }
 
 }

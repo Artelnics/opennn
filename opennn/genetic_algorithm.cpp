@@ -1560,9 +1560,9 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
 void GeneticAlgorithm::print() const
 {
-    cout << "Genetic algorithm" << endl;
-    cout << "Individuals number: " << get_individuals_number() << endl;
-    cout << "Genes number: " << get_genes_number() << endl;
+    cout << "Genetic algorithm" << endl
+         << "Individuals number: " << get_individuals_number() << endl
+         << "Genes number: " << get_genes_number() << endl;
 }
 
 

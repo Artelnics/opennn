@@ -1224,51 +1224,18 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     const vector<vector<Index>>& layer_input_indices = get_layer_input_indices();
 
+    vector<vector<pair<type*, dimensions>>> layer_input_pairs;
+       // = forward_propagation.get_layer_input_pairs(const Batch & batch) const
+
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
-    Index first_layer_index;
-    Index last_layer_index;
-    
-    if(is_training)
-    {
-        first_layer_index = first_trainable_layer_index;
-        last_layer_index = last_trainable_layer_index;
-    }
-    else
-    {
-        first_layer_index = 0;
-        last_layer_index = layers_number - 1;
-    }
-
-    vector<pair<type*, dimensions>> layer_inputs;
+    const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
+    const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
     
     for(Index i = first_layer_index; i <= last_layer_index; i++)
     {
-        const vector<Index> single_layer_input_indices = layer_input_indices[i];
-        const Index layer_inputs_number = layer_input_indices.size();
-
-        if(i == first_layer_index || is_input_layer(single_layer_input_indices))
-        {
-            layer_inputs.resize(1);
-           
-            layer_inputs[0] = input_pairs[0];
-        }
-        else if(is_context_layer(single_layer_input_indices))
-        {
-            layer_inputs.resize(1);
-
-            layer_inputs[0] = input_pairs[1];
-        }
-        else
-        {
-            layer_inputs.resize(layer_inputs_number);
-
-            for(Index j = 0; j < layer_inputs_number; j++)
-                layer_inputs[j] = forward_propagation.layers[layer_input_indices[i][j]]->get_outputs_pair();
-        }
-
-        layers[i]->forward_propagate(layer_inputs,
+        layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
                                      is_training);
     }
@@ -2256,10 +2223,6 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::Bounding:
             layers[i] = new BoundingLayerForwardPropagation(batch_samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::RegionProposal:
-            //                layers[i] = new RegionProposalLayerForwardPropagation(batch_samples_number, neural_network_layers[i]);
         break;
 
         case Layer::Type::Embedding:

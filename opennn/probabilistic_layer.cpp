@@ -415,7 +415,7 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
 
 void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                        const vector<pair<type*, dimensions>>& deltas_pair,
+                                        const vector<pair<type*, dimensions>>& delta_pairs,
                                         LayerForwardPropagation* forward_propagation,
                                         LayerBackPropagation* back_propagation) const
 {
@@ -423,7 +423,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index neurons_number = get_neurons_number();
     
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
     // Forward propagation
 
@@ -903,11 +903,10 @@ vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagation::get_input_der
 
 void ProbabilisticLayerBackPropagation::print() const 
 {
-    cout << "Biases derivatives:" << endl;
-    cout << biases_derivatives << endl;
-
-    cout << "Synaptic weights derivatives:" << endl;
-    cout << synaptic_weights_derivatives << endl;
+    cout << "Biases derivatives:" << endl
+         << biases_derivatives << endl
+         << "Synaptic weights derivatives:" << endl
+         << synaptic_weights_derivatives << endl;
 }
 
 

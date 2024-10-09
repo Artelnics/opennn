@@ -513,7 +513,7 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
 
 void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                    const vector<pair<type*, dimensions>>& deltas_pair,
+                                    const vector<pair<type*, dimensions>>& delta_pairs,
                                     LayerForwardPropagation* forward_propagation,
                                     LayerBackPropagation* back_propagation) const
 {
@@ -539,7 +539,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     // Back propagation
 
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     const bool& is_first_layer = recurrent_layer_back_propagation->is_first_layer;
 

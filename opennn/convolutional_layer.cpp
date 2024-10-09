@@ -287,7 +287,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
 
 void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                        const vector<pair<type*, dimensions>>& deltas_pair,
+                                        const vector<pair<type*, dimensions>>& delta_pairs,
                                         LayerForwardPropagation* forward_propagation,
                                         LayerBackPropagation* back_propagation) const
 {
@@ -1223,7 +1223,9 @@ vector<pair<type*, dimensions>> ConvolutionalLayerBackPropagation::get_input_der
     const Index input_width = convolutional_layer->get_input_width();
     const Index channels = convolutional_layer->get_input_channels();
 
-    return {{(type*)(input_derivatives.data()), {batch_samples_number, input_height, input_width, channels}}};
+    convolutional_layer->get_input_dimensions();
+
+    return {{(type*)input_derivatives.data(), {batch_samples_number, input_height, input_width, channels}}};
 }
 
 

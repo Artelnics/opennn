@@ -249,7 +249,7 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
 
 void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                          const vector<pair<type*, dimensions>>& deltas_pair,
+                                          const vector<pair<type*, dimensions>>& delta_pairs,
                                           LayerForwardPropagation* forward_propagation,
                                           LayerBackPropagation* back_propagation) const
 {
@@ -257,10 +257,10 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    if(deltas_pair.size() > 1)     
-        add_deltas(deltas_pair);
+    if(delta_pairs.size() > 1)     
+        add_deltas(delta_pairs);
 
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     // Forward propagation
 

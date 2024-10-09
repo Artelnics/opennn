@@ -49,28 +49,17 @@ public:
                     Unscaling,
                     Bounding,
                     Flatten,
-                    RegionProposal,
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};
 
     // Constructor
 
-    explicit Layer()
-    {
-        const int n = omp_get_max_threads();
-
-        thread_pool = new ThreadPool(n);
-        thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-    }
+    explicit Layer();
 
     // Destructor
 
-    virtual ~Layer()
-    {
-        delete thread_pool;
-        delete thread_pool_device;
-    }
+    virtual ~Layer();
 
     string get_name() const;
 
@@ -159,6 +148,7 @@ protected:
     string name = "layer";
 
     Type layer_type;
+
 
     template <int rank>
     void binary(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type threshold) const

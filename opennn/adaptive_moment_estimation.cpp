@@ -675,9 +675,8 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 void AdaptiveMomentEstimationData::print() const
 {
     cout << "Gradient exponential decay:" << endl
-         <<gradient_exponential_decay << endl;
-
-    cout << "Square gradient exponential decay:" << endl
+         << gradient_exponential_decay << endl
+         << "Square gradient exponential decay:" << endl
          << square_gradient_exponential_decay << endl;
 }
 

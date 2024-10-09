@@ -346,7 +346,7 @@ void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
 
 void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                          const vector<pair<type*, dimensions>>& deltas_pair,
+                                          const vector<pair<type*, dimensions>>& delta_pairs,
                                           LayerForwardPropagation* forward_propagation,
                                           LayerBackPropagation* back_propagation) const
 {

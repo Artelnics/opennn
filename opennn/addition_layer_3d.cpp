@@ -105,7 +105,7 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
 
 
 void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     const vector<pair<type*, dimensions>>& deltas_pair,
+                                     const vector<pair<type*, dimensions>>& delta_pairs,
                                      LayerForwardPropagation* forward_propagation,
                                      LayerBackPropagation* back_propagation) const
 {
@@ -248,9 +248,11 @@ vector<pair<type*, dimensions>> AdditionLayer3DBackPropagation::get_input_deriva
     const Index inputs_number = addition_layer_3d->get_inputs_number();
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
+    
+
     return
-    {{(type*)(input_1_derivatives.data()), {batch_samples_number, inputs_number, inputs_depth}},
-     {(type*)(input_2_derivatives.data()), {batch_samples_number, inputs_number, inputs_depth}}};
+    {{(type*)input_1_derivatives.data(), {batch_samples_number, inputs_number, inputs_depth}},
+     {(type*)input_2_derivatives.data(), {batch_samples_number, inputs_number, inputs_depth}}};
 }
 
 }

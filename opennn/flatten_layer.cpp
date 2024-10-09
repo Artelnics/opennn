@@ -102,12 +102,11 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
            batch_samples_number*neurons_number*sizeof(type));
 
     flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_samples_number, neurons_number);
-
 }
 
 
 void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                            const vector<pair<type*, dimensions>>& deltas_pair,
+                                            const vector<pair<type*, dimensions>>& delta_pairs,
                                             LayerForwardPropagation* forward_propagation,
                                             LayerBackPropagation* back_propagation) const
 {

@@ -12,6 +12,22 @@
 namespace opennn
 {
 
+Layer::Layer()
+{
+
+    const int n = omp_get_max_threads();
+
+    thread_pool = new ThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+}
+
+
+Layer::~Layer()
+{
+    delete thread_pool;
+    delete thread_pool_device;
+}
+
 string Layer::get_name() const
 {
     return name;
@@ -66,9 +82,6 @@ string Layer::get_type_string() const
 
     case Type::Flatten:
         return "Flatten";
-
-    case Type::RegionProposal:
-        return "RegionProposal";
 
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";

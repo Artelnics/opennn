@@ -787,9 +787,8 @@ void ScalingLayer2D::print() const
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        cout << "Neuron " << i << endl;
-
-        cout << "Scaler " << scalers_text(i) << endl;
+        cout << "Neuron " << i << endl
+             << "Scaler " << scalers_text(i) << endl;
 
         descriptives(i).print();
     }

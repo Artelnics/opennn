@@ -655,7 +655,7 @@ void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensi
 
 
 void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                                       const vector<pair<type*, dimensions>>& deltas_pair,
+                                                       const vector<pair<type*, dimensions>>& delta_pairs,
                                                        LayerForwardPropagation* forward_propagation,
                                                        LayerBackPropagation* back_propagation) const
 {
@@ -663,9 +663,9 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 
     const TensorMap<Tensor<type, 3>> context = tensor_map_3(input_pairs[1]);
 
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
-    Index batch_samples_number = input_pairs[0].second[0];
+    const Index batch_samples_number = input_pairs[0].second[0];
 
     type* query_weights_data = (type*)query_weights.data();
     type* key_weights_data = (type*)key_weights.data();
@@ -877,6 +877,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
                 += sample_query_derivatives.contract(head_query_weights, A_BT);
 
             // CONTEXT DERIVATIVES
+
             context_derivatives.chip(sample_index, 0).device(*thread_pool_device) 
                 += sample_key_derivatives.contract(head_key_weights, A_BT)
                 + sample_value_derivatives.contract(head_value_weights, A_BT);

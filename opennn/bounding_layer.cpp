@@ -324,10 +324,8 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, con
         const Index neurons_number = get_neurons_number();
 
         for(Index i = 0; i < neurons_number; i++)
-        {
-            buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_name[i] << ")\n";
-            buffer << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
-        }
+            buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_name[i] << ")\n"
+                   << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
     }
 
     return buffer.str();
@@ -336,11 +334,9 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, con
 
 void BoundingLayer::print() const
 {
-    cout << "Bounding layer" << endl;
-
-    cout << "Lower bounds: " << lower_bounds << endl;
-
-    cout << "Upper bounds: " << upper_bounds << endl;
+    cout << "Bounding layer" << endl
+         << "Lower bounds: " << lower_bounds << endl
+         << "Upper bounds: " << upper_bounds << endl;
 }
 
 
