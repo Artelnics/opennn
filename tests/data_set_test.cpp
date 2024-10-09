@@ -1935,13 +1935,13 @@ void DataSetTest::test_fill()
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
 
-    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
+    const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map(input_pairs[0]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     assert_true(are_equal(inputs, input_data), LOG);
     assert_true(are_equal(targets, target_data), LOG);  

@@ -188,13 +188,8 @@ Tensor<Index, 1> TimeSeriesDataSet::get_target_time_series_raw_variables_indices
     Index index = 0;
 
     for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
         if(time_series_raw_variables(i).use == VariableUse::Target)
-        {
-            target_raw_variables_indices(index) = i;
-            index++;
-        }
-    }
+            target_raw_variables_indices(index++) = i;
 
     return target_raw_variables_indices;
 }
@@ -209,24 +204,13 @@ Tensor<string, 1> TimeSeriesDataSet::get_time_series_variables_names() const
     Index index = 0;
 
     for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
         if(time_series_raw_variables(i).type == RawVariableType::Categorical)
-        {
             for(Index j = 0; j < time_series_raw_variables(i).categories.size(); j++)
-            {
-                variables_names(index) = time_series_raw_variables(i).categories(j);
-
-                index++;
-            }
-        }
+                variables_names(index++) = time_series_raw_variables(i).categories(j);
         else
-        {
-            variables_names(index) = time_series_raw_variables(i).name;
-            index++;
-        }
-    }
+            variables_names(index++) = time_series_raw_variables(i).name;
 
-    return move(variables_names);
+    return variables_names;
 }
 
 
@@ -239,13 +223,8 @@ Tensor<Index, 1> TimeSeriesDataSet::get_input_time_series_raw_variables_indices(
     Index index = 0;
 
     for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
         if(time_series_raw_variables(i).use == VariableUse::Input)
-        {
-            input_raw_variables_indices(index) = i;
-            index++;
-        }
-    }
+            input_raw_variables_indices(index++) = i;
 
     return input_raw_variables_indices;
 }
@@ -1420,9 +1399,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
             const RawVariableType target_raw_variable_type = time_series_raw_variables(raw_variable_index).type;
 
             if(target_raw_variable_type == RawVariableType::Numeric)
-            {
                 input_target_numeric_raw_variables_number++;
-            }
 
             count++;
         }
@@ -1431,17 +1408,11 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
     Index new_lags_number;
 
     if((samples_number == lags_number || samples_number < lags_number) && lags_number > 2)
-    {
         new_lags_number = lags_number - 2;
-    }
     else if(samples_number == lags_number + 1 && lags_number > 1)
-    {
         new_lags_number = lags_number - 1;
-    }
     else
-    {
         new_lags_number = lags_number;
-    }
 
     Tensor<type, 2> autocorrelations(input_target_numeric_raw_variables_number, new_lags_number);
     Tensor<type, 1> autocorrelations_vector(new_lags_number);
@@ -1525,9 +1496,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
             const RawVariableType target_raw_variable_type = time_series_raw_variables(raw_variable_index).type;
 
             if(target_raw_variable_type == RawVariableType::Numeric)
-            {
                 input_target_numeric_raw_variables_number++;
-            }
 
             count++;
         }

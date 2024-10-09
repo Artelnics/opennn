@@ -72,11 +72,11 @@ vector<float> calculate_outputs(const vector<float>& inputs)
 	double scaled_free_res_stream_velocity = (free_res_stream_velocity-50.86074448)/15.57278538;
 	double scaled_suction_side_di_splacement_thickness = (suction_side_di_splacement_thickness-0.01113987993)/0.01315023471;
 
-	double perceptron_layer_output_0 = ( 0.0160486 + (scaled_frequency*-0.581589) + (scaled_angle_of_attack*-0.368824) + (scaled_cho_rd_lenght*-0.497451) + (scaled_free_res_stream_velocity*0.218891) + (scaled_suction_side_di_splacement_thickness*-0.267632));
+	double layer_output_0 = ( 0.00961979 + (layer_output_0*-0.610238) + (layer_output_1*-0.316603) + (layer_output_2*-0.463742) + (layer_output_3*0.236948) + (layer_output_4*-0.310925));
 
-	double unscaling_layer_output_0=perceptron_layer_output_0*6.898656845+124.8359451;
+	layer_output_0=layer_output_0*6.898656845+124.8359451;
 
-	double scaled_sound_pressure_level = max(-3.402823466e+38, unscaling_layer_output_0);
+	double scaled_sound_pressure_level = max(-3.402823466e+38, layer_output_0);
 	scaled_sound_pressure_level = min(3.402823466e+38, scaled_sound_pressure_level);
 
 	vector<float> out(1);

@@ -84,7 +84,6 @@ public:
     void set(const Index&, const Index&, const Index&, const Index&);
 
     void set_default();
-    void set_name(const string&);
 
     // Architecture
 
@@ -126,16 +125,16 @@ public:
 
     // Multihead Attention layer outputs
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
     // Gradient
 
-    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                  const Tensor<pair<type*, dimensions>, 1>&,
-                                  LayerForwardPropagation*,
-                                  LayerBackPropagation*) const final;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        LayerForwardPropagation*,
+                        LayerBackPropagation*) const final;
 
     void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const final;
 
@@ -270,6 +269,8 @@ protected:
         virtual ~MultiheadAttentionLayerBackPropagation()
         {
         }
+
+        vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

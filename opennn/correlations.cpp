@@ -291,9 +291,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
             for(Index j = 0; j < y_columns_number; j++)
                 new_y(index, j) = y(i, j);
 
-            new_x(index) = x(i);
-
-            index++;
+            new_x(index++) = x(i);
         }
     }
 
@@ -937,14 +935,8 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < x.dimension(0); i++)
     {
-        if(!isnan(x(i)) && x(i) <= type(0))
-        {
-            power_correlation.r = type(NAN);
-
-            return power_correlation;
-        }
-
-        if(!isnan(y(i)) && y(i) <= type(0))
+        if(!isnan(x(i)) && x(i) <= type(0) 
+        || !isnan(y(i)) && y(i) <= type(0))
         {
             power_correlation.r = type(NAN);
 

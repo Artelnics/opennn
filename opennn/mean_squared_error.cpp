@@ -38,13 +38,13 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
     
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
     
@@ -62,7 +62,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     
     error = sum_squared_error(0)*coefficient;
     
-   // if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -106,7 +106,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
      const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-     TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
+     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
      
      const type coefficient = type(2.0) / type(outputs_number * batch_samples_number);
 
@@ -125,7 +125,7 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device) = errors;
 
@@ -154,17 +154,17 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                   BackPropagationLM& back_propagation_lm) const
 {
-     const Index outputs_number = neural_network->get_outputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
-     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
+    const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
-     const type coefficient = type(2.0)/type(batch_samples_number);
+    const type coefficient = type(2.0)/type(batch_samples_number);
 
-     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
+    Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
-     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
+    const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-     hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
 }
 
 

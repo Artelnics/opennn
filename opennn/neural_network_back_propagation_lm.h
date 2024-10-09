@@ -34,6 +34,18 @@ struct NeuralNetworkBackPropagationLM
     void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network);
 
 
+    vector<LayerBackPropagationLM*> get_layers() const 
+    {
+        return layers;
+    }
+
+
+    NeuralNetwork* get_neural_network() const
+    {
+        return neural_network;
+    }
+
+
     void print()
     {
         const Index layers_number = layers.size();
@@ -52,7 +64,7 @@ struct NeuralNetworkBackPropagationLM
 
     NeuralNetwork* neural_network = nullptr;
 
-    Tensor<LayerBackPropagationLM*, 1> layers;
+    vector<LayerBackPropagationLM*> layers;
 };
 
 }

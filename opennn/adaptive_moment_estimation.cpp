@@ -155,7 +155,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
-
+    
     // Data set
 
     DataSet* data_set = loss_index->get_data_set();
@@ -238,7 +238,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
 
-    Tensor<pair<type*, dimensions>, 1> inputs_pair;
+    vector<pair<type*, dimensions>> input_pairs;
 
     // Loss index
 
@@ -293,6 +293,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
+            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
             training_batch.fill(training_batches.chip(iteration, 0),
@@ -302,21 +303,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
 
-            inputs_pair = training_batch.get_inputs_pair();
+            input_pairs = training_batch.get_input_pairs();
 
-            { //DEBUG 
-                const TensorMap<Tensor<type, 4>> images(inputs_pair(0).first,
-                    inputs_pair(0).second[0],
-                    inputs_pair(0).second[1],
-                    inputs_pair(0).second[2],
-                    inputs_pair(0).second[3]);
-
-                //cout << "first_image (300x300x3):\n" << images.chip(0, 0) << endl;
-
-                //system("pause");
-            }
-
-            neural_network->forward_propagate(inputs_pair,
+            neural_network->forward_propagate(input_pairs,
                                               training_forward_propagation,
                                               is_training);
 
@@ -368,9 +357,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      context_variables_indices);               
                 // Neural network
                 
-                inputs_pair = selection_batch.get_inputs_pair();
+                input_pairs = selection_batch.get_input_pairs();
 
-                neural_network->forward_propagate(inputs_pair,
+                neural_network->forward_propagate(input_pairs,
                                                   selection_forward_propagation,
                                                   is_training);
                 
@@ -490,42 +479,26 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(9, 2);
 
-    // Initial learning rate
-
     labels_values(0,0) = "Learning rate";
     labels_values(0,1) = to_string(double(learning_rate));
-
-    // Initial decay
 
     labels_values(1,0) = "Initial decay";
     labels_values(1,1) = to_string(double(initial_decay));
 
-    // Beta 1
-
     labels_values(2,0) = "Beta 1";
     labels_values(2,1) = to_string(double(beta_1));
-
-    // Beta 2
 
     labels_values(3,0) = "Beta 2";
     labels_values(3,1) = to_string(double(beta_2));
 
-    // Epsilon
-
     labels_values(4,0) = "Epsilon";
     labels_values(4,1) = to_string(double(epsilon));
-
-    // Training loss goal
 
     labels_values(5,0) = "Training loss goal";
     labels_values(5,1) = to_string(double(training_loss_goal));
 
-    // Maximum epochs number
-
     labels_values(6,0) = "Maximum epochs number";
     labels_values(6,1) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels_values(7,0) = "Maximum time";
     labels_values(7,1) = write_time(maximum_time);
@@ -564,23 +537,18 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
     
-    if(!use_custom_learning_rate)
-    {
-        parameters.device(*thread_pool_device)
-            -= (learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
-    }
-    else
+    type effective_learning_rate = learning_rate * bias_correction;
+
+    if(use_custom_learning_rate)
     {
         const type warmup_steps = 4000;
         type& step = optimization_data.step;
-
-        const type custom_learning_rate = learning_rate * min(pow(step, -0.5), step * pow(warmup_steps, -1.5));
-
-        parameters.device(*thread_pool_device)
-            -= (custom_learning_rate * bias_correction) * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
-
+        effective_learning_rate *= learning_rate * min(pow(step, -0.5), step * pow(warmup_steps, -1.5));
         step++;
     }
+
+    parameters.device(*thread_pool_device)
+        -= effective_learning_rate*gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
 
     optimization_data.iteration++;
 
