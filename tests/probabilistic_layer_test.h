@@ -53,7 +53,7 @@ private:
     Tensor<type, 2> activations;
     Tensor<type, 2> activations_derivatives;
 
-    pair<type*, dimensions> inputs_pair;
+    pair<type*, dimensions> input_pairs;
 
     bool is_training = true;
 

@@ -70,7 +70,6 @@ public:
     void set(const Index&, const Index&, const Index&, const bool& = false);
 
     void set_default();
-    void set_name(const string&);
 
     // Architecture
 
@@ -99,18 +98,18 @@ public:
 
     // Embedding layer outputs
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&layer,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
     // Gradient
 
-    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                  const Tensor<pair<type*, dimensions>, 1>&,
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                                  const vector<pair<type*, dimensions>>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
 
-    void add_deltas(const Tensor<pair<type*, dimensions>, 1>&) const;
+    void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
     void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
@@ -170,25 +169,19 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
         
         pair<type*, dimensions> get_outputs_pair() const final;
 
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
         void print() const
         {
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores.dimensions() << endl;
-
 //            cout << "Outputs dimensions:" << endl;
 //            cout << output_dimensions << endl;
-
 //            cout << "Outputs:" << endl;
 //            cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores << endl;
         }
-
 
         void build_positional_encoding_matrix();
 
@@ -223,8 +216,12 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
         {
         }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+        vector<pair<type*, dimensions>> get_input_derivative_pairs() const
+        {
+            return vector<pair<type*, dimensions>>();
+        }
 
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
         void print() const
         {

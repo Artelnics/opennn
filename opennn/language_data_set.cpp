@@ -172,13 +172,8 @@ Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
     Index index = 0;
 
     for(Index i = 0; i < raw_variables_number; i++)
-    {
         if(raw_variables(i).use == VariableUse::Context)
-        {
-            context_raw_variables_indices(index) = i;
-            index++;
-        }
-    }
+            context_raw_variables_indices(index++) = i;
 
     return context_raw_variables_indices;
 }
@@ -1334,8 +1329,7 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
     {
         if(line.empty()) continue;
 
-        vocabulary(count) = line;
-        count++;
+        vocabulary(count++) = line;
 
         if(file.peek() == EOF) break;
     }

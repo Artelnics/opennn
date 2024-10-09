@@ -329,26 +329,24 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
 
     ForwardPropagation forward_propagation(batch_samples_number, this);
     
-    pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
-    pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
+    const pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
+    const pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
 
-    Tensor<pair<type*, dimensions>, 1> inputs_pairs(2);
-
-    inputs_pairs(0) = input_pair;
-    inputs_pairs(1) = context_pair;
+    const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
 
     const Index layers_number = get_layers_number();
 
-    pair<type*, dimensions> outputs_pair = forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair 
+        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
-    TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[1], outputs_pair.second[2]);
+    TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     Tensor<type, 1> current_outputs(outputs_pair.second[2]);
     Tensor<Index, 0> prediction;
     
     for(Index i = 1; i < input_length; i++)
     {
-        forward_propagate(inputs_pairs, forward_propagation);
+        forward_propagate(input_pairs, forward_propagation);
 
         current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
 
@@ -361,7 +359,8 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     
     ostringstream output_string;
 
-    //if(!imported_vocabulary)    detokenize_whitespace(input, output_string);
+    //if(!imported_vocabulary)    
+    // detokenize_whitespace(input, output_string);
     //else
     detokenize_wordpiece(input, output_string);
 
@@ -371,22 +370,18 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
 
 Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, const Tensor<type, 2>& context)
 {
-    pair<type*, dimensions> input_pair((type*)input.data(), { input.dimension(0), input.dimension(1) });
-    pair<type*, dimensions> context_pair((type*)context.data(), { input.dimension(0), context.dimension(1) });
+    const pair<type*, dimensions> input_pair((type*)input.data(), { input.dimension(0), input.dimension(1) });
+    const pair<type*, dimensions> context_pair((type*)context.data(), { input.dimension(0), context.dimension(1) });
 
-    Tensor<pair<type*, dimensions>, 1> inputs_pair(2);
-    inputs_pair(0) = input_pair;
-    inputs_pair(1) = context_pair;
+    const vector<pair<type*, dimensions>> input_pairs = { input_pair, context_pair };
 
     ForwardPropagation forward_propagation(input.dimension(0), this);
 
-    forward_propagate(inputs_pair, forward_propagation, false);
+    forward_propagate(input_pairs, forward_propagation, false);
 
-    pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1], outputs_pair.second[2]);
-
-    return outputs;
+    return tensor_map_3(outputs_pair);
 }
 
 
@@ -549,15 +544,6 @@ void Transformer::load_transformer(const string& path)
     cout << "Loading transformer model..." << endl;
 
     load(path);
-/*
-    MultiheadAttentionLayer* cross_attention_layer = static_cast<MultiheadAttentionLayer*>(get_layer("cross_attention_1"));
-
-    const Index new_context_length = cross_attention_layer->get_context_size();
-    const Index new_input_length = cross_attention_layer->get_input_size();
-
-    context_length = new_context_length;
-    input_length = new_input_length;
-*/
 }
 
 

@@ -278,39 +278,22 @@ void Batch::print() const
 }
 
 
-Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
+vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 {
-    Tensor<pair<type*, dimensions>, 1> inputs;
+    vector<pair<type*, dimensions>> input_pairs(has_context ? 2 : 1);
 
-    if(!has_context)
-    {
-        inputs.resize(1);
-        inputs(0).first = input_data;
-        inputs(0).second = input_dimensions;
-    }
-    else
-    {
-        inputs.resize(2);
-
-        inputs(0).first = input_data;
-        inputs(0).second = input_dimensions;
-
-        inputs(1).first = context_data;
-        inputs(1).second = context_dimensions;
-    }
-
-    return inputs;
+    input_pairs[0] = { input_data, input_dimensions };
+    
+    if (has_context)
+        input_pairs[1] = { context_data, context_dimensions };
+    
+    return input_pairs;
 }
 
 
 pair<type*, dimensions> Batch::get_targets_pair() const
 {
-    pair<type *, dimensions> targets;
-
-    targets.first = targets_data;
-    targets.second = targets_dimensions;
-
-    return targets;
+    return { targets_data , targets_dimensions };
 }
 
 }

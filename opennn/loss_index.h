@@ -53,26 +53,11 @@ public:
 
    inline NeuralNetwork* get_neural_network() const 
    {
-        #ifdef OPENNN_DEBUG
-
-        if(!neural_network)
-             throw runtime_error("Neural network pointer is nullptr.\n");
-
-        #endif
-
       return neural_network;
    }
 
-
    inline DataSet* get_data_set() const 
    {
-        #ifdef OPENNN_DEBUG
-
-        if(!data_set)
-             throw runtime_error("DataSet pointer is nullptr.\n");
-
-        #endif
-
       return data_set;
    }
 
@@ -115,17 +100,13 @@ public:
 
    bool has_selection() const;
 
-   Index find_input_index(const Tensor<Index, 1>&, const Index) const;
-
    // Numerical differentiation
 
    type calculate_eta() const;
    type calculate_h(const type&) const;
 
    Tensor<type, 1> calculate_numerical_gradient();
-
    Tensor<type, 2> calculate_numerical_jacobian();
-
    Tensor<type, 1> calculate_numerical_inputs_derivatives();
 
    // Back propagation
@@ -154,7 +135,7 @@ public:
 
    void calculate_errors_lm(const Batch&,
                             const ForwardPropagation&,
-                            BackPropagationLM&) const; // general
+                            BackPropagationLM&) const; 
 
    virtual void calculate_squared_errors_lm(const Batch&,
                                             const ForwardPropagation&,
@@ -255,13 +236,15 @@ struct BackPropagationLM
 
     void print() const;
     
-    void set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
+    void set_layer_output_indices(const vector<vector<Index>>&);
 
     pair<type*, dimensions> get_output_deltas_pair() const;
 
+    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs(const Index&, const Index&) const;
+
     Index batch_samples_number = 0;
 
-    Tensor<Tensor<Index, 1>, 1> layers_outputs_indices;
+    Tensor<Tensor<Index, 1>, 1> layer_output_indices;
 
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;

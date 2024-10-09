@@ -33,6 +33,16 @@ struct NeuralNetworkBackPropagation
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network);
 
+    Tensor<LayerBackPropagation*, 1> get_layers() const
+    {
+        return layers;
+    }
+
+    NeuralNetwork* get_neural_network() const
+    {
+        return neural_network;
+    }
+
     void print() const
     {
         cout << "Neural network back-propagation" << endl;

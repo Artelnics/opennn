@@ -34,9 +34,7 @@ public:
    explicit UnscalingLayer();
 
    explicit UnscalingLayer(const dimensions&);
-/*
-   explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
-*/
+   
    // Get  
 
    Index get_inputs_number() const final;
@@ -104,9 +102,15 @@ public:
 
    // Forward propagation
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const vector<pair<type*, dimensions>>&, 
+                          LayerForwardPropagation*, 
+                          const bool&) final;
 
    // Serialization
+
+   Tensor<string, 1> write_scalers_text() const;
+
+   void print() const;
 
    void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;

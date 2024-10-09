@@ -100,7 +100,6 @@ void GradientDescentTest::test_perform_training()
 
     training_results = gradient_descent.perform_training();
     error = training_results.get_training_error();
-
 /*
     assert_true(error < old_error, LOG);
 
