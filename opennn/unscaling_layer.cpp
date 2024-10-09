@@ -24,12 +24,6 @@ UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions) : Layer()
     set(new_input_dimensions[0]);
 }
 
-/*
-UnscalingLayer::UnscalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
-{
-    set(new_descriptives);
-}
-*/
 
 Index UnscalingLayer::get_inputs_number() const
 {
@@ -536,17 +530,17 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-void UnscalingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
-    const Index samples_number = inputs_pair(0).second[0];
+    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation
             = static_cast<UnscalingLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type,2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
     Tensor<type,2>& outputs = unscaling_layer_forward_propagation->outputs;
 
@@ -655,6 +649,56 @@ void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
+Tensor<string, 1> UnscalingLayer::write_scalers_text() const
+{
+    const Index neurons_number = get_neurons_number();
+
+#ifdef OPENNN_DEBUG
+
+    if(neurons_number == 0)
+        throw runtime_error("Neurons number must be greater than 0.\n");
+
+#endif
+
+    Tensor<string, 1> scaling_methods_strings(neurons_number);
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        if(scalers[i] == Scaler::None)
+            scaling_methods_strings[i] = "no scaling";
+        else if(scalers[i] == Scaler::MeanStandardDeviation)
+            scaling_methods_strings[i] = "mean and standard deviation";
+        else if(scalers[i] == Scaler::StandardDeviation)
+            scaling_methods_strings[i] = "standard deviation";
+        else if(scalers[i] == Scaler::MinimumMaximum)
+            scaling_methods_strings[i] = "minimum and maximum";
+        else if(scalers[i] == Scaler::Logarithm)
+            scaling_methods_strings[i] = "Logarithm";
+        else
+            throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
+    }
+
+    return scaling_methods_strings;
+}
+
+void UnscalingLayer::print() const
+{
+    cout << "Unscaling layer" << endl;
+
+    const Index inputs_number = get_inputs_number();
+
+    const Tensor<string, 1> scalers_text = write_scalers_text();
+
+    for(Index i = 0; i < inputs_number; i++)
+    {
+        cout << "Neuron " << i << endl;
+
+        cout << "Scaler " << scalers_text(i) << endl;
+
+        descriptives(i).print();
+    }
+}
+
 
 void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -732,7 +776,7 @@ pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
+    return { outputs_data, { batch_samples_number, neurons_number } };
 }
 
 

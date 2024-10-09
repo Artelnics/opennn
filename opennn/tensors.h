@@ -16,24 +16,8 @@ type calculate_random_uniform(const type& = type(0), const type& = type(1));
 
 bool calculate_random_bool();
 
-// void set_random(Tensor<type, 1>&, const type& = type(-0.1), const type& = type(0.1));
-// void set_random(Tensor<type, 2>&, const type& = type(-0.1), const type& = type(0.1));
-// void set_random(Tensor<type, 3>&, const type& = type(-0.1), const type& = type(0.1));
-// void set_random(Tensor<type, 4>&, const type& = type(-0.1), const type& = type(0.1));
-
 template<int Dimension>
-void set_random(Tensor<type, Dimension>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)
-{
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<type> dist(minimum, maximum);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); i++)
-    {
-        tensor(i) = dist(gen);
-    }
-}
+void set_random(Tensor<type, Dimension>& tensor, const type& minimum = -0.1, const type& maximum = 0.1);
 
 type bound(const type& value, const type& minimum, const type& maximum);
 
@@ -56,14 +40,14 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 // Sum
 
-void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
-void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
-void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
-//void sum_matrices(ThreadPoolDevice*, const TensorMap<Tensor<type, 1>>&, Tensor<type, 3>&);
-//void sum_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
+void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
+void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
+//void sum_matrices(const ThreadPoolDevice*, const TensorMap<Tensor<type, 1>>&, Tensor<type, 3>&);
+//void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
-void substract_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
-void substract_matrices(ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
+void substract_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+void substract_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
 void set_identity(Tensor<type, 2>&);
 
@@ -75,32 +59,26 @@ void substract_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 // Multiplication
 
-void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
-void multiply_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
-void multiply_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
+void multiply_rows(const Tensor<type, 2>&, const Tensor<type, 1>&);
+void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
+void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
-void batch_matrix_multiplication(ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-void batch_matrix_multiplication(ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-//void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-//void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 3>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+void batch_matrix_multiplication(const ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+void batch_matrix_multiplication(const ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+//void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+//void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 3>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 
-Tensor<type, 2> self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&);
+Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
 
 // Division
 
-void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
-void divide_columns(ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
-//void divide_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
+void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 // Checking
-
-bool has_NAN(const Tensor<type, 1>&);
-bool has_NAN(Tensor<type, 2>&);
-bool has_NAN(Tensor<type, 3>&);
-bool has_NAN(Tensor<type, 4>&);
 
 bool is_zero(const Tensor<type, 1>&, const type& = type(NUMERIC_LIMITS_MIN));
 
@@ -118,8 +96,6 @@ bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = typ
 bool are_equal(const Tensor<bool, 1>&, const Tensor<bool, 1>&);
 bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = type(0));
 bool are_equal(const Tensor<bool, 2>&, const Tensor<bool, 2>&);
-
-bool is_less_than(const Tensor<type, 1>&, const type&);
 
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
@@ -245,6 +221,14 @@ type round_to_precision(type, const int&);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 
+TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair);
+
+TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair);
+
+TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair);
+
+TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair);
+
 void print_dimensions(const dimensions&);
 
 template<class T, int n>
@@ -265,18 +249,6 @@ Tensor<T, 1> tensor_wrapper(T obj)
     wrapper.setValues({obj});
 
     return wrapper;
-}
-
-
-template<int rank>
-pair<type*, dimensions> to_pair(Tensor<type, rank>& tensor)
-{
-    dimensions tensor_dimensions(rank);
-
-    for(Index i = 0; i < rank; i++)
-        tensor_dimensions[i] = tensor.dimension(i);
-
-    return pair<type*, dimensions>(tensor.data(), tensor_dimensions);
 }
 
 }

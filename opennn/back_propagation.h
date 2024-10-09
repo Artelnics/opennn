@@ -23,33 +23,11 @@ struct BackPropagation
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
 
-    void set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
+    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs(const Index&, const Index&) const;
 
     pair<type*, dimensions> get_output_deltas_pair() const;
 
-    void print() const
-    {
-        cout << "Back-propagation" << endl;
-
-        cout << "Errors:" << endl;
-        cout << errors << endl;
-
-        cout << "Error:" << endl;
-        cout << error << endl;
-
-        cout << "Regularization:" << endl;
-        cout << regularization << endl;
-
-        cout << "Loss:" << endl;
-        cout << loss << endl;
-
-        cout << "Gradient:" << endl;
-        cout << gradient << endl;
-
-        neural_network.print();
-    }
-
-    Tensor<Tensor<Index, 1>, 1> layers_outputs_indices;
+    void print() const;
 
     Index batch_samples_number = 0;
 

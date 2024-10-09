@@ -94,7 +94,7 @@ void fill_tokens(const string& text, const string& separator, Tensor<string, 1>&
 
         if(last_position - old_position != 1 && index != 0)
         {
-            tokens[index] = "";
+            tokens[index++] = "";
             index++;
             old_position++;
             continue;
@@ -288,13 +288,9 @@ bool is_numeric_string(const string& text)
 
         if(index == text.size()
         || (text.find("%") != string::npos && index+1 == text.size()))
-        {
             return true;
-        }
         else
-        {
             return  false;
-        }
     }
     catch(const exception&)
     {
@@ -845,185 +841,6 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
     text.swap(buffer);
 }
 
-
-string replace_non_allowed_programming_expressions(string& s)
-{
-    string out;
-
-    if(s[0] == '$')
-        out = s;
-
-    replace_all_appearances(s, "fn", "f_n");
-    replace_all_appearances(s, "if", "i_f");
-    replace_all_appearances(s, "do", "d_o");
-    replace_all_appearances(s, "or", "o_r");
-    replace_all_appearances(s, "is", "i_s");
-    replace_all_appearances(s, "as", "a_s");
-    replace_all_appearances(s, "or", "o_r");
-    replace_all_appearances(s, "if", "i_f");
-    replace_all_appearances(s, "in", "in_");
-    replace_all_appearances(s, "del", "del");
-    replace_all_appearances(s, "max","ma_x");
-    replace_all_appearances(s, "min","mi_n");
-    replace_all_appearances(s, "and", "an_d");
-    replace_all_appearances(s, "for", "fo_r");
-    replace_all_appearances(s, "die", "di_e");
-    replace_all_appearances(s, "int", "in_t");
-    replace_all_appearances(s, "new", "ne_w");
-    replace_all_appearances(s, "use", "us_e");
-    replace_all_appearances(s, "var", "va_r");
-    replace_all_appearances(s, "try", "tr_y");
-    replace_all_appearances(s, "xor", "xo_r");
-    replace_all_appearances(s, "def", "de_f");
-    replace_all_appearances(s, "for", "fo_r");
-    replace_all_appearances(s, "not", "no_t_");
-    replace_all_appearances(s, "rise","ri_se");
-    replace_all_appearances(s, "byte", "byt_e");
-    replace_all_appearances(s, "echo", "ech_o");
-    replace_all_appearances(s, "eval", "eva_l");
-    replace_all_appearances(s, "pass", "pa_ss");
-    replace_all_appearances(s, "form", "for_m");
-    replace_all_appearances(s, "else", "el_se");
-    replace_all_appearances(s, "with", "w_ith");
-    replace_all_appearances(s, "exit", "exi_t");
-    replace_all_appearances(s, "auto", "aut_o");
-    replace_all_appearances(s, "enum", "enu_m");
-    replace_all_appearances(s, "case", "cas_e");
-    replace_all_appearances(s, "char", "cha_r");
-    replace_all_appearances(s, "void", "voi_d");
-    replace_all_appearances(s, "goto", "got_o");
-    replace_all_appearances(s, "long", "lon_g");
-    replace_all_appearances(s, "else", "els_e");
-    replace_all_appearances(s, "goto", "got_o");
-    replace_all_appearances(s, "type", "ty_pe");
-    replace_all_appearances(s, "self", "se_lf");
-    replace_all_appearances(s, "list", "lis_t");
-    replace_all_appearances(s, "None", "No_ne");
-    replace_all_appearances(s, "elif", "el_if");
-    replace_all_appearances(s, "True", "t_rue_");
-    replace_all_appearances(s, "super","sup_er");
-    replace_all_appearances(s, "endif", "endi_f");
-    replace_all_appearances(s, "await", "awai_t");
-    replace_all_appearances(s, "catch", "catc_h");
-    replace_all_appearances(s, "class", "clas_s");
-    replace_all_appearances(s, "clone", "clon_e");
-    replace_all_appearances(s, "empty", "empt_y");
-    replace_all_appearances(s, "final", "fina_l");
-    replace_all_appearances(s, "break", "brea_k");
-    replace_all_appearances(s, "while", "whil_e");
-    replace_all_appearances(s, "float", "floa_t");
-    replace_all_appearances(s, "union", "unio_n");
-    replace_all_appearances(s, "short", "shor_t");
-    replace_all_appearances(s, "const", "cons_t");
-    replace_all_appearances(s, "match", "matc_h");
-    replace_all_appearances(s, "isset", "isse_t");
-    replace_all_appearances(s, "while", "whil_e");
-    replace_all_appearances(s, "yield", "yiel_d");
-    replace_all_appearances(s, "False", "Fa_lse");
-    replace_all_appearances(s, "unset", "unse_t");
-    replace_all_appearances(s, "print", "prin_t");
-    replace_all_appearances(s, "trait", "trai_t");
-    replace_all_appearances(s, "throw", "thro_w");
-    replace_all_appearances(s, "raise", "rai_se");
-    replace_all_appearances(s, "while", "wh_ile");
-    replace_all_appearances(s, "yield", "yi_eld");
-    replace_all_appearances(s, "break", "bre_ak");
-    replace_all_appearances(s, "class", "c_lass");
-    replace_all_appearances(s, "string","str_ing");
-    replace_all_appearances(s, "except", "exc_ept");
-    replace_all_appearances(s, "lambda", "lamb_da");
-    replace_all_appearances(s, "assert", "asser_t");
-    replace_all_appearances(s, "global", "glo_bal");
-    replace_all_appearances(s, "elseif", "elsei_f");
-    replace_all_appearances(s, "endfor", "endfo_r");
-    replace_all_appearances(s, "static", "stati_c");
-    replace_all_appearances(s, "switch", "switc_h");
-    replace_all_appearances(s, "struct", "struc_t");
-    replace_all_appearances(s, "double", "doubl_e");
-    replace_all_appearances(s, "sizeof", "sizeo_f");
-    replace_all_appearances(s, "extern", "exter_n");
-    replace_all_appearances(s, "signed", "signe_d");
-    replace_all_appearances(s, "return", "retur_n");
-    replace_all_appearances(s, "global", "globa_l");
-    replace_all_appearances(s, "public", "publi_c");
-    replace_all_appearances(s, "return", "retur_n");
-    replace_all_appearances(s, "static", "stati_c");
-    replace_all_appearances(s, "switch", "switc_h");
-    replace_all_appearances(s, "import", "imp_ort");
-    replace_all_appearances(s, "return", "retu_rn");
-    replace_all_appearances(s, "boolea", "boole_an");
-    replace_all_appearances(s, "import", "includ_e");
-    replace_all_appearances(s, "friend", "frie_end");
-    replace_all_appearances(s, "foreach", "foreac_h");
-    replace_all_appearances(s, "private", "privat_e");
-    replace_all_appearances(s, "require", "requir_e");
-    replace_all_appearances(s, "typedef", "typede_f");
-    replace_all_appearances(s, "_Packed", "_P_acked");
-    replace_all_appearances(s, "default", "defaul_t");
-    replace_all_appearances(s, "extends", "extend_s");
-    replace_all_appearances(s, "finally", "finall_y");
-    replace_all_appearances(s, "finally", "final_ly");
-    replace_all_appearances(s, "nonlocal", "nonlo_cal");
-    replace_all_appearances(s, "continue", "con_tinue");
-    replace_all_appearances(s, "continue", "continu_e");
-    replace_all_appearances(s, "volatile", "volatil_e");
-    replace_all_appearances(s, "unsigned", "unsigne_d");
-    replace_all_appearances(s, "abstract", "abstrac_t");
-    replace_all_appearances(s, "register", "registe_r");
-    replace_all_appearances(s, "endwhile", "endwhil_e");
-    replace_all_appearances(s, "function", "functio_n");
-    replace_all_appearances(s, "readonly", "readonl_y");
-    replace_all_appearances(s, "arguments", "argument_s");
-    replace_all_appearances(s, "endswitch", "endswitc_h");
-    replace_all_appearances(s, "protected", "protecte_d");
-    replace_all_appearances(s, "insteadof", "insteado_f");
-    replace_all_appearances(s, "interface", "interfac_e");
-    replace_all_appearances(s, "namespace", "namespac_e");
-    replace_all_appearances(s, "enddeclare", "enddeclar_e");
-    replace_all_appearances(s, "endforeach", "endforeac_h");
-    replace_all_appearances(s, "implements", "implement_s");
-    replace_all_appearances(s, "instanceof", "instanceo_f");
-    replace_all_appearances(s, "include_once", "include_on_ce_");
-    replace_all_appearances(s, "require_once", "require_on_ce_");
-    replace_all_appearances(s, "__halt_compiler", "__h_a_l_t_c_o_m_p_i_l_e_r_");
-
-    for(char& c: s)
-    {
-        if(c=='1'){ out+="_one_";   continue;}
-        if(c=='2'){ out+="_two_";   continue;}
-        if(c=='3'){ out+="_three_"; continue;}
-        if(c=='4'){ out+="_four_";  continue;}
-        if(c=='5'){ out+="_five_";  continue;}
-        if(c=='6'){ out+="_six_";   continue;}
-        if(c=='7'){ out+="_seven_"; continue;}
-        if(c=='8'){ out+="_eight_"; continue;}
-        if(c=='9'){ out+="_nine_";  continue;}
-        if(c=='0'){ out+="_zero_";  continue;}
-
-        if(c=='.'){ out+="_dot_";   continue;}
-        if(c=='/'){ out+="_div_";   continue;}
-        if(c=='*'){ out+="_mul_";   continue;}
-        if(c=='+'){ out+="_sum_";   continue;}
-        if(c=='-'){ out+="_res_";   continue;}
-        if(c=='='){ out+="_equ_";   continue;}
-        if(c=='!'){ out+="_not_";   continue;}
-        if(c==','){ out+="_colon_"; continue;}
-        if(c==';'){ out+="_semic_"; continue;}
-        if(c=='\\'){ out+="_slash_";continue;}
-
-        if(c=='&'){ out+="_amprsn_"; continue;}
-        if(c=='?'){ out+="_ntrgtn_"; continue;}
-        if(c=='<'){ out+="_lower_" ; continue;}
-        if(c=='>'){ out+="_higher_"; continue;}
-
-        if(isalnum(c)!=0){ out += c; continue;}
-        if(isalnum(c)==0){ out+='_'; continue;}
-    }
-
-    return out;
-}
-
-
 // vector<string> get_words_in_a_string(string str)
 // {
 //     vector<string> output;
@@ -1346,174 +1163,6 @@ string get_word_from_token(string& token)
 }
 
 
-Tensor<string, 1> fix_write_expression_outputs(const string &str,
-                                               const Tensor<string, 1> &outputs,
-                                               const string &programming_languaje)
-{
-    Tensor<string,1> out;
-    Tensor<string,1> tokens;
-    Tensor<string,1> found_tokens;
-
-    string token;
-    string out_string;
-    string new_variable;
-    string old_variable;
-    string expression = str;
-
-    stringstream ss(expression);
-
-    int option = 0;
-
-    if(programming_languaje == "javascript") { option = 1; }
-    else if(programming_languaje == "php")   { option = 2; }
-    else if(programming_languaje == "python"){ option = 3; }
-    else if(programming_languaje == "c")     { option = 4; }
-
-    size_t dimension = outputs.dimension(0);
-
-    while(getline(ss, token, '\n'))
-    {
-        if(token.size() > 1 && token.back() == '{'){ break; }
-        if(token.size() > 1 && token.back() != ';'){ token += ';'; }
-        push_back_string(tokens, token);
-    }
-
-    for(Index i = 0; i < tokens.dimension(0); i++)
-    {
-        string s = tokens(i);
-        string word;
-
-        for(char& c : s)
-        {
-            if(c!=' ' && c!='=') word += c; 
-            else break; 
-        }
-
-        if(word.size() > 1)
-            push_back_string(found_tokens, word);
-    }
-
-    new_variable = found_tokens[found_tokens.size()-1];
-    old_variable = outputs[dimension-1];
-
-    if(new_variable != old_variable)
-    {
-        Index j = found_tokens.size();
-
-        for(Index i = dimension; i --> 0;)
-        {
-            j -= 1;
-
-            new_variable = found_tokens[j];
-            old_variable = outputs[i];
-
-            switch(option)
-            {
-                //JavaScript
-                case 1:
-                    out_string = "\tvar ";
-                    out_string += old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
-                    out_string += ";";
-                    push_back_string(out, out_string);
-                break;
-
-                //Php
-                case 2:
-                    out_string = "$";
-                    out_string += old_variable;
-                    out_string += " = ";
-                    out_string += "$";
-                    out_string += new_variable;
-                    out_string += ";";
-                    push_back_string(out, out_string);
-                break;
-
-                //Python
-                case 3:
-                    out_string = old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
-                    push_back_string(out, out_string);
-                break;
-
-                //C
-                case 4:
-                    out_string = "double ";
-                    out_string += old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
-                    out_string += ";";
-                    push_back_string(out, out_string);
-                break;
-
-                default:
-                break;
-            }
-        }
-    }
-
-    return out;
-}
-
-
-Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_name,
-                                                       Tensor<string, 1>& output_names,
-                                                       ostringstream& buffer_)
-{
-    //preparing output information
-
-    Tensor<Tensor<string,1>, 1> output(3);
-
-    ostringstream buffer;
-    buffer << buffer_.str();
-
-    Tensor<string, 1> outputs(output_names.dimension(0));
-    Tensor<string, 1> inputs(inputs_name.dimension(0));
-    Tensor<string,1> buffer_out;
-
-    string output_name_aux;
-    string input_name_aux;
-
-    for(int i = 0; i < inputs_name.dimension(0); i++)
-    {
-        if(inputs_name[i].empty())
-        {
-            inputs(i) = "input_" + to_string(i);
-            buffer << "\t" << to_string(i) + ") " << inputs_name(i) << endl;
-        }
-        else
-        {
-            input_name_aux = inputs_name[i];
-            inputs(i) = replace_non_allowed_programming_expressions(input_name_aux);
-            buffer << "\t" << to_string(i) + ") " << inputs(i) << endl;
-        }
-    }
-
-    for(int i = 0; i < output_names.dimension(0); i++)
-    {
-        if(output_names[i].empty())
-        {
-            outputs(i) = "output_" + to_string(i);
-        }
-        else
-        {
-            output_name_aux = output_names[i];
-            outputs(i) = replace_non_allowed_programming_expressions(output_name_aux);
-        }
-    }
-
-    push_back_string(buffer_out, buffer.str());
-
-    output(0) = inputs;
-    output(1) = outputs;
-    output(2) = buffer_out;
-
-    return output;
-}
-
-
 string round_to_precision_string(type x, const int& precision)
 {
     const type factor = type(pow(10, precision));
@@ -1523,9 +1172,7 @@ string round_to_precision_string(type x, const int& precision)
     stringstream buffer;
     buffer << fixed << setprecision(precision) << rounded_value;
 
-    const string result = buffer.str();
-
-    return result;
+    return buffer.str();
 }
 
 
@@ -1544,9 +1191,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
             stringstream buffer;
             buffer << fixed << setprecision(precision) << rounded_value;
 
-            const string result = buffer.str();
-
-            matrix_rounded(i, j) = result;
+            matrix_rounded(i, j) = buffer.str();
         }
     }
 
@@ -1624,13 +1269,11 @@ void display_progress_bar(const int& completed, const int& total)
     cout << "[";
 
     for(int i = 0; i < width; i++)
-    {
         if(i < position)
             cout << "=";
         else if(i == position)
             cout << ">";
         else cout << " ";
-    }
     
     cout << "] " << int(progress * 100.0) << " %\r";
 
@@ -1656,7 +1299,6 @@ void create_alphabet()
         text_copy.begin(),
         text_copy.end(),
         alphabet.data());
-
 }
 */
 /*
@@ -1894,10 +1536,7 @@ void delete_blanks(Tensor<string, 1>& words)
         trim(vector_copy(i));
 
         if(!vector_copy(i).empty())
-        {
-            words(index) = vector_copy(i);
-            index++;
-        }
+            words(index++) = vector_copy(i);
     }
 }
 
@@ -1917,13 +1556,8 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
         Index index = 0;
 
         for(Index j = 0; j < documents_tokens(i).size(); j++)
-        {
             if(!documents_tokens(i)(j).empty())
-            {
-                new_document_tokens(index) = documents_tokens(i)(j);
-                index++;
-            }
-        }
+                new_document_tokens(index++) = documents_tokens(i)(j);
 
         documents_tokens(i) = new_document_tokens;
     }
@@ -2278,13 +1912,11 @@ void replace_accented_words(Tensor<Tensor<string,1>, 1>& documents)
 {
     const Index documents_size = documents.size();
 
-    for(Index i = 0; i < documents_size; i++)
-    {
-        const Index document_size = documents(i).size();
+    #pragma omp parallel for
 
-        for(Index j = 0; j < document_size; j++)
+    for(Index i = 0; i < documents_size; i++)
+        for(Index j = 0; j < documents(i).size(); j++)
             replace_accented_words(documents(i)(j));
-    }
 }
 
 
@@ -2716,9 +2348,8 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
                     word += " " + words[j+k];
                 }
 
-                combinated_words[index] = word;
+                combinated_words[index++] = word;
 
-                index++;
             }
         }
     }

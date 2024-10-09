@@ -100,10 +100,8 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
 {
 #ifdef OPENNN_DEBUG
-
     if(new_learning_rate <= type(0))
         throw runtime_error("initial_learning_rate must be greater than 0.\n");
-
 #endif
 
     initial_learning_rate = new_learning_rate;
@@ -158,7 +156,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment;
     
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
-    
+
     if(momentum <= type(0))
     {
         parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
@@ -186,8 +184,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 
     optimization_data.iteration++;
-
-    // Update parameters
 
     neural_network->set_parameters(parameters);
 }
@@ -250,7 +246,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
     
-    const Tensor<pair<type*, dimensions>, 1> training_inputs = training_batch.get_inputs_pair();
+    const vector<pair<type*, dimensions>> training_inputs = training_batch.get_input_pairs();
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
@@ -394,9 +390,9 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Neural network
                 
-                neural_network->forward_propagate(selection_batch.get_inputs_pair(),
-                                                          selection_forward_propagation,
-                                                          is_training);
+                neural_network->forward_propagate(selection_batch.get_input_pairs(),
+                                                  selection_forward_propagation,
+                                                  is_training);
 
                 results.selection_error_history(epoch) = selection_error;
 

@@ -84,7 +84,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
-    const Tensor<Layer*, 1> trainable_layers = neural_network->get_trainable_layers();
+    const vector<Layer*> trainable_layers = neural_network->get_trainable_layers();
 
     Index neurons_number;
 
@@ -119,9 +119,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
-        trainable_layers(trainable_layers_number-2)->set_neurons_number(neurons_number);
+        trainable_layers[trainable_layers_number-2]->set_neurons_number(neurons_number);
 
-        trainable_layers(trainable_layers_number-1)->set_inputs_number(neurons_number);
+        trainable_layers[trainable_layers_number-1]->set_inputs_number(neurons_number);
 
         neurons_selection_results.neurons_number_history(epoch) = neurons_number;
 

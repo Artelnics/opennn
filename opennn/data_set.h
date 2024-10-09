@@ -128,6 +128,13 @@ public:
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const Tensor<string, 1>& = Tensor<string, 1>());
 
+        void set(const string&,
+            const DataSet::VariableUse&,
+            const DataSet::RawVariableType & = DataSet::RawVariableType::Numeric,
+            const Scaler & = Scaler::MeanStandardDeviation,
+            const Tensor<string, 1> & = Tensor<string, 1>());
+
+
         string name;
 
         DataSet::VariableUse use = DataSet::VariableUse::None;
@@ -154,7 +161,7 @@ public:
 
         void set_type(const string&);
 
-        void add_category(const string&);
+        //void add_category(const string&);
 
         void set_categories(const Tensor<string, 1>&);
 
@@ -437,7 +444,6 @@ public:
     // Variables set
 
     void set_variables_names(const Tensor<string, 1>&);
-    void set_variables_names_from_raw_variables(const Tensor<string, 1>&, const Tensor<DataSet::RawVariable, 1>&);
     void set_variable_name(const Index&, const string&);
 
     void set_input();

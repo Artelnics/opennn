@@ -16,6 +16,7 @@ pip-selfcheck.json
 .LSOverride
 
 .vs/
+.vscode/
 
 #Blank
 /blank/main.cpp

@@ -27,14 +27,6 @@ ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
 }
 
 
-ScalingLayer2D::ScalingLayer2D(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
-{
-/*
-    set(new_descriptives);
-*/
-}
-
-
 dimensions ScalingLayer2D::get_output_dimensions() const
 {
     return input_dimensions;
@@ -218,36 +210,6 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
     set_default();
 }
 
-/*
-void ScalingLayer2D::set(const Tensor<Descriptives, 1>& new_descriptives)
-{
-    descriptives = new_descriptives;
-
-    scalers.resize(new_descriptives.size());
-
-    scalers.setConstant(Scaler::MeanStandardDeviation);
-
-    set_neurons_number(new_descriptives.size());
-
-    set_default();
-}
-
-
-void ScalingLayer2D::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
-{
-    descriptives = new_descriptives;
-
-    scalers = new_scalers;
-}
-
-
-void ScalingLayer2D::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
-{
-    set_default();
-
-    from_XML(new_scaling_layer_document);
-}
-*/
 
 void ScalingLayer2D::set_inputs_number(const Index& new_inputs_number)
 {
@@ -492,17 +454,17 @@ void ScalingLayer2D::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
-void ScalingLayer2D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
+void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
-    const Index samples_number = inputs_pair(0).second[0];
+    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
     ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation
         = static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
 
@@ -974,7 +936,7 @@ pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
+    return {outputs_data, {batch_samples_number, neurons_number}};
 }
 
 

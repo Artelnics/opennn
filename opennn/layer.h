@@ -88,6 +88,8 @@ public:
 
     string get_type_string() const;
 
+    void set_name(const string&);
+
     // Parameters initialization
 
     virtual void set_parameters_constant(const type&);
@@ -106,19 +108,19 @@ public:
 
     // Forward propagation
 
-    virtual void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
+    virtual void forward_propagate(const vector<pair<type*, dimensions>>&,
                                    LayerForwardPropagation*,
                                    const bool&) = 0;
 
     // Back propagation
 
-    virtual void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                const Tensor<pair<type*, dimensions>, 1>&,
+    virtual void back_propagate(const vector<pair<type*, dimensions>>&,
+                                const vector<pair<type*, dimensions>>&,
                                 LayerForwardPropagation*,
                                 LayerBackPropagation*) const {}
 
-    virtual void back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>&,
-                                   const Tensor<pair<type*, dimensions>, 1>&,
+    virtual void back_propagate_lm(const vector<pair<type*, dimensions>>&,
+                                   const vector<pair<type*, dimensions>>&,
                                    LayerForwardPropagation*,
                                    LayerBackPropagationLM*) const {}
 

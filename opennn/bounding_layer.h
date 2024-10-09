@@ -85,7 +85,7 @@ public:
 
    // Lower and upper bounds
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
+   void forward_propagate(const vector<pair<type*, dimensions>>&, 
                           LayerForwardPropagation*, 
                           const bool&) final;
 
@@ -94,6 +94,8 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    // Serialization
+
+   void print() const;
 
    void from_XML(const tinyxml2::XMLDocument&) final;
 
