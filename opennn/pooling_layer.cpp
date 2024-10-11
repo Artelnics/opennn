@@ -254,11 +254,11 @@ void PoolingLayer::set_default()
 
 
 void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     LayerForwardPropagation* layer_forward_propagation,
+                                     unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                      const bool& is_training)
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-
+/*
     switch(pooling_method)
     {
         case PoolingMethod::MaxPooling:
@@ -273,15 +273,16 @@ void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
                                               is_training);
             break;
     }
+*/
 }
 
 
 void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
-                                                     LayerForwardPropagation* layer_forward_propagation,
+                                                     unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                                      const bool& is_training) const
 { 
-    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
-            = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
+    unique_ptr<PoolingLayerForwardPropagation> pooling_layer_forward_propagation
+            (static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.release()));
 
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
 
@@ -303,7 +304,7 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
 
 
 void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
-                                                 LayerForwardPropagation* layer_forward_propagation,
+                                                 unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                                  const bool& is_training) const
 {
     const Index batch_samples_number = inputs.dimension(0);
@@ -315,8 +316,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Index output_height = get_output_height();
     const Index channels = get_channels_number();
 
-    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
-        = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
+    unique_ptr < PoolingLayerForwardPropagation> pooling_layer_forward_propagation
+        (static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.release()));
 
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
@@ -361,12 +362,12 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
 void PoolingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   const vector<pair<type*, dimensions>>& delta_pairs,
-                                  LayerForwardPropagation* forward_propagation,
-                                  LayerBackPropagation* back_propagation) const
+                                  unique_ptr<LayerForwardPropagation> forward_propagation,
+                                  unique_ptr<LayerBackPropagation> back_propagation) const
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
     const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
-
+/*
     switch(pooling_method)
     {
     case PoolingMethod::MaxPooling:
@@ -382,13 +383,14 @@ void PoolingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
                                        back_propagation);
         break;
     }
+*/
 }
 
 
 void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                               const Tensor<type, 4>& deltas,
-                                              LayerForwardPropagation* forward_propagation,
-                                              LayerBackPropagation* back_propagation) const
+                                              unique_ptr<LayerForwardPropagation> forward_propagation,
+                                              unique_ptr<LayerBackPropagation> back_propagation) const
 {
     const Index batch_samples_number = inputs.dimension(0);
 
@@ -401,15 +403,15 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     // Forward propagation
 
-    PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
-        static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
+    unique_ptr<PoolingLayerForwardPropagation> pooling_layer_forward_propagation 
+        (static_cast<PoolingLayerForwardPropagation*>(forward_propagation.release()));
 
     Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
     // Back propagation
 
-    PoolingLayerBackPropagation* pooling_layer_back_propagation =
-        static_cast<PoolingLayerBackPropagation*>(back_propagation);
+    unique_ptr<PoolingLayerBackPropagation> pooling_layer_back_propagation
+        (static_cast<PoolingLayerBackPropagation*>(back_propagation.release()));
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
@@ -441,7 +443,7 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
 void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
                                                   const Tensor<type, 4>& deltas,
-                                                  LayerBackPropagation* back_propagation) const
+                                                  unique_ptr<LayerBackPropagation> back_propagation) const
 {
     const Index batch_samples_number = inputs.dimension(0);
 
@@ -464,8 +466,8 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     // Back propagation
 
-    PoolingLayerBackPropagation* pooling_layer_back_propagation =
-        static_cast<PoolingLayerBackPropagation*>(back_propagation);
+    unique_ptr<PoolingLayerBackPropagation> pooling_layer_back_propagation
+        (static_cast<PoolingLayerBackPropagation*>(back_propagation.release()));
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 

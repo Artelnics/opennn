@@ -205,7 +205,7 @@ void NormalizationLayer3D::set_parameters_random()
 
 
 void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                             LayerForwardPropagation* layer_forward_propagation,
+                                             unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                              const bool& is_training)
 {
     const Index samples_number = input_pairs[0].second[0];
@@ -214,8 +214,8 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    NormalizationLayer3DForwardPropagation* normalization_layer_3d_forward_propagation =
-        static_cast<NormalizationLayer3DForwardPropagation*>(layer_forward_propagation);
+    unique_ptr<NormalizationLayer3DForwardPropagation> normalization_layer_3d_forward_propagation
+        (static_cast<NormalizationLayer3DForwardPropagation*>(layer_forward_propagation.release()));
 
     // @todo Can we avoid normalized_inputs
 
@@ -250,8 +250,8 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
 void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                           const vector<pair<type*, dimensions>>& delta_pairs,
-                                          LayerForwardPropagation* forward_propagation,
-                                          LayerBackPropagation* back_propagation) const
+                                          unique_ptr<LayerForwardPropagation> forward_propagation,
+                                          unique_ptr<LayerBackPropagation> back_propagation) const
 {
     const Index batch_samples_number = input_pairs[0].second[0];
 
@@ -264,8 +264,8 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     // Forward propagation
 
-    const NormalizationLayer3DForwardPropagation* normalization_layer_3d_forward_propagation =
-        static_cast<NormalizationLayer3DForwardPropagation*>(forward_propagation);
+    const unique_ptr<NormalizationLayer3DForwardPropagation> normalization_layer_3d_forward_propagation 
+        (static_cast<NormalizationLayer3DForwardPropagation*>(forward_propagation.release()));
 
     const Tensor<type, 3>& normalized_inputs = normalization_layer_3d_forward_propagation->normalized_inputs;
 
@@ -277,8 +277,8 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     // Back propagation
 
-    NormalizationLayer3DBackPropagation* normalization_layer_3d_back_propagation =
-        static_cast<NormalizationLayer3DBackPropagation*>(back_propagation);
+    unique_ptr<NormalizationLayer3DBackPropagation> normalization_layer_3d_back_propagation 
+        (static_cast<NormalizationLayer3DBackPropagation*>(back_propagation.release()));
     
     Tensor<type, 1>& gammas_derivatives = normalization_layer_3d_back_propagation->gammas_derivatives;
     Tensor<type, 1>& betas_derivatives = normalization_layer_3d_back_propagation->betas_derivatives;
@@ -317,28 +317,28 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 }
 
 
-void NormalizationLayer3D::add_deltas(const vector<pair<type*, dimensions>>& deltas_pair) const
+void NormalizationLayer3D::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
 {
-    TensorMap<Tensor<type, 3>> deltas= tensor_map_3(deltas_pair[0]);
+    TensorMap<Tensor<type, 3>> deltas= tensor_map_3(delta_pairs[0]);
 
-    for(Index i = 1; i < deltas_pair.size(); i++)
+    for(Index i = 1; i < delta_pairs.size(); i++)
     {
-        const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(deltas_pair[i]);
+        const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(delta_pairs[i]);
 
         deltas.device(*thread_pool_device) += other_deltas;
     }
 }
 
 
-void NormalizationLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
+void NormalizationLayer3D::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
                                            const Index& index,
                                            Tensor<type, 1>& gradient) const
 {
     const Index gammas_number = get_gammas_number();
     const Index betas_number = get_betas_number();
 
-    NormalizationLayer3DBackPropagation* normalization_layer_3d_back_propagation =
-        static_cast<NormalizationLayer3DBackPropagation*>(back_propagation);
+    unique_ptr<NormalizationLayer3DBackPropagation> normalization_layer_3d_back_propagation 
+        (static_cast<NormalizationLayer3DBackPropagation*>(back_propagation.release()));
 
     const type* gammas_derivatives_data = normalization_layer_3d_back_propagation->gammas_derivatives.data();
     const type* betas_derivatives_data = normalization_layer_3d_back_propagation->betas_derivatives.data();

@@ -25,8 +25,8 @@ struct ForwardPropagation
     {
         const Index layers_number = layers.size();
 
-        for(Index i = 0; i < layers_number; i++)
-            delete layers[i];
+//        for(Index i = 0; i < layers_number; i++)
+//            delete layers[i];
     }
 
     void set(const Index&, NeuralNetwork*);
@@ -41,7 +41,7 @@ struct ForwardPropagation
 
     NeuralNetwork* neural_network = nullptr;
 
-    vector<LayerForwardPropagation*> layers;
+    vector<unique_ptr<LayerForwardPropagation>> layers;
 };
 
 }

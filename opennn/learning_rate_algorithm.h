@@ -9,14 +9,14 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-// System includes
+
 
 #include <iostream>
 #include <limits>
 #include <cmath>
 #include <cstdlib>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "neural_network.h"

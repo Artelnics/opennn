@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
+
 
 #include <cstring>
 #include <iostream>
@@ -15,7 +15,7 @@
 #include <string>
 #include <time.h>
 
-// OpenNN includes
+
 
 #include "../../opennn/opennn.h"
 

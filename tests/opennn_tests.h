@@ -9,7 +9,7 @@
 #ifndef OPENNNTESTS_H
 #define OPENNNTESTS_H
 
-// OpenNN includes
+
 
 // Unit testing includes
 

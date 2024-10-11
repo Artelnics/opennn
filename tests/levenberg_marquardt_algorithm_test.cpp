@@ -31,7 +31,7 @@ void LevenbergMarquardtAlgorithmTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm_1;
 
@@ -158,7 +158,7 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
 {
     cout << "Running Levenberg-Marquardt algorithm test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

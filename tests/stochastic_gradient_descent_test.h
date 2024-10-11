@@ -29,7 +29,7 @@ public:
 
     virtual ~StochasticGradientDescentTest();
 
-    // Constructor and destructor
+     and destructor
 
     void test_constructor();
 

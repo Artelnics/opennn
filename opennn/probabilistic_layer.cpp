@@ -379,15 +379,15 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 
 
 void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                           LayerForwardPropagation* forward_propagation,
+                                           unique_ptr<LayerForwardPropagation> forward_propagation,
                                            const bool& is_training)
 {
     const Index neurons_number = get_neurons_number();
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
+    unique_ptr < ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
+            (static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.release()));
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
@@ -416,8 +416,8 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
 void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         const vector<pair<type*, dimensions>>& delta_pairs,
-                                        LayerForwardPropagation* forward_propagation,
-                                        LayerBackPropagation* back_propagation) const
+                                        unique_ptr<LayerForwardPropagation> forward_propagation,
+                                        unique_ptr<LayerBackPropagation> back_propagation) const
 {
     const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
@@ -427,15 +427,15 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
-            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
+    unique_ptr<ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
+            (static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.release()));
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     // Back propagation
 
-    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
-            static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
+    unique_ptr<ProbabilisticLayerBackPropagation> probabilistic_layer_back_propagation
+            (static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.release()));
     
     Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation->input_derivatives;
 
@@ -468,15 +468,15 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
+void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
                                          const Index& index,
                                          Tensor<type, 1>& gradient) const
 {
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
-        static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
+    const unique_ptr<ProbabilisticLayerBackPropagation> probabilistic_layer_back_propagation
+        (static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.release()));
 
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
@@ -492,12 +492,12 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
-void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
+void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM> back_propagation,
                                                            const Index& index,
                                                            Tensor<type, 2>& squared_errors_Jacobian) const
 {
-    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
-        static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
+    unique_ptr<ProbabilisticLayerBackPropagationLM> probabilistic_layer_back_propagation_lm
+        (static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.release()));
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
     const Index parameters_number = get_parameters_number();
@@ -628,57 +628,57 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& output_names) const
+string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < output_names.size(); j++)
     {
-        buffer << output_names(j) << " = binary(" << inputs_name(j) << ");\n";
+        buffer << output_names(j) << " = binary(" << input_names(j) << ");\n";
     }
     return buffer.str();
 }
 
 
-string ProbabilisticLayer::write_logistic_expression(const Tensor<string, 1>& inputs_name,
+string ProbabilisticLayer::write_logistic_expression(const Tensor<string, 1>& input_names,
                                                      const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < output_names.size(); j++)
     {
-        buffer << output_names(j) << " = logistic(" << inputs_name(j) << ");\n";
+        buffer << output_names(j) << " = logistic(" << input_names(j) << ");\n";
     }
     return buffer.str();
 }
 
 
-string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& output_names) const
+string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < output_names.size(); j++)
     {
-        buffer << output_names(j) << " = competitive(" << inputs_name(j) << ");\n";
+        buffer << output_names(j) << " = competitive(" << input_names(j) << ");\n";
     }
     return buffer.str();
 }
 
 
-string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& output_names) const
+string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < output_names.size(); j++)
     {
-        buffer << output_names(j) << " = softmax(" << inputs_name(j) << ");\n";
+        buffer << output_names(j) << " = softmax(" << input_names(j) << ");\n";
     }
 
     return buffer.str();
 }
 
 
-string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& inputs_name) const
+string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& input_names) const
 {
     ostringstream buffer;
 
@@ -691,7 +691,7 @@ string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& inputs_na
 
         for(Index j = 0; j < inputs_number; j++)
         {
-            buffer << " +" << synaptic_weights(j, i) << "*" << inputs_name(j) << "";
+            buffer << " +" << synaptic_weights(j, i) << "*" << input_names(j) << "";
         }
 
         buffer << " " << endl;
@@ -772,12 +772,12 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& output_nam
 }
 
 
-string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name,
+string ProbabilisticLayer::write_expression(const Tensor<string, 1>& input_names,
                                             const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
-    buffer << write_combinations(inputs_name);
+    buffer << write_combinations(input_names);
 
     buffer << write_activations(output_names);
 

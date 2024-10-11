@@ -9,10 +9,6 @@
 #ifndef EMBEDDINGLAYER_H
 #define EMBEDDINGLAYER_H
 
-// System includes
-
-// OpenNN includes
-
 #include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
@@ -99,19 +95,21 @@ public:
     // Embedding layer outputs
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           LayerForwardPropagation*,
+                           unique_ptr<LayerForwardPropagation>,
                            const bool&) final;
 
     // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
-                                  const vector<pair<type*, dimensions>>&,
-                                  LayerForwardPropagation*,
-                                  LayerBackPropagation*) const final;
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>,
+                        unique_ptr<LayerBackPropagation>) const final;
 
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-    void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
+    void insert_gradient(unique_ptr<LayerBackPropagation> back_propagation, 
+                         const Index& index, 
+                         Tensor<type, 1>& gradient) const;
 
     // Serialization
 
@@ -148,7 +146,7 @@ protected:
 
 struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
     {
-        // Default constructor
+        
 
         explicit EmbeddingLayerForwardPropagation() : LayerForwardPropagation()
         {
@@ -197,7 +195,7 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 
 struct EmbeddingLayerBackPropagation : LayerBackPropagation
     {
-        // Default constructor
+        
 
         explicit EmbeddingLayerBackPropagation() : LayerBackPropagation()
         {

@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-// System includes
+
 
 #include <algorithm>
 #include <fstream>
@@ -16,7 +16,7 @@
 #include <numeric>
 #include <stdio.h>
 
-// OpenNN includes
+
 
 #include "../eigen/Eigen/Dense"
 

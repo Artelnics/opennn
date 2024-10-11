@@ -467,15 +467,15 @@ void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
 
 
 void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       LayerForwardPropagation* forward_propagation,
+                                       unique_ptr<LayerForwardPropagation> forward_propagation,
                                        const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index inputs_number = input_pairs[0].second[2];
 
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
-        = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
+    unique_ptr<RecurrentLayerForwardPropagation> recurrent_layer_forward_propagation
+        (static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.release()));
 
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
@@ -514,18 +514,18 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
 void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                     const vector<pair<type*, dimensions>>& delta_pairs,
-                                    LayerForwardPropagation* forward_propagation,
-                                    LayerBackPropagation* back_propagation) const
+                                    unique_ptr<LayerForwardPropagation> forward_propagation,
+                                    unique_ptr<LayerBackPropagation> back_propagation) const
 {
     const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
-            static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
+    const unique_ptr<RecurrentLayerForwardPropagation> recurrent_layer_forward_propagation
+            (static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.release()));
 
-    RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
-            static_cast<RecurrentLayerBackPropagation*>(back_propagation);
+    unique_ptr<RecurrentLayerBackPropagation> recurrent_layer_back_propagation 
+            (static_cast<RecurrentLayerBackPropagation*>(back_propagation.release()));
 
     // Forward propagation
 
@@ -660,7 +660,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 }
 
 
-void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
+void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
                                      const Index& index,
                                      Tensor<type, 1>& gradient) const
 {
@@ -669,8 +669,8 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     type* gradient_data = gradient.data();
 
-    RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
-        static_cast<RecurrentLayerBackPropagation*>(back_propagation);
+    unique_ptr<RecurrentLayerBackPropagation> recurrent_layer_back_propagation 
+        (static_cast<RecurrentLayerBackPropagation*>(back_propagation.release()));
 
     #pragma omp parallel sections
     {
@@ -692,7 +692,7 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
-string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_name,
+string RecurrentLayer::write_expression(const Tensor<string, 1>& input_names,
                                         const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
@@ -703,12 +703,12 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_name,
 
         buffer << output_names(j) << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
 
-        for(Index i = 0; i < inputs_name.size() - 1; i++)
+        for(Index i = 0; i < input_names.size() - 1; i++)
         {
-           buffer << " (" << inputs_name[i] << "*" << synaptic_weights_column(i) << ") +";
+           buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
         }
 
-        buffer << " (" << inputs_name[inputs_name.size() - 1] << "*" << synaptic_weights_column[inputs_name.size() - 1] << "));\n";
+        buffer << " (" << input_names[input_names.size() - 1] << "*" << synaptic_weights_column[input_names.size() - 1] << "));\n";
     }
 
     return buffer.str();

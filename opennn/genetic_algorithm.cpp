@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
+
 
 #include <algorithm>
 #include <cmath>
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <random>
 
-// OpenNN includes
+
 
 #include "tensors.h"
 #include "correlations.h"
@@ -573,7 +573,7 @@ void GeneticAlgorithm::evaluate_population()
 
     Tensor<Index, 1> inputs_number(individuals_number);
 
-    Tensor<string, 1> inputs_name;
+    Tensor<string, 1> input_names;
 
     for(Index i = 0; i < individuals_number; i++)
     {
@@ -591,11 +591,11 @@ void GeneticAlgorithm::evaluate_population()
 
         data_set->scrub_missing_values();
 
-        inputs_name = data_set->get_input_variables_names();
+        input_names = data_set->get_input_variables_names();
 
         neural_network->set_inputs_number(data_set->get_input_variables_number());
 
-        neural_network->set_inputs_names(inputs_name);
+        neural_network->set_inputs_names(input_names);
 
         neural_network->set_parameters_random();
 
@@ -613,7 +613,7 @@ void GeneticAlgorithm::evaluate_population()
         {
             cout << "Training error: " << training_results.get_training_error() << endl
                  << "Selection error: " << training_results.get_selection_error() << endl
-                 << "Variables number: " << inputs_name.size() << endl
+                 << "Variables number: " << input_names.size() << endl
                  << "Inputs number: " << data_set->get_input_raw_variables_number() << endl;
         }
 
@@ -1064,7 +1064,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         perform_crossover();
 
-        if(mutation_rate!=0 && epoch > maximum_epochs_number*0.5 && epoch < maximum_epochs_number*0.8) perform_mutation();
+        if(mutation_rate!=0 && epoch > maximum_epochs_number*0.5 && epoch < maximum_epochs_number*0.8) 
+            perform_mutation();
     }
 
     // Set data set stuff
@@ -1096,6 +1097,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     return inputs_selection_results;
 }
+
 
 void GeneticAlgorithm::check_categorical_raw_variables()
 {

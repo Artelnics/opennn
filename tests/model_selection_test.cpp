@@ -118,7 +118,7 @@ void ModelSelectionTest::run_test_case()
 {
     cout << "Running model selection test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

@@ -28,7 +28,7 @@ void BoundingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     BoundingLayer bounding_layer_1;
 
@@ -103,7 +103,7 @@ void BoundingLayerTest::run_test_case()
 {
     cout << "Running bounding layer test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

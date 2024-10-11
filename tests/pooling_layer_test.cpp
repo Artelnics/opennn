@@ -372,7 +372,7 @@ void PoolingLayerTest::run_test_case()
 {
    cout << "Running pooling layer test case...\n";
 
-   // Constructor and destructor
+    and destructor
 
     test_constructor();
     test_destructor();

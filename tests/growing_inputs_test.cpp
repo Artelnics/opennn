@@ -98,7 +98,7 @@ void GrowingInputsTest::run_test_case()
 {
     cout << "Running growing inputs test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();
