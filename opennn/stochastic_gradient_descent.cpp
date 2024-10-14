@@ -232,7 +232,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
@@ -261,7 +261,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_inputs_names(inputs_name);
+    neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer_2d())

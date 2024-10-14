@@ -163,14 +163,14 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
-
+/*
     // Forward propagation
 
-    LayerForwardPropagation* output_layer_forward_propagation 
+    unique_ptr<LayerForwardPropagation> output_layer_forward_propagation 
         = forward_propagation.layers[last_trainable_layer_index];
 
-    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
+    const unique_ptr<ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
+            (static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation.release()));
 
     const pair<type*, dimensions> outputs_pair = probabilistic_layer_forward_propagation->get_outputs_pair();
 
@@ -192,6 +192,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     const type coefficient = type(total_samples_number) / (type(batch_samples_number) * normalization_coefficient);
 
     error = weighted_squared_error(0)*coefficient;
+*/
 }
 
 
@@ -246,9 +247,9 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 
-    const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
+    const pair<type*, dimensions> delta_pairs = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
     const type coefficient = type(2*total_samples_number)/(type(batch_samples_number)*normalization_coefficient);
 
@@ -381,12 +382,12 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
-
-    LayerForwardPropagation* output_layer_forward_propagation 
+/*
+    unique_ptr<LayerForwardPropagation> output_layer_forward_propagation 
         = forward_propagation.layers[last_trainable_layer_index];
 
-    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
+    const unique_ptr<ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
+        (static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation.release()));
 
     const pair<type*, dimensions> outputs_pair = probabilistic_layer_forward_propagation->get_outputs_pair();
 
@@ -399,6 +400,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
     // @todo
 
     //squared_errors.device(*thread_pool_device) = 0;
+*/
 }
 
 }

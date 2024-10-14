@@ -9,11 +9,11 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "data_set.h"
@@ -98,17 +98,6 @@ public:
 
    virtual void set_normalization_coefficient() {}
 
-   bool has_selection() const;
-
-   // Numerical differentiation
-
-   type calculate_eta() const;
-   type calculate_h(const type&) const;
-
-   Tensor<type, 1> calculate_numerical_gradient();
-   Tensor<type, 2> calculate_numerical_jacobian();
-   Tensor<type, 1> calculate_numerical_inputs_derivatives();
-
    // Back propagation
 
    virtual void calculate_error(const Batch&,
@@ -188,6 +177,14 @@ public:
 
    void check() const;
 
+   // Numerical differentiation
+
+   static type calculate_h(const type&);
+
+   Tensor<type, 1> calculate_numerical_gradient();
+   Tensor<type, 2> calculate_numerical_jacobian();
+   Tensor<type, 1> calculate_numerical_inputs_derivatives();
+
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
         #include "../../opennn_cuda/opennn_cuda/loss_index_cuda.h"
@@ -236,15 +233,11 @@ struct BackPropagationLM
 
     void print() const;
     
-    void set_layer_output_indices(const vector<vector<Index>>&);
-
     pair<type*, dimensions> get_output_deltas_pair() const;
 
-    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs(const Index&, const Index&) const;
+    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs() const;
 
     Index batch_samples_number = 0;
-
-    Tensor<Tensor<Index, 1>, 1> layer_output_indices;
 
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;

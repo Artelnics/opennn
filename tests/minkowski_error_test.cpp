@@ -337,7 +337,7 @@ void MinkowskiErrorTest::run_test_case()
 {
    cout << "Running Minkowski error test case...\n";  
 
-   // Constructor and destructor
+    and destructor
 
    test_constructor();
    test_destructor();

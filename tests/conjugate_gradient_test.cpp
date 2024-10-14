@@ -30,7 +30,7 @@ void ConjugateGradientTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     ConjugateGradient conjugate_gradient_1;
     assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
@@ -286,7 +286,7 @@ void ConjugateGradientTest::run_test_case()
 {
     cout << "Running conjugate gradient test case...\n";
 
-    // Constructor
+    
 
     test_constructor();
     test_destructor();

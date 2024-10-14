@@ -28,7 +28,7 @@ void TimeSeriesDataSetTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     TimeSeriesDataSet data_set_1;
 
@@ -286,7 +286,7 @@ void TimeSeriesDataSetTest::run_test_case()
 {
     cout << "Running time series data set test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

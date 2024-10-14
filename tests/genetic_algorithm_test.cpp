@@ -500,7 +500,7 @@ void GeneticAlgorithmTest::run_test_case()
 {
     cout << "Running genetic algorithm test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

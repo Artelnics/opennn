@@ -136,11 +136,11 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 }
 
 
-void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propagation,
+void ConvolutionalLayer::normalize(unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                    const bool& is_training)
 {
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
-            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
+    unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation
+        (static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.release()));
 
     Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
     type* outputs_data = outputs.data();
@@ -197,10 +197,10 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
 }
 
 
-void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagation)
+void ConvolutionalLayer::shift(unique_ptr<LayerForwardPropagation> layer_forward_propagation)
 {
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
-            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
+    unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation
+            (static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.release()));
 
     type* outputs_data = convolutional_layer_forward_propagation->outputs.data();
 
@@ -253,13 +253,13 @@ void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Ten
 
 
 void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                           LayerForwardPropagation* layer_forward_propagation,
+                                           unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                            const bool& is_training)
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
     
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
-            static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
+    unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation
+            (static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.release()));
 
     Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
 
@@ -273,10 +273,12 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     if(batch_normalization)
     {
+/*
         normalize(layer_forward_propagation,
                   is_training);
 
         shift(layer_forward_propagation);
+*/
     }
 
     if(is_training)
@@ -287,9 +289,9 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
 
 void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                        const vector<pair<type*, dimensions>>& deltas_pair,
-                                        LayerForwardPropagation* forward_propagation,
-                                        LayerBackPropagation* back_propagation) const
+                                        const vector<pair<type*, dimensions>>& delta_pairs,
+                                        unique_ptr<LayerForwardPropagation> forward_propagation,
+                                        unique_ptr<LayerBackPropagation> back_propagation) const
 {
     // Convolutional layer
 
@@ -309,19 +311,19 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
-    const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(deltas_pair[0]);
+    const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
 
     // Forward propagation
 
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
-            static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+    unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation 
+            (static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.release()));
 
     const Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
     // Back propagation
 
-    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
-            static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
+    unique_ptr<ConvolutionalLayerBackPropagation> convolutional_layer_back_propagation 
+            (static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.release()));
 
     Tensor<type, 4>& convolutions_derivatives =
         convolutional_layer_back_propagation->convolutions_derivatives;
@@ -420,7 +422,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
+void ConvolutionalLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
                                          const Index& index,
                                          Tensor<type, 1>& gradient) const
 {
@@ -431,8 +433,8 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     // Back-propagation
 
-    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
-        static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
+    unique_ptr<ConvolutionalLayerBackPropagation> convolutional_layer_back_propagation 
+        (static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.release()));
 
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
@@ -1223,7 +1225,9 @@ vector<pair<type*, dimensions>> ConvolutionalLayerBackPropagation::get_input_der
     const Index input_width = convolutional_layer->get_input_width();
     const Index channels = convolutional_layer->get_input_channels();
 
-    return {{(type*)(input_derivatives.data()), {batch_samples_number, input_height, input_width, channels}}};
+    convolutional_layer->get_input_dimensions();
+
+    return {{(type*)input_derivatives.data(), {batch_samples_number, input_height, input_width, channels}}};
 }
 
 

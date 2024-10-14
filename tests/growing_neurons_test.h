@@ -29,7 +29,7 @@ public:
 
    virtual ~GrowingNeuronsTest();
 
-   // Constructor and destructor
+    and destructor
 
    void test_constructor();
 

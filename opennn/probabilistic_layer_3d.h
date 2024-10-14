@@ -9,12 +9,12 @@
 #ifndef ProbabilisticLayer3D_H
 #define ProbabilisticLayer3D_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "layer.h"
@@ -116,22 +116,22 @@ public:
    // Outputs
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          LayerForwardPropagation*,
+                          unique_ptr<LayerForwardPropagation>,
                           const bool&) final;
 
    // Gradient
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
-                       LayerForwardPropagation*,
-                       LayerBackPropagation*) const final;
+                       unique_ptr<LayerForwardPropagation>,
+                       unique_ptr<LayerBackPropagation>) const final;
 
    void calculate_combinations_derivatives(const Tensor<type, 3>&,
                                                  const Tensor<type, 2>&,
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
 
-   void insert_gradient(LayerBackPropagation*, 
+   void insert_gradient(unique_ptr<LayerBackPropagation>, 
                         const Index&, 
                         Tensor<type, 1>&) const final;
 
@@ -168,14 +168,14 @@ protected:
 
 struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
+    
 
     explicit ProbabilisticLayer3DForwardPropagation() : LayerForwardPropagation()
     {
     }
 
 
-    // Constructor
+    
 
     explicit ProbabilisticLayer3DForwardPropagation(const Index new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()

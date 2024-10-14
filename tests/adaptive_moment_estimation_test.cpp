@@ -33,7 +33,7 @@ void AdaptiveMomentEstimationTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     AdaptiveMomentEstimation adaptive_moment_estimation_1;
     assert_true(!adaptive_moment_estimation_1.has_loss_index(), LOG);
@@ -201,7 +201,7 @@ void AdaptiveMomentEstimationTest::run_test_case()
 {
     cout << "Running Adaptive Moment Estimation (ADAM) test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

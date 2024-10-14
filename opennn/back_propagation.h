@@ -23,7 +23,7 @@ struct BackPropagation
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
 
-    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs(const Index&, const Index&) const;
+    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs() const;
 
     pair<type*, dimensions> get_output_deltas_pair() const;
 

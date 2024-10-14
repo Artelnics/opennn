@@ -516,18 +516,18 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(inputs_name.size()).c_str());
+    file_stream.PushText(to_string(input_names.size()).c_str());
     file_stream.CloseElement();
 
     // Inputs names
 
-    for(Index i = 0; i < inputs_name.size(); i++)
+    for(Index i = 0; i < input_names.size(); i++)
     {
         file_stream.OpenElement("Input");
 
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
 
-        file_stream.PushText(inputs_name[i].c_str());
+        file_stream.PushText(input_names[i].c_str());
 
         file_stream.CloseElement();
     }

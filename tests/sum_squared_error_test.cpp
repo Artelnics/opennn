@@ -499,7 +499,7 @@ void SumSquaredErrorTest::run_test_case()
 {
     cout << "Running sum squared error test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
 

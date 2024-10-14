@@ -29,7 +29,7 @@ void NeuralNetworkTest::test_constructor()
 
     Tensor<Layer*, 1> layers;
 
-    // Default constructor
+    
 
     NeuralNetwork neural_network_0;
 

@@ -9,12 +9,12 @@
 #ifndef PERCEPTRONLAYER3D_H
 #define PERCEPTRONLAYER3D_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "layer.h"
@@ -130,19 +130,19 @@ public:
                               Tensor<type, 3>&) const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          LayerForwardPropagation*,
+                          unique_ptr<LayerForwardPropagation>,
                           const bool&) final;
 
    // Gradient
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                                  const vector<pair<type*, dimensions>>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+                                 unique_ptr<LayerForwardPropagation>,
+                                 unique_ptr<LayerBackPropagation>) const final;
 
    void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-   void insert_gradient(LayerBackPropagation*,
+   void insert_gradient(unique_ptr<LayerBackPropagation>,
                         const Index&,
                         Tensor<type, 1>&) const final;
 
@@ -177,7 +177,7 @@ protected:
 
 struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 {
-    // Default constructor
+    
 
     explicit PerceptronLayer3DForwardPropagation() : LayerForwardPropagation()
     {
@@ -212,7 +212,7 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 {
-    // Default constructor
+    
 
     explicit PerceptronLayer3DBackPropagation() : LayerBackPropagation()
     {

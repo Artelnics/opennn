@@ -9,11 +9,11 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "neural_network.h"
