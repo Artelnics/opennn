@@ -27,7 +27,7 @@ void ProbabilisticLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     ProbabilisticLayer probabilistic_layer_1;
 

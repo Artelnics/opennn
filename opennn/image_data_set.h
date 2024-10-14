@@ -9,11 +9,11 @@
 #ifndef IMAGEDATASET_H
 #define IMAGEDATASET_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "data_set.h"

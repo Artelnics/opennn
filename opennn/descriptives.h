@@ -13,8 +13,6 @@ namespace opennn
 
 struct Descriptives {
 
-  // Default constructor.
-
   explicit Descriptives();
 
   // Values constructor.

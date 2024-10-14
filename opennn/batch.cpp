@@ -240,15 +240,12 @@ void Batch::print() const
     const Index inputs_rank = input_dimensions.size();
     const Index targets_rank = targets_dimensions.size();
 
-    cout << "Batch" << endl;
-
-    cout << "Inputs:" << endl;
-    cout << "Inputs dimensions:" << endl;
+    cout << "Batch" << endl
+         << "Inputs:" << endl
+         << "Inputs dimensions:" << endl;
 
     for(Index i = 0; i < inputs_rank; i++)
-    {
         cout << input_dimensions[i] << endl;
-    }
 
     if(inputs_rank == 4)
     {
@@ -261,14 +258,11 @@ void Batch::print() const
         cout << inputs << endl;
     }
 
-    cout << "Targets:" << endl;
-
-    cout << "Targets dimensions:" << endl;
+    cout << "Targets:" << endl
+         << "Targets dimensions:" << endl;
 
     for(Index i = 0; i < targets_rank; i++)
-    {
         cout << targets_dimensions[i] << endl;
-    }
 
     const TensorMap<Tensor<type, 2>> targets(targets_data,
                                              targets_dimensions[0],

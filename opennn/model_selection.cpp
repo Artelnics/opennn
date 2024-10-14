@@ -305,7 +305,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 tinyxml2::XMLElement* growing_inputs_element_copy = growing_inputs_document.NewElement("GrowingInputs");
 
-                for(const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor = growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                     growing_inputs_element_copy->InsertEndChild(nodeFor->DeepClone(&growing_inputs_document));
 
                 growing_inputs_document.InsertEndChild(growing_inputs_element_copy);
@@ -323,7 +323,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 tinyxml2::XMLElement* genetic_algorithm_element_copy = genetic_algorithm_document.NewElement("GeneticAlgorithm");
 
-                for(const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor = genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                     genetic_algorithm_element_copy->InsertEndChild(nodeFor->DeepClone(&genetic_algorithm_document));
 
                 genetic_algorithm_document.InsertEndChild(genetic_algorithm_element_copy);

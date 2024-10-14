@@ -9,13 +9,13 @@
 #ifndef OPTIMIZATIONALGORITHM_H
 #define OPTIMIZATIONALGORITHM_H
 
-// System includes
+
 
 #include <iostream>
 #include <limits>
 #include <cmath>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "loss_index.h"

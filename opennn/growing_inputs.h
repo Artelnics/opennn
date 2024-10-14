@@ -9,9 +9,9 @@
 #ifndef GROWINGINPUTS_H
 #define GROWINGINPUTS_H
 
-// System includes
 
-// OpenNN includes
+
+
 
 #include "training_strategy.h"
 #include "inputs_selection.h"

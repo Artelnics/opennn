@@ -627,9 +627,9 @@ void ConvolutionalLayerTest::test_back_propagate()
     input_pairs[0].first = inputs.data();
     input_pairs[0].second = { input_images, input_height, input_width, channels };
 
-    Tensor<pair<type*, dimensions>, 1> deltas_pair(1);
-    deltas_pair(0).first = inputs.data();
-    deltas_pair(0).second = { input_images, input_height, input_width, channels };
+    Tensor<pair<type*, dimensions>, 1> delta_pairs(1);
+    delta_pairs(0).first = inputs.data();
+    delta_pairs(0).second = { input_images, input_height, input_width, channels };
 
     // bmp_image_1:
     //    255 255   0   0   255 255   0   0     255 255   0   0
@@ -668,7 +668,7 @@ void ConvolutionalLayerTest::test_back_propagate()
 
     convolutional_layer.forward_propagate(input_pairs, &forward_propagation, is_training);
 
-    convolutional_layer.back_propagate(input_pairs, deltas_pair, &forward_propagation, &back_propagation);
+    convolutional_layer.back_propagate(input_pairs, delta_pairs, &forward_propagation, &back_propagation);
 
     // Current layer's values
 

@@ -80,7 +80,7 @@ void FlattenLayerTest::run_test_case()
 {
    cout << "Running flatten layer test case...\n";
 
-   // Constructor and destructor
+    and destructor
 
     test_constructor();
     test_destructor();

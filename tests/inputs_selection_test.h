@@ -31,7 +31,7 @@ public:
 
     virtual ~InputsSelectionTest();
 
-    // Constructor and destructor
+     and destructor
 
     void test_constructor();
 

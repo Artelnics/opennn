@@ -431,7 +431,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
@@ -447,7 +447,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
-    neural_network->set_inputs_names(inputs_name);
+    neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer_2d())

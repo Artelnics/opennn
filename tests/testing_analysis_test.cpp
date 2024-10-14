@@ -1137,7 +1137,7 @@ void TestingAnalysisTest::run_test_case()
 {
     cout << "Running testing analysis test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

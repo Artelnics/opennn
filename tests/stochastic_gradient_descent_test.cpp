@@ -34,7 +34,7 @@ void StochasticGradientDescentTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     StochasticGradientDescent stochastic_gradient_descent_1;
     assert_true(!stochastic_gradient_descent_1.has_loss_index(), LOG);
@@ -225,7 +225,7 @@ void StochasticGradientDescentTest::run_test_case()
 {
     cout << "Running stochastic gradient descent test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
 
