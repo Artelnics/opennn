@@ -31,7 +31,7 @@ public:
 
     virtual ~GrowingInputsTest();
 
-    // Constructor and destructor
+     and destructor
 
     void test_constructor();
 

@@ -9,11 +9,11 @@
 #ifndef PERCEPTRONLAYER_H
 #define PERCEPTRONLAYER_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "layer.h"
@@ -139,26 +139,26 @@ public:
                                Tensor<type, 2>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           LayerForwardPropagation*,
+                           unique_ptr<LayerForwardPropagation>,
                            const bool&) final;
 
     // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        LayerForwardPropagation*,
-                        LayerBackPropagation*) const final;
+                        unique_ptr<LayerForwardPropagation>,
+                        unique_ptr<LayerBackPropagation>) const final;
 
     void back_propagate_lm(const vector<pair<type*, dimensions>>&,
                            const vector<pair<type*, dimensions>>&,
-                           LayerForwardPropagation*,
-                           LayerBackPropagationLM*) const final;
+                           unique_ptr<LayerForwardPropagation>,
+                           unique_ptr<LayerBackPropagationLM>) const final;
 
-    void insert_gradient(LayerBackPropagation*,
+    void insert_gradient(unique_ptr<LayerBackPropagation>,
                          const Index&,
                          Tensor<type, 1>&) const final;
 
-    void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
+    void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>,
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
@@ -217,7 +217,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-    // Default constructor
+    
 
     explicit PerceptronLayerBackPropagation();
 
@@ -241,7 +241,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
-    // Default constructor
+    
 
     explicit PerceptronLayerBackPropagationLM();
 

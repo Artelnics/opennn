@@ -6,12 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
-
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "../opennn/data_set.h"
 

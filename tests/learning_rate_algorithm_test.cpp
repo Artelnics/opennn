@@ -255,7 +255,7 @@ void LearningRateAlgorithmTest::run_test_case()
 {
     cout << "Running learning rate algorithm test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

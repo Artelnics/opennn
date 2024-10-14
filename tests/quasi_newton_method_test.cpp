@@ -29,7 +29,7 @@ void QuasiNewtonMethodTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     QuasiNewtonMethod quasi_newton_method_1;
 
@@ -240,7 +240,7 @@ void QuasiNewtonMethodTest::run_test_case()
 {
     cout << "Running quasi-Newton method test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

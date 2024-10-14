@@ -291,7 +291,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     const Index variables_number = conditions_string.size();
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
 
     const Tensor<string, 1> output_names = data_set->get_target_variables_names();
 
@@ -299,7 +299,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(contains(inputs_name, names[i]))
+        if(contains(input_names, names[i]))
         {
             index = neural_network->get_input_index(names[i]);
 
@@ -578,7 +578,7 @@ void ResponseOptimizationResults::print() const
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<string, 1> inputs_name = neural_network->get_input_names();
+    const Tensor<string, 1> input_names = neural_network->get_input_names();
     const Tensor<string, 1> output_names = neural_network->get_output_names();
 
     cout << "\nResponse optimization results: " << endl;
@@ -587,7 +587,7 @@ void ResponseOptimizationResults::print() const
         throw runtime_error("Optimal variables vector is empty.\n");
 
     for(Index i = 0; i < inputs_number; i++)
-        cout << inputs_name[i] << ": " << optimal_variables[i] << endl;
+        cout << input_names[i] << ": " << optimal_variables[i] << endl;
 
     for(Index i = 0; i < outputs_number; i++)
         cout << output_names[i] << ": " << optimal_variables[inputs_number + i] << endl;

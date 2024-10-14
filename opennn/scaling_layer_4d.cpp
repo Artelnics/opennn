@@ -111,11 +111,11 @@ bool ScalingLayer4D::is_empty() const
 
 
 void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       LayerForwardPropagation* forward_propagation,
+                                       unique_ptr<LayerForwardPropagation> forward_propagation,
                                        const bool& is_training)
 {
-    ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation
-            = static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation);
+    unique_ptr<ScalingLayer4DForwardPropagation> scaling_layer_forward_propagation
+        (static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.release()));
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 

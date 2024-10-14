@@ -9,12 +9,12 @@
 #ifndef NORMALIZEDSQUAREDERROR_H
 #define NORMALIZEDSQUAREDERROR_H
 
-// System includes
+
 
 #include <cmath>
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "loss_index.h"

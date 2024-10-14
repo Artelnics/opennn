@@ -29,7 +29,7 @@ public:
 
     virtual ~LevenbergMarquardtAlgorithmTest();
 
-    // Constructor and destructor
+     and destructor
 
     void test_constructor();
 

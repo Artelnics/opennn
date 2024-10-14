@@ -27,7 +27,7 @@ public:
 
     virtual ~ResponseOptimizationTest();
 
-    // Constructor and destructor
+     and destructor
 
     void test_constructor();
 

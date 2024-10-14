@@ -9,12 +9,12 @@
 #ifndef QUASINEWTONMETHOD_H
 #define QUASINEWTONMETHOD_H
 
-// System includes
+
 
 #include <string>
 #include <iostream>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "loss_index.h"

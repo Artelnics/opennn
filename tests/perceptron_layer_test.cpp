@@ -29,7 +29,7 @@ void PerceptronLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     PerceptronLayer perceptron_layer_1;
 

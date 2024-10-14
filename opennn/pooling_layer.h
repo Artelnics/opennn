@@ -99,32 +99,32 @@ public:
     // First order activations
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           LayerForwardPropagation*,
+                           unique_ptr<LayerForwardPropagation>,
                            const bool&) final;
 
     void forward_propagate_max_pooling(const Tensor<type, 4>&,
-                                       LayerForwardPropagation*,
+                                       unique_ptr<LayerForwardPropagation>,
                                        const bool&) const;
 
     void forward_propagate_average_pooling(const Tensor<type, 4>&,
-                                           LayerForwardPropagation*,
+                                           unique_ptr<LayerForwardPropagation>,
                                            const bool&) const;
 
     // Back-propagation
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        LayerForwardPropagation*,
-                        LayerBackPropagation*) const final;
+                        unique_ptr<LayerForwardPropagation>,
+                        unique_ptr<LayerBackPropagation>) const final;
 
     void back_propagate_max_pooling(const Tensor<type, 4>&,
                                     const Tensor<type, 4>&,
-                                    LayerForwardPropagation*,
-                                    LayerBackPropagation*) const;
+                                    unique_ptr<LayerForwardPropagation>,
+                                    unique_ptr<LayerBackPropagation>) const;
 
     void back_propagate_average_pooling(const Tensor<type, 4>&,
                                         const Tensor<type, 4>&,
-                                        LayerBackPropagation*) const;
+                                        unique_ptr<LayerBackPropagation>) const;
 
     // Serialization
 
@@ -161,11 +161,11 @@ protected:
 
 struct PoolingLayerForwardPropagation : LayerForwardPropagation
 {
-    // Default constructor
+    
 
     explicit PoolingLayerForwardPropagation();
 
-    // Constructor
+    
 
     explicit PoolingLayerForwardPropagation(const Index&, Layer*);
     
