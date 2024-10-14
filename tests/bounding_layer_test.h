@@ -26,7 +26,7 @@ public:
 
    virtual ~BoundingLayerTest();
 
-   // Constructor and destructor
+    and destructor
 
    void test_constructor();
 

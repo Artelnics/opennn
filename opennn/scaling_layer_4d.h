@@ -63,7 +63,7 @@ public:
    bool is_empty() const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          LayerForwardPropagation*, 
+                          unique_ptr<LayerForwardPropagation>, 
                           const bool&) final;
 
    // Serialization
@@ -88,7 +88,7 @@ protected:
 
 struct ScalingLayer4DForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
+    
 
     explicit ScalingLayer4DForwardPropagation() : LayerForwardPropagation()
     {
@@ -99,7 +99,7 @@ struct ScalingLayer4DForwardPropagation : LayerForwardPropagation
     {
     }
 
-    // Constructor
+    
 
     explicit ScalingLayer4DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()

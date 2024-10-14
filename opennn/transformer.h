@@ -104,7 +104,7 @@ struct TransformerForwardPropagation : ForwardPropagation
 
     Index batch_samples_number = 0;
 
-    Tensor<LayerForwardPropagation*, 1> layers;
+    Tensor<unique_ptr<LayerForwardPropagation>, 1> layers;
 };
 };
 

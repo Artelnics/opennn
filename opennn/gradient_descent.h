@@ -9,12 +9,12 @@
 #ifndef GRADIENTDESCENT_H
 #define GRADIENTDESCENT_H
 
-// System includes
+
 
 #include <string>
 #include <iostream>
 
-// OpenNN includes
+
 
 #include "loss_index.h"
 

@@ -94,19 +94,19 @@ namespace opennn
         // Forward propagation
 
         void forward_propagate(const vector<pair<type*, dimensions>>&,
-                               LayerForwardPropagation*,
+                               unique_ptr<LayerForwardPropagation>,
                                const bool&) final;
 
         // Gradient
 
         void back_propagate(const vector<pair<type*, dimensions>>&,
                             const vector<pair<type*, dimensions>>&,
-                            LayerForwardPropagation*,
-                            LayerBackPropagation*) const final;
+                            unique_ptr<LayerForwardPropagation>,
+                            unique_ptr<LayerBackPropagation>) const final;
 
         void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-        void insert_gradient(LayerBackPropagation*,
+        void insert_gradient(unique_ptr<LayerBackPropagation>,
                              const Index&,
                              Tensor<type, 1>&) const final;
 
@@ -140,7 +140,7 @@ namespace opennn
 
     struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
     {
-        // Default constructor
+        
 
         explicit NormalizationLayer3DForwardPropagation() : LayerForwardPropagation()
         {
@@ -183,7 +183,7 @@ namespace opennn
 
     struct NormalizationLayer3DBackPropagation : LayerBackPropagation
     {
-        // Default constructor
+        
 
         explicit NormalizationLayer3DBackPropagation() : LayerBackPropagation()
         {

@@ -87,7 +87,7 @@ Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 }
 
 
-string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& output_names) const
+string UnscalingLayer::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -99,7 +99,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_name, co
     {
         if(scalers(i) == Scaler::None)
         {
-            buffer << output_names(i) << " = " << inputs_name(i) << ";\n";
+            buffer << output_names(i) << " = " << input_names(i) << ";\n";
         }
         else if(scalers(i) == Scaler::MinimumMaximum)
         {
@@ -113,7 +113,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_name, co
 
                 const type intercept = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
-                buffer << output_names[i] << "=" << inputs_name[i] << "*" << slope << "+" << intercept<<";\n";
+                buffer << output_names[i] << "=" << input_names[i] << "*" << slope << "+" << intercept<<";\n";
             }
         }
         else if(scalers(i) == Scaler::MeanStandardDeviation)
@@ -122,17 +122,17 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_name, co
 
             const type mean = descriptives(i).mean;
 
-            buffer << output_names[i] << "=" << inputs_name[i] << "*" << standard_deviation<<"+"<<mean<<";\n";
+            buffer << output_names[i] << "=" << input_names[i] << "*" << standard_deviation<<"+"<<mean<<";\n";
         }
         else if(scalers(i) == Scaler::StandardDeviation)
         {
             const type standard_deviation = descriptives(i).standard_deviation;
 
-            buffer << output_names[i] << "=" <<  inputs_name(i) << "*" << standard_deviation<<";\n";
+            buffer << output_names[i] << "=" <<  input_names(i) << "*" << standard_deviation<<";\n";
         }
         else if(scalers(i) == Scaler::Logarithm)
         {
-            buffer << output_names[i] << "=" << "exp(" << inputs_name[i] << ");\n";
+            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
         }
         else
         {
@@ -531,14 +531,14 @@ bool UnscalingLayer::is_empty() const
 
 
 void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       LayerForwardPropagation* forward_propagation,
+                                       unique_ptr<LayerForwardPropagation> forward_propagation,
                                        const bool& is_training)
 {
     const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
-    UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation
-            = static_cast<UnscalingLayerForwardPropagation*>(forward_propagation);
+    unique_ptr<UnscalingLayerForwardPropagation> unscaling_layer_forward_propagation
+            (static_cast<UnscalingLayerForwardPropagation*>(forward_propagation.release()));
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 

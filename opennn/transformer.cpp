@@ -80,7 +80,7 @@ void Transformer::set(const Index& input_length,
 {
     layers.resize(0);
     
-    inputs_name.resize(input_length + context_length);
+    input_names.resize(input_length + context_length);
 
     // Embedding Layers
     
@@ -549,12 +549,6 @@ void Transformer::load_transformer(const string& path)
 
 TransformerForwardPropagation::~TransformerForwardPropagation()
 {
-    const Index layers_number = layers.size();
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        delete layers[i];
-    }
 }
 
 
@@ -575,19 +569,19 @@ void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNe
         switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Embedding:
-            layers[i] = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<EmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::MultiheadAttention:
-            layers[i] = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique < MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::PerceptronLayer3D:
-            layers[i] = new PerceptronLayer3DForwardPropagation(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique < PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Probabilistic3D:
-            layers[i] = new ProbabilisticLayer3DForwardPropagation(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique < ProbabilisticLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         default: break;

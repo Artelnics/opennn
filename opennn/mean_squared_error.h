@@ -9,11 +9,11 @@
 #ifndef MEANSQUAREDERROR_H
 #define MEANSQUAREDERROR_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "loss_index.h"
 #include "data_set.h"

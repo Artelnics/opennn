@@ -26,7 +26,7 @@ void ImageDataSetTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     ImageDataSet data_set_1;
 

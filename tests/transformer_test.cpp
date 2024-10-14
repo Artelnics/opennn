@@ -29,7 +29,7 @@ void TransformerTest::test_constructor()
     
     Tensor<unique_ptr<Layer>, 1> layers;
 
-    // Default constructor
+    
 
     Transformer transformer_0;
 

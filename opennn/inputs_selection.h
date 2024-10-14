@@ -9,13 +9,13 @@
 #ifndef INPUTSSELECTIONALGORITHM_H
 #define INPUTSSELECTIONALGORITHM_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 #include <limits>
 
-// OpenNN includes
+
 
 #include "training_strategy.h"
 #include "config.h"
@@ -116,7 +116,7 @@ protected:
 
 struct InputsSelectionResults
 {
-    // Default constructor
+    
 
     explicit InputsSelectionResults()
     {
