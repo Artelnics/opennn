@@ -9,12 +9,12 @@
 #ifndef UNSCALINGLAYER_H
 #define UNSCALINGLAYER_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "layer.h"
@@ -103,7 +103,7 @@ public:
    // Forward propagation
 
    void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          LayerForwardPropagation*, 
+                          unique_ptr<LayerForwardPropagation>, 
                           const bool&) final;
 
    // Serialization
@@ -136,13 +136,13 @@ protected:
 
 struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
+    
 
     explicit UnscalingLayerForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-    // Constructor
+    
 
     explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()

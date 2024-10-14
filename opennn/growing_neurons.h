@@ -9,9 +9,9 @@
 #ifndef GROWINGNEURONS_H
 #define GROWINGNEURONS_H
 
-// System includes
 
-// OpenNN includes
+
+
 
 #include "training_strategy.h"
 #include "neurons_selection.h"

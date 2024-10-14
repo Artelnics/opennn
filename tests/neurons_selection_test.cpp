@@ -55,7 +55,7 @@ void NeuronsSelectionTest::run_test_case()
 {
     cout << "Running neurons selection algorithm test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
 

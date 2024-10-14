@@ -27,7 +27,7 @@ void ProbabilisticLayer3DTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Default constructor
+    
 
     ProbabilisticLayer3D probabilistic_layer_3d_1;
 
@@ -375,7 +375,7 @@ void ProbabilisticLayer3DTest::run_test_case()
 {
     cout << "Running probabilistic layer test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

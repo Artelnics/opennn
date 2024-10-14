@@ -9,12 +9,12 @@
 #ifndef NEURONSSELECTION_H
 #define NEURONSSELECTION_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "training_strategy.h"
@@ -114,7 +114,7 @@ protected:
 
 struct NeuronsSelectionResults
 {
-    // Default constructor
+    
 
     explicit NeuronsSelectionResults()
     {

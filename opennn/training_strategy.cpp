@@ -31,7 +31,6 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* n
     : data_set(new_data_set),
        neural_network(new_neural_network)
 {
-
     set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
 
     set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
@@ -703,7 +702,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* Minkowski_error_element_copy = new_document.NewElement("MinkowskiError");
 
-            for(const tinyxml2::XMLNode* nodeFor=Minkowski_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = Minkowski_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 Minkowski_error_element_copy->InsertEndChild(nodeFor->DeepClone(&new_document));
 
             new_document.InsertEndChild(Minkowski_error_element_copy);
@@ -721,7 +720,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* cross_entropy_error_element_copy = new_document.NewElement("CrossEntropyError");
 
-            for(const tinyxml2::XMLNode* nodeFor=loss_index_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = loss_index_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 cross_entropy_error_element_copy->InsertEndChild(nodeFor->DeepClone(&new_document));
 
             new_document.InsertEndChild(cross_entropy_error_element_copy);
@@ -739,7 +738,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* weighted_squared_error_element_copy = new_document.NewElement("WeightedSquaredError");
 
-            for(const tinyxml2::XMLNode* nodeFor=weighted_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = weighted_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 weighted_squared_error_element_copy->InsertEndChild(nodeFor->DeepClone(&new_document));
 
             new_document.InsertEndChild(weighted_squared_error_element_copy);
@@ -779,7 +778,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* gradient_descent_element_copy = gradient_descent_document.NewElement("GradientDescent");
 
-            for(const tinyxml2::XMLNode* nodeFor=gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 gradient_descent_element_copy->InsertEndChild(nodeFor->DeepClone(&gradient_descent_document));
      
             gradient_descent_document.InsertEndChild(gradient_descent_element_copy);
@@ -797,7 +796,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* conjugate_gradient_element_copy = conjugate_gradient_document.NewElement("ConjugateGradient");
 
-            for(const tinyxml2::XMLNode* nodeFor=conjugate_gradient_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = conjugate_gradient_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 conjugate_gradient_element_copy->InsertEndChild(nodeFor->DeepClone(&conjugate_gradient_document));
 
             conjugate_gradient_document.InsertEndChild(conjugate_gradient_element_copy);
@@ -815,7 +814,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* stochastic_gradient_descent_element_copy = stochastic_gradient_descent_document.NewElement("StochasticGradientDescent");
 
-            for(const tinyxml2::XMLNode* nodeFor=stochastic_gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = stochastic_gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 stochastic_gradient_descent_element_copy->InsertEndChild(nodeFor->DeepClone(&stochastic_gradient_descent_document));
 
             stochastic_gradient_descent_document.InsertEndChild(stochastic_gradient_descent_element_copy);
@@ -833,7 +832,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* adaptive_moment_estimation_element_copy = adaptive_moment_estimation_document.NewElement("AdaptiveMomentEstimation");
 
-            for(const tinyxml2::XMLNode* nodeFor=adaptive_moment_estimation_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = adaptive_moment_estimation_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 adaptive_moment_estimation_element_copy->InsertEndChild(nodeFor->DeepClone(&adaptive_moment_estimation_document));
 
             adaptive_moment_estimation_document.InsertEndChild(adaptive_moment_estimation_element_copy);
@@ -851,7 +850,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             tinyxml2::XMLElement* quasi_newton_method_element_copy = quasi_Newton_document.NewElement("QuasiNewtonMethod");
 
-            for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 quasi_newton_method_element_copy->InsertEndChild(nodeFor->DeepClone(&quasi_Newton_document));
 
             quasi_Newton_document.InsertEndChild(quasi_newton_method_element_copy);
@@ -868,7 +867,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             tinyxml2::XMLDocument Levenberg_Marquardt_document;
             tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = Levenberg_Marquardt_document.NewElement("LevenbergMarquardt");
 
-            for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor = Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 levenberg_marquardt_algorithm_element_copy->InsertEndChild(nodeFor->DeepClone(&Levenberg_Marquardt_document));
 
             Levenberg_Marquardt_document.InsertEndChild(levenberg_marquardt_algorithm_element_copy);

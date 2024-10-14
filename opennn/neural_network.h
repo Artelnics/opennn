@@ -190,7 +190,7 @@ public:
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
-   vector<Index> get_layers_parameters_numbers() const;
+   vector<Index> get_layer_parameter_numbers() const;
    vector<Index> get_trainable_layers_parameters_numbers() const;
 
    void set_parameters(const Tensor<type, 1>&) const;
@@ -263,7 +263,7 @@ protected:
 
    NeuralNetwork::ModelType model_type;
 
-   Tensor<string, 1> inputs_name;
+   Tensor<string, 1> input_names;
 
    Tensor<string, 1> output_names;
 

@@ -2,11 +2,11 @@
 #ifndef CODIFICATION_H
 #define CODIFICATION_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 using namespace std;
 

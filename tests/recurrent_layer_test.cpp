@@ -164,7 +164,7 @@ void RecurrentLayerTest::run_test_case()
 {
     cout << "Running recurrent layer test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
 

@@ -9,9 +9,9 @@
 #ifndef SCALING_H
 #define SCALING_H
 
-// System includes
 
-// OpenNN includes
+
+
 
 #include "config.h"
 #include "descriptives.h"

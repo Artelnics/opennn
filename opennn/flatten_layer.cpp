@@ -85,15 +85,15 @@ void FlattenLayer::set(const dimensions& new_input_dimensions)
 
 
 void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     LayerForwardPropagation* layer_forward_propagation,
+                                     unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                      const bool& is_training)
 {
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
     const Index neurons_number = get_neurons_number();
 
-    FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
-            static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation);
+    unique_ptr<FlattenLayerForwardPropagation> flatten_layer_forward_propagation 
+            (static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.release()));
 
     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
 
@@ -102,29 +102,28 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
            batch_samples_number*neurons_number*sizeof(type));
 
     flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_samples_number, neurons_number);
-
 }
 
 
 void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                            const vector<pair<type*, dimensions>>& deltas_pair,
-                                            LayerForwardPropagation* forward_propagation,
-                                            LayerBackPropagation* back_propagation) const
+                                            const vector<pair<type*, dimensions>>& delta_pairs,
+                                            unique_ptr<LayerForwardPropagation> forward_propagation,
+                                            unique_ptr<LayerBackPropagation> back_propagation) const
 {
     const Index batch_samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair[0]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
     // Back propagation
 
-    FlattenLayerBackPropagation* flatten_layer_back_propagation =
-        static_cast<FlattenLayerBackPropagation*>(back_propagation);
+    unique_ptr<FlattenLayerBackPropagation> flatten_layer_back_propagation
+        (static_cast<FlattenLayerBackPropagation*>(back_propagation.release()));
 
     Tensor<type, 4>& input_derivatives = flatten_layer_back_propagation->input_derivatives;
 
     memcpy(input_derivatives.data(),
-           deltas_pair[0].first,
+           delta_pairs[0].first,
            Index(batch_samples_number * neurons_number * sizeof(type)));
 }
 

@@ -30,7 +30,7 @@ public:
 
    virtual ~DataSetTest();
 
-   // Constructor and destructor
+    and destructor
 
    void test_constructor();
    void test_destructor();  

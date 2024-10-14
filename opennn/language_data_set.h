@@ -9,12 +9,12 @@
 #ifndef LANGUAGEDATASET_H
 #define LANGUAGEDATASET_H
 
-// System includes
+
 
 #include <string>
 #include <fstream>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "data_set.h"

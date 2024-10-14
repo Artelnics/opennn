@@ -9,15 +9,10 @@
 #ifndef BOUNDINGLAYER_H
 #define BOUNDINGLAYER_H
 
-// System includes
-
 #include <iostream>
 #include <string>
 
-// OpenNN includes
-
 #include "layer.h"
-
 #include "config.h"
 #include "layer_forward_propagation.h"
 
@@ -86,7 +81,7 @@ public:
    // Lower and upper bounds
 
    void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          LayerForwardPropagation*, 
+                          unique_ptr<LayerForwardPropagation>, 
                           const bool&) final;
 
    // Expression
@@ -117,13 +112,10 @@ private:
 
 struct BoundingLayerForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
-
     explicit BoundingLayerForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-    // Constructor
 
     explicit BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()

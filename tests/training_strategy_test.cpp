@@ -158,7 +158,7 @@ void TrainingStrategyTest::run_test_case()
 {
     cout << "Running training strategy test case...\n";
 
-    // Constructor and destructor
+     and destructor
 
     test_constructor();
     test_destructor();

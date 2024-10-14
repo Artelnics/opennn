@@ -9,12 +9,12 @@
 #ifndef SCALINGLAYER2D_H
 #define SCALINGLAYER2D_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "scaling.h"
 #include "layer.h"
@@ -106,7 +106,7 @@ public:
    void check_range(const Tensor<type, 1>&) const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          LayerForwardPropagation*, 
+                          unique_ptr<LayerForwardPropagation>, 
                           const bool&) final;
 
    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
@@ -148,7 +148,7 @@ protected:
 
 struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
+    
 
     explicit ScalingLayer2DForwardPropagation() : LayerForwardPropagation()
     {
@@ -159,7 +159,7 @@ struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
     {
     }
 
-    // Constructor
+    
 
     explicit ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()

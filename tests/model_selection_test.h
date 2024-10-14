@@ -27,7 +27,7 @@ public:
 
    virtual ~ModelSelectionTest();
 
-   // Constructor and destructor
+    and destructor
 
    void test_constructor();
 
