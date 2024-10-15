@@ -360,8 +360,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
         
         neural_network->forward_propagate(batch.get_input_pairs(),
-                                                  optimization_data.potential_parameters,
-                                                  forward_propagation);
+                                          optimization_data.potential_parameters,
+                                          forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
 

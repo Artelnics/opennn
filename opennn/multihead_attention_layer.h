@@ -193,33 +193,25 @@ protected:
     const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 };
 
-    struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
+struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
+{
+        
+    explicit MultiheadAttentionLayerForwardPropagation() : LayerForwardPropagation()
     {
-        
+    }
 
-        explicit MultiheadAttentionLayerForwardPropagation() : LayerForwardPropagation()
-        {
-        }
+    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer);
+    }
+                
+    pair<type*, dimensions> get_outputs_pair() const final;
 
-        virtual ~MultiheadAttentionLayerForwardPropagation()
-        {
-        }
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
-        explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-            : LayerForwardPropagation()
-        {
-            set(new_batch_samples_number, new_layer);
-        }
-        
-        
-        pair<type*, dimensions> get_outputs_pair() const final;
-
-
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-        void print() const
-        {
+    void print() const
+    {
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores.dimensions() << endl;
 
@@ -232,83 +224,78 @@ protected:
 
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores << endl;
-        }
+    }
 
-        Tensor<type, 4> query;
-        Tensor<type, 4> key;
-        Tensor<type, 4> value;
+    Tensor<type, 4> query;
+    Tensor<type, 4> key;
+    Tensor<type, 4> value;
         
-        Tensor<type, 2> sample_matrix;
+    Tensor<type, 2> sample_matrix;
 
-        Tensor<type, 4> attention_scores;
-        Tensor<type, 4> attention_weights;
-        Tensor<type, 4> attention_outputs;
+    Tensor<type, 4> attention_scores;
+    Tensor<type, 4> attention_weights;
+    Tensor<type, 4> attention_outputs;
 
-        Tensor<type, 4> projection_outputs;
-        Tensor<type, 3> outputs;
-    };
+    Tensor<type, 4> projection_outputs;
+    Tensor<type, 3> outputs;
+};
 
 
-    struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
+struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
+{
+        
+
+    explicit MultiheadAttentionLayerBackPropagation() : LayerBackPropagation()
     {
-        
 
-        explicit MultiheadAttentionLayerBackPropagation() : LayerBackPropagation()
-        {
-
-        }
+    }
 
 
-        explicit MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-            : LayerBackPropagation()
-        {
-            set(new_batch_samples_number, new_layer);
-        }
+    explicit MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+        : LayerBackPropagation()
+    {
+        set(new_batch_samples_number, new_layer);
+    }
 
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-        virtual ~MultiheadAttentionLayerBackPropagation()
-        {
-        }
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-        vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    void print() const
+    {
+    }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    Tensor<type, 4> error_attention_scores_derivatives;
+    Tensor<type, 4> error_attention_weights_derivatives;
+    Tensor<type, 4> error_attention_output_derivatives;
 
-        void print() const
-        {
-        }
+    Tensor<type, 2> sample_deltas;
 
-        Tensor<type, 4> error_attention_scores_derivatives;
-        Tensor<type, 4> error_attention_weights_derivatives;
-        Tensor<type, 4> error_attention_output_derivatives;
+    Tensor<type, 4> error_query_derivatives;
+    Tensor<type, 4> error_key_derivatives;
+    Tensor<type, 4> error_value_derivatives;
 
-        Tensor<type, 2> sample_deltas;
+    Tensor<type, 3> query_weights_derivatives;
+    Tensor<type, 3> key_weights_derivatives;
+    Tensor<type, 3> value_weights_derivatives;
 
-        Tensor<type, 4> error_query_derivatives;
-        Tensor<type, 4> error_key_derivatives;
-        Tensor<type, 4> error_value_derivatives;
+    Tensor<type, 3> projection_weights_derivatives;
 
-        Tensor<type, 3> query_weights_derivatives;
-        Tensor<type, 3> key_weights_derivatives;
-        Tensor<type, 3> value_weights_derivatives;
+    Tensor<type, 2> query_biases_derivatives;
+    Tensor<type, 2> key_biases_derivatives;
+    Tensor<type, 2> value_biases_derivatives;
+    Tensor<type, 1> projection_biases_derivatives;
 
-        Tensor<type, 3> projection_weights_derivatives;
+    Tensor<type, 1> aux_rows;
 
-        Tensor<type, 2> query_biases_derivatives;
-        Tensor<type, 2> key_biases_derivatives;
-        Tensor<type, 2> value_biases_derivatives;
-        Tensor<type, 1> projection_biases_derivatives;
+    Tensor<type, 3> input_derivatives;
+    Tensor<type, 3> context_derivatives;
+};
 
-        Tensor<type, 1> aux_rows;
-
-        Tensor<type, 3> input_derivatives;
-        Tensor<type, 3> context_derivatives;
-    };
-
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_forward_propagation_cuda.h"
-        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_back_propagation_cuda.h"
-    #endif
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_back_propagation_cuda.h"
+#endif
 
 }
 

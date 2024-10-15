@@ -8,6 +8,7 @@
 
 #include "layer.h"
 #include "tensors.h"
+#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {

@@ -174,31 +174,20 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     {
     }
 
-
-    
-
     explicit ProbabilisticLayer3DForwardPropagation(const Index new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
-    }
-
-
-    virtual ~ProbabilisticLayer3DForwardPropagation()
-    {
-    }
-    
+    }    
     
     pair<type*, dimensions> get_outputs_pair() const final;
 
-
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
+        cout << "Outputs:" << endl
+             << outputs << endl;
     }
 
     Tensor<type, 3> outputs;
@@ -209,13 +198,7 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 {
     explicit ProbabilisticLayer3DBackPropagation() : LayerBackPropagation()
     {
-
     }
-
-    virtual ~ProbabilisticLayer3DBackPropagation()
-    {
-    }
-
 
     explicit ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()

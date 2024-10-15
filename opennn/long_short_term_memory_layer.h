@@ -9,12 +9,8 @@
 #ifndef LONGSHORTTERMMEMORYLAYER_H
 #define LONGSHORTTERMMEMORYLAYER_H
 
-
-
 #include <iostream>
 #include <string>
-
-
 
 #include "config.h"
 #include "layer.h"
@@ -315,11 +311,6 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     explicit LongShortTermMemoryLayerBackPropagation() : LayerBackPropagation()
     {
     }
-
-    virtual ~LongShortTermMemoryLayerBackPropagation()
-    {
-    }
-
 
     explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()

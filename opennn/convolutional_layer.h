@@ -251,8 +251,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
 
-   virtual ~ConvolutionalLayerBackPropagation();
-
    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
    void set(const Index&, Layer*) final;

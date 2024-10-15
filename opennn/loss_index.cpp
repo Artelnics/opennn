@@ -594,13 +594,9 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-BackPropagation::~BackPropagation()
-{
-}
-
-
 void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_loss_index)
 {
+
     loss_index = new_loss_index;
 
     batch_samples_number = new_batch_samples_number;
@@ -665,7 +661,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
     const vector<vector<Index>>& layer_input_indices = neural_network_ptr->get_layer_input_indices();
     const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
 
-    const vector<unique_ptr<LayerBackPropagation>> layer_back_propagations = neural_network.get_layers();
+    const vector<unique_ptr<LayerBackPropagation>>& layer_back_propagations = neural_network.get_layers();
 
     vector<pair<type*, dimensions>> input_derivative_pairs;
 

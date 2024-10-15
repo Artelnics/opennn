@@ -748,11 +748,6 @@ PoolingLayerBackPropagation::PoolingLayerBackPropagation(const Index& new_batch_
 }
 
 
-PoolingLayerBackPropagation::~PoolingLayerBackPropagation()
-{
-}
-
-
 void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     batch_samples_number = new_batch_samples_number;

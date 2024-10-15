@@ -64,13 +64,7 @@ public:
 
    explicit NeuralNetwork(const string&);
 
-   // Destructor
-
-   virtual ~NeuralNetwork();
-
    // APPENDING LAYERS
-
-//   void delete_layers();
 
    void add_layer(unique_ptr<Layer>, 
                   const string& name = "layer", 

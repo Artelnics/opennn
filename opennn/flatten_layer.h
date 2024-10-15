@@ -157,11 +157,6 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
         set(new_batch_samples_number, new_layer);
     }
 
-
-    virtual ~FlattenLayerBackPropagation()
-    {
-    }
-
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;

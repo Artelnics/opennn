@@ -29,13 +29,7 @@ public:
 
     explicit InputsSelectionTest();
 
-    virtual ~InputsSelectionTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Unit testing
 

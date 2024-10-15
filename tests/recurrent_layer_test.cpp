@@ -19,11 +19,6 @@ RecurrentLayerTest::RecurrentLayerTest() : UnitTesting()
 }
 
 
-RecurrentLayerTest::~RecurrentLayerTest()
-{
-}
-
-
 void RecurrentLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -56,15 +51,6 @@ void RecurrentLayerTest::test_constructor()
 
     assert_true(recurrent_layer.get_parameters_number() == 18, LOG);
     assert_true(recurrent_layer.get_biases_number() == 3, LOG);
-}
-
-
-void RecurrentLayerTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    RecurrentLayer* recurrent_layer = new RecurrentLayer;
-    delete recurrent_layer;
 }
 
 
@@ -164,11 +150,7 @@ void RecurrentLayerTest::run_test_case()
 {
     cout << "Running recurrent layer test case...\n";
 
-     and destructor
-
     test_constructor();
-
-    test_destructor();
 
     test_calculate_activations();
 

@@ -29,12 +29,7 @@ public:
 
    explicit GeneticAlgorithmTest();  
 
-   virtual ~GeneticAlgorithmTest();
-
-    and destructor
-
    void test_constructor();
-   void test_destructor();
 
    // Population
 

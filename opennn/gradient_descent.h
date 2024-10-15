@@ -126,19 +126,14 @@ struct GradientDescentData : public OptimizationAlgorithmData
         set(new_gradient_descent);
     }
 
-
-    virtual ~GradientDescentData() {}
-
     void set(GradientDescent* new_gradient_descent);
-
 
     virtual void print() const
     {
-        cout << "Training direction:" << endl;
-        cout << training_direction << endl;
-
-        cout << "Learning rate:" << endl;
-        cout << learning_rate << endl;
+        cout << "Training direction:" << endl
+             << training_direction << endl
+             << "Learning rate:" << endl
+             << learning_rate << endl;
     }
 
     GradientDescent* gradient_descent = nullptr;

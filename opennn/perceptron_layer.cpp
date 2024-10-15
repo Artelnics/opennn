@@ -775,12 +775,6 @@ PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation(const Index
 }
 
 
-PerceptronLayerForwardPropagation::~PerceptronLayerForwardPropagation()
-{
-
-}
-
-
 void PerceptronLayerForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
@@ -801,12 +795,6 @@ PerceptronLayerBackPropagation::PerceptronLayerBackPropagation(const Index &new_
     : LayerBackPropagation()
 {
     set(new_batch_samples_number, new_layer);
-}
-
-
-PerceptronLayerBackPropagation::~PerceptronLayerBackPropagation()
-{
-
 }
 
 
@@ -864,12 +852,6 @@ PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &
     : LayerBackPropagationLM()
 {
     set(new_batch_samples_number, new_layer);
-}
-
-
-PerceptronLayerBackPropagationLM::~PerceptronLayerBackPropagationLM()
-{
-
 }
 
 

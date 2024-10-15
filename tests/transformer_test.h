@@ -26,10 +26,7 @@ public:
 
     explicit TransformerTest();
 
-    virtual ~TransformerTest();
-
     void test_constructor();
-    void test_destructor();
 
     void test_forward_propagate();
 

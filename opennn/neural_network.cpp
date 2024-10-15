@@ -59,18 +59,6 @@ NeuralNetwork::NeuralNetwork(const string& file_name)
 }
 
 
-NeuralNetwork::~NeuralNetwork()
-{
-//    delete_layers();
-}
-
-
-//void NeuralNetwork::delete_layers()
-//{
-//    layers.resize(0);
-//}
-
-
 void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const vector<Index>& input_indices)
 {
     const Layer::Type layer_type = layer->get_type();
@@ -2085,6 +2073,7 @@ Tensor<string, 1> NeuralNetwork::get_layer_types_string() const
 
 void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
+
     batch_samples_number = new_batch_samples_number;
 
     neural_network = new_neural_network;
@@ -2154,11 +2143,13 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         default: break;
         }
     }
+
 }
 
 
 void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
+
     batch_samples_number = new_batch_samples_number;
 
     neural_network = new_neural_network;
@@ -2167,7 +2158,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
     const Index layers_number = neural_network_layers.size();
 
-    layers.resize(layers_number, nullptr);
+    layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
     {

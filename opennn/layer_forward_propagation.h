@@ -1,7 +1,7 @@
 #ifndef LAYERFORWARDPROPAGATION_H
 #define LAYERFORWARDPROPAGATION_H
 
-#include "layer.h"
+//#include "layer.h"
 #include "config.h"
 
 using namespace std;
@@ -9,6 +9,9 @@ using namespace Eigen;
 
 namespace opennn
 {
+
+class Layer;
+
 
 struct LayerForwardPropagation
 {

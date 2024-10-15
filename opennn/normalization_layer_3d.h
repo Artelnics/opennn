@@ -153,17 +153,9 @@ namespace opennn
             set(new_batch_samples_number, new_layer);
         }
 
-
-        virtual ~NormalizationLayer3DForwardPropagation()
-        {
-        }
-
-
         pair<type*, dimensions> get_outputs_pair() const final;
 
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
         void print() const
         {
@@ -190,16 +182,10 @@ namespace opennn
 
         }
 
-
         explicit NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
             : LayerBackPropagation()
         {
             set(new_batch_samples_number, new_layer);
-        }
-
-
-        virtual ~NormalizationLayer3DBackPropagation()
-        {
         }
 
         vector<pair<type*, dimensions>> get_input_derivative_pairs() const;

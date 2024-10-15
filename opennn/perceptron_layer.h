@@ -201,8 +201,6 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
     explicit PerceptronLayerForwardPropagation(const Index&, Layer*);
 
-    virtual ~PerceptronLayerForwardPropagation();
-
     pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index&, Layer*) final;
@@ -217,13 +215,9 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-    
-
     explicit PerceptronLayerBackPropagation();
 
     explicit PerceptronLayerBackPropagation(const Index&, Layer*);
-
-    virtual ~PerceptronLayerBackPropagation();
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
@@ -241,13 +235,9 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
-    
-
     explicit PerceptronLayerBackPropagationLM();
 
     explicit PerceptronLayerBackPropagationLM(const Index&, Layer*);
-
-    virtual ~PerceptronLayerBackPropagationLM();
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 

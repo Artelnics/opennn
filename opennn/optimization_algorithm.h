@@ -147,20 +147,14 @@ struct OptimizationAlgorithmData
     {
     }
 
-    virtual ~OptimizationAlgorithmData()
-    {
-    }
-
     void print() const
     {
-        cout << "Potential parameters:" << endl;
-        cout << potential_parameters << endl;
-
-        cout << "Training direction:" << endl;
-        cout << training_direction << endl;
-
-        cout << "Initial learning rate:" << endl;
-        cout << initial_learning_rate << endl;
+        cout << "Potential parameters:" << endl
+             << potential_parameters << endl
+             << "Training direction:" << endl
+             << training_direction << endl
+             << "Initial learning rate:" << endl
+             << initial_learning_rate << endl;
     }
 
     Tensor<type, 1> potential_parameters;
@@ -177,8 +171,6 @@ struct TrainingResults
     }
 
     explicit TrainingResults(const Index& epochs_number);
-
-    virtual ~TrainingResults() {}
 
     string write_stopping_condition() const;
 

@@ -24,10 +24,7 @@ public:
 
     explicit ProbabilisticLayerTest();
 
-    virtual ~ProbabilisticLayerTest();
-
     void test_constructor();
-    void test_destructor();
 
     void test_calculate_combinations();
     void test_calculate_activations();

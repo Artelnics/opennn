@@ -24,10 +24,7 @@ public:
 
    explicit PoolingLayerTest();
 
-   virtual ~PoolingLayerTest();
-
    void test_constructor();
-   void test_destructor();
 
    void test_forward_propagate_average_pooling();
    void test_forward_propagate_max_pooling();

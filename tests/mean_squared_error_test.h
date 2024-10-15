@@ -26,13 +26,7 @@ public:
 
     explicit MeanSquaredErrorTest();
 
-    virtual ~MeanSquaredErrorTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Back-propagation
 

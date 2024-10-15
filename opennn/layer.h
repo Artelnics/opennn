@@ -13,15 +13,16 @@
 
 #include "config.h"
 #include "tinyxml2.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
 
-class Layer;
-
-struct LayerForwardPropagation;
-struct LayerBackPropagation;
-struct LayerBackPropagationLM;
+//struct LayerForwardPropagation;
+//struct LayerBackPropagation;
+//struct LayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
 struct LayerForwardPropagationCuda;
@@ -52,8 +53,6 @@ public:
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};
-
-    
 
     explicit Layer();
 

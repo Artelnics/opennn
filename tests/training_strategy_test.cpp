@@ -17,11 +17,6 @@ TrainingStrategyTest::TrainingStrategyTest() : UnitTesting()
 }
 
 
-TrainingStrategyTest::~TrainingStrategyTest()
-{
-}
-
-
 void TrainingStrategyTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -32,16 +27,6 @@ void TrainingStrategyTest::test_constructor()
 
     assert_true(training_strategy.get_neural_network() != nullptr, LOG);
     assert_true(training_strategy.get_data_set() != nullptr, LOG);
-}
-
-
-void TrainingStrategyTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    TrainingStrategy* training_strategy = new TrainingStrategy(&neural_network, &data_set);
-
-    delete training_strategy;
 }
 
 
@@ -158,10 +143,7 @@ void TrainingStrategyTest::run_test_case()
 {
     cout << "Running training strategy test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Training
 

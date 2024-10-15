@@ -191,8 +191,6 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
     explicit PoolingLayerBackPropagation(const Index&, Layer*);
 
-    virtual ~PoolingLayerBackPropagation();
-
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index&, Layer*) final;

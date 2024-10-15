@@ -799,12 +799,6 @@ ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
 }
 
 
-ProbabilisticLayerForwardPropagation::~ProbabilisticLayerForwardPropagation()
-{
-
-}
-
-
 pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -850,12 +844,6 @@ void ProbabilisticLayerForwardPropagation::print() const
 
 ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation() : LayerBackPropagation() 
 {
-}
-
-
-ProbabilisticLayerBackPropagation::~ProbabilisticLayerBackPropagation() 
-{
-
 }
 
 
