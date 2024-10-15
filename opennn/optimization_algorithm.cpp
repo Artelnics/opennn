@@ -175,10 +175,7 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 //         const type distance = l2_distance(input_row, output_row)/inputs_number;
 
 //         if(!isnan(distance))
-//         {
-//             distances(distance_index) = l2_distance(input_row, output_row)/inputs_number;
-//             distance_index++;
-//         }
+//             distances(distance_index++) = l2_distance(input_row, output_row)/inputs_number;
 //     }
 
 //     return box_plot(distances);
