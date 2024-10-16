@@ -259,14 +259,14 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                      LayerForwardPropagation* forward_propagation,
+void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                      unique_ptr<LayerForwardPropagation> forward_propagation,
                                       const bool& is_training)
 {
-    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(inputs_pair(0));
+    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
-    BoundingLayerForwardPropagation* bounding_layer_forward_propagation
-            = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);
+    unique_ptr<BoundingLayerForwardPropagation> bounding_layer_forward_propagation
+        (static_cast<BoundingLayerForwardPropagation*>(forward_propagation.release()));
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
@@ -313,7 +313,7 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& output_names) const
+string BoundingLayer::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
@@ -324,10 +324,8 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, con
         const Index neurons_number = get_neurons_number();
 
         for(Index i = 0; i < neurons_number; i++)
-        {
-            buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_name[i] << ")\n";
-            buffer << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
-        }
+            buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
+                   << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
     }
 
     return buffer.str();
@@ -336,11 +334,9 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, con
 
 void BoundingLayer::print() const
 {
-    cout << "Bounding layer" << endl;
-
-    cout << "Lower bounds: " << lower_bounds << endl;
-
-    cout << "Upper bounds: " << upper_bounds << endl;
+    cout << "Bounding layer" << endl
+         << "Lower bounds: " << lower_bounds << endl
+         << "Upper bounds: " << upper_bounds << endl;
 }
 
 
@@ -465,7 +461,7 @@ pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() cons
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
+    return { outputs_data, { batch_samples_number, neurons_number } };
 }
 
 

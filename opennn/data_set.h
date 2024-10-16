@@ -11,11 +11,11 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "tinyxml2.h"
 #include "histogram.h"

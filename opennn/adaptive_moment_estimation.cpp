@@ -179,7 +179,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
 
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();    
 
@@ -217,7 +217,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_inputs_names(inputs_name);
+    neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer_2d())
@@ -238,7 +238,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
 
-    Tensor<pair<type*, dimensions>, 1> inputs_pair;
+    vector<pair<type*, dimensions>> input_pairs;
 
     // Loss index
 
@@ -293,6 +293,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
+            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
             training_batch.fill(training_batches.chip(iteration, 0),
@@ -302,9 +303,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
 
-            inputs_pair = training_batch.get_inputs_pair();
+            input_pairs = training_batch.get_input_pairs();
 
-            neural_network->forward_propagate(inputs_pair,
+            neural_network->forward_propagate(input_pairs,
                                               training_forward_propagation,
                                               is_training);
 
@@ -356,9 +357,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      context_variables_indices);               
                 // Neural network
                 
-                inputs_pair = selection_batch.get_inputs_pair();
+                input_pairs = selection_batch.get_input_pairs();
 
-                neural_network->forward_propagate(inputs_pair,
+                neural_network->forward_propagate(input_pairs,
                                                   selection_forward_propagation,
                                                   is_training);
                 
@@ -674,9 +675,8 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 void AdaptiveMomentEstimationData::print() const
 {
     cout << "Gradient exponential decay:" << endl
-         <<gradient_exponential_decay << endl;
-
-    cout << "Square gradient exponential decay:" << endl
+         << gradient_exponential_decay << endl
+         << "Square gradient exponential decay:" << endl
          << square_gradient_exponential_decay << endl;
 }
 

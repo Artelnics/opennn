@@ -18,11 +18,6 @@ NeuronsSelectionTest::NeuronsSelectionTest() : UnitTesting()
 }
 
 
-NeuronsSelectionTest::~NeuronsSelectionTest()
-{
-}
-
-
 void NeuronsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -41,25 +36,11 @@ void NeuronsSelectionTest::test_constructor()
 }
 
 
-void NeuronsSelectionTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    GrowingNeurons* growing_neurons = new GrowingNeurons;
-
-    delete growing_neurons;
-}
-
-
 void NeuronsSelectionTest::run_test_case()
 {
     cout << "Running neurons selection algorithm test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-
-    test_destructor();
 
     cout << "End of neurons selection algorithm test case.\n\n";
 }

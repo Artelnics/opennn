@@ -94,17 +94,13 @@ struct TransformerForwardPropagation : ForwardPropagation
         set(new_batch_samples, new_neural_network);
     }
 
-    // Destructor
-
-    virtual ~TransformerForwardPropagation();
-
     void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network);
 
     void print() const;
 
     Index batch_samples_number = 0;
 
-    Tensor<LayerForwardPropagation*, 1> layers;
+    Tensor<unique_ptr<LayerForwardPropagation>, 1> layers;
 };
 };
 

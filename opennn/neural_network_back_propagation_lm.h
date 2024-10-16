@@ -20,25 +20,12 @@ struct NeuralNetworkBackPropagationLM
         neural_network = new_neural_network;
     }
 
-    virtual ~NeuralNetworkBackPropagationLM()
-    {
-        const Index layers_number = layers.size();
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            delete layers[i];
-        }
-    }
-
-
     void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network);
 
-
-    Tensor<LayerBackPropagationLM*, 1> get_layers() const 
+    const vector<unique_ptr<LayerBackPropagationLM>>& get_layers() const 
     {
         return layers;
     }
-
 
     NeuralNetwork* get_neural_network() const
     {
@@ -64,7 +51,7 @@ struct NeuralNetworkBackPropagationLM
 
     NeuralNetwork* neural_network = nullptr;
 
-    Tensor<LayerBackPropagationLM*, 1> layers;
+    vector<unique_ptr<LayerBackPropagationLM>> layers;
 };
 
 }

@@ -18,11 +18,6 @@ PoolingLayerTest::PoolingLayerTest() : UnitTesting()
 }
 
 
-PoolingLayerTest::~PoolingLayerTest()
-{
-}
-
-
 void PoolingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -41,12 +36,6 @@ void PoolingLayerTest::test_constructor()
 
     assert_true(pooling_layer.get_pool_height() == 3 
                 && pooling_layer.get_pool_width() == 2, LOG);
-}
-
-
-void PoolingLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
 }
 
 
@@ -372,10 +361,7 @@ void PoolingLayerTest::run_test_case()
 {
    cout << "Running pooling layer test case...\n";
 
-   // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Outputs
 

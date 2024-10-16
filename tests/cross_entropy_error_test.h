@@ -28,10 +28,7 @@ public:
 
     explicit CrossEntropyErrorTest();
 
-    virtual ~CrossEntropyErrorTest();
-
     void test_constructor();
-    void test_destructor();
 
     void test_back_propagate();
 

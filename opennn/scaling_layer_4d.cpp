@@ -110,15 +110,15 @@ bool ScalingLayer4D::is_empty() const
 }
 
 
-void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                     LayerForwardPropagation* forward_propagation,
-                                     const bool& is_training)
+void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                       unique_ptr<LayerForwardPropagation> forward_propagation,
+                                       const bool& is_training)
 {
-    ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation
-            = static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation);
+    unique_ptr<ScalingLayer4DForwardPropagation> scaling_layer_forward_propagation
+        (static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.release()));
 
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(inputs_pair(0));
-    
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
+
     Tensor<type, 4>& outputs = scaling_layer_forward_propagation->outputs;
 
     outputs.device(*thread_pool_device) = inputs/type(255); 
@@ -226,9 +226,11 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 
 pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(layer);
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number, 1, 1 });
+    const dimensions output_dimensions = scaling_layer_4d->get_output_dimensions();
+
+    return {outputs_data, {batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]}};
 }
 
 

@@ -17,16 +17,9 @@ ImageDataSetTest::ImageDataSetTest() : UnitTesting()
 }
 
 
-ImageDataSetTest::~ImageDataSetTest()
-{
-}
-
-
 void ImageDataSetTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
-    // Default constructor
+    cout << "test_constructor\n";    
 
     ImageDataSet data_set_1;
 
@@ -45,21 +38,11 @@ void ImageDataSetTest::test_constructor()
 }
 
 
-void ImageDataSetTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    ImageDataSet* data_set = new ImageDataSet();
-    delete data_set;
-}
-
-
 void ImageDataSetTest::run_test_case()
 {
     cout << "Running image data set test case...\n";
 
     test_constructor();
-    test_destructor();
 
     cout << "End of image data set test case.\n\n";
 }

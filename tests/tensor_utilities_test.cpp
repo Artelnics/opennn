@@ -19,11 +19,6 @@ TensorsTest::TensorsTest() : UnitTesting()
 }
 
 
-TensorsTest::~TensorsTest()
-{
-}
-
-
 void TensorsTest::test_fill_tensor_data()
 {
     cout << "test_fill_tensor_data\n";

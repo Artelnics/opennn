@@ -25,13 +25,7 @@ public:
 
     explicit QuasiNewtonMethodTest();
 
-    virtual ~QuasiNewtonMethodTest();
-
-    // Constructor and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Training
 

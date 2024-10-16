@@ -9,11 +9,11 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "neural_network.h"
@@ -102,8 +102,6 @@ struct ResponseOptimizationResults
     {
         neural_network = new_neural_network;
     }
-
-    virtual ~ResponseOptimizationResults(){}
 
     DataSet* data_set = nullptr;
 

@@ -274,9 +274,9 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 
-    const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();  
+    const pair<type*, dimensions> delta_pairs = back_propagation.get_output_deltas_pair();  
 
-    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(deltas_pair);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
     const type coefficient = type(2*total_samples_number) / (type(batch_samples_number)*normalization_coefficient);
 

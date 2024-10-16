@@ -27,13 +27,7 @@ public:
 
     explicit LearningRateAlgorithmTest();
 
-    virtual ~LearningRateAlgorithmTest();
-
-    // Constructor and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Training
 

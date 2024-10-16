@@ -25,16 +25,9 @@ StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 }
 
 
-StochasticGradientDescentTest::~StochasticGradientDescentTest()
-{
-}
-
-
 void StochasticGradientDescentTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     StochasticGradientDescent stochastic_gradient_descent_1;
     assert_true(!stochastic_gradient_descent_1.has_loss_index(), LOG);
@@ -43,15 +36,6 @@ void StochasticGradientDescentTest::test_constructor()
 
     StochasticGradientDescent stochastic_gradient_descent_2(&sum_squared_error);
     assert_true(stochastic_gradient_descent_2.has_loss_index(), LOG);
-}
-
-
-void StochasticGradientDescentTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    StochasticGradientDescent* stochastic_gradient_descent = new StochasticGradientDescent;
-    delete stochastic_gradient_descent;
 }
 
 
@@ -225,11 +209,7 @@ void StochasticGradientDescentTest::run_test_case()
 {
     cout << "Running stochastic gradient descent test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-
-    test_destructor();
 
     // Training
 

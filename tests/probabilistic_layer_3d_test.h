@@ -24,13 +24,7 @@ public:
 
     explicit ProbabilisticLayer3DTest();
 
-    virtual ~ProbabilisticLayer3DTest();
-
-    // Constructor and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Forward propagate
 

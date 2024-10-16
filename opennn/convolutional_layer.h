@@ -9,11 +9,7 @@
 #ifndef CONVOLUTIONALLAYER_H
 #define CONVOLUTIONALLAYER_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
 
 #include "tinyxml2.h"
 #include "layer.h"
@@ -25,8 +21,8 @@
 namespace opennn
 {
 
-struct ConvolutionalLayerForwardPropagation;
-struct ConvolutionalLayerBackPropagation;
+//struct ConvolutionalLayerForwardPropagation;
+//struct ConvolutionalLayerBackPropagation;
 
 #ifdef OPENNN_CUDA
 struct ConvolutionalLayerForwardPropagationCuda;
@@ -156,24 +152,24 @@ public:
     void calculate_convolutions(const Tensor<type, 4>&,
                                 Tensor<type, 4>&) const;
 
-    void normalize(LayerForwardPropagation*, const bool&);
+    void normalize(unique_ptr<LayerForwardPropagation>, const bool&);
 
-    void shift(LayerForwardPropagation*);
+    void shift(unique_ptr<LayerForwardPropagation>);
 
     void calculate_activations(Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                           LayerForwardPropagation*,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>,
                            const bool&) final;
 
    // Back propagation
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
-                                 const vector<pair<type*, dimensions>>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+                       const vector<pair<type*, dimensions>>&,
+                       unique_ptr<LayerForwardPropagation>,
+                       unique_ptr<LayerBackPropagation>) const final;
 
-   void insert_gradient(LayerBackPropagation*,
+   void insert_gradient(unique_ptr<LayerBackPropagation>,
                         const Index&,
                         Tensor<type, 1>&) const final;
 
@@ -224,11 +220,11 @@ protected:
 
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
-   // Default constructor
+   
 
    explicit ConvolutionalLayerForwardPropagation();
 
-   // Constructor
+   
 
    explicit ConvolutionalLayerForwardPropagation(const Index&, Layer*);
       
@@ -255,7 +251,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
 
-   virtual ~ConvolutionalLayerBackPropagation();
+   vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
    void set(const Index&, Layer*) final;
 

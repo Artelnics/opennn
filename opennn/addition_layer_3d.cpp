@@ -87,16 +87,16 @@ void AdditionLayer3D::set_display(const bool& new_display)
 }
 
 
-void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                        LayerForwardPropagation* layer_forward_propagation,
+void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                        unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> input_1 = tensor_map_3(inputs_pair(0));
+    const TensorMap<Tensor<type, 3>> input_1 = tensor_map_3(input_pairs[0]);
     
-    const TensorMap<Tensor<type, 3>> input_2 = tensor_map_3(inputs_pair(1));
+    const TensorMap<Tensor<type, 3>> input_2 = tensor_map_3(input_pairs[1]);
 
-    AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
-        static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation);
+    unique_ptr<AdditionLayer3DForwardPropagation> addition_layer_3d_forward_propagation 
+        (static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation.release()));
 
     Tensor<type, 3>& outputs = addition_layer_3d_forward_propagation->outputs;
 
@@ -104,17 +104,17 @@ void AdditionLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
 }
 
 
-void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
-                                     const vector<pair<type*, dimensions>>& deltas_pair,
-                                     LayerForwardPropagation* forward_propagation,
-                                     LayerBackPropagation* back_propagation) const
+void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                     const vector<pair<type*, dimensions>>& delta_pairs,
+                                     unique_ptr<LayerForwardPropagation> forward_propagation,
+                                     unique_ptr<LayerBackPropagation> back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     // Back propagation
 
-    AdditionLayer3DBackPropagation* addition_layer_3d_back_propagation =
-        static_cast<AdditionLayer3DBackPropagation*>(back_propagation);
+    unique_ptr<AdditionLayer3DBackPropagation> addition_layer_3d_back_propagation 
+        (static_cast<AdditionLayer3DBackPropagation*>(back_propagation.release()));
 
     Tensor<type, 3>& input_1_derivatives = addition_layer_3d_back_propagation->input_1_derivatives;
 
@@ -196,7 +196,6 @@ void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-
 pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() const
 {
     AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
@@ -204,8 +203,9 @@ pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() co
     const Index inputs_number = addition_layer_3d->get_inputs_number();
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, inputs_depth });
+    return {outputs_data, {batch_samples_number, inputs_number, inputs_depth}};
 }
+
 
 void AdditionLayer3DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -237,9 +237,19 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
 
     input_1_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
     input_2_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
 
-    inputs_derivatives = {{input_1_derivatives.data(), {batch_samples_number, inputs_number, inputs_depth}},
-                          {input_2_derivatives.data(), {batch_samples_number, inputs_number, inputs_depth}}};
+
+vector<pair<type*, dimensions>> AdditionLayer3DBackPropagation::get_input_derivative_pairs() const
+{
+    AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
+
+    const Index inputs_number = addition_layer_3d->get_inputs_number();
+    const Index inputs_depth = addition_layer_3d->get_inputs_depth();
+
+    return
+    {{(type*)input_1_derivatives.data(), {batch_samples_number, inputs_number, inputs_depth}},
+     {(type*)input_2_derivatives.data(), {batch_samples_number, inputs_number, inputs_depth}}};
 }
 
 }

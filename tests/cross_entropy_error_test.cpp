@@ -21,26 +21,11 @@ CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting()
 }
 
 
-CrossEntropyErrorTest::~CrossEntropyErrorTest()
-{
-}
-
-
 void CrossEntropyErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
 
     CrossEntropyError cross_entropy_error;
-}
-
-
-void CrossEntropyErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    CrossEntropyError* cross_entropy_error = new CrossEntropyError;
-
-    delete cross_entropy_error;
 }
 
 
@@ -74,7 +59,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, true);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
         // Loss index
 
@@ -118,7 +103,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -188,7 +173,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         }
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -263,7 +248,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         }
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -343,7 +328,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         }
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -375,7 +360,6 @@ void CrossEntropyErrorTest::run_test_case()
     cout << "Running cross-entropy error test case...\n";
 
     test_constructor();
-    test_destructor();
 
     test_back_propagate();
 

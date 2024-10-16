@@ -24,12 +24,7 @@ public:
 
    explicit FlattenLayerTest();
 
-   virtual ~FlattenLayerTest();
-
-   // Constructor and destructor
-
    void test_constructor();
-   void test_destructor();
 
    // Forward propagation
 

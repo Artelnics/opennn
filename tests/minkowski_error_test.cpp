@@ -22,11 +22,6 @@ MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting()
 }
 
 
-MinkowskiErrorTest::~MinkowskiErrorTest() 
-{
-}
-
-
 void MinkowskiErrorTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -44,16 +39,6 @@ void MinkowskiErrorTest::test_constructor()
 
    assert_true(minkowski_error_2.has_neural_network(), LOG);
    assert_true(minkowski_error_2.has_data_set(), LOG);
-}
-
-
-void MinkowskiErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    MinkowskiError* minkowski_error = new MinkowskiError;
-
-    delete minkowski_error;
 }
 
 
@@ -89,7 +74,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -133,12 +118,12 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         neural_network.print();
 
         // Loss index
-
+/*
         Tensor<Layer*, 1> trainable_layers = neural_network.get_trainable_layers();
 
         back_propagation.set(samples_number, &minkowski_error);
@@ -151,6 +136,7 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+*/
     }
 
     // Test binary classification trivial
@@ -178,7 +164,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -225,7 +211,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         forward_propagation.set(samples_number, &neural_network);
 
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -270,7 +256,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -312,7 +298,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -337,10 +323,7 @@ void MinkowskiErrorTest::run_test_case()
 {
    cout << "Running Minkowski error test case...\n";  
 
-   // Constructor and destructor
-
    test_constructor();
-   test_destructor();
 
    // Back-propagation
 

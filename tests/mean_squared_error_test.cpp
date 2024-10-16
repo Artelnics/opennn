@@ -23,11 +23,6 @@ MeanSquaredErrorTest::MeanSquaredErrorTest() : UnitTesting()
 }
 
 
-MeanSquaredErrorTest::~MeanSquaredErrorTest()
-{
-}
-
-
 void MeanSquaredErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -45,24 +40,6 @@ void MeanSquaredErrorTest::test_constructor()
 
     assert_true(mean_squared_error_2.has_neural_network(), LOG);
     assert_true(mean_squared_error_2.has_data_set(), LOG);
-}
-
-
-void MeanSquaredErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    // Default
-
-    MeanSquaredError* mean_squared_error_1 = new MeanSquaredError;
-
-    delete mean_squared_error_1;
-
-    // Neural network and data set
-
-    MeanSquaredError* mean_squared_error_2 = new MeanSquaredError(&neural_network, &data_set);
-
-    delete mean_squared_error_2;
 }
 
 
@@ -102,7 +79,7 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -146,7 +123,7 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -187,7 +164,7 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -232,7 +209,7 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -275,7 +252,7 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -348,7 +325,7 @@ void MeanSquaredErrorTest::test_back_propagate_recurrent()
     neural_network.add_layer(recurrent_layer);
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, true);
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 
@@ -408,7 +385,7 @@ void MeanSquaredErrorTest::test_back_propagate_long_short_term_memory()
     neural_network.add_layer(lstm_layer);
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, true);
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 
@@ -462,7 +439,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -515,7 +492,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // not running in visual studio
 
@@ -567,7 +544,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -675,7 +652,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -715,7 +692,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -761,7 +738,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -804,7 +781,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -845,7 +822,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -1822,7 +1799,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         neural_network.add_layer(perceptron_layer);
 
         ForwardPropagation forward_propagation(images_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         cout << "End forward propagate" << endl;
 
@@ -2004,7 +1981,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         neural_network.add_layer(perceptron_layer);
 
         ForwardPropagation forward_propagation(images_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
 
       MeanSquaredError mean_squared_error(&neural_network, &data_set);
@@ -2032,7 +2009,6 @@ void MeanSquaredErrorTest::run_test_case()
     cout << "Running mean squared error test case...\n";
 
     test_constructor();
-    test_destructor();
 
     // Convolutional network
 

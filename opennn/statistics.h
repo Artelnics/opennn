@@ -9,7 +9,7 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-// System includes
+
 
 #include <fstream>
 #include <iostream>
@@ -17,7 +17,7 @@
 #include <math.h>
 #include <vector>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "descriptives.h"

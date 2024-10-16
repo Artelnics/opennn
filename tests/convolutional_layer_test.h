@@ -24,12 +24,9 @@ public:
 
     explicit ConvolutionalLayerTest();
 
-    virtual ~ConvolutionalLayerTest();
-
     void test_eigen_convolution();
 
     void test_constructor();
-    void test_destructor();
 
     void test_calculate_convolutions();
 

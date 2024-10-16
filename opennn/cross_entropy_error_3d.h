@@ -9,9 +9,9 @@
 #ifndef CROSSENTROPYERROR3D_H
 #define CROSSENTROPYERROR3D_H
 
-// System includes
 
-// OpenNN includes
+
+
 
 #include "loss_index.h"
 #include "data_set.h"

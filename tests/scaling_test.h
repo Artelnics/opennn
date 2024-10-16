@@ -23,7 +23,6 @@ class ScalingTest : public UnitTesting
 public: 
 
     explicit ScalingTest();
-    virtual ~ScalingTest();
 
     // Scaling
 
