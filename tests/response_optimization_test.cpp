@@ -17,11 +17,6 @@ ResponseOptimizationTest::ResponseOptimizationTest() : UnitTesting()
 }
 
 
-ResponseOptimizationTest::~ResponseOptimizationTest()
-{
-}
-
-
 void ResponseOptimizationTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -38,16 +33,6 @@ void ResponseOptimizationTest::test_constructor()
     assert_true(response_optimization_2.get_outputs_conditions()(1) == ResponseOptimization::Condition::None, LOG);
 
     ResponseOptimization response_optimization_3;
-}
-
-
-void ResponseOptimizationTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    ResponseOptimization* response_optimization_1 = new ResponseOptimization;
-
-    delete response_optimization_1;
 }
 
 
@@ -180,10 +165,7 @@ void ResponseOptimizationTest::run_test_case()
 {
     cout << "Running response optimization test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Performance
 

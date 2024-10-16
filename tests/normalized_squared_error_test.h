@@ -26,10 +26,7 @@ public:
 
     explicit NormalizedSquaredErrorTest();
 
-    virtual ~NormalizedSquaredErrorTest();
-
     void test_constructor();
-    void test_destructor();
 
     void test_calculate_normalization_coefficient();
 

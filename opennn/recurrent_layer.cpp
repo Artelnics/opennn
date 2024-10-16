@@ -467,7 +467,7 @@ void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
 
 
 void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation> forward_propagation,
+                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
@@ -514,8 +514,8 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
 void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                     const vector<pair<type*, dimensions>>& delta_pairs,
-                                    unique_ptr<LayerForwardPropagation> forward_propagation,
-                                    unique_ptr<LayerBackPropagation> back_propagation) const
+                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();

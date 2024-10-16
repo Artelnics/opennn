@@ -1040,7 +1040,7 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 {
 
     const Index raw_variables_number = get_raw_variables_number();
-    const Tensor<string,1> raw_variables_names = get_raw_variables_names();
+    const Tensor<string,1> raw_variables_names = get_raw_variable_names();
 
     const Tensor<string, 1> tokens = get_tokens(sentence, " ");
 
@@ -1327,7 +1327,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                             }
                             else
                             {
-                                r1_r2[0] = "";
+                                r1_r2[0].clear();
                             }
 
                             if(r1_r2[1].length() >= current_suffix.length())
@@ -1336,7 +1336,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                             }
                             else
                             {
-                                r1_r2[1] = "";
+                                r1_r2[1].clear();
                             }
                         }
                     }
@@ -1410,7 +1410,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                 }
                 else
                 {
-                    r1_r2[0] = "";
+                    r1_r2[0].clear();
                 }
 
                 if(r1_r2[1].length() >= 1)
@@ -1419,7 +1419,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                 }
                 else
                 {
-                    r1_r2[1] = "";
+                    r1_r2[1].clear();
                 }
             }
 
@@ -1447,7 +1447,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[0] = "";
+                            r1_r2[0].clear();
                         }
 
                         if(r1_r2[1].length() >= 1)
@@ -1456,7 +1456,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[1] = "";
+                            r1_r2[1].clear();
                         }
                     }
                     else if(current_suffix == "entli")
@@ -1475,7 +1475,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[0] = "";
+                            r1_r2[0].clear();
                         }
 
                         if(r1_r2[1].length() >= current_suffix.length())
@@ -1484,7 +1484,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[1] = "";
+                            r1_r2[1].clear();
                         }
                     }
                     else if(current_suffix == "ational" || current_suffix == "ation" || current_suffix == "ator")
@@ -1497,7 +1497,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[0] = "";
+                            r1_r2[0].clear();
                         }
 
                         if(r1_r2[1].length() >= current_suffix.length())
@@ -1519,7 +1519,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[0] = "";
+                            r1_r2[0].clear();
                         }
 
                         if(r1_r2[1].length() >= current_suffix.length())
@@ -1528,7 +1528,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[1] = "";
+                            r1_r2[1].clear();
                         }
                     }
                     else if(current_suffix == "fulness")
@@ -1547,7 +1547,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[0] = "";
+                            r1_r2[0].clear();
                         }
 
                         if(r1_r2[1].length() >= current_suffix.length())
@@ -1556,7 +1556,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[1] = "";
+                            r1_r2[1].clear();
                         }
                     }
                     else if(current_suffix == "iveness" || current_suffix == "iviti")
@@ -1569,7 +1569,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[0] = "";
+                            r1_r2[0].clear();
                         }
 
                         if(r1_r2[1].length() >= current_suffix.length())
@@ -1591,7 +1591,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[0] = "";
+                            r1_r2[0].clear();
                         }
 
                         if(r1_r2[1].length() >= current_suffix.length())
@@ -1600,7 +1600,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         }
                         else
                         {
-                            r1_r2[1] = "";
+                            r1_r2[1].clear();
                         }
                     }
                     else if(current_suffix == "ogi" && current_word[current_word.length()-4] == 'l')
@@ -1645,22 +1645,14 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ate";
 
                         if(r1_r2[0].length() >= current_suffix.length())
-                        {
                             r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ate";
-                        }
                         else
-                        {
-                            r1_r2[0] = "";
-                        }
+                            r1_r2[0].clear();
 
                         if(r1_r2[1].length() >= current_suffix.length())
-                        {
                             r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ate";
-                        }
                         else
-                        {
-                            r1_r2[1] = "";
-                        }
+                            r1_r2[1].clear();
                     }
                     else if(current_suffix == "alize")
                     {
@@ -1673,22 +1665,14 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                         current_word = current_word.substr(0,current_word.length()-current_suffix.length()) + "ic";
 
                         if(r1_r2[0].length() >= current_suffix.length())
-                        {
                             r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length()) + "ic";
-                        }
                         else
-                        {
-                            r1_r2[0] = "";
-                        }
+                            r1_r2[0].clear();
 
                         if(r1_r2[1].length() >= current_suffix.length())
-                        {
                             r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length()) + "ic";
-                        }
                         else
-                        {
-                            r1_r2[1] = "";
-                        }
+                            r1_r2[1].clear();
                     }
                     else if(current_suffix == "ful" || current_suffix == "ness")
                     {

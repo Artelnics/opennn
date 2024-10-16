@@ -20,11 +20,6 @@ GeneticAlgorithmTest::GeneticAlgorithmTest() : UnitTesting()
 }
 
 
-GeneticAlgorithmTest::~GeneticAlgorithmTest()
-{
-}
-
-
 void GeneticAlgorithmTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -38,16 +33,6 @@ void GeneticAlgorithmTest::test_constructor()
 
     GeneticAlgorithm genetic_algorithm_2;
     assert_true(!genetic_algorithm_2.has_training_strategy(), LOG);
-}
-
-
-void GeneticAlgorithmTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    GeneticAlgorithm* genetic_algorithm = new GeneticAlgorithm;
-
-    delete genetic_algorithm;
 }
 
 
@@ -500,10 +485,7 @@ void GeneticAlgorithmTest::run_test_case()
 {
     cout << "Running genetic algorithm test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Population
 

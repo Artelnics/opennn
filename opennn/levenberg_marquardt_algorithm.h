@@ -140,8 +140,6 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
         set(new_Levenberg_Marquardt_method);
     }
 
-    virtual ~LevenbergMarquardtAlgorithmData() {}
-
     void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method);
 
     LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm = nullptr;

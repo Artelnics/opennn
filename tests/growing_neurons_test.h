@@ -27,13 +27,7 @@ public:
 
    explicit GrowingNeuronsTest();
 
-   virtual ~GrowingNeuronsTest();
-
-    and destructor
-
    void test_constructor();
-
-   void test_destructor();
 
    // Order selection
 

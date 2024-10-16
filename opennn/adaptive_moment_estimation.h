@@ -35,8 +35,6 @@ public:
    explicit AdaptiveMomentEstimation();
 
    explicit AdaptiveMomentEstimation(LossIndex*);   
-
-   //virtual ~AdaptiveMomentEstimation();
    
    // Training operators
 

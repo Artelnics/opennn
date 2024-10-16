@@ -547,11 +547,6 @@ void Transformer::load_transformer(const string& path)
 }
 
 
-TransformerForwardPropagation::~TransformerForwardPropagation()
-{
-}
-
-
 void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
 {
     Transformer* neural_network = static_cast<Transformer*>(new_neural_network);

@@ -23,11 +23,6 @@ MeanSquaredErrorTest::MeanSquaredErrorTest() : UnitTesting()
 }
 
 
-MeanSquaredErrorTest::~MeanSquaredErrorTest()
-{
-}
-
-
 void MeanSquaredErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -45,24 +40,6 @@ void MeanSquaredErrorTest::test_constructor()
 
     assert_true(mean_squared_error_2.has_neural_network(), LOG);
     assert_true(mean_squared_error_2.has_data_set(), LOG);
-}
-
-
-void MeanSquaredErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    // Default
-
-    MeanSquaredError* mean_squared_error_1 = new MeanSquaredError;
-
-    delete mean_squared_error_1;
-
-    // Neural network and data set
-
-    MeanSquaredError* mean_squared_error_2 = new MeanSquaredError(&neural_network, &data_set);
-
-    delete mean_squared_error_2;
 }
 
 
@@ -2032,7 +2009,6 @@ void MeanSquaredErrorTest::run_test_case()
     cout << "Running mean squared error test case...\n";
 
     test_constructor();
-    test_destructor();
 
     // Convolutional network
 

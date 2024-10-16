@@ -143,8 +143,6 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
         set(new_stochastic_gradient_descent);
     }
 
-    virtual ~StochasticGradientDescentData() {}
-
     void set(StochasticGradientDescent* new_stochastic_gradient_descent);
 
     StochasticGradientDescent* stochastic_gradient_descent = nullptr;

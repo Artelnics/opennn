@@ -20,11 +20,6 @@ ConvolutionalLayerTest::ConvolutionalLayerTest() : UnitTesting()
 }
 
 
-ConvolutionalLayerTest::~ConvolutionalLayerTest()
-{
-}
-
-
 void ConvolutionalLayerTest::test_eigen_convolution()
 {
     cout << "test_eigen_convolution\n";
@@ -185,12 +180,6 @@ void ConvolutionalLayerTest::test_constructor()
                 && convolutional_layer.get_kernel_width() == 2
                 && convolutional_layer.get_kernel_channels() == 1 
                 && convolutional_layer.get_kernels_number() == 16, LOG);
-}
-
-
-void ConvolutionalLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
 }
 
 
@@ -724,7 +713,6 @@ void ConvolutionalLayerTest::run_test_case()
     test_eigen_convolution();
 
     test_constructor();
-    test_destructor();
 
     test_calculate_convolutions();
 

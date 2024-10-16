@@ -22,10 +22,7 @@ public:
 
     explicit UnscalingLayerTest();
 
-    virtual ~UnscalingLayerTest();
-
     void test_constructor();
-    void test_destructor();
 
     void run_test_case();
 

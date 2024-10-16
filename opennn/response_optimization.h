@@ -103,8 +103,6 @@ struct ResponseOptimizationResults
         neural_network = new_neural_network;
     }
 
-    virtual ~ResponseOptimizationResults(){}
-
     DataSet* data_set = nullptr;
 
     NeuralNetwork* neural_network = nullptr;

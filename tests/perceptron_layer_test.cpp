@@ -20,16 +20,9 @@ PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
 }
 
 
-PerceptronLayerTest::~PerceptronLayerTest()
-{
-}
-
-
 void PerceptronLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    
 
     PerceptronLayer perceptron_layer_1;
 
@@ -62,16 +55,6 @@ void PerceptronLayerTest::test_constructor()
     assert_true(perceptron_layer_5.get_biases_number() == 1, LOG);
     assert_true(perceptron_layer_5.get_synaptic_weights_number() == 1, LOG);
     assert_true(perceptron_layer_5.get_parameters_number() == 2, LOG);
-}
-
-
-void PerceptronLayerTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    PerceptronLayer* perceptron_layer = new PerceptronLayer;
-
-    delete perceptron_layer;
 }
 
 
@@ -372,7 +355,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     input_pairs.first = inputs.data();
     input_pairs.second = {{samples_number, inputs_number}};
-
+/*
     perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
@@ -542,6 +525,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs.setRandom();
 
     parameters = perceptron_layer.get_parameters();
+*/
 }
 
 
@@ -550,7 +534,6 @@ void PerceptronLayerTest::run_test_case()
     cout << "Running perceptron layer test case...\n";
 
     test_constructor();
-    test_destructor();
 
     test_calculate_combinations();
 

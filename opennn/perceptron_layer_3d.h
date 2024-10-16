@@ -130,15 +130,15 @@ public:
                               Tensor<type, 3>&) const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          unique_ptr<LayerForwardPropagation>,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Gradient
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
-                                 const vector<pair<type*, dimensions>>&,
-                                 unique_ptr<LayerForwardPropagation>,
-                                 unique_ptr<LayerBackPropagation>) const final;
+                       const vector<pair<type*, dimensions>>&,
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
    void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
@@ -183,24 +183,15 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
     {
     }
 
-
     explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
      : LayerForwardPropagation()
     {
-    set(new_batch_samples_number, new_layer);
+        set(new_batch_samples_number, new_layer);
     }
-
-
-    virtual ~PerceptronLayer3DForwardPropagation()
-    {
-    }
-
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
     void print() const;
 
@@ -225,23 +216,16 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
         set(new_batch_samples_number, new_layer);
     }
 
-
-    virtual ~PerceptronLayer3DBackPropagation()
-    {
-    }
-
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
     void print() const
     {
-        cout << "Biases derivatives:" << endl;
-        cout << biases_derivatives << endl;
-
-        cout << "Synaptic weights derivatives:" << endl;
-        cout << synaptic_weights_derivatives << endl;
+        cout << "Biases derivatives:" << endl
+             << biases_derivatives << endl
+             << "Synaptic weights derivatives:" << endl
+             << synaptic_weights_derivatives << endl;
     }
 
     Tensor<type, 1> biases_derivatives;

@@ -24,10 +24,7 @@ public:
 
     explicit ScalingLayer2DTest();
 
-    virtual ~ScalingLayer2DTest();
-
     void test_constructor();
-    void test_destructor();
 
     void test_forward_propagate();
 
