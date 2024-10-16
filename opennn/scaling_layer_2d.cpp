@@ -455,7 +455,7 @@ void ScalingLayer2D::check_range(const Tensor<type, 1>& inputs) const
 
 
 void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation> forward_propagation,
+                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
     const Index samples_number = input_pairs[0].second[0];

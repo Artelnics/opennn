@@ -80,8 +80,8 @@ public:
 
    // Lower and upper bounds
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          unique_ptr<LayerForwardPropagation>, 
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Expression

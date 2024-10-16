@@ -99,7 +99,6 @@ public:
    const vector<unique_ptr<Layer>>& get_layers() const;
    const unique_ptr<Layer>& get_layer(const Index&) const;
    const unique_ptr<Layer>& get_layer(const string&) const;
-   vector<Layer*> get_trainable_layers() const;
 
    Index get_layer_index(const string&) const;
 
@@ -156,7 +155,6 @@ public:
    // Layers
 
    Index get_layers_number() const;
-   Index get_trainable_layers_number() const;
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
@@ -185,7 +183,6 @@ public:
    Tensor<type, 1> get_parameters() const;
 
    vector<Index> get_layer_parameter_numbers() const;
-   vector<Index> get_trainable_layers_parameters_numbers() const;
 
    void set_parameters(const Tensor<type, 1>&) const;
 

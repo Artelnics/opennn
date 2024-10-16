@@ -99,23 +99,23 @@ public:
     // First order activations
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           unique_ptr<LayerForwardPropagation>,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     void forward_propagate_max_pooling(const Tensor<type, 4>&,
-                                       unique_ptr<LayerForwardPropagation>,
+                                       unique_ptr<LayerForwardPropagation>&,
                                        const bool&) const;
 
     void forward_propagate_average_pooling(const Tensor<type, 4>&,
-                                           unique_ptr<LayerForwardPropagation>,
+                                           unique_ptr<LayerForwardPropagation>&,
                                            const bool&) const;
 
     // Back-propagation
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        unique_ptr<LayerForwardPropagation>,
-                        unique_ptr<LayerBackPropagation>) const final;
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
     void back_propagate_max_pooling(const Tensor<type, 4>&,
                                     const Tensor<type, 4>&,

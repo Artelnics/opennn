@@ -199,15 +199,15 @@ public:
     // Outputs
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           unique_ptr<LayerForwardPropagation>,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        unique_ptr<LayerForwardPropagation>,
-                        unique_ptr<LayerBackPropagation>) const final;
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>,
                          const Index&,
@@ -215,9 +215,9 @@ public:
 
     // Squared errors
 
-    void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>,
-        const Index&,
-        Tensor<type, 2>&) const final;
+    void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
+                                           const Index&,
+                                           Tensor<type, 2>&) const final;
 
     // Expression
 

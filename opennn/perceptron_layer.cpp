@@ -370,7 +370,7 @@ void PerceptronLayer::calculate_activations(Tensor<type, 2>& activations,
 
 
 void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                        unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+                                        unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                         const bool& is_training)
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
@@ -405,8 +405,8 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
 void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                      const vector<pair<type*, dimensions>>& delta_pairs,
-                                     unique_ptr<LayerForwardPropagation> forward_propagation,
-                                     unique_ptr<LayerBackPropagation> back_propagation) const
+                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
@@ -446,8 +446,8 @@ void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
 void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
                                         const vector<pair<type*, dimensions>>& delta_pairs,
-                                        unique_ptr<LayerForwardPropagation> forward_propagation,
-                                        unique_ptr<LayerBackPropagationLM> back_propagation) const
+                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                        unique_ptr<LayerBackPropagationLM>& back_propagation) const
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
@@ -546,7 +546,7 @@ void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_prop
 }
 
 
-void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM> back_propagation,
+void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
                                                         const Index& index,
                                                         Tensor<type, 2>& squared_errors_Jacobian) const
 {

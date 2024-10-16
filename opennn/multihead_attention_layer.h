@@ -126,15 +126,15 @@ public:
     // Multihead Attention layer outputs
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           unique_ptr<LayerForwardPropagation>,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        unique_ptr<LayerForwardPropagation>,
-                        unique_ptr<LayerBackPropagation>) const final;
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>, const Index&, Tensor<type, 1>&) const final;
 

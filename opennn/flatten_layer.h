@@ -75,16 +75,16 @@ public:
 
     // Forward propagation
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                           unique_ptr<LayerForwardPropagation>, 
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     // Back-propagation
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        unique_ptr<LayerForwardPropagation>,
-                        unique_ptr<LayerBackPropagation>) const final;
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
     // Serialization
 

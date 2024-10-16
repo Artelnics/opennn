@@ -562,12 +562,11 @@ void GrowingInputs::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
 
-    if(file)
-    {
-        tinyxml2::XMLPrinter printer(file);
-        to_XML(printer);
-        fclose(file);
-    }
+    if(!file) return;
+
+    tinyxml2::XMLPrinter printer(file);
+    to_XML(printer);
+    fclose(file);
 }
 
 

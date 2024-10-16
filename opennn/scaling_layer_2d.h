@@ -105,8 +105,8 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          unique_ptr<LayerForwardPropagation>, 
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
