@@ -27,13 +27,7 @@ public:
 
     explicit StochasticGradientDescentTest();
 
-    virtual ~StochasticGradientDescentTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Training
 

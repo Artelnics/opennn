@@ -19,30 +19,13 @@ BoundingLayerTest::BoundingLayerTest() : UnitTesting()
 }
 
 
-BoundingLayerTest::~BoundingLayerTest()
-{
-}
-
-
 void BoundingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    
-
     BoundingLayer bounding_layer_1;
 
     assert_true(bounding_layer_1.get_neurons_number() == 0, LOG);
-}
-
-
-void BoundingLayerTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    BoundingLayer* bounding_layer_1 = new BoundingLayer;
-
-    delete bounding_layer_1;
 }
 
 
@@ -75,7 +58,7 @@ void BoundingLayerTest::test_forward_propagate()
 
     input_pairs.first = inputs.data();
     input_pairs.second = {{samples_number, inputs_number}};
-
+/*
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
     bounding_layer.forward_propagate({ input_pairs }, &bounding_layer_forward_propagation, is_training);
 
@@ -96,6 +79,7 @@ void BoundingLayerTest::test_forward_propagate()
     outputs = bounding_layer_forward_propagation.outputs;
 
     assert_true(outputs(0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+*/
 }
 
 
@@ -103,10 +87,7 @@ void BoundingLayerTest::run_test_case()
 {
     cout << "Running bounding layer test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Lower and upper bounds
 

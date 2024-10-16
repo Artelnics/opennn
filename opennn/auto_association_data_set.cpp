@@ -75,7 +75,6 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
             new_raw_variables(index).set_use(DataSet::VariableUse::Input);
             new_raw_variables(index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
-            index++;
         }
         else
         {
@@ -83,8 +82,9 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
             new_raw_variables(index).set_use(DataSet::VariableUse::Target);
             new_raw_variables(index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
-            index++;
         }
+
+        index++;
     }
 
     raw_variables = new_raw_variables;

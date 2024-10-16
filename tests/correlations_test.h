@@ -23,13 +23,7 @@ class CorrelationsTest : public UnitTesting
 
 public:
 
-    // DEFAULT CONSTRUCTOR
-
     explicit CorrelationsTest();
-
-    virtual ~CorrelationsTest();
-
-    // Correlation
 
     void test_linear_correlation();
 

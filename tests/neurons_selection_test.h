@@ -29,13 +29,7 @@ public:
 
     explicit NeuronsSelectionTest();
 
-    virtual ~NeuronsSelectionTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Unit testing
 

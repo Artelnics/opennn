@@ -22,16 +22,9 @@ LevenbergMarquardtAlgorithmTest::LevenbergMarquardtAlgorithmTest() : UnitTesting
 }
 
 
-LevenbergMarquardtAlgorithmTest::~LevenbergMarquardtAlgorithmTest()
-{
-}
-
-
 void LevenbergMarquardtAlgorithmTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm_1;
 
@@ -42,24 +35,6 @@ void LevenbergMarquardtAlgorithmTest::test_constructor()
     LevenbergMarquardtAlgorithm lma2(&sum_squared_error);
 
     assert_true(lma2.has_loss_index(), LOG);
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    // Test
-
-    LevenbergMarquardtAlgorithm* lma = new LevenbergMarquardtAlgorithm;
-
-    delete lma;
-
-    // Test
-
-    LevenbergMarquardtAlgorithm* lma2 = new LevenbergMarquardtAlgorithm(&sum_squared_error);
-
-    delete lma2;
 }
 
 
@@ -158,10 +133,7 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
 {
     cout << "Running Levenberg-Marquardt algorithm test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Training
 

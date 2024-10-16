@@ -20,19 +20,12 @@ struct NeuralNetworkBackPropagationLM
         neural_network = new_neural_network;
     }
 
-    virtual ~NeuralNetworkBackPropagationLM()
-    {
-    }
-
-
     void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network);
-
 
     const vector<unique_ptr<LayerBackPropagationLM>>& get_layers() const 
     {
         return layers;
     }
-
 
     NeuralNetwork* get_neural_network() const
     {

@@ -123,7 +123,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const Index original_input_raw_variables_number = data_set->get_input_raw_variables_number();
 
-    const Tensor<string, 1> raw_variables_names = data_set->get_raw_variables_names();
+    const Tensor<string, 1> raw_variables_names = data_set->get_raw_variable_names();
 
     Tensor<string, 1> input_raw_variables_names;
 
@@ -562,12 +562,11 @@ void GrowingInputs::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
 
-    if(file)
-    {
-        tinyxml2::XMLPrinter printer(file);
-        to_XML(printer);
-        fclose(file);
-    }
+    if(!file) return;
+
+    tinyxml2::XMLPrinter printer(file);
+    to_XML(printer);
+    fclose(file);
 }
 
 

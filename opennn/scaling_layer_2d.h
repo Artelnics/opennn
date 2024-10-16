@@ -105,8 +105,8 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          unique_ptr<LayerForwardPropagation>, 
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
@@ -148,36 +148,24 @@ protected:
 
 struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
 {
-    
-
     explicit ScalingLayer2DForwardPropagation() : LayerForwardPropagation()
     {
     }
-
-
-    virtual ~ScalingLayer2DForwardPropagation()
-    {
-    }
-
-    
 
     explicit ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
-    
-    
+       
     pair<type*, dimensions> get_outputs_pair() const final;
-
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
+        cout << "Outputs:" << endl
+             << outputs << endl;
     }
 
     Tensor<type, 2> outputs;

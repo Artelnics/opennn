@@ -102,8 +102,8 @@ public:
 
    // Forward propagation
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          unique_ptr<LayerForwardPropagation>, 
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Serialization

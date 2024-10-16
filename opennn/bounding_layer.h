@@ -80,8 +80,8 @@ public:
 
    // Lower and upper bounds
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                          unique_ptr<LayerForwardPropagation>, 
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Expression
@@ -122,23 +122,15 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
     {
         set(new_batch_samples_number, new_layer);
     }
-
-
-    virtual ~BoundingLayerForwardPropagation()
-    {
-    }
-    
-    
+        
     pair<type*, dimensions> get_outputs_pair() const final;
-
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
+        cout << "Outputs:" << endl
+             << outputs << endl;
     }
 
 

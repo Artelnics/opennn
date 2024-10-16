@@ -20,11 +20,6 @@ ScalingTest::ScalingTest() : UnitTesting()
 }
 
 
-ScalingTest::~ScalingTest()
-{
-}
-
-
 void ScalingTest::test_scale_data_mean_standard_deviation()
 {
     cout << "test_scale_data_inputs_mean_standard_deviation\n";

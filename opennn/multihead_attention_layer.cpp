@@ -606,7 +606,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 
 
 void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                                unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+                                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                 const bool& is_training)
 {
     unique_ptr<MultiheadAttentionLayerForwardPropagation> multihead_attention_layer_forward_propagation
@@ -655,9 +655,9 @@ void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensi
 
 
 void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                                       const vector<pair<type*, dimensions>>& delta_pairs,
-                                                       unique_ptr<LayerForwardPropagation> forward_propagation,
-                                                       unique_ptr<LayerBackPropagation> back_propagation) const
+                                             const vector<pair<type*, dimensions>>& delta_pairs,
+                                             unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                             unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> input = tensor_map_3(input_pairs[0]);
 

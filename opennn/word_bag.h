@@ -17,8 +17,6 @@ struct WordBag
 {
     explicit WordBag() {}
 
-    virtual ~WordBag() {}
-
     Tensor<string, 1> words;
     Tensor<Index, 1> frequencies;
     Tensor<double, 1> percentages;

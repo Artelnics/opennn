@@ -27,13 +27,7 @@ public:
 
     explicit AdaptiveMomentEstimationTest();
 
-    virtual ~AdaptiveMomentEstimationTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Training
 

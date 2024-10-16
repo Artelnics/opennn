@@ -531,7 +531,7 @@ bool UnscalingLayer::is_empty() const
 
 
 void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation> forward_propagation,
+                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
     const Index samples_number = input_pairs[0].second[0];
