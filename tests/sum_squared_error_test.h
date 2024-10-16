@@ -26,13 +26,7 @@ public:
 
     explicit SumSquaredErrorTest();
 
-    virtual ~SumSquaredErrorTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Back-propagation
 

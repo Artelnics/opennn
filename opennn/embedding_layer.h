@@ -17,6 +17,8 @@
 namespace opennn
 {
 
+class Layer;
+
 struct EmbeddingLayerForwardPropagation;
 struct EmbeddingLayerBackPropagation;
 struct EmbeddingLayerBackPropagationLM;
@@ -95,15 +97,15 @@ public:
     // Embedding layer outputs
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           unique_ptr<LayerForwardPropagation>,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        unique_ptr<LayerForwardPropagation>,
-                        unique_ptr<LayerBackPropagation>) const final;
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
@@ -158,13 +160,7 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
         {
             set(new_batch_samples_number, new_layer);
         }
-
-
-        virtual ~EmbeddingLayerForwardPropagation()
-        {
-        }
-        
-        
+                
         pair<type*, dimensions> get_outputs_pair() const final;
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
@@ -207,11 +203,6 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
             : LayerBackPropagation()
         {
             set(new_batch_samples_number, new_layer);
-        }
-
-
-        virtual ~EmbeddingLayerBackPropagation()
-        {
         }
 
         vector<pair<type*, dimensions>> get_input_derivative_pairs() const

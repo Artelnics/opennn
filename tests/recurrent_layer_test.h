@@ -24,11 +24,7 @@ public:
 
     explicit RecurrentLayerTest();
 
-    virtual ~RecurrentLayerTest();
-
     void test_constructor();
-
-    void test_destructor();
 
     void test_calculate_activations();
 

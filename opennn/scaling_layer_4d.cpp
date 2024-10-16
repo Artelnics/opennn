@@ -111,7 +111,7 @@ bool ScalingLayer4D::is_empty() const
 
 
 void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation> forward_propagation,
+                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
     unique_ptr<ScalingLayer4DForwardPropagation> scaling_layer_forward_propagation

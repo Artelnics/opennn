@@ -19,16 +19,9 @@ TimeSeriesDataSetTest::TimeSeriesDataSetTest() : UnitTesting()
 }
 
 
-TimeSeriesDataSetTest::~TimeSeriesDataSetTest()
-{
-}
-
-
 void TimeSeriesDataSetTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
-    
+    cout << "test_constructor\n";    
 
     TimeSeriesDataSet data_set_1;
 
@@ -52,15 +45,6 @@ void TimeSeriesDataSetTest::test_constructor()
     assert_true(data_set_3.get_target_variables_number() == 1,LOG);
     assert_true(data_set_3.get_input_variables_number() == 1,LOG);
 */
-}
-
-
-void TimeSeriesDataSetTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    TimeSeriesDataSet* data_set = new TimeSeriesDataSet();
-    delete data_set;
 }
 
 
@@ -286,10 +270,7 @@ void TimeSeriesDataSetTest::run_test_case()
 {
     cout << "Running time series data set test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Correlations
 

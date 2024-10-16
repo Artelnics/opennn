@@ -379,7 +379,7 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 
 
 void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                           unique_ptr<LayerForwardPropagation> forward_propagation,
+                                           unique_ptr<LayerForwardPropagation>& forward_propagation,
                                            const bool& is_training)
 {
     const Index neurons_number = get_neurons_number();
@@ -416,8 +416,8 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
 void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         const vector<pair<type*, dimensions>>& delta_pairs,
-                                        unique_ptr<LayerForwardPropagation> forward_propagation,
-                                        unique_ptr<LayerBackPropagation> back_propagation) const
+                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                        unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
@@ -492,7 +492,7 @@ void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_p
 }
 
 
-void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM> back_propagation,
+void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
                                                            const Index& index,
                                                            Tensor<type, 2>& squared_errors_Jacobian) const
 {
@@ -799,12 +799,6 @@ ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
 }
 
 
-ProbabilisticLayerForwardPropagation::~ProbabilisticLayerForwardPropagation()
-{
-
-}
-
-
 pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -850,12 +844,6 @@ void ProbabilisticLayerForwardPropagation::print() const
 
 ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation() : LayerBackPropagation() 
 {
-}
-
-
-ProbabilisticLayerBackPropagation::~ProbabilisticLayerBackPropagation() 
-{
-
 }
 
 

@@ -254,7 +254,7 @@ void PoolingLayer::set_default()
 
 
 void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+                                     unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                      const bool& is_training)
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
@@ -278,7 +278,7 @@ void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 
 
 void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
-                                                     unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+                                                     unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                      const bool& is_training) const
 { 
     unique_ptr<PoolingLayerForwardPropagation> pooling_layer_forward_propagation
@@ -304,7 +304,7 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
 
 
 void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
-                                                 unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+                                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                  const bool& is_training) const
 {
     const Index batch_samples_number = inputs.dimension(0);
@@ -362,8 +362,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
 void PoolingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   const vector<pair<type*, dimensions>>& delta_pairs,
-                                  unique_ptr<LayerForwardPropagation> forward_propagation,
-                                  unique_ptr<LayerBackPropagation> back_propagation) const
+                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
     const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
@@ -745,11 +745,6 @@ PoolingLayerBackPropagation::PoolingLayerBackPropagation(const Index& new_batch_
     : LayerBackPropagation()
 {
     set(new_batch_samples_number, new_layer);
-}
-
-
-PoolingLayerBackPropagation::~PoolingLayerBackPropagation()
-{
 }
 
 

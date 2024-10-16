@@ -26,13 +26,7 @@ public:
 
     explicit MinkowskiErrorTest();
 
-    virtual ~MinkowskiErrorTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Back-propagation
 

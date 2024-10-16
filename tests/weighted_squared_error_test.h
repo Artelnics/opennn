@@ -26,10 +26,7 @@ public:
 
     explicit WeightedSquaredErrorTest();
 
-    virtual ~WeightedSquaredErrorTest();
-
     void test_constructor();
-    void test_destructor();
 
     void test_back_propagate();
 

@@ -21,11 +21,6 @@ WeightedSquaredErrorTest::WeightedSquaredErrorTest() : UnitTesting()
 }
 
 
-WeightedSquaredErrorTest::~WeightedSquaredErrorTest()
-{
-}
-
-
 void WeightedSquaredErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -43,15 +38,6 @@ void WeightedSquaredErrorTest::test_constructor()
 
     assert_true(weighted_squared_error_2.has_neural_network(), LOG);
     assert_true(weighted_squared_error_2.has_data_set(), LOG);
-}
-
-
-void WeightedSquaredErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    WeightedSquaredError* weighted_squared_error = new WeightedSquaredError;
-    delete weighted_squared_error;
 }
 
 
@@ -160,7 +146,6 @@ void WeightedSquaredErrorTest::run_test_case()
     cout << "Running weighted squared error test case...\n";
 
     test_constructor();
-    test_destructor();
 
     test_back_propagate();
 

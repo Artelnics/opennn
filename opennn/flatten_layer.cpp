@@ -85,7 +85,7 @@ void FlattenLayer::set(const dimensions& new_input_dimensions)
 
 
 void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+                                     unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                      const bool& is_training)
 {
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
@@ -106,9 +106,9 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 
 
 void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                            const vector<pair<type*, dimensions>>& delta_pairs,
-                                            unique_ptr<LayerForwardPropagation> forward_propagation,
-                                            unique_ptr<LayerBackPropagation> back_propagation) const
+                                  const vector<pair<type*, dimensions>>& delta_pairs,
+                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
