@@ -24,8 +24,6 @@ public:
 
     explicit TensorsTest();
 
-    virtual ~TensorsTest();
-
     void test_fill_tensor_data();
 
     void test_calculate_rank();

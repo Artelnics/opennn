@@ -17,11 +17,6 @@ GrowingInputsTest::GrowingInputsTest() : UnitTesting()
 }
 
 
-GrowingInputsTest::~GrowingInputsTest()
-{
-}
-
-
 void GrowingInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -37,16 +32,6 @@ void GrowingInputsTest::test_constructor()
     GrowingInputs growing_inputs_2;
 
     assert_true(!growing_inputs_2.has_training_strategy(), LOG);
-}
-
-
-void GrowingInputsTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    GrowingInputs* growing_inputs = new GrowingInputs;
-
-    delete growing_inputs;
 }
 
 
@@ -98,17 +83,13 @@ void GrowingInputsTest::run_test_case()
 {
     cout << "Running growing inputs test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Input selection
 
     test_perform_inputs_selection();
 
     cout << "End of growing input test case.\n\n";
-
 }
 
 }

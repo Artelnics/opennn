@@ -21,26 +21,11 @@ CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting()
 }
 
 
-CrossEntropyErrorTest::~CrossEntropyErrorTest()
-{
-}
-
-
 void CrossEntropyErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
 
     CrossEntropyError cross_entropy_error;
-}
-
-
-void CrossEntropyErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    CrossEntropyError* cross_entropy_error = new CrossEntropyError;
-
-    delete cross_entropy_error;
 }
 
 
@@ -375,7 +360,6 @@ void CrossEntropyErrorTest::run_test_case()
     cout << "Running cross-entropy error test case...\n";
 
     test_constructor();
-    test_destructor();
 
     test_back_propagate();
 

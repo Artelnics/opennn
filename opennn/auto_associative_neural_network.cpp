@@ -471,10 +471,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::calculate_samples_distances(type* 
         const type distance = l2_distance(input_row, output_row)/inputs_number;
 
         if(!isnan(distance))
-        {
-            distances(distance_index) = l2_distance(input_row, output_row)/inputs_number;
-            distance_index++;
-        }
+            distances(distance_index++) = l2_distance(input_row, output_row)/inputs_number;
     }
 
     return distances;

@@ -25,13 +25,7 @@ public:
 
     explicit ResponseOptimizationTest();
 
-    virtual ~ResponseOptimizationTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Performance
 

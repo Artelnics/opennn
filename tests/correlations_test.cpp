@@ -22,11 +22,6 @@ CorrelationsTest::CorrelationsTest() : UnitTesting()
 }
 
 
-CorrelationsTest::~CorrelationsTest()
-{
-}
-
-
 void CorrelationsTest::test_spearman_correlation()
 {
     cout << "test_spearman_correlation\n";

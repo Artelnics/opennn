@@ -1,7 +1,7 @@
 #ifndef LAYERBACKPROPAGATIONLM_H
 #define LAYERBACKPROPAGATIONLM_H
 
-#include "layer.h"
+//#include "layer.h"
 
 using namespace std;
 using namespace Eigen;
@@ -9,11 +9,12 @@ using namespace Eigen;
 namespace opennn
 {
 
+class Layer;
+
+
 struct LayerBackPropagationLM
 {
     explicit LayerBackPropagationLM() {}
-
-    virtual ~LayerBackPropagationLM() {}
 
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
 

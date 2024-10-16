@@ -19,16 +19,9 @@ DataSetTest::DataSetTest() : UnitTesting()
 }
 
 
-DataSetTest::~DataSetTest()
-{
-}
-
-
 void DataSetTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    
 
     DataSet data_set_1;
 
@@ -50,15 +43,6 @@ void DataSetTest::test_constructor()
     assert_true(data_set_3.get_samples_number() == 1, LOG);
     assert_true(data_set_3.get_input_variables_number() == 1,LOG);
     assert_true(data_set_3.get_target_variables_number() == 1,LOG);
-}
-
-
-void DataSetTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    DataSet* data_set = new DataSet(1, 1, 1);
-    delete data_set;
 }
 
 
@@ -1953,10 +1937,7 @@ void DataSetTest::run_test_case()
 {
     cout << "Running data set test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Data resizing
 

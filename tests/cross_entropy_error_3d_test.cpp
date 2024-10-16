@@ -25,26 +25,11 @@ CrossEntropyError3DTest::CrossEntropyError3DTest() : UnitTesting()
 }
 
 
-CrossEntropyError3DTest::~CrossEntropyError3DTest()
-{
-}
-
-
 void CrossEntropyError3DTest::test_constructor()
 {
     cout << "test_constructor\n";
 
     CrossEntropyError3D cross_entropy_error_3d;
-}
-
-
-void CrossEntropyError3DTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    CrossEntropyError3D* cross_entropy_error_3d = new CrossEntropyError3D;
-
-    delete cross_entropy_error_3d;
 }
 
 
@@ -462,7 +447,6 @@ void CrossEntropyError3DTest::run_test_case()
     // Test constructor
 
     test_constructor();
-    test_destructor();
     
     // Back-propagation
     

@@ -75,16 +75,16 @@ public:
 
     // Forward propagation
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&, 
-                           unique_ptr<LayerForwardPropagation>, 
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     // Back-propagation
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        unique_ptr<LayerForwardPropagation>,
-                        unique_ptr<LayerBackPropagation>) const final;
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
     // Serialization
 
@@ -155,11 +155,6 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
-    }
-
-
-    virtual ~FlattenLayerBackPropagation()
-    {
     }
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;

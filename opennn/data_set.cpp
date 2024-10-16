@@ -96,7 +96,7 @@ const bool& DataSet::get_display() const
 
 DataSet::RawVariable::RawVariable()
 {
-    name = "";
+    name.clear();
     use = VariableUse::None;
     type = RawVariableType::None;
     categories.resize(0);
@@ -1414,7 +1414,7 @@ Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
 }
 
 
-Tensor<string, 1> DataSet::get_raw_variables_names() const
+Tensor<string, 1> DataSet::get_raw_variable_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -3024,7 +3024,7 @@ void DataSet::set(const string& data_path,
 
 void DataSet::set(const Tensor<type, 2>& new_data)
 {
-    data_path = "";
+    data_path.clear();
     
     const Index variables_number = new_data.dimension(1);
     const Index samples_number = new_data.dimension(0);
@@ -3065,7 +3065,7 @@ void DataSet::set(const Index& new_samples_number,
                   const Index& new_inputs_number,
                   const Index& new_targets_number)
 {
-    data_path = "";
+    data_path.clear();
 
     const Index new_variables_number = new_inputs_number + new_targets_number;
 
@@ -6621,14 +6621,10 @@ void DataSet::decode(string& input_string) const
     switch(codification)
     {
     case DataSet::Codification::SHIFT_JIS:
-    {
         input_string = sj2utf8(input_string);
-    }
-
+        break;
     default:
-    {
-        // do nothing;
-    }
+        break;
     }
 }
 

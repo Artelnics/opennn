@@ -21,11 +21,6 @@ ModelSelectionTest::ModelSelectionTest() : UnitTesting()
 }
 
 
-ModelSelectionTest::~ModelSelectionTest() 
-{
-}
-
-
 void ModelSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -36,16 +31,6 @@ void ModelSelectionTest::test_constructor()
     ModelSelection model_selection_2;
 
     assert_true(!model_selection_2.has_training_strategy(), LOG);
-}
-
-
-void ModelSelectionTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    ModelSelection* model_selection = new ModelSelection;
-
-    delete model_selection;
 }
 
 
@@ -118,10 +103,7 @@ void ModelSelectionTest::run_test_case()
 {
     cout << "Running model selection test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Model selection
 
