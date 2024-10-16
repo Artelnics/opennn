@@ -678,7 +678,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
             continue;
         }
 
-        for (Index j = 0; j < layer_output_indices[i].size(); j++)
+        for (Index j = 0; j < static_cast<Index>(layer_output_indices[i].size()); j++)
         {
             const Index output_index = layer_output_indices[i][j];
             const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
