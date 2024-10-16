@@ -707,7 +707,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& 
 
 
 void LongShortTermMemoryLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                                 unique_ptr<LayerForwardPropagation> forward_propagation,
+                                                 unique_ptr<LayerForwardPropagation>& forward_propagation,
                                                  const bool& is_training)
 {
 
@@ -881,8 +881,8 @@ void LongShortTermMemoryLayer::forward_propagate(const vector<pair<type*, dimens
 
 void LongShortTermMemoryLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                               const vector<pair<type*, dimensions>>& delta_pairs,
-                                              unique_ptr<LayerForwardPropagation> forward_propagation,
-                                              unique_ptr<LayerBackPropagation> back_propagation) const
+                                              unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                              unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);

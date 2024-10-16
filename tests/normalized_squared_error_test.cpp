@@ -21,11 +21,6 @@ NormalizedSquaredErrorTest::NormalizedSquaredErrorTest() : UnitTesting()
 }
 
 
-NormalizedSquaredErrorTest::~NormalizedSquaredErrorTest()
-{
-}
-
-
 void NormalizedSquaredErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -43,16 +38,6 @@ void NormalizedSquaredErrorTest::test_constructor()
 
     assert_true(normalized_squared_error_2.has_neural_network(), LOG);
     assert_true(normalized_squared_error_2.has_data_set(), LOG);
-}
-
-
-void NormalizedSquaredErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    NormalizedSquaredError* nse = new NormalizedSquaredError;
-
-    delete nse;
 }
 
 
@@ -546,7 +531,6 @@ void NormalizedSquaredErrorTest::run_test_case()
     cout << "Running normalized squared error test case...\n";
 
     test_constructor();
-    test_destructor();
 
     test_calculate_normalization_coefficient();
 

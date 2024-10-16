@@ -94,7 +94,7 @@ void fill_tokens(const string& text, const string& separator, Tensor<string, 1>&
 
         if(last_position - old_position != 1 && index != 0)
         {
-            tokens[index++] = "";
+            tokens[index++].clear();
             index++;
             old_position++;
             continue;
@@ -844,7 +844,7 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
 // vector<string> get_words_in_a_string(string str)
 // {
 //     vector<string> output;
-//     string word = "";
+//     string word;
 
 //     for(auto x : str)
 //     {
@@ -859,7 +859,7 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
 //         //if(x == ' ')
 //         {
 //             output.push_back(word);
-//             word = "";
+//             word.clear();
 //         }
 //     }
 
@@ -1092,7 +1092,7 @@ void delete_non_printable_chars(string& text)
     text.erase(remove_if(text.begin(),
                          text.end(),
                          [&ct](wchar_t ch) {return !ct.is(ctype::print, ch);}),
-                         text.end()) ;
+                         text.end());
 }
 
 

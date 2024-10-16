@@ -205,7 +205,7 @@ void NormalizationLayer3D::set_parameters_random()
 
 
 void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                             unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+                                             unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                              const bool& is_training)
 {
     const Index samples_number = input_pairs[0].second[0];
@@ -250,8 +250,8 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
 void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                           const vector<pair<type*, dimensions>>& delta_pairs,
-                                          unique_ptr<LayerForwardPropagation> forward_propagation,
-                                          unique_ptr<LayerBackPropagation> back_propagation) const
+                                          unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                          unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_samples_number = input_pairs[0].second[0];
 

@@ -300,7 +300,7 @@ void LanguageDataSet::set_data_random_language_model(const Index& batch_samples_
                                                      const Index& completion_dimension,
                                                      const Index& context_dimension)
 {
-    data_path = "";
+    data_path.clear();
 
     set(batch_samples_number, context_length + 2 * completion_length);
 
@@ -1795,7 +1795,7 @@ void LanguageDataSet::load_documents(const string& path)
 
     Index tokens_number = 0;
 
-    string delimiter = "";
+    string delimiter;
     const string separator = get_separator_string();
 
     while(getline(file, line))
@@ -1843,7 +1843,7 @@ void LanguageDataSet::load_documents(const string& path)
 
             document(lines_count) += " " + tokens(0);
             document_target(lines_count) += tokens(1);
-            delimiter = "";
+            delimiter.clear();
             lines_count++;
         }
 

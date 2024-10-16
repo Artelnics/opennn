@@ -175,10 +175,7 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 //         const type distance = l2_distance(input_row, output_row)/inputs_number;
 
 //         if(!isnan(distance))
-//         {
-//             distances(distance_index) = l2_distance(input_row, output_row)/inputs_number;
-//             distance_index++;
-//         }
+//             distances(distance_index++) = l2_distance(input_row, output_row)/inputs_number;
 //     }
 
 //     return box_plot(distances);
@@ -260,14 +257,13 @@ void OptimizationAlgorithm::print() const
 
 void OptimizationAlgorithm::save(const string& file_name) const
 {
-    FILE * file = fopen(file_name.c_str(), "w");
+    FILE* file = fopen(file_name.c_str(), "w");
 
-    if(file)
-    {
-        tinyxml2::XMLPrinter printer(file);
-        to_XML(printer);
-        fclose(file);
-    }
+    if(!file) return;
+
+    tinyxml2::XMLPrinter printer(file);
+    to_XML(printer);
+    fclose(file);
 }
 
 
@@ -419,16 +415,12 @@ void TrainingResults::save(const string& file_name) const
     std::ofstream file;
     file.open(file_name);
 
-    if(file)
-    {
-        for(Index i = 0; i < final_results.dimension(0); i++)
-        {
-            file << final_results(i,0) << "; " << final_results(i,1) << "\n";
-        }
+    if(!file) return;
 
-        file.close();
-    }
+    for(Index i = 0; i < final_results.dimension(0); i++)
+        file << final_results(i,0) << "; " << final_results(i,1) << "\n";
 
+    file.close();
 }
 
 

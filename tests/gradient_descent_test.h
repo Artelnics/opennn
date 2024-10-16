@@ -27,13 +27,7 @@ public:
 
     explicit GradientDescentTest();
 
-    virtual ~GradientDescentTest();
-
-     and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Training
 

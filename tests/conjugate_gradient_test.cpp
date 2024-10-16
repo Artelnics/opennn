@@ -21,16 +21,9 @@ ConjugateGradientTest::ConjugateGradientTest() : UnitTesting()
 }
 
 
-ConjugateGradientTest::~ConjugateGradientTest()
-{
-}
-
-
 void ConjugateGradientTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    
 
     ConjugateGradient conjugate_gradient_1;
     assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
@@ -39,16 +32,6 @@ void ConjugateGradientTest::test_constructor()
 
     ConjugateGradient conjugate_gradient_2(&sum_squared_error);
     assert_true(conjugate_gradient_2.has_loss_index(), LOG);
-}
-
-
-void ConjugateGradientTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    ConjugateGradient* conjugate_gradient = new ConjugateGradient;
-
-    delete conjugate_gradient;
 }
 
 
@@ -286,10 +269,7 @@ void ConjugateGradientTest::run_test_case()
 {
     cout << "Running conjugate gradient test case...\n";
 
-    
-
     test_constructor();
-    test_destructor();
 
     // Training
 

@@ -159,15 +159,15 @@ public:
     void calculate_activations(Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           unique_ptr<LayerForwardPropagation>,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
    // Back propagation
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
-                       unique_ptr<LayerForwardPropagation>,
-                       unique_ptr<LayerBackPropagation>) const final;
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>,
                         const Index&,
@@ -250,8 +250,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    explicit ConvolutionalLayerBackPropagation();
 
    explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
-
-   virtual ~ConvolutionalLayerBackPropagation();
 
    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 

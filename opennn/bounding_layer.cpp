@@ -260,7 +260,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 
 
 void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                      unique_ptr<LayerForwardPropagation> forward_propagation,
+                                      unique_ptr<LayerForwardPropagation>& forward_propagation,
                                       const bool& is_training)
 {
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);

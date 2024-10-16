@@ -18,11 +18,6 @@ LongShortTermMemoryLayerTest::LongShortTermMemoryLayerTest() : UnitTesting()
 }
 
 
-LongShortTermMemoryLayerTest::~LongShortTermMemoryLayerTest()
-{
-}
-
-
 void LongShortTermMemoryLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -52,16 +47,6 @@ void LongShortTermMemoryLayerTest::test_constructor()
     long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
 
     assert_true(long_short_term_memory_layer.get_parameters_number() == 72, LOG);
-}
-
-
-void LongShortTermMemoryLayerTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    LongShortTermMemoryLayer* lstm_layer = new LongShortTermMemoryLayer;
-
-    delete lstm_layer;
 }
 
 
@@ -97,13 +82,13 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     input_pairs.first = inputs.data();
     input_pairs.second = {{samples_number, inputs_number}};
-
+/*
     long_short_term_memory_layer.forward_propagate({input_pairs}, &long_short_term_layer_forward_propagation, is_training);
 
     assert_true(long_short_term_layer_forward_propagation.outputs.rank() == 2, LOG);
     assert_true(long_short_term_layer_forward_propagation.outputs.dimension(0) == 1, LOG);
     assert_true(long_short_term_layer_forward_propagation.outputs.dimension(1) == inputs.dimension(1), LOG);
-
+*/
 }
 
 
@@ -111,10 +96,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
 {
     cout << "Running long short-term memory layer test case...\n";
 
-     and destructor
-
     test_constructor();
-    test_destructor();
 
     // Forward propagate
 

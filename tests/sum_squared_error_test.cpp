@@ -22,11 +22,6 @@ SumSquaredErrorTest::SumSquaredErrorTest() : UnitTesting()
 }
 
 
-SumSquaredErrorTest::~SumSquaredErrorTest() 
-{
-}
-
-
 void SumSquaredErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -46,15 +41,6 @@ void SumSquaredErrorTest::test_constructor()
     assert_true(sum_squared_error_4.has_data_set(), LOG);
 }
 
-
-void SumSquaredErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    SumSquaredError* sum_squared_error = new SumSquaredError;
-
-    delete sum_squared_error;
-}
 
 void SumSquaredErrorTest::test_back_propagate()
 {
@@ -499,11 +485,7 @@ void SumSquaredErrorTest::run_test_case()
 {
     cout << "Running sum squared error test case...\n";
 
-     and destructor
-
     test_constructor();
-
-    test_destructor();
 
     // Back propagate
 

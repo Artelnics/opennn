@@ -7,7 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
-#include "tensors.h"
+//#include "tensors.h"
+#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
@@ -27,6 +28,7 @@ Layer::~Layer()
     delete thread_pool;
     delete thread_pool_device;
 }
+
 
 string Layer::get_name() const
 {
@@ -154,7 +156,7 @@ dimensions Layer::get_output_dimensions() const
 
 
 void Layer::forward_propagate(const vector<pair<type*, dimensions>>&, 
-                              unique_ptr<LayerForwardPropagation>, const bool&)
+                              unique_ptr<LayerForwardPropagation>&, const bool&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }

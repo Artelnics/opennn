@@ -15,15 +15,10 @@ struct NeuralNetworkBackPropagation
 {
     NeuralNetworkBackPropagation() {}
 
-    virtual ~NeuralNetworkBackPropagation()
-    {
-    }
-
     NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network)
     {
         neural_network = new_neural_network;
     }
-
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network);
 

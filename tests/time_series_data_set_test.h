@@ -27,12 +27,7 @@ public:
 
    explicit TimeSeriesDataSetTest();
 
-   virtual ~TimeSeriesDataSetTest();
-
-    and destructor
-
    void test_constructor();
-   void test_destructor();  
 
    // Correlation
 

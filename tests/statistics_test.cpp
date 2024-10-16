@@ -20,11 +20,6 @@ StatisticsTest::StatisticsTest() : UnitTesting()
 }
 
 
-StatisticsTest::~StatisticsTest()
-{
-}
-
-
 void StatisticsTest::test_count_empty_bins()
 {
     cout << "test_count_empty_bins\n";
