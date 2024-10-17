@@ -9,9 +9,9 @@
 #ifndef OPENNN_IMAGES_H
 #define OPENNN_IMAGES_H
 
-// System includes
 
-// OpenNN includes
+
+
 
 #include "config.h"
 

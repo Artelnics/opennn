@@ -19,16 +19,9 @@ DataSetTest::DataSetTest() : UnitTesting()
 }
 
 
-DataSetTest::~DataSetTest()
-{
-}
-
-
 void DataSetTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     DataSet data_set_1;
 
@@ -50,15 +43,6 @@ void DataSetTest::test_constructor()
     assert_true(data_set_3.get_samples_number() == 1, LOG);
     assert_true(data_set_3.get_input_variables_number() == 1,LOG);
     assert_true(data_set_3.get_target_variables_number() == 1,LOG);
-}
-
-
-void DataSetTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    DataSet* data_set = new DataSet(1, 1, 1);
-    delete data_set;
 }
 
 
@@ -1935,9 +1919,9 @@ void DataSetTest::test_fill()
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
 
-    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
+    const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map(inputs_pair(0));
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map(input_pairs[0]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
@@ -1953,10 +1937,7 @@ void DataSetTest::run_test_case()
 {
     cout << "Running data set test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Data resizing
 

@@ -9,13 +9,13 @@
 #ifndef INPUTSSELECTIONALGORITHM_H
 #define INPUTSSELECTIONALGORITHM_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 #include <limits>
 
-// OpenNN includes
+
 
 #include "training_strategy.h"
 #include "config.h"
@@ -116,7 +116,7 @@ protected:
 
 struct InputsSelectionResults
 {
-    // Default constructor
+    
 
     explicit InputsSelectionResults()
     {
@@ -133,26 +133,22 @@ struct InputsSelectionResults
 
     void set(const Index& maximum_epochs_number);
 
-   virtual ~InputsSelectionResults() {}
-
    string write_stopping_condition() const;
 
    void resize_history(const Index& new_size);
 
-
    void print() const
    {
-       cout << endl;
-       cout << "Inputs Selection Results" << endl;
+       cout << endl
+            << "Inputs Selection Results" << endl
+            << "Optimal inputs number: " << optimal_input_raw_variables_names.size() << endl
+            << "Inputs: " << endl;
 
-       cout << "Optimal inputs number: " << optimal_input_raw_variables_names.size() << endl;
+       for(Index i = 0; i < optimal_input_raw_variables_names.size(); i++) 
+           cout << "   " << optimal_input_raw_variables_names(i) << endl;
 
-       cout << "Inputs: " << endl;
-
-       for(Index i = 0; i < optimal_input_raw_variables_names.size(); i++) cout << "   " << optimal_input_raw_variables_names(i) << endl;
-
-       cout << "Optimum training error: " << optimum_training_error << endl;
-       cout << "Optimum selection error: " << optimum_selection_error << endl;
+       cout << "Optimum training error: " << optimum_training_error << endl
+            << "Optimum selection error: " << optimum_selection_error << endl;
    }
 
 

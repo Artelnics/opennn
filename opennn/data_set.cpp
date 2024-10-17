@@ -96,7 +96,7 @@ const bool& DataSet::get_display() const
 
 DataSet::RawVariable::RawVariable()
 {
-    name = "";
+    name.clear();
     use = VariableUse::None;
     type = RawVariableType::None;
     categories.resize(0);
@@ -1414,7 +1414,7 @@ Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
 }
 
 
-Tensor<string, 1> DataSet::get_raw_variables_names() const
+Tensor<string, 1> DataSet::get_raw_variable_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -3024,7 +3024,7 @@ void DataSet::set(const string& data_path,
 
 void DataSet::set(const Tensor<type, 2>& new_data)
 {
-    data_path = "";
+    data_path.clear();
     
     const Index variables_number = new_data.dimension(1);
     const Index samples_number = new_data.dimension(0);
@@ -3065,7 +3065,7 @@ void DataSet::set(const Index& new_samples_number,
                   const Index& new_inputs_number,
                   const Index& new_targets_number)
 {
-    data_path = "";
+    data_path.clear();
 
     const Index new_variables_number = new_inputs_number + new_targets_number;
 
@@ -4013,14 +4013,14 @@ void DataSet::print_input_target_raw_variables_correlations() const
     const Index inputs_number = get_input_variables_number();
     const Index targets_number = get_target_raw_variables_number();
 
-    const Tensor<string, 1> inputs_name = get_input_raw_variable_names();
+    const Tensor<string, 1> input_names = get_input_raw_variable_names();
     const Tensor<string, 1> targets_name = get_target_raw_variables_names();
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variable_pearson_correlations();
 
     for(Index j = 0; j < targets_number; j++)
         for(Index i = 0; i < inputs_number; i++)
-            cout << targets_name(j) << " - " << inputs_name(i) << ": " << correlations(i, j).r << endl;
+            cout << targets_name(j) << " - " << input_names(i) << ": " << correlations(i, j).r << endl;
 }
 
 
@@ -4029,7 +4029,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     const Index inputs_number = get_input_raw_variables_number();
     const Index targets_number = get_target_raw_variables_number();
 
-    const Tensor<string, 1> inputs_name = get_input_variables_names();
+    const Tensor<string, 1> input_names = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
     const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variable_pearson_correlations());
@@ -4042,7 +4042,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
 
     for(Index i = 0 ; i < inputs_number; i++)
         for(Index j = 0 ; j < targets_number ; j++)
-            top_correlation.insert(pair<type,string>(correlations(i, j), inputs_name(i) + " - " + targets_name(j)));
+            top_correlation.insert(pair<type,string>(correlations(i, j), input_names(i) + " - " + targets_name(j)));
 
     map<type,string>::iterator it;
 
@@ -6625,14 +6625,10 @@ void DataSet::decode(string& input_string) const
     switch(codification)
     {
     case DataSet::Codification::SHIFT_JIS:
-    {
         input_string = sj2utf8(input_string);
-    }
-
+        break;
     default:
-    {
-        // do nothing;
-    }
+        break;
     }
 }
 

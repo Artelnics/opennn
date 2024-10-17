@@ -9,11 +9,11 @@
 #ifndef RECURRENTLAYER_H
 #define RECURRENTLAYER_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "layer.h"
@@ -140,20 +140,20 @@ public:
    void calculate_activations(Tensor<type, 2>&,
                               Tensor<type, 2>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                          LayerForwardPropagation*,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Back propagation
 
-   void insert_gradient(LayerBackPropagation*,
+   void insert_gradient(unique_ptr<LayerBackPropagation>,
                         const Index& ,
                         Tensor<type, 1>&) const final;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
-                                 const vector<pair<type*, dimensions>>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+                       const vector<pair<type*, dimensions>>&,
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
    // Expression
 
@@ -225,15 +225,13 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     {
     }
 
-    virtual ~RecurrentLayerBackPropagation()
-    {
-    }
-
     explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

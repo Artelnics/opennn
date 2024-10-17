@@ -24,16 +24,9 @@ AdaptiveMomentEstimationTest::AdaptiveMomentEstimationTest() : UnitTesting()
 }
 
 
-AdaptiveMomentEstimationTest::~AdaptiveMomentEstimationTest()
-{
-}
-
-
 void AdaptiveMomentEstimationTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     AdaptiveMomentEstimation adaptive_moment_estimation_1;
     assert_true(!adaptive_moment_estimation_1.has_loss_index(), LOG);
@@ -42,16 +35,6 @@ void AdaptiveMomentEstimationTest::test_constructor()
 
     AdaptiveMomentEstimation adaptive_moment_estimation_2(&mean_squared_error);
     assert_true(adaptive_moment_estimation_2.has_loss_index(), LOG);
-}
-
-
-void AdaptiveMomentEstimationTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    AdaptiveMomentEstimation* adaptive_moment_estimation = new AdaptiveMomentEstimation;
-
-    delete adaptive_moment_estimation;
 }
 
 
@@ -201,10 +184,7 @@ void AdaptiveMomentEstimationTest::run_test_case()
 {
     cout << "Running Adaptive Moment Estimation (ADAM) test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Training
 

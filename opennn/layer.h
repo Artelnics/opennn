@@ -13,15 +13,16 @@
 
 #include "config.h"
 #include "tinyxml2.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
 
-class Layer;
-
-struct LayerForwardPropagation;
-struct LayerBackPropagation;
-struct LayerBackPropagationLM;
+//struct LayerForwardPropagation;
+//struct LayerBackPropagation;
+//struct LayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
 struct LayerForwardPropagationCuda;
@@ -49,28 +50,15 @@ public:
                     Unscaling,
                     Bounding,
                     Flatten,
-                    RegionProposal,
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};
 
-    // Constructor
-
-    explicit Layer()
-    {
-        const int n = omp_get_max_threads();
-
-        thread_pool = new ThreadPool(n);
-        thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-    }
+    explicit Layer();
 
     // Destructor
 
-    virtual ~Layer()
-    {
-        delete thread_pool;
-        delete thread_pool_device;
-    }
+    virtual ~Layer();
 
     string get_name() const;
 
@@ -108,31 +96,31 @@ public:
 
     // Forward propagation
 
-    virtual void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                   LayerForwardPropagation*,
+    virtual void forward_propagate(const vector<pair<type*, dimensions>>&,
+                                   unique_ptr<LayerForwardPropagation>&,
                                    const bool&) = 0;
 
     // Back propagation
 
     virtual void back_propagate(const vector<pair<type*, dimensions>>&,
                                 const vector<pair<type*, dimensions>>&,
-                                LayerForwardPropagation*,
-                                LayerBackPropagation*) const {}
+                                unique_ptr<LayerForwardPropagation>&,
+                                unique_ptr<LayerBackPropagation>&) const {}
 
     virtual void back_propagate_lm(const vector<pair<type*, dimensions>>&,
                                    const vector<pair<type*, dimensions>>&,
-                                   LayerForwardPropagation*,
-                                   LayerBackPropagationLM*) const {}
+                                   unique_ptr<LayerForwardPropagation>&,
+                                   unique_ptr<LayerBackPropagationLM>&) const {}
 
-    virtual void insert_gradient(LayerBackPropagation*,
+    virtual void insert_gradient(unique_ptr<LayerBackPropagation>,
                                  const Index&,
                                  Tensor<type, 1>&) const {}
 
     virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-                                                      LayerForwardPropagation*,
-                                                      LayerBackPropagationLM*) {}
+                                                      unique_ptr<LayerForwardPropagation>&,
+                                                      unique_ptr<LayerBackPropagationLM>&) {}
 
-    virtual void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
+    virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                                    const Index&,
                                                    Tensor<type, 2>&) const {}
 
@@ -159,6 +147,7 @@ protected:
     string name = "layer";
 
     Type layer_type;
+
 
     template <int rank>
     void binary(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type threshold) const

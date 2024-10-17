@@ -9,12 +9,8 @@
 #ifndef LONGSHORTTERMMEMORYLAYER_H
 #define LONGSHORTTERMMEMORYLAYER_H
 
-// System includes
-
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "layer.h"
@@ -159,40 +155,40 @@ public:
    void calculate_recurrent_activations(Tensor<type, 1>&,
                                         Tensor<type, 1>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                          LayerForwardPropagation*,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Back propagation
 
-   void insert_gradient(LayerBackPropagation*,
+   void insert_gradient(unique_ptr<LayerBackPropagation>,
                         const Index& ,
                         Tensor<type, 1>&) const final;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
-                       LayerForwardPropagation*,
-                       LayerBackPropagation*) const final;
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
    void calculate_forget_parameters_derivatives(const Tensor<type, 2>&,
                                                 const Tensor<type, 2>&,
-                                                LongShortTermMemoryLayerForwardPropagation*,
-                                                LongShortTermMemoryLayerBackPropagation*) const;
+       unique_ptr<LongShortTermMemoryLayerForwardPropagation>,
+       unique_ptr<LongShortTermMemoryLayerBackPropagation>) const;
 
    void calculate_input_parameters_derivatives(const Tensor<type, 2>&,
                                                const Tensor<type, 2>&,
-                                               LongShortTermMemoryLayerForwardPropagation*,
-                                               LongShortTermMemoryLayerBackPropagation*) const;
+       unique_ptr < LongShortTermMemoryLayerForwardPropagation>,
+       unique_ptr < LongShortTermMemoryLayerBackPropagation>) const;
 
    void calculate_state_parameters_derivatives(const Tensor<type, 2>&,
                                                const Tensor<type, 2>&,
-                                               LongShortTermMemoryLayerForwardPropagation*,
-                                               LongShortTermMemoryLayerBackPropagation*) const;
+       unique_ptr < LongShortTermMemoryLayerForwardPropagation>,
+       unique_ptr < LongShortTermMemoryLayerBackPropagation>) const;
 
    void calculate_output_parameters_derivatives(const Tensor<type, 2>&,
                                                 const Tensor<type, 2>&,
-                                                LongShortTermMemoryLayerForwardPropagation*,
-                                                LongShortTermMemoryLayerBackPropagation*) const;
+       unique_ptr < LongShortTermMemoryLayerForwardPropagation>,
+       unique_ptr < LongShortTermMemoryLayerBackPropagation>) const;
 
    // Expression
 
@@ -316,17 +312,13 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     {
     }
 
-    virtual ~LongShortTermMemoryLayerBackPropagation()
-    {
-    }
-
-
     explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
 
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

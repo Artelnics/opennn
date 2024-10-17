@@ -18,18 +18,11 @@ NeuralNetworkTest::NeuralNetworkTest() : UnitTesting()
 }
 
 
-NeuralNetworkTest::~NeuralNetworkTest()
-{
-}
-
-
 void NeuralNetworkTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    Tensor<Layer*, 1> layers;
-
-    // Default constructor
+    Tensor<Layer*, 1> layers;    
 
     NeuralNetwork neural_network_0;
 
@@ -144,16 +137,6 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_6.is_empty(), LOG);
     assert_true(neural_network_6.get_layers_number() == 0, LOG);
 */
-}
-
-
-void NeuralNetworkTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    NeuralNetwork* neural_network = new NeuralNetwork;
-
-    delete neural_network;
 }
 
 
@@ -607,7 +590,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
 
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[1]);
@@ -683,7 +666,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
 
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[0]);
@@ -714,7 +697,6 @@ void NeuralNetworkTest::run_test_case()
     cout << "Running neural network test case...\n";
 
     test_constructor();   
-    test_destructor();
  
     test_add_layer();
 

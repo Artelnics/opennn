@@ -9,11 +9,11 @@
 #ifndef MODELSELECTION_H
 #define MODELSELECTION_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "training_strategy.h"
 #include "growing_neurons.h"

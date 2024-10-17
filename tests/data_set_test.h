@@ -28,12 +28,7 @@ public:
 
    explicit DataSetTest();
 
-   virtual ~DataSetTest();
-
-   // Constructor and destructor
-
    void test_constructor();
-   void test_destructor();  
 
    // Data resizing
 

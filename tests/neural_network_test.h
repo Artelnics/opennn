@@ -26,10 +26,7 @@ public:
 
     explicit NeuralNetworkTest();
 
-    virtual ~NeuralNetworkTest();
-
     void test_constructor();
-    void test_destructor();
 
     void test_add_layer();
 

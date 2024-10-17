@@ -11,11 +11,11 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "tinyxml2.h"
 #include "histogram.h"
@@ -212,7 +212,7 @@ public:
     Tensor<Index, 1> get_unused_raw_variables_indices() const;
     Tensor<Index, 1> get_used_raw_variables_indices() const;
 
-    Tensor<string, 1> get_raw_variables_names() const;
+    Tensor<string, 1> get_raw_variable_names() const;
 
     Tensor<string, 1> get_input_raw_variable_names() const;
     Tensor<string, 1> get_target_raw_variables_names() const;

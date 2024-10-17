@@ -20,11 +20,6 @@ ConvolutionalLayerTest::ConvolutionalLayerTest() : UnitTesting()
 }
 
 
-ConvolutionalLayerTest::~ConvolutionalLayerTest()
-{
-}
-
-
 void ConvolutionalLayerTest::test_eigen_convolution()
 {
     cout << "test_eigen_convolution\n";
@@ -185,12 +180,6 @@ void ConvolutionalLayerTest::test_constructor()
                 && convolutional_layer.get_kernel_width() == 2
                 && convolutional_layer.get_kernel_channels() == 1 
                 && convolutional_layer.get_kernels_number() == 16, LOG);
-}
-
-
-void ConvolutionalLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
 }
 
 
@@ -516,9 +505,9 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     kernel.setConstant(type(1));
 
-    Tensor<pair<type*, dimensions>, 1> inputs_pair(1);
-    inputs_pair(0).first = inputs.data();
-    inputs_pair(0).second = { input_images, input_height, input_width, channels };
+    Tensor<pair<type*, dimensions>, 1> input_pairs[1];
+    input_pairs[0].first = inputs.data();
+    input_pairs[0].second = { input_images, input_height, input_width, channels };
 
     // bmp_image_1:
     //    255 255   0   0   255 255   0   0     255 255   0   0
@@ -554,7 +543,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
 
-    convolutional_layer.forward_propagate(inputs_pair, &forward_propagation, is_training);
+    convolutional_layer.forward_propagate(input_pairs, &forward_propagation, is_training);
  
     assert_true(forward_propagation.outputs.dimension(0) == input_images
                 && forward_propagation.outputs.dimension(1) == convolutional_layer.get_output_dimensions()[0] 
@@ -623,13 +612,13 @@ void ConvolutionalLayerTest::test_back_propagate()
 
     kernel.setConstant(type(1));
 
-    Tensor<pair<type*, dimensions>, 1> inputs_pair(1);
-    inputs_pair(0).first = inputs.data();
-    inputs_pair(0).second = { input_images, input_height, input_width, channels };
+    Tensor<pair<type*, dimensions>, 1> input_pairs[1];
+    input_pairs[0].first = inputs.data();
+    input_pairs[0].second = { input_images, input_height, input_width, channels };
 
-    Tensor<pair<type*, dimensions>, 1> deltas_pair(1);
-    deltas_pair(0).first = inputs.data();
-    deltas_pair(0).second = { input_images, input_height, input_width, channels };
+    Tensor<pair<type*, dimensions>, 1> delta_pairs(1);
+    delta_pairs(0).first = inputs.data();
+    delta_pairs(0).second = { input_images, input_height, input_width, channels };
 
     // bmp_image_1:
     //    255 255   0   0   255 255   0   0     255 255   0   0
@@ -666,9 +655,9 @@ void ConvolutionalLayerTest::test_back_propagate()
 
     convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
 
-    convolutional_layer.forward_propagate(inputs_pair, &forward_propagation, is_training);
+    convolutional_layer.forward_propagate(input_pairs, &forward_propagation, is_training);
 
-    convolutional_layer.back_propagate(inputs_pair, deltas_pair, &forward_propagation, &back_propagation);
+    convolutional_layer.back_propagate(input_pairs, delta_pairs, &forward_propagation, &back_propagation);
 
     // Current layer's values
 
@@ -724,7 +713,6 @@ void ConvolutionalLayerTest::run_test_case()
     test_eigen_convolution();
 
     test_constructor();
-    test_destructor();
 
     test_calculate_convolutions();
 

@@ -24,13 +24,7 @@ public:
 
     explicit LongShortTermMemoryLayerTest();
 
-    virtual ~LongShortTermMemoryLayerTest();
-
-    // Constructor and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Forward propagate
 

@@ -25,13 +25,7 @@ public:
 
    explicit ModelSelectionTest();
 
-   virtual ~ModelSelectionTest();
-
-   // Constructor and destructor
-
    void test_constructor();
-
-   void test_destructor();
 
    // Model selection
 

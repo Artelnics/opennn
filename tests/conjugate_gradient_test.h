@@ -27,13 +27,7 @@ public:
 
    explicit ConjugateGradientTest();    
 
-   virtual ~ConjugateGradientTest();
-
-   // Constructor and destructor
-
    void test_constructor();
-
-   void test_destructor();
 
    // Training
 

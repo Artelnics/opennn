@@ -25,26 +25,11 @@ CrossEntropyError3DTest::CrossEntropyError3DTest() : UnitTesting()
 }
 
 
-CrossEntropyError3DTest::~CrossEntropyError3DTest()
-{
-}
-
-
 void CrossEntropyError3DTest::test_constructor()
 {
     cout << "test_constructor\n";
 
     CrossEntropyError3D cross_entropy_error_3d;
-}
-
-
-void CrossEntropyError3DTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    CrossEntropyError3D* cross_entropy_error_3d = new CrossEntropyError3D;
-
-    delete cross_entropy_error_3d;
 }
 
 
@@ -93,7 +78,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(batch_samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
         
         // Loss index
 
@@ -150,7 +135,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         neural_network.add_layer(probabilistic_layer_3d);
 
         forward_propagation.set(batch_samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -218,7 +203,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         neural_network.add_layer(probabilistic_layer_3d);
 
         forward_propagation.set(batch_samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -288,7 +273,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
         
-        transformer.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
         
         // Loss index
 
@@ -462,7 +447,6 @@ void CrossEntropyError3DTest::run_test_case()
     // Test constructor
 
     test_constructor();
-    test_destructor();
     
     // Back-propagation
     

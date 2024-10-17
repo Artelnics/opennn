@@ -27,11 +27,8 @@ public:
 
     explicit TrainingStrategyTest();
 
-    virtual ~TrainingStrategyTest();
-
     void test_constructor();
-    void test_destructor();
-
+ 
     void test_perform_training();
 
     void test_to_XML();

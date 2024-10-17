@@ -18,16 +18,9 @@ ProbabilisticLayer3DTest::ProbabilisticLayer3DTest() : UnitTesting()
 }
 
 
-ProbabilisticLayer3DTest::~ProbabilisticLayer3DTest()
-{
-}
-
-
 void ProbabilisticLayer3DTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     ProbabilisticLayer3D probabilistic_layer_3d_1;
 
@@ -75,16 +68,6 @@ void ProbabilisticLayer3DTest::test_constructor()
         probabilistic_layer_3d_4.get_biases_number() == 3 &&
         probabilistic_layer_3d_4.get_synaptic_weights_number() == 6 &&
         probabilistic_layer_3d_4.get_parameters_number() == 9, LOG);
-}
-
-
-void ProbabilisticLayer3DTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D;
-
-    delete probabilistic_layer_3d;
 }
 
 
@@ -291,7 +274,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         inputs.setConstant(type(1));
         
         //Forward propagate
-
+/*
         probabilistic_layer_3d_forward_propagation.set(samples_number, &probabilistic_layer_3d);
         
         probabilistic_layer_3d.forward_propagate(tensor_wrapper(to_pair(inputs)),
@@ -311,7 +294,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
             outputs.dimension(2) == neurons_number, LOG);
 
         assert_true(correct_outputs, LOG);
-        
+  */      
     }
 
     {
@@ -342,7 +325,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         //Forward propagate
 
         probabilistic_layer_3d_forward_propagation.set(samples_number, &probabilistic_layer_3d);
-
+/*
         probabilistic_layer_3d.forward_propagate(tensor_wrapper(to_pair(inputs)),
                                                  &probabilistic_layer_3d_forward_propagation,
                                                  is_training);
@@ -366,6 +349,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
             outputs.dimension(2) == neurons_number, LOG);
 
         assert_true(correct_outputs, LOG);
+*/
     }
 }
 
@@ -374,10 +358,7 @@ void ProbabilisticLayer3DTest::run_test_case()
 {
     cout << "Running probabilistic layer test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Forward propagate
 

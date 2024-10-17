@@ -240,15 +240,12 @@ void Batch::print() const
     const Index inputs_rank = input_dimensions.size();
     const Index targets_rank = targets_dimensions.size();
 
-    cout << "Batch" << endl;
-
-    cout << "Inputs:" << endl;
-    cout << "Inputs dimensions:" << endl;
+    cout << "Batch" << endl
+         << "Inputs:" << endl
+         << "Inputs dimensions:" << endl;
 
     for(Index i = 0; i < inputs_rank; i++)
-    {
         cout << input_dimensions[i] << endl;
-    }
 
     if(inputs_rank == 4)
     {
@@ -261,14 +258,11 @@ void Batch::print() const
         cout << inputs << endl;
     }
 
-    cout << "Targets:" << endl;
-
-    cout << "Targets dimensions:" << endl;
+    cout << "Targets:" << endl
+         << "Targets dimensions:" << endl;
 
     for(Index i = 0; i < targets_rank; i++)
-    {
         cout << targets_dimensions[i] << endl;
-    }
 
     const TensorMap<Tensor<type, 2>> targets(targets_data,
                                              targets_dimensions[0],
@@ -278,16 +272,16 @@ void Batch::print() const
 }
 
 
-Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
+vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 {
-    Tensor<pair<type*, dimensions>, 1> inputs(has_context ? 2 : 1);
+    vector<pair<type*, dimensions>> input_pairs(has_context ? 2 : 1);
 
-    inputs(0) = { input_data, input_dimensions };
+    input_pairs[0] = { input_data, input_dimensions };
     
     if (has_context)
-        inputs(1) = { context_data, context_dimensions };
+        input_pairs[1] = { context_data, context_dimensions };
     
-    return inputs;
+    return input_pairs;
 }
 
 

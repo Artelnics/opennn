@@ -232,7 +232,7 @@ TrainingResults GradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
@@ -245,7 +245,7 @@ TrainingResults GradientDescent::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_inputs_names(inputs_name);
+    neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer_2d())
@@ -309,7 +309,7 @@ TrainingResults GradientDescent::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch.get_inputs_pair(), 
+        neural_network->forward_propagate(training_batch.get_input_pairs(), 
                                           training_forward_propagation, 
                                           is_training);
 
@@ -324,7 +324,7 @@ TrainingResults GradientDescent::perform_training()
 
         if(has_selection)
         {
-            neural_network->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
+            neural_network->forward_propagate(selection_batch.get_input_pairs(), selection_forward_propagation, is_training);
 
             loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 

@@ -9,12 +9,12 @@
 #ifndef FLATTENLAYER_H
 #define FLATTENLAYER_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "layer.h"
 #include "layer_forward_propagation.h"
@@ -75,16 +75,16 @@ public:
 
     // Forward propagation
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
-                           LayerForwardPropagation*, 
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     // Back-propagation
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
-                        LayerForwardPropagation*,
-                        LayerBackPropagation*) const final;
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
     // Serialization
 
@@ -108,13 +108,13 @@ protected:
 
 struct FlattenLayerForwardPropagation : LayerForwardPropagation
 {
-   // Default constructor
+   
 
    explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
    {
    }
 
-   // Constructor
+   
 
    explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
        : LayerForwardPropagation()
@@ -144,7 +144,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 struct FlattenLayerBackPropagation : LayerBackPropagation
 {
 
-    // Default constructor
+    
 
     explicit FlattenLayerBackPropagation() : LayerBackPropagation()
     {
@@ -157,13 +157,9 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
         set(new_batch_samples_number, new_layer);
     }
 
-
-    virtual ~FlattenLayerBackPropagation()
-    {
-    }
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
     void print() const
     {

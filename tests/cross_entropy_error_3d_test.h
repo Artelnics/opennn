@@ -26,11 +26,7 @@ public:
 
     explicit CrossEntropyError3DTest();
 
-    virtual ~CrossEntropyError3DTest();
-
     void test_constructor();
-
-    void test_destructor();
 
     // Back-propagation
 

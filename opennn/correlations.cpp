@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
+
 
 #include <iostream>
 #include <cmath>
@@ -276,7 +276,8 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
         if(isnan(x(i)) || isnan(y(i)))
             not_NAN_row(i) = false;
 
-        if(not_NAN_row(i)) new_rows_number++;
+        if(not_NAN_row(i))
+            new_rows_number++;
     }
 
     Tensor<type, 1> new_x(new_rows_number);

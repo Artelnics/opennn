@@ -230,7 +230,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
@@ -243,7 +243,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     
-    neural_network->set_inputs_names(inputs_name);
+    neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer_2d())
@@ -266,12 +266,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    const Tensor<pair<type*, dimensions>, 1> training_inputs_pair = training_batch.get_inputs_pair();
+    const vector<pair<type*, dimensions>> training_input_pairs = training_batch.get_input_pairs();
 
     Batch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
-    const Tensor<pair<type*, dimensions>, 1> selection_inputs_pair = selection_batch.get_inputs_pair();
+    const vector<pair<type*, dimensions>> selection_input_pairs = selection_batch.get_input_pairs();
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
@@ -310,7 +310,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_inputs_pair,
+        neural_network->forward_propagate(training_input_pairs,
                                           training_forward_propagation,
                                           is_training);
         
@@ -324,7 +324,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         
         if(has_selection)
         {           
-            neural_network->forward_propagate(selection_inputs_pair,
+            neural_network->forward_propagate(selection_input_pairs,
                                               selection_forward_propagation,
                                               is_training);
 
@@ -447,7 +447,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
     
-    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
+    const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
 
     const type regularization_weight = loss_index->get_regularization_weight();
     
@@ -476,7 +476,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
         
-        neural_network->forward_propagate(inputs_pair,
+        neural_network->forward_propagate(input_pairs,
                                           potential_parameters,
                                           forward_propagation);
 

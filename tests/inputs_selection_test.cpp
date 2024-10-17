@@ -18,11 +18,6 @@ InputsSelectionTest::InputsSelectionTest() : UnitTesting()
 }
 
 
-InputsSelectionTest::~InputsSelectionTest()
-{
-}
-
-
 void InputsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -41,25 +36,11 @@ void InputsSelectionTest::test_constructor()
 }
 
 
-void InputsSelectionTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    GrowingInputs* growing_inputs = new GrowingInputs;
-
-    delete growing_inputs;
-}
-
-
 void InputsSelectionTest::run_test_case()
 {
     cout << "Running inputs selection algorithm test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-
-    test_destructor();
 
     cout << "End of inputs selection algorithm test case.\n\n";
 }

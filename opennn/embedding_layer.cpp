@@ -253,14 +253,14 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 }
 
 
-void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                       LayerForwardPropagation* layer_forward_propagation,
+void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                       unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                        const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair(0));
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
-        = static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation);
+    unique_ptr<EmbeddingLayerForwardPropagation> embedding_layer_forward_propagation
+        (static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation.release()));
 
     Tensor<type, 3>& outputs = embedding_layer_forward_propagation->outputs;
 
@@ -282,24 +282,25 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& inputs_pair,
-                                              const vector<pair<type*, dimensions>>& deltas_pair,
-                                              LayerForwardPropagation* forward_propagation,
-                                              LayerBackPropagation* back_propagation) const
+void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                    const vector<pair<type*, dimensions>>& delta_pairs,
+                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_samples_number = inputs_pair[0].second[0];
-    const Index inputs_number = inputs_pair[0].second[1];
+    const Index batch_samples_number = input_pairs[0].second[0];
+    const Index inputs_number = input_pairs[0].second[1];
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(inputs_pair[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    if(deltas_pair.size() > 1)     
-        add_deltas(deltas_pair);
+    if(delta_pairs.size() > 1)     
+        add_deltas(delta_pairs);
 
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     // Back propagation
 
-    EmbeddingLayerBackPropagation* embedding_layer_back_propagation = static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
+    unique_ptr<EmbeddingLayerBackPropagation> embedding_layer_back_propagation
+        (static_cast<EmbeddingLayerBackPropagation*>(back_propagation.release()));
 
     Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
@@ -309,7 +310,8 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     for(Index i = 0; i < batch_samples_number; i++)
     {
         if(positional_encoding)
-            sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
+            sample_deltas.device(*thread_pool_device) 
+            = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
         else
             sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
@@ -319,28 +321,28 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 }
 
 
-void EmbeddingLayer::add_deltas(const vector<pair<type*, dimensions>>& deltas_pair) const
+void EmbeddingLayer::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
 {
 
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(deltas_pair[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
      
-    for(Index i = 1; i < deltas_pair.size(); i++)
+    for(Index i = 1; i < delta_pairs.size(); i++)
     {
-        const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(deltas_pair[i]);
+        const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(delta_pairs[i]);
 
         deltas.device(*thread_pool_device) += other_deltas;
     }
 }
 
 
-void EmbeddingLayer::insert_gradient(LayerBackPropagation* back_propagation,
+void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
                                      const Index& index,
                                      Tensor<type, 1>& gradient) const
 {
     const Index embedding_weights_number = get_parameters_number();
 
-    const EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
-        static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
+    const unique_ptr<EmbeddingLayerBackPropagation> embedding_layer_back_propagation
+        (static_cast<EmbeddingLayerBackPropagation*>(back_propagation.release()));
 
     const type* embedding_weights_derivatives_data = embedding_layer_back_propagation->embedding_weights_derivatives.data();
 
@@ -477,7 +479,7 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 
     const Index depth = embedding_layer->get_depth();
     
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, depth });
+    return {outputs_data, {batch_samples_number, inputs_number, depth}};
 }
 
 
@@ -542,8 +544,6 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension, depth);
-
-    inputs_derivatives.resize(0); // Always input layer
 }
 
 }

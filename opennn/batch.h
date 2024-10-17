@@ -23,7 +23,7 @@ struct Batch
 
     virtual ~Batch();
 
-    Tensor<pair<type*, dimensions>, 1> get_inputs_pair() const;
+    vector<pair<type*, dimensions>> get_input_pairs() const;
 
     pair<type*, dimensions> get_targets_pair() const;
 

@@ -24,10 +24,7 @@ public:
 
     explicit ProbabilisticLayerTest();
 
-    virtual ~ProbabilisticLayerTest();
-
     void test_constructor();
-    void test_destructor();
 
     void test_calculate_combinations();
     void test_calculate_activations();
@@ -53,7 +50,7 @@ private:
     Tensor<type, 2> activations;
     Tensor<type, 2> activations_derivatives;
 
-    pair<type*, dimensions> inputs_pair;
+    pair<type*, dimensions> input_pairs;
 
     bool is_training = true;
 

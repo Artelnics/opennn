@@ -9,14 +9,14 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-// System includes
+
 
 #include <iostream>
 #include <limits>
 #include <cmath>
 #include <cstdlib>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "neural_network.h"
@@ -42,8 +42,6 @@ public:
 
    explicit LearningRateAlgorithm(LossIndex*);
 
-   // Destructor
-
    virtual ~LearningRateAlgorithm();
 
    struct Triplet
@@ -55,24 +53,14 @@ public:
            B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
        }
 
-
-       virtual ~Triplet()
-       {
-       }
-
-
        inline bool operator == (const Triplet& other_triplet) const
        {
           if(A == other_triplet.A
           && U == other_triplet.U
           && B == other_triplet.B)
-          {
              return true;
-          }
           else
-          {
              return false;
-          }
        }
 
        inline type get_length() const

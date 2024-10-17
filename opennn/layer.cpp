@@ -7,10 +7,28 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
-#include "tensors.h"
+//#include "tensors.h"
+#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
+
+Layer::Layer()
+{
+
+    const int n = omp_get_max_threads();
+
+    thread_pool = new ThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+}
+
+
+Layer::~Layer()
+{
+    delete thread_pool;
+    delete thread_pool_device;
+}
+
 
 string Layer::get_name() const
 {
@@ -66,9 +84,6 @@ string Layer::get_type_string() const
 
     case Type::Flatten:
         return "Flatten";
-
-    case Type::RegionProposal:
-        return "RegionProposal";
 
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";
@@ -140,7 +155,8 @@ dimensions Layer::get_output_dimensions() const
 }
 
 
-void Layer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&)
+void Layer::forward_propagate(const vector<pair<type*, dimensions>>&, 
+                              unique_ptr<LayerForwardPropagation>&, const bool&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
