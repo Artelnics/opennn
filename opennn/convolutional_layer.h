@@ -55,7 +55,11 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const dimensions&, const dimensions& = {1, 1, 1, 1});
+    explicit ConvolutionalLayer(const dimensions&,                                // Input dimensions {height,width,channels}
+                                const dimensions& = {1, 1, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
+                                const ActivationFunction& = ActivationFunction::Linear,
+                                const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
+                                const ConvolutionType& = ConvolutionType::Valid); // Convolution type (Valid || Same)                   
 
     // Destructor
 
@@ -116,7 +120,7 @@ public:
 
     // Set
 
-    void set(const dimensions&, const dimensions&);
+    void set(const dimensions&, const dimensions&, const ActivationFunction&, const dimensions&, const ConvolutionType&);
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
@@ -169,9 +173,9 @@ public:
    // Back propagation
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
-                                 const vector<pair<type*, dimensions>>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+                       const vector<pair<type*, dimensions>>&,
+                       LayerForwardPropagation*,
+                       LayerBackPropagation*) const final;
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,

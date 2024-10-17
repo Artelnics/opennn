@@ -642,7 +642,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     Index buffer_size = new_buffer_size;
     Index batches_number;
 
-    const Index batch_size = std::min(batch_samples_number, samples_number);
+    const Index batch_size = min(batch_samples_number, samples_number);
 
     if(buffer_size > samples_number)
         buffer_size = samples_number;
@@ -6864,12 +6864,6 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     }
 
     return input_data;
-}
-
-
-bool DataSet::get_augmentation() const
-{
-    return augmentation;
 }
 
 

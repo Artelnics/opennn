@@ -60,7 +60,7 @@ public:
 
     explicit PerceptronLayer(const dimensions&,
                              const dimensions&,
-                             const ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
+                             const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
     // Get
 

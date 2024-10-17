@@ -50,8 +50,8 @@ bool calculate_random_bool()
 }
 
 
-template<int Dimension>
-void set_random(Tensor<type, Dimension>& tensor, const type& minimum, const type& maximum)
+template<int rank>
+void set_random(Tensor<type, rank>& tensor, const type& minimum, const type& maximum)
 {
     random_device rd;
     mt19937 gen(rd());

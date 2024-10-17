@@ -186,7 +186,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives;// = data_set->scale_input_variables();
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
@@ -317,9 +317,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             //cout << "gradient:\n" << training_back_propagation.gradient << endl;
             //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
-            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient.abs() - loss_index->calculate_numerical_gradient().abs() << endl;
+            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            
             //system("pause");
 
             training_error += training_back_propagation.error;
@@ -463,7 +464,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
-    
+
     data_set->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network->has_unscaling_layer())

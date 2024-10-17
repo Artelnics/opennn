@@ -103,6 +103,7 @@ public:
    const vector<unique_ptr<Layer>>& get_layers() const;
    const unique_ptr<Layer>& get_layer(const Index&) const;
    const unique_ptr<Layer>& get_layer(const string&) const;
+   const unique_ptr<Layer>& get_last_layer() const;
    Tensor<Layer*, 1> get_trainable_layers() const;
 
    Index get_layer_index(const string&) const;

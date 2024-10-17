@@ -756,8 +756,6 @@ protected:
 
     Index rows_missing_values_number = 0;
 
-    bool augmentation = false;
-
     bool display = true;     
 };
 

@@ -23,12 +23,15 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 
 
 ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
-                                       const dimensions& new_kernel_dimensions) : Layer()
+                                       const dimensions& new_kernel_dimensions,
+                                       const ConvolutionalLayer::ActivationFunction& new_activation_function,
+                                       const dimensions& new_stride_dimensions,
+                                       const ConvolutionalLayer::ConvolutionType& new_convolution_type) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
     name = "convolutional_layer";
 
-    set(new_input_dimensions, new_kernel_dimensions);
+    set(new_input_dimensions, new_kernel_dimensions, new_activation_function, new_stride_dimensions, new_convolution_type);
 }
 
 
@@ -389,7 +392,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         // Synaptic weights derivatives
 
         kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
-
+        //cout << kernel_synaptic_weights_derivatives << "\nend of convolution gradients" << endl;
+        //cout << "Convolution gradients:\n" << biases_derivatives << endl;
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
                kernel_synaptic_weights_derivatives.data(),
                kernel_synaptic_weights_number * sizeof(type));
@@ -587,6 +591,21 @@ Index ConvolutionalLayer::get_kernels_number() const
 }
 
 
+Index ConvolutionalLayer::get_padding_height() const
+{
+    switch (convolution_type)
+    {
+    case ConvolutionType::Valid:
+        return 0;
+
+    case ConvolutionType::Same:
+        return row_stride * (input_dimensions[1] - 1) - input_dimensions[1] + get_kernel_height();
+    }
+
+    return 0;
+}
+
+
 Index ConvolutionalLayer::get_padding_width() const
 {
     switch(convolution_type)
@@ -596,21 +615,6 @@ Index ConvolutionalLayer::get_padding_width() const
 
     case ConvolutionType::Same:
         return column_stride*(input_dimensions[2] - 1) - input_dimensions[2] + get_kernel_width();
-    }
-
-    return 0;
-}
-
-
-Index ConvolutionalLayer::get_padding_height() const
-{
-    switch(convolution_type)
-    {
-    case ConvolutionType::Valid:
-        return 0;
-
-    case ConvolutionType::Same:
-        return row_stride*(input_dimensions[1] - 1) - input_dimensions[1] + get_kernel_height();
     }
 
     return 0;
@@ -654,7 +658,10 @@ Index ConvolutionalLayer::get_parameters_number() const
 
 
 void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
-                             const dimensions& new_kernel_dimensions)
+                             const dimensions& new_kernel_dimensions,
+                             const ConvolutionalLayer::ActivationFunction& new_activation_function,
+                             const dimensions& new_stride_dimensions,
+                             const ConvolutionType& new_convolution_type)
 {
     if(new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions must be 3");
@@ -662,21 +669,34 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     if(new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
 
-    if (new_kernel_dimensions.size() != 4)
-        throw runtime_error("Kernel dimensions must be 4");
+    if (new_stride_dimensions.size() != 2)
+        throw runtime_error("Stride dimensions must be 2");
 
     if (new_kernel_dimensions[0] > new_input_dimensions[0] || new_kernel_dimensions[1] > new_input_dimensions[1])
         throw runtime_error("kernel dimensions cannot be bigger than input dimensions");
 
     if (new_kernel_dimensions[2] != new_input_dimensions[2])
         throw runtime_error("kernel_channels must match input_channels dimension");
+
+    if (new_stride_dimensions[0] <= 0 || new_stride_dimensions[1] <= 0)
+        throw runtime_error("Stride dimensions cannot be 0 or lower");
+
+    if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[0])
+        throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
     
+    input_dimensions = new_input_dimensions;
+
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];
     const Index kernel_channels = new_kernel_dimensions[2];
     const Index kernels_number = new_kernel_dimensions[3];
 
-    set_activation_function("RectifiedLinear");
+    row_stride = new_stride_dimensions[0];
+    column_stride = new_stride_dimensions[1];
+
+    set_activation_function(new_activation_function);
+
+    set_convolution_type(new_convolution_type);
 
     biases.resize(kernels_number);
     set_random(biases);
@@ -693,8 +713,6 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
     scales.resize(kernels_number);
     offsets.resize(kernels_number);
-
-    input_dimensions = new_input_dimensions;
 }
 
 
@@ -1115,10 +1133,13 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
 
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
+
+    const Index padding_height = convolutional_layer->get_padding_height();
+    const Index padding_width = convolutional_layer->get_padding_width();
     
     preprocessed_inputs.resize(batch_samples_number,
-                               input_height,
-                               input_width,
+                               input_height + padding_height,
+                               input_width + padding_width,
                                input_channels);
 
     outputs.resize(batch_samples_number,
@@ -1213,6 +1234,7 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                              input_width,
                              channels);
 
+    inputs_derivatives.resize(1);
     inputs_derivatives = {{input_derivatives.data(), 
                           {batch_samples_number, input_height, input_width, channels}}};
 }

@@ -891,6 +891,7 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
 
     input_derivatives.resize(batch_samples_number, inputs_number);
 
+    inputs_derivatives.resize(1);
     inputs_derivatives = {{input_derivatives.data(),
                           {batch_samples_number, inputs_number}}};
 }

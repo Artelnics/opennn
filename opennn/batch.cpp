@@ -20,61 +20,68 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
                  const Tensor<Index, 1>& context_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
-    
-    fill_tensor_data(data, samples_indices, inputs_indices, input_data);
 
-    if(has_context)
+    ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
+
+    if (image_data_set != nullptr && image_data_set->get_augmentation())
+    {
+        ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
+        // @TODO
+        Tensor<type, 2>& augmented_data = perform_augmentation(data);
+
+        fill_tensor_data(augmented_data, samples_indices, inputs_indices, input_data);
+    }
+    else
+    {
+        fill_tensor_data(data, samples_indices, inputs_indices, input_data);
+    }
+
+    if (has_context)
         fill_tensor_data(data, samples_indices, context_indices, context_data);
 
     fill_tensor_data(data, samples_indices, targets_indices, targets_data);
 }
 
 
-void Batch::perform_augmentation() const
+Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 {
     ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
 
     const dimensions& input_dimensions = data_set->get_input_dimensions();
 
-    const Index rows_number = input_dimensions[0];
-    const Index columns_number = input_dimensions[1];
+    const Index input_height = input_dimensions[0];
+    const Index input_width = input_dimensions[1];
     const Index channels = input_dimensions[2];
-    const Index input_size = rows_number*columns_number*channels;
 
     TensorMap<Tensor<type, 4>> inputs(input_data,
                                       batch_size,
-                                      rows_number,
-                                      columns_number,
+                                      input_height,
+                                      input_width,
                                       channels);
-
+   
     const bool random_reflection_axis_x = image_data_set->get_random_reflection_axis_x();
     const bool random_reflection_axis_y = image_data_set->get_random_reflection_axis_y();
     const type random_rotation_minimum = image_data_set->get_random_rotation_minimum();
     const type random_rotation_maximum = image_data_set->get_random_rotation_maximum();
-    const type random_rescaling_minimum = type(0);
-    const type random_rescaling_maximum = type(0);
     const type random_horizontal_translation_minimum = image_data_set->get_random_horizontal_translation_minimum();
     const type random_horizontal_translation_maximum = image_data_set->get_random_horizontal_translation_maximum();
     const type random_vertical_translation_minimum = image_data_set->get_random_vertical_translation_minimum();
     const type random_vertical_translation_maximum = image_data_set->get_random_vertical_translation_maximum();
 
-    type* input_data = inputs.data();
-
-    for(Index batch = 0; batch < batch_size; batch++)
+    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
     {
-        TensorMap<Tensor<type, 3>> image(input_data + batch*input_size,
-                                         rows_number,
-                                         columns_number,
-                                         channels);
+        Tensor<type, 3> image = inputs.chip(batch_index, 0);
+        cout << image << endl;
+        system("pause");
 
         if(random_reflection_axis_x)
         {
-            reflect_image_x(thread_pool_device, image);
+            //reflect_image_x(thread_pool_device, image);
         }
 
         if(random_reflection_axis_y)
         {
-            //reflect_image_y(thread_pool_device, image, image);
+            //reflect_image_y(thread_pool_device, image);
         }
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
@@ -86,24 +93,17 @@ void Batch::perform_augmentation() const
             //rotate_image(thread_pool_device, image, image, angle);
         }
 
-        if(random_rescaling_minimum != 0 && random_rescaling_maximum != 0)
-        {
-            const type rescaling = random_rescaling_minimum < random_rescaling_maximum
-                                 ? random_rescaling_minimum + type(rand())
-                                 : random_rescaling_maximum;
-
-            rescale_image(thread_pool_device, image, image, rescaling);
-        }
-
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
         {
-            const type translation = random_horizontal_translation_minimum < random_rescaling_maximum
+            const type translation = random_horizontal_translation_minimum < random_horizontal_translation_maximum
                                    ? random_horizontal_translation_minimum + type(rand())
-                                   : random_rescaling_maximum;
+                                   : random_horizontal_translation_maximum;
 
             //translate_image(thread_pool_device, image, image, translation);
         }
-    }  
+    } 
+    Tensor<type, 2> todo;
+    return todo;
 }
 
 

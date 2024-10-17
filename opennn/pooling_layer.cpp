@@ -20,19 +20,13 @@ PoolingLayer::PoolingLayer() : Layer()
 }
 
 
-PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions, const dimensions& new_pool_dimensions) : Layer()
+PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions, 
+                           const dimensions& new_pool_dimensions,
+                           const dimensions& new_stride_dimensions,
+                           const dimensions& new_padding_dimensions,
+                           const PoolingMethod& new_pooling_method) : Layer()
 {
-    set(new_input_dimensions, new_pool_dimensions);
-
-    input_dimensions = new_input_dimensions;
-
-    pool_height = new_pool_dimensions[0];
-    pool_width = new_pool_dimensions[1];
-
-    row_stride = new_pool_dimensions[0];
-    column_stride = new_pool_dimensions[1];
-
-    set_default();
+    set(new_input_dimensions, new_pool_dimensions, new_stride_dimensions, new_padding_dimensions, new_pooling_method);
 }
 
 
@@ -169,7 +163,11 @@ string PoolingLayer::write_pooling_method() const
 }
 
 
-void PoolingLayer::set(const dimensions& new_input_dimensions, const dimensions& new_pool_dimensions)
+void PoolingLayer::set(const dimensions& new_input_dimensions, 
+                       const dimensions& new_pool_dimensions,
+                       const dimensions& new_stride_dimensions,
+                       const dimensions& new_padding_dimensions,
+                       const PoolingMethod& new_pooling_method)
 {
     if(new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions must be 3");
@@ -177,13 +175,36 @@ void PoolingLayer::set(const dimensions& new_input_dimensions, const dimensions&
     if(new_pool_dimensions.size() != 2)
         throw runtime_error("Pool dimensions must be 2");
 
+    if (new_stride_dimensions.size() != 2)
+        throw runtime_error("Stride dimensions must be 2");
+
+    if (new_padding_dimensions.size() != 2)
+        throw runtime_error("Padding dimensions must be 2");
+
     if (new_pool_dimensions[0] > new_input_dimensions[0] || new_pool_dimensions[1] > new_input_dimensions[1])
         throw runtime_error("Pool dimensions cannot be bigger than input dimensions");
+
+    if (new_stride_dimensions[0] <= 0 || new_stride_dimensions[1] <= 0)
+        throw runtime_error("Stride dimensions cannot be 0 or lower");
+
+    if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[0])
+        throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
+
+    if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
+        throw runtime_error("Padding dimensions cannot be lower than 0");
 
     input_dimensions = new_input_dimensions;
 
     pool_height = new_pool_dimensions[0];
     pool_width = new_pool_dimensions[1];
+
+    row_stride = new_stride_dimensions[0];
+    column_stride = new_stride_dimensions[1];
+
+    padding_heigth = new_padding_dimensions[0];
+    padding_width = new_padding_dimensions[1];
+
+    set_pooling_method(new_pooling_method);
 
     set_default();
 }
@@ -771,6 +792,7 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
 
     input_derivatives.resize(batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 
+    inputs_derivatives.resize(1);
     inputs_derivatives = {{input_derivatives.data(),
                           {batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]}}};
 }

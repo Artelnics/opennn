@@ -79,7 +79,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const
 
     const Index old_layers_number = get_layers_number();
 
-    layers.push_back(std::move(layer));
+    layers.push_back(move(layer));
 
     layers_inputs_indices.push_back(input_indices.empty() ? std::vector<Index>(1, old_layers_number - 1) : input_indices);
 
@@ -305,6 +305,14 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& name) const
 }
 
 
+const unique_ptr<Layer>& NeuralNetwork::get_last_layer() const
+{
+    const Index layers_number = get_layers_number();
+
+    return layers[layers_number-1];
+}
+
+
 Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers() const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
@@ -359,7 +367,7 @@ vector<vector<Index>> NeuralNetwork::get_layers_output_indices() const
     const Index layers_number = layers_inputs_indices.size();
 
     vector<vector<Index>> layers_outputs_indices(layers_number);
-
+    /*
     for (Index j = 0; j < layers_number; j++)
     {
         for (Index k = 0; k < layers_inputs_indices[j].size(); k++)
@@ -368,7 +376,7 @@ vector<vector<Index>> NeuralNetwork::get_layers_output_indices() const
             layers_outputs_indices[input_index].push_back(j);
         }
     }
-/*
+    */
     Index layer_count = 0;
 
     for(Index i = 0; i < layers_number; i++)
@@ -392,10 +400,9 @@ vector<vector<Index>> NeuralNetwork::get_layers_output_indices() const
                 }
             }
         }
-
         layer_count = 0;
     }
-*/
+
     return layers_outputs_indices;
 }
 
@@ -605,15 +612,28 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
         
         for (Index i = 0; i < complexity_size; i++)
         {
-            const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
+            const dimensions kernel_dimensions = {3, 3, /*get_output_dimensions()[2]*/input_dimensions[2], complexity_dimensions[i]};
+            const dimensions convolution_stride_dimensions = {1, 1};
+            const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
-            add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(), kernel_dimensions),
-                      "convolutional_layer_" + to_string(i+1));
+            add_layer(make_unique<ConvolutionalLayer>(/*get_output_dimensions()*/input_dimensions,
+                                                      kernel_dimensions,
+                                                      ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                      convolution_stride_dimensions,
+                                                      convolution_type),
+                      "convolutional_layer_" + to_string(i + 1));
+            
+            const dimensions pool_dimensions = {2, 2};
+            const dimensions pooling_stride_dimensions = { 2, 2 };
+            const dimensions padding_dimensions = { 0, 0 };
+            const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
 
-            const dimensions pool_dimensions = {1, 1};
-
-            add_layer(make_unique<PoolingLayer>(get_output_dimensions(), pool_dimensions),
-                "pooling_layer_" + to_string(i + 1));
+            add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
+                                                pool_dimensions,
+                                                pooling_stride_dimensions,
+                                                padding_dimensions,
+                                                pooling_method),
+                      "pooling_layer_" + to_string(i + 1));
         }
 
         add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
@@ -1901,7 +1921,6 @@ void NeuralNetwork::print() const
         cout << endl
              << "Layer " << i << ": " << endl;
         layers[i]->print();
-
     }
 
     cout << "Outputs:" << endl

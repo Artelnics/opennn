@@ -853,7 +853,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        parameters_forward(i) -= h;
 
        parameters_backward(i) -= h;
-       
+
        neural_network->forward_propagate(inputs_pair,
                                          parameters_backward,
                                          forward_propagation);

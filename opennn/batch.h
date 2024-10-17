@@ -38,7 +38,7 @@ struct Batch
               const Tensor<Index, 1>&, 
               const Tensor<Index, 1>& = Tensor<Index, 1>());
 
-    void perform_augmentation() const;
+    Tensor<type, 2> perform_augmentation(const Tensor<type, 2>&);
 
     void print() const;
 
