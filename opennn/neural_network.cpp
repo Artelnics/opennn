@@ -370,7 +370,6 @@ Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices,
             return i;
 
     return -1;
->>>>>>> 2bb4f7fc65b40a4cbd8fe1537366d6407d5c96fb
 }
 
 
