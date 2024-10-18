@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-
 #include <iostream>
 #include <cmath>
 #include <algorithm>
@@ -156,7 +154,6 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
         return logistic_correlation_matrix_matrix(thread_pool_device, x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
-
 }
 
 
@@ -194,15 +191,6 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
                                     const Tensor<type, 1>& x,
                                     const Tensor<type, 1>& y)
 {
-#ifdef OPENNN_DEBUG
-
-    if(x.size() != y.size())
-        throw runtime_error("Y size must be equal to X size.\n");
-
-#endif
-
-    // Check negative values from y
-
     Correlation exponential_correlation;
 
     for(Index i = 0; i < y.dimension(0); i++)
@@ -433,19 +421,14 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
 type r_correlation_to_z_correlation(const type& r_correlation)
 {
-    const type z_correlation = type(0.5*log((1 + r_correlation)/(1 - r_correlation)));
-
-    return z_correlation;
+    return type(0.5 * log((1 + r_correlation) / (1 - r_correlation)));
 }
 
 
 type z_correlation_to_r_correlation (const type& z_correlation)
 {
-    const type r_correlation = type((exp(2*z_correlation)-1) / (exp(2*z_correlation)+1));
-
-    return r_correlation;
+    return type((exp(2 * z_correlation) - 1) / (exp(2 * z_correlation) + 1));
 }
-
 
 
 Tensor<type, 1> confidence_interval_z_correlation(const type& z_correlation, const Index& n)
@@ -455,17 +438,16 @@ Tensor<type, 1> confidence_interval_z_correlation(const type& z_correlation, con
     const type z_standard_error = type(1.959964);
 
     confidence_interval(0) = z_correlation - z_standard_error * type(1/sqrt(n - 3));
-
     confidence_interval(1) = z_correlation + z_standard_error * type(1/sqrt(n - 3));
 
     return confidence_interval;
 }
 
 
-// @todo Improve this method to be more similar to the other code.
-
 Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
 {
+    // @todo Improve this method to be more similar to the other code.
+
     const int n = x.size();
 
     vector<pair<type, size_t> > sorted_vector(n);
@@ -517,19 +499,6 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
                                     const Tensor<type, 1>& x,
                                     const Tensor<type, 1>& y)
 {
-#ifdef OPENNN_DEBUG
-
-    Index n = y.size();
-
-    const Index x_size = x.size();
-
-    if(x_size != n)
-        throw runtime_error("Y size must be equal to X size.\n");
-
-#endif
-
-    // Check negative values from x
-
     Correlation logarithmic_correlation;
 
     for(Index i = 0; i < x.dimension(0); i++)
@@ -923,15 +892,6 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
                               const Tensor<type, 1>& x,
                               const Tensor<type, 1>& y)
 {
-#ifdef OPENNN_DEBUG
-
-    if(x.size() != y.size())
-        throw runtime_error("Y size must be equal to X size.\n");
-
-#endif
-
-    // Check negative values from x and y
-
     Correlation power_correlation;
 
     for(Index i = 0; i < x.dimension(0); i++)

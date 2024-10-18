@@ -96,12 +96,6 @@ void SumSquaredError::calculate_output_delta_lm(const Batch&,
                                                 ForwardPropagation&,
                                                 BackPropagationLM& back_propagation) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     // Back propagation
 
     const Tensor<type, 2>& errors = back_propagation.errors;
@@ -120,12 +114,6 @@ void SumSquaredError::calculate_output_delta_lm(const Batch&,
 void SumSquaredError::calculate_error_gradient_lm(const Batch& ,
                                                   BackPropagationLM& back_propagation_lm) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 

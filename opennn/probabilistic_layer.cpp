@@ -25,9 +25,7 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number,
     set(new_inputs_number, new_neurons_number);
 
     if(new_neurons_number > 1)
-    {
         activation_function = ActivationFunction::Softmax;
-    }
 }
 
 
@@ -36,9 +34,7 @@ ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions, c
     set(new_input_dimensions[0], new_output_dimensions[0]);
 
     if(new_output_dimensions[0] > 1)
-    {
         activation_function = ActivationFunction::Softmax;
-    }
 }
 
 
@@ -56,9 +52,7 @@ Index ProbabilisticLayer::get_neurons_number() const
 
 dimensions ProbabilisticLayer::get_output_dimensions() const
 {
-    Index neurons_number = get_neurons_number();
-
-    return { neurons_number };
+    return { get_neurons_number() };
 }
 
 
@@ -89,50 +83,30 @@ const ProbabilisticLayer::ActivationFunction& ProbabilisticLayer::get_activation
 string ProbabilisticLayer::write_activation_function() const
 {
     if(activation_function == ActivationFunction::Binary)
-    {
         return "Binary";
-    }
     else if(activation_function == ActivationFunction::Logistic)
-    {
         return "Logistic";
-    }
     else if(activation_function == ActivationFunction::Competitive)
-    {
         return "Competitive";
-    }
     else if(activation_function == ActivationFunction::Softmax)
-    {
         return "Softmax";
-    }
     else
-    {
         throw runtime_error("Unknown probabilistic method.\n");
-    }
 }
 
 
 string ProbabilisticLayer::write_activation_function_text() const
 {
     if(activation_function == ActivationFunction::Binary)
-    {
         return "binary";
-    }
     else if(activation_function == ActivationFunction::Logistic)
-    {
         return "logistic";
-    }
     else if(activation_function == ActivationFunction::Competitive)
-    {
         return "competitive";
-    }
     else if(activation_function == ActivationFunction::Softmax)
-    {
         return "softmax";
-    }
     else
-    {
         throw runtime_error("Unknown probabilistic method.\n");
-    }
 }
 
 
@@ -266,14 +240,9 @@ void ProbabilisticLayer::set_default()
 
     const Index neurons_number = get_neurons_number();
 
-    if(neurons_number == 1)
-    {
-        activation_function = ActivationFunction::Logistic;
-    }
-    else
-    {
-        activation_function = ActivationFunction::Softmax;
-    }
+    neurons_number == 1 
+        ? activation_function = ActivationFunction::Logistic
+        : activation_function = ActivationFunction::Softmax;
 
     decision_threshold = type(0.5);
 
@@ -283,24 +252,6 @@ void ProbabilisticLayer::set_default()
 
 void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_activation_function)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(neurons_number == 1 && new_activation_function == ActivationFunction::Competitive)
-        throw runtime_error("Activation function cannot be Competitive when the number of neurons is 1.\n");
-
-    if(neurons_number == 1 && new_activation_function == ActivationFunction::Softmax)
-        throw runtime_error("Activation function cannot be Softmax when the number of neurons is 1.\n");
-
-    if(neurons_number != 1 && new_activation_function == ActivationFunction::Binary)
-        throw runtime_error("Activation function cannot be Binary when the number of neurons is greater than 1.\n");
-
-    if(neurons_number != 1 && new_activation_function == ActivationFunction::Logistic)
-        throw runtime_error("Activation function cannot be Logistic when the number of neurons is greater than 1.\n");
-
-#endif
-
     activation_function = new_activation_function;
 }
 
@@ -308,25 +259,15 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
 void ProbabilisticLayer::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Binary")
-    {
         set_activation_function(ActivationFunction::Binary);
-    }
     else if(new_activation_function == "Logistic")
-    {
         set_activation_function(ActivationFunction::Logistic);
-    }
     else if(new_activation_function == "Competitive")
-    {
         set_activation_function(ActivationFunction::Competitive);
-    }
     else if(new_activation_function == "Softmax")
-    {
         set_activation_function(ActivationFunction::Softmax);
-    }
     else
-    {
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
-    }
 }
 
 
@@ -633,9 +574,8 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
     ostringstream buffer;
 
     for(Index j = 0; j < output_names.size(); j++)
-    {
         buffer << output_names(j) << " = binary(" << input_names(j) << ");\n";
-    }
+
     return buffer.str();
 }
 
@@ -646,9 +586,8 @@ string ProbabilisticLayer::write_logistic_expression(const Tensor<string, 1>& in
     ostringstream buffer;
 
     for(Index j = 0; j < output_names.size(); j++)
-    {
         buffer << output_names(j) << " = logistic(" << input_names(j) << ");\n";
-    }
+
     return buffer.str();
 }
 
@@ -658,9 +597,8 @@ string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>&
     ostringstream buffer;
 
     for(Index j = 0; j < output_names.size(); j++)
-    {
         buffer << output_names(j) << " = competitive(" << input_names(j) << ");\n";
-    }
+
     return buffer.str();
 }
 
@@ -670,9 +608,7 @@ string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inp
     ostringstream buffer;
 
     for(Index j = 0; j < output_names.size(); j++)
-    {
         buffer << output_names(j) << " = softmax(" << input_names(j) << ");\n";
-    }
 
     return buffer.str();
 }
@@ -690,9 +626,7 @@ string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& input_nam
         buffer << "probabilistic_layer_combinations_" << to_string(i) << " = " << biases(i);
 
         for(Index j = 0; j < inputs_number; j++)
-        {
             buffer << " +" << synaptic_weights(j, i) << "*" << input_names(j) << "";
-        }
 
         buffer << " " << endl;
     }
@@ -714,53 +648,40 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& output_nam
         switch(activation_function)
         {
         case ActivationFunction::Binary:
-        {
             buffer << "\tif" << "probabilistic_layer_combinations_" << to_string(i) << " < 0.5, " << output_names(i) << "= 0.0. Else " << output_names(i) << " = 1.0\n";
-        }
             break;
 
         case ActivationFunction::Logistic:
-        {
             buffer <<  output_names(i) << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << "));\n";
-        }
             break;
 
         case ActivationFunction::Competitive:
             if(i == 0)
-            {
-                buffer << "\tfor each probabilistic_layer_combinations_i:"<<endl;
-
-                buffer <<"\t\tif probabilistic_layer_combinations_i is equal to max(probabilistic_layer_combinations_i):"<<endl;
-
-                buffer <<"\t\t\tactivations[i] = 1"<<endl;
-
-                buffer <<"\t\telse:"<<endl;
-
-                buffer <<"\t\t\tactivations[i] = 0"<<endl;
-            }
-
+                buffer << "\tfor each probabilistic_layer_combinations_i:" << endl
+                       << "\t\tif probabilistic_layer_combinations_i is equal to max(probabilistic_layer_combinations_i):"<<endl
+                       << "\t\t\tactivations[i] = 1"<<endl
+                       << "\t\telse:"<<endl
+                       << "\t\t\tactivations[i] = 0"<<endl;
             break;
 
         case ActivationFunction::Softmax:
 
-            if(i == 0)
+            if (i == 0)
             {
                 buffer << "sum = ";
 
-                for(Index i = 0; i < neurons_number; i++)
+                for (Index i = 0; i < neurons_number; i++)
                 {
                     buffer << "exp(probabilistic_layer_combinations_" << to_string(i) << ")";
 
-                    if(i != neurons_number-1) buffer << " + ";
+                    if (i != neurons_number - 1)
+                        buffer << " + ";
                 }
 
                 buffer << ";\n" << endl;
 
-                for(Index i = 0; i < neurons_number; i++)
-                {
-                    buffer << output_names(i) << " = exp(probabilistic_layer_combinations_" << to_string(i) <<")/sum;\n";
-                }
-
+                for (Index i = 0; i < neurons_number; i++)
+                    buffer << output_names(i) << " = exp(probabilistic_layer_combinations_" << to_string(i) << ")/sum;\n";
             }
             break;
         default:

@@ -69,6 +69,7 @@ Tensor<type, 1> ScalingLayer2D::get_minimums() const
 
     Tensor<type, 1> minimums(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
         minimums[i] = descriptives[i].minimum;
 
@@ -82,6 +83,7 @@ Tensor<type, 1> ScalingLayer2D::get_maximums() const
 
     Tensor<type, 1> maximums(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
         maximums[i] = descriptives[i].maximum;
 
@@ -95,6 +97,7 @@ Tensor<type, 1> ScalingLayer2D::get_means() const
 
     Tensor<type, 1> means(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
         means[i] = descriptives[i].mean;
 
@@ -108,6 +111,7 @@ Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
 
     Tensor<type, 1> standard_deviations(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
         standard_deviations[i] = descriptives[i].standard_deviation;
 
@@ -127,8 +131,8 @@ Tensor<string, 1> ScalingLayer2D::write_scalers() const
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
-    {
         if(scalers[i] == Scaler::None)
             scaling_methods_strings[i] = "None";
         else if(scalers[i] == Scaler::MinimumMaximum)
@@ -141,7 +145,6 @@ Tensor<string, 1> ScalingLayer2D::write_scalers() const
             scaling_methods_strings[i] = "Logarithm";
         else
             throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-    }
 
     return scaling_methods_strings;
 }
@@ -151,17 +154,10 @@ Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef OPENNN_DEBUG
-
-    if(neurons_number == 0)
-        throw runtime_error("Neurons number must be greater than 0.\n");
-
-#endif
-
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
-    {
         if(scalers[i] == Scaler::None)
             scaling_methods_strings[i] = "no scaling";
         else if(scalers[i] == Scaler::MeanStandardDeviation)
@@ -174,7 +170,6 @@ Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
             scaling_methods_strings[i] = "Logarithm";
         else
             throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-    }
 
     return scaling_methods_strings;
 }
@@ -254,26 +249,6 @@ void ScalingLayer2D::set_min_max_range(const type& min, const type& max)
 
 void ScalingLayer2D::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
-
-#ifdef OPENNN_DEBUG
-
-    const Index new_descriptives_size = new_descriptives.size();
-
-    const Index neurons_number = get_neurons_number();
-
-    if(new_descriptives_size != neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer2D class.\n"
-               << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
-               << "Size of descriptives (" << new_descriptives_size << ") is not equal to number of scaling neurons (" << neurons_number << ").\n";
-
-        throw runtime_error("Size of descriptives (" + to_string(new_descriptives_size) + ") is not equal to number of scaling neurons (" + to_string(neurons_number) + ").\n");
-    }
-
-#endif
-
     descriptives = new_descriptives;
 }
 
@@ -310,17 +285,6 @@ void ScalingLayer2D::set_standard_deviation(const Index& i, const type& new_stan
 
 void ScalingLayer2D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(neurons_number == 0)
-    {
-        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
-    }
-
-#endif
-
     scalers = new_scaling_methods;
 }
 
@@ -329,17 +293,10 @@ void ScalingLayer2D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef OPENNN_DEBUG
-
-    if(neurons_number == 0)
-        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
-
-#endif
-
     Tensor<Scaler, 1> new_scaling_methods(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
-    {
         if(new_scaling_methods_string(i) == "None")
             new_scaling_methods(i) = Scaler::None;
         else if(new_scaling_methods_string(i) == "MinimumMaximum")
@@ -352,7 +309,6 @@ void ScalingLayer2D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
             new_scaling_methods(i) = Scaler::Logarithm;
         else
             throw runtime_error("Unknown scaling method: " + new_scaling_methods_string[i] + ".\n");
-    }
 
     set_scalers(new_scaling_methods);
 }
@@ -385,19 +341,9 @@ void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef OPENNN_DEBUG
-
-    if(neurons_number == 0)
-    {
-        throw runtime_error("Neurons number (" + to_string(neurons_number) + ") must be greater than 0.\n");
-    }
-
-#endif
-
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
-    {
         set_scaler(i, new_scaling_methods_string);
-    }
 }
 
 
@@ -405,10 +351,9 @@ void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
 {
     const Index neurons_number = get_neurons_number();
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
-    {
         scalers(i) = new_scaling_method;
-    }
 }
 
 
@@ -420,37 +365,7 @@ void ScalingLayer2D::set_display(const bool& new_display)
 
 bool ScalingLayer2D::is_empty() const
 {
-    const Index neurons_number = get_neurons_number();
-
-    return neurons_number == 0;
-}
-
-
-void ScalingLayer2D::check_range(const Tensor<type, 1>& inputs) const
-{
-    const Index inputs_number = get_neurons_number();
-
-    // Check inputs
-
-    if(display)
-    {
-        for(Index i = 0; i < inputs_number; i++)
-        {
-            if(inputs(i) < descriptives(i).minimum)
-            {
-                cout << "OpenNN Warning: ScalingLayer2D class.\n"
-                     << "void check_range(const Tensor<type, 1>&) const method.\n"
-                     << "Input value " << i << " is less than corresponding minimum.\n";
-            }
-
-            if(inputs(i) > descriptives(i).maximum)
-            {
-                cout << "OpenNN Warning: ScalingLayer2D class.\n"
-                     << "void check_range(const Tensor<type, 1>&) const method.\n"
-                     << "Input value " << i << " is greater than corresponding maximum.\n";
-            }
-        }
-    }
+    return get_neurons_number() == 0;
 }
 
 

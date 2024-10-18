@@ -99,8 +99,6 @@ public:
 
    bool is_empty() const;
 
-   void check_range(const Tensor<type, 1>&) const;
-
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;

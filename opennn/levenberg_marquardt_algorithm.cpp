@@ -115,39 +115,18 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter(const type& new_damping_
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_damping_parameter_factor)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_damping_parameter_factor <= type(0))
-        throw runtime_error("Damping parameter factor must be greater than zero.");
-
-#endif
-
     damping_parameter_factor = new_damping_parameter_factor;
 }
 
 
 void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_minimum_damping_parameter)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_damping_parameter <= type(0))
-        throw runtime_error("Minimum damping parameter must be greater than zero.");
-
-#endif
-
     minimum_damping_parameter = new_minimum_damping_parameter;
 }
 
 
 void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_maximum_damping_parameter)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_damping_parameter <= type(0))
-        throw runtime_error("Maximum damping parameter must be greater than zero.");
-
-#endif
-
     maximum_damping_parameter = new_maximum_damping_parameter;
 }
 

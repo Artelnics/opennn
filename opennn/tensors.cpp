@@ -1671,23 +1671,14 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
 
-   #ifdef OPENNN_DEBUG
-   if(row_index > rows_number)
-      throw runtime_error("row index: " + to_string(row_index) + "rows_number" + to_string(rows_number) + "\n");
-   else if(rows_number < 2)
-      throw runtime_error("Number of rows must be equal or greater than two.\n");
-   #endif
-
-   Tensor<type, 2> new_matrix(rows_number-1, columns_number);
+    Tensor<type, 2> new_matrix(rows_number-1, columns_number);
 
     #pragma omp parallel for
-
-   for(Index i = 0; i < row_index; i++)
-      for(Index j = 0; j < columns_number; j++)
-          new_matrix(i, j) = tensor(i, j);
+    for(Index i = 0; i < row_index; i++)
+        for(Index j = 0; j < columns_number; j++)
+            new_matrix(i, j) = tensor(i, j);
 
     #pragma omp parallel for
-
    for(Index i = row_index+1; i < rows_number; i++)
       for(Index j = 0; j < columns_number; j++)
          new_matrix(i-1,j) = tensor(i, j);

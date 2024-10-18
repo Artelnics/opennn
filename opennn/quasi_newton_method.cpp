@@ -293,12 +293,6 @@ void QuasiNewtonMethod::update_parameters(
         BackPropagation& back_propagation,
         QuasiNewtonMehtodData& optimization_data) const
 {
-    #ifdef OPENNN_DEBUG
-
-        check();
-
-    #endif
-
     Tensor<type, 1>& parameters = back_propagation.parameters;
     const Tensor<type, 1>& gradient = back_propagation.gradient;
 
@@ -401,14 +395,8 @@ void QuasiNewtonMethod::update_parameters(
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
-
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     // Start training
+
     if(display) cout << "Training with quasi-Newton method...\n";
     TrainingResults results(maximum_epochs_number+1);
 

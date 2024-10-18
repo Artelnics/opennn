@@ -42,15 +42,6 @@ Index BoundingLayer::get_inputs_number() const
 
 type BoundingLayer::get_lower_bound(const Index& i) const
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(i >= neurons_number)
-        throw runtime_error("Index must be less than number of bounding neurons.\n");
-
-#endif
-
     return lower_bounds[i];
 }
 
@@ -69,25 +60,12 @@ Index BoundingLayer::get_neurons_number() const
 
 dimensions BoundingLayer::get_output_dimensions() const
 {
-    const Index neurons_number = get_neurons_number();
-
-    return { neurons_number };
+    return { get_neurons_number() };
 }
 
 
 type BoundingLayer::get_upper_bound(const Index& i) const
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(neurons_number == 0)
-        throw runtime_error("Number of bounding neurons is zero.\n");
-    else if(i >= neurons_number)
-        throw runtime_error("Index must be less than number of bounding neurons.\n");
-
-#endif
-
     return upper_bounds(i);
 }
 
@@ -185,20 +163,11 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef OPENNN_DEBUG
-
-    if(index >= neurons_number)
-        throw runtime_error("Index of bounding neurons must be less than number of bounding neurons.\n");
-
-#endif
-
     if(lower_bounds.size() != neurons_number)
     {
         lower_bounds.resize(neurons_number);
         lower_bounds.setConstant(-numeric_limits<type>::max());
     }
-
-    // Set lower bound of single neuron
 
     lower_bounds[index] = new_lower_bound;
 }
@@ -206,17 +175,6 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
 
 void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(new_lower_bounds.size() != neurons_number)
-        throw runtime_error("Size must be equal to number of bounding neurons number.\n");
-
-#endif
-
-    // Set lower bound of bounding neurons
-
     lower_bounds = new_lower_bounds;
 }
 
@@ -241,13 +199,6 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef OPENNN_DEBUG
-
-    if(index >= neurons_number)
-        throw runtime_error("Index of bounding neuron must be less than number of bounding neurons.\n");
-
-#endif
-
     if(upper_bounds.size() != neurons_number)
     {
         upper_bounds.resize(neurons_number);
@@ -255,7 +206,6 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
     }
 
     upper_bounds[index] = new_upper_bound;
-
 }
 
 

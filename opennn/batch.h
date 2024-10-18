@@ -68,7 +68,6 @@ struct Batch
 
     ThreadPool* thread_pool = nullptr;
     ThreadPoolDevice* thread_pool_device = nullptr;
-
 };
 
 #ifdef OPENNN_CUDA

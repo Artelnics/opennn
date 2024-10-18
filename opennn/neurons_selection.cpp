@@ -29,13 +29,6 @@ NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy)
 
 TrainingStrategy* NeuronsSelection::get_training_strategy() const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!training_strategy)
-        throw runtime_error("Training strategy pointer is nullptr.\n");
-
-#endif
-
     return training_strategy;
 }
 
@@ -139,33 +132,12 @@ void NeuronsSelection::set_default()
 
 void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neurons)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_neurons <= 0)
-        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be greater than 0.\n");
-
-    if(new_maximum_neurons < minimum_neurons)
-        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") "
-                            "must be equal or greater than minimum_neurons(" + to_string(minimum_neurons) + ").\n");
-
-#endif
-
     maximum_neurons = new_maximum_neurons;
 }
 
 
 void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_neurons <= 0)
-        throw runtime_error("minimum_neurons(" + to_string(new_minimum_neurons) + ") must be greater than 0.\n");
-
-    if(new_minimum_neurons >= maximum_neurons)
-        throw runtime_error("minimum_neurons(" + to_string(new_minimum_neurons) + ") must be less than maximum_neurons(" + to_string(maximum_neurons) + ").\n");
-
-#endif
-
     minimum_neurons = new_minimum_neurons;
 }
 
@@ -184,39 +156,18 @@ void NeuronsSelection::set_display(const bool& new_display)
 
 void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_selection_error_goal < 0)
-        throw runtime_error("Selection loss goal must be greater or equal than 0.\n");
-
-#endif
-
     selection_error_goal = new_selection_error_goal;
 }
 
 
 void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_epochs_number <= 0)
-        throw runtime_error("Maximum epochs number must be greater than 0.\n");
-
-#endif
-
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
 
 void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < 0)
-        throw runtime_error("Maximum time must be greater than 0.\n");
-
-#endif
-
     maximum_time = new_maximum_time;
 }
 
@@ -284,16 +235,6 @@ void NeuronsSelection::check() const
 
 string NeuronsSelection::write_time(const type& time) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(time > type(3600e5))
-        throw runtime_error("Time must be lower than 10e5 seconds.\n");
-
-    if(time < type(0))
-        throw runtime_error("Time must be greater than 0.\n");
-
-#endif
-
     const int hours = int(time) / 3600;
     int seconds = int(time) % 3600;
     const int minutes = seconds / 60;

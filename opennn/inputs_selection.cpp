@@ -29,27 +29,13 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
 
 TrainingStrategy* InputsSelection::get_training_strategy() const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!training_strategy)
-        throw runtime_error("Training strategy pointer is nullptr.\n");
-
-#endif
-
     return training_strategy;
 }
 
 
 bool InputsSelection::has_training_strategy() const
 {
-    if(training_strategy)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return training_strategy;
 }
 
 
@@ -132,13 +118,6 @@ void InputsSelection::set_display(const bool& new_display)
 
 void InputsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_selection_error_goal < 0)
-        throw runtime_error("Selection loss goal must be greater or equal than 0.\n");
-
-#endif
-
     selection_error_goal = new_selection_error_goal;
 }
 
@@ -152,39 +131,18 @@ void InputsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_
 
 void InputsSelection::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < 0)
-        throw runtime_error("Maximum time must be greater than 0.\n");
-
-#endif
-
     maximum_time = new_maximum_time;
 }
 
 
 void InputsSelection::set_maximum_correlation(const type& new_maximum_correlation)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_correlation < 0 || new_maximum_correlation > 1)
-        throw runtime_error("Maximum correlation must be comprised between 0 and 1.\n");
-
-#endif
-
     maximum_correlation = new_maximum_correlation;
 }
 
 
 void InputsSelection::set_minimum_correlation(const type& new_minimum_correlation)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_correlation < 0 || new_minimum_correlation > 1)
-        throw runtime_error("Minimum correlation must be comprised between 0 and 1.\n");
-
-#endif
-
     minimum_correlation = new_minimum_correlation;
 }
 
@@ -291,7 +249,6 @@ void InputsSelectionResults::resize_history(const Index& new_size)
     mean_training_error_history.resize(new_size);
     mean_selection_error_history.resize(new_size);
 
-
     for(Index i = 0; i < new_size; i++)
     {
         training_error_history(i) = old_training_error_history(i);
@@ -304,17 +261,6 @@ void InputsSelectionResults::resize_history(const Index& new_size)
 
 string InputsSelection::write_time(const type& time) const
 {
-
-#ifdef OPENNN_DEBUG
-
-    if(time > type(3600e5))
-        throw runtime_error("Time must be lower than 10e5 seconds.\n");
-
-    if(time < type(0))
-        throw runtime_error("Time must be greater than 0.\n");
-
-#endif
-
     const int hours = int(time) / 3600;
     int seconds = int(time) % 3600;
     const int minutes = seconds / 60;
@@ -332,14 +278,6 @@ string InputsSelection::write_time(const type& time) const
 
 Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(uses.size() < inputs_number)
-        throw runtime_error("Size of uses vector(" + to_string(uses.size()) + ") "
-                            "must be greater than " + to_string(inputs_number) + ".\n");
-
-#endif
-
     Index i = 0;
 
     Index j = 0;

@@ -99,11 +99,6 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
 {
-#ifdef OPENNN_DEBUG
-    if(new_learning_rate <= type(0))
-        throw runtime_error("initial_learning_rate must be greater than 0.\n");
-#endif
-
     initial_learning_rate = new_learning_rate;
 }
 

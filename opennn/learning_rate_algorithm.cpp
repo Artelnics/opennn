@@ -34,11 +34,6 @@ LearningRateAlgorithm::~LearningRateAlgorithm()
 
 LossIndex* LearningRateAlgorithm::get_loss_index() const
 {
-#ifdef OPENNN_DEBUG
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-#endif
-
     return loss_index;
 }
 
@@ -154,13 +149,6 @@ void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_
 
 void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning_rate_tolerance)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_learning_rate_tolerance <= type(0))
-        throw runtime_error("Tolerance must be greater than 0.\n");
-
-#endif
-
     learning_rate_tolerance = new_learning_rate_tolerance;
 }
 
@@ -178,19 +166,6 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
     OptimizationAlgorithmData& optimization_data) const
 {
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-#ifdef OPENNN_DEBUG
-
-    if(loss_index == nullptr)
-        throw runtime_error("Pointer to loss index is nullptr.\n");
-
-    if(neural_network == nullptr)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
-
-    if(thread_pool_device == nullptr)
-        throw runtime_error("Pointer to thread pool device is nullptr.\n");
-
-#endif
 
     ostringstream buffer;
 
@@ -300,25 +275,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 {
     Triplet triplet;
 
-#ifdef OPENNN_DEBUG
-    if(loss_index == nullptr)
-        throw runtime_error("Pointer to loss index is nullptr.\n");
-#endif
-
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-#ifdef OPENNN_DEBUG
-
-    if(neural_network == nullptr)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
-
-    if(thread_pool_device == nullptr)
-        throw runtime_error("Pointer to thread pool device is nullptr.\n");
-
-    if(optimization_data.initial_learning_rate < type(NUMERIC_LIMITS_MIN))
-        throw runtime_error("Initial learning rate is zero.\n");
-
-#endif
 
     const type regularization_weight = loss_index->get_regularization_weight();
 
@@ -440,40 +397,11 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
 type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet& triplet) const
 {
-
     const type middle = triplet.A.first + type(0.5)*(triplet.B.first - triplet.A.first);
 
     const type learning_rate = triplet.U.first < middle
         ? triplet.A.first + type(0.618) * (triplet.B.first - triplet.A.first)
         : triplet.A.first + type(0.382) * (triplet.B.first - triplet.A.first);
-
-#ifdef OPENNN_DEBUG
-
-    if(learning_rate < triplet.A.first)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "type calculate_golden_section_learning_rate(const Triplet&) const method.\n"
-               << "Learning rate(" << learning_rate << ") is less than left point("
-               << triplet.A.first << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    if(learning_rate > triplet.B.first)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "type calculate_golden_section_learning_rate(const Triplet&) const method.\n"
-               << "Learning rate(" << learning_rate << ") is greater than right point("
-               << triplet.B.first << ").\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-#endif
 
     return learning_rate;
 }

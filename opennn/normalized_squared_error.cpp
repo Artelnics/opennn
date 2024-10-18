@@ -44,27 +44,17 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
     data_set = new_data_set;
 
     if(neural_network->has_recurrent_layer() || neural_network->has_long_short_term_memory_layer())
-    {
         set_time_series_normalization_coefficient();
-    }
     else
-    {
         set_normalization_coefficient();
-    }
 }
 
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    // Data set
-
     const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
 
-    // Targets matrix
-
     const Tensor<type, 2> targets = data_set->get_target_data();
-
-    // Normalization coefficient
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
 }
@@ -72,8 +62,6 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
-    //Targets matrix
-
     const Tensor<type, 2> targets = data_set->get_target_data();
 
     const Index rows = targets.dimension(0)-1;
@@ -83,18 +71,14 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     Tensor<type, 2> targets_t_1(rows, columns);
 
     for(Index i = 0; i < columns; i++)
-    {
         copy(targets.data() + targets.dimension(0) * i,
              targets.data() + targets.dimension(0) * i + rows,
              targets_t_1.data() + targets_t_1.dimension(0) * i);
-    }
 
     for(Index i = 0; i < columns; i++)
-    {
         copy(targets.data() + targets.dimension(0) * i + 1,
              targets.data() + targets.dimension(0) * i + 1 + rows,
              targets_t.data() + targets_t.dimension(0) * i);
-    }
 
     normalization_coefficient = calculate_time_series_normalization_coefficient(targets_t_1, targets_t);
 }
@@ -111,12 +95,8 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
     // @todo add pragma 
 
     for(Index i = 0; i < target_samples_number; i++)
-    {
         for(Index j = 0; j < target_variables_number; j++)
-        {
             normalization_coefficient += (targets_t_1(i, j) - targets_t(i, j)) * (targets_t_1(i, j) - targets_t(i, j));
-        }
-    }
 
     return normalization_coefficient;
 }
@@ -185,7 +165,8 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
         normalization_coefficient += norm(0);
     }
 
-    if(type(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1);
+    if(type(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) 
+        normalization_coefficient = type(1);
 
     return normalization_coefficient;
 }
@@ -324,14 +305,8 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
 
 void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
-                                                             BackPropagationLM& back_propagation_lm) const
+                                                        BackPropagationLM& back_propagation_lm) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index total_samples_number = data_set->get_samples_number();
 
     // Batch
@@ -364,8 +339,6 @@ string NormalizedSquaredError::get_error_type_text() const
 
 void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // Error type
-
     file_stream.OpenElement("NormalizedSquaredError");
 
     file_stream.CloseElement();
