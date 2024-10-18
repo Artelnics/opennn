@@ -197,7 +197,6 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
         return;
 
     default:
-
         throw runtime_error("Unknown inverse hessian approximation method.\n");
     }
 }
@@ -226,7 +225,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); // Ok , auto?
+            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); 
 
     // Calculates Approximation
 
@@ -270,20 +269,20 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
             = parameters_difference/parameters_difference_dot_gradient_difference(0)
             - old_inverse_hessian_dot_gradient_difference/gradient_dot_hessian_dot_gradient(0);
 
-    // Calculates Approximation
+    // Calculate approximation
 
     inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
 
     inverse_hessian.device(*thread_pool_device) 
         += self_kronecker_product(thread_pool_device, parameters_difference)
-        / parameters_difference_dot_gradient_difference(0); // Ok
+        / parameters_difference_dot_gradient_difference(0); 
 
     inverse_hessian.device(*thread_pool_device)
         -= self_kronecker_product(thread_pool_device, old_inverse_hessian_dot_gradient_difference)
-        / gradient_dot_hessian_dot_gradient(0); // Ok
+        / gradient_dot_hessian_dot_gradient(0); 
 
     inverse_hessian.device(*thread_pool_device)
-        += self_kronecker_product(thread_pool_device, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
+        += self_kronecker_product(thread_pool_device, BFGS)*(gradient_dot_hessian_dot_gradient(0)); 
 }
 
 

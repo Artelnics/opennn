@@ -403,6 +403,8 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
                      << "Standard deviation of variable " << i << " is zero.\n"
                      << "Those variables won't be scaled.\n";
             }
+
+            continue;
         }
         else
         {

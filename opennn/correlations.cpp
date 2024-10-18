@@ -319,7 +319,8 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
             }
         }
 
-        if(not_NAN_row(i)) new_rows_number++;
+        if(not_NAN_row(i)) 
+            new_rows_number++;
     }
 
     Tensor<type, 2> new_x(new_rows_number, x_columns_number);
@@ -402,7 +403,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     Correlation linear_correlation;
     linear_correlation.form = Correlation::Form::Linear;
-
     linear_correlation.a = type(s_y() * s_xx() - s_x() * s_xy()) / type(double(n) * s_xx() - s_x() * s_x());
     linear_correlation.b = type(double(n) * s_xy() - s_x() * s_y()) / type(double(n) * s_xx() - s_x() * s_x());
     linear_correlation.r = type(double(n) * s_xy() - s_x() * s_y()) / type(denominator);
@@ -447,7 +447,7 @@ Tensor<type, 1> confidence_interval_z_correlation(const type& z_correlation, con
 Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
 {
     // @todo Improve this method to be more similar to the other code.
-
+/*
     const int n = x.size();
 
     vector<pair<type, size_t> > sorted_vector(n);
@@ -478,6 +478,8 @@ Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
     TensorMap<Tensor<type, 1>> x_rank(x_rank_vector.data(), x_rank_vector.size());
 
     return x_rank;
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -821,16 +823,12 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     Tensor<Index, 1> input_columns_indices(x_filtered.dimension(1));
 
     for(Index i = 0; i < x_filtered.dimension(1); i++)
-    {
         input_columns_indices(i) = i;
-    }
 
     Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
 
     for(Index i = 0; i < y_filtered.dimension(1); i++)
-    {
         target_columns_indices(i) = x_filtered.dimension(1)+i;
-    }
 
     DataSet data_set(data);
 

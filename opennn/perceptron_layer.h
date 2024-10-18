@@ -9,11 +9,7 @@
 #ifndef PERCEPTRONLAYER_H
 #define PERCEPTRONLAYER_H
 
-
-
 #include <string>
-
-
 
 #include "config.h"
 #include "layer.h"

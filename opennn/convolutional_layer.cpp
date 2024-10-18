@@ -184,7 +184,8 @@ void ConvolutionalLayer::normalize(unique_ptr<LayerForwardPropagation> layer_for
         }
         else
         {
-            kernel_output.device(*thread_pool_device) = (kernel_output - moving_means(kernel_index))
+            kernel_output.device(*thread_pool_device) 
+                = (kernel_output - moving_means(kernel_index))
                     / (moving_standard_deviations(kernel_index) + epsilon);
         }
     }
@@ -252,7 +253,6 @@ void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Ten
     default: return;
     }
 }
-
 
 
 void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
@@ -369,6 +369,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
 
+    auto reverse_dimensions = Eigen::array<ptrdiff_t, 3>{1, 1, 0};
+
     // Biases synaptic weights and input derivatives
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -402,9 +404,9 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
         // Input derivatives
 
-        rotated_kernel_synaptic_weights = kernel_synaptic_weights.reverse(Eigen::array<ptrdiff_t, 3>{1, 1, 0});
+        rotated_kernel_synaptic_weights = kernel_synaptic_weights.reverse(reverse_dimensions);
         
-        for (Index image_index = 0; image_index < batch_samples_number; ++image_index)
+        for (Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
             image_kernel_convolutions_derivatives_padded 
                 = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
@@ -604,7 +606,7 @@ Index ConvolutionalLayer::get_padding_height() const
         return row_stride * (input_dimensions[1] - 1) - input_dimensions[1] + get_kernel_height();
     }
 
-    return 0;
+    throw runtime_error("Unknown convolution type");
 }
 
 
@@ -619,7 +621,7 @@ Index ConvolutionalLayer::get_padding_width() const
         return column_stride*(input_dimensions[2] - 1) - input_dimensions[2] + get_kernel_width();
     }
 
-    return 0;
+    throw runtime_error("Unknown convolution type");
 }
 
 
@@ -921,10 +923,8 @@ Index ConvolutionalLayer::get_input_channels() const
 void ConvolutionalLayer::print() const
 {
     cout << "Convolutional layer" << endl;
-
     cout << "Input dimensions: " << endl;
     print_dimensions(input_dimensions);
-
     cout << "Output dimensions: " << endl;
     print_dimensions(get_output_dimensions());
 }
@@ -1128,7 +1128,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
 
     const Index input_height = convolutional_layer->get_input_height();
     const Index input_width = convolutional_layer->get_input_width();
-
     const Index input_channels = convolutional_layer->get_input_channels();
 
     const Index kernels_number = convolutional_layer->get_kernels_number();

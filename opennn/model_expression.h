@@ -130,7 +130,7 @@ string write_comments_c()
     "// \tinputs[2] = input3;"
     "// \t. . ."
     "// \n"
-    "// Inputs Names:";
+    "// Input names:";
 }
 
 
@@ -234,7 +234,10 @@ string write_expression_c(const NeuralNetwork& neural_network)
 
     Tensor<string, 1> input_names =  neural_network.get_input_names();
     Tensor<string, 1> output_names = neural_network.get_output_names();
-    
+
+    fix_input_names(input_names);
+    fix_output_names(output_names);
+
     const Index inputs_number = neural_network.get_inputs_number();
     const Index outputs_number = neural_network.get_outputs_number();
 
@@ -242,7 +245,7 @@ string write_expression_c(const NeuralNetwork& neural_network)
 
     int cell_states_counter = 0;
     int hidden_state_counter = 0;
-    int LSTM_number = 0;// get_long_short_term_memory_layers_number();
+    int LSTM_number = neural_network.get_long_short_term_memory_layers_number();
 
     bool logistic = false;
     bool ReLU = false;
@@ -252,17 +255,7 @@ string write_expression_c(const NeuralNetwork& neural_network)
     bool SoftPlus = false;
     bool SoftSign = false;
 
-    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
-
-    for(Index i = 0; i < inputs_number; i++)
-        input_names(i) = inputs_outputs_buffer(0)(i);
-
-    for(Index i = 0; i < outputs_number; i++)
-        output_names(i) = inputs_outputs_buffer(1)(i);
-
     buffer << write_comments_c();
-
-    buffer << inputs_outputs_buffer(2)[0];
     
     buffer << "\n" << endl
            << "#include <iostream>" << endl
@@ -1857,7 +1850,7 @@ string write_expression_python(const NeuralNetwork& neural_network)
 }
 
 
-string replace_non_allowed_programming_expressions(const string& str)
+string replace_reserved_keywords(const string& str)
 {
 /*
     Tensor<string, 1> out;
@@ -2097,49 +2090,32 @@ Tensor<string, 1> fix_write_expression_outputs(const string& str,
 }
 
 
-Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& input_names,
-                                                       Tensor<string, 1>& output_names,
-                                                       ostringstream& buffer_)
+void fix_input_names(Tensor<string, 1>& input_names)
 {
-    Tensor<Tensor<string,1>, 1> output(3);
-
-    ostringstream buffer;
-    buffer << buffer_.str();
-
-    const Index outputs_number = output_names.dimension(0);
     const Index inputs_number = input_names.dimension(0);
 
-    Tensor<string, 1> outputs(outputs_number);
-    Tensor<string, 1> inputs(inputs_number);
-    Tensor<string,1> buffer_out;
+    Tensor<string,1> input_names(inputs_number);
 
     for(int i = 0; i < inputs_number; i++)
-    {
         if(input_names[i].empty())
-        {
-            inputs(i) = "input_" + to_string(i);
-            buffer << "\t" << to_string(i) + ") " << input_names(i) << endl;
-        }
+            input_names(i) = "input_" + to_string(i);
         else
-        {
-            inputs(i) = replace_non_allowed_programming_expressions(input_names[i]);
-            buffer << "\t" << to_string(i) + ") " << inputs(i) << endl;
-        }
-    }
+            input_names(i) = replace_reserved_keywords(input_names[i]);
+}
 
-    for(int i = 0; i < outputs_number; i++)
-        if(output_names[i].empty())
-            outputs(i) = "output_" + to_string(i);
+
+Tensor<string, 1> fix_output_names(Tensor<string, 1>& output_names)
+{
+    const Index outputs_number = output_names.dimension(0);
+
+    Tensor<string, 1> input_names(outputs_number);
+
+    for (int i = 0; i < outputs_number; i++)
+        if (output_names[i].empty())
+            output_names(i) = "output_" + to_string(i);
         else
-            outputs(i) = replace_non_allowed_programming_expressions(output_names[i]);
+            input_names(i) = replace_reserved_keywords(input_names[i]);
 
-    push_back_string(buffer_out, buffer.str());
-
-    output(0) = inputs;
-    output(1) = outputs;
-    output(2) = buffer_out;
-
-    return output;
 }
 
 }

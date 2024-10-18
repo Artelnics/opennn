@@ -57,6 +57,7 @@ Tensor<type, 1> UnscalingLayer::get_minimums() const
 
     Tensor<type, 1> minimums(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
         minimums[i] = descriptives[i].minimum;
 
@@ -70,6 +71,7 @@ Tensor<type, 1> UnscalingLayer::get_maximums() const
 
     Tensor<type, 1> maximums(neurons_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
         maximums[i] = descriptives[i].maximum;
 

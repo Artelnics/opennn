@@ -196,7 +196,6 @@ public:
 
    string write_activation_function_expression() const;
 
-
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    // Serialization

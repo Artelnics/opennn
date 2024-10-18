@@ -2,7 +2,6 @@
 #define DATASETBATCH_H
 
 #include "data_set.h"
-// Cuda includes
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
