@@ -9,8 +9,6 @@
 #ifndef CORRELATIONS_H
 #define CORRELATIONS_H
 
-
-
 #include "correlation.h"
 #include "config.h"
 

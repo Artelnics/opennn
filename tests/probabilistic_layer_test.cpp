@@ -82,10 +82,10 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 
     Tensor<type, 2> combinations(1, 1);
     probabilistic_layer.set(1, 1);
-
+/*
     probabilistic_layer.set_synaptic_weights(synaptic_weights);
     probabilistic_layer.set_biases(biases);
-
+*/
     probabilistic_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2

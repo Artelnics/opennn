@@ -62,7 +62,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     Tensor<bool, 2>& mask = back_propagation.mask;
     bool& built_mask = back_propagation.built_mask;
     
-    Tensor<type, 0> cross_entropy_error;
+    Tensor<type, 0>& error = back_propagation.error;
 
     if(!built_mask)
     {
@@ -80,9 +80,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
 
-    cross_entropy_error.device(*thread_pool_device) = errors.sum();
-
-    back_propagation.error = cross_entropy_error(0) / mask_sum(0);
+    error.device(*thread_pool_device) = errors.sum() / mask_sum(0);
 
     // Masked accuracy
     
@@ -98,7 +96,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     back_propagation.accuracy = accuracy(0);
     
-    if(isnan(back_propagation.error)) throw runtime_error("Error is NAN");
+    if(isnan(error())) throw runtime_error("Error is NAN");
 }
 
 

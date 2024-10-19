@@ -642,7 +642,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     Index buffer_size = new_buffer_size;
     Index batches_number;
 
-    const Index batch_size = std::min(batch_samples_number, samples_number);
+    const Index batch_size = min(batch_samples_number, samples_number);
 
     if(buffer_size > samples_number)
         buffer_size = samples_number;
@@ -851,16 +851,6 @@ void DataSet::set_sample_uses(const Tensor<SampleUse, 1>& new_uses)
 {
     const Index samples_number = get_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    const Index new_uses_size = new_uses.size();
-
-    if(new_uses_size != samples_number)
-        throw runtime_error("Size of uses(" + to_string(new_uses_size) + ") "
-                            "must be equal to number of samples(" + to_string(samples_number) + ").\n");
-
-#endif
-
     for(Index i = 0; i < samples_number; i++)
         samples_uses(i) = new_uses(i);
 }
@@ -869,16 +859,6 @@ void DataSet::set_sample_uses(const Tensor<SampleUse, 1>& new_uses)
 void DataSet::set_sample_uses(const Tensor<string, 1>& new_uses)
 {
     const Index samples_number = get_samples_number();
-
-#ifdef OPENNN_DEBUG
-
-    const Index new_uses_size = new_uses.size();
-
-    if(new_uses_size != samples_number)
-        throw runtime_error("Size of uses(" + to_string(new_uses_size) + ") "
-                            "must be equal to number of samples(" + to_string(samples_number) + ").\n");
-
-#endif
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -2615,31 +2595,17 @@ Tensor<type, 2> DataSet::get_testing_target_data() const
 
 Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
 {
-#ifdef OPENNN_DEBUG
-    const Index samples_number = get_samples_number();
-
-    if(index >= samples_number)
-        throw runtime_error("Index of sample (" + to_string(index) + ") "
-                            "must be less than number of samples (" + to_string(samples_number) + ").\n");
-#endif
-
     return data.chip(index,0);
 }
 
 
 Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor<Index, 1>& variables_indices) const
 {
-#ifdef OPENNN_DEBUG
-    const Index samples_number = get_samples_number();
-
-    if(sample_index >= samples_number)
-        throw runtime_error("Index of sample must be less than number of \n");
-#endif
-
     const Index variables_number = variables_indices.size();
 
     Tensor<type, 1 > row(variables_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < variables_number; i++)
         row(i) = data(sample_index, variables_indices(i));
 
@@ -2845,95 +2811,6 @@ Tensor<type, 2> DataSet::get_raw_variable_data(const string& column_name) const
     const Index raw_variable_index = get_raw_variable_index(column_name);
 
     return get_raw_variable_data(raw_variable_index);
-}
-
-
-Tensor<type, 1> DataSet::get_variable_data(const Index& index) const
-{
-    return data.chip(index, 1);
-}
-
-
-Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
-{
-    const Tensor<string, 1> variable_names = get_variables_names();
-
-    Index size = 0;
-
-    for(Index i = 0; i < variable_names.size(); i++)
-        if(variable_names(i) ==  variable_name) size++;
-
-    Tensor<Index, 1> variable_index(size);
-
-    Index index = 0;
-
-    for(Index i = 0; i < variable_names.size(); i++)
-        if(variable_names(i) ==  variable_name)
-            variable_index(index++) = i;
-
-#ifdef OPENNN_DEBUG
-    const Index variables_size = variable_index.size();
-
-    if(variables_size == 0)
-        throw runtime_error("Variable: " + variable_name + " does not exist.\n");
-
-    if(variables_size > 1)
-        throw runtime_error("Variable: " + variable_name + " appears more than once in the data set.\n");
-#endif
-
-    return data.chip(variable_index(0), 1);
-}
-
-
-Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Tensor<Index, 1>& samples_indices) const
-{
-    const Index samples_indices_size = samples_indices.size();
-
-    Tensor<type, 1 > raw_variable(samples_indices_size);
-
-    for(Index i = 0; i < samples_indices_size; i++)
-        raw_variable(i) = data(samples_indices(i), variable_index);
-
-    return raw_variable;
-}
-
-
-Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Tensor<Index, 1>& samples_indices) const
-{
-    const Tensor<string, 1> variable_names = get_variables_names();
-
-    Index size = 0;
-
-    for(Index i = 0; i < variable_names.size(); i++)
-        if(variable_names(i) ==  variable_name)
-            size++;
-
-    Tensor<Index, 1> variable_index(size);
-
-    Index index = 0;
-
-    for(Index i = 0; i < variable_names.size(); i++)
-        if(variable_names(i) ==  variable_name)
-            variable_index(index++) = i;
-
-#ifdef OPENNN_DEBUG
-    const Index variables_size = variable_index.size();
-
-    if(variables_size == 0)
-        throw runtime_error("Variable: " + variable_name + " does not exist.\n");
-
-    if(variables_size > 1)
-        throw runtime_error("Variable: " + variable_name + " appears more than once in the data set.\n");
-#endif
-
-    const Index samples_indices_size = samples_indices.size();
-
-    Tensor<type, 1 > raw_variable(samples_indices_size);
-
-    for(Index i = 0; i < samples_indices_size; i++)
-        raw_variable(i) = data(samples_indices(i), variable_index(0));
-
-    return raw_variable;
 }
 
 
@@ -3270,13 +3147,6 @@ void DataSet::set_codification(const string& new_codification_string)
 
 void DataSet::set_missing_values_label(const string& new_missing_values_label)
 {
-#ifdef OPENNN_DEBUG
-
-    if(get_trimmed(new_missing_values_label).empty())
-        throw runtime_error("Missing values label cannot be empty.\n");
-
-#endif
-
     missing_values_label = new_missing_values_label;
 }
 
@@ -3591,7 +3461,8 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
     {
         const Index training_index = used_indices(i);
 
-        if (isnan(data(training_index, target_index))) continue;
+        if (isnan(data(training_index, target_index))) 
+            continue;
         
         if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
             negatives++;
@@ -6583,7 +6454,7 @@ void DataSet::shuffle()
     mt19937 urng(rng());
 
     const Index data_rows = data.dimension(0);
-    const Index data_raw_variables = data.dimension(1);
+    const Index data_columns = data.dimension(1);
 
     Tensor<Index, 1> indices(data_rows);
 
@@ -6592,7 +6463,7 @@ void DataSet::shuffle()
 
     std::shuffle(&indices(0), &indices(data_rows-1), urng);
 
-    Tensor<type, 2> new_data(data_rows, data_raw_variables);
+    Tensor<type, 2> new_data(data_rows, data_columns);
     Tensor<string, 1> new_rows_labels(data_rows);
 
     Index index = 0;
@@ -6605,8 +6476,8 @@ void DataSet::shuffle()
 
         new_rows_labels(i) = samples_id(index);
 
-        for(Index j = 0; j < data_raw_variables; j++)
-            new_data(i, j) = data(index,j);
+        for(Index j = 0; j < data_columns; j++)
+            new_data(i, j) = data(index, j);
     }
 
     data = new_data;
@@ -6860,12 +6731,6 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     }
 
     return input_data;
-}
-
-
-bool DataSet::get_augmentation() const
-{
-    return augmentation;
 }
 
 
