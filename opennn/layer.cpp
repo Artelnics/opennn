@@ -15,7 +15,6 @@ namespace opennn
 
 Layer::Layer()
 {
-
     const int n = omp_get_max_threads();
 
     thread_pool = new ThreadPool(n);

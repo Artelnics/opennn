@@ -9,12 +9,8 @@
 #ifndef SCALINGLAYER2D_H
 #define SCALINGLAYER2D_H
 
-
-
 #include <iostream>
 #include <string>
-
-
 
 #include "scaling.h"
 #include "layer.h"
@@ -102,8 +98,6 @@ public:
    // Check
 
    bool is_empty() const;
-
-   void check_range(const Tensor<type, 1>&) const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,

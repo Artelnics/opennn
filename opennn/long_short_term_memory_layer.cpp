@@ -63,78 +63,6 @@ Index LongShortTermMemoryLayer::get_parameters_number() const
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::get_forget_biases() const
-{
-    return forget_biases;
-}
-
-
-Tensor<type, 1> LongShortTermMemoryLayer::get_input_biases() const
-{
-    return input_biases;
-}
-
-
-Tensor<type, 1> LongShortTermMemoryLayer::get_state_biases() const
-{
-    return state_biases;
-}
-
-
-Tensor<type, 1> LongShortTermMemoryLayer::get_output_biases() const
-{
-    return output_biases;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_forget_weights() const
-{
-    return forget_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_input_weights() const
-{
-    return input_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_state_weights() const
-{
-    return state_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_output_weights() const
-{
-    return output_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_forget_recurrent_weights() const
-{
-    return forget_recurrent_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_input_recurrent_weights() const
-{
-    return input_recurrent_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_state_recurrent_weights() const
-{
-    return state_recurrent_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_output_recurrent_weights() const
-{
-    return output_recurrent_weights;
-}
-
-
 Index LongShortTermMemoryLayer::get_timesteps() const
 {
     return time_steps;
@@ -340,79 +268,6 @@ void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_numbe
 }
 
 
-void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_biases)
-{
-    forget_biases = new_biases;
-}
-
-
-void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biases)
-{
-    input_biases = new_biases;
-}
-
-
-void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biases)
-{
-    state_biases = new_biases;
-}
-
-
-void LongShortTermMemoryLayer::set_output_biases(const Tensor<type, 1>& new_biases)
-{
-    output_biases = new_biases;
-}
-
-
-void LongShortTermMemoryLayer::set_forget_weights(const Tensor<type, 2>& new_forget_weights)
-{
-    forget_weights = new_forget_weights;
-}
-
-
-void LongShortTermMemoryLayer::set_input_weights(const Tensor<type, 2>& new_input_weight)
-{
-    input_weights = new_input_weight;
-}
-
-
-void LongShortTermMemoryLayer::set_state_weights(const Tensor<type, 2>& new_state_weights)
-{
-    state_weights = new_state_weights;
-}
-
-
-void LongShortTermMemoryLayer::set_output_weights(const Tensor<type, 2>& new_output_weight)
-{
-    output_weights = new_output_weight;
-
-}
-
-
-void LongShortTermMemoryLayer::set_forget_recurrent_weights(const Tensor<type, 2>& new_forget_recurrent_weight)
-{
-    forget_recurrent_weights = new_forget_recurrent_weight;
-}
-
-
-void LongShortTermMemoryLayer::set_input_recurrent_weights(const Tensor<type, 2>& new_input_recurrent_weight)
-{
-    input_recurrent_weights = new_input_recurrent_weight;
-}
-
-
-void LongShortTermMemoryLayer::set_state_recurrent_weights(const Tensor<type, 2>& new_state_recurrent_weight)
-{
-    state_recurrent_weights = new_state_recurrent_weight;
-}
-
-
-void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2>& new_output_recurrent_weight)
-{
-    output_recurrent_weights = new_output_recurrent_weight;
-}
-
-
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index neurons_number = get_neurons_number();
@@ -486,45 +341,25 @@ void LongShortTermMemoryLayer::set_activation_function(const LongShortTermMemory
 void LongShortTermMemoryLayer::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
-    {
         activation_function = ActivationFunction::Logistic;
-    }
     else if(new_activation_function_name == "HyperbolicTangent")
-    {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
     else if(new_activation_function_name == "Linear")
-    {
         activation_function = ActivationFunction::Linear;
-    }
     else if(new_activation_function_name == "RectifiedLinear")
-    {
         activation_function = ActivationFunction::RectifiedLinear;
-    }
     else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
         activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
     else if(new_activation_function_name == "SoftPlus")
-    {
         activation_function = ActivationFunction::SoftPlus;
-    }
     else if(new_activation_function_name == "SoftSign")
-    {
         activation_function = ActivationFunction::SoftSign;
-    }
     else if(new_activation_function_name == "HardSigmoid")
-    {
         activation_function = ActivationFunction::HardSigmoid;
-    }
     else if(new_activation_function_name == "ExponentialLinear")
-    {
         activation_function = ActivationFunction::ExponentialLinear;
-    }
     else
-    {
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-    }
 }
 
 
@@ -537,45 +372,25 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const LongShort
 void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& new_recurrent_activation_function_name)
 {
     if(new_recurrent_activation_function_name == "Logistic")
-    {
         recurrent_activation_function = ActivationFunction::Logistic;
-    }
     else if(new_recurrent_activation_function_name == "HyperbolicTangent")
-    {
         recurrent_activation_function = ActivationFunction::HyperbolicTangent;
-    }
     else if(new_recurrent_activation_function_name == "Linear")
-    {
         recurrent_activation_function = ActivationFunction::Linear;
-    }
     else if(new_recurrent_activation_function_name == "RectifiedLinear")
-    {
         recurrent_activation_function = ActivationFunction::RectifiedLinear;
-    }
     else if(new_recurrent_activation_function_name == "ScaledExponentialLinear")
-    {
         recurrent_activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
     else if(new_recurrent_activation_function_name == "SoftPlus")
-    {
         recurrent_activation_function = ActivationFunction::SoftPlus;
-    }
     else if(new_recurrent_activation_function_name == "SoftSign")
-    {
         recurrent_activation_function = ActivationFunction::SoftSign;
-    }
     else if(new_recurrent_activation_function_name == "HardSigmoid")
-    {
         recurrent_activation_function = ActivationFunction::HardSigmoid;
-    }
     else if(new_recurrent_activation_function_name == "ExponentialLinear")
-    {
         recurrent_activation_function = ActivationFunction::ExponentialLinear;
-    }
     else
-    {
         throw runtime_error("Unknown activation function: " + new_recurrent_activation_function_name + ".\n");
-    }
 }
 
 

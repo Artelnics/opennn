@@ -9,19 +9,13 @@
 #ifndef QUASINEWTONMETHOD_H
 #define QUASINEWTONMETHOD_H
 
-
-
 #include <string>
 #include <iostream>
-
-
 
 #include "config.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
-
-//using Eigen::MatrixXd;
 
 namespace opennn
 {

@@ -84,7 +84,7 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
+        assert_true(abs(back_propagation.error()) < NUMERIC_LIMITS_MIN, LOG);
         assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
 
         assert_true(is_zero(back_propagation.gradient), LOG);
@@ -176,7 +176,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         assert_true(back_propagation.errors.dimension(0) == 1, LOG);
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-        assert_true(back_propagation.error - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+        assert_true(back_propagation.error() - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
@@ -222,7 +222,7 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.error >= 0, LOG);
+        assert_true(back_propagation.error() >= 0, LOG);
 
         // @todo
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
@@ -309,7 +309,7 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.error >= type(0), LOG);
+        assert_true(back_propagation.error() >= type(0), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
 */

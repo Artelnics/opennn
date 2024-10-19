@@ -239,6 +239,7 @@
     <ClCompile Include="codification.cpp" />
     <ClInclude Include="layer_back_propagation.h" />
     <ClInclude Include="layer_back_propagation_lm.h" />
+    <ClInclude Include="model_expression.h" />
     <ClInclude Include="normalization_layer_3d.h" />
     <ClInclude Include="normalized_squared_error.h" />
     <ClInclude Include="raw_variable.h" />
