@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "strings_utilities.h"
-
 #include "tensors.h"
 #include "multihead_attention_layer.h"
 
@@ -426,13 +425,10 @@ void MultiheadAttentionLayer::build_causal_mask()
     causal_mask.resize(context_size, input_size);
     causal_mask.setZero();
 
+    #pragma omp parallel for
     for(Index input_index = 0; input_index < input_size; input_index++)
-    {
         for(Index context_index = input_index + 1; context_index < context_size; context_index++)
-        {
             causal_mask(context_index, input_index) = m_inf;
-        }
-    }
 }
 
 
@@ -450,7 +446,9 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
                 + sample_index * context_size * input_size
                 + head_index * context_size * input_size * batch_samples_number;
 
-            TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data, context_size, input_size);
+            TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data, 
+                                                               context_size, 
+                                                               input_size);
 
             sample_attention_scores.device(*thread_pool_device) += causal_mask;
         }
@@ -458,14 +456,14 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 }
 
 
-// @todo Check if we can do this with transposed matrices in contract. 
-
 void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& input,
                                                        Tensor<type, 4>& transformed_input,
                                                        const Tensor<type, 3>& weights,
                                                        const Tensor<type, 2>& biases,
                                                        Tensor<type, 2>& sample_matrix) const
 {
+    // @todo Check if we can do this with transposed matrices in contract. 
+
     const Index batch_size = input.dimension(0);
     const Index variables_number = input.dimension(1);
 
@@ -594,14 +592,11 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
     */
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
-    type random;
-
+    #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
-    {
-        random = calculate_random_uniform(type(0), type(1));
-
-        attention_scores(i) = (random < dropout_rate) ? 0 : attention_scores(i) * scaling_factor;
-    }
+        attention_scores(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
+            ? 0 
+            : attention_scores(i) * scaling_factor;
 }
 
 

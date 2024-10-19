@@ -67,13 +67,6 @@ void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_sel
 
 NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 {
-    #ifdef OPENNN_DEBUG
-
-    if(!training_strategy)
-         throw runtime_error("training_strategy is nullptr.\n");
-
-    #endif
-
     NeuronsSelectionResults neurons_selection_results(maximum_epochs_number);
 
     if(display) cout << "Performing growing neurons selection..." << endl;

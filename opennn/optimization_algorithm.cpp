@@ -47,13 +47,6 @@ OptimizationAlgorithm::~OptimizationAlgorithm()
 
 LossIndex* OptimizationAlgorithm::get_loss_index() const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-
-#endif
-
     return loss_index;
 }
 
@@ -196,19 +189,6 @@ void OptimizationAlgorithm::set_default()
 
 void OptimizationAlgorithm::check() const
 {
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(!loss_index)
-        throw runtime_error("Pointer to loss index is nullptr.\n");
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    if(neural_network == nullptr)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
-
-#endif
 }
 
 
@@ -382,17 +362,6 @@ void TrainingResults::resize_selection_error_history(const Index& new_size)
 
 string OptimizationAlgorithm::write_time(const type& time) const
 {
-
-#ifdef OPENNN_DEBUG
-
-    if(time > type(3600e5))
-        throw runtime_error("Time must be lower than 10e5 seconds.\n");
-
-    if(time < type(0))
-        throw runtime_error("Time must be greater than 0.\n");
-
-#endif
-
     const int hours = int(time) / 3600;
     int seconds = int(time) % 3600;
     const int minutes = seconds / 60;
@@ -400,9 +369,10 @@ string OptimizationAlgorithm::write_time(const type& time) const
 
     ostringstream elapsed_time;
 
-    elapsed_time << setfill('0') << setw(2) << hours << ":"
-                 << setfill('0') << setw(2) << minutes << ":"
-                 << setfill('0') << setw(2) << seconds;
+    elapsed_time << setfill('0')
+        << setw(2) << hours << ":"
+        << setw(2) << minutes << ":"
+        << setw(2) << seconds << endl;
 
     return elapsed_time.str();
 }

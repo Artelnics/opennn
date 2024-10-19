@@ -16,8 +16,8 @@ type calculate_random_uniform(const type& = type(0), const type& = type(1));
 
 bool calculate_random_bool();
 
-template<int Dimension>
-void set_random(Tensor<type, Dimension>& tensor, const type& minimum = -0.1, const type& maximum = 0.1);
+template<int rank>
+void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const type& maximum = 0.1);
 
 type bound(const type& value, const type& minimum, const type& maximum);
 
@@ -161,15 +161,6 @@ type l2_distance(const type&, const type&);
 type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
-// Check
-
-void check_size(const Tensor<type, 1>&, const Index&, const string&);
-
-void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
-
-//void check_raw_variables_number(const Tensor<type, 2>&, const Index&, const string&);
-//void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
-
 // Fill
 
 void fill_tensor_data(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, type*);
@@ -210,10 +201,6 @@ string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
 string string_tensor_to_string(const Tensor<string, 1>&, const string& = " ");
 
 Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
-
-//Index partition(Tensor<type, 2>&, const Index&, const Index&, const Index&);
-Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
 
 type round_to_precision(type, const int&);
 //Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);

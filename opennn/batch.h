@@ -2,7 +2,6 @@
 #define DATASETBATCH_H
 
 #include "data_set.h"
-// Cuda includes
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
@@ -38,7 +37,7 @@ struct Batch
               const Tensor<Index, 1>&, 
               const Tensor<Index, 1>& = Tensor<Index, 1>());
 
-    void perform_augmentation() const;
+    Tensor<type, 2> perform_augmentation(const Tensor<type, 2>&);
 
     void print() const;
 
@@ -68,7 +67,6 @@ struct Batch
 
     ThreadPool* thread_pool = nullptr;
     ThreadPoolDevice* thread_pool_device = nullptr;
-
 };
 
 #ifdef OPENNN_CUDA

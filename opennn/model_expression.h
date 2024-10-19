@@ -1,16 +1,27 @@
-   // Expression
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M O D E L   E X P R E S S I O N   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-   string write_expression() const;
+#ifndef MODELEXPRESSION_H
+#define MODELEXPRESSION_H
 
-   string write_expression_python() const;
-   string write_expression_c() const;
-   string write_expression_api() const;
-   string write_expression_javascript() const;
+#include "strings_utilities.h"
+#include "tensors.h"
+#include "neural_network.h"
 
+#include <string>
+#include <unordered_map>
 
-
-string write_expression() const
+namespace opennn
 {
+
+string write_expression() 
+{
+/*
     const Index layers_number = get_layers_number();
 
     const vector<unique_ptr<Layer>>& layers = get_layers();
@@ -92,98 +103,267 @@ string write_expression() const
     replace(expression, "+-", "-");
 
     return expression;
+*/
+    return string();
+}
+
+string write_comments_c()
+{
+    return
+    "// Artificial Intelligence Techniques SL\t"
+    "// artelnics@artelnics.com\t"
+    "// Your model has been exported to this c file."
+    "// You can manage it with the main method, where you \t"
+    "// can change the values of your inputs. For example:"
+    "// if we want to add these 3 values (0.3, 2.5 and 1.8)"
+    "// to our 3 inputs (Input_1, Input_2 and Input_1), the"
+    "// main program has to look like this:"
+    "// \t"
+    "// int main(){ "
+    "// \tvector<float> inputs(3);"
+    "// \t"
+    "// \tconst float asdas  = 0.3;"
+    "// \tinputs[0] = asdas;"
+    "// \tconst float input2 = 2.5;"
+    "// \tinputs[1] = input2;"
+    "// \tconst float input3 = 1.8;"
+    "// \tinputs[2] = input3;"
+    "// \t. . ."
+    "// \n"
+    "// Input names:"
+    "\n"
+    "#include <iostream>"
+    "#include <vector>"
+    "#include <math.h>"
+    "#include <stdio.h>"
+    "\n"
+    "using namespace std;"
+    "\n";
 }
 
 
-string write_expression_c() const
+string write_logistic_c()
 {
+    return 
+    "float Logistic (float x) {\n"
+    "float z = 1/(1+exp(-x));\n"
+    "return z;\n"
+    "}\n"
+    "\n";
+}
+
+
+string write_relu_c()
+{
+    return
+    "float ReLU(float x) {\n"
+    "float z = max(0, x);\n"
+    "return z;\n"
+    "}\n"
+    "\n";
+}
+
+
+string write_exponential_linear_c()
+{
+    return
+    "float ExponentialLinear(float x) {\n" 
+    "float z;\n"
+    "float alpha = 1.67326;\n"
+    "if(x>0){\n"
+    "z = x;\n"
+    "}else{\n"
+    "z = alpha*(exp(x)-1);\n"
+    "}\n"
+    "return z;\n"
+    "}\n"
+    "\n";
+}
+
+
+string write_selu_c()
+{
+    return
+    "float SELU(float x) {\n"
+    "float z;\n"
+    "float alpha  = 1.67326;\n"
+    "float lambda = 1.05070;\n"
+    "if(x > 0){\n"
+    "z = lambda*x;\n"
+    "}else{\n"
+    "z = lambda*alpha*(exp(x)-1);\n"
+    "}\n"
+    "return z;\n"
+    "}\n"
+    "\n";
+}
+
+
+string write_hard_sigmoid_c()
+{
+    return
+    "float HardSigmoid(float x) {\n"
+    "float z = 1/(1+exp(-x));\n"
+    "return z;\n"
+    "}\n"
+    "\n";
+}
+
+
+string write_soft_plus_c()
+{
+    return
+    "float SoftPlus(float x) {\n"
+    "float z = log(1+exp(x));\n"
+    "return z;\n"
+    "}\n"
+    "\n";
+}
+
+
+string write_soft_sign_c()
+{
+    return
+    "float SoftSign(float x) {\n"
+    "float z = x/(1+abs(x));\n"
+    "return z;\n"
+    "}\n"
+    "\n";
+}
+
+void lstm_c()
+{
+/*
+    if (LSTM_number > 0)
+    {
+        for (int i = 0; i < found_tokens.dimension(0); i++)
+        {
+            const string token = found_tokens(i);
+
+            if (token.find("cell_state") == 0)
+                cell_states_counter += 1;
+
+            if (token.find("hidden_state") == 0)
+                hidden_state_counter += 1;
+        }
+
+        buffer << "struct LSTMMemory" << endl
+            << "{" << endl
+            << "\t" << "int current_combinations_derivatives = 3;" << endl
+            << "\t" << "int time_step_counter = 1;" << endl;
+
+        for (int i = 0; i < hidden_state_counter; i++)
+            buffer << "\t" << "float hidden_state_" << to_string(i) << " = type(0);" << endl;
+
+        for (int i = 0; i < cell_states_counter; i++)
+            buffer << "\t" << "float cell_states_" << to_string(i) << " = type(0);" << endl;
+
+        buffer << "} lstm; \n\n" << endl
+            << "vector<float> calculate_outputs(const vector<float>& inputs, LSTMMemory& lstm)" << endl;
+    }
+
+    if (LSTM_number > 0)
+    {
+        buffer << "\n\tif(lstm.time_step_counter%lstm.current_combinations_derivatives == 0 ){" << endl
+            << "\t\t" << "lstm.time_step_counter = 1;" << endl;
+
+        for (int i = 0; i < hidden_state_counter; i++)
+            buffer << "\t\t" << "lstm.hidden_state_" << to_string(i) << " = type(0);" << endl;
+
+        for (int i = 0; i < cell_states_counter; i++)
+            buffer << "\t\t" << "lstm.cell_states_" << to_string(i) << " = type(0);" << endl;
+
+        buffer << "\t}" << endl;
+    }
+
+    if (LSTM_number > 0)
+    {
+        replace_all_appearances(outputs_espresion, "(t)", "");
+        replace_all_appearances(outputs_espresion, "(t-1)", "");
+        replace_all_appearances(outputs_espresion, "double cell_state", "cell_state");
+        replace_all_appearances(outputs_espresion, "double hidden_state", "hidden_state");
+        replace_all_appearances(outputs_espresion, "cell_state", "lstm.cell_state");
+        replace_all_appearances(outputs_espresion, "hidden_state", "lstm.hidden_state");
+    }
+
+    if (LSTM_number > 0)
+        buffer << "\t" << "LSTMMemory lstm;" << "\n" << endl
+        << "\t" << "vector<float> outputs(" << output_names.size() << ");" << endl
+        << "\n\t" << "outputs = calculate_outputs(inputs, lstm);" << endl;
+
+    if (LSTM_number)
+        buffer << "\n\t" << "lstm.time_step_counter += 1;" << endl;
+*/
+}
+
+
+void auto_association_c()
+{
+/*
+    if (model_type == NeuralNetwork::ModelType::AutoAssociation)
+    {
+        // Delete intermediate calculations
+
+        // sample_autoassociation_distance
+        {
+            const string word_to_delete = "sample_autoassociation_distance =";
+
+            const size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            const string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            const size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+    }
+*/
+}
+
+
+string write_expression_c(const NeuralNetwork& neural_network)
+{
+    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
+
     string aux;
     ostringstream buffer;
     ostringstream outputs_buffer;
 
-    Tensor<string, 1> inputs =  get_input_names();
-    Tensor<string, 1> outputs = get_output_names();
+    Tensor<string, 1> input_names =  neural_network.get_input_names();
+    Tensor<string, 1> output_names = neural_network.get_output_names();
+
+    fix_input_names(input_names);
+    fix_output_names(output_names);
+
+    const Index inputs_number = neural_network.get_inputs_number();
+    const Index outputs_number = neural_network.get_outputs_number();
+
     Tensor<string, 1> found_tokens;
 
     int cell_states_counter = 0;
     int hidden_state_counter = 0;
-    int LSTM_number = get_long_short_term_memory_layers_number();
+    int LSTM_number = neural_network.get_long_short_term_memory_layers_number();
 
-    bool logistic     = false;
-    bool ReLU         = false;
-    bool ExpLinear    = false;
-    bool SExpLinear   = false;
-    bool HSigmoid     = false;
-    bool SoftPlus     = false;
-    bool SoftSign     = false;
+    bool logistic = false;
+    bool ReLU = false;
+    bool ExpLinear = false;
+    bool SExpLinear = false;
+    bool HSigmoid = false;
+    bool SoftPlus = false;
+    bool SoftSign = false;
 
-    buffer << "// Artificial Intelligence Techniques SL\t" << endl
-           << "// artelnics@artelnics.com\t" << endl
-           << "// Your model has been exported to this c file." << endl
-           << "// You can manage it with the main method, where you \t" << endl
-           << "// can change the values of your inputs. For example:" << endl
-           << "// if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl
-           << "// to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl
-           << "// main program has to look like this:" << endl
-           << "// \t" << endl
-           << "// int main(){ " << endl
-           << "// \t" << "vector<float> inputs(3);"<< endl
-           << "// \t" << endl
-           << "// \t" << "const float asdas  = 0.3;" << endl
-           << "// \t" << "inputs[0] = asdas;"        << endl
-           << "// \t" << "const float input2 = 2.5;" << endl
-           << "// \t" << "inputs[1] = input2;"       << endl
-           << "// \t" << "const float input3 = 1.8;" << endl
-           << "// \t" << "inputs[2] = input3;"       << endl
-           << "// \t" << ". . ." << endl
-           << "// \n" << endl
-           << "// Inputs Names:" <<endl;
-
-    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
-
-    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
-        inputs(i) = inputs_outputs_buffer(0)(i);
-
-    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
-        outputs(i) = inputs_outputs_buffer(1)(i);
-
-    buffer << inputs_outputs_buffer(2)[0]
-           << "\n" << endl
-           << "#include <iostream>" << endl
-           << "#include <vector>" << endl
-           << "#include <math.h>" << endl
-           << "#include <stdio.h>" << endl
-           << "\n" << endl
-           << "using namespace std;" << endl
-           << "\n" << endl;
+    buffer << write_comments_c();
+    
 
     string token;
     string expression = write_expression();
-
-    if(model_type == ModelType::AutoAssociation)
-    {
-    // Delete intermediate calculations
-
-    // sample_autoassociation_distance
-    {
-        const string word_to_delete = "sample_autoassociation_distance =";
-
-        const size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-
-    // sample_autoassociation_variables_distance
-    {
-        const string word_to_delete = "sample_autoassociation_variables_distance =";
-
-        const size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-    }
 
     stringstream ss(expression);
 
@@ -240,146 +420,39 @@ string write_expression_c() const
     }
 
     if(logistic)
-    {
-        buffer << "float Logistic (float x) {" << endl
-               << "float z = 1/(1+exp(-x));" << endl
-               << "return z;" << endl
-               << "}" << endl
-               << "\n" << endl;
-    }
+        buffer << write_logistic_c();
 
     if(ReLU)
-    {
-        buffer << "float ReLU(float x) {" << endl
-               << "float z = max(0, x);" << endl
-               << "return z;" << endl
-               << "}" << endl
-               << "\n" << endl;
-    }
+        buffer << write_relu_c();
 
     if(ExpLinear)
-    {
-        buffer << "float ExponentialLinear(float x) {" << endl
-               << "float z;" << endl
-               << "float alpha = 1.67326;" << endl
-               << "if(x>0){" << endl
-               << "z = x;" << endl
-               << "}else{" << endl
-               << "z = alpha*(exp(x)-1);" << endl
-               << "}" << endl
-               << "return z;" << endl
-               << "}" << endl
-               << "\n" << endl;
-    }
+        buffer << write_exponential_linear_c();
 
     if(SExpLinear)
-    {
-        buffer << "float SELU(float x) {" << endl
-               << "float z;" << endl
-               << "float alpha  = 1.67326;" << endl
-               << "float lambda = 1.05070;" << endl
-               << "if(x > 0){" << endl
-               << "z = lambda*x;" << endl
-               << "}else{" << endl
-               << "z = lambda*alpha*(exp(x)-1);" << endl
-               << "}" << endl
-               << "return z;" << endl
-               << "}" << endl
-               << "\n" << endl;
-    }
+        //buffer << write_exponential_linear_c();
 
     if(HSigmoid)
-    {
-        buffer << "float HardSigmoid(float x) {" << endl
-               << "float z = 1/(1+exp(-x));" << endl
-               << "return z;" << endl
-               << "}" << endl
-               << "\n" << endl;
-    }
+        buffer << write_hard_sigmoid_c();
 
     if(SoftPlus)
-    {
-        buffer << "float SoftPlus(float x) {" << endl
-               << "float z = log(1+exp(x));" << endl
-               << "return z;" << endl
-               << "}" << endl
-               << "\n" << endl;
-    }
-
+        buffer << write_soft_plus_c();
+ 
     if(SoftSign)
-    {
-        buffer << "float SoftSign(float x) {" << endl
-               << "float z = x/(1+abs(x));" << endl
-               << "return z;" << endl
-               << "}" << endl
-               << "\n" << endl;
-    }
+        buffer << write_soft_sign_c();
 
-    if(LSTM_number > 0)
-    {
-        for(int i = 0; i < found_tokens.dimension(0); i++)
-        {
-            const string token = found_tokens(i);
+    buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl
+           << "{" << endl;
 
-            if(token.find("cell_state") == 0)
-                cell_states_counter += 1;
-
-            if(token.find("hidden_state") == 0)
-                hidden_state_counter += 1;
-        }
-
-        buffer << "struct LSTMMemory" << endl
-               << "{" << endl
-               << "\t" << "int current_combinations_derivatives = 3;" << endl
-               << "\t" << "int time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "\t" << "float hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "\t" << "float cell_states_" << to_string(i) << " = type(0);" << endl;
-
-        buffer << "} lstm; \n\n" << endl
-               << "vector<float> calculate_outputs(const vector<float>& inputs, LSTMMemory& lstm)" << endl;
-    }
-    else
-    {
-        buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl;
-    }
-
-    buffer << "{" << endl;
-
-    for(int i = 0; i < inputs.dimension(0); i++)
-        if(inputs[i].empty())
-            buffer << "\t" << "const float " << "input_" << to_string(i) << " = " << "inputs[" << to_string(i) << "];" << endl;
-        else
-            buffer << "\t" << "const float " << inputs[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
-
-    if(LSTM_number>0)
-    {
-        buffer << "\n\tif(lstm.time_step_counter%lstm.current_combinations_derivatives == 0 ){" << endl
-               << "\t\t" << "lstm.time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "\t\t" << "lstm.hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "\t\t" << "lstm.cell_states_" << to_string(i) << " = type(0);" << endl;
-
-        buffer << "\t}" << endl;
-    }
+    for(int i = 0; i < inputs_number; i++)
+            buffer << "\t" << "const float " << input_names[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
     for(int i = 0; i < tokens.dimension(0); i++)
-    {
-        const string t = tokens(i);
-
-        if(t.size() <= 1)
+        if(tokens(i).size() <= 1)
             outputs_buffer << endl;
         else
-            outputs_buffer << "\t" << t << endl;
-    }
+            outputs_buffer << "\t" << tokens(i) << endl;
 
     const string keyword = "double";
 
@@ -387,70 +460,40 @@ string write_expression_c() const
 
     replace_substring_in_string(found_tokens, outputs_espresion, keyword);
 
-    if(LSTM_number>0)
-    {
-        replace_all_appearances(outputs_espresion, "(t)", "");
-        replace_all_appearances(outputs_espresion, "(t-1)", "");
-        replace_all_appearances(outputs_espresion, "double cell_state", "cell_state");
-        replace_all_appearances(outputs_espresion, "double hidden_state", "hidden_state");
-        replace_all_appearances(outputs_espresion, "cell_state"  , "lstm.cell_state");
-        replace_all_appearances(outputs_espresion, "hidden_state", "lstm.hidden_state");
-    }
-
     buffer << outputs_espresion;
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "c");
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "c");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
         buffer << fixed_outputs(i) << endl;
 
-    buffer << "\t" << "vector<float> out(" << outputs.size() << ");" << endl;
+    buffer << "\t" << "vector<float> out(" << output_names.size() << ");" << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
-        if(outputs[i].empty())
-            buffer << "\t" << "out[" << to_string(i) << "] = " << "output" << to_string(i) << ";"<< endl;
-        else
-            buffer << "\t" << "out[" << to_string(i) << "] = " << outputs[i] << ";" << endl;
-
-    if(LSTM_number)
-        buffer << "\n\t" << "lstm.time_step_counter += 1;" << endl;
+    for(int i = 0; i < output_names.dimension(0); i++)
+        buffer << "\t" << "out[" << to_string(i) << "] = " << output_names[i] << ";" << endl;
 
     buffer << "\n\t" << "return out;" << endl
            << "}"  << endl
            << "\n" << endl
            << "int main(){ \n" << endl
-           << "\t" << "vector<float> inputs(" << to_string(inputs.size()) << "); \n" << endl;
+           << "\tvector<float> inputs(" << to_string(input_names.size()) << "); \n" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-    {
-        if(inputs[i].empty())
-            buffer << "\t" << "const float " << "input_" << to_string(i) <<" =" << " /*enter your value here*/; " << endl
+    for(int i = 0; i < inputs_number; i++)
+        if(input_names[i].empty())
+            buffer << "\t" << "const float " << "input_" << to_string(i) <<" =" << " //enter your value here; " << endl
                    << "\t" << "inputs[" << to_string(i) << "] = " << "input_" << to_string(i) << ";" << endl;
         else
-            buffer << "\t" << "const float " << inputs[i] << " =" << " /*enter your value here*/; " << endl
-                   << "\t" << "inputs[" << to_string(i) << "] = " << inputs[i] << ";" << endl;
-    }
+            buffer << "\t" << "const float " << input_names[i] << " =" << " //enter your value here; " << endl
+                   << "\t" << "inputs[" << to_string(i) << "] = " << input_names[i] << ";" << endl;
 
-    buffer << endl;
-
-    if(LSTM_number > 0)
-        buffer << "\t"   << "LSTMMemory lstm;" << "\n" << endl
-               << "\t"   << "vector<float> outputs(" << outputs.size() <<");" << endl
-               << "\n\t" << "outputs = calculate_outputs(inputs, lstm);" << endl;
-    else
-        buffer << "\t"   << "vector<float> outputs(" << outputs.size() <<");" << endl
-               << "\n\t" << "outputs = calculate_outputs(inputs);" << endl;
-
-    buffer << "" << endl
+    buffer << endl
+           << "\t   vector<float> outputs(" << output_names.size() <<");" << endl
+           << "\n\t outputs = calculate_outputs(inputs);" << endl
+           << "" << endl
            << "\t" << "printf(\"These are your outputs:\\n\");" << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
-    {
-        if(outputs[i].empty())
-            buffer << "\t" << "printf( \"output" << to_string(i) << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
-        else
-            buffer << "\t" << "printf( \""<< output_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
-    }
+    for(int i = 0; i < outputs_number; i++)
+        buffer << "\t" << "printf( \""<< output_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
 
     buffer << "\n\t" << "return 0;" << endl
            << "} \n" << endl;
@@ -462,14 +505,263 @@ string write_expression_c() const
 }
 
 
-string write_expression_api() const
+string write_header_api()
 {
+    return
+    "<!DOCTYPE html>"
+    "<!--"
+    "Artificial Intelligence Techniques SL\t"
+    "artelnics@artelnics.com\t"
+    ""
+    "Your model has been exported to this php file."
+    "You can manage it writting your parameters in the url of your browser.\t"
+    "Example:"
+    ""
+    "\turl = http://localhost/API_example/\t"
+    "\tparameters in the url = http://localhost/API_example/?num=5&num=2&...\t"
+    "\tTo see the ouput refresh the page"
+    ""
+    "\tInputs Names: \t"
+    ""
+    "-->\t"
+    ""
+    "<html lang = \"en\">\n"
+    "<head>\n"
+    "<title>Rest API Client Side Demo</title>\n "
+    "<meta charset = \"utf-8\">"
+    "<meta name = \"viewport\" content = \"width=device-width, initial-scale=1\">"
+    "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">"
+    "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>"
+    "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>"
+    "</head>"
+    "<style>"
+    ".btn{"
+    "background-color: #7393B3"
+    "border: none;"
+    "color: white;"
+    "padding: 15px 32px;"
+    "text-align: center;"
+    "font-size: 16px;"
+    "}"
+    "</style>"
+    "<body>"
+    "<div class = \"container\">"
+    "<br></br>"
+    "<div class = \"form-group\">"
+    "<p>"
+    "follow the steps defined in the \"index.php\" file"
+    "</p>"
+    "<p>"
+    "Refresh the page to see the prediction"
+    "</p>"
+    "</div>"
+    "<h4>"
+    "<?php\n";
+}
+
+
+void lstm_api()
+{
+/*
+    if (LSTM_number > 0)
+    {
+        for (int i = 0; i < found_tokens.dimension(0); i++)
+        {
+            const string t = found_tokens(i);
+
+            if (token.find("cell_state") == 0)
+                cell_states_counter += 1;
+
+            if (token.find("hidden_state") == 0)
+                hidden_state_counter += 1;
+        }
+
+        buffer << "class NeuralNetwork{" << endl
+            << "public $time_steps = 3;" << endl
+            << "public $time_step_counter = 1;" << endl;
+
+        for (int i = 0; i < hidden_state_counter; i++)
+            buffer << "public $" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
+
+        for (int i = 0; i < cell_states_counter; i++)
+            buffer << "public $" << "cell_states_" << to_string(i) << " = type(0);" << endl;
+
+        buffer << "}" << endl
+            << "$nn = new NeuralNetwork;" << endl;
+    }
+
+    if (LSTM_number > 0)
+    {
+        buffer << "if($nn->time_step_counter % $nn->current_combinations_derivatives === 0 ){" << endl
+            << "$nn->current_combinations_derivatives = 3;" << endl
+            << "$nn->time_step_counter = 1;" << endl;
+
+        for (int i = 0; i < hidden_state_counter; i++)
+            buffer << "$nn->" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
+
+        for (int i = 0; i < cell_states_counter; i++)
+            buffer << "$nn->" << "cell_states_" << to_string(i) << " = type(0);" << endl;
+
+        buffer << "}" << endl;
+    }
+
+    if(LSTM_number > 0)
+    {
+    replace_all_appearances(t, "(t)"     , "");
+    replace_all_appearances(t, "(t-1)"   , "");
+    replace_all_appearances(t, "hidden_" , "$hidden_");
+    replace_all_appearances(t, "cell_"   , "$cell_");
+    replace_all_appearances(t, "$hidden_", "$nn->hidden_");
+    replace_all_appearances(t, "$cell_"  , "$nn->cell_");
+    }
+
+*/
+}
+
+
+void autoassociation_api()
+{
+/*
+    if (model_type == NeuralNetwork::ModelType::AutoAssociation)
+    {
+        // Delete intermediate calculations
+
+        // sample_autoassociation_distance
+        {
+            string word_to_delete = "sample_autoassociation_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+    }
+*/
+}
+
+
+string logistic_api()
+{
+    return
+    "<?php"
+    "function Logistic(int $x) {"
+    "$z = 1/(1+exp(-$x));"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+
+string relu_api()
+{
+    return
+    "<?php"
+    "function ReLU(int $x) {"
+    "$z = max(0, $x);"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string exponential_linear_api()
+{
+    return
+    "<?php"
+    "function ExponentialLinear(int $x) {"
+    "$alpha = 1.6732632423543772848170429916717;"
+    "if($x>0){"
+    "$z=$x;"
+    "}else{"
+    "$z=$alpha*(exp($x)-1);"
+    "}"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+
+string scaled_exponential_linear()
+{
+    return
+    "<?php"
+    "function SELU(int $x) {"
+    "$alpha  = 1.67326;"
+    "$lambda = 1.05070;"
+    "if($x>0){"
+    "$z=$lambda*$x;"
+    "}else{"
+    "$z=$lambda*$alpha*(exp($x)-1);"
+    "}"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string hard_sigmoid()
+{
+    return
+    "<?php"
+    "function HardSigmoid(int $x) {"
+    "$z=1/(1+exp(-$x));"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string soft_plus()
+{
+    return
+    "<?php"
+    "function SoftPlus(int $x) {"
+    "$z=log(1+exp($x));"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string soft_sign()
+{
+    return
+    "<?php"
+    "function SoftSign(int $x) {"
+    "$z=$x/(1+abs($x));"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string write_expression_api(const NeuralNetwork& neural_network) 
+{
+
     ostringstream buffer;
     Tensor<string, 1> found_tokens;
-    Tensor<string, 1> inputs =  get_input_names();
-    Tensor<string, 1> outputs = get_output_names();
+    
+    Tensor<string, 1> input_names =  neural_network.get_input_names();
+    Tensor<string, 1> output_names = neural_network.get_output_names();
 
-    int LSTM_number = get_long_short_term_memory_layers_number();
+    const Index inputs_number = neural_network.get_inputs_number();
+    const Index outputs_number = neural_network.get_outputs_number();
+
+    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
+
+    const int LSTM_number = neural_network.get_long_short_term_memory_layers_number();
     int cell_states_counter = 0;
     int hidden_state_counter = 0;
 
@@ -481,93 +773,16 @@ string write_expression_api() const
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    buffer << "<!DOCTYPE html>" << endl
-           << "<!--" << endl
-           << "Artificial Intelligence Techniques SL\t" << endl
-           << "artelnics@artelnics.com\t" << endl
-           << "" << endl
-           << "Your model has been exported to this php file." << endl
-           << "You can manage it writting your parameters in the url of your browser.\t" << endl
-           << "Example:" << endl
-           << "" << endl
-           << "\turl = http://localhost/API_example/\t" << endl
-           << "\tparameters in the url = http://localhost/API_example/?num=5&num=2&...\t" << endl
-           << "\tTo see the ouput refresh the page" << endl
-           << "" << endl
-           << "\tInputs Names: \t" << endl;
-
-    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
+    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
-        inputs(i) = inputs_outputs_buffer(0)(i);
+        input_names(i) = inputs_outputs_buffer(0)(i);
 
     for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
-        outputs(i) = inputs_outputs_buffer(1)(i);
-
-    buffer << inputs_outputs_buffer(2)[0]
-        << "" << endl
-        << "-->\t" << endl
-        << "" << endl
-        << "<html lang = \"en\">\n" << endl
-        << "<head>\n" << endl
-        << "<title>Rest API Client Side Demo</title>\n " << endl
-        << "<meta charset = \"utf-8\">" << endl
-        << "<meta name = \"viewport\" content = \"width=device-width, initial-scale=1\">" << endl
-        << "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">" << endl
-        << "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>" << endl
-        << "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>" << endl
-        << "</head>" << endl
-        << "<style>" << endl
-        << ".btn{" << endl
-        << "background-color: #7393B3" << endl // Gray
-        << "border: none;" << endl
-        << "color: white;" << endl
-        << "padding: 15px 32px;" << endl
-        << "text-align: center;" << endl
-        << "font-size: 16px;" << endl
-        << "}" << endl
-        << "</style>" << endl
-        << "<body>" << endl
-        << "<div class = \"container\">" << endl
-        << "<br></br>" << endl
-        << "<div class = \"form-group\">" << endl
-        << "<p>" << endl
-        << "follow the steps defined in the \"index.php\" file" << endl
-        << "</p>" << endl
-        << "<p>" << endl
-        << "Refresh the page to see the prediction" << endl
-        << "</p>" << endl
-        << "</div>" << endl
-        << "<h4>" << endl
-        << "<?php" << "\n" << endl;
+        output_names(i) = inputs_outputs_buffer(1)(i);
 
     string token;
     string expression = write_expression();
-
-    if(model_type == ModelType::AutoAssociation)
-    {
-    // Delete intermediate calculations
-
-    // sample_autoassociation_distance
-    {
-        string word_to_delete = "sample_autoassociation_distance =";
-
-        size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-
-    // sample_autoassociation_variables_distance
-    {
-        string word_to_delete = "sample_autoassociation_variables_distance =";
-
-        size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-    }
 
     stringstream ss(expression);
     Tensor<string, 1> tokens;
@@ -593,33 +808,6 @@ string write_expression_api() const
             push_back_string(found_tokens, word);
     }
 
-    if(LSTM_number > 0)
-    {
-        for(int i = 0; i < found_tokens.dimension(0); i++)
-        {
-            const string t = found_tokens(i);
-
-            if(token.find("cell_state") == 0)
-                cell_states_counter += 1;
-
-            if(token.find("hidden_state") == 0)
-                hidden_state_counter += 1;
-        }
-
-        buffer << "class NeuralNetwork{" << endl
-               << "public $time_steps = 3;" << endl
-               << "public $time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "public $" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "public $" << "cell_states_" << to_string(i) << " = type(0);" << endl;
-
-        buffer << "}" << endl
-               << "$nn = new NeuralNetwork;" << endl;
-    }
-
     buffer << "session_start();" << endl
            << "if(isset($_SESSION['lastpage']) && $_SESSION['lastpage'] == __FILE__) { " << endl
            << "if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') " << endl
@@ -633,18 +821,14 @@ string write_expression_api() const
            << "parse_str($url_components['query'], $params);" << endl
            << "\n" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-        if(inputs[i].empty())
-            buffer << "$num"    + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
-                   << "$input_" + to_string(i) << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
-        else
+    for(int i = 0; i < inputs_number; i++)
             buffer << "$num" + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
-                   << "$" << inputs[i]      << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
+                   << "$" << input_names[i]      << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
 
     buffer << "if(" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-        if(i != inputs.dimension(0)-1)
+    for(int i = 0; i < inputs_number; i++)
+        if(i != inputs_number - 1)
             buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl;
         else
             buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
@@ -658,21 +842,6 @@ string write_expression_api() const
            << "$status =400;" << endl
            << "$status_msg = 'invalid parameters';" << endl
            << "}"   << endl;
-
-    if(LSTM_number>0)
-    {
-        buffer << "if($nn->time_step_counter % $nn->current_combinations_derivatives === 0 ){" << endl
-               << "$nn->current_combinations_derivatives = 3;" << endl
-               << "$nn->time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "$nn->" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "$nn->" << "cell_states_" << to_string(i) << " = type(0);" << endl;
-
-        buffer << "}" << endl;
-    }
 
     buffer << "\n" << endl;
 
@@ -696,7 +865,7 @@ string write_expression_api() const
 
     string new_word;
 
-    Tensor<string, 1> found_tokens_and_input_names = concatenate_string_tensors(inputs, found_tokens);
+    Tensor<string, 1> found_tokens_and_input_names = concatenate_string_tensors(input_names, found_tokens);
     found_tokens_and_input_names = sort_string_tensor(found_tokens_and_input_names);
 
     for(int i = 0; i < tokens.dimension(0); i++)
@@ -728,20 +897,10 @@ string write_expression_api() const
             replace_all_word_appearances(t, found_tokens_and_input_names[i], new_word);
         }
 
-        if(LSTM_number > 0)
-        {
-            replace_all_appearances(t, "(t)"     , "");
-            replace_all_appearances(t, "(t-1)"   , "");
-            replace_all_appearances(t, "hidden_" , "$hidden_");
-            replace_all_appearances(t, "cell_"   , "$cell_");
-            replace_all_appearances(t, "$hidden_", "$nn->hidden_");
-            replace_all_appearances(t, "$cell_"  , "$nn->cell_");
-        }
-
         buffer << t << endl;
     }
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "php");
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "php");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
         buffer << fixed_outputs(i) << endl;
@@ -749,8 +908,8 @@ string write_expression_api() const
     buffer << "if($status === 200){" << endl
            << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
-        buffer << ", '" << outputs(i) << "' => " << "$" << outputs[i] << endl;
+    for(int i = 0; i < outputs_number; i++)
+        buffer << ", '" << output_names(i) << "' => " << "$" << output_names[i] << endl;
 
     buffer << "];" << endl
            << "}" << endl
@@ -772,14 +931,8 @@ string write_expression_api() const
            << "?>" << endl
            << "\n" << endl;
 
-    if(logistic)
-        buffer << "<?php" << endl
-               << "function Logistic(int $x) {" << endl
-               << "$z = 1/(1+exp(-$x));" << endl
-               << "return $z;" << endl
-               << "}" << endl
-               << "?>" << endl
-               << "\n" << endl;
+    if (logistic)
+        buffer << logistic_api();
 
     if(ReLU)
         buffer << "<?php" << endl
@@ -859,14 +1012,50 @@ string write_expression_api() const
     return out;
 }
 
-
-string write_expression_javascript() const
+string autoassociaton_javascript()
 {
+/*
+    if (model_type == NeuralNetwork::ModelType::AutoAssociation)
+    {
+        // Delete intermediate calculations
+
+        // sample_autoassociation_distance
+        {
+            string word_to_delete = "sample_autoassociation_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+    }
+*/
+}
+
+
+string write_expression_javascript(const NeuralNetwork& neural_network)
+{
+
     Tensor<string, 1> tokens;
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
-    Tensor<string, 1> inputs =  get_input_names();
-    Tensor<string, 1> outputs = get_output_names();
+    Tensor<string, 1> input_names = neural_network.get_input_names();
+    Tensor<string, 1> output_names = neural_network.get_output_names();
+
+    const Index inputs_number = neural_network.get_inputs_number();
+    const Index outputs_number = neural_network.get_outputs_number();
+
+    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
     ostringstream buffer_to_fix;
 
@@ -875,36 +1064,11 @@ string write_expression_javascript() const
 
     const int maximum_output_variable_numbers = 5;
 
-    if(model_type == ModelType::AutoAssociation)
-    {
-    // Delete intermediate calculations
-
-    // sample_autoassociation_distance
-    {
-        string word_to_delete = "sample_autoassociation_distance =";
-
-        size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-
-    // sample_autoassociation_variables_distance
-    {
-        string word_to_delete = "sample_autoassociation_variables_distance =";
-
-        size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-    }
-
     stringstream ss(expression);
 
     int cell_states_counter = 0;
     int hidden_state_counter = 0;
-    int LSTM_number = get_long_short_term_memory_layers_number();
+    int LSTM_number = neural_network.get_long_short_term_memory_layers_number();
 
     bool logistic     = false;
     bool ReLU         = false;
@@ -939,13 +1103,13 @@ string write_expression_javascript() const
                   << "\n" << endl
                   << "Inputs Names:" <<endl;
      
-     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer_to_fix);
+     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer_to_fix);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
-        inputs(i) = inputs_outputs_buffer(0)(i);
+        input_names(i) = inputs_outputs_buffer(0)(i);
 
     for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
-        outputs(i) = inputs_outputs_buffer(1)(i);
+        output_names(i) = inputs_outputs_buffer(1)(i);
 
     ostringstream buffer;
 
@@ -1053,15 +1217,15 @@ string write_expression_javascript() const
            << "<table border=\"1px\" class=\"form\">" << endl
            << "\n" << endl
            << "INPUTS" << endl;
-
+/*
     if(has_scaling_layer_2d())
     {
-        const Tensor<Descriptives, 1> inputs_descriptives = get_scaling_layer_2d()->get_descriptives();
+        const Tensor<Descriptives, 1> inputs_descriptives = neural_network.get_scaling_layer_2d()->get_descriptives();
 
         for(int i = 0; i < inputs.dimension(0); i++)
             buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
-                   << "<td> " << inputs_name[i] << " </td>" << endl
+                   << "<td> " << input_names[i] << " </td>" << endl
                    << "<td style=\"text-align:center\">" << endl
                    << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl
                    << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl
@@ -1082,17 +1246,17 @@ string write_expression_javascript() const
                    << "</tr>" << endl
                    << "\n" << endl;
     }
-
+*/
     buffer << "</table>" << endl
            << "</form>" << endl
            << "\n" << endl;
 
-    if(outputs.dimension(0) > maximum_output_variable_numbers)
+    if(outputs_number > maximum_output_variable_numbers)
     {
         buffer << "<!-- HIDDEN INPUTS -->" << endl;
 
-        for(int i = 0; i < outputs.dimension(0); i++)
-            buffer << "<input type=\"hidden\" id=\"" << outputs[i] << "\" value=\"\">" << endl;
+        for(int i = 0; i < outputs_number; i++)
+            buffer << "<input type=\"hidden\" id=\"" << output_names[i] << "\" value=\"\">" << endl;
 
         buffer << "\n" << endl;
     }
@@ -1106,7 +1270,7 @@ string write_expression_javascript() const
            << "\n" << endl
            << "<table border=\"1px\" class=\"form\">" << endl
            << "OUTPUTS" << endl;
-
+/*
     if(outputs.dimension(0) > maximum_output_variable_numbers)
     {
         buffer << "<tr style=\"height:3.5em\">" << endl
@@ -1140,7 +1304,7 @@ string write_expression_javascript() const
                    << "</tr>" << endl
                    << "\n" << endl;
     }
-
+*/
     buffer << "</table>" << endl
            << "\n" << endl
            << "</form>" << endl
@@ -1150,15 +1314,15 @@ string write_expression_javascript() const
            << "\n" << endl
            << "<script>" << endl;
 
-    if(outputs.dimension(0) > maximum_output_variable_numbers)
+    if(outputs_number > maximum_output_variable_numbers)
     {
         buffer << "function updateSelectedCategory() {" << endl
                << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl
                << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
 
-        for(int i = 0; i < outputs.dimension(0); i++) 
-            buffer << "\tif(selectedCategory === \"" << outputs[i] << "\") {" << endl
-                   << "\t\tselectedValueElement.value = document.getElementById(\"" << outputs[i] << "\").value;" << endl
+        for(int i = 0; i < outputs_number; i++) 
+            buffer << "\tif(selectedCategory === \"" << output_names[i] << "\") {" << endl
+                   << "\t\tselectedValueElement.value = document.getElementById(\"" << output_names[i] << "\").value;" << endl
                    << "\t}" << endl;
 
         buffer << "}" << endl
@@ -1169,17 +1333,17 @@ string write_expression_javascript() const
            << "{" << endl
            << "\t" << "var inputs = [];" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-        buffer << "\t" << "var " << inputs[i] << " =" << " document.getElementById(\"" << inputs[i] << "\").value; " << endl
-               << "\t" << "inputs.push(" << inputs[i] << ");" << endl;
+    for(int i = 0; i < inputs_number; i++)
+        buffer << "\t" << "var " << input_names[i] << " =" << " document.getElementById(\"" << input_names[i] << "\").value; " << endl
+               << "\t" << "inputs.push(" << input_names[i] << ");" << endl;
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
-        buffer << "\t" << "var " << outputs[i] << " = document.getElementById(\"" << outputs[i] << "\");" << endl
-               << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
+    for(int i = 0; i < outputs_number; i++)
+        buffer << "\t" << "var " << output_names[i] << " = document.getElementById(\"" << output_names[i] << "\");" << endl
+               << "\t" << output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
 
-    if(outputs.dimension(0) > maximum_output_variable_numbers)
+    if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     //else
     //{
@@ -1207,8 +1371,8 @@ string write_expression_javascript() const
     buffer << "function calculate_outputs(inputs)" << endl
            << "{" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-        buffer << "\t" << "var " << inputs[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
+    for(int i = 0; i < inputs_number; i++)
+        buffer << "\t" << "var " << input_names[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
@@ -1295,15 +1459,15 @@ string write_expression_javascript() const
     if(LSTM_number>0)
         buffer << "\t" << "time_step_counter += 1" << "\n" << endl;
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "javascript");
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "javascript");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
         buffer << fixed_outputs(i) << endl;
 
     buffer << "\t" << "var out = [];" << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
-        buffer << "\t" << "out.push(" << outputs[i] << ");" << endl;
+    for(int i = 0; i < outputs_number; i++)
+        buffer << "\t" << "out.push(" << output_names[i] << ");" << endl;
 
     buffer << "\n\t" << "return out;" << endl
            << "}" << "\n" << endl;
@@ -1412,20 +1576,22 @@ string write_expression_javascript() const
 }
 
 
-string write_expression_python() const
+string write_expression_python(const NeuralNetwork& neural_network) 
 {
     ostringstream buffer;
 
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
 
-    Tensor<string, 1> inputs =  get_input_names();
-    Tensor<string, 1> original_inputs =  get_input_names();
-    Tensor<string, 1> outputs = get_output_names();
+    Tensor<string, 1> inputs = neural_network.get_input_names();
+    Tensor<string, 1> original_inputs = neural_network.get_input_names();
+    Tensor<string, 1> outputs = neural_network.get_output_names();
+
+    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
 //    const Index layers_number = get_layers_number();
 
-    int LSTM_number = get_long_short_term_memory_layers_number();
+    const int LSTM_number = neural_network.get_long_short_term_memory_layers_number();
     int cell_states_counter = 0;
     int hidden_state_counter = 0;
 
@@ -1548,8 +1714,8 @@ string write_expression_python() const
 
     buffer << "import numpy as np" << endl
            << "\n" << endl;
-/*
-    if(model_type == ModelType::AutoAssociation)
+
+    if(model_type == NeuralNetwork::ModelType::AutoAssociation)
     {
         buffer << "def calculate_distances(input, output):" << endl;
         buffer << "\t" << "return (np.linalg.norm(np.array(input)-np.array(output)))/len(input)" << endl;
@@ -1565,11 +1731,12 @@ string write_expression_python() const
 
         buffer << "\n" << endl;
     }
-*/
+
     buffer << "class NeuralNetwork:" << endl;
-/*
-    if(model_type == ModelType::AutoAssociation)
+
+    if(model_type == NeuralNetwork::ModelType::AutoAssociation)
     {
+/*
         buffer << "\t" << "minimum = " << to_string(distances_descriptives.minimum) << endl;
         buffer << "\t" << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
         buffer << "\t" << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
@@ -1578,8 +1745,9 @@ string write_expression_python() const
         buffer << "\t" << "maximum = " << to_string(distances_descriptives.maximum) << endl;
         buffer << "\t" << "standard_deviation = " << to_string(distances_descriptives.standard_deviation) << endl;
         buffer << "\n" << endl;
-    }
 */
+    }
+
     if(LSTM_number > 0)
     {
         buffer << "\t" << "def __init__(self, ts = 1):" << endl
@@ -1739,7 +1907,7 @@ string write_expression_python() const
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "python");
 
-    if(model_type != ModelType::AutoAssociation)
+    if(model_type != NeuralNetwork::ModelType::AutoAssociation)
         for(int i = 0; i < fixed_outputs.dimension(0); i++)
             buffer << "\t\t" << fixed_outputs(i) << endl;
 
@@ -1751,7 +1919,7 @@ string write_expression_python() const
     if(LSTM_number>0)
         buffer << "\n\t\t" << "self.time_step_counter += 1" << endl;
 
-    if(model_type != ModelType::AutoAssociation)
+    if(model_type != NeuralNetwork::ModelType::AutoAssociation)
         buffer << "\n\t\t" << "return out;" << endl;
     else
         buffer << "\n\t\t" << "return out, sample_autoassociation_distance, sample_autoassociation_variables_distance;" << endl;
@@ -1760,7 +1928,7 @@ string write_expression_python() const
            << "\t" << "def calculate_batch_output(self, input_batch):" << endl
            << "\t\toutput_batch = [None]*input_batch.shape[0]\n" << endl
            << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
-
+/*
     if(has_recurrent_layer())
         buffer << "\t\t\tif(i%self.current_combinations_derivatives == 0):\n" << endl
                << "\t\t\t\tself.hidden_states = "+ to_string(get_recurrent_layer()->get_neurons_number())+"*[0]\n" << endl;
@@ -1769,7 +1937,7 @@ string write_expression_python() const
         buffer << "\t\t\tif(i%self.current_combinations_derivatives == 0):\n" << endl
                << "\t\t\t\tself.hidden_states = "+ to_string(get_long_short_term_memory_layer()->get_neurons_number())+"*[0]\n" << endl
                << "\t\t\t\tself.cell_states = "+ to_string(get_long_short_term_memory_layer()->get_neurons_number())+"*[0]\n" << endl;
-
+*/
     buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl
            << "\t\t\toutput = self.calculate_outputs(inputs)\n" << endl
            << "\t\t\toutput_batch[i] = output\n"<< endl
@@ -1793,187 +1961,131 @@ string write_expression_python() const
     return out;
 }
 
-string replace_non_allowed_programming_expressions(string& s)
+
+string replace_reserved_keywords(const string& str)
 {
-    string out;
+/*
+    Tensor<string, 1> out;
+    Tensor<string, 1> tokens;
+    Tensor<string, 1> found_tokens;
 
-    if(s[0] == '$')
-        out = s;
+    string token;
+    string out_string;
+    string new_variable;
+    string old_variable;
+    string expression = str;
 
-    replace_all_appearances(s, "fn", "f_n");
-    replace_all_appearances(s, "if", "i_f");
-    replace_all_appearances(s, "do", "d_o");
-    replace_all_appearances(s, "or", "o_r");
-    replace_all_appearances(s, "is", "i_s");
-    replace_all_appearances(s, "as", "a_s");
-    replace_all_appearances(s, "or", "o_r");
-    replace_all_appearances(s, "if", "i_f");
-    replace_all_appearances(s, "in", "in_");
-    replace_all_appearances(s, "del", "del");
-    replace_all_appearances(s, "max","ma_x");
-    replace_all_appearances(s, "min","mi_n");
-    replace_all_appearances(s, "and", "an_d");
-    replace_all_appearances(s, "for", "fo_r");
-    replace_all_appearances(s, "die", "di_e");
-    replace_all_appearances(s, "int", "in_t");
-    replace_all_appearances(s, "new", "ne_w");
-    replace_all_appearances(s, "use", "us_e");
-    replace_all_appearances(s, "var", "va_r");
-    replace_all_appearances(s, "try", "tr_y");
-    replace_all_appearances(s, "xor", "xo_r");
-    replace_all_appearances(s, "def", "de_f");
-    replace_all_appearances(s, "for", "fo_r");
-    replace_all_appearances(s, "not", "no_t_");
-    replace_all_appearances(s, "rise","ri_se");
-    replace_all_appearances(s, "byte", "byt_e");
-    replace_all_appearances(s, "echo", "ech_o");
-    replace_all_appearances(s, "eval", "eva_l");
-    replace_all_appearances(s, "pass", "pa_ss");
-    replace_all_appearances(s, "form", "for_m");
-    replace_all_appearances(s, "else", "el_se");
-    replace_all_appearances(s, "with", "w_ith");
-    replace_all_appearances(s, "exit", "exi_t");
-    replace_all_appearances(s, "auto", "aut_o");
-    replace_all_appearances(s, "enum", "enu_m");
-    replace_all_appearances(s, "case", "cas_e");
-    replace_all_appearances(s, "char", "cha_r");
-    replace_all_appearances(s, "void", "voi_d");
-    replace_all_appearances(s, "goto", "got_o");
-    replace_all_appearances(s, "long", "lon_g");
-    replace_all_appearances(s, "else", "els_e");
-    replace_all_appearances(s, "goto", "got_o");
-    replace_all_appearances(s, "type", "ty_pe");
-    replace_all_appearances(s, "self", "se_lf");
-    replace_all_appearances(s, "list", "lis_t");
-    replace_all_appearances(s, "None", "No_ne");
-    replace_all_appearances(s, "elif", "el_if");
-    replace_all_appearances(s, "True", "t_rue_");
-    replace_all_appearances(s, "super","sup_er");
-    replace_all_appearances(s, "endif", "endi_f");
-    replace_all_appearances(s, "await", "awai_t");
-    replace_all_appearances(s, "catch", "catc_h");
-    replace_all_appearances(s, "class", "clas_s");
-    replace_all_appearances(s, "clone", "clon_e");
-    replace_all_appearances(s, "empty", "empt_y");
-    replace_all_appearances(s, "final", "fina_l");
-    replace_all_appearances(s, "break", "brea_k");
-    replace_all_appearances(s, "while", "whil_e");
-    replace_all_appearances(s, "float", "floa_t");
-    replace_all_appearances(s, "union", "unio_n");
-    replace_all_appearances(s, "short", "shor_t");
-    replace_all_appearances(s, "const", "cons_t");
-    replace_all_appearances(s, "match", "matc_h");
-    replace_all_appearances(s, "isset", "isse_t");
-    replace_all_appearances(s, "while", "whil_e");
-    replace_all_appearances(s, "yield", "yiel_d");
-    replace_all_appearances(s, "False", "Fa_lse");
-    replace_all_appearances(s, "unset", "unse_t");
-    replace_all_appearances(s, "print", "prin_t");
-    replace_all_appearances(s, "trait", "trai_t");
-    replace_all_appearances(s, "throw", "thro_w");
-    replace_all_appearances(s, "raise", "rai_se");
-    replace_all_appearances(s, "while", "wh_ile");
-    replace_all_appearances(s, "yield", "yi_eld");
-    replace_all_appearances(s, "break", "bre_ak");
-    replace_all_appearances(s, "class", "c_lass");
-    replace_all_appearances(s, "string","str_ing");
-    replace_all_appearances(s, "except", "exc_ept");
-    replace_all_appearances(s, "lambda", "lamb_da");
-    replace_all_appearances(s, "assert", "asser_t");
-    replace_all_appearances(s, "global", "glo_bal");
-    replace_all_appearances(s, "elseif", "elsei_f");
-    replace_all_appearances(s, "endfor", "endfo_r");
-    replace_all_appearances(s, "static", "stati_c");
-    replace_all_appearances(s, "switch", "switc_h");
-    replace_all_appearances(s, "struct", "struc_t");
-    replace_all_appearances(s, "double", "doubl_e");
-    replace_all_appearances(s, "sizeof", "sizeo_f");
-    replace_all_appearances(s, "extern", "exter_n");
-    replace_all_appearances(s, "signed", "signe_d");
-    replace_all_appearances(s, "return", "retur_n");
-    replace_all_appearances(s, "global", "globa_l");
-    replace_all_appearances(s, "public", "publi_c");
-    replace_all_appearances(s, "return", "retur_n");
-    replace_all_appearances(s, "static", "stati_c");
-    replace_all_appearances(s, "switch", "switc_h");
-    replace_all_appearances(s, "import", "imp_ort");
-    replace_all_appearances(s, "return", "retu_rn");
-    replace_all_appearances(s, "boolea", "boole_an");
-    replace_all_appearances(s, "import", "includ_e");
-    replace_all_appearances(s, "friend", "frie_end");
-    replace_all_appearances(s, "foreach", "foreac_h");
-    replace_all_appearances(s, "private", "privat_e");
-    replace_all_appearances(s, "require", "requir_e");
-    replace_all_appearances(s, "typedef", "typede_f");
-    replace_all_appearances(s, "_Packed", "_P_acked");
-    replace_all_appearances(s, "default", "defaul_t");
-    replace_all_appearances(s, "extends", "extend_s");
-    replace_all_appearances(s, "finally", "finall_y");
-    replace_all_appearances(s, "finally", "final_ly");
-    replace_all_appearances(s, "nonlocal", "nonlo_cal");
-    replace_all_appearances(s, "continue", "con_tinue");
-    replace_all_appearances(s, "continue", "continu_e");
-    replace_all_appearances(s, "volatile", "volatil_e");
-    replace_all_appearances(s, "unsigned", "unsigne_d");
-    replace_all_appearances(s, "abstract", "abstrac_t");
-    replace_all_appearances(s, "register", "registe_r");
-    replace_all_appearances(s, "endwhile", "endwhil_e");
-    replace_all_appearances(s, "function", "functio_n");
-    replace_all_appearances(s, "readonly", "readonl_y");
-    replace_all_appearances(s, "arguments", "argument_s");
-    replace_all_appearances(s, "endswitch", "endswitc_h");
-    replace_all_appearances(s, "protected", "protecte_d");
-    replace_all_appearances(s, "insteadof", "insteado_f");
-    replace_all_appearances(s, "interface", "interfac_e");
-    replace_all_appearances(s, "namespace", "namespac_e");
-    replace_all_appearances(s, "enddeclare", "enddeclar_e");
-    replace_all_appearances(s, "endforeach", "endforeac_h");
-    replace_all_appearances(s, "implements", "implement_s");
-    replace_all_appearances(s, "instanceof", "instanceo_f");
-    replace_all_appearances(s, "include_once", "include_on_ce_");
-    replace_all_appearances(s, "require_once", "require_on_ce_");
-    replace_all_appearances(s, "__halt_compiler", "__h_a_l_t_c_o_m_p_i_l_e_r_");
+    stringstream ss(expression);
 
-    for(char& c: s)
+    int option = 0;
+
+    if (programming_languaje == "javascript") 
+        option = 1; 
+    else if (programming_languaje == "php") 
+        option = 2; 
+    else if (programming_languaje == "python") 
+        option = 3; 
+    else if (programming_languaje == "c") 
+        option = 4; 
+
+    size_t dimension = outputs.dimension(0);
+
+    while (getline(ss, token, '\n'))
     {
-        if(c=='1'){ out+="_one_";   continue;}
-        if(c=='2'){ out+="_two_";   continue;}
-        if(c=='3'){ out+="_three_"; continue;}
-        if(c=='4'){ out+="_four_";  continue;}
-        if(c=='5'){ out+="_five_";  continue;}
-        if(c=='6'){ out+="_six_";   continue;}
-        if(c=='7'){ out+="_seven_"; continue;}
-        if(c=='8'){ out+="_eight_"; continue;}
-        if(c=='9'){ out+="_nine_";  continue;}
-        if(c=='0'){ out+="_zero_";  continue;}
+        if (token.size() > 1 && token.back() == '{') 
+            break; 
 
-        if(c=='.'){ out+="_dot_";   continue;}
-        if(c=='/'){ out+="_div_";   continue;}
-        if(c=='*'){ out+="_mul_";   continue;}
-        if(c=='+'){ out+="_sum_";   continue;}
-        if(c=='-'){ out+="_res_";   continue;}
-        if(c=='='){ out+="_equ_";   continue;}
-        if(c=='!'){ out+="_not_";   continue;}
-        if(c==','){ out+="_colon_"; continue;}
-        if(c==';'){ out+="_semic_"; continue;}
-        if(c=='\\'){ out+="_slash_";continue;}
+        if (token.size() > 1 && token.back() != ';') 
+            token += ';'; 
 
-        if(c=='&'){ out+="_amprsn_"; continue;}
-        if(c=='?'){ out+="_ntrgtn_"; continue;}
-        if(c=='<'){ out+="_lower_" ; continue;}
-        if(c=='>'){ out+="_higher_"; continue;}
+        push_back_string(tokens, token);
+    }
 
-        if(isalnum(c)!=0){ out += c; continue;}
-        if(isalnum(c)==0){ out+='_'; continue;}
+    for (Index i = 0; i < tokens.dimension(0); i++)
+    {
+        string s = tokens(i);
+        string word;
+
+        for (char& c : s)
+            if (c != ' ' && c != '=') 
+                word += c;
+            else 
+                break;
+
+        if (word.size() > 1)
+            push_back_string(found_tokens, word);
+    }
+
+    new_variable = found_tokens[found_tokens.size() - 1];
+    old_variable = outputs[dimension - 1];
+
+    if (new_variable != old_variable)
+    {
+        Index j = found_tokens.size();
+
+        for (Index i = dimension; i-- > 0;)
+        {
+            j -= 1;
+
+            new_variable = found_tokens[j];
+            old_variable = outputs[i];
+
+            switch (option)
+            {
+                //JavaScript
+            case 1:
+                out_string = "\tvar "
+                 + old_variable
+                 + " = "
+                 + new_variable
+                 + ";";
+                push_back_string(out, out_string);
+                break;
+
+                //Php
+            case 2:
+                out_string = "$"
+                 + old_variable
+                 + " = "
+                 + "$"
+                 + new_variable
+                 + ";";
+                push_back_string(out, out_string);
+                break;
+
+                //Python
+            case 3:
+                out_string = old_variable
+                 + " = "
+                 + new_variable;
+                push_back_string(out, out_string);
+                break;
+
+                //C
+            case 4:
+                out_string = "double "
+                 + old_variable
+                 + " = "
+                 + new_variable
+                 + ";";
+                push_back_string(out, out_string);
+                break;
+
+            default:
+                break;
+            }
+        }
     }
 
     return out;
+*/
+    return string();
 }
 
 
-Tensor<string, 1> fix_write_expression_outputs(const string &str,
-                                               const Tensor<string, 1> &outputs,
-                                               const string &programming_languaje)
+Tensor<string, 1> fix_write_expression_outputs(const string& str,
+                                               const Tensor<string, 1>& outputs,
+                                               const string& programming_languaje)
 {
     Tensor<string,1> out;
     Tensor<string,1> tokens;
@@ -1989,17 +2101,24 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 
     int option = 0;
 
-    if(programming_languaje == "javascript") { option = 1; }
-    else if(programming_languaje == "php")   { option = 2; }
-    else if(programming_languaje == "python"){ option = 3; }
-    else if(programming_languaje == "c")     { option = 4; }
+    if(programming_languaje == "javascript") 
+        option = 1;
+    else if(programming_languaje == "php")   
+        option = 2;
+    else if(programming_languaje == "python")
+        option = 3;
+    else if(programming_languaje == "c")     
+        option = 4;
 
-    size_t dimension = outputs.dimension(0);
+    const size_t dimension = outputs.dimension(0);
 
     while(getline(ss, token, '\n'))
     {
-        if(token.size() > 1 && token.back() == '{'){ break; }
-        if(token.size() > 1 && token.back() != ';'){ token += ';'; }
+        if(token.size() > 1 && token.back() == '{')
+            break;
+        if(token.size() > 1 && token.back() != ';')
+            token += ';';
+ 
         push_back_string(tokens, token);
     }
 
@@ -2009,10 +2128,10 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
         string word;
 
         for(char& c : s)
-        {
-            if(c!=' ' && c!='=') word += c; 
-            else break; 
-        }
+            if(c!=' ' && c!='=') 
+                word += c; 
+            else 
+                break; 
 
         if(word.size() > 1)
             push_back_string(found_tokens, word);
@@ -2036,40 +2155,40 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
             {
                 //JavaScript
                 case 1:
-                    out_string = "\tvar ";
-                    out_string += old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
-                    out_string += ";";
+                    out_string = "\tvar "
+                     + old_variable
+                     + " = "
+                     + new_variable
+                     + ";";
                     push_back_string(out, out_string);
                 break;
 
                 //Php
                 case 2:
-                    out_string = "$";
-                    out_string += old_variable;
-                    out_string += " = ";
-                    out_string += "$";
-                    out_string += new_variable;
-                    out_string += ";";
+                    out_string = "$"
+                     + old_variable
+                     + " = "
+                     + "$"
+                     + new_variable
+                     + ";";
                     push_back_string(out, out_string);
                 break;
 
                 //Python
                 case 3:
-                    out_string = old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
+                    out_string = old_variable
+                     + " = "
+                     + new_variable;
                     push_back_string(out, out_string);
                 break;
 
                 //C
                 case 4:
-                    out_string = "double ";
-                    out_string += old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
-                    out_string += ";";
+                    out_string = "double "
+                     + old_variable
+                     + " = "
+                     + new_variable
+                     + ";";
                     push_back_string(out, out_string);
                 break;
 
@@ -2083,57 +2202,51 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str,
 }
 
 
-Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_name,
-                                                       Tensor<string, 1>& output_names,
-                                                       ostringstream& buffer_)
+void fix_input_names(Tensor<string, 1>& input_names)
 {
-    //preparing output information
+    const Index inputs_number = input_names.dimension(0);
 
-    Tensor<Tensor<string,1>, 1> output(3);
+    Tensor<string,1> input_names(inputs_number);
 
-    ostringstream buffer;
-    buffer << buffer_.str();
-
-    Tensor<string, 1> outputs(output_names.dimension(0));
-    Tensor<string, 1> inputs(inputs_name.dimension(0));
-    Tensor<string,1> buffer_out;
-
-    string output_name_aux;
-    string input_name_aux;
-
-    for(int i = 0; i < inputs_name.dimension(0); i++)
-    {
-        if(inputs_name[i].empty())
-        {
-            inputs(i) = "input_" + to_string(i);
-            buffer << "\t" << to_string(i) + ") " << inputs_name(i) << endl;
-        }
+    for(int i = 0; i < inputs_number; i++)
+        if(input_names[i].empty())
+            input_names(i) = "input_" + to_string(i);
         else
-        {
-            input_name_aux = inputs_name[i];
-            inputs(i) = replace_non_allowed_programming_expressions(input_name_aux);
-            buffer << "\t" << to_string(i) + ") " << inputs(i) << endl;
-        }
-    }
-
-    for(int i = 0; i < output_names.dimension(0); i++)
-    {
-        if(output_names[i].empty())
-        {
-            outputs(i) = "output_" + to_string(i);
-        }
-        else
-        {
-            output_name_aux = output_names[i];
-            outputs(i) = replace_non_allowed_programming_expressions(output_name_aux);
-        }
-    }
-
-    push_back_string(buffer_out, buffer.str());
-
-    output(0) = inputs;
-    output(1) = outputs;
-    output(2) = buffer_out;
-
-    return output;
+            input_names(i) = replace_reserved_keywords(input_names[i]);
 }
+
+
+Tensor<string, 1> fix_output_names(Tensor<string, 1>& output_names)
+{
+    const Index outputs_number = output_names.dimension(0);
+
+    Tensor<string, 1> input_names(outputs_number);
+
+    for (int i = 0; i < outputs_number; i++)
+        if (output_names[i].empty())
+            output_names(i) = "output_" + to_string(i);
+        else
+            input_names(i) = replace_reserved_keywords(input_names[i]);
+
+}
+
+}
+
+#endif
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

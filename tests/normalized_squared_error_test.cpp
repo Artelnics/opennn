@@ -86,7 +86,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
+        assert_true(abs(back_propagation.error()) < NUMERIC_LIMITS_MIN, LOG);
         assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
 
         assert_true(is_zero(back_propagation.gradient), LOG);
@@ -179,7 +179,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.errors.dimension(0) == 1, LOG);
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-        assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
+        assert_true(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
 */
@@ -227,7 +227,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.error >= 0, LOG);
+        assert_true(back_propagation.error() >= 0, LOG);
 
         //assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
 */
@@ -271,7 +271,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.error < type(1e-1), LOG);
+        assert_true(back_propagation.error() < type(1e-1), LOG);
         assert_true(is_zero(back_propagation.gradient,type(1e-1)), LOG);
     }*/
 
@@ -317,7 +317,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.error >= type(0), LOG);
+        assert_true(back_propagation.error() >= type(0), LOG);
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)), LOG);
     }*/
 }
@@ -425,7 +425,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(back_propagation_lm.error() >= type(0), LOG);
         //assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
         //assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
@@ -476,7 +476,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(back_propagation_lm.error() >= type(0), LOG);
         //assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
         //assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
