@@ -116,18 +116,6 @@ const bool& ProbabilisticLayer::get_display() const
 }
 
 
-const Tensor<type, 1>& ProbabilisticLayer::get_biases() const
-{
-    return biases;
-}
-
-
-const Tensor<type, 2>& ProbabilisticLayer::get_synaptic_weights() const
-{
-    return synaptic_weights;
-}
-
-
 Index ProbabilisticLayer::get_parameters_number() const
 {
     return biases.size() + synaptic_weights.size();
@@ -200,18 +188,6 @@ void ProbabilisticLayer::set_neurons_number(const Index& new_neurons_number)
     biases.resize(new_neurons_number);
 
     synaptic_weights.resize(inputs_number, new_neurons_number);
-}
-
-
-void ProbabilisticLayer::set_biases(const Tensor<type, 1>& new_biases)
-{
-    biases = new_biases;
-}
-
-
-void ProbabilisticLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
-{
-    synaptic_weights = new_synaptic_weights;
 }
 
 

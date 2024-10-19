@@ -86,8 +86,8 @@ void PerceptronLayerTest::test_calculate_combinations()
     combinations.resize(samples_number, neurons_number);
     combinations.setConstant(type(3.1416));
 
-    biases = perceptron_layer.get_biases();
-    synaptic_weights = perceptron_layer.get_synaptic_weights();
+//    biases = perceptron_layer.get_biases();
+//    synaptic_weights = perceptron_layer.get_synaptic_weights();
 
     perceptron_layer.calculate_combinations(inputs, combinations);
 
@@ -95,10 +95,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     biases.setConstant(type(1));
     synaptic_weights.setConstant(type(2));
-
+/*
     perceptron_layer.set_biases(biases);
     perceptron_layer.set_synaptic_weights(synaptic_weights);
-
+*/
     inputs.setConstant(type(3));
 
     perceptron_layer.calculate_combinations(inputs, combinations);
@@ -143,10 +143,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     inputs.resize(2,3);
     inputs.setConstant(type(0.5));
-
+/*
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
-
+*/
     perceptron_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2, LOG);
@@ -161,7 +161,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     samples_number = 1;
 
     perceptron_layer.set(inputs_number, neurons_number);
-
+/*
     synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setConstant(type(1));
     perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -169,7 +169,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     biases.resize( neurons_number);
     biases.setConstant(type(1));
     perceptron_layer.set_biases(biases);
-
+*/
     inputs.resize(samples_number, inputs_number);
     inputs.setValues({{type(0.5), type(0.5)}});
 
@@ -190,7 +190,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     samples_number = 1;
 
     perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-
+/*
     synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setValues({{type(1)}});
     perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -204,7 +204,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
-
+*/
     assert_true(biases(0) - type(-0.5) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(synaptic_weights(0, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -233,10 +233,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setZero();
-
+/*
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
-
+*/
     combinations.resize(samples_number, neurons_number);
 
     perceptron_layer.calculate_combinations(inputs, combinations);

@@ -41,18 +41,6 @@ bool ConvolutionalLayer::is_empty() const
 }
 
 
-const Tensor<type, 1>& ConvolutionalLayer::get_biases() const
-{
-    return biases;
-}
-
-
-const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
-{
-    return synaptic_weights;
-}
-
-
 bool ConvolutionalLayer::get_batch_normalization() const
 {
     return batch_normalization;
@@ -764,18 +752,6 @@ void ConvolutionalLayer::set_activation_function(const string& new_activation_fu
         activation_function = ActivationFunction::ExponentialLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-}
-
-
-void ConvolutionalLayer::set_biases(const Tensor<type, 1>& new_biases)
-{
-    biases = new_biases;
-}
-
-
-void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 4>& new_synaptic_weights)
-{
-    synaptic_weights = new_synaptic_weights;
 }
 
 

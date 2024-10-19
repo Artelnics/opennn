@@ -63,10 +63,6 @@ public:
 
     bool is_empty() const;
 
-    const Tensor<type, 1>& get_biases() const;
-
-    const Tensor<type, 4>& get_synaptic_weights() const;
-
     bool get_batch_normalization() const;
 
     Index get_biases_number() const;
@@ -120,10 +116,6 @@ public:
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
-
-    void set_biases(const Tensor<type, 1>&);
-
-    void set_synaptic_weights(const Tensor<type, 4>&);
 
     void set_batch_normalization(const bool&);
 

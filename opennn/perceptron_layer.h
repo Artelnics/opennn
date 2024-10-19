@@ -65,8 +65,6 @@ public:
 
     // Parameters
 
-    const Tensor<type, 1>& get_biases() const;
-    const Tensor<type, 2>& get_synaptic_weights() const;
     Tensor<type, 1> get_parameters() const final;
 
     Index get_biases_number() const;
@@ -102,9 +100,6 @@ public:
     void set_neurons_number(const Index&) final;
 
     // Parameters
-
-    void set_biases(const Tensor<type, 1>&);
-    void set_synaptic_weights(const Tensor<type, 2>&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 

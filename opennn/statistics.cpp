@@ -2034,8 +2034,6 @@ Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>& matrix, const Ind
 }
 
 
-///Returns a vector with the percentiles of a vector given.
-
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);

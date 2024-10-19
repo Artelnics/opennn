@@ -161,15 +161,6 @@ type l2_distance(const type&, const type&);
 type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
-// Check
-
-void check_size(const Tensor<type, 1>&, const Index&, const string&);
-
-void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
-
-//void check_raw_variables_number(const Tensor<type, 2>&, const Index&, const string&);
-//void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
-
 // Fill
 
 void fill_tensor_data(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, type*);
@@ -210,10 +201,6 @@ string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
 string string_tensor_to_string(const Tensor<string, 1>&, const string& = " ");
 
 Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
-
-//Index partition(Tensor<type, 2>&, const Index&, const Index&, const Index&);
-Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
 
 type round_to_precision(type, const int&);
 //Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
