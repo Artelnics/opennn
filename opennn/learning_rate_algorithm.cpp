@@ -222,7 +222,7 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
 
         const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
-        V.second = back_propagation.error + regularization_weight*regularization;
+        V.second = back_propagation.error() + regularization_weight * regularization;
 
         // Update points
 
@@ -303,7 +303,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
-        triplet.B.second = back_propagation.error + regularization_weight*regularization;
+        triplet.B.second = back_propagation.error() + regularization_weight * regularization;
 
     } while(abs(triplet.A.second - triplet.B.second) < loss_tolerance && triplet.A.second != triplet.B.second);
 
@@ -324,7 +324,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
-        triplet.B.second = back_propagation.error + regularization_weight*regularization;
+        triplet.B.second = back_propagation.error() + regularization_weight * regularization;
 
         while(triplet.U.second > triplet.B.second)
         {
@@ -344,7 +344,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
-            triplet.B.second = back_propagation.error + regularization_weight*regularization;
+            triplet.B.second = back_propagation.error() + regularization_weight * regularization;
         }
     }
     else if(triplet.A.second < triplet.B.second)
@@ -362,7 +362,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
-        triplet.U.second = back_propagation.error + regularization_weight*regularization;
+        triplet.U.second = back_propagation.error() + regularization_weight * regularization;
 
         while(triplet.A.second < triplet.U.second)
         {
@@ -379,7 +379,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
-            triplet.U.second = back_propagation.error + regularization_weight*regularization;
+            triplet.U.second = back_propagation.error() + regularization_weight * regularization;
 
             if(triplet.U.first - triplet.A.first <= learning_rate_tolerance)
             {

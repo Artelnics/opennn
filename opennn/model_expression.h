@@ -130,7 +130,15 @@ string write_comments_c()
     "// \tinputs[2] = input3;"
     "// \t. . ."
     "// \n"
-    "// Input names:";
+    "// Input names:"
+    "\n"
+    "#include <iostream>"
+    "#include <vector>"
+    "#include <math.h>"
+    "#include <stdio.h>"
+    "\n"
+    "using namespace std;"
+    "\n";
 }
 
 
@@ -223,6 +231,102 @@ string write_soft_sign_c()
     "\n";
 }
 
+void lstm_c()
+{
+/*
+    if (LSTM_number > 0)
+    {
+        for (int i = 0; i < found_tokens.dimension(0); i++)
+        {
+            const string token = found_tokens(i);
+
+            if (token.find("cell_state") == 0)
+                cell_states_counter += 1;
+
+            if (token.find("hidden_state") == 0)
+                hidden_state_counter += 1;
+        }
+
+        buffer << "struct LSTMMemory" << endl
+            << "{" << endl
+            << "\t" << "int current_combinations_derivatives = 3;" << endl
+            << "\t" << "int time_step_counter = 1;" << endl;
+
+        for (int i = 0; i < hidden_state_counter; i++)
+            buffer << "\t" << "float hidden_state_" << to_string(i) << " = type(0);" << endl;
+
+        for (int i = 0; i < cell_states_counter; i++)
+            buffer << "\t" << "float cell_states_" << to_string(i) << " = type(0);" << endl;
+
+        buffer << "} lstm; \n\n" << endl
+            << "vector<float> calculate_outputs(const vector<float>& inputs, LSTMMemory& lstm)" << endl;
+    }
+
+    if (LSTM_number > 0)
+    {
+        buffer << "\n\tif(lstm.time_step_counter%lstm.current_combinations_derivatives == 0 ){" << endl
+            << "\t\t" << "lstm.time_step_counter = 1;" << endl;
+
+        for (int i = 0; i < hidden_state_counter; i++)
+            buffer << "\t\t" << "lstm.hidden_state_" << to_string(i) << " = type(0);" << endl;
+
+        for (int i = 0; i < cell_states_counter; i++)
+            buffer << "\t\t" << "lstm.cell_states_" << to_string(i) << " = type(0);" << endl;
+
+        buffer << "\t}" << endl;
+    }
+
+    if (LSTM_number > 0)
+    {
+        replace_all_appearances(outputs_espresion, "(t)", "");
+        replace_all_appearances(outputs_espresion, "(t-1)", "");
+        replace_all_appearances(outputs_espresion, "double cell_state", "cell_state");
+        replace_all_appearances(outputs_espresion, "double hidden_state", "hidden_state");
+        replace_all_appearances(outputs_espresion, "cell_state", "lstm.cell_state");
+        replace_all_appearances(outputs_espresion, "hidden_state", "lstm.hidden_state");
+    }
+
+    if (LSTM_number > 0)
+        buffer << "\t" << "LSTMMemory lstm;" << "\n" << endl
+        << "\t" << "vector<float> outputs(" << output_names.size() << ");" << endl
+        << "\n\t" << "outputs = calculate_outputs(inputs, lstm);" << endl;
+
+    if (LSTM_number)
+        buffer << "\n\t" << "lstm.time_step_counter += 1;" << endl;
+*/
+}
+
+
+void auto_association_c()
+{
+/*
+    if (model_type == NeuralNetwork::ModelType::AutoAssociation)
+    {
+        // Delete intermediate calculations
+
+        // sample_autoassociation_distance
+        {
+            const string word_to_delete = "sample_autoassociation_distance =";
+
+            const size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            const string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            const size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+    }
+*/
+}
+
 
 string write_expression_c(const NeuralNetwork& neural_network)
 {
@@ -257,42 +361,9 @@ string write_expression_c(const NeuralNetwork& neural_network)
 
     buffer << write_comments_c();
     
-    buffer << "\n" << endl
-           << "#include <iostream>" << endl
-           << "#include <vector>" << endl
-           << "#include <math.h>" << endl
-           << "#include <stdio.h>" << endl
-           << "\n" << endl
-           << "using namespace std;" << endl
-           << "\n" << endl;
 
     string token;
     string expression = write_expression();
-
-    if(model_type == NeuralNetwork::ModelType::AutoAssociation)
-    {
-    // Delete intermediate calculations
-
-    // sample_autoassociation_distance
-    {
-        const string word_to_delete = "sample_autoassociation_distance =";
-
-        const size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-
-    // sample_autoassociation_variables_distance
-    {
-        const string word_to_delete = "sample_autoassociation_variables_distance =";
-
-        const size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-    }
 
     stringstream ss(expression);
 
@@ -369,59 +440,11 @@ string write_expression_c(const NeuralNetwork& neural_network)
     if(SoftSign)
         buffer << write_soft_sign_c();
 
-    if(LSTM_number > 0)
-    {
-        for(int i = 0; i < found_tokens.dimension(0); i++)
-        {
-            const string token = found_tokens(i);
-
-            if(token.find("cell_state") == 0)
-                cell_states_counter += 1;
-
-            if(token.find("hidden_state") == 0)
-                hidden_state_counter += 1;
-        }
-
-        buffer << "struct LSTMMemory" << endl
-               << "{" << endl
-               << "\t" << "int current_combinations_derivatives = 3;" << endl
-               << "\t" << "int time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "\t" << "float hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "\t" << "float cell_states_" << to_string(i) << " = type(0);" << endl;
-
-        buffer << "} lstm; \n\n" << endl
-               << "vector<float> calculate_outputs(const vector<float>& inputs, LSTMMemory& lstm)" << endl;
-    }
-    else
-    {
-        buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl;
-    }
-
-    buffer << "{" << endl;
+    buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl
+           << "{" << endl;
 
     for(int i = 0; i < inputs_number; i++)
-        if(input_names[i].empty())
-            buffer << "\t" << "const float " << "input_" << to_string(i) << " = " << "inputs[" << to_string(i) << "];" << endl;
-        else
             buffer << "\t" << "const float " << input_names[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
-
-    if(LSTM_number > 0)
-    {
-        buffer << "\n\tif(lstm.time_step_counter%lstm.current_combinations_derivatives == 0 ){" << endl
-               << "\t\t" << "lstm.time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "\t\t" << "lstm.hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "\t\t" << "lstm.cell_states_" << to_string(i) << " = type(0);" << endl;
-
-        buffer << "\t}" << endl;
-    }
 
     buffer << endl;
 
@@ -437,16 +460,6 @@ string write_expression_c(const NeuralNetwork& neural_network)
 
     replace_substring_in_string(found_tokens, outputs_espresion, keyword);
 
-    if(LSTM_number>0)
-    {
-        replace_all_appearances(outputs_espresion, "(t)", "");
-        replace_all_appearances(outputs_espresion, "(t-1)", "");
-        replace_all_appearances(outputs_espresion, "double cell_state", "cell_state");
-        replace_all_appearances(outputs_espresion, "double hidden_state", "hidden_state");
-        replace_all_appearances(outputs_espresion, "cell_state"  , "lstm.cell_state");
-        replace_all_appearances(outputs_espresion, "hidden_state", "lstm.hidden_state");
-    }
-
     buffer << outputs_espresion;
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "c");
@@ -457,19 +470,13 @@ string write_expression_c(const NeuralNetwork& neural_network)
     buffer << "\t" << "vector<float> out(" << output_names.size() << ");" << endl;
 
     for(int i = 0; i < output_names.dimension(0); i++)
-        if(output_names[i].empty())
-            buffer << "\t" << "out[" << to_string(i) << "] = " << "output" << to_string(i) << ";"<< endl;
-        else
-            buffer << "\t" << "out[" << to_string(i) << "] = " << output_names[i] << ";" << endl;
-
-    if(LSTM_number)
-        buffer << "\n\t" << "lstm.time_step_counter += 1;" << endl;
+        buffer << "\t" << "out[" << to_string(i) << "] = " << output_names[i] << ";" << endl;
 
     buffer << "\n\t" << "return out;" << endl
            << "}"  << endl
            << "\n" << endl
            << "int main(){ \n" << endl
-           << "\t" << "vector<float> inputs(" << to_string(input_names.size()) << "); \n" << endl;
+           << "\tvector<float> inputs(" << to_string(input_names.size()) << "); \n" << endl;
 
     for(int i = 0; i < inputs_number; i++)
         if(input_names[i].empty())
@@ -479,24 +486,14 @@ string write_expression_c(const NeuralNetwork& neural_network)
             buffer << "\t" << "const float " << input_names[i] << " =" << " //enter your value here; " << endl
                    << "\t" << "inputs[" << to_string(i) << "] = " << input_names[i] << ";" << endl;
 
-    buffer << endl;
-
-    if(LSTM_number > 0)
-        buffer << "\t"   << "LSTMMemory lstm;" << "\n" << endl
-               << "\t"   << "vector<float> outputs(" << output_names.size() <<");" << endl
-               << "\n\t" << "outputs = calculate_outputs(inputs, lstm);" << endl;
-    else
-        buffer << "\t"   << "vector<float> outputs(" << output_names.size() <<");" << endl
-               << "\n\t" << "outputs = calculate_outputs(inputs);" << endl;
-
-    buffer << "" << endl
+    buffer << endl
+           << "\t   vector<float> outputs(" << output_names.size() <<");" << endl
+           << "\n\t outputs = calculate_outputs(inputs);" << endl
+           << "" << endl
            << "\t" << "printf(\"These are your outputs:\\n\");" << endl;
 
     for(int i = 0; i < outputs_number; i++)
-        if(output_names[i].empty())
-            buffer << "\t" << "printf( \"output" << to_string(i) << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
-        else
-            buffer << "\t" << "printf( \""<< output_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
+        buffer << "\t" << "printf( \""<< output_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
 
     buffer << "\n\t" << "return 0;" << endl
            << "} \n" << endl;
@@ -508,13 +505,259 @@ string write_expression_c(const NeuralNetwork& neural_network)
 }
 
 
+string write_header_api()
+{
+    return
+    "<!DOCTYPE html>"
+    "<!--"
+    "Artificial Intelligence Techniques SL\t"
+    "artelnics@artelnics.com\t"
+    ""
+    "Your model has been exported to this php file."
+    "You can manage it writting your parameters in the url of your browser.\t"
+    "Example:"
+    ""
+    "\turl = http://localhost/API_example/\t"
+    "\tparameters in the url = http://localhost/API_example/?num=5&num=2&...\t"
+    "\tTo see the ouput refresh the page"
+    ""
+    "\tInputs Names: \t"
+    ""
+    "-->\t"
+    ""
+    "<html lang = \"en\">\n"
+    "<head>\n"
+    "<title>Rest API Client Side Demo</title>\n "
+    "<meta charset = \"utf-8\">"
+    "<meta name = \"viewport\" content = \"width=device-width, initial-scale=1\">"
+    "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">"
+    "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>"
+    "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>"
+    "</head>"
+    "<style>"
+    ".btn{"
+    "background-color: #7393B3"
+    "border: none;"
+    "color: white;"
+    "padding: 15px 32px;"
+    "text-align: center;"
+    "font-size: 16px;"
+    "}"
+    "</style>"
+    "<body>"
+    "<div class = \"container\">"
+    "<br></br>"
+    "<div class = \"form-group\">"
+    "<p>"
+    "follow the steps defined in the \"index.php\" file"
+    "</p>"
+    "<p>"
+    "Refresh the page to see the prediction"
+    "</p>"
+    "</div>"
+    "<h4>"
+    "<?php\n";
+}
+
+
+void lstm_api()
+{
+/*
+    if (LSTM_number > 0)
+    {
+        for (int i = 0; i < found_tokens.dimension(0); i++)
+        {
+            const string t = found_tokens(i);
+
+            if (token.find("cell_state") == 0)
+                cell_states_counter += 1;
+
+            if (token.find("hidden_state") == 0)
+                hidden_state_counter += 1;
+        }
+
+        buffer << "class NeuralNetwork{" << endl
+            << "public $time_steps = 3;" << endl
+            << "public $time_step_counter = 1;" << endl;
+
+        for (int i = 0; i < hidden_state_counter; i++)
+            buffer << "public $" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
+
+        for (int i = 0; i < cell_states_counter; i++)
+            buffer << "public $" << "cell_states_" << to_string(i) << " = type(0);" << endl;
+
+        buffer << "}" << endl
+            << "$nn = new NeuralNetwork;" << endl;
+    }
+
+    if (LSTM_number > 0)
+    {
+        buffer << "if($nn->time_step_counter % $nn->current_combinations_derivatives === 0 ){" << endl
+            << "$nn->current_combinations_derivatives = 3;" << endl
+            << "$nn->time_step_counter = 1;" << endl;
+
+        for (int i = 0; i < hidden_state_counter; i++)
+            buffer << "$nn->" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
+
+        for (int i = 0; i < cell_states_counter; i++)
+            buffer << "$nn->" << "cell_states_" << to_string(i) << " = type(0);" << endl;
+
+        buffer << "}" << endl;
+    }
+
+    if(LSTM_number > 0)
+    {
+    replace_all_appearances(t, "(t)"     , "");
+    replace_all_appearances(t, "(t-1)"   , "");
+    replace_all_appearances(t, "hidden_" , "$hidden_");
+    replace_all_appearances(t, "cell_"   , "$cell_");
+    replace_all_appearances(t, "$hidden_", "$nn->hidden_");
+    replace_all_appearances(t, "$cell_"  , "$nn->cell_");
+    }
+
+*/
+}
+
+
+void autoassociation_api()
+{
+/*
+    if (model_type == NeuralNetwork::ModelType::AutoAssociation)
+    {
+        // Delete intermediate calculations
+
+        // sample_autoassociation_distance
+        {
+            string word_to_delete = "sample_autoassociation_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+    }
+*/
+}
+
+
+string logistic_api()
+{
+    return
+    "<?php"
+    "function Logistic(int $x) {"
+    "$z = 1/(1+exp(-$x));"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+
+string relu_api()
+{
+    return
+    "<?php"
+    "function ReLU(int $x) {"
+    "$z = max(0, $x);"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string exponential_linear_api()
+{
+    return
+    "<?php"
+    "function ExponentialLinear(int $x) {"
+    "$alpha = 1.6732632423543772848170429916717;"
+    "if($x>0){"
+    "$z=$x;"
+    "}else{"
+    "$z=$alpha*(exp($x)-1);"
+    "}"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+
+string scaled_exponential_linear()
+{
+    return
+    "<?php"
+    "function SELU(int $x) {"
+    "$alpha  = 1.67326;"
+    "$lambda = 1.05070;"
+    "if($x>0){"
+    "$z=$lambda*$x;"
+    "}else{"
+    "$z=$lambda*$alpha*(exp($x)-1);"
+    "}"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string hard_sigmoid()
+{
+    return
+    "<?php"
+    "function HardSigmoid(int $x) {"
+    "$z=1/(1+exp(-$x));"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string soft_plus()
+{
+    return
+    "<?php"
+    "function SoftPlus(int $x) {"
+    "$z=log(1+exp($x));"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
+string soft_sign()
+{
+    return
+    "<?php"
+    "function SoftSign(int $x) {"
+    "$z=$x/(1+abs($x));"
+    "return $z;"
+    "}"
+    "?>"
+    "\n";
+}
+
 string write_expression_api(const NeuralNetwork& neural_network) 
 {
 
     ostringstream buffer;
     Tensor<string, 1> found_tokens;
-    Tensor<string, 1> inputs =  neural_network.get_input_names();
-    Tensor<string, 1> outputs = neural_network.get_output_names();
+    
+    Tensor<string, 1> input_names =  neural_network.get_input_names();
+    Tensor<string, 1> output_names = neural_network.get_output_names();
+
+    const Index inputs_number = neural_network.get_inputs_number();
+    const Index outputs_number = neural_network.get_outputs_number();
 
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
@@ -530,93 +773,16 @@ string write_expression_api(const NeuralNetwork& neural_network)
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    buffer << "<!DOCTYPE html>" << endl
-           << "<!--" << endl
-           << "Artificial Intelligence Techniques SL\t" << endl
-           << "artelnics@artelnics.com\t" << endl
-           << "" << endl
-           << "Your model has been exported to this php file." << endl
-           << "You can manage it writting your parameters in the url of your browser.\t" << endl
-           << "Example:" << endl
-           << "" << endl
-           << "\turl = http://localhost/API_example/\t" << endl
-           << "\tparameters in the url = http://localhost/API_example/?num=5&num=2&...\t" << endl
-           << "\tTo see the ouput refresh the page" << endl
-           << "" << endl
-           << "\tInputs Names: \t" << endl;
-
-    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
+    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
-        inputs(i) = inputs_outputs_buffer(0)(i);
+        input_names(i) = inputs_outputs_buffer(0)(i);
 
     for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
-        outputs(i) = inputs_outputs_buffer(1)(i);
-
-    buffer << inputs_outputs_buffer(2)[0]
-        << "" << endl
-        << "-->\t" << endl
-        << "" << endl
-        << "<html lang = \"en\">\n" << endl
-        << "<head>\n" << endl
-        << "<title>Rest API Client Side Demo</title>\n " << endl
-        << "<meta charset = \"utf-8\">" << endl
-        << "<meta name = \"viewport\" content = \"width=device-width, initial-scale=1\">" << endl
-        << "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">" << endl
-        << "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>" << endl
-        << "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>" << endl
-        << "</head>" << endl
-        << "<style>" << endl
-        << ".btn{" << endl
-        << "background-color: #7393B3" << endl // Gray
-        << "border: none;" << endl
-        << "color: white;" << endl
-        << "padding: 15px 32px;" << endl
-        << "text-align: center;" << endl
-        << "font-size: 16px;" << endl
-        << "}" << endl
-        << "</style>" << endl
-        << "<body>" << endl
-        << "<div class = \"container\">" << endl
-        << "<br></br>" << endl
-        << "<div class = \"form-group\">" << endl
-        << "<p>" << endl
-        << "follow the steps defined in the \"index.php\" file" << endl
-        << "</p>" << endl
-        << "<p>" << endl
-        << "Refresh the page to see the prediction" << endl
-        << "</p>" << endl
-        << "</div>" << endl
-        << "<h4>" << endl
-        << "<?php" << "\n" << endl;
+        output_names(i) = inputs_outputs_buffer(1)(i);
 
     string token;
     string expression = write_expression();
-
-    if(model_type == NeuralNetwork::ModelType::AutoAssociation)
-    {
-    // Delete intermediate calculations
-
-    // sample_autoassociation_distance
-    {
-        string word_to_delete = "sample_autoassociation_distance =";
-
-        size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-
-    // sample_autoassociation_variables_distance
-    {
-        string word_to_delete = "sample_autoassociation_variables_distance =";
-
-        size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-    }
 
     stringstream ss(expression);
     Tensor<string, 1> tokens;
@@ -642,33 +808,6 @@ string write_expression_api(const NeuralNetwork& neural_network)
             push_back_string(found_tokens, word);
     }
 
-    if(LSTM_number > 0)
-    {
-        for(int i = 0; i < found_tokens.dimension(0); i++)
-        {
-            const string t = found_tokens(i);
-
-            if(token.find("cell_state") == 0)
-                cell_states_counter += 1;
-
-            if(token.find("hidden_state") == 0)
-                hidden_state_counter += 1;
-        }
-
-        buffer << "class NeuralNetwork{" << endl
-               << "public $time_steps = 3;" << endl
-               << "public $time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "public $" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "public $" << "cell_states_" << to_string(i) << " = type(0);" << endl;
-
-        buffer << "}" << endl
-               << "$nn = new NeuralNetwork;" << endl;
-    }
-
     buffer << "session_start();" << endl
            << "if(isset($_SESSION['lastpage']) && $_SESSION['lastpage'] == __FILE__) { " << endl
            << "if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') " << endl
@@ -682,18 +821,14 @@ string write_expression_api(const NeuralNetwork& neural_network)
            << "parse_str($url_components['query'], $params);" << endl
            << "\n" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-        if(inputs[i].empty())
-            buffer << "$num"    + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
-                   << "$input_" + to_string(i) << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
-        else
+    for(int i = 0; i < inputs_number; i++)
             buffer << "$num" + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
-                   << "$" << inputs[i]      << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
+                   << "$" << input_names[i]      << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
 
     buffer << "if(" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-        if(i != inputs.dimension(0)-1)
+    for(int i = 0; i < inputs_number; i++)
+        if(i != inputs_number - 1)
             buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl;
         else
             buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
@@ -707,21 +842,6 @@ string write_expression_api(const NeuralNetwork& neural_network)
            << "$status =400;" << endl
            << "$status_msg = 'invalid parameters';" << endl
            << "}"   << endl;
-
-    if(LSTM_number>0)
-    {
-        buffer << "if($nn->time_step_counter % $nn->current_combinations_derivatives === 0 ){" << endl
-               << "$nn->current_combinations_derivatives = 3;" << endl
-               << "$nn->time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "$nn->" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "$nn->" << "cell_states_" << to_string(i) << " = type(0);" << endl;
-
-        buffer << "}" << endl;
-    }
 
     buffer << "\n" << endl;
 
@@ -745,7 +865,7 @@ string write_expression_api(const NeuralNetwork& neural_network)
 
     string new_word;
 
-    Tensor<string, 1> found_tokens_and_input_names = concatenate_string_tensors(inputs, found_tokens);
+    Tensor<string, 1> found_tokens_and_input_names = concatenate_string_tensors(input_names, found_tokens);
     found_tokens_and_input_names = sort_string_tensor(found_tokens_and_input_names);
 
     for(int i = 0; i < tokens.dimension(0); i++)
@@ -777,20 +897,10 @@ string write_expression_api(const NeuralNetwork& neural_network)
             replace_all_word_appearances(t, found_tokens_and_input_names[i], new_word);
         }
 
-        if(LSTM_number > 0)
-        {
-            replace_all_appearances(t, "(t)"     , "");
-            replace_all_appearances(t, "(t-1)"   , "");
-            replace_all_appearances(t, "hidden_" , "$hidden_");
-            replace_all_appearances(t, "cell_"   , "$cell_");
-            replace_all_appearances(t, "$hidden_", "$nn->hidden_");
-            replace_all_appearances(t, "$cell_"  , "$nn->cell_");
-        }
-
         buffer << t << endl;
     }
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "php");
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "php");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
         buffer << fixed_outputs(i) << endl;
@@ -798,8 +908,8 @@ string write_expression_api(const NeuralNetwork& neural_network)
     buffer << "if($status === 200){" << endl
            << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
-        buffer << ", '" << outputs(i) << "' => " << "$" << outputs[i] << endl;
+    for(int i = 0; i < outputs_number; i++)
+        buffer << ", '" << output_names(i) << "' => " << "$" << output_names[i] << endl;
 
     buffer << "];" << endl
            << "}" << endl
@@ -821,14 +931,8 @@ string write_expression_api(const NeuralNetwork& neural_network)
            << "?>" << endl
            << "\n" << endl;
 
-    if(logistic)
-        buffer << "<?php" << endl
-               << "function Logistic(int $x) {" << endl
-               << "$z = 1/(1+exp(-$x));" << endl
-               << "return $z;" << endl
-               << "}" << endl
-               << "?>" << endl
-               << "\n" << endl;
+    if (logistic)
+        buffer << logistic_api();
 
     if(ReLU)
         buffer << "<?php" << endl
@@ -908,6 +1012,36 @@ string write_expression_api(const NeuralNetwork& neural_network)
     return out;
 }
 
+string autoassociaton_javascript()
+{
+/*
+    if (model_type == NeuralNetwork::ModelType::AutoAssociation)
+    {
+        // Delete intermediate calculations
+
+        // sample_autoassociation_distance
+        {
+            string word_to_delete = "sample_autoassociation_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != string::npos)
+                expression.erase(index, string::npos);
+        }
+    }
+*/
+}
+
 
 string write_expression_javascript(const NeuralNetwork& neural_network)
 {
@@ -915,8 +1049,11 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
     Tensor<string, 1> tokens;
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
-    Tensor<string, 1> inputs = neural_network.get_input_names();
-    Tensor<string, 1> outputs = neural_network.get_output_names();
+    Tensor<string, 1> input_names = neural_network.get_input_names();
+    Tensor<string, 1> output_names = neural_network.get_output_names();
+
+    const Index inputs_number = neural_network.get_inputs_number();
+    const Index outputs_number = neural_network.get_outputs_number();
 
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
@@ -926,31 +1063,6 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
     string expression = write_expression();
 
     const int maximum_output_variable_numbers = 5;
-
-    if(model_type == NeuralNetwork::ModelType::AutoAssociation)
-    {
-    // Delete intermediate calculations
-
-    // sample_autoassociation_distance
-    {
-        string word_to_delete = "sample_autoassociation_distance =";
-
-        size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-
-    // sample_autoassociation_variables_distance
-    {
-        string word_to_delete = "sample_autoassociation_variables_distance =";
-
-        size_t index = expression.find(word_to_delete);
-
-        if(index != string::npos)
-            expression.erase(index, string::npos);
-    }
-    }
 
     stringstream ss(expression);
 
@@ -991,13 +1103,13 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
                   << "\n" << endl
                   << "Inputs Names:" <<endl;
      
-     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer_to_fix);
+     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer_to_fix);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
-        inputs(i) = inputs_outputs_buffer(0)(i);
+        input_names(i) = inputs_outputs_buffer(0)(i);
 
     for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
-        outputs(i) = inputs_outputs_buffer(1)(i);
+        output_names(i) = inputs_outputs_buffer(1)(i);
 
     ostringstream buffer;
 
@@ -1139,12 +1251,12 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
            << "</form>" << endl
            << "\n" << endl;
 
-    if(outputs.dimension(0) > maximum_output_variable_numbers)
+    if(outputs_number > maximum_output_variable_numbers)
     {
         buffer << "<!-- HIDDEN INPUTS -->" << endl;
 
-        for(int i = 0; i < outputs.dimension(0); i++)
-            buffer << "<input type=\"hidden\" id=\"" << outputs[i] << "\" value=\"\">" << endl;
+        for(int i = 0; i < outputs_number; i++)
+            buffer << "<input type=\"hidden\" id=\"" << output_names[i] << "\" value=\"\">" << endl;
 
         buffer << "\n" << endl;
     }
@@ -1202,15 +1314,15 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
            << "\n" << endl
            << "<script>" << endl;
 
-    if(outputs.dimension(0) > maximum_output_variable_numbers)
+    if(outputs_number > maximum_output_variable_numbers)
     {
         buffer << "function updateSelectedCategory() {" << endl
                << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl
                << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
 
-        for(int i = 0; i < outputs.dimension(0); i++) 
-            buffer << "\tif(selectedCategory === \"" << outputs[i] << "\") {" << endl
-                   << "\t\tselectedValueElement.value = document.getElementById(\"" << outputs[i] << "\").value;" << endl
+        for(int i = 0; i < outputs_number; i++) 
+            buffer << "\tif(selectedCategory === \"" << output_names[i] << "\") {" << endl
+                   << "\t\tselectedValueElement.value = document.getElementById(\"" << output_names[i] << "\").value;" << endl
                    << "\t}" << endl;
 
         buffer << "}" << endl
@@ -1221,17 +1333,17 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
            << "{" << endl
            << "\t" << "var inputs = [];" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-        buffer << "\t" << "var " << inputs[i] << " =" << " document.getElementById(\"" << inputs[i] << "\").value; " << endl
-               << "\t" << "inputs.push(" << inputs[i] << ");" << endl;
+    for(int i = 0; i < inputs_number; i++)
+        buffer << "\t" << "var " << input_names[i] << " =" << " document.getElementById(\"" << input_names[i] << "\").value; " << endl
+               << "\t" << "inputs.push(" << input_names[i] << ");" << endl;
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
-        buffer << "\t" << "var " << outputs[i] << " = document.getElementById(\"" << outputs[i] << "\");" << endl
-               << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
+    for(int i = 0; i < outputs_number; i++)
+        buffer << "\t" << "var " << output_names[i] << " = document.getElementById(\"" << output_names[i] << "\");" << endl
+               << "\t" << output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
 
-    if(outputs.dimension(0) > maximum_output_variable_numbers)
+    if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     //else
     //{
@@ -1259,8 +1371,8 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
     buffer << "function calculate_outputs(inputs)" << endl
            << "{" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
-        buffer << "\t" << "var " << inputs[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
+    for(int i = 0; i < inputs_number; i++)
+        buffer << "\t" << "var " << input_names[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
@@ -1347,15 +1459,15 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
     if(LSTM_number>0)
         buffer << "\t" << "time_step_counter += 1" << "\n" << endl;
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "javascript");
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "javascript");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
         buffer << fixed_outputs(i) << endl;
 
     buffer << "\t" << "var out = [];" << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
-        buffer << "\t" << "out.push(" << outputs[i] << ");" << endl;
+    for(int i = 0; i < outputs_number; i++)
+        buffer << "\t" << "out.push(" << output_names[i] << ");" << endl;
 
     buffer << "\n\t" << "return out;" << endl
            << "}" << "\n" << endl;

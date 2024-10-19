@@ -299,7 +299,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                       training_forward_propagation,
                                       training_back_propagation_lm);
         
-        results.training_error_history(epoch) = training_back_propagation_lm.error;
+        results.training_error_history(epoch) = training_back_propagation_lm.error();
         
         if(has_selection)
         {           
@@ -319,7 +319,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                            selection_forward_propagation,
                                            selection_back_propagation_lm);
 
-            results.selection_error_history(epoch) = selection_back_propagation_lm.error;
+            results.selection_error_history(epoch) = selection_back_propagation_lm.error();
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) 
                 selection_failures++;
@@ -434,7 +434,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     
     Tensor<type, 1>& parameters = back_propagation_lm.parameters;
     
-    type& error = back_propagation_lm.error;
+    type& error = back_propagation_lm.error();
     type& loss = back_propagation_lm.loss;
 
     const Tensor<type, 1>& gradient = back_propagation_lm.gradient;

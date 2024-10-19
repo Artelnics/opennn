@@ -503,7 +503,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         loss_index->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-        results.training_error_history(epoch) = training_back_propagation.error;
+        results.training_error_history(epoch) = training_back_propagation.error();
 
         // Update parameters
 
@@ -519,7 +519,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            results.selection_error_history(epoch) = selection_back_propagation.error;
+            results.selection_error_history(epoch) = selection_back_propagation.error();
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }

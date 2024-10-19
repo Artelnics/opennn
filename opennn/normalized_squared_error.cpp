@@ -196,19 +196,15 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     Tensor<type, 2>& errors = back_propagation.errors;
 
-    type& error = back_propagation.error;
+    Tensor<type,0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = outputs - targets;
 
-    Tensor<type, 0> sum_squared_error;
-
-    sum_squared_error.device(*thread_pool_device) =  errors.contract(errors, SSE);
-
     const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
-        
-    error = sum_squared_error(0)*coefficient;
 
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    error.device(*thread_pool_device) =  errors.contract(errors, SSE) * coefficient;
+
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -225,17 +221,13 @@ void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
     // Back propagation
 
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
-    type& error = back_propagation.error;
-
-    Tensor<type, 0> sum_squared_error;
-
-    sum_squared_error.device(*thread_pool_device) = squared_errors.square().sum();
+    Tensor<type, 0>& error = back_propagation.error;
 
     const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
 
-    error = sum_squared_error(0)*coefficient;
+    error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
 
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 

@@ -268,9 +268,10 @@ string InputsSelection::write_time(const type& time) const
 
     ostringstream elapsed_time;
 
-    elapsed_time << setfill('0') << setw(2) << hours << ":"
-                 << setfill('0') << setw(2) << minutes << ":"
-                 << setfill('0') << setw(2) << seconds << endl;
+    elapsed_time << setfill('0')
+        << setw(2) << hours << ":"
+        << setw(2) << minutes << ":"
+        << setw(2) << seconds << endl;
 
     return elapsed_time.str();
 }
@@ -279,24 +280,19 @@ string InputsSelection::write_time(const type& time) const
 Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number) const
 {
     Index i = 0;
-
     Index j = 0;
 
     while(i < uses.size())
     {
-        if(uses[i] == DataSet::VariableUse::Input && inputs_number == j)
+        if (uses[i] == DataSet::VariableUse::Input)
         {
-            break;
-        }
-        else if(uses[i] == DataSet::VariableUse::Input)
-        {
-            i++;
+            if (j == inputs_number)
+                break;
+
             j++;
         }
-        else
-        {
-            i++;
-        }
+
+        i++;
     }
 
     return i;

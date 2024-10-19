@@ -237,6 +237,8 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
     normalized_inputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
 
+    // @todo outputs is assigned twice!!!
+
     outputs.device(*thread_pool_device) = normalized_inputs;
 
     outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);

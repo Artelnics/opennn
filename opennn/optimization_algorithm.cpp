@@ -369,9 +369,10 @@ string OptimizationAlgorithm::write_time(const type& time) const
 
     ostringstream elapsed_time;
 
-    elapsed_time << setfill('0') << setw(2) << hours << ":"
-                 << setfill('0') << setw(2) << minutes << ":"
-                 << setfill('0') << setw(2) << seconds;
+    elapsed_time << setfill('0')
+        << setw(2) << hours << ":"
+        << setw(2) << minutes << ":"
+        << setw(2) << seconds << endl;
 
     return elapsed_time.str();
 }
