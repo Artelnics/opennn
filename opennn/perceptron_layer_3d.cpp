@@ -90,18 +90,6 @@ type PerceptronLayer3D::get_dropout_rate() const
 }
 
 
-const Tensor<type, 1>& PerceptronLayer3D::get_biases() const
-{
-    return biases;
-}
-
-
-const Tensor<type, 2>& PerceptronLayer3D::get_synaptic_weights() const
-{
-    return synaptic_weights;
-}
-
-
 Tensor<type, 1> PerceptronLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
@@ -230,18 +218,6 @@ void PerceptronLayer3D::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void PerceptronLayer3D::set_biases(const Tensor<type, 1>& new_biases)
-{
-    biases = new_biases;
-}
-
-
-void PerceptronLayer3D::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
-{
-    synaptic_weights = new_synaptic_weights;
-}
-
-
 void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     #pragma omp parallel sections
@@ -318,7 +294,6 @@ void PerceptronLayer3D::set_parameters_glorot()
     const type maximum = limit;
 
     #pragma omp parallel for
-
     for(Index i = 0; i < synaptic_weights.size(); i++)
         synaptic_weights(i) = minimum + (maximum - minimum)*type(rand() / (RAND_MAX + 1.0));
 }
@@ -481,12 +456,8 @@ void PerceptronLayer3D::add_deltas(const vector<pair<type*, dimensions>>& delta_
 {
     TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
-    for(Index i = 1; i < static_cast<Index>(delta_pairs.size()); i++)
-    {
-        const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(delta_pairs[i]);
-
-        deltas.device(*thread_pool_device) += other_deltas;
-    }
+    for(Index i = 1; i < delta_pairs.size(); i++)
+        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
 }
 
 

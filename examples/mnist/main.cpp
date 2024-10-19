@@ -26,27 +26,31 @@ int main()
 
         // Data set
         
-        /*//Random image data set 
-        const Index samples_number = 1;
+        //Random image data set 
+        const Index samples_number = 10;
         const Index image_height = 4;
         const Index image_width = 4;
         const Index channels = 1;
-        ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 1);
+        ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 5);
         image_data_set.set_image_data_random();
-        */
-        ImageDataSet image_data_set;
+
+        image_data_set.set_augmentation(true);
+        
+        //ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
         //image_data_set.set_data_source_path("C:/mnist/train");
-        image_data_set.set_data_source_path("C:/binary_mnist");
+        //image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
+        //image_data_set.set_input_dimensions({22,22,1});
 
-        image_data_set.read_bmp();
+        //image_data_set.read_bmp();
 
-        //image_data_set.set_training();
+        image_data_set.set_training();
 
-        image_data_set.print();
+        //image_data_set.print();
+        image_data_set.print_data();
 
         // Neural network
 
@@ -55,7 +59,7 @@ int main()
             { 1 },
             image_data_set.get_target_dimensions());
 
-        neural_network.print();
+        //neural_network.print();
 
         // Training strategy
  
@@ -64,8 +68,8 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(5);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(5);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();

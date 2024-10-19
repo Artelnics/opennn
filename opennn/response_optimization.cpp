@@ -38,8 +38,8 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 
     inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
     inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
-/*
-    if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
+
+    if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification) 
     {
         output_minimums.resize(outputs_number);
         output_minimums.setZero();
@@ -52,7 +52,6 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
         output_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
         output_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
     }
-*/
 }
 
 
@@ -71,8 +70,8 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 
     inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
     inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
-/*
-    if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification
+
+    if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification) 
     {
         output_minimums.resize(outputs_number);
         output_minimums.setZero();
@@ -85,7 +84,6 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
         output_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
         output_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
     }
-*/
 }
 
 
@@ -111,6 +109,7 @@ Index ResponseOptimization::get_evaluations_number() const
 {
     return evaluations_number;
 }
+
 
 Tensor<type, 1> ResponseOptimization::get_inputs_minimums() const
 {
@@ -162,21 +161,16 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
     switch(condition)
     {
     case Condition::Minimum:
-
         if(values.size() != 0)
             throw runtime_error("For Minimum condition, size of values must be 0.\n");
-
         return;
 
     case Condition::Maximum:
-
         if(values.size() != 0)
             throw runtime_error("For Maximum condition, size of values must be 0.\n");
-
         return;
 
     case Condition::EqualTo:
-
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
@@ -186,7 +180,6 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
         return;
 
     case Condition::LessEqualTo:
-
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
@@ -195,7 +188,6 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
         return;
 
     case Condition::GreaterEqualTo:
-
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
@@ -204,7 +196,6 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
         return;
 
     case Condition::Between:
-
         if(values.size() != 2)
             throw runtime_error("For Between condition, size of values must be 2.\n");
 
@@ -228,25 +219,21 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
     switch(condition)
     {
     case Condition::Minimum:
-
         if(values.size() != 0)
             throw runtime_error("For Minimum condition, size of values must be 0.\n");
 
         return;
 
     case Condition::Maximum:
-
         if(values.size() != 0)
             throw runtime_error("For Maximum condition, size of values must be 0.\n");
 
         return;
 
     case Condition::EqualTo:
-
         throw runtime_error("EqualTo condition is only available for inputs.\n");
 
     case Condition::LessEqualTo:
-
         throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
         output_maximums[index] = values[0];
@@ -436,7 +423,6 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
 Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 {
-
     const Index inputs_number = neural_network->get_inputs_number();
 
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
@@ -460,7 +446,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
             if(column_type == DataSet::RawVariableType::Numeric || column_type == DataSet::RawVariableType::Constant)
             {
-                inputs(i,index++) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
+                inputs(i, index++) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
                 index++;
             }
             else if(column_type == DataSet::RawVariableType::Binary)
@@ -518,12 +504,10 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
     Tensor<type, 2> envelope = assemble_matrix_matrix(inputs,outputs);
 
     for(Index i = 0; i < outputs_number; i++)
-    {
         if(envelope.size() != 0)
             envelope = filter_column_minimum_maximum(envelope, inputs_number + i, output_minimums(i), output_maximums(i));
         else
             return Tensor<type,2>();
-    }
 
     return envelope;
 }
@@ -533,11 +517,9 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
     ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network);
 
-    Tensor<type, 2> inputs = calculate_inputs();
+    const Tensor<type, 2> inputs = calculate_inputs();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
     const Tensor<type, 2> envelope = calculate_envelope(inputs, outputs);
 
@@ -572,6 +554,7 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 
     return results;
 }
+
 
 void ResponseOptimizationResults::print() const
 {

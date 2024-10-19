@@ -323,15 +323,10 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
 void EmbeddingLayer::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
 {
-
     TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
      
-    for(Index i = 1; i < static_cast<Index>(delta_pairs.size()); i++)
-    {
-        const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(delta_pairs[i]);
-
-        deltas.device(*thread_pool_device) += other_deltas;
-    }
+    for(Index i = 1; i < delta_pairs.size(); i++)
+        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
 }
 
 

@@ -180,18 +180,14 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     Tensor<type, 2>& errors = back_propagation.errors;
 
-    type& error = back_propagation.error;
+    Tensor<type, 0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = (outputs - targets).square();
-    
-    Tensor<type, 0> weighted_squared_error;
-
-    weighted_squared_error.device(*thread_pool_device)
-        = ((targets == type(0)).select(negatives_weight*errors, positives_weight*errors)).sum();
 
     const type coefficient = type(total_samples_number) / (type(batch_samples_number) * normalization_coefficient);
 
-    error = weighted_squared_error(0)*coefficient;
+    error.device(*thread_pool_device)
+        = ((targets == type(0)).select(negatives_weight*errors, positives_weight*errors)).sum()*coefficient;
 */
 }
 
@@ -215,15 +211,11 @@ void WeightedSquaredError::calculate_error_lm(const Batch& batch,
 
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    type& error = back_propagation.error;
-
-    Tensor<type, 0> weighted_squared_error;
+    Tensor<type, 0>& error = back_propagation.error;
 
     const type coefficient = type(total_samples_number) / (type(batch_samples_number) * normalization_coefficient);
 
-    weighted_squared_error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
-
-    error = weighted_squared_error();
+    error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
 }
 
 
