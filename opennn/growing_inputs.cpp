@@ -98,12 +98,6 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_sele
 
 InputsSelectionResults GrowingInputs::perform_inputs_selection()
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     InputsSelectionResults inputs_selection_results(maximum_epochs_number);
 
     if(display) cout << "Performing growing inputs selection..." << endl;

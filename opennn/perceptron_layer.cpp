@@ -82,18 +82,6 @@ dimensions PerceptronLayer::get_output_dimensions() const
 }
 
 
-const Tensor<type, 1>& PerceptronLayer::get_biases() const
-{
-    return biases;
-}
-
-
-const Tensor<type, 2>& PerceptronLayer::get_synaptic_weights() const
-{
-    return synaptic_weights;
-}
-
-
 Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
     const Index synaptic_weights_number = synaptic_weights.size();
@@ -209,18 +197,6 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
     biases.resize(new_neurons_number);
 
     synaptic_weights.resize(inputs_number, new_neurons_number);
-}
-
-
-void PerceptronLayer::set_biases(const Tensor<type, 1>& new_biases)
-{
-    biases = new_biases;
-}
-
-
-void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
-{
-    synaptic_weights = new_synaptic_weights;
 }
 
 

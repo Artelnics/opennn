@@ -9,11 +9,7 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-
-
 #include <string>
-
-
 
 #include "config.h"
 #include "neural_network.h"
@@ -29,16 +25,12 @@ class ResponseOptimization
 
 public:
 
-   // DEFAULT CONSTRUCTOR
-
     explicit ResponseOptimization();
 
     explicit ResponseOptimization(NeuralNetwork*);
 
     explicit ResponseOptimization(NeuralNetwork*,DataSet*);
 
-
-    ///Enumeration of the available conditions for response optimization.
 
    enum class Condition{None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
 
@@ -134,4 +126,3 @@ struct ResponseOptimizationResults
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
