@@ -27,7 +27,7 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
     {
         ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
         // @TODO
-        Tensor<type, 2>& augmented_data = perform_augmentation(data);
+        const Tensor<type, 2>& augmented_data = perform_augmentation(data);
 
         fill_tensor_data(augmented_data, samples_indices, inputs_indices, input_data);
     }
