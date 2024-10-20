@@ -322,7 +322,7 @@ void NormalizationLayer3D::add_deltas(const vector<pair<type*, dimensions>>& del
 {
     TensorMap<Tensor<type, 3>> deltas= tensor_map_3(delta_pairs[0]);
 
-    for(Index i = 1; i < delta_pairs.size(); i++)
+    for(Index i = 1; i < static_cast<Index>(delta_pairs.size()); i++)
         deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
 }
 
