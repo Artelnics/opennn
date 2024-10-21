@@ -127,7 +127,7 @@ void StochasticGradientDescentTest::test_transformer_training()
     Index depth;
     Index perceptron_depth;
     Index heads_number;
-    Index number_of_layers;
+    Index layers_number;
 
     Transformer transformer;
 
@@ -147,12 +147,12 @@ void StochasticGradientDescentTest::test_transformer_training()
     depth = 4;
     perceptron_depth = 6;
     heads_number = 4;
-    number_of_layers = 1;
+    layers_number = 1;
 
     data_set.set_data_random_language_model(samples_number, inputs_number, context_length, input_dimensions, context_dimension);
 
     transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
-                        depth, perceptron_depth, heads_number, number_of_layers });
+                        depth, perceptron_depth, heads_number, layers_number });
 
     stochastic_gradient_descent.set_loss_goal(NUMERIC_LIMITS_MIN);
 

@@ -110,7 +110,9 @@ Tensor<Index, 1> GeneticAlgorithm::get_original_unused_raw_variables()
 
 void GeneticAlgorithm::set_default()
 {
-    const Index genes_number = (training_strategy == nullptr || !training_strategy->has_neural_network())
+    // @todo if training strategy is nullptr this will crash
+
+    const Index genes_number = (training_strategy || !training_strategy->has_neural_network())
         ? 0
         : training_strategy->get_data_set()->get_input_and_unused_variables_number();
 
@@ -508,12 +510,10 @@ void GeneticAlgorithm::evaluate_population()
         selection_errors(i) = type(training_results.get_selection_error());
 
         if(display)
-        {
             cout << "Training error: " << training_results.get_training_error() << endl
                  << "Selection error: " << training_results.get_selection_error() << endl
                  << "Variables number: " << input_names.size() << endl
                  << "Inputs number: " << data_set->get_input_raw_variables_number() << endl;
-        }
 
         data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
     }
@@ -874,7 +874,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         elapsed_time = type(difftime(current_time, beginning_time));
 
         if(display)
-        {
             cout << endl
                  << "Epoch number: " << epoch << endl
                  << "Generation mean training error: " << training_errors.mean() << endl
@@ -886,7 +885,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
                  << "Best ever selection error: " << inputs_selection_results.optimum_selection_error << endl
                  << "Elapsed time: " << write_time(elapsed_time) << endl
                  << "Best selection error in generation: " << generation_selected << endl;
-        }
 
         // Stopping criteria
 
@@ -1239,32 +1237,20 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
     Tensor<string, 2> string_matrix(labels.size(), 2);
 
-    // Population size
-
     labels(0) = "Population size";
     values(0) = to_string(individuals_number);
-
-    // Elitism size
 
     labels(1) = "Elitism size";
     values(1) = to_string(elitism_size);
 
-    // Mutation rate
-
     labels(2) = "Mutation rate";
     values(2) = to_string(mutation_rate);
-
-    // Selection loss goal
 
     labels(3) = "Selection loss goal";
     values(3) = to_string(selection_error_goal);
 
-    // Maximum Generations number
-
     labels(4) = "Maximum Generations number";
     values(4) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels(5) = "Maximum time";
     values(5) = to_string(maximum_time);
