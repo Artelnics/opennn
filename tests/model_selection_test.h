@@ -33,8 +33,6 @@ public:
 
    // Serialization
 
-   void test_to_XML();   
-   void test_from_XML();
    void test_save();
    void test_load();
 

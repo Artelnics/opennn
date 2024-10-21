@@ -97,6 +97,7 @@ HEADERS += \
     long_short_term_memory_layer.h \
     recurrent_layer.h \
     neural_network.h \
+    model_expression.h \
     neural_network_forward_propagation.h \
     neural_network_back_propagation.h \
     neural_network_back_propagation_lm.h \

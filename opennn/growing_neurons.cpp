@@ -74,10 +74,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     // Neural network    
 
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
-/*
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
-
-    const vector<Layer*> trainable_layers = neural_network->get_trainable_layers();
 
     Index neurons_number;
 
@@ -111,11 +107,11 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         // Neural network
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
-
+/*
         trainable_layers[trainable_layers_number-2]->set_neurons_number(neurons_number);
 
         trainable_layers[trainable_layers_number-1]->set_inputs_number(neurons_number);
-
+*/
         neurons_selection_results.neurons_number_history(epoch) = neurons_number;
 
         // Loss index
@@ -130,11 +126,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             training_results = training_strategy->perform_training();
 
             if(display)
-            {
                 cout << "Trial: " << trial+1 << endl
                      << "Training error: " << training_results.get_training_error() << endl
                      << "Selection error: " << training_results.get_selection_error() << endl;
-            }
 
             if(training_results.get_selection_error() < minimum_selection_error)
             {
@@ -149,7 +143,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             {
                 neurons_selection_results.optimal_neurons_number = neurons_number;
                 neurons_selection_results.optimal_parameters = neural_network->get_parameters();
-
                 neurons_selection_results.optimum_training_error = minimum_training_error;
                 neurons_selection_results.optimum_selection_error = minimum_selection_error;                                
             }
@@ -227,14 +220,14 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     }
 
     // Save neural network
-
+/*
     trainable_layers[trainable_layers_number-1]->set_inputs_number(neurons_selection_results.optimal_neurons_number);
     trainable_layers[trainable_layers_number-2]->set_neurons_number(neurons_selection_results.optimal_neurons_number);
-
+*/
     neural_network->set_parameters(neurons_selection_results.optimal_parameters);
 
     if(display) neurons_selection_results.print();
-*/
+
     return neurons_selection_results;
 }
 
@@ -390,13 +383,14 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
 void GrowingNeurons::save(const string& file_name) const
 {
-    FILE * file = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(!file) return;
+    if (!file.is_open())
+        return;
 
-    tinyxml2::XMLPrinter printer(file);
+    tinyxml2::XMLPrinter printer;
     to_XML(printer);
-    fclose(file);
+    file << printer.CStr();
 }
 
 

@@ -32,8 +32,6 @@ public:
 
     void test_calculate_outputs();
 
-    bool check_activations_sums(const Tensor<type, 3>&);
-
     void run_test_case();
 
 private:
@@ -47,7 +45,7 @@ private:
     Index embedding_depth = 0;
     Index perceptron_depth = 0;
     Index heads_number = 0;
-    Index number_of_layers = 0;
+    Index layers_number = 0;
 
     Tensor<type, 2> data;
 

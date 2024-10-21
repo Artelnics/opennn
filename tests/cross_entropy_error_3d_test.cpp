@@ -231,7 +231,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
     Index perceptron_depth;
     Index heads_number;
-    Index number_of_layers;
+    Index layers_number;
 
     Tensor<Index, 1> context_variables_indices;
 
@@ -251,7 +251,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         depth = 4; 
         perceptron_depth = 6; 
         heads_number = 4;
-        number_of_layers = 1;
+        layers_number = 1;
         
         bool is_training = true;
         
@@ -269,7 +269,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
         
         transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
-                          depth, perceptron_depth, heads_number, number_of_layers });
+                          depth, perceptron_depth, heads_number, layers_number });
         
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
         
