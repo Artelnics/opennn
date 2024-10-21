@@ -63,14 +63,6 @@ void ModelSelectionTest::test_perform_neurons_selection()
 }
 
 
-void ModelSelectionTest::test_to_XML()
-{
-    cout << "test_to_XML\n";
-
-    model_selection.save("../data/model_selection.xml");
-}
-
-
 void ModelSelectionTest::test_save()
 {
     cout << "test_save\n";

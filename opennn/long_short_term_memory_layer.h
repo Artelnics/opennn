@@ -135,25 +135,25 @@ public:
                        unique_ptr<LayerForwardPropagation>&,
                        unique_ptr<LayerBackPropagation>&) const final;
 
-   void calculate_forget_parameters_derivatives(const Tensor<type, 2>&,
-                                                const Tensor<type, 2>&,
-                                                unique_ptr<LongShortTermMemoryLayerForwardPropagation>,
-                                                unique_ptr<LongShortTermMemoryLayerBackPropagation>) const;
-
-   void calculate_input_parameters_derivatives(const Tensor<type, 2>&,
+   void calculate_forget_parameter_derivatives(const Tensor<type, 2>&,
                                                const Tensor<type, 2>&,
-                                               unique_ptr < LongShortTermMemoryLayerForwardPropagation>,
-                                               unique_ptr < LongShortTermMemoryLayerBackPropagation>) const;
+                                               unique_ptr<LongShortTermMemoryLayerForwardPropagation>&,
+                                               unique_ptr<LongShortTermMemoryLayerBackPropagation>&) const;
 
-   void calculate_state_parameters_derivatives(const Tensor<type, 2>&,
+   void calculate_input_parameter_derivatives(const Tensor<type, 2>&,
+                                              const Tensor<type, 2>&,
+                                              unique_ptr<LongShortTermMemoryLayerForwardPropagation>&,
+                                              unique_ptr<LongShortTermMemoryLayerBackPropagation>&) const;
+
+   void calculate_state_parameter_derivatives(const Tensor<type, 2>&,
+                                              const Tensor<type, 2>&,
+                                              unique_ptr<LongShortTermMemoryLayerForwardPropagation>&,
+                                              unique_ptr<LongShortTermMemoryLayerBackPropagation>&) const;
+
+   void calculate_output_parameter_derivatives(const Tensor<type, 2>&,
                                                const Tensor<type, 2>&,
-                                               unique_ptr < LongShortTermMemoryLayerForwardPropagation>,
-                                               unique_ptr < LongShortTermMemoryLayerBackPropagation>) const;
-
-   void calculate_output_parameters_derivatives(const Tensor<type, 2>&,
-                                                const Tensor<type, 2>&,
-                                                unique_ptr < LongShortTermMemoryLayerForwardPropagation>,
-                                                unique_ptr < LongShortTermMemoryLayerBackPropagation>) const;
+                                               unique_ptr<LongShortTermMemoryLayerForwardPropagation>&,
+                                               unique_ptr<LongShortTermMemoryLayerBackPropagation>&) const;
 
    // Expression
 

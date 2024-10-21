@@ -407,14 +407,6 @@ void TransformerTest::test_forward_propagate()
     }
 }
 
-bool TransformerTest::check_activations_sums(const Tensor<type, 3>& probabilistic_activations)
-{
-    const Tensor<type, 2> activations_sums = probabilistic_activations.sum(Eigen::array<Index, 1>({ 2 }));
-    Tensor<bool, 0> correct_activations = ((activations_sums - activations_sums.constant(1)).abs() < type(1e-2)).all();
-
-    return correct_activations(0);
-}
-
 
 void TransformerTest::run_test_case()
 {

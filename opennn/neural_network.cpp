@@ -17,11 +17,12 @@
 #include "neural_network_forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
-#include "strings_utilities.h"
+//#include "strings_utilities.h"
 #include "config.h"
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
+#include "pooling_layer.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
 #include "addition_layer_3d.h"
@@ -67,7 +68,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const
 
     const Index old_layers_number = get_layers_number();
 
-    layers.push_back(move(layer));
+    layers.push_back(std::move(layer));
 
     layer_input_indices.push_back(input_indices.empty() 
         ? std::vector<Index>(1, old_layers_number - 1) 
@@ -325,11 +326,12 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 
     vector<vector<Index>> layer_output_indices(layers_number);
 
-    for (Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
-        for (Index k = 0; k < Index(layer_input_indices[i].size()); k++)
+        for(Index k = 0; k < Index(layer_input_indices[i].size()); k++)
         {
             const Index input_index = layer_input_indices[i][k];
+
             layer_output_indices[input_index].push_back(i);
         }
     }
@@ -614,7 +616,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     }
     else if(model_type == ModelType::AutoAssociation)
     {
-        /*
+/*
         add_layer(make_unique<ScalingLayer2D>(inputs_number));
 
         const Index mapping_neurons_number = 10;
@@ -1357,29 +1359,27 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Layers
 
     for(Index i = 0; i < layers_number; i++)
-    {
         layers[i]->to_XML(file_stream);
-    }
-/*
+
     ostringstream buffer;
 
     // Layers inputs indices
 
     file_stream.OpenElement("LayersInputsIndices");
 
-    for(Index i = 0; i < layer_input_indices.size(); i++)
+    for(Index i = 0; i < Index(layer_input_indices.size()); i++)
     {
         file_stream.OpenElement("LayerInputsIndices");
 
         file_stream.PushAttribute("LayerIndex", to_string(i+1).c_str());
 
-        const Tensor<Index, 1>& indices = layer_input_indices[i];
+        const vector<Index>& indices = layer_input_indices[i];
 
         buffer.str("");
 
-        for(Index j = 0; j < indices.size(); j++)
+        for(Index j = 0; j < Index(indices.size()); j++)
         {
-            buffer << indices(j);
+            buffer << indices[j];
 
             if(j != indices.size() - 1)
                 buffer << " ";
@@ -1391,7 +1391,7 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     file_stream.CloseElement();
-*/
+
     // Layers (end tag)
 
     file_stream.CloseElement();
@@ -1738,10 +1738,8 @@ void NeuralNetwork::print() const
     cout << "Neural network" << endl;
 
     if(model_type != ModelType::ImageClassification)
-    {
         cout << "Inputs:" << endl
              << get_input_names() << endl;
-    }
 
     const Index layers_number = get_layers_number();       
 
@@ -1755,22 +1753,22 @@ void NeuralNetwork::print() const
     }
 
     cout << "Outputs:" << endl
-         << get_output_names() << endl;
-
-    cout << "Parameters:" << endl
+         << get_output_names() << endl
+         << "Parameters:" << endl
          << get_parameters_number() << endl;
 }
 
 
 void NeuralNetwork::save(const string& file_name) const
 {
-    FILE * file = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(!file) return;
+    if (!file.is_open())
+        return;
 
-    tinyxml2::XMLPrinter printer(file);
+    tinyxml2::XMLPrinter printer;
     to_XML(printer);
-    fclose(file);
+    file << printer.CStr();
 }
 
 

@@ -128,7 +128,7 @@ public:
 
     void set_column_stride(const Index&);
 
-    void set_inputs_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
 
     // Initialization
 

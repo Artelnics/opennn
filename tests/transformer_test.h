@@ -32,8 +32,6 @@ public:
 
     void test_calculate_outputs();
 
-    bool check_activations_sums(const Tensor<type, 3>&);
-
     void run_test_case();
 
 private:

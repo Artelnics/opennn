@@ -70,12 +70,6 @@ dimensions EmbeddingLayer::get_output_dimensions() const
 }
 
 
-Tensor<type, 2> EmbeddingLayer::get_embedding_weights() const
-{
-    return embedding_weights;
-}
-
-
 Index EmbeddingLayer::get_parameters_number() const
 {
     return embedding_weights.size();
@@ -224,16 +218,11 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs) const
 {
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
-    type random;
-
+    #pragma omp parallel for
     for(Index i = 0; i < outputs.size(); i++)
-    {
-        random = calculate_random_uniform(type(0), type(1));
-
-        outputs(i) = (random < dropout_rate) 
+        outputs(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
             ? 0 
             : outputs(i) * scaling_factor;
-    }
 }
 
 
@@ -272,7 +261,8 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
             outputs.chip(batch_element, 0).device(*thread_pool_device) += positional_encoding;
     }
 
-    if(dropout_rate > 0 && is_training)    dropout(outputs);
+    if(dropout_rate > 0 && is_training)
+        dropout(outputs);
 }
 
 
@@ -305,12 +295,13 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     {
         if(positional_encoding)
             sample_deltas.device(*thread_pool_device) 
-            = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
+                = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
         else
             sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
         for(Index j = 0; j < inputs_number; j++)
-            embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device) += sample_deltas.chip(j, 0);
+            embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
+                += sample_deltas.chip(j, 0);
     }
 }
 
@@ -509,7 +500,6 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     const type half_depth = type(depth) / 2;
 
     #pragma omp parallel for
-
     for(Index i = 0; i < inputs_number; i++)
         for(Index j = 0; j < Index(depth); j++)
             positional_encoding(i, j) = (j < Index(half_depth))

@@ -147,8 +147,6 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         Index heads_number = 4;
         Index layers_number = 1;
 
-        bool is_training = true;
-
         LanguageDataSet language_data_set;
 
         language_data_set.set_data_random_language_model(batch_samples_number,

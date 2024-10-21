@@ -795,7 +795,7 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 }
 
 
-void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_input_dimensions)
+void ConvolutionalLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 }
