@@ -463,7 +463,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Neural network
 
-        neural_network->forward_propagate(training_batch.get_input_pairs(), training_forward_propagation, is_training);
+        neural_network->forward_propagate(training_batch, training_forward_propagation, is_training);
 
         // Loss index
 
@@ -476,7 +476,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(has_selection)
         {
-            neural_network->forward_propagate(selection_batch.get_input_pairs(), selection_forward_propagation, is_training);
+            neural_network->forward_propagate(selection_batch, selection_forward_propagation, is_training);
 
             loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 

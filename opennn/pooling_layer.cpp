@@ -279,7 +279,7 @@ void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
                                      const bool& is_training)
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-/*
+
     switch(pooling_method)
     {
         case PoolingMethod::MaxPooling:
@@ -294,7 +294,7 @@ void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
                                               is_training);
             break;
     }
-*/
+
 }
 
 

@@ -186,7 +186,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives;// = data_set->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
@@ -237,8 +237,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
-
-    vector<pair<type*, dimensions>> input_pairs;
 
     // Loss index
 
@@ -303,9 +301,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
 
-            input_pairs = training_batch.get_input_pairs();
-
-            neural_network->forward_propagate(input_pairs,
+            neural_network->forward_propagate(training_batch,
                                               training_forward_propagation,
                                               is_training);
 
@@ -321,7 +317,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
             
-            //system("pause");
+            system("pause");
 
             training_error += training_back_propagation.error;
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
@@ -357,10 +353,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      target_variables_indices,
                                      context_variables_indices);               
                 // Neural network
-                
-                input_pairs = selection_batch.get_input_pairs();
 
-                neural_network->forward_propagate(input_pairs,
+                neural_network->forward_propagate(selection_batch,
                                                   selection_forward_propagation,
                                                   is_training);
                 

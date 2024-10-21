@@ -225,10 +225,7 @@ protected:
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
    
-
    explicit ConvolutionalLayerForwardPropagation();
-
-   
 
    explicit ConvolutionalLayerForwardPropagation(const Index&, Layer*);
       

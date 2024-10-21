@@ -260,7 +260,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
                                            const bool& is_training)
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-    
+
     unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation
             (static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.release()));
 
@@ -1121,7 +1121,7 @@ pair<type*, dimensions> ConvolutionalLayerForwardPropagation::get_outputs_pair()
 void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     batch_samples_number = new_batch_samples_number;
-
+   
     layer = new_layer;
 
     const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
@@ -1149,6 +1149,8 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                    output_width,
                    kernels_number);
 
+    outputs_data = outputs.data();
+
     means.resize(kernels_number);
 
     standard_deviations.resize(kernels_number);
@@ -1158,7 +1160,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                                    output_width,
                                    kernels_number);
 
-    outputs_data = outputs.data();    
 }
 
 

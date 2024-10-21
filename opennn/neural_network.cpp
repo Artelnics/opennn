@@ -1150,7 +1150,7 @@ void NeuralNetwork::set_parameters_random() const
 }
 
 
-void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void NeuralNetwork::forward_propagate(const Batch& batch,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
 {
@@ -1158,27 +1158,24 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     const vector<unique_ptr<Layer>>& layers = get_layers();
 
-    const vector<vector<Index>>& layer_input_indices = get_layer_input_indices();
-
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs;
-       // = forward_propagation.get_layer_input_pairs(input_pairs) const
-
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
+    vector<vector<pair<type*, dimensions>>> layer_input_pair = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
+
     for(Index i = first_layer_index; i <= last_layer_index; i++)
     {
-        layers[i]->forward_propagate(layer_input_pairs[i],
+        layers[i]->forward_propagate(layer_input_pair[i],
                                      forward_propagation.layers[i],
                                      is_training);
     }
 }
 
 
-void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void NeuralNetwork::forward_propagate(const Batch& batch,
                                       const Tensor<type, 1>& new_parameters,
                                       ForwardPropagation& forward_propagation) const
 {
@@ -1188,7 +1185,7 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     const bool is_training = true;
 
-    forward_propagate(input_pairs, forward_propagation, is_training);
+    forward_propagate(batch, forward_propagation, is_training);
 
     set_parameters(original_parameters);
 }
@@ -1203,7 +1200,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
-    forward_propagate({input_pair}, forward_propagation);
+    //TODO forward_propagate({input_pair}, forward_propagation);
 
     const Index layers_number = get_layers_number();
 
@@ -1224,7 +1221,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), { {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}});
 
-    forward_propagate({input_pair}, forward_propagation);
+    //TODO forward_propagate({input_pair}, forward_propagation);
 
     const Index layers_number = get_layers_number();
 
@@ -2113,67 +2110,67 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
         break;
         
         case Layer::Type::PerceptronLayer3D:
-            layers[i] = make_unique < PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Probabilistic:
-            layers[i] = make_unique < ProbabilisticLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<ProbabilisticLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Probabilistic3D:
-            layers[i] = make_unique < ProbabilisticLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<ProbabilisticLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Recurrent:
-            layers[i] = make_unique < RecurrentLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<RecurrentLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::LongShortTermMemory:
-            layers[i] = make_unique < LongShortTermMemoryLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<LongShortTermMemoryLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Convolutional:
-            layers[i] = make_unique < ConvolutionalLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<ConvolutionalLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Pooling:
-            layers[i] = make_unique < PoolingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<PoolingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Flatten:
-            layers[i] = make_unique < FlattenLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<FlattenLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Scaling2D:
-            layers[i] = make_unique < ScalingLayer2DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<ScalingLayer2DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Scaling4D:
-            layers[i] = make_unique < ScalingLayer4DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<ScalingLayer4DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Unscaling:
-            layers[i] = make_unique < UnscalingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<UnscalingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Bounding:
-            layers[i] = make_unique < BoundingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<BoundingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Embedding:
-            layers[i] = make_unique < EmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<EmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::MultiheadAttention:
-            layers[i] = make_unique < MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Addition3D:
-            layers[i] = make_unique < AdditionLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<AdditionLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Normalization3D:
-            layers[i] = make_unique < NormalizationLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<NormalizationLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         default: cout << "Default" << endl; break;
@@ -2186,25 +2183,52 @@ pair<type*, dimensions> ForwardPropagation::get_last_trainable_layer_outputs_pai
 {
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    return layers[last_trainable_layer_index]->get_outputs_pair();
+    const unique_ptr<LayerForwardPropagation>& layer_forward_propagation = layers[last_trainable_layer_index];
+
+    return layer_forward_propagation->get_outputs_pair();
 }
 
 
-vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pairs(const Batch& batch) const
+vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pairs(const vector<pair<type*, dimensions>>& batch_input_pairs) const
 {
     const Index layers_number = neural_network->get_layers_number();
 
+    if (layers_number == 0) 
+        return vector<vector<pair<type*, dimensions>>>();
+
+    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
+
     vector<vector<pair<type*, dimensions>>> layer_input_pairs(layers_number);
 
+    layer_input_pairs[0] = batch_input_pairs;
+
+    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
+
+    for (Index i = first_trainable_layer_index; i < layers_number; i++)
+    {
+        const unique_ptr<LayerForwardPropagation>& layer_forward_propagation = layers[i-1];
+        layer_input_pairs[i].resize(1);
+
+        if (i == first_trainable_layer_index) 
+        {
+            layer_input_pairs[i] = batch_input_pairs;
+        }
+        else
+        {
+            layer_input_pairs[i][0] = layer_forward_propagation->get_outputs_pair();
+        }
+    }
+
+/*
     const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
 
-    const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
+    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
 
     for (Index i = 0; i < layers_number; i++)
     {
         const vector<Index>& this_layer_input_indices = layer_input_indices[i];
 
-        if (neural_network->is_input_layer(this_layer_input_indices))
+        if (i == first_trainable_layer_index || neural_network->is_input_layer(this_layer_input_indices))
         {
             layer_input_pairs[i].push_back(input_pairs[0]);
         }
@@ -2220,11 +2244,11 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
             {
                 const Index this_layer_input_index = this_layer_input_indices[j];
 
-                layer_input_pairs[i].push_back(layers[this_layer_input_index]->get_outputs_pair());
+                //layer_input_pairs[i].push_back(layers[this_layer_input_index]->get_outputs_pair());
             }
         }
     }
-
+*/
     return layer_input_pairs;
 }
 

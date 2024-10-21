@@ -31,10 +31,8 @@ int main()
         const Index image_height = 4;
         const Index image_width = 4;
         const Index channels = 1;
-        ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 5);
+        ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 2);
         image_data_set.set_image_data_random();
-
-        image_data_set.set_augmentation(true);
         
         //ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
@@ -49,8 +47,8 @@ int main()
 
         image_data_set.set_training();
 
-        //image_data_set.print();
-        image_data_set.print_data();
+        image_data_set.print();
+        //image_data_set.print_data();
 
         // Neural network
 
@@ -59,7 +57,7 @@ int main()
             { 1 },
             image_data_set.get_target_dimensions());
 
-        //neural_network.print();
+        neural_network.print();
 
         // Training strategy
  

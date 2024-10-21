@@ -26,8 +26,8 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet*
 
 
 void CrossEntropyError::calculate_error(const Batch& batch,
-                     const ForwardPropagation& forward_propagation,
-                     BackPropagation& back_propagation) const
+                                        const ForwardPropagation& forward_propagation,
+                                        BackPropagation& back_propagation) const
 {      
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -50,9 +50,9 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
-
+    cout << "pasa" << endl;
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-
+    cout << "pasa 1" << endl;
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
