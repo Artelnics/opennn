@@ -101,13 +101,13 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
 
 bool TrainingStrategy::has_neural_network() const
 {
-    return neural_network != nullptr;
+    return neural_network;
 }
 
 
 bool TrainingStrategy::has_data_set() const
 {
-    return data_set != nullptr;
+    return data_set;
 }
 
 

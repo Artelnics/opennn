@@ -2989,8 +2989,8 @@ void DataSet::set(const DataSet& other_data_set)
 
 void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
 {
-    if(thread_pool != nullptr) delete thread_pool;
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool) delete thread_pool;
+    if(thread_pool_device) delete thread_pool_device;
 
     set_default();
 
@@ -3174,8 +3174,8 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete thread_pool;
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool) delete thread_pool;
+    if(thread_pool_device) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -4893,11 +4893,8 @@ void DataSet::print() const
    
     const Index raw_variables_number = get_raw_variables_number();
 
-    //for(Index i = 0; i < raw_variables_number; i++)
-    //{
-    //    cout << endl;
-    //    raw_variables(i).print();
-    //}
+    for(Index i = 0; i < raw_variables_number; i++)
+        raw_variables(i).print();
 }
 
 

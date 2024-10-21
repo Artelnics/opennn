@@ -32,8 +32,8 @@ TrainingStrategy* ModelSelection::get_training_strategy() const
 
 
 bool ModelSelection::has_training_strategy() const
-{   
-    return training_strategy != nullptr;
+{
+    return training_strategy;
 }
 
 

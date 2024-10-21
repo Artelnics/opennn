@@ -73,8 +73,8 @@ void TestingAnalysis::set_default()
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete thread_pool;
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool) delete thread_pool;
+    if(thread_pool_device) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -1172,7 +1172,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
 {
     if (outputs_number == 1)
     {
-        const type decision_threshold = (neural_network->get_probabilistic_layer() != nullptr)
+        const type decision_threshold = neural_network->get_probabilistic_layer()
                                         ? neural_network->get_probabilistic_layer()->get_decision_threshold()
                                         : type(0.5);
 
@@ -1688,7 +1688,7 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
     const Tensor<Index, 1> testing_indices = data_set->get_testing_samples_indices();
 
-    const type decision_threshold = (neural_network->get_probabilistic_layer() != nullptr)
+    const type decision_threshold = neural_network->get_probabilistic_layer()
                                   ? neural_network->get_probabilistic_layer()->get_decision_threshold()
                                   : type(0.5);
 

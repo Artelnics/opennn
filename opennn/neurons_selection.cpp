@@ -35,14 +35,7 @@ TrainingStrategy* NeuronsSelection::get_training_strategy() const
 
 bool NeuronsSelection::has_training_strategy() const
 {
-    if(training_strategy != nullptr)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return training_strategy;
 }
 
 
@@ -99,17 +92,16 @@ void NeuronsSelection::set_default()
     Index inputs_number;
     Index outputs_number;
 
-    if(training_strategy == nullptr
-            || !training_strategy->has_neural_network())
+    if(!training_strategy
+    || !training_strategy->has_neural_network())
     {
         inputs_number = 0;
         outputs_number = 0;
     }
-    else
-    {
-        inputs_number = training_strategy->get_neural_network()->get_inputs_number();
-        outputs_number = training_strategy->get_neural_network()->get_outputs_number();
-    }
+
+    inputs_number = training_strategy->get_neural_network()->get_inputs_number();
+    outputs_number = training_strategy->get_neural_network()->get_outputs_number();
+
     // MEMBERS
 
     minimum_neurons = 1;

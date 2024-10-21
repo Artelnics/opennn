@@ -49,7 +49,7 @@ void GrowingInputs::set_default()
 {
     maximum_selection_failures = 100;
 
-    if(training_strategy == nullptr || !training_strategy->has_neural_network())
+    if(!training_strategy || !training_strategy->has_neural_network())
     {
         maximum_inputs_number = 100;
     }
@@ -179,10 +179,10 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
             if(display)
             {
-                cout << endl;
-                cout << "Epoch: " << epoch << endl;
-                cout << "Input raw_variables number: " << input_raw_variables_number << endl;
-                cout << "Inputs: " << endl;
+                cout << endl
+                     << "Epoch: " << epoch << endl
+                     << "Input raw_variables number: " << input_raw_variables_number << endl
+                     << "Inputs: " << endl;
 
                 input_raw_variables_names = data_set->get_input_raw_variable_names();
 
@@ -197,9 +197,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 neural_network->set_parameters_random();
 
                 if(data_set->has_nan())
-                {
                     data_set->scrub_missing_values();
-                }
 
                 training_results = training_strategy->perform_training();
 
@@ -228,11 +226,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 }
 
                 if(display)
-                {
-                    cout << "Trial number: " << j+1 << endl;
-                    cout << "   Training error: " << training_results.get_training_error() << endl;
-                    cout << "   Selection error: " << training_results.get_selection_error() << endl;
-                }
+                    cout << "Trial number: " << j+1 << endl
+                         << "   Training error: " << training_results.get_training_error() << endl
+                         << "   Selection error: " << training_results.get_selection_error() << endl;
             }
 
             if(previus_training_error < minimum_training_error)

@@ -336,7 +336,6 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
     
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);

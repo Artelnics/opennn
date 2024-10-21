@@ -47,9 +47,6 @@ namespace opennn
 
         // Parameters
 
-        const Tensor<type, 1>& get_gammas() const;
-        const Tensor<type, 1>& get_betas() const;
-
         Index get_gammas_number() const;
         Index get_betas_number() const;
         Index get_parameters_number() const final;
@@ -72,9 +69,6 @@ namespace opennn
         void set_inputs_depth(const Index&);
 
         // Parameters
-
-        void set_gammas(const Tensor<type, 1>&);
-        void set_betas(const Tensor<type, 1>&);
 
         void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 

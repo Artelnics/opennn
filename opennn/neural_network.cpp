@@ -1146,8 +1146,6 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     const vector<unique_ptr<Layer>>& layers = get_layers();
 
-    const vector<vector<Index>>& layer_input_indices = get_layer_input_indices();
-
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs;
        // = forward_propagation.get_layer_input_pairs(input_pairs) const
 

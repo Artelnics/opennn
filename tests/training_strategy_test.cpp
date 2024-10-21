@@ -25,8 +25,8 @@ void TrainingStrategyTest::test_constructor()
 
     TrainingStrategy training_strategy_1(&neural_network, &data_set);
 
-    assert_true(training_strategy.get_neural_network() != nullptr, LOG);
-    assert_true(training_strategy.get_data_set() != nullptr, LOG);
+    assert_true(training_strategy.get_neural_network(), LOG);
+    assert_true(training_strategy.get_data_set(), LOG);
 }
 
 
@@ -41,7 +41,7 @@ void TrainingStrategyTest::test_perform_training()
     Index neurons_number;
 
     Tensor<type, 2> data;
-/*
+
     // Test
 
     samples_number = 5;
@@ -70,7 +70,7 @@ void TrainingStrategyTest::test_perform_training()
     training_strategy.set_display(false);
 
     training_strategy.perform_training();
-*/
+
 }
 
 
