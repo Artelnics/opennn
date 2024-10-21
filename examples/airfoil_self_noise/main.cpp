@@ -92,7 +92,7 @@ int main()
         Tensor<type, 2> inputs(1, input_variables_number);
         inputs.setRandom();
 
-        inputs.setValues({{800,0,0.3048,71.3,0.00266337}});
+        inputs.setValues({{type(800), type(0), type(0.3048), type(71.3), type(0.00266337)}});
 
         cout << inputs << endl;
 

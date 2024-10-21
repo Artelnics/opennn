@@ -23,13 +23,16 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
 
     ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
 
-    if (image_data_set != nullptr && image_data_set->get_augmentation())
+    if (image_data_set && image_data_set->get_augmentation())
     {
+
         ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
+/*
         // @TODO
         Tensor<type, 2>& augmented_data = perform_augmentation(data);
 
         fill_tensor_data(augmented_data, samples_indices, inputs_indices, input_data);
+*/
     }
     else
     {

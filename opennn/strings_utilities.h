@@ -39,14 +39,14 @@ namespace opennn
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
     bool is_email(const string&);
-    bool contains_number(const string&);
+//    bool contains_number(const string&);
 
     bool starts_with(const string&, const string&);
     bool ends_with(const string&, const string&);
     bool ends_with(const string&, const Tensor<string,1>&);
 
-    bool is_constant_numeric(const Tensor<type, 1>&);
-    bool is_constant_string(const Tensor<string, 1>&);
+//    bool is_constant_numeric(const Tensor<type, 1>&);
+//    bool is_constant_string(const Tensor<string, 1>&);
 
     time_t date_to_timestamp(const string&, const Index& = 0);
 
