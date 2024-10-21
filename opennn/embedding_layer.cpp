@@ -241,15 +241,11 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 {
     const Index batch_size = inputs.dimension(0);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(Index row = 0; row < batch_size; row++)
-    {
         for(Index input_position = 0; input_position < inputs_number; input_position++)
-        {
             outputs.chip(row, 0).chip(input_position, 0)
                 = embedding_weights.chip(inputs(row, input_position), 0);
-        }
-    }
 }
 
 
@@ -273,9 +269,7 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
         const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
         
         for(Index batch_element = 0; batch_element < outputs.dimension(0); batch_element++)
-        {
             outputs.chip(batch_element, 0).device(*thread_pool_device) += positional_encoding;
-        }
     }
 
     if(dropout_rate > 0 && is_training)    dropout(outputs);
@@ -323,19 +317,14 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
 void EmbeddingLayer::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
 {
-
     TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
      
     for(Index i = 1; i < delta_pairs.size(); i++)
-    {
-        const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(delta_pairs[i]);
-
-        deltas.device(*thread_pool_device) += other_deltas;
-    }
+        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
 }
 
 
-void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                      const Index& index,
                                      Tensor<type, 1>& gradient) const
 {
@@ -501,7 +490,8 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     outputs_data = outputs.data();
 
-    if(embedding_layer->get_positional_encoding())    build_positional_encoding_matrix();
+    if(embedding_layer->get_positional_encoding())
+        build_positional_encoding_matrix();
 }
 
 

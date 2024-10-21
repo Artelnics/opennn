@@ -207,7 +207,7 @@ public:
 
    // Serialization
 
-   Tensor<string, 2> get_information() const;
+   Tensor<string, 2> get_information();
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
 

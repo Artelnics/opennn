@@ -518,7 +518,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 }
 
 
-void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                       const Index& index,
                                       Tensor<type, 1>& gradient) const
 {

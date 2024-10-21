@@ -426,13 +426,10 @@ void MultiheadAttentionLayer::build_causal_mask()
     causal_mask.resize(context_size, input_size);
     causal_mask.setZero();
 
+    #pragma omp parallel for
     for(Index input_index = 0; input_index < input_size; input_index++)
-    {
         for(Index context_index = input_index + 1; context_index < context_size; context_index++)
-        {
             causal_mask(context_index, input_index) = m_inf;
-        }
-    }
 }
 
 
@@ -458,14 +455,14 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 }
 
 
-// @todo Check if we can do this with transposed matrices in contract. 
-
 void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& input,
                                                        Tensor<type, 4>& transformed_input,
                                                        const Tensor<type, 3>& weights,
                                                        const Tensor<type, 2>& biases,
                                                        Tensor<type, 2>& sample_matrix) const
 {
+    // @todo Check if we can do this with transposed matrices in contract.
+
     const Index batch_size = input.dimension(0);
     const Index variables_number = input.dimension(1);
 
@@ -594,14 +591,11 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
     */
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
-    type random;
-
+    #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
-    {
-        random = calculate_random_uniform(type(0), type(1));
-
-        attention_scores(i) = (random < dropout_rate) ? 0 : attention_scores(i) * scaling_factor;
-    }
+        attention_scores(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
+            ? 0
+            : attention_scores(i) * scaling_factor;
 }
 
 
@@ -896,7 +890,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 }
 
 
-void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                               const Index& index,
                                               Tensor<type, 1>& gradient) const
 {
@@ -1179,8 +1173,8 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
 
     input_derivatives.resize(batch_samples_number, input_size, depth);
     context_derivatives.resize(batch_samples_number, context_size, depth);
-
 }
+
 
 vector<pair<type*, dimensions>> MultiheadAttentionLayerBackPropagation::get_input_derivative_pairs() const
 {

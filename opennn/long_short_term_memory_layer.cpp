@@ -2178,7 +2178,7 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 }
 
 
-void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                                const Index& index,
                                                Tensor<type, 1>& gradient) const
 {    

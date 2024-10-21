@@ -106,7 +106,7 @@ namespace opennn
 
         void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-        void insert_gradient(unique_ptr<LayerBackPropagation>,
+        void insert_gradient(unique_ptr<LayerBackPropagation>&,
                              const Index&,
                              Tensor<type, 1>&) const final;
 

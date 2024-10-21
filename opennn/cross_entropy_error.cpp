@@ -167,7 +167,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
-    const pair<type*, dimensions> outputs_pair = forward_propagation.layers[last_trainable_layer_index]->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 

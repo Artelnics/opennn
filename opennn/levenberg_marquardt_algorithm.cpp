@@ -554,32 +554,20 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(7, 2);
 
-    // Damping parameter factor
-
     labels_values(0,0) = "Damping parameter factor";
     labels_values(0,1) = to_string(double(damping_parameter_factor));
-
-    // Minimum loss decrease
 
     labels_values(2,0) = "Minimum loss decrease";
     labels_values(2,1) = to_string(double(minimum_loss_decrease));
 
-    // Loss goal
-
     labels_values(3,0) = "Loss goal";
     labels_values(3,1) = to_string(double(training_loss_goal));
-
-    // Maximum selection failures
 
     labels_values(4,0) = "Maximum selection error increases";
     labels_values(4,1) = to_string(maximum_selection_failures);
 
-    // Maximum epochs number
-
     labels_values(5,0) = "Maximum epochs number";
     labels_values(5,1) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels_values(6,0) = "Maximum time";
     labels_values(6,1) = write_time(maximum_time);

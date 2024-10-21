@@ -468,7 +468,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                          const Index& index,
                                          Tensor<type, 1>& gradient) const
 {

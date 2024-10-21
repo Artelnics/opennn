@@ -365,42 +365,26 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
     Tensor<string, 1> labels(8);
     Tensor<string, 1> values(8);
 
-    // Trials number
-
     labels(0) = "Trials number";
     values(0) = to_string(trials_number);
-
-    // Selection loss goal
 
     labels(1) = "Selection error goal";
     values(1) = to_string(selection_error_goal);
 
-    // Maximum selection failures
-
     labels(2) = "Maximum selection failures";
     values(2) = to_string(maximum_selection_failures);
-
-    // Maximum inputs number
 
     labels(3) = "Maximum inputs number";
     values(3) = to_string(maximum_inputs_number);
 
-    // Minimum correlation
-
     labels(4) = "Minimum correlations";
     values(4) = to_string(minimum_correlation);
-
-    // Maximum correlation
 
     labels(5) = "Maximum correlation";
     values(5) = to_string(maximum_correlation);
 
-    // Maximum epochs number
-
     labels(6) = "Maximum iterations number";
     values(6) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels(7) = "Maximum time";
     values(7) = to_string(maximum_time);

@@ -131,7 +131,7 @@ public:
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
 
-   void insert_gradient(unique_ptr<LayerBackPropagation>, 
+   void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index&, 
                         Tensor<type, 1>&) const final;
 

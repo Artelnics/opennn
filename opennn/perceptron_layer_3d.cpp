@@ -490,7 +490,7 @@ void PerceptronLayer3D::add_deltas(const vector<pair<type*, dimensions>>& delta_
 }
 
 
-void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                       const Index& index,
                                       Tensor<type, 1>& gradient) const
 {

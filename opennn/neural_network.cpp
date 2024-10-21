@@ -952,7 +952,7 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
             return i;
     }
 
-    return 0;
+    throw runtime_error("The neural network has no trainable layers.");
 }
 
 
@@ -973,7 +973,7 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
             return i;
     }
 
-    return 0;
+    throw runtime_error("The neural network has no trainable layers.");
 }
 
 
@@ -1251,9 +1251,8 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 }
 
 
-Tensor<string, 2> NeuralNetwork::get_information() const
+Tensor<string, 2> NeuralNetwork::get_information()
 {
-
     const Index layers_number = get_layers_number();
 
     Tensor<string, 2> information(layers_number, 3);
@@ -1264,7 +1263,7 @@ Tensor<string, 2> NeuralNetwork::get_information() const
         information(i,1) = to_string(layers[i]->get_neurons_number());
 
         const string layer_type = layers[i]->get_type_string();
-/*
+
         if(layer_type == "PerceptronLayer")
         {
             unique_ptr<PerceptronLayer> perceptron_layer(static_cast<PerceptronLayer*>(layers[i].release()));
@@ -1273,19 +1272,19 @@ Tensor<string, 2> NeuralNetwork::get_information() const
         }
         else if(layer_type == "ProbabilisticLayer")
         {
-            const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers[i]);
+            unique_ptr<ProbabilisticLayer> probabilistic_layer(static_cast<ProbabilisticLayer*>(layers[i].release()));
 
             information(i,2) = probabilistic_layer->write_activation_function();
         }
         else if(layer_type == "LongShortTermMemoryLayer")
         {
-            const LongShortTermMemoryLayer* long_short_term_memory_layer = static_cast<LongShortTermMemoryLayer*>(trainable_layers[i]);
+            unique_ptr<LongShortTermMemoryLayer> long_short_term_memory_layer(static_cast<LongShortTermMemoryLayer*>(layers[i].release()));
 
             information(i,2) = long_short_term_memory_layer->write_activation_function();
         }
         else if(layer_type == "RecurrentLayer")
         {
-            const RecurrentLayer* recurrent_layer = static_cast<RecurrentLayer*>(trainable_layers[i]);
+            unique_ptr<RecurrentLayer> recurrent_layer(static_cast<RecurrentLayer*>(layers[i].release()));
 
             information(i,2) = recurrent_layer->write_activation_function();
         }
@@ -1293,7 +1292,6 @@ Tensor<string, 2> NeuralNetwork::get_information() const
         {
             information(i,2) = "No activation function";
         }
-*/
     }
 
     return information;
@@ -2235,7 +2233,6 @@ void ForwardPropagation::print() const
 }
 
 
-
 void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
     batch_samples_number = new_batch_samples_number;
@@ -2243,26 +2240,27 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
     neural_network = new_neural_network;
 
     const Index layers_number = neural_network->get_layers_number();
-/*
+
+    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
+
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
     {
-        switch (layers[i]->get_type())
+        switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Perceptron:
-            layers[i] = make_unique<PerceptronLayerBackPropagationLM>(batch_samples_number, trainable_layers[i]);
+            layers[i] = make_unique<PerceptronLayerBackPropagationLM>(batch_samples_number, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Probabilistic:
-            layers[i] = make_unique<ProbabilisticLayerBackPropagationLM>(batch_samples_number, trainable_layers[i]);
+            layers[i] = make_unique<ProbabilisticLayerBackPropagationLM>(batch_samples_number, neural_network_layers[i].get());
             break;
 
         default:
             throw runtime_error("Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n");
         }
     }
-*/
 }
 }
 

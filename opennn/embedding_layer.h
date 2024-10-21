@@ -109,7 +109,7 @@ public:
 
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-    void insert_gradient(unique_ptr<LayerBackPropagation> back_propagation, 
+    void insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                          const Index& index, 
                          Tensor<type, 1>& gradient) const;
 

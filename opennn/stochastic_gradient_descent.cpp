@@ -502,37 +502,23 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(7, 2);
 
-    // Initial learning rate
-
     labels_values(0,0) = "Inital learning rate";
     labels_values(0,1) = to_string(double(initial_learning_rate));
-
-    // Initial decay
 
     labels_values(1,0) = "Inital decay";
     labels_values(1,1) = to_string(double(initial_decay));
 
-    // Momentum
-
     labels_values(2,0) = "Apply momentum";    
     momentum > type(0) ? labels_values(2,1) = "true" : labels_values(2,1) = "false";
-
-    // Training loss goal
 
     labels_values(3,0) = "Training loss goal";
     labels_values(3,1) = to_string(double(training_loss_goal));
 
-    // Maximum epochs number
-
     labels_values(4,0) = "Maximum epochs number";
     labels_values(4,1) = to_string(maximum_epochs_number);
 
-    // Maximum time
-
     labels_values(5,0) = "Maximum time";
     labels_values(5,1) = write_time(maximum_time);
-
-    // Batch samples number
 
     labels_values(6,0) = "Batch samples number";
     labels_values(6,1) = to_string(batch_samples_number);

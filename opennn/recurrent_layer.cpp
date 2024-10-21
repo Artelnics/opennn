@@ -660,7 +660,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 }
 
 
-void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                      const Index& index,
                                      Tensor<type, 1>& gradient) const
 {

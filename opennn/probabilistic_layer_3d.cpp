@@ -424,7 +424,7 @@ void ProbabilisticLayer3D::calculate_combinations_derivatives(const Tensor<type,
 }
 
 
-void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                            const Index& index,
                                            Tensor<type, 1>& gradient) const
 {
