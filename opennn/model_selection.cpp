@@ -32,8 +32,8 @@ TrainingStrategy* ModelSelection::get_training_strategy() const
 
 
 bool ModelSelection::has_training_strategy() const
-{   
-    return training_strategy != nullptr;
+{
+    return training_strategy;
 }
 
 
@@ -359,13 +359,14 @@ void ModelSelection::print() const
 
 void ModelSelection::save(const string& file_name) const
 {
-    FILE * file = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(!file) return;
+    if (!file.is_open())
+        return;
 
-    tinyxml2::XMLPrinter printer(file);
+    tinyxml2::XMLPrinter printer;
     to_XML(printer);
-    fclose(file);
+    file << printer.CStr();
 }
 
 

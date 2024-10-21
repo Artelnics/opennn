@@ -43,8 +43,6 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const Index outputs_depth = outputs_pair.second[2];
-    
     const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
     
     // Back propagation

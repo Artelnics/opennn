@@ -133,15 +133,13 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 
     while(count_training != training_samples_number)
     {
-        index = indices(i);
+        index = indices(i++);
 
         if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index)= SampleUse::Training;
             count_training++;
         }
-
-        i++;
     }
 
     // Testing
@@ -150,15 +148,13 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 
     while(count_testing != testing_samples_number)
     {
-        index = indices(i);
+        index = indices(i++);
 
         if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index) = SampleUse::Testing;
             count_testing++;
         }
-
-        i++;
     }
 }
 

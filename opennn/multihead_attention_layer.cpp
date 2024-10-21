@@ -595,7 +595,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
     #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
         attention_scores(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
-            ? 0 
+            ? 0
             : attention_scores(i) * scaling_factor;
 }
 
@@ -891,7 +891,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 }
 
 
-void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                               const Index& index,
                                               Tensor<type, 1>& gradient) const
 {
@@ -1174,8 +1174,8 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
 
     input_derivatives.resize(batch_samples_number, input_size, depth);
     context_derivatives.resize(batch_samples_number, context_size, depth);
-
 }
+
 
 vector<pair<type*, dimensions>> MultiheadAttentionLayerBackPropagation::get_input_derivative_pairs() const
 {

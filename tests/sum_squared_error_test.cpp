@@ -45,7 +45,7 @@ void SumSquaredErrorTest::test_constructor()
 void SumSquaredErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
-/*
+
     // Test approximation all zero
     {
         samples_number = 1;
@@ -84,10 +84,10 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
+/*
         assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
         assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
-
+*/
         assert_true(is_zero(back_propagation.gradient), LOG);
     }
 
@@ -221,7 +221,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
-*/
+
     // Test forecasting trivial
 
     {
@@ -243,8 +243,8 @@ void SumSquaredErrorTest::test_back_propagate()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-        /*
-        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
+    /*
+        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
 
         neural_network.set_parameters_constant(type(0));
 

@@ -396,13 +396,10 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
             if(display)
-            {
-                cout << "display: " << display << endl;
                 cout << "OpenNN Warning: ScalingLayer2D class.\n"
                      << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                      << "Standard deviation of variable " << i << " is zero.\n"
                      << "Those variables won't be scaled.\n";
-            }
 
             continue;
         }
@@ -486,13 +483,10 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
             if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
             {
                 if(display)
-                {
-                    cout << "display: " << display << endl;
                     cout << "OpenNN Warning: ScalingLayer class.\n"
                          << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                          << "Standard deviation of variable " << i << " is zero.\n"
                          << "Those variables won't be scaled.\n";
-                }
             }
             else
             {

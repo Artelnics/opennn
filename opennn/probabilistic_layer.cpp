@@ -336,7 +336,6 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
     
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
@@ -385,7 +384,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                          const Index& index,
                                          Tensor<type, 1>& gradient) const
 {
@@ -731,11 +730,9 @@ void ProbabilisticLayerForwardPropagation::print() const
 
     const Index neurons_number = layer->get_neurons_number();
 
-    //if(neurons_number == 1)
-    //{
-     //   cout << "Activations derivatives:" << endl;
-      //  cout << activations_derivatives << endl;
-    //}
+    if(neurons_number == 1)
+       cout << "Activations derivatives:" << endl
+            << activations_derivatives << endl;
 }
 
 

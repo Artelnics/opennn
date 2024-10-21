@@ -68,7 +68,7 @@ void ScalingLayer2DTest::test_forward_propagate()
     input_pairs.second = {{samples_number, inputs_number}};
 /*
     scaling_layer.forward_propagate({input_pairs},
-                                    &scaling_layer_forward_propagation,
+                                    scaling_layer_forward_propagation,
                                     is_training);
     
     outputs = scaling_layer_forward_propagation.outputs;
