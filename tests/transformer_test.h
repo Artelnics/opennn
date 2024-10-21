@@ -47,7 +47,7 @@ private:
     Index embedding_depth = 0;
     Index perceptron_depth = 0;
     Index heads_number = 0;
-    Index number_of_layers = 0;
+    Index layers_number = 0;
 
     Tensor<type, 2> data;
 

@@ -527,7 +527,6 @@ void LongShortTermMemoryLayer::forward_propagate(const vector<pair<type*, dimens
 {
 
     const Index samples_number = input_pairs[0].second[0];
-    const Index inputs_number = input_pairs[0].second[1];
 
     unique_ptr<LongShortTermMemoryLayerForwardPropagation> long_short_term_memory_layer_forward_propagation
             (static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.release()));

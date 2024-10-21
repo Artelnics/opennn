@@ -730,11 +730,9 @@ void ProbabilisticLayerForwardPropagation::print() const
 
     const Index neurons_number = layer->get_neurons_number();
 
-    //if(neurons_number == 1)
-    //{
-     //   cout << "Activations derivatives:" << endl;
-      //  cout << activations_derivatives << endl;
-    //}
+    if(neurons_number == 1)
+       cout << "Activations derivatives:" << endl
+            << activations_derivatives << endl;
 }
 
 

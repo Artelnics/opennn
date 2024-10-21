@@ -332,7 +332,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = {0, 1, 2};
     const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = {0, 1};
 
-    Tensor<type, 3>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
+    //Tensor<type, 3>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
 
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 
@@ -384,8 +384,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         // Synaptic weights derivatives
 
         kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
-        //cout << kernel_synaptic_weights_derivatives << "\nend of convolution gradients" << endl;
-        //cout << "Convolution gradients:\n" << biases_derivatives << endl;
+
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
                kernel_synaptic_weights_derivatives.data(),
                kernel_synaptic_weights_number * sizeof(type));
@@ -1197,9 +1196,9 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                                kernel_width,
                                                kernel_channels);
 
-    image_convolutions_derivatives.resize(output_height, 
-                                          output_width, 
-                                          1);
+    //image_convolutions_derivatives.resize(output_height,
+    //                                      output_width,
+    //                                      1);
 
     input_derivatives.resize(batch_samples_number,
                              input_height,

@@ -327,7 +327,7 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        for (Index k = 0; k < layer_input_indices[i].size(); k++)
+        for (Index k = 0; k < Index(layer_input_indices[i].size()); k++)
         {
             const Index input_index = layer_input_indices[i][k];
             layer_output_indices[input_index].push_back(i);
@@ -368,7 +368,7 @@ Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices,
 {
     // @todo not sure what it does. Rename variables
 
-    for (Index i = 0; i < layer_inputs_indices.size(); i++)
+    for (Index i = 0; i < Index(layer_inputs_indices.size()); i++)
         if (layer_inputs_indices[i] == layer_index)
             return i;
 
@@ -858,7 +858,7 @@ Index NeuralNetwork::get_parameters_number() const
 
     #pragma omp parallel for reduction(+: parameters_number)
 
-    for(Index i = 0; i < layers.size(); i++)
+    for(Index i = 0; i < Index(layers.size()); i++)
         parameters_number += layers[i]->get_parameters_number();
 
     return parameters_number;
