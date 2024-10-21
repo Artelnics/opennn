@@ -199,7 +199,6 @@ void NormalizationLayer3D::set_parameters_constant(const type& value)
 void NormalizationLayer3D::set_parameters_random()
 {
     set_random(gammas);
-
     set_random(betas);
 }
 
@@ -237,6 +236,8 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
                                            .reshape(range_3).broadcast(expand_normalization_axis);
 
     normalized_inputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
+
+    // @todo outputs is assigned twice!!!
 
     outputs.device(*thread_pool_device) = normalized_inputs;
 
@@ -322,11 +323,7 @@ void NormalizationLayer3D::add_deltas(const vector<pair<type*, dimensions>>& del
     TensorMap<Tensor<type, 3>> deltas= tensor_map_3(delta_pairs[0]);
 
     for(Index i = 1; i < delta_pairs.size(); i++)
-    {
-        const TensorMap<Tensor<type, 3>> other_deltas = tensor_map_3(delta_pairs[i]);
-
-        deltas.device(*thread_pool_device) += other_deltas;
-    }
+        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
 }
 
 
@@ -353,7 +350,6 @@ void NormalizationLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
         memcpy(gradient_data + index + gammas_number, betas_derivatives_data, betas_number * sizeof(type));
     }
 }
-
 
 
 void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)

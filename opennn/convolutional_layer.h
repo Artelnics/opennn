@@ -51,17 +51,17 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const dimensions&, const dimensions& = {1, 1, 1, 1});
+    explicit ConvolutionalLayer(const dimensions&,                                // Input dimensions {height,width,channels}
+                                const dimensions& = {1, 1, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
+                                const ActivationFunction& = ActivationFunction::Linear,
+                                const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
+                                const ConvolutionType& = ConvolutionType::Valid); // Convolution type (Valid || Same)                   
 
     // Destructor
 
     // Get
 
     bool is_empty() const;
-
-    const Tensor<type, 1>& get_biases() const;
-
-    const Tensor<type, 4>& get_synaptic_weights() const;
 
     bool get_batch_normalization() const;
 
@@ -112,14 +112,10 @@ public:
 
     // Set
 
-    void set(const dimensions&, const dimensions&);
+    void set(const dimensions&, const dimensions&, const ActivationFunction&, const dimensions&, const ConvolutionType&);
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
-
-    void set_biases(const Tensor<type, 1>&);
-
-    void set_synaptic_weights(const Tensor<type, 4>&);
 
     void set_batch_normalization(const bool&);
 

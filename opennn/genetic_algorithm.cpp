@@ -148,38 +148,6 @@ void GeneticAlgorithm::set_default()
 
 void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index individuals_number = get_individuals_number();
-    const Index new_individuals_number = new_population.dimension(1);
-
-    // Optimization algorithm
-
-    if(!training_strategy)
-        throw runtime_error("Pointer to training strategy is nullptr.\n");
-
-    // Loss index
-
-    const LossIndex* loss_index = training_strategy->get_loss_index();
-
-    if(!loss_index)
-        throw runtime_error("Pointer to loss index is nullptr.\n");
-
-    // Neural network
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    if(!neural_network)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
-
-    if(new_individuals_number != individuals_number)
-    {
-        throw runtime_error("Population rows (" + to_string(new_individuals_number) + ") "
-                            "must be equal to population size (" + to_string(individuals_number) + ").\n");
-    }
-
-#endif
-
     population = new_population;
 }
 
@@ -210,36 +178,13 @@ void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection
 
 void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index individuals_number = get_individuals_number();
-
-    if(new_fitness.size() != individuals_number)
-        throw runtime_error("Fitness size (" + to_string(new_fitness.size()) + ") "
-                            "must be equal to population size (" + to_string(individuals_number) + ").\n");
-
-    for(Index i = 0; i < individuals_number; i++)
-    {
-        if(new_fitness[i] < 0)
-            throw runtime_error("Fitness must be greater than 0.\n");
-    }
-
-#endif
-
     fitness = new_fitness;
 }
 
 
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_individuals_number < 4)
-        throw runtime_error("Population size (" + to_string(new_individuals_number) + ") must be greater than 4.\n");
-
-#endif
-
-    Index new_genes_number = training_strategy->get_data_set()->get_input_variables_number();
+    const Index new_genes_number = training_strategy->get_data_set()->get_input_variables_number();
 
     population.resize(new_individuals_number, new_genes_number);
 
@@ -267,53 +212,21 @@ void GeneticAlgorithm::set_initialization_method(const GeneticAlgorithm::Initial
 
 void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_mutation_rate < 0 || new_mutation_rate > 1)
-        throw runtime_error("Mutation rate must be between 0 and 1.\n");
-
-#endif
-
     mutation_rate = new_mutation_rate;
 }
 
 
 void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index individuals_number = get_individuals_number();
-
-    if(new_elitism_size > individuals_number)
-        throw runtime_error("Elitism size(" + to_string(new_elitism_size) + ") "
-                            "must be lower than population size(" + to_string(individuals_number) + ").\n");
-
-#endif
-
     elitism_size = new_elitism_size;
 }
 
 
 void GeneticAlgorithm::initialize_population()
 {
-#ifdef OPENNN_DEBUG
-
-    const Index individuals_number = get_individuals_number();
-
-    if(individuals_number == 0)
-        throw runtime_error("Population size must be greater than 0.\n");
-
-    const Index genes_number = get_genes_number();
-
-    if(individuals_number > pow(2, genes_number))
-        throw runtime_error("Individuals number must be less than 2 to the power of genes number.\n");
-
-#endif
-
-    if(initialization_method == GeneticAlgorithm::InitializationMethod::Random)
-        initialize_population_random();
-    else
-        initialize_population_correlations();
+    initialization_method == GeneticAlgorithm::InitializationMethod::Random
+        ? initialize_population_random()
+        : initialize_population_correlations();
 }
 
 
@@ -526,23 +439,8 @@ type GeneticAlgorithm::generate_random_between_0_and_1()
 }
 
 
-// void GeneticAlgorithm::set_initial_raw_variables_indices(const Tensor<Index ,1>& new_initial_raw_variables_indices)
-// {
-//     initial_raw_variables_indices = new_initial_raw_variables_indices;
-// }
-
-
 void GeneticAlgorithm::evaluate_population()
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-    if(population.size() == 0)
-        throw runtime_error("Population size must be greater than 0.\n");
-
-#endif
-
     // Training strategy
 
     TrainingResults training_results;
@@ -682,16 +580,6 @@ Tensor<type, 1> GeneticAlgorithm::calculate_selection_probabilities()
 
 void GeneticAlgorithm::perform_selection()
 {
-#ifdef OPENNN_DEBUG
-
-    if(population.size() == 0)
-        throw runtime_error("Population size must be greater than 0.\n");
-
-    if(fitness.dimension(0) == 0)
-        throw runtime_error("No fitness found.\n");
-
-#endif
-
     const Index individuals_number = get_individuals_number();
 
     selection.setConstant(false);
@@ -711,18 +599,6 @@ void GeneticAlgorithm::perform_selection()
     {
         weighted_random(selection_probabilities);
     }
-
-#ifdef OPENNN_DEBUG
-
-    Index selection_assert = 0;
-
-    for(Index i = 0; i < individuals_number; i++) if(selection(i)) selection_assert++;
-
-    if(selection_assert != individuals_number / 2)
-        throw runtime_error("Number of selected individuals (" + to_string(selection_assert) + ") "
-                            "must be " + to_string(individuals_number / 2) + " .\n");
-
-#endif
 }
 
 
@@ -755,17 +631,6 @@ void GeneticAlgorithm::perform_crossover()
     const Index genes_number = get_genes_number();
 
     const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
-
-    #ifdef OPENNN_DEBUG
-            Index count_selected_individuals = 0;
-
-    for(Index i = 0; i < individuals_number; i++)
-                if(selection(i))
-                    count_selected_individuals++;
-
-            if(individuals_number != count_selected_individuals)
-                throw runtime_error("Selected individuals number is wrong.\n");
-    #endif
 
     // Couples generation
 
@@ -899,12 +764,6 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     if(display) cout << "Performing genetic inputs selection..." << endl << endl;
 
     initialize_population();

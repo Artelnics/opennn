@@ -34,13 +34,6 @@ Descriptives::Descriptives(const Tensor<type, 1>&x)
 {
     const Index size = x.size();
 
-#ifdef OPENNN_DEBUG
-
-    if(size == 0)
-        throw runtime_error("Size must be greater than zero.\n");
-
-#endif
-
     Tensor<type, 0> minimum = x.minimum();
     Tensor<type, 0> maximum = x.maximum();
 
@@ -655,11 +648,6 @@ Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix,
 
 type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 {
-#ifdef OPENNN_DEBUG
-    if(begin > end)
-        throw runtime_error("Begin must be less or equal than end.\n");
-#endif
-
     if(end == begin) return vector[begin];
 
     long double sum = 0.0;
@@ -677,22 +665,16 @@ type mean(const Tensor<type, 1>& vector)
 
     if(size == 0) return type(0);
 
-#ifdef OPENNN_DEBUG
-    if(size == 0)
-        throw runtime_error("Size must be greater than zero.\n");
-#endif
-
     long double sum = 0.0;
 
     Index count = 0;
 
     for(Index i = 0; i < size; i++)
     {
-        if(!isnan(vector(i)))
-        {
-            sum += vector(i);
-            count++;
-        }
+        if (isnan(vector(i))) continue;
+
+        sum += vector(i);
+        count++;
     }
 
     const type mean = type(sum/count);
@@ -705,11 +687,6 @@ type variance(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
-#ifdef OPENNN_DEBUG
-    if(size == 0)
-        throw runtime_error("Size must be greater than zero.\n");
-#endif
-
     long double sum = 0.0;
     long double squared_sum = 0.0;
 
@@ -717,13 +694,12 @@ type variance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(!isnan(vector(i)))
-        {
-            sum += vector(i);
-            squared_sum += double(vector(i)) * double(vector(i));
+        if (isnan(vector(i))) continue;
 
-            count++;
-        }
+        sum += vector(i);
+        squared_sum += double(vector(i)) * double(vector(i));
+
+        count++;
     }
 
     if(count <= 1) return type(0);
@@ -738,11 +714,6 @@ type variance(const Tensor<type, 1>& vector)
 type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
     const Index size = indices.dimension(0);
-
-#ifdef OPENNN_DEBUG
-    if(size == 0)
-        throw runtime_error("Indices size must be greater than zero.\n");
-#endif
 
     long double sum = 0.0;
     long double squared_sum = 0.0;
@@ -775,11 +746,6 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
 type standard_deviation(const Tensor<type, 1>& vector)
 {
-#ifdef OPENNN_DEBUG
-    if(vector.dimension(0) == 0)
-        throw runtime_error("Size must be greater than zero.\n");
-#endif
-
     if(vector.size() == 0) return type(0);
 
     return sqrt(variance(vector));
@@ -788,11 +754,6 @@ type standard_deviation(const Tensor<type, 1>& vector)
 
 type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
-#ifdef OPENNN_DEBUG
-    if(vector.dimension(0) == 0)
-        throw runtime_error("Size must be greater than zero.\n");
-#endif
-
     return (variance(vector, indices) < type(1e-9)) 
         ? type(0) 
         : sqrt(variance(vector, indices));
@@ -831,11 +792,6 @@ type asymmetry(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
-#ifdef OPENNN_DEBUG
-    if(size == 0)
-        throw runtime_error("Size must be greater than zero.\n");
-#endif
-
     if(size == 0 || size == 1)
         return type(0);
 
@@ -852,12 +808,11 @@ type asymmetry(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(!isnan(vector(i)))
-        {
-            sum += (vector(i) - mean_value) *(vector(i) - mean_value) *(vector(i) - mean_value);
+        if (isnan(vector(i))) continue;
 
-            count++;
-        }
+        sum += (vector(i) - mean_value) *(vector(i) - mean_value) *(vector(i) - mean_value);
+
+        count++;
     }
 
     const type numerator = type(sum/count);
@@ -870,11 +825,6 @@ type asymmetry(const Tensor<type, 1>& vector)
 type kurtosis(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
-
-#ifdef OPENNN_DEBUG
-    if(size == 0)
-        throw runtime_error("Size must be greater than zero.\n");
-#endif
 
     if(size == 1)
         return type(0);
@@ -915,7 +865,8 @@ type median(const Tensor<type, 1>& vector)
     Index new_size = 0;
 
     for(Index i = 0; i < size; i++)
-        if(!isnan(vector(i))) new_size++;
+        if(!isnan(vector(i))) 
+            new_size++;
 
     Tensor<type, 1> sorted_vector;
     sorted_vector.resize(new_size);
@@ -1143,11 +1094,6 @@ BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
 Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 {
-#ifdef OPENNN_DEBUG
-    if(bins_number < 1)
-        throw runtime_error("Number of bins is less than one.\n");
-#endif
-
     const Index size = vector.dimension(0);
 
     Tensor<type, 1> minimums(bins_number);
@@ -1262,11 +1208,6 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
 Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index& bins_number)
 {
-#ifdef OPENNN_DEBUG
-    if(bins_number < 1)
-        throw runtime_error("Number of bins is less than one.\n");
-#endif
-
     const Index bin_center = (bins_number % 2 == 0) 
         ? Index(type(bins_number) / type(2.0)) 
         : Index(type(bins_number) / type(2.0) + type(0.5));
@@ -1399,11 +1340,6 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
-
-#ifdef OPENNN_DEBUG
-    if(rows_number == 0)
-        throw runtime_error("Number of rows must be greater than one.\n");
-#endif
 
     Tensor<Descriptives, 1> descriptives(columns_number);
 
@@ -1619,11 +1555,6 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-#ifdef OPENNN_DEBUG
-    if(rows_number == 0)
-        throw runtime_error("Number of rows must be greater than one.\n");
-#endif
-
     // Mean
 
     Tensor<type, 1> mean(columns_number);
@@ -1676,38 +1607,6 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 
     if(row_indices_size == 0 && column_indices_size == 0) return Tensor<type, 1>();
 
-#ifdef OPENNN_DEBUG
-
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    // Rows check
-
-    if(row_indices_size > rows_number)
-        throw runtime_error("Size of row indices(" + to_string(row_indices_size) + ") is greater than number of rows(" + to_string(rows_number) + ").\n");
-
-    for(Index i = 0; i < row_indices_size; i++)
-    {
-        if(row_indices(i) >= rows_number)
-            throw runtime_error("Row index " + to_string(i) + " must be less than rows number.\n");
-    }
-
-    if(row_indices_size == 0)
-        throw runtime_error("Size of row indices must be greater than zero.\n");
-
-    // columns check
-
-    if(column_indices_size > columns_number)
-        throw runtime_error("column indices size must be equal or less than columns number.\n");
-
-    for(Index i = 0; i < column_indices_size; i++)
-    {
-        if(column_indices(i) >= columns_number)
-            throw runtime_error("column index " + to_string(i) + " must be less than columns number.\n");
-    }
-
-#endif
-
     Index row_index;
     Index column_index;
 
@@ -1728,11 +1627,10 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
         {
             row_index = row_indices(i);
 
-            if(!isnan(matrix(row_index,column_index)))
-            {
-                mean(j) += matrix(row_index,column_index);
-                count++;
-            }
+            if (isnan(matrix(row_index, column_index))) continue;
+
+            mean(j) += matrix(row_index,column_index);
+            count++;            
         }
 
         mean(j) /= type(count);
@@ -1748,16 +1646,6 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
     const Index columns_number = matrix.dimension(1);
 
     if(rows_number == 0 && columns_number == 0) return type(NAN);
-
-#ifdef OPENNN_DEBUG
-
-    if(rows_number == 0)
-        throw runtime_error("Number of rows must be greater than one.\n");
-
-    if(column_index >= columns_number)
-        throw runtime_error("Index of column must be less than number of columns.\n");
-
-#endif
 
     if(rows_number == 0 && columns_number == 0) return type(NAN);
 
@@ -1892,41 +1780,8 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& column_indices)
 {
-
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
-
-#ifdef OPENNN_DEBUG
-
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    // Rows check
-
-    if(row_indices_size > rows_number)
-        throw runtime_error("Size of row indices(" + to_string(row_indices_size) + ") is greater than number of rows(" + to_string(rows_number) + ").\n");
-
-    for(Index i = 0; i < row_indices_size; i++)
-    {
-        if(row_indices(i) >= rows_number)
-            throw runtime_error("Row index " + to_string(i) + " must be less than rows number.\n");
-    }
-
-    if(row_indices_size == 0)
-        throw runtime_error("Size of row indices must be greater than zero.\n");
-
-    // columns check
-
-    if(column_indices_size > columns_number)
-        throw runtime_error("column indices size must be equal or less than columns number.\n");
-
-    for(Index i = 0; i < column_indices_size; i++)
-    {
-        if(column_indices(i) >= columns_number)
-            throw runtime_error("column index " + to_string(i) + " must be less than columns number.\n");
-    }
-
-#endif
 
     Index column_index;
 
@@ -2035,13 +1890,6 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
     Tensor<Index, 1> minimal_indices(number);
     Tensor<type, 0> maxim = vector.maximum();
 
-#ifdef OPENNN_DEBUG
-
-    if(number > size)
-        throw runtime_error("Number of minimal indices to be computed must be lower (or equal) than the size of the imput vector.\n");
-
-#endif
-
     for(Index j = 0; j < number; j++)
     {
         Index minimal_index = 0;
@@ -2073,13 +1921,6 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
     Tensor<type, 1> vector_copy = vector;
 
     Tensor<Index, 1> maximal_indices(number);
-
-#ifdef OPENNN_DEBUG
-
-    if(number > size)
-        throw runtime_error("Number of maximal indices to be computed must be lower (or equal) than the size of the imput vector.\n");
-
-#endif
 
     for(Index j = 0; j < number; j++)
     {
@@ -2193,18 +2034,9 @@ Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>& matrix, const Ind
 }
 
 
-///Returns a vector with the percentiles of a vector given.
-
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
-
-#ifdef OPENNN_DEBUG
-
-    if(size < 10)
-        throw runtime_error("Size must be greater or equal than 10.\n");
-
-#endif
 
     Index new_size = 0;
 

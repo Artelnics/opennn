@@ -1,7 +1,6 @@
 #ifndef BOXPLOT_H
 #define BOXPLOT_H
 
-
 #include "config.h"
 
 using namespace std;

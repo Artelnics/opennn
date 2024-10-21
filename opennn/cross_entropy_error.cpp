@@ -57,16 +57,12 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     // Back propagation
 
-    type& error = back_propagation.error;
+    Tensor<type, 0>& error = back_propagation.error;
 
-    Tensor<type, 0> cross_entropy_error;
-
-    cross_entropy_error.device(*thread_pool_device) 
+    error.device(*thread_pool_device) 
         = ((targets * outputs.log() + (type(1) - targets) * ((type(1) - outputs).log())).sum()) / type(-batch_samples_number);
 
-    error = cross_entropy_error();
-
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -97,15 +93,11 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     probabilistic_layer_back_propagation->targets = targets;
 
-    type& error = back_propagation.error;
+    Tensor<type, 0>& error = back_propagation.error;
 
-    Tensor<type, 0> cross_entropy_error;
+    error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1/*batch_samples_number*/);
 
-    cross_entropy_error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1/*batch_samples_number*/);
-
-    error = cross_entropy_error();
-
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "strings_utilities.h"
-
 #include "tensors.h"
 #include "multihead_attention_layer.h"
 
@@ -447,7 +446,9 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
                 + sample_index * context_size * input_size
                 + head_index * context_size * input_size * batch_samples_number;
 
-            TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data, context_size, input_size);
+            TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data, 
+                                                               context_size, 
+                                                               input_size);
 
             sample_attention_scores.device(*thread_pool_device) += causal_mask;
         }
@@ -461,7 +462,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
                                                        const Tensor<type, 2>& biases,
                                                        Tensor<type, 2>& sample_matrix) const
 {
-    // @todo Check if we can do this with transposed matrices in contract.
+    // @todo Check if we can do this with transposed matrices in contract. 
 
     const Index batch_size = input.dimension(0);
     const Index variables_number = input.dimension(1);

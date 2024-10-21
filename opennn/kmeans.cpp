@@ -6,7 +6,6 @@
 // Artificial Intelligence Techniques SL
 // artelnics@artelnics.com
 
-
 #include <string>
 #include <omp.h>
 

@@ -197,7 +197,6 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
         return;
 
     default:
-
         throw runtime_error("Unknown inverse hessian approximation method.\n");
     }
 }
@@ -226,7 +225,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); // Ok , auto?
+            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); 
 
     // Calculates Approximation
 
@@ -270,20 +269,20 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
             = parameters_difference/parameters_difference_dot_gradient_difference(0)
             - old_inverse_hessian_dot_gradient_difference/gradient_dot_hessian_dot_gradient(0);
 
-    // Calculates Approximation
+    // Calculate approximation
 
     inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
 
     inverse_hessian.device(*thread_pool_device) 
         += self_kronecker_product(thread_pool_device, parameters_difference)
-        / parameters_difference_dot_gradient_difference(0); // Ok
+        / parameters_difference_dot_gradient_difference(0); 
 
     inverse_hessian.device(*thread_pool_device)
         -= self_kronecker_product(thread_pool_device, old_inverse_hessian_dot_gradient_difference)
-        / gradient_dot_hessian_dot_gradient(0); // Ok
+        / gradient_dot_hessian_dot_gradient(0); 
 
     inverse_hessian.device(*thread_pool_device)
-        += self_kronecker_product(thread_pool_device, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
+        += self_kronecker_product(thread_pool_device, BFGS)*(gradient_dot_hessian_dot_gradient(0)); 
 }
 
 
@@ -293,12 +292,6 @@ void QuasiNewtonMethod::update_parameters(
         BackPropagation& back_propagation,
         QuasiNewtonMehtodData& optimization_data) const
 {
-    #ifdef OPENNN_DEBUG
-
-        check();
-
-    #endif
-
     Tensor<type, 1>& parameters = back_propagation.parameters;
     const Tensor<type, 1>& gradient = back_propagation.gradient;
 
@@ -401,14 +394,8 @@ void QuasiNewtonMethod::update_parameters(
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
-
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     // Start training
+
     if(display) cout << "Training with quasi-Newton method...\n";
     TrainingResults results(maximum_epochs_number+1);
 
@@ -516,7 +503,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         loss_index->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-        results.training_error_history(epoch) = training_back_propagation.error;
+        results.training_error_history(epoch) = training_back_propagation.error();
 
         // Update parameters
 
@@ -532,7 +519,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            results.selection_error_history(epoch) = selection_back_propagation.error;
+            results.selection_error_history(epoch) = selection_back_propagation.error();
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }

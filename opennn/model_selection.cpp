@@ -27,13 +27,6 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 
 TrainingStrategy* ModelSelection::get_training_strategy() const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!training_strategy)
-        throw runtime_error("Training strategy pointer is nullptr.\n");
-
-#endif
-
     return training_strategy;
 }
 

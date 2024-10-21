@@ -26,8 +26,6 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     long_short_term_memory_layer.set();
 
-    assert_true(long_short_term_memory_layer.get_forget_weights().dimension(1) == 0, LOG);
-
     // Test
 
     inputs_number = 1;

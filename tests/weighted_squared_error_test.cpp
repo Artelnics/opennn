@@ -89,10 +89,9 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.errors.dimension(0) == 1, LOG);
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-        assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
+        assert_true(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
-
     }
 
     // Test binary classification random samples, inputs, outputs, neurons

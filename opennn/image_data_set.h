@@ -12,6 +12,7 @@
 
 
 #include <string>
+#include <chrono>
 
 
 
@@ -45,10 +46,6 @@
     namespace fs = ghc::filesystem;
 #endif
 
-// #include "filesystem.h"
-// namespace fs = ghc::filesystem;
-
-//using namespace fs;
 
 namespace opennn
 {
@@ -84,6 +81,7 @@ public:
 
     void set_image_data_random();
 
+    void set_input_dimensions(const dimensions&);
     void set_channels_number(const int&);
     void set_image_width(const int&);
     void set_image_height(const int&);

@@ -38,32 +38,6 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                                                                         const Tensor<type, 1>& old_training_direction,
                                                                         Tensor<type, 1>& training_direction) const
 {
-
-#ifdef OPENNN_DEBUG
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_number();
-
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-
-    const Index old_gradient_size = old_gradient.size();
-
-    if(old_gradient_size != parameters_number)
-        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-        throw runtime_error("Size of gradient (" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-    const Index old_training_direction_size = old_training_direction.size();
-
-    if(old_training_direction_size != parameters_number)
-        throw runtime_error("Size of old training direction (" + to_string(old_training_direction_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-#endif
-
     switch(training_direction_method)
     {
     case TrainingDirectionMethod::FR:
@@ -82,27 +56,6 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
 
 type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_number();
-
-    const Index old_gradient_size = old_gradient.size();
-
-    if(old_gradient_size != parameters_number)
-        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-        throw runtime_error("Size of gradient(" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-#endif
-
     type FR_parameter = type(0);
 
     Tensor<type, 0> numerator;
@@ -115,9 +68,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
         ? type(0)
         : numerator(0) / denominator(0);
 
-    FR_parameter = clamp(FR_parameter, type(0), type(1));
-
-    return FR_parameter;
+    return clamp(FR_parameter, type(0), type(1));
 }
 
 
@@ -126,31 +77,6 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                                                         const Tensor<type, 1>& old_training_direction,
                                                         Tensor<type, 1>& training_direction) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_number();
-
-    const Index old_gradient_size = old_gradient.size();
-
-    if(old_gradient_size != parameters_number)
-        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-        throw runtime_error("Size of gradient (" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-    const Index old_training_direction_size = old_training_direction.size();
-
-    if(old_training_direction_size != parameters_number)
-        throw runtime_error("Size of old training direction (" + to_string(old_training_direction_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-#endif
-
     const type FR_parameter = calculate_FR_parameter(old_gradient, gradient);
 
     training_direction.device(*thread_pool_device) = -gradient + old_training_direction*FR_parameter;
@@ -166,26 +92,6 @@ void ConjugateGradient::calculate_gradient_descent_training_direction(const Tens
 
 type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_number();
-
-    const Index old_gradient_size = old_gradient.size();
-
-    if(old_gradient_size != parameters_number)
-        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-        throw runtime_error("Size of gradient(" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-#endif
-
     type PR_parameter = type(0);
 
     Tensor<type, 0> numerator;
@@ -199,9 +105,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
         ? type(0)
         : numerator(0) / denominator(0);
 
-    PR_parameter = std::clamp(PR_parameter, type(0), type(1));
-
-    return PR_parameter;
+    return clamp(PR_parameter, type(0), type(1));
 }
 
 
@@ -210,32 +114,6 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                                                         const Tensor<type, 1>& old_training_direction,
                                                         Tensor<type, 1>& training_direction) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_number();
-
-    const Index old_gradient_size = old_gradient.size();
-
-    if(old_gradient_size != parameters_number)
-        throw runtime_error("Size of old gradient (" + to_string(old_gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-        throw runtime_error("Size of gradient(" + to_string(gradient_size) + ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-    const Index old_training_direction_size = old_training_direction.size();
-
-    if(old_training_direction_size != parameters_number)
-        throw runtime_error("Size of old training direction(" + to_string(old_training_direction_size) +  ") is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-#endif
-
     const type PR_parameter = calculate_PR_parameter(old_gradient, gradient);
 
     training_direction.device(*thread_pool_device) = -gradient + old_training_direction*PR_parameter;
@@ -468,7 +346,7 @@ TrainingResults ConjugateGradient::perform_training()
         // Loss index
 
         loss_index->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-        results.training_error_history(epoch) = training_back_propagation.error;
+        results.training_error_history(epoch) = training_back_propagation.error();
 
         // Update parameters
 
@@ -480,7 +358,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            results.selection_error_history(epoch) = selection_back_propagation.error;
+            results.selection_error_history(epoch) = selection_back_propagation.error();
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }

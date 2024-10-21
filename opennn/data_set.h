@@ -299,12 +299,6 @@ public:
     Tensor<type, 1> get_sample(const Index&) const;
     void add_sample(const Tensor<type, 1>&);
 
-    Tensor<type, 1> get_variable_data(const Index&) const;
-    Tensor<type, 1> get_variable_data(const string&) const;
-
-    Tensor<type, 1> get_variable_data(const Index&, const Tensor<Index, 1>&) const;
-    Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
-
     Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
 
     // Members get
@@ -755,8 +749,6 @@ protected:
     Tensor<Index, 1> raw_variables_missing_values_number;
 
     Index rows_missing_values_number = 0;
-
-    bool augmentation = false;
 
     bool display = true;     
 };

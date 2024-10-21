@@ -43,7 +43,11 @@ public:
 
     explicit PoolingLayer();
 
-    explicit PoolingLayer(const dimensions&, const dimensions& = {1, 1});
+    explicit PoolingLayer(const dimensions&,            // Input dimensions {height,width,channels}
+                          const dimensions& = { 1, 1 }, // Pool dimensions {pool_height,pool_width}
+                          const dimensions& = { 1, 1 }, // Stride dimensions {row_stride, column_stride}
+                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_heigth, padding_width}
+                          const PoolingMethod& = PoolingMethod::AveragePooling);
 
     // Get
 
@@ -77,7 +81,7 @@ public:
 
     // Set
 
-    void set(const dimensions&, const dimensions&);
+    void set(const dimensions&, const dimensions&, const dimensions&, const dimensions&, const PoolingMethod&);
 
     void set_inputs_dimensions(const dimensions&);
 
@@ -119,12 +123,12 @@ public:
 
     void back_propagate_max_pooling(const Tensor<type, 4>&,
                                     const Tensor<type, 4>&,
-                                    unique_ptr<LayerForwardPropagation>,
-                                    unique_ptr<LayerBackPropagation>) const;
+                                    unique_ptr<LayerForwardPropagation>&,
+                                    unique_ptr<LayerBackPropagation>&) const;
 
     void back_propagate_average_pooling(const Tensor<type, 4>&,
                                         const Tensor<type, 4>&,
-                                        unique_ptr<LayerBackPropagation>) const;
+                                        unique_ptr<LayerBackPropagation>&) const;
 
     // Serialization
 

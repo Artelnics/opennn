@@ -73,24 +73,6 @@ Index RecurrentLayer::get_timesteps() const
 }
 
 
-Tensor<type, 1> RecurrentLayer::get_biases() const
-{
-    return biases;
-}
-
-
-const Tensor<type, 2>& RecurrentLayer::get_input_weights() const
-{
-    return input_weights;
-}
-
-
-const Tensor<type, 2>& RecurrentLayer::get_recurrent_weights() const
-{
-    return recurrent_weights;
-}
-
-
 Index RecurrentLayer::get_biases_number() const
 {
     return biases.size();
@@ -140,54 +122,6 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
 const RecurrentLayer::ActivationFunction& RecurrentLayer::get_activation_function() const
 {
     return activation_function;
-}
-
-
-Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) const
-{
-    const Index biases_number = get_biases_number();
-    const Index input_weights_number = get_input_weights_number();
-
-    Tensor<type, 1> new_biases(biases_number);
-
-    new_biases = parameters.slice(Eigen::array<Index, 1>({input_weights_number}), Eigen::array<Index, 1>({biases_number}));
-
-    Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
-
-    return new_biases.reshape(two_dim);
-}
-
-
-Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& parameters) const
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-    const Index input_weights_number = get_input_weights_number();
-
-    const Tensor<type, 1> new_inputs_weights
-            = parameters.slice(Eigen::array<Index, 1>({0}), Eigen::array<Index, 1>({input_weights_number}));
-
-    const Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
-
-    return new_inputs_weights.reshape(two_dim);
-}
-
-
-Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& parameters) const
-{
-    const Index neurons_number = get_neurons_number();
-    const Index recurrent_weights_number = recurrent_weights.size();
-
-    const Index parameters_size = parameters.size();
-
-    const Index start_recurrent_weights_number = (parameters_size - recurrent_weights_number);
-
-    const Tensor<type, 1> new_synaptic_weights
-            = parameters.slice(Eigen::array<Index, 1>({start_recurrent_weights_number}), Eigen::array<Index, 1>({recurrent_weights_number}));
-
-    const Eigen::array<Index, 2> two_dim{{neurons_number, neurons_number}};
-
-    return new_synaptic_weights.reshape(two_dim);
 }
 
 
@@ -307,24 +241,6 @@ void RecurrentLayer::set_timesteps(const Index& new_timesteps)
 }
 
 
-void RecurrentLayer::set_biases(const Tensor<type, 1>& new_biases)
-{
-    biases = new_biases;
-}
-
-
-void RecurrentLayer::set_input_weights(const Tensor<type, 2>& new_input_weights)
-{
-    input_weights = new_input_weights;
-}
-
-
-void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_weights)
-{
-    recurrent_weights = new_recurrent_weights;
-}
-
-
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index biases_number = get_biases_number();
@@ -354,45 +270,25 @@ void RecurrentLayer::set_activation_function(const RecurrentLayer::ActivationFun
 void RecurrentLayer::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
-    {
         activation_function = ActivationFunction::Logistic;
-    }
     else if(new_activation_function_name == "HyperbolicTangent")
-    {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
     else if(new_activation_function_name == "Linear")
-    {
         activation_function = ActivationFunction::Linear;
-    }
     else if(new_activation_function_name == "RectifiedLinear")
-    {
         activation_function = ActivationFunction::RectifiedLinear;
-    }
     else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
         activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
     else if(new_activation_function_name == "SoftPlus")
-    {
         activation_function = ActivationFunction::SoftPlus;
-    }
     else if(new_activation_function_name == "SoftSign")
-    {
         activation_function = ActivationFunction::SoftSign;
-    }
     else if(new_activation_function_name == "HardSigmoid")
-    {
         activation_function = ActivationFunction::HardSigmoid;
-    }
     else if(new_activation_function_name == "ExponentialLinear")
-    {
         activation_function = ActivationFunction::ExponentialLinear;
-    }
     else
-    {
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-    }
 }
 
 
@@ -704,9 +600,7 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& input_names,
         buffer << output_names(j) << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < input_names.size() - 1; i++)
-        {
            buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
-        }
 
         buffer << " (" << input_names[input_names.size() - 1] << "*" << synaptic_weights_column[input_names.size() - 1] << "));\n";
     }
