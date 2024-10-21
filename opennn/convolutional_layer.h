@@ -128,7 +128,7 @@ public:
 
     void set_column_stride(const Index&);
 
-    void set_inputs_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
 
     // Initialization
 
@@ -165,7 +165,7 @@ public:
                        unique_ptr<LayerForwardPropagation>&,
                        unique_ptr<LayerBackPropagation>&) const final;
 
-   void insert_gradient(unique_ptr<LayerBackPropagation>,
+   void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index&,
                         Tensor<type, 1>&) const final;
 
@@ -253,7 +253,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    void print() const;
 
-   Tensor<type, 3> image_convolutions_derivatives;
+   //Tensor<type, 3> image_convolutions_derivatives;
 
    Tensor<type, 4> kernel_synaptic_weights_derivatives;
    Tensor<type, 4> convolutions_derivatives;

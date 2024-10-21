@@ -133,7 +133,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         image_data_set.set_display(false);
         image_data_set.set_data_source_path("data/conv_test");
-/*
+
         image_data_set.read_bmp();
         image_data_set.scale_input_variables();
 
@@ -147,7 +147,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-
+/*
         neural_network.delete_layers();
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number });
@@ -164,7 +164,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         neural_network.set_parameters_constant(type(0));
         //neural_network.set_parameters_random();
-/*
+
          { // debug
             image_data_set.set_display(true);
             image_data_set.print();

@@ -56,7 +56,7 @@ namespace opennn
     template<typename Base, typename T>
     inline bool is_instance_of(const T* ptr)
     {
-        return dynamic_cast<const Base*>(ptr) != nullptr;
+        return dynamic_cast<const Base*>(ptr);
     }
 }
 

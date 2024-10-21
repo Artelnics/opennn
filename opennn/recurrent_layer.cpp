@@ -368,7 +368,6 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 {
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
-    const Index inputs_number = input_pairs[0].second[2];
 
     unique_ptr<RecurrentLayerForwardPropagation> recurrent_layer_forward_propagation
         (static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.release()));
@@ -468,7 +467,6 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     for (Index time_step = 0; time_step < time_steps; time_step++)
         current_inputs = inputs.chip(time_step, 1);
-
 /*
     for(Index sample_index = 0; sample_index < samples_number; sample_index++)
     {
@@ -556,7 +554,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 }
 
 
-void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                      const Index& index,
                                      Tensor<type, 1>& gradient) const
 {

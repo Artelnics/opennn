@@ -26,9 +26,9 @@ void TestingAnalysisTest::test_constructor()
 
     TestingAnalysis testing_analysis(&neural_network,&data_set);
 
-    assert_true(testing_analysis.get_neural_network() != nullptr, LOG);
+    assert_true(testing_analysis.get_neural_network(), LOG);
 
-    assert_true(testing_analysis.get_data_set() != nullptr, LOG);
+    assert_true(testing_analysis.get_data_set(), LOG);
 }
 
 
