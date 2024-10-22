@@ -2,11 +2,7 @@
 #ifndef CODIFICATION_H
 #define CODIFICATION_H
 
-
-
 #include <string>
-
-
 
 using namespace std;
 

@@ -319,7 +319,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             
             system("pause");
 
-            training_error += training_back_propagation.error;
+            training_error += training_back_propagation.error();
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
 
             // Optimization algorithm
@@ -364,7 +364,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                             selection_forward_propagation,
                                             selection_back_propagation);
                 
-                selection_error += selection_back_propagation.error;
+                selection_error += selection_back_propagation.error();
 
                 if(is_classification_model) 
                     selection_accuracy += selection_back_propagation.accuracy;

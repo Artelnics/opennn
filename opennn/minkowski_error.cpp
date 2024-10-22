@@ -72,17 +72,14 @@ void MinkowskiError::calculate_error(const Batch& batch,
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     Tensor<type, 2>& errors = back_propagation.errors;
-    type& error = back_propagation.error;
+    
+    Tensor<type, 0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = outputs - targets;
 
-    Tensor<type, 0> minkowski_error;
+    error.device(*thread_pool_device) = (errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter) / type(batch_samples_number);
 
-    minkowski_error.device(*thread_pool_device) = (errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter);
-
-    error = minkowski_error(0)/type(batch_samples_number);
-
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 

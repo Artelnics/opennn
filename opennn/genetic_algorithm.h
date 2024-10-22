@@ -77,8 +77,6 @@ public:
 
     void set_maximum_epochs_number(const Index&);
 
-//    void set_initial_raw_variables_indices(const Tensor<Index ,1>&);
-
     // GENETIC OPERATORS METHODS
 
     // Population

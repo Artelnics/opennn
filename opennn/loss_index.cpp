@@ -239,7 +239,7 @@ void LossIndex::back_propagate(const Batch& batch,
     cout << "llega 3" << endl;
     // Loss
 
-    back_propagation.loss = back_propagation.error;
+    back_propagation.loss = back_propagation.error();
 
     // Regularization
     
@@ -286,7 +286,7 @@ void LossIndex::back_propagate_lm(const Batch& batch,
 
     // Loss
 
-    back_propagation_lm.loss = back_propagation_lm.error;
+    back_propagation_lm.loss = back_propagation_lm.error();
 
     // Regularization
     
@@ -612,8 +612,6 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 
     neural_network.set(batch_samples_number, neural_network_ptr);
 
-    error = type(0);
-
     loss = type(0);
 
     errors.resize(batch_samples_number, outputs_number);
@@ -758,7 +756,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        calculate_error(batch, forward_propagation, back_propagation);
 
-       error_forward = back_propagation.error;
+       error_forward = back_propagation.error();
 
        parameters_forward(i) -= h;
 
@@ -770,7 +768,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        calculate_error(batch, forward_propagation, back_propagation);
 
-       error_backward = back_propagation.error;
+       error_backward = back_propagation.error();
 
        parameters_backward(i) += h;
 
@@ -825,7 +823,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
         neural_network->forward_propagate(batch, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
-        error_forward = back_propagation.error;
+        error_forward = back_propagation.error();
 
         input_pairs[0].first[i] -= h;
 
@@ -834,7 +832,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
         neural_network->forward_propagate(batch, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
-        error_backward = back_propagation.error;
+        error_backward = back_propagation.error();
 
         input_pairs[0].first[i] += h;
 
@@ -1037,9 +1035,7 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
     neural_network.set(batch_samples_number, neural_network_ptr);
     
     parameters = neural_network_ptr->get_parameters();
-    
-    error = type(0);
-    
+        
     loss = type(0);
     
     gradient.resize(parameters_number);

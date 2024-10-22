@@ -123,12 +123,12 @@ public:
 
     void back_propagate_max_pooling(const Tensor<type, 4>&,
                                     const Tensor<type, 4>&,
-                                    unique_ptr<LayerForwardPropagation>,
-                                    unique_ptr<LayerBackPropagation>) const;
+                                    unique_ptr<LayerForwardPropagation>&,
+                                    unique_ptr<LayerBackPropagation>&) const;
 
     void back_propagate_average_pooling(const Tensor<type, 4>&,
                                         const Tensor<type, 4>&,
-                                        unique_ptr<LayerBackPropagation>) const;
+                                        unique_ptr<LayerBackPropagation>&) const;
 
     // Serialization
 

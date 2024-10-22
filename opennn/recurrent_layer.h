@@ -9,11 +9,7 @@
 #ifndef RECURRENTLAYER_H
 #define RECURRENTLAYER_H
 
-
-
 #include <string>
-
-
 
 #include "config.h"
 #include "layer.h"
@@ -66,20 +62,12 @@ public:
 
    Index get_timesteps() const;
 
-   Tensor<type, 1> get_biases() const;
-   const Tensor<type, 2>& get_input_weights() const;
-   const Tensor<type, 2>& get_recurrent_weights() const;
-
    Index get_biases_number() const;
    Index get_input_weights_number() const;
    Index get_recurrent_weights_number() const;
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
-
-   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_input_weights(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_recurrent_weights(const Tensor<type, 1>&) const;
 
    // Activation functions
 
@@ -108,12 +96,6 @@ public:
    // Parameters
 
    void set_timesteps(const Index&);
-
-   void set_biases(const Tensor<type, 1>&);
-
-   void set_input_weights(const Tensor<type, 2>&);
-
-   void set_recurrent_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
 

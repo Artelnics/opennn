@@ -33,7 +33,7 @@ struct BackPropagation
 
     NeuralNetworkBackPropagation neural_network;
 
-    type error = type(0);
+    Tensor<type, 0> error;
     type regularization = type(0);
     type loss = type(0);
 

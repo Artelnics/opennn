@@ -129,23 +129,6 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 
 void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradient, Tensor<type, 1>& training_direction) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_number();
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-        throw runtime_error("Size of gradient(" + to_string(gradient_size) + ") "
-                            "is not equal to number of parameters (" + to_string(parameters_number) + ").\n");
-
-#endif
-
     training_direction.device(*thread_pool_device) = -gradient;
 }
 
@@ -208,10 +191,6 @@ void GradientDescent::update_parameters(
 TrainingResults GradientDescent::perform_training()
 {
     TrainingResults results(maximum_epochs_number+1);
-
-#ifdef OPENNN_DEBUG
-    check();
-#endif
 
     // Start training
 
@@ -319,7 +298,8 @@ TrainingResults GradientDescent::perform_training()
                                    training_forward_propagation, 
                                    training_back_propagation);
 
-        results.training_error_history(epoch) = training_back_propagation.error;
+        results.training_error_history(epoch) = training_back_propagation.error();
+
 
         // Update parameters
 
@@ -335,7 +315,7 @@ TrainingResults GradientDescent::perform_training()
                                         selection_forward_propagation, 
                                         selection_back_propagation);
 
-            results.selection_error_history(epoch) = selection_back_propagation.error;
+            results.selection_error_history(epoch) = selection_back_propagation.error();
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }

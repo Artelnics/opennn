@@ -70,7 +70,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 
     for(Index batch_index = 0; batch_index < batch_size; batch_index++)
     {
-        Tensor<type, 3> image = inputs.chip(batch_index, 0);
+        const Tensor<type, 3> image = inputs.chip(batch_index, 0);
         cout << image << endl;
         system("pause");
 
@@ -102,6 +102,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
             //translate_image(thread_pool_device, image, image, translation);
         }
     } 
+
     Tensor<type, 2> todo;
     return todo;
 }

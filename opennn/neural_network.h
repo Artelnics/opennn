@@ -176,8 +176,6 @@ public:
    Index get_outputs_number() const;
    dimensions get_output_dimensions() const;
 
-   Tensor<Index, 1> get_architecture() const;
-
    // Parameters
 
    Index get_parameters_number() const;
@@ -208,7 +206,6 @@ public:
 
    // Serialization
 
-   Tensor<string, 2> get_information() const;
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
 

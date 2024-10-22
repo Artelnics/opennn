@@ -86,10 +86,10 @@ void ProbabilisticLayer3DTest::test_calculate_combinations()
     Tensor<type, 3> combinations(1, 1, 1);
 
     probabilistic_layer_3d.set(1, 1, 1);
-
+/*
     probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
     probabilistic_layer_3d.set_biases(biases);
-
+*/
     probabilistic_layer_3d.calculate_combinations(inputs, combinations);
 
     assert_true(
@@ -315,7 +315,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         synaptic_weights.setValues({ {type(1),type(-1),type(0),type(1)},
                                     {type(2),type(-2),type(0),type(2)},
                                     {type(3),type(-3),type(0),type(3)}});
-        
+/*
         probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
         probabilistic_layer_3d.set_biases(biases);
 

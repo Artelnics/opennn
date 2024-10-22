@@ -17,7 +17,6 @@
 namespace opennn
 {
 
-
 class AutoAssociativeNeuralNetwork : public NeuralNetwork
 {
 
