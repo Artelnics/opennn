@@ -1584,8 +1584,6 @@ void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_d
 
     size = sizeof(type);
 
-    type value = type(0);
-
     time_series_data.resize(rows_number, columns_number);
 
     const Index total_elements = rows_number * columns_number;

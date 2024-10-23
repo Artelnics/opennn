@@ -112,7 +112,7 @@ public:
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
 
-    virtual void insert_gradient(unique_ptr<LayerBackPropagation>,
+    virtual void insert_gradient(unique_ptr<LayerBackPropagation>&,
                                  const Index&,
                                  Tensor<type, 1>&) const {}
 

@@ -414,18 +414,16 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
     const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
-    unique_ptr<UnscalingLayerForwardPropagation> unscaling_layer_forward_propagation
-            (static_cast<UnscalingLayerForwardPropagation*>(forward_propagation.release()));
+    UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation =
+            static_cast<UnscalingLayerForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
     Tensor<type,2>& outputs = unscaling_layer_forward_propagation->outputs;
 
-    Scaler scaler;
-
     for(Index i = 0; i < neurons_number; i++)
     {
-        scaler = scalers(i);
+        const Scaler& scaler = scalers(i);
 
         const TensorMap<Tensor<type, 1>> input_column(inputs.data() + i * samples_number, samples_number);
 

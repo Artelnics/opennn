@@ -303,8 +303,8 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    unique_ptr < ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
-            (static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.release()));
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
@@ -336,7 +336,6 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
     
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
@@ -344,15 +343,15 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    unique_ptr<ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
-            (static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.release()));
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     // Back propagation
 
-    unique_ptr<ProbabilisticLayerBackPropagation> probabilistic_layer_back_propagation
-            (static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.release()));
+    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+            static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
     
     Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation->input_derivatives;
 
@@ -385,15 +384,15 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                          const Index& index,
                                          Tensor<type, 1>& gradient) const
 {
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    const unique_ptr<ProbabilisticLayerBackPropagation> probabilistic_layer_back_propagation
-        (static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.release()));
+    const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+        static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
 
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
@@ -413,8 +412,8 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
                                                            const Index& index,
                                                            Tensor<type, 2>& squared_errors_Jacobian) const
 {
-    unique_ptr<ProbabilisticLayerBackPropagationLM> probabilistic_layer_back_propagation_lm
-        (static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.release()));
+    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+        static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.get());
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
     const Index parameters_number = get_parameters_number();
@@ -731,11 +730,9 @@ void ProbabilisticLayerForwardPropagation::print() const
 
     const Index neurons_number = layer->get_neurons_number();
 
-    //if(neurons_number == 1)
-    //{
-     //   cout << "Activations derivatives:" << endl;
-      //  cout << activations_derivatives << endl;
-    //}
+    if(neurons_number == 1)
+       cout << "Activations derivatives:" << endl
+            << activations_derivatives << endl;
 }
 
 

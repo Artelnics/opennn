@@ -114,8 +114,8 @@ void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    unique_ptr<ScalingLayer4DForwardPropagation> scaling_layer_forward_propagation
-        (static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.release()));
+    ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation =
+        static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 

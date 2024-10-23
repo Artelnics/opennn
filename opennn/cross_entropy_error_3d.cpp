@@ -43,16 +43,14 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const Index outputs_depth = outputs_pair.second[2];
-    
     const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
     
     // Back propagation
 
     const Index layers_number = back_propagation.neural_network.layers.size();
     
-    unique_ptr<ProbabilisticLayer3DBackPropagation> probabilistic_layer_3d_back_propagation 
-        (static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].release()));
+    ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
+        static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
         
     probabilistic_layer_3d_back_propagation->targets = targets;
     

@@ -50,9 +50,9 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
-    cout << "pasa" << endl;
+
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-    cout << "pasa 1" << endl;
+
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
@@ -88,8 +88,8 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     const Index layers_number = back_propagation.neural_network.layers.size();
 
-    unique_ptr<ProbabilisticLayerBackPropagation> probabilistic_layer_back_propagation 
-        (static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].release()));
+    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+        static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
 
     probabilistic_layer_back_propagation->targets = targets;
 
@@ -131,8 +131,8 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     // Forward propagation
 
-    const unique_ptr<ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
-        (static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers[last_trainable_layer_index].release()));
+    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers[last_trainable_layer_index].get());
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
@@ -151,15 +151,13 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
-    const pair<type*, dimensions> outputs_pair = forward_propagation.layers[last_trainable_layer_index]->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 

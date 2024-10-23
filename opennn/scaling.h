@@ -1,17 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S T A T I S T I C S   H E A D E R
+//   S C A L I N G   H E A D E R
 //
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
 #ifndef SCALING_H
 #define SCALING_H
-
-
-
-
 
 #include "config.h"
 #include "descriptives.h"

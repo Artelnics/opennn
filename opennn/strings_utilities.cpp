@@ -299,28 +299,28 @@ bool is_numeric_string(const string& text)
 }
 
 
-bool is_constant_string(const Tensor<string, 1>& string_list)
-{
-    const string str0 = string_list[0];
+// bool is_constant_string(const Tensor<string, 1>& string_list)
+// {
+//     const string str0 = string_list[0];
 
-    for(int i = 1; i < string_list.size(); i++) 
-        if(string_list[i] != str0)
-            return false;
+//     for(int i = 1; i < string_list.size(); i++)
+//         if(string_list[i] != str0)
+//             return false;
 
-    return true;
-}
+//     return true;
+// }
 
 
-bool is_constant_numeric(const Tensor<type, 1>& str)
-{
-    const type a0 = str[0];
+// bool is_constant_numeric(const Tensor<type, 1>& str)
+// {
+//     const type a0 = str[0];
 
-    for(int i = 1; i < str.size(); i++)
-        if(abs(str[i]-a0) > type(1e-3) || isnan(str[i]) || isnan(a0)) 
-            return false;
+//     for(int i = 1; i < str.size(); i++)
+//         if(abs(str[i]-a0) > type(1e-3) || isnan(str[i]) || isnan(a0))
+//             return false;
 
-    return true;
-}
+//     return true;
+// }
 
 
 bool is_date_time_string(const string& text)
@@ -376,10 +376,10 @@ bool is_email(const string& word)
 }
 
 
-bool contains_number(const string& word)
-{
-    return(find_if(word.begin(), word.end(), ::isdigit) != word.end());
-}
+// bool contains_number(const string& word)
+// {
+//     return(find_if(word.begin(), word.end(), ::isdigit) != word.end());
+// }
 
 
 bool starts_with(const string& word, const string& starting)

@@ -83,7 +83,7 @@ public:
 
     void set(const dimensions&, const dimensions&, const dimensions&, const dimensions&, const PoolingMethod&);
 
-    void set_inputs_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
 
     void set_padding_heigth(const Index&);
     void set_padding_width(const Index&);

@@ -50,13 +50,13 @@ const bool& LossIndex::get_display() const
 
 bool LossIndex::has_neural_network() const
 {
-    return neural_network != nullptr;
+    return neural_network;
 }
 
 
 bool LossIndex::has_data_set() const
 {
-    return data_set != nullptr;
+    return data_set;
 }
 
 
@@ -117,8 +117,8 @@ void LossIndex::set(const LossIndex& other_error_term)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete thread_pool;
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool) delete thread_pool;
+    if(thread_pool_device) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -196,10 +196,8 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
                                     const ForwardPropagation & neural_network_forward_propagation,
                                     BackPropagationLM & back_propagation) const
 {
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-    
-    const pair<type*, dimensions> outputs_pair 
-        = neural_network_forward_propagation.layers[last_trainable_layer_index]->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair
+        = neural_network_forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
@@ -230,9 +228,9 @@ void LossIndex::back_propagate(const Batch& batch,
     if(batch.is_empty()) return;
 
     // Loss index
-    cout << "llega" << endl;
+
     calculate_error(batch, forward_propagation, back_propagation);
-    cout << "llega 1" << endl;
+
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
     cout << "llega 2" << endl;
     assemble_layers_error_gradient(back_propagation);
@@ -470,15 +468,15 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation.get_layer_delta_pairs();
-
+    cout << "pasa 2" << endl;
     calculate_output_delta(batch, forward_propagation, back_propagation);
-/*
+    cout << "pasa 3" << endl;
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate(layer_input_pairs[i],
                                   layer_delta_pairs[i],
                                   forward_propagation.layers[i],
                                   back_propagation.neural_network.layers[i]);
-*/
+
 }
 
 
@@ -491,7 +489,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
     const vector<Index> layers_parameters_number = neural_network->get_layer_parameter_numbers();
 
     Index index = 0;
-/*
+
     for(Index i = 0; i < layers_number; i++)
     {
         layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
@@ -500,7 +498,6 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
         index += layers_parameters_number[i];
     }
-*/
 }
 
 
@@ -647,38 +644,35 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 
 vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs() const
 {
-    // @todo mix between layers and trainable layers
-
     NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
 
-    const Index layers_number = neural_network_ptr->get_layers_number();
+    const Index trainable_layers_number = neural_network_ptr->get_trainable_layers_number();
 
     const vector<vector<Index>>& layer_input_indices = neural_network_ptr->get_layer_input_indices();
-    const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
+
+    //const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices(); // Same as input index?
 
     const vector<unique_ptr<LayerBackPropagation>>& layer_back_propagations = neural_network.get_layers();
 
     vector<pair<type*, dimensions>> input_derivative_pairs;
 
-    vector<vector<pair<type*, dimensions>>> layer_delta_pairs(layers_number);
+    vector<vector<pair<type*, dimensions>>> layer_delta_pairs(trainable_layers_number);
 
-    // @todo
-
-    Index last_trainable_layer_index = 0;
-    Index first_trainable_layer_index = 0;
+    Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
+    Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
         if (i == last_trainable_layer_index)
         {
             layer_delta_pairs[i].push_back(get_output_deltas_pair());
-
+            cout << "pasa y es 4: " << i << endl;
             continue;
         }
 
-        for (Index j = 0; j < layer_output_indices[i].size(); j++)
+        for (Index j = 0; j < Index(layer_input_indices[i].size()); j++)
         {
-            const Index output_index = layer_output_indices[i][j];
+            const Index output_index = layer_input_indices[i][j];
             const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
 
             input_derivative_pairs = layer_back_propagations[output_index]->get_input_derivative_pairs();
@@ -977,7 +971,6 @@ vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
-        const vector<Index>& this_layer_input_indices = layer_input_indices[i];
         const vector<Index>& this_layer_output_indices = layer_output_indices[i];
 
         const Index this_layer_output_connections = this_layer_output_indices.size();

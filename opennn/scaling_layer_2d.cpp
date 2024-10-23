@@ -376,8 +376,8 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
     const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
-    unique_ptr<ScalingLayer2DForwardPropagation> scaling_layer_forward_propagation
-        (static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation.release()));
+    ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation =
+        static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
@@ -396,13 +396,10 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
             if(display)
-            {
-                cout << "display: " << display << endl;
                 cout << "OpenNN Warning: ScalingLayer2D class.\n"
                      << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                      << "Standard deviation of variable " << i << " is zero.\n"
                      << "Those variables won't be scaled.\n";
-            }
 
             continue;
         }
@@ -486,13 +483,10 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
             if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
             {
                 if(display)
-                {
-                    cout << "display: " << display << endl;
                     cout << "OpenNN Warning: ScalingLayer class.\n"
                          << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                          << "Standard deviation of variable " << i << " is zero.\n"
                          << "Those variables won't be scaled.\n";
-                }
             }
             else
             {

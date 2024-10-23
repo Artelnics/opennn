@@ -16,20 +16,20 @@
 #include "batch.h"
 #include "layer.h"
 #include "perceptron_layer.h"
-#include "perceptron_layer_3d.h"
-#include "addition_layer_3d.h"
-#include "normalization_layer_3d.h"
+//#include "perceptron_layer_3d.h"
+//#include "addition_layer_3d.h"
+//#include "normalization_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
-#include "probabilistic_layer_3d.h"
-#include "flatten_layer.h"
-#include "pooling_layer.h"
-#include "convolutional_layer.h"
+//#include "probabilistic_layer_3d.h"
+//#include "flatten_layer.h"
+//#include "pooling_layer.h"
+//#include "convolutional_layer.h"
 #include "long_short_term_memory_layer.h"
-#include "multihead_attention_layer.h"
+//#include "multihead_attention_layer.h"
 #include "embedding_layer.h"
 #include "recurrent_layer.h"
 
@@ -147,7 +147,7 @@ public:
 
    void set_inputs_number(const Index&);
 
-   virtual void set_default();
+   void set_default();
 
    void set_threads_number(const int&);
 
@@ -156,6 +156,7 @@ public:
    // Layers
 
    Index get_layers_number() const;
+   Index get_trainable_layers_number() const;
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
@@ -209,18 +210,18 @@ public:
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&);
    void inputs_from_XML(const tinyxml2::XMLDocument&);
    void layers_from_XML(const tinyxml2::XMLDocument&);
    void outputs_from_XML(const tinyxml2::XMLDocument&);
 
-   virtual void to_XML(tinyxml2::XMLPrinter&) const;
+   void to_XML(tinyxml2::XMLPrinter&) const;
 
    void print() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
 
-   virtual void load(const string&) final;
+   void load(const string&);
    void load_parameters_binary(const string&);
 
    Tensor<string, 1> get_layer_names() const;

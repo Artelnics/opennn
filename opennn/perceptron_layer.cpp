@@ -351,8 +351,8 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    unique_ptr<PerceptronLayerForwardPropagation> perceptron_layer_forward_propagation
-        (static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation.release()));
+    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
+        static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
 
@@ -389,15 +389,15 @@ void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     // Forward propagation
 
-    const unique_ptr < PerceptronLayerForwardPropagation> perceptron_layer_forward_propagation 
-            (static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.release()));
+    const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
+        static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
 
     // Back propagation
 
-    unique_ptr<PerceptronLayerBackPropagation> perceptron_layer_back_propagation
-            (static_cast<PerceptronLayerBackPropagation*>(back_propagation.release()));
+    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
+        static_cast<PerceptronLayerBackPropagation*>(back_propagation.get());
     
     Tensor<type, 2>& combinations_derivatives = perceptron_layer_back_propagation->combinations_derivatives;
 
@@ -435,16 +435,16 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    const unique_ptr<PerceptronLayerForwardPropagation> perceptron_layer_forward_propagation
-        (static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.release()));
+    const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
+        static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 2>& activations_derivatives 
         = perceptron_layer_forward_propagation->activations_derivatives;
 
     // Back propagation
 
-    unique_ptr<PerceptronLayerBackPropagationLM> perceptron_layer_back_propagation_lm 
-        (static_cast<PerceptronLayerBackPropagationLM*>(back_propagation.release()));
+    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
+        static_cast<PerceptronLayerBackPropagationLM*>(back_propagation.get());
 
     Tensor<type, 2>& combinations_derivatives = perceptron_layer_back_propagation_lm->combinations_derivatives;
 
@@ -494,15 +494,15 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 }
 
 
-void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propagation,
+void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                       const Index& index,
                                       Tensor<type, 1>& gradient) const
 {
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    unique_ptr<PerceptronLayerBackPropagation> perceptron_layer_back_propagation 
-        (static_cast<PerceptronLayerBackPropagation*>(back_propagation.release()));
+    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
+        static_cast<PerceptronLayerBackPropagation*>(back_propagation.get());
 
     const Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_back_propagation->synaptic_weights_derivatives;
     const Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
@@ -529,8 +529,8 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackProp
     const Index layer_parameters_number = get_parameters_number();
     const Index batch_samples_number = back_propagation->batch_samples_number;
 
-    unique_ptr<PerceptronLayerBackPropagationLM> perceptron_layer_back_propagation_lm
-        (static_cast<PerceptronLayerBackPropagationLM*>(back_propagation.release()));
+    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
+        static_cast<PerceptronLayerBackPropagationLM*>(back_propagation.get());
 
     type* squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
