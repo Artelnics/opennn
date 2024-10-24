@@ -95,8 +95,8 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
     
     const TensorMap<Tensor<type, 3>> input_2 = tensor_map_3(input_pairs[1]);
 
-    unique_ptr<AdditionLayer3DForwardPropagation> addition_layer_3d_forward_propagation 
-        (static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation.release()));
+    AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
+        static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = addition_layer_3d_forward_propagation->outputs;
 
@@ -113,8 +113,8 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     // Back propagation
 
-    unique_ptr<AdditionLayer3DBackPropagation> addition_layer_3d_back_propagation 
-        (static_cast<AdditionLayer3DBackPropagation*>(back_propagation.release()));
+    AdditionLayer3DBackPropagation* addition_layer_3d_back_propagation =
+        static_cast<AdditionLayer3DBackPropagation*>(back_propagation.get());
 
     Tensor<type, 3>& input_1_derivatives = addition_layer_3d_back_propagation->input_1_derivatives;
 

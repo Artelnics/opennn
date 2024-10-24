@@ -92,8 +92,8 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 
     const Index neurons_number = get_neurons_number();
 
-    unique_ptr<FlattenLayerForwardPropagation> flatten_layer_forward_propagation 
-            (static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.release()));
+    FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
+            static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.get());
 
     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
 
@@ -117,8 +117,8 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
 
     // Back propagation
 
-    unique_ptr<FlattenLayerBackPropagation> flatten_layer_back_propagation
-        (static_cast<FlattenLayerBackPropagation*>(back_propagation.release()));
+    FlattenLayerBackPropagation* flatten_layer_back_propagation =
+        static_cast<FlattenLayerBackPropagation*>(back_propagation.get());
 
     Tensor<type, 4>& input_derivatives = flatten_layer_back_propagation->input_derivatives;
 
