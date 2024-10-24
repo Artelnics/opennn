@@ -181,7 +181,6 @@ void ImageDataSet::set(const Index& new_images_number,
     }
 
     // Samples
-
     samples_uses.resize(new_images_number);
     split_samples_random();
 
@@ -238,6 +237,7 @@ void ImageDataSet::set_image_data_random()
                     data(current_sample, j) = rand() % 256;
 
                 data(current_sample, k + inputs_number) = 1;
+
                 current_sample++;
             }
         }
