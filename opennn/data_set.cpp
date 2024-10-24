@@ -925,9 +925,8 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     while(count_training != training_samples_number)
     {
-        index = indices(i);
+        index = indices(i++);
 
-        i++;
 
         if (samples_uses(index) == SampleUse::None) continue;
 
@@ -936,14 +935,11 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     }
 
     // Selection
-
     Index count_selection = 0;
 
     while(count_selection != selection_samples_number)
     {
-        index = indices(i);
-
-        i++;
+        index = indices(i++);
 
         if (samples_uses(index) == SampleUse::None) continue;
         
@@ -952,19 +948,16 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     }
 
     // Testing
-
     Index count_testing = 0;
 
     while(count_testing != testing_samples_number)
     {
-        index = indices(i);
+        index = indices(i++);
 
         if (samples_uses(index) == SampleUse::None) continue;
 
         samples_uses(index) = SampleUse::Testing;
         count_testing++;
-
-        i++;
     }
 }
 

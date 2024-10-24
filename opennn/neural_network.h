@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "config.h"
+#include "batch.h"
 #include "layer.h"
 #include "perceptron_layer.h"
 //#include "perceptron_layer_3d.h"
@@ -155,6 +156,7 @@ public:
    // Layers
 
    Index get_layers_number() const;
+   Index get_trainable_layers_number() const;
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
@@ -227,11 +229,15 @@ public:
 
    void save_outputs(Tensor<type, 2>&, const string&);
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&, 
+   void forward_propagate(const Batch&, 
                           ForwardPropagation&, 
                           const bool& = false) const;
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&, 
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          ForwardPropagation&,
+                          const bool& = false) const;
+
+   void forward_propagate(const Batch&,
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
 

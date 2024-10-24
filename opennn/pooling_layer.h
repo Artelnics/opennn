@@ -201,8 +201,6 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
     void print() const;
 
-    // @todo What is this?
-
     Tensor<type, 4> gradient_tensor;
 
     Tensor<type, 4> input_derivatives;
