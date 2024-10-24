@@ -233,6 +233,10 @@ public:
                           ForwardPropagation&, 
                           const bool& = false) const;
 
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          ForwardPropagation&,
+                          const bool& = false) const;
+
    void forward_propagate(const Batch&,
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;

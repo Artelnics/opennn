@@ -935,7 +935,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     }
 
     // Selection
-    cout << "pasa 3" << endl;
     Index count_selection = 0;
 
     while(count_selection != selection_samples_number)
@@ -949,7 +948,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     }
 
     // Testing
-    cout << "pasa 4" << endl;
     Index count_testing = 0;
 
     while(count_testing != testing_samples_number)

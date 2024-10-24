@@ -182,7 +182,7 @@ void ImageDataSet::set(const Index& new_images_number,
 
     // Samples
     samples_uses.resize(new_images_number);
-    //split_samples_random();
+    split_samples_random();
 
     set_raw_variables_scalers(Scaler::ImageMinMax);
 }

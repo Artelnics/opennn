@@ -962,8 +962,6 @@ vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs
     const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
 
     const vector<unique_ptr<LayerBackPropagationLM>>& layers_back_propagation = neural_network.get_layers();
-    
-    // @todo
 
     const Index last_trainable_layer_index = 0;
     const Index first_trainable_layer_index = 0;
