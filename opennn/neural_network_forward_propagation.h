@@ -25,7 +25,7 @@ struct ForwardPropagation
 
     pair<type*, dimensions> get_last_trainable_layer_outputs_pair() const;
 
-    vector<vector<pair<type*, dimensions>>> get_layer_input_pairs(const Batch& batch) const;
+    vector<vector<pair<type*, dimensions>>> get_layer_input_pairs(const vector<pair<type*, dimensions>>&) const;
 
     void print() const;
 

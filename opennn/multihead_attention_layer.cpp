@@ -604,8 +604,8 @@ void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensi
                                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                 const bool& is_training)
 {
-    unique_ptr<MultiheadAttentionLayerForwardPropagation> multihead_attention_layer_forward_propagation
-        (static_cast<MultiheadAttentionLayerForwardPropagation*>(layer_forward_propagation.release()));
+    MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation =
+        static_cast<MultiheadAttentionLayerForwardPropagation*>(layer_forward_propagation.get());
 
     const TensorMap<Tensor<type, 3>> input = tensor_map_3(input_pairs[0]);
 
@@ -669,8 +669,8 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 
     // Forward propagation
 
-    const unique_ptr<MultiheadAttentionLayerForwardPropagation> multihead_attention_layer_forward_propagation
-        (static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation.release()));
+    const MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation =
+        static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 4>& attention_weights = multihead_attention_layer_forward_propagation->attention_weights;
     const Tensor<type, 4>& attention_outputs = multihead_attention_layer_forward_propagation->attention_outputs;
@@ -688,8 +688,8 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 
     // Back propagation
 
-    unique_ptr<MultiheadAttentionLayerBackPropagation> multihead_attention_layer_back_propagation
-        (static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation.release()));
+    MultiheadAttentionLayerBackPropagation* multihead_attention_layer_back_propagation =
+        static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation.get());
 
     Tensor<type, 3>& projection_weights_derivatives = multihead_attention_layer_back_propagation->projection_weights_derivatives;
 
@@ -895,8 +895,8 @@ void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& 
                                               const Index& index,
                                               Tensor<type, 1>& gradient) const
 {
-    unique_ptr<MultiheadAttentionLayerBackPropagation> multihead_attention_layer_back_propagation
-        (static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation.release()));
+    MultiheadAttentionLayerBackPropagation* multihead_attention_layer_back_propagation =
+        static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation.get());
 
     const Tensor<type, 3>& query_weights_derivatives = multihead_attention_layer_back_propagation->query_weights_derivatives;
     const Tensor<type, 2>& query_biases_derivatives = multihead_attention_layer_back_propagation->query_biases_derivatives;

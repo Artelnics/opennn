@@ -215,8 +215,8 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
 {
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
-    unique_ptr<BoundingLayerForwardPropagation> bounding_layer_forward_propagation
-        (static_cast<BoundingLayerForwardPropagation*>(forward_propagation.release()));
+    BoundingLayerForwardPropagation* bounding_layer_forward_propagation =
+        static_cast<BoundingLayerForwardPropagation*>(forward_propagation.get());
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
