@@ -316,7 +316,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
             
-            system("pause");
+            //system("pause");
 
             training_error += training_back_propagation.error();
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy;

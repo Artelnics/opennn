@@ -326,42 +326,25 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 
     vector<vector<Index>> layer_output_indices(layers_number);
 
-    for(Index i = 0; i < layers_number; i++)
+    for (Index i = 0; i < layers_number; i++)
     {
-        for(Index k = 0; k < Index(layer_input_indices[i].size()); k++)
+        for (Index k = 0; k < Index(layer_input_indices[i].size()); k++)
         {
             const Index input_index = layer_input_indices[i][k];
 
-            layer_output_indices[input_index].push_back(i);
-        }
-    }
-/*
-    Index layer_count = 0;
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        for(Index j = 0; j < layers_number; j++)
-            for(Index k = 0; k < layer_input_indices[j].size(); k++)
-                if(layer_input_indices[j][k] == i)
-                    layer_count++;
-
-        layer_output_indices[i].resize(layer_count);
-
-        layer_count = 0;
-
-        for(Index j = 0; j < layers_number; j++)
-        {
-            for(Index k = 0; k < layer_input_indices[j].size(); k++)
-            {
-                if(layer_input_indices[j][k] == i)
-                {
-                    layer_output_indices[i][layer_count++] = j;
-                }
+            if (input_index != -1) {
+                layer_output_indices[input_index].push_back(i);
             }
         }
-        layer_count = 0;
     }
-*/
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        if (layer_output_indices[i].empty()) {
+            layer_output_indices[i].push_back(-1);
+        }
+    }
+
     return layer_output_indices;
 }
 
