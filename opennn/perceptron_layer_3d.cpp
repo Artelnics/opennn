@@ -380,8 +380,8 @@ void PerceptronLayer3D::forward_propagate(const vector<pair<type*, dimensions>>&
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    unique_ptr<PerceptronLayer3DForwardPropagation> perceptron_layer_3d_forward_propagation 
-        (static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation.release()));
+    PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
+        static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = perceptron_layer_3d_forward_propagation->outputs;
 
@@ -418,15 +418,15 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
 
     // Forward propagation
 
-    const unique_ptr<PerceptronLayer3DForwardPropagation> perceptron_layer_3d_forward_propagation 
-            (static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation.release()));
+    const PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
+            static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
 
     // Back propagation
 
-    unique_ptr<PerceptronLayer3DBackPropagation> perceptron_layer_3d_back_propagation 
-            (static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.release()));
+    PerceptronLayer3DBackPropagation* perceptron_layer_3d_back_propagation =
+            static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
     Tensor<type, 3>& combinations_derivatives = perceptron_layer_3d_back_propagation->combinations_derivatives;
 
@@ -468,8 +468,8 @@ void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation> back_pr
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    unique_ptr<PerceptronLayer3DBackPropagation> perceptron_layer_back_propagation
-        (static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.release()));
+    PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
+        static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
     const type* synaptic_weights_derivatives_data = perceptron_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();

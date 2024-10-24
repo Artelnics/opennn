@@ -497,27 +497,38 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch.get_input_pairs(), training_forward_propagation, is_training);
+        neural_network->forward_propagate(training_batch, 
+                                          training_forward_propagation, 
+                                          is_training);
         
         // Loss index
 
-        loss_index->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+        loss_index->back_propagate(training_batch, 
+                                   training_forward_propagation, 
+                                   training_back_propagation);
 
         results.training_error_history(epoch) = training_back_propagation.error();
 
         // Update parameters
 
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        update_parameters(training_batch, 
+                          training_forward_propagation, 
+                          training_back_propagation, 
+                          optimization_data);
 
         // Selection error
 
         if(has_selection)
         {            
-            neural_network->forward_propagate(selection_batch.get_input_pairs(), selection_forward_propagation, is_training);
+            neural_network->forward_propagate(selection_batch, 
+                selection_forward_propagation,
+                is_training);
 
             // Loss Index
 
-            loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            loss_index->calculate_error(selection_batch, 
+                                        selection_forward_propagation, 
+                                        selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error();
 

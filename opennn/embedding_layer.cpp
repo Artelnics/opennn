@@ -259,8 +259,8 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    unique_ptr<EmbeddingLayerForwardPropagation> embedding_layer_forward_propagation
-        (static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation.release()));
+    EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation =
+        static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = embedding_layer_forward_propagation->outputs;
 
@@ -299,8 +299,8 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     // Back propagation
 
-    unique_ptr<EmbeddingLayerBackPropagation> embedding_layer_back_propagation
-        (static_cast<EmbeddingLayerBackPropagation*>(back_propagation.release()));
+    EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
+        static_cast<EmbeddingLayerBackPropagation*>(back_propagation.get());
 
     Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
@@ -336,8 +336,8 @@ void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation> back_propa
 {
     const Index embedding_weights_number = get_parameters_number();
 
-    const unique_ptr<EmbeddingLayerBackPropagation> embedding_layer_back_propagation
-        (static_cast<EmbeddingLayerBackPropagation*>(back_propagation.release()));
+    const EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
+        static_cast<EmbeddingLayerBackPropagation*>(back_propagation.get());
 
     const type* embedding_weights_derivatives_data = embedding_layer_back_propagation->embedding_weights_derivatives.data();
 

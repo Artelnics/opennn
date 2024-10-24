@@ -308,8 +308,8 @@ void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    unique_ptr<ProbabilisticLayer3DForwardPropagation> probabilistic_layer_3d_forward_propagation
-            (static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.release()));
+    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
+        static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
     
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
     
@@ -330,15 +330,15 @@ void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     // Forward propagation
 
-    unique_ptr<ProbabilisticLayer3DForwardPropagation> probabilistic_layer_3d_forward_propagation
-            (static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.release()));
+    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
+            static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
 
     // Back propagation
 
-    unique_ptr<ProbabilisticLayer3DBackPropagation> probabilistic_layer_3d_back_propagation 
-            (static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.release()));
+    ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
+            static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.get());
 
     const Tensor<type, 2>& targets = probabilistic_layer_3d_back_propagation->targets;
     Tensor<type, 2>& mask = probabilistic_layer_3d_back_propagation->mask;
@@ -407,8 +407,8 @@ void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    const unique_ptr<ProbabilisticLayer3DBackPropagation> probabilistic_layer_3d_back_propagation 
-        (static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.release()));
+    const ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
+        static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.get());
 
     const type* synaptic_weights_derivatives_data = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_3d_back_propagation->biases_derivatives.data();

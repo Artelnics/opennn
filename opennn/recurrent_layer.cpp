@@ -369,8 +369,8 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
 
-    unique_ptr<RecurrentLayerForwardPropagation> recurrent_layer_forward_propagation
-        (static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.release()));
+    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
+        static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
@@ -416,11 +416,11 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
-    const unique_ptr<RecurrentLayerForwardPropagation> recurrent_layer_forward_propagation
-            (static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.release()));
+    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
+            static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
 
-    unique_ptr<RecurrentLayerBackPropagation> recurrent_layer_back_propagation 
-            (static_cast<RecurrentLayerBackPropagation*>(back_propagation.release()));
+    RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
+            static_cast<RecurrentLayerBackPropagation*>(back_propagation.get());
 
     // Forward propagation
 
@@ -563,8 +563,8 @@ void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
 
     type* gradient_data = gradient.data();
 
-    unique_ptr<RecurrentLayerBackPropagation> recurrent_layer_back_propagation 
-        (static_cast<RecurrentLayerBackPropagation*>(back_propagation.release()));
+    RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
+        static_cast<RecurrentLayerBackPropagation*>(back_propagation.get());
 
     #pragma omp parallel sections
     {

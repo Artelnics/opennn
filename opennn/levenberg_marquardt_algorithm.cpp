@@ -245,12 +245,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    const vector<pair<type*, dimensions>> training_input_pairs = training_batch.get_input_pairs();
-
     Batch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
-
-    const vector<pair<type*, dimensions>> selection_input_pairs = selection_batch.get_input_pairs();
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
@@ -289,7 +285,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_input_pairs,
+        neural_network->forward_propagate(training_batch,
                                           training_forward_propagation,
                                           is_training);
         
@@ -303,7 +299,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         
         if(has_selection)
         {           
-            neural_network->forward_propagate(selection_input_pairs,
+            neural_network->forward_propagate(selection_batch,
                                               selection_forward_propagation,
                                               is_training);
 
@@ -425,9 +421,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
-    
-    const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
-
     const type regularization_weight = loss_index->get_regularization_weight();
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -455,7 +448,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
         
-        neural_network->forward_propagate(input_pairs,
+        neural_network->forward_propagate(batch,
                                           potential_parameters,
                                           forward_propagation);
 
