@@ -73,9 +73,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plo
     Tensor<type, 1> minimum_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         minimum_distances(i) = multivariate_distances_box_plot(i).minimum;
-    }
 
     return minimum_distances;
 }
@@ -86,9 +84,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plo
     Tensor<type, 1> first_quartile_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         first_quartile_distances(i) = multivariate_distances_box_plot(i).first_quartile;
-    }
 
     return first_quartile_distances;
 }
@@ -99,21 +95,18 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plo
     Tensor<type, 1> median_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         median_distances(i) = multivariate_distances_box_plot(i).median;
-    }
 
     return median_distances;
 }
+
 
 Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plot_third_quartile() const
 {
     Tensor<type, 1> third_quartile_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         third_quartile_distances(i) = multivariate_distances_box_plot(i).third_quartile;
-    }
 
     return third_quartile_distances;
 }
@@ -124,9 +117,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plo
     Tensor<type, 1> maximum_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         maximum_distances(i) = multivariate_distances_box_plot(i).maximum;
-    }
 
     return maximum_distances;
 }
@@ -543,10 +534,12 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     buffer.str("");
 
-    for(Index i = 0; i < static_cast<Index>(layers.size()); i++)
+    for(Index i = 0; i < Index(layers.size()); i++)
     {
         buffer << layers[i]->get_type_string();
-        if(i != layers.size()-1) buffer << " ";
+
+        if(i != layers.size()-1)
+            buffer << " ";
     }
 
     file_stream.PushText(buffer.str().c_str());
@@ -555,10 +548,8 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     // Layers information
 
-    for(Index i = 0; i < static_cast<Index>(layers.size()); i++)
-    {
+    for(Index i = 0; i < Index(layers.size()); i++)
         layers[i]->to_XML(file_stream);
-    }
 
     // Layers (end tag)
 

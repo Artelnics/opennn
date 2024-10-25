@@ -182,7 +182,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     genetic_algorithm.set_fitness(fitness);
 
     selection_errors.resize(4);
-    selection_errors.setValues({type(0.4),type(0.3),type(0.2),type(0.1)});
+    selection_errors.setValues({type(0.4), type(0.3), type(0.2), type(0.1)});
 
     genetic_algorithm.initialize_population();
 
@@ -215,7 +215,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     genetic_algorithm.set_fitness(fitness);
 
     selection_errors.resize(4);
-    selection_errors.setValues({type(0.4),type(0.3),type(0.2),type(0.1)});
+    selection_errors.setValues({type(0.4), type(0.3), type(0.2), type(0.1)});
 
     genetic_algorithm.initialize_population();
 
@@ -295,7 +295,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     genetic_algorithm.set_population(population);
 
-    selection_errors.setValues({type(0.4),type(0.3),type(0.2),type(0.1)});
+    selection_errors.setValues({type(0.4), type(0.3), type(0.2), type(0.1)});
 
     genetic_algorithm.set_selection_errors(selection_errors);
 
