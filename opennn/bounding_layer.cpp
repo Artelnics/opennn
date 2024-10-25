@@ -222,28 +222,18 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        // @todo 
-
-        outputs.device(*thread_pool_device) = inputs;
-/*
-        const int rows_number = inputs.dimension(0);
-
-        auto broadcast_dimensions = Eigen::array<int, 2>{rows_number, 1};
-
-        outputs = inputs.minimum(lower_bounds.broadcast(broadcast_dimensions))
-                        .maximum(upper_bounds.broadcast(broadcast_dimensions));
-
-        const int rows_number = inputs.dimension(0);
+        const Index rows_number = inputs.dimension(0);
         const Index columns_number = inputs.dimension(1);
 
         #pragma omp parallel for
-        for(Index i = 0; i < rows_number; i++)
-            for(Index j = 0; j < columns_number; j++)
-                if(inputs(i, j) < lower_bounds(j))
-                    outputs(i, j) = lower_bounds(j);
-                else if(inputs(i, j) > upper_bounds(j))
-                    outputs(i, j) = upper_bounds(j);
-*/
+        for (Index j = 0; j < columns_number; j++)
+        {
+            const type& lower_bound = lower_bounds(j);
+            const type& upper_bound = upper_bounds(j);
+
+            for (Index i = 0; i < rows_number; i++)
+                outputs(i, j) = min(max(inputs(i, j), lower_bound), upper_bound);
+        }
     }
     else
     {
