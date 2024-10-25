@@ -47,42 +47,15 @@ bool ConvolutionalLayer::get_batch_normalization() const
 }
 
 
-// void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output) const
-// {
-//     switch(convolution_type)
-//     {
-//     case ConvolutionType::Valid:
-
-//         padded_output.device(*thread_pool_device) = inputs;
-
-//         return;
-
-//     case ConvolutionType::Same:
-
-//         const Index pad_rows = get_padding().first;
-//         const Index pad_columns = get_padding().second;
-
-//         Eigen::array<pair<Index, Index>, 4> paddings;
-//         paddings[0] = make_pair(0, 0);
-//         paddings[1] = make_pair(pad_rows, pad_rows);
-//         paddings[2] = make_pair(pad_columns, pad_columns);
-//         paddings[3] = make_pair(0, 0);
-
-//         padded_output.device(*thread_pool_device) = inputs.pad(paddings);
-
-//         return;
-//     }
-// }
-
-
 void ConvolutionalLayer::preprocess_inputs(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& preprocessed_inputs) const
 {
-    convolution_type == ConvolutionType::Same
-        ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
-        : preprocessed_inputs.device(*thread_pool_device) = inputs;
+    if (convolution_type == ConvolutionType::Same)
+        preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings());
+    else
+        preprocessed_inputs.device(*thread_pool_device) = inputs;
 
-    if(row_stride != 1 || column_stride != 1)
+    if (row_stride != 1 || column_stride != 1)
         preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(get_strides());
 }
 
@@ -259,7 +232,9 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
     preprocess_inputs(inputs, preprocessed_inputs);
-
+    //cout << "inputs: " << inputs.chip(0,0) << endl;
+    //cout << "preprocessed_inputs: " << preprocessed_inputs.chip(0,0) << endl;
+    //system("pause");
     calculate_convolutions(preprocessed_inputs, outputs);
 
     if(batch_normalization)
@@ -838,9 +813,8 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index row_stride = get_row_stride();
         const Index column_stride = get_column_stride();
 
-        const Index pad_rows = max<Index>(0, (ceil((type)input_height/row_stride) - 1) * row_stride + kernel_height - input_height) / 2;
-
-        const Index pad_columns = max<Index>(0, (ceil((type)input_width/column_stride) - 1) * column_stride + kernel_width - input_width) / 2;
+        const Index pad_rows = std::max<Index>(0, ((static_cast<float>(input_height) / row_stride) - 1) * row_stride + kernel_height - input_height) / 2;
+        const Index pad_columns = std::max<Index>(0, ((static_cast<float>(input_width) / column_stride) - 1) * column_stride + kernel_width - input_width) / 2;
 
         return make_pair(pad_rows, pad_columns);
     }
@@ -855,11 +829,11 @@ Eigen::array<pair<Index, Index>, 4> ConvolutionalLayer::get_paddings() const
     const Index pad_rows = get_padding().first;
     const Index pad_columns = get_padding().second;
 
-    const Eigen::array<pair<Index, Index>, 4> paddings =
-        { make_pair(0, 0),
-          make_pair(pad_rows, pad_rows),
-          make_pair(pad_columns, pad_columns),
-          make_pair(0, 0) };
+    const Eigen::array<std::pair<Index, Index>, 4> paddings =
+        { std::make_pair(0, 0),
+          std::make_pair(pad_rows, pad_rows),
+          std::make_pair(pad_columns, pad_columns),
+          std::make_pair(0, 0) };
 
     return paddings;
 }

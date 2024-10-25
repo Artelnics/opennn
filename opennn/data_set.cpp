@@ -28,6 +28,8 @@
 #include "codification.h"
 #include "strings_utilities.h"
 
+using namespace std;
+
 namespace opennn
 {
 
@@ -3278,98 +3280,89 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
     Index variable_index = 0;
     Index used_raw_variable_index = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for (Index i = 0; i < raw_variables_number; i++)
     {
         const RawVariable raw_variable = raw_variables(i);
 
-        if(raw_variable.type == RawVariableType::Numeric)
+        if (raw_variable.use == VariableUse::None)
         {
-            if(raw_variable.use == VariableUse::None)
-            {
-                variable_index++;
-            }
-            else
-            {
-                Tensor<type, 1> raw_variable_data(used_samples_number);
-
-                for(Index j = 0; j < used_samples_number; j++)
-                    raw_variable_data(j) = data(used_samples_indices(j), variable_index);
-
-                histograms(used_raw_variable_index++) = histogram(raw_variable_data, bins_number);
-
-                variable_index++;
-            }
+            variable_index += (raw_variable.type == RawVariableType::Categorical)
+                ? raw_variable.get_categories_number()
+                : 1;
+            continue;
         }
-        else if(raw_variable.type == RawVariableType::Categorical)
+
+       
+        switch (raw_variable.type)
+        {
+
+        case RawVariableType::Numeric:
+        {
+            Tensor<type, 1> raw_variable_data(used_samples_number);
+
+            for (Index j = 0; j < used_samples_number; j++)
+                raw_variable_data(j) = data(used_samples_indices(j), variable_index);
+
+            histograms(used_raw_variable_index++) = histogram(raw_variable_data, bins_number);
+
+            variable_index++;
+        }
+            break;
+
+        case RawVariableType::Categorical:
         {
             const Index categories_number = raw_variable.get_categories_number();
 
-            if(raw_variable.use == VariableUse::None)
+            Tensor<Index, 1> categories_frequencies(categories_number);
+            categories_frequencies.setZero();
+            Tensor<type, 1> centers(categories_number);
+
+            for (Index j = 0; j < categories_number; j++)
             {
-                variable_index += categories_number;
-            }
-            else
-            {
-                Tensor<Index, 1> categories_frequencies(categories_number);
-                categories_frequencies.setZero();
-                Tensor<type, 1> centers(categories_number);
+                for (Index k = 0; k < used_samples_number; k++)
+                    if (abs(data(used_samples_indices(k), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+                        categories_frequencies(j)++;
 
-                for(Index j = 0; j < categories_number; j++)
-                {
-                    for(Index k = 0; k < used_samples_number; k++)
-                        if(abs(data(used_samples_indices(k), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
-                            categories_frequencies(j)++;
+                centers(j) = type(j);
 
-                    centers(j) = type(j);
-
-                    variable_index++;
-                }
-
-                histograms(used_raw_variable_index).frequencies = categories_frequencies;
-                histograms(used_raw_variable_index).centers = centers;
-
-                used_raw_variable_index++;
-            }
-        }
-        else if(raw_variable.type == RawVariableType::Binary)
-        {
-            if(raw_variable.use == VariableUse::None)
-            {
                 variable_index++;
             }
-            else
-            {
-                Tensor<Index, 1> binary_frequencies(2);
-                binary_frequencies.setZero();
 
-                for(Index j = 0; j < used_samples_number; j++)
-                {
-                    binary_frequencies(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN)
-                        ? 0
-                        : 1)++;
-                }
+            histograms(used_raw_variable_index).frequencies = categories_frequencies;
+            histograms(used_raw_variable_index).centers = centers;
 
-                histograms(used_raw_variable_index).frequencies = binary_frequencies;
-                variable_index++;
-                used_raw_variable_index++;
-            }
+            used_raw_variable_index++;
         }
-        else if(raw_variable.type == RawVariableType::DateTime)
-        {
-            // @todo
+            break;
 
-            if(raw_variable.use == VariableUse::None)
+        case RawVariableType::Binary:
+        {
+            Tensor<Index, 1> binary_frequencies(2);
+            binary_frequencies.setZero();
+
+            for (Index j = 0; j < used_samples_number; j++)
             {
+                binary_frequencies(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN)
+                    ? 0
+                    : 1)++;
             }
-            else
-            {
-            }
+
+            histograms(used_raw_variable_index).frequencies = binary_frequencies;
+            variable_index++;
+            used_raw_variable_index++;
+        }
+            break;
+        
+        case RawVariableType::DateTime:
 
             variable_index++;
-        }
-        else
-        {
-            variable_index++;
+
+            break;
+
+        default:
+
+            throw runtime_error("Unknown raw variable type.");
+
         }
     }
 

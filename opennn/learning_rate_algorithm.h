@@ -107,44 +107,16 @@ public:
            ostringstream buffer;
 
            if(U.first < A.first)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "U is less than A:\n"
-                     << struct_to_string();
-
-              throw runtime_error(buffer.str());
-           }
+              throw runtime_error("U is less than A:\n" + struct_to_string());
 
            if(U.first > B.first)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "U is greater than B:\n"
-                     << struct_to_string();
-
-              throw runtime_error(buffer.str());
-           }
+              throw runtime_error("U is greater than B:\n" + struct_to_string());
 
            if(U.second >= A.second)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "fU is equal or greater than fA:\n"
-                     << struct_to_string();
-
-              throw runtime_error(buffer.str());
-           }
+              throw runtime_error("fU is equal or greater than fA:\n" + struct_to_string());
 
            if(U.second >= B.second)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "fU is equal or greater than fB:\n"
-                     << struct_to_string();
-
-              throw runtime_error(buffer.str());
-           }
+              throw runtime_error("fU is equal or greater than fB:\n" + struct_to_string());
        }
 
        pair<type, type> A;
