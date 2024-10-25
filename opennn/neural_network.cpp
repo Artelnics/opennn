@@ -512,7 +512,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
 
     model_type = new_model_type;
 
-    const Index complexity_size = complexity_dimensions.size();
 
     const Index inputs_number = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
 
@@ -521,112 +520,165 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     for(Index i = 0; i < inputs_number; i++)
         input_names(i) = "input_" + to_string(i+1);
 
-    if(model_type == ModelType::Approximation)
-    {
-        add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+    switch(model_type)
+    {    
+    case ModelType::Approximation:
+        set_approximation(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
+    
+    case ModelType::Classification: 
+        set_classification(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
 
-        for(Index i = 0; i < complexity_size; i++)
-        {
-            const dimensions neurons_number = {complexity_dimensions[i]};
+    case ModelType::TextClassification:
+        set_classification(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
 
-            add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                      "perceptron_layer_" + to_string(i+1));
-        }
+    case ModelType::Forecasting:
+        set_forecasting(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
 
-        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), output_dimensions, PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(complexity_size+1));
+    case ModelType::ImageClassification:
+        set_image_classification(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
+    
+    case ModelType::AutoAssociation:
+        set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
 
-        add_layer(make_unique<UnscalingLayer>(output_dimensions));
-
-        add_layer(make_unique<BoundingLayer>(output_dimensions));
     }
-    else if(model_type == ModelType::Classification || model_type == ModelType::TextClassification)
-    {
-        for (Index i = 0; i < complexity_size; i++)
-        {
-            const dimensions neurons_number = {complexity_dimensions[i]};
-            add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                "perceptron_layer_" + to_string(i + 1));
-        }
-
-        add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
-    }
-    else if(model_type == ModelType::Forecasting)
-    {
-        add_layer(make_unique<ScalingLayer2D>(input_dimensions));
-
-        add_layer(make_unique<UnscalingLayer>(output_dimensions));
-
-        add_layer(make_unique<BoundingLayer>(output_dimensions));
-    }
-    else if(model_type == ModelType::ImageClassification)
-    {
-        add_layer(make_unique<ScalingLayer4D>(input_dimensions));
-        
-        for (Index i = 0; i < complexity_size; i++)
-        {
-            
-            const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
-            const dimensions convolution_stride_dimensions = {1, 1};
-            const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
-
-            add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                      kernel_dimensions,
-                                                      ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                      convolution_stride_dimensions,
-                                                      convolution_type),
-                      "convolutional_layer_" + to_string(i + 1));
-            
-            const dimensions pool_dimensions = {2, 2};
-            const dimensions pooling_stride_dimensions = { 2, 2 };
-            const dimensions padding_dimensions = { 0, 0 };
-            const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
-
-            //add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
-            //                                    pool_dimensions,
-            //                                    pooling_stride_dimensions,
-            //                                    padding_dimensions,
-            //                                    pooling_method),
-            //          "pooling_layer_" + to_string(i + 1));
-            
-        }
-
-        add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
-
-        //const dimensions neurons_number = { complexity_dimensions[complexity_dimensions.size()]*2 };
-        //add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::RectifiedLinear), "perceptron_layer");
-
-        add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
-    }
-    else if(model_type == ModelType::AutoAssociation)
-    {
-/*
-        add_layer(make_unique<ScalingLayer2D>(inputs_number));
-
-        const Index mapping_neurons_number = 10;
-        const Index bottle_neck_neurons_number = complexity_dimensions[0];
-
-        add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                  "mapping_layer");
-
-        add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
-                  "bottleneck_layer");
-
-        add_layer(make_unique<PerceptronLayer>(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                  "demapping_layer");
-
-        add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, output_dimensions[0], PerceptronLayer::ActivationFunction::Linear),
-                  "output_layer");
-
-        add_layer(make_unique<UnscalingLayer>(output_dimensions[0]));
-*/
-    }
-
     const Index outputs_number = accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
 
     output_names.resize(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
         output_names(i) = "output_" + to_string(i+1);
+}
+
+
+void NeuralNetwork::set_approximation(const dimensions& input_dimensions, 
+                                      const dimensions& complexity_dimensions, 
+                                      const dimensions& output_dimensions)
+{
+    const Index complexity_size = complexity_dimensions.size();
+
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
+    for (Index i = 0; i < complexity_size; i++)
+    {
+        const dimensions neurons_number = { complexity_dimensions[i] };
+
+        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+            "perceptron_layer_" + to_string(i + 1));
+    }
+
+    add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), output_dimensions, PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(complexity_size + 1));
+
+    add_layer(make_unique<UnscalingLayer>(output_dimensions));
+
+    add_layer(make_unique<BoundingLayer>(output_dimensions));
+
+}
+
+
+void NeuralNetwork::set_classification(const dimensions& input_dimensions, 
+                                       const dimensions& complexity_dimensions, 
+                                       const dimensions& output_dimensions)
+{
+    const Index complexity_size = complexity_dimensions.size();
+
+    for (Index i = 0; i < complexity_size; i++)
+    {
+        const dimensions neurons_number = { complexity_dimensions[i] };
+
+        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+            "perceptron_layer_" + to_string(i + 1));
+    }
+
+    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
+
+}
+
+
+void NeuralNetwork::set_forecasting(const dimensions& input_dimensions, 
+                                    const dimensions& complexity_dimensions, 
+                                    const dimensions& output_dimensions)
+{
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
+    add_layer(make_unique<UnscalingLayer>(output_dimensions));
+
+    add_layer(make_unique<BoundingLayer>(output_dimensions));
+}
+
+
+void NeuralNetwork::set_auto_association(const dimensions& input_dimensions, 
+                                         const dimensions& complexity_dimensions, 
+                                         const dimensions& output_dimensions)
+{
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
+    const Index mapping_neurons_number = 10;
+    const Index bottle_neck_neurons_number = complexity_dimensions[0];
+/*
+    add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+                "mapping_layer");
+
+    add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
+                "bottleneck_layer");
+
+    add_layer(make_unique<PerceptronLayer>(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+                "demapping_layer");
+
+    add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, output_dimensions[0], PerceptronLayer::ActivationFunction::Linear),
+                "output_layer");
+*/
+    add_layer(make_unique<UnscalingLayer>(output_dimensions));
+}
+
+
+void NeuralNetwork::set_image_classification(const dimensions& input_dimensions, 
+                                             const dimensions& complexity_dimensions, 
+                                             const dimensions& output_dimensions)
+{
+    const Index complexity_size = complexity_dimensions.size();
+
+    add_layer(make_unique<ScalingLayer4D>(input_dimensions));
+
+    for (Index i = 0; i < complexity_size; i++)
+    {
+        const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
+        const dimensions convolution_stride_dimensions = { 1, 1 };
+        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
+
+        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+            kernel_dimensions,
+            ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+            convolution_stride_dimensions,
+            convolution_type),
+            "convolutional_layer_" + to_string(i + 1));
+
+        const dimensions pool_dimensions = { 2, 2 };
+        const dimensions pooling_stride_dimensions = { 2, 2 };
+        const dimensions padding_dimensions = { 0, 0 };
+        const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
+
+        //add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
+        //                                    pool_dimensions,
+        //                                    pooling_stride_dimensions,
+        //                                    padding_dimensions,
+        //                                    pooling_method),
+        //          "pooling_layer_" + to_string(i + 1));
+
+    }
+
+    add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
+
+    //const dimensions neurons_number = { complexity_dimensions[complexity_dimensions.size()]*2 };
+    //add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::RectifiedLinear), "perceptron_layer");
+
+    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
+
 }
 
 

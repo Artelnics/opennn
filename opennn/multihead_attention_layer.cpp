@@ -560,38 +560,33 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& v
 
 void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 {
-    /*
+    // @todo there are two loops here. Are they the same?
+
     const Index batch_samples_number = attention_scores.dimension(2);
 
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
-    type* entry_data;
-    type random = 0;
-    
-#pragma omp parallel for
+/*
+    #pragma omp parallel for
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
             for(Index position_index = 0; position_index < input_size; position_index++)
             {
-                entry_data = attention_scores.data()
+                type* entry_data = attention_scores.data()
                              + position_index * context_size
                              + sample_index * input_size * context_size
                              + head_index * batch_samples_number * input_size * context_size;
 
                 TensorMap<Tensor<type, 1>> entry(entry_data, context_size);
 
-                random = calculate_random_uniform((type)0, (type)1);
-
-                random < dropout_rate ? entry.setZero()
-                    : entry = entry * scaling_factor;
+                calculate_random_uniform(type(0), type(1)) < dropout_rate 
+                    ? entry.setZero()
+                    : entry *= scaling_factor;
             }
         }
     }
-    */
-    const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
+*/   
     #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
         attention_scores(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
