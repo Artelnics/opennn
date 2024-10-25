@@ -567,14 +567,14 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
             
             const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
             const dimensions convolution_stride_dimensions = {1, 1};
-            const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
+            const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
 
-            //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-            //                                          kernel_dimensions,
-            //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-            //                                          convolution_stride_dimensions,
-            //                                          convolution_type),
-            //          "convolutional_layer_" + to_string(i + 1));
+            add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+                                                      kernel_dimensions,
+                                                      ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                      convolution_stride_dimensions,
+                                                      convolution_type),
+                      "convolutional_layer_" + to_string(i + 1));
             
             const dimensions pool_dimensions = {2, 2};
             const dimensions pooling_stride_dimensions = { 2, 2 };
