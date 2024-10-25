@@ -136,10 +136,6 @@ public:
 
     void set_parameters_random();
 
-    // Padding
-
-//    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-
     // Forward propagation
 
     void preprocess_inputs(const Tensor<type, 4>&,
