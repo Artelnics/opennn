@@ -11,6 +11,9 @@
 #ifndef EIGEN_META_H
 #define EIGEN_META_H
 
+//#include "Eigen/src/Core/util/Macros.h"       //No me funciona y no sé porqué, pues antes sí lo hacía
+#include "Macros.h"
+//#include "../util/Macros.h"
 #if defined(EIGEN_GPU_COMPILE_PHASE)
 
  #include <cfloat>

@@ -83,7 +83,7 @@ public:
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
-    enum class ModelType{Approximation, Classification, Forecasting, AutoAssociation, TextClassification, ImageClassification};
+    enum class ModelType{Approximation, Classification, Forecasting, AutoAssociation, TextClassification, ImageClassification, ObjectDetection};
 
     enum class SampleUse{Training, Selection, Testing, None};
 

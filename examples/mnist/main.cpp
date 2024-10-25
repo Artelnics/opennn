@@ -34,8 +34,8 @@ int main()
 
         // Data set
         
-        /* //Random image data set 
-        const Index samples_number = 2;
+         //Random image data set
+        /*const Index samples_number = 2;
         const Index image_height = 4;
         const Index image_width = 4;
         ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 2);
@@ -47,7 +47,8 @@ int main()
         //image_data_set.set_data_source_path("C:/mnist/train");
         //image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
-        image_data_set.set_data_source_path("C:/Users/Roberto Lopez/Documents/melanoma_dataset_bmp_small");
+        //image_data_set.set_data_source_path("C:/Users/Roberto Lopez/Documents/melanoma_dataset_bmp_small");
+        image_data_set.set_data_source_path("/Users/artelnics/Documents/opennn/examples/mnist/data");
 
         image_data_set.read_bmp();
 

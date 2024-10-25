@@ -3,7 +3,7 @@
 
 #include "data_set.h"
 // Cuda includes
-#include "batch.h"
+//#include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
 #include "images.h"

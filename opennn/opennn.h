@@ -44,6 +44,7 @@
 #include "auto_associative_neural_network.h"
 #include "transformer.h"
 #include "neural_network_forward_propagation.h"
+#include "non_max_suppression_layer.h"
 
 // Training strategy
 

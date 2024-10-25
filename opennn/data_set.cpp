@@ -339,6 +339,8 @@ string DataSet::get_model_type_string() const
         return "TextClassification";
     case ModelType::ImageClassification:
         return "ImageClassification";
+    case ModelType::ObjectDetection:
+        return "ObjectDetection";
     default:
         throw runtime_error("Unknown model type");
     }
@@ -1081,15 +1083,17 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     while(count_training != training_samples_number)
     {
+
         index = indices(i);
 
         i++;
 
         if (samples_uses(index) == SampleUse::None) continue;
 
-        samples_uses(index)= SampleUse::Training;
+        samples_uses(index) = SampleUse::Training;
         count_training++;
     }
+
 
     // Selection
 
@@ -1097,6 +1101,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     while(count_selection != selection_samples_number)
     {
+
         index = indices(i);
 
         i++;
@@ -1113,14 +1118,17 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     while(count_testing != testing_samples_number)
     {
+
         index = indices(i);
+
+        i++;
 
         if (samples_uses(index) == SampleUse::None) continue;
 
         samples_uses(index) = SampleUse::Testing;
         count_testing++;
 
-        i++;
+
     }
 }
 
@@ -3254,6 +3262,7 @@ void DataSet::set()
 
 void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Index& channels)
 {
+
     // Set data
 
     const Index variables_number = inputs_variables_dimensions.dimension(0) + channels;
@@ -3333,7 +3342,6 @@ void DataSet::set(const Tensor<type, 2>& new_data)
 
 void DataSet::set(const Index& new_samples_number, const Index& new_variables_number)
 {
-    
     data.resize(new_samples_number, new_variables_number);
 
     raw_variables.resize(new_variables_number);
@@ -3350,6 +3358,8 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
     raw_variables(new_variables_number - 1).type = RawVariableType::Numeric;
 
     samples_uses.resize(new_samples_number);
+
+    samples_uses.setConstant(SampleUse::Training);
 
     split_samples_random();
 }
@@ -3464,6 +3474,8 @@ void DataSet::set_model_type_string(const string& new_model_type)
         set_model_type(ModelType::TextClassification);
     else if(new_model_type == "AutoAssociation")
         set_model_type(ModelType::AutoAssociation);
+    else if(new_model_type == "ObjectDetection")
+        set_model_type(ModelType::ObjectDetection);
     else
         throw runtime_error("Unknown model type: " + new_model_type + "\n");
 }

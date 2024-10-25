@@ -20,7 +20,7 @@ using namespace Eigen;
 
 namespace opennn
 {
-    // Read 
+    // Read
 
     Tensor<unsigned char, 3> read_bmp_image(const string&);
     

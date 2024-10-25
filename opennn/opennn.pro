@@ -139,7 +139,9 @@ HEADERS += \
     word_bag.h \
     addition_layer_3d.h \
     normalization_layer_3d.h \
-    opennn.h
+    non_max_suppression_layer.h \
+    opennn.h \
+    yolo_dataset.h
 
 SOURCES += \
     cross_entropy_error_3d.cpp \
@@ -206,4 +208,5 @@ SOURCES += \
     flatten_layer.cpp \
     addition_layer_3d.cpp \
     normalization_layer_3d.cpp \
-    unit_testing.cpp
+    unit_testing.cpp \
+    non_max_suppression_layer.cpp

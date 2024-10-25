@@ -644,6 +644,84 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     }
     else if(model_type == ModelType::ImageClassification)
     {
+        /*
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), {3, 3, 3, 32}),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new PoolingLayer(get_output_dimensions(), {2, 2}),
+                  "pooling_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new PoolingLayer(get_output_dimensions(), pool_dimensions),
+                  "pooling_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new PoolingLayer(get_output_dimensions(), pool_dimensions),
+                  "pooling_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new PoolingLayer(get_output_dimensions(), pool_dimensions),
+                  "pooling_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new PoolingLayer(get_output_dimensions(), pool_dimensions),
+                  "pooling_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+
+        add_layer(new ConvolutionalLayer(get_output_dimensions(), kernel_dimensions),
+                  "convolutional_layer_" + to_string(i+1));
+
+        add_layer(new PoolingLayer(get_output_dimensions(), pool_dimensions),
+                  "pooling_layer_" + to_string(i+1));
+        */
+        /*
         add_layer(new ScalingLayer4D(input_dimensions));
 
         for(Index i = 0; i < complexity_size; i++)
@@ -658,7 +736,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
             add_layer(new PoolingLayer(get_output_dimensions(), pool_dimensions),
                       "pooling_layer_" + to_string(i+1));
         }
-
+        */
         add_layer(new FlattenLayer(get_output_dimensions()));
 
         add_layer(new ProbabilisticLayer(get_output_dimensions(), output_dimensions), "probabilistic_layer");

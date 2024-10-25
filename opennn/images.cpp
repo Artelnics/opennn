@@ -1,5 +1,6 @@
 #include "images.h"
 #include <stdexcept>
+#include <iostream>
 
 namespace opennn
 {
@@ -15,15 +16,15 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     fread(info, sizeof(unsigned char), 54, file);
 
-    const Index width_no_padding = *(int*)&info[18];
-    const Index height = *(int*)&info[22];
-    const Index bits_per_pixel = *(int*)&info[28];
+    const Index width_no_padding = abs(*(int*)&info[18]);
+    const Index height = abs(*(int*)&info[22]);
+    const Index bits_per_pixel = abs(*(int*)&info[28]);
 
     const int channels = bits_per_pixel == 24
                        ? 3
                        : 1;
     
-    //const Index channels = channels;
+    // const Index channels = channels;
     
     Index padding = 0;
 
