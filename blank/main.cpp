@@ -326,7 +326,7 @@ type loss_function(const Tensor<type, 2>& labels, const vector<YOLO_anchor_box> 
 Tensor<type, 2> non_maximum_suppression(const vector<Tensor<type, 1>>& input_bounding_boxes, const type& overlap_treshold, const Index& classes_number);
 
 
-// Tensor<type, 3> draw_boxes();
+
 
 
 Tensor<type, 3> draw_boxes(const Tensor<type, 3>& image, const Tensor<type, 2>& final_boxes);
