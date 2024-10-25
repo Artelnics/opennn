@@ -110,7 +110,8 @@ Tensor<Index, 1> GeneticAlgorithm::get_original_unused_raw_variables()
 
 void GeneticAlgorithm::set_default()
 {
-    // @todo if training strategy is nullptr this will crash
+    if (training_strategy)
+        return;
 
     const Index genes_number = (training_strategy || !training_strategy->has_neural_network())
         ? 0

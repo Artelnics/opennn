@@ -464,15 +464,7 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
         TensorMap<Tensor<type, 2>> outputs(outputs_data, output_dimensions[0], output_dimensions(1));
 
         if(output_dimensions[0] != points_number || output_dimensions(1) != neurons_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&).\n"
-                   << "Outputs dimensions must be equal to " << points_number << " and " << neurons_number << ".\n";
-
-            throw invalid_argument(buffer.str());
-        }
+            throw invalid_argument("Outputs dimensions must be equal to " + to_string(points_number) + " and " + to_string(neurons_number) + ".\n");
 
         for(Index i = 0; i < neurons_number; i++)
         {
@@ -482,56 +474,50 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
 
             if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
             {
-                if(display)
+                if (display)
                     cout << "OpenNN Warning: ScalingLayer class.\n"
-                         << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                         << "Standard deviation of variable " << i << " is zero.\n"
-                         << "Those variables won't be scaled.\n";
+                    << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+                    << "Standard deviation of variable " << i << " is zero.\n"
+                    << "Those variables won't be scaled.\n"; 
+
+                continue;
+            }
+
+            if(scaler == Scaler::None)
+            {
+
+            }
+            else if(scaler == Scaler::MinimumMaximum)
+            {
+                const type slope =
+                    (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
+
+                const type intercept =
+                    (min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(descriptives(i).maximum-descriptives(i).minimum);
+
+                column = intercept + slope*inputs.chip(i, 1);
+            }
+            else if(scaler == Scaler::MeanStandardDeviation)
+            {
+                const type slope = type(1)/descriptives(i).standard_deviation;
+
+                const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
+
+                column = intercept + slope*inputs.chip(i, 1);
+            }
+            else if(scaler == Scaler::StandardDeviation)
+            {
+                column = type(1/descriptives(i).standard_deviation) * inputs.chip(i, 1);/*column/type(descriptives(i).standard_deviation);*/
+            }
+            else if(scaler == Scaler::Logarithm)
+            {
+                column = inputs.chip(i,1).log();
             }
             else
             {
-                if(scaler == Scaler::None)
-                {
-
-                }
-                else if(scaler == Scaler::MinimumMaximum)
-                {
-                    const type slope =
-                        (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
-
-                    const type intercept =
-                        (min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(descriptives(i).maximum-descriptives(i).minimum);
-
-                    column = intercept + slope*inputs.chip(i, 1);
-                }
-                else if(scaler == Scaler::MeanStandardDeviation)
-                {
-                    const type slope = type(1)/descriptives(i).standard_deviation;
-
-                    const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
-
-                    column = intercept + slope*inputs.chip(i, 1);
-                }
-                else if(scaler == Scaler::StandardDeviation)
-                {
-                    column = type(1/descriptives(i).standard_deviation) * inputs.chip(i, 1);/*column/type(descriptives(i).standard_deviation);*/
-                }
-                else if(scaler == Scaler::Logarithm)
-                {
-                    column = inputs.chip(i,1).log();
-                }
-                else
-                {
-                    ostringstream buffer;
-
-                    buffer << "OpenNN Exception: ScalingLayer class\n"
-                           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                           << "Unknown scaling method.\n";
-
-                    throw invalid_argument(buffer.str());
-                }
-
+                throw invalid_argument("Unknown scaling method.\n");
             }
+
             outputs.chip(i, 1) = column;
         }
     }
@@ -540,34 +526,19 @@ void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>&
         const Tensor<bool, 0> equal_dimensions = (input_dimensions == output_dimensions).any().all();
 
         if(!equal_dimensions(0))
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&).\n"
-                   << "Input and output data must have the same dimensions.\n";
-
-            throw invalid_argument(buffer.str());
-        }
+            throw invalid_argument("Input and output data must have the same dimensions.\n");
 
         TensorMap<Tensor<type, 4>> input(input_data, input_dimensions(0), input_dimensions(1), input_dimensions(2), input_dimensions(3));
 
         TensorMap<Tensor<type, 4>> output(outputs_data, input_dimensions(0), input_dimensions(1), input_dimensions(2), input_dimensions(3));
 
+        #pragma omp parallel for
         for(Index i = 0; i < input.size(); i++)
-        {
             output(i) = -type(1) + type(2*input(i)/255);
-        }
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void ScalingLayer::calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&).\n"
-               << "Input dimension must be 2 or 4.\n";
-
-        throw invalid_argument(buffer.str());
+        throw invalid_argument("Input dimension must be 2 or 4.\n");
     }
 }
 

@@ -375,15 +375,7 @@ void ModelSelection::load(const string& file_name)
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
         throw runtime_error("Cannot load XML file " + file_name + ".\n");
-    }
 
     from_XML(document);
 }
