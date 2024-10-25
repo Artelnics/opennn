@@ -403,142 +403,44 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
             continue;
         }
-        else
+
+        switch(scaler)
         {
-            if(scaler == Scaler::None)
-            {
-                output_column = input_column;
-            }
-            else if(scaler == Scaler::MinimumMaximum)
-            {
-                const type slope =
-                        (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
-
-                const type intercept =
-                        (min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(descriptives(i).maximum-descriptives(i).minimum);
-
-                output_column.device(*thread_pool_device) = intercept + slope * input_column;
-            }
-            else if(scaler == Scaler::MeanStandardDeviation)
-            {
-                const type slope = type(1)/descriptives(i).standard_deviation;
-
-                const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
-
-                output_column.device(*thread_pool_device) = intercept + slope*input_column;
-            }
-            else if(scaler == Scaler::StandardDeviation)
-            {
-                output_column.device(*thread_pool_device) = type(1/descriptives(i).standard_deviation)*input_column;
-            }
-            else if(scaler == Scaler::Logarithm)
-            {
-                output_column.device(*thread_pool_device) = input_column.log();
-            }
-            else if(scaler == Scaler::ImageMinMax)
-            {
-                output_column.device(*thread_pool_device) = input_column/type(255);
-            }
-            else
-            {
-                throw runtime_error("Unknown scaling method.\n");
-            }
-        }
-    }
-}
-
-
-void ScalingLayer2D::calculate_outputs(type* input_data, const Tensor<Index, 1>& input_dimensions,
-                                     type* outputs_data, const Tensor<Index, 1>& output_dimensions)
-{
-    const Index input_rank = input_dimensions.size();
-
-    if(input_rank == 2)
-    {
-        const Index points_number = input_dimensions(0);
-        const Index neurons_number = get_neurons_number();
-
-        const Tensor<Index, 0> input_size = input_dimensions.prod();
-
-        const TensorMap<Tensor<type, 2>> inputs(input_data, input_dimensions(0), input_dimensions(1));
-        TensorMap<Tensor<type, 2>> outputs(outputs_data, output_dimensions[0], output_dimensions(1));
-
-        if(output_dimensions[0] != points_number || output_dimensions(1) != neurons_number)
-            throw invalid_argument("Outputs dimensions must be equal to " + to_string(points_number) + " and " + to_string(neurons_number) + ".\n");
-
-        for(Index i = 0; i < neurons_number; i++)
+        case Scaler::None:
+            output_column = input_column;
+        break;
+        case Scaler::MinimumMaximum:
         {
-            const Scaler scaler = scalers(i);
-
-            Tensor<type, 1> column = inputs.chip(i, 1);
-
-            if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
-            {
-                if (display)
-                    cout << "OpenNN Warning: ScalingLayer class.\n"
-                    << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                    << "Standard deviation of variable " << i << " is zero.\n"
-                    << "Those variables won't be scaled.\n"; 
-
-                continue;
-            }
-
-            if(scaler == Scaler::None)
-            {
-
-            }
-            else if(scaler == Scaler::MinimumMaximum)
-            {
-                const type slope =
+            const type slope =
                     (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
 
-                const type intercept =
+            const type intercept =
                     (min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(descriptives(i).maximum-descriptives(i).minimum);
 
-                column = intercept + slope*inputs.chip(i, 1);
-            }
-            else if(scaler == Scaler::MeanStandardDeviation)
-            {
-                const type slope = type(1)/descriptives(i).standard_deviation;
-
-                const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
-
-                column = intercept + slope*inputs.chip(i, 1);
-            }
-            else if(scaler == Scaler::StandardDeviation)
-            {
-                column = type(1/descriptives(i).standard_deviation) * inputs.chip(i, 1);/*column/type(descriptives(i).standard_deviation);*/
-            }
-            else if(scaler == Scaler::Logarithm)
-            {
-                column = inputs.chip(i,1).log();
-            }
-            else
-            {
-                throw invalid_argument("Unknown scaling method.\n");
-            }
-
-            outputs.chip(i, 1) = column;
+            output_column.device(*thread_pool_device) = intercept + slope * input_column;
         }
-    }
-    else if(input_rank == 4)
-    {
-        const Tensor<bool, 0> equal_dimensions = (input_dimensions == output_dimensions).any().all();
+        break;
+        case Scaler::MeanStandardDeviation:
+        {
+            const type slope = type(1)/descriptives(i).standard_deviation;
 
-        if(!equal_dimensions(0))
-            throw invalid_argument("Input and output data must have the same dimensions.\n");
+            const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
 
-        TensorMap<Tensor<type, 4>> input(input_data, input_dimensions(0), input_dimensions(1), input_dimensions(2), input_dimensions(3));
-
-        TensorMap<Tensor<type, 4>> output(outputs_data, input_dimensions(0), input_dimensions(1), input_dimensions(2), input_dimensions(3));
-
-        #pragma omp parallel for
-        for(Index i = 0; i < input.size(); i++)
-            output(i) = -type(1) + type(2*input(i)/255);
-    }
-    else
-    {
-        throw invalid_argument("Input dimension must be 2 or 4.\n");
+            output_column.device(*thread_pool_device) = intercept + slope*input_column;
+        }
+        break;
+        case Scaler::StandardDeviation:
+            output_column.device(*thread_pool_device) = type(1/descriptives(i).standard_deviation)*input_column;
+            break;
+        case Scaler::Logarithm:
+            output_column.device(*thread_pool_device) = input_column.log();
+            break;
+        case Scaler::ImageMinMax:
+            output_column.device(*thread_pool_device) = input_column/type(255);
+            break;
+        default:
+            throw runtime_error("Unknown scaling method.\n");
+        }
     }
 }
 
@@ -552,9 +454,7 @@ string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inpu
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-    {
         buffer << output_names(i) << " = " << input_names(i) << ";\n";
-    }
 
     return buffer.str();
 }
@@ -569,9 +469,7 @@ string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>&
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-    {
         buffer << output_names(i) << " = 2*(" << input_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
-    }
 
     return buffer.str();
 }
@@ -586,9 +484,7 @@ string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<str
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-    {
         buffer << output_names(i) << " = (" << input_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
-    }
 
     return buffer.str();
 }
@@ -603,9 +499,7 @@ string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-    {
         buffer << output_names(i) << " = " << input_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
-    }
 
     return buffer.str();
 }
@@ -621,31 +515,28 @@ string ScalingLayer2D::write_expression(const Tensor<string, 1>& input_names, co
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scalers(i) == Scaler::None)
-        {
+        switch(scalers(i))
+        { 
+        case Scaler::None:
             buffer << "scaled_" << input_names(i) << " = " << input_names(i) << ";\n";
-        }
-        else if(scalers(i) == Scaler::MinimumMaximum)
-        {
-            buffer << "scaled_" << input_names(i) << " = " << input_names(i) << "*(" << max_range << "-" << min_range << ")/("
-                                                            << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*("
-                                                            << max_range << "-" << min_range << ")/("
-                                                            << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
-        }
-        else if(scalers(i) == Scaler::MeanStandardDeviation)
-        {
+            break;
+        case Scaler::MinimumMaximum:
+            buffer << "scaled_" << input_names(i) 
+                   << " = " << input_names(i) << "*(" << max_range << "-" << min_range << ")/("
+                   << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*("
+                   << max_range << "-" << min_range << ")/("
+                   << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
+            break;
+        case Scaler::MeanStandardDeviation:
             buffer << "scaled_" << input_names(i) << " = (" << input_names(i) << "-" << descriptives(i).mean << ")/" << descriptives(i).standard_deviation << ";\n";
-        }
-        else if(scalers(i) == Scaler::StandardDeviation)
-        {
+            break;
+        case Scaler::StandardDeviation:
             buffer << "scaled_" << input_names(i) << " = " << input_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
-        }
-        else if(scalers(i) == Scaler::Logarithm)
-        {
+            break;
+        case Scaler::Logarithm:
             buffer << "scaled_" << input_names(i) << " = log(" << input_names(i) << ");\n";
-        }
-        else
-        {
+            break;
+        default:
             throw runtime_error("Unknown inputs scaling method.\n");
         }
     }
@@ -679,17 +570,11 @@ void ScalingLayer2D::print() const
 
 void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // Scaling layer
-
     file_stream.OpenElement("ScalingLayer2D");
-
-    // Layer name
 
     file_stream.OpenElement("Name");
     file_stream.PushText(name.c_str());
     file_stream.CloseElement();
-
-    // Scaling neurons number
 
     const Index neurons_number = get_neurons_number();
 
@@ -697,35 +582,23 @@ void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(to_string(neurons_number).c_str());
     file_stream.CloseElement();
 
-    // Scaling neurons
-
     const Tensor<string, 1> scaling_methods_string = write_scalers();
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        // Scaling neuron
-
         file_stream.OpenElement("ScalingNeuron");
         file_stream.PushAttribute("Index", int(i+1));
-
-        //Descriptives
 
         file_stream.OpenElement("Descriptives");
         file_stream.PushText(tensor_to_string(descriptives(i).to_tensor()).c_str());
         file_stream.CloseElement();
 
-        // Scaler
-
         file_stream.OpenElement("Scaler");
         file_stream.PushText(scaling_methods_string(i).c_str());
         file_stream.CloseElement();
 
-        // Scaling neuron (end tag)
-
         file_stream.CloseElement();
     }
-
-    // Scaling layer (end tag)
 
     file_stream.CloseElement();
 }

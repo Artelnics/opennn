@@ -1,8 +1,6 @@
 #ifndef LAYERBACKPROPAGATIONLM_H
 #define LAYERBACKPROPAGATIONLM_H
 
-//#include "layer.h"
-
 using namespace std;
 using namespace Eigen;
 

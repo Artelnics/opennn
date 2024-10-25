@@ -9,13 +9,9 @@
 #ifndef OPTIMIZATIONALGORITHM_H
 #define OPTIMIZATIONALGORITHM_H
 
-
-
 #include <iostream>
 #include <limits>
 #include <cmath>
-
-
 
 #include "config.h"
 #include "loss_index.h"
@@ -43,8 +39,6 @@ public:
                                  MaximumEpochsNumber,
                                  MaximumTime};
 
-   // Get
-
    LossIndex* get_loss_index() const;
 
    string get_hardware_use() const;
@@ -52,8 +46,6 @@ public:
    void set_hardware_use(const string&);
 
    bool has_loss_index() const;
-
-   // Utilities
 
    const bool& get_display() const;
 
@@ -64,8 +56,6 @@ public:
    const string& get_neural_network_file_name() const;
 
    string write_time(const type&) const;
-
-   // Set
 
    void set();
 
@@ -82,8 +72,6 @@ public:
    void set_save_period(const Index&);
    void set_neural_network_file_name(const string&);
 
-   // Calculate distances for AANN histogram
-
 //   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
    // Training
@@ -93,8 +81,6 @@ public:
    virtual TrainingResults perform_training() = 0;
 
    virtual string write_optimization_algorithm_type() const {return string();}
-
-   // Serialization
 
    virtual void print() const;
 
@@ -115,8 +101,6 @@ protected:
    LossIndex* loss_index = nullptr;
 
    Index epochs_number = 10000;
-
-   // UTILITIES
 
    BoxPlot auto_association_box_plot;
 
@@ -184,14 +168,12 @@ struct TrainingResults
 
     void print(const string& message = string())
     {
-        cout << message << endl;
-
         const Index epochs_number = training_error_history.size();
 
-        cout << "Training results" << endl;
-        cout << "Epochs number: " << epochs_number-1 << endl;
-
-        cout << "Training error: " << training_error_history(epochs_number-1) << endl;
+        cout << message << endl
+             << "Training results" << endl
+             << "Epochs number: " << epochs_number-1 << endl
+             << "Training error: " << training_error_history(epochs_number-1) << endl;
 
         if(abs(training_error_history(epochs_number-1) + type(1)) < type(NUMERIC_LIMITS_MIN))
             cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
@@ -206,8 +188,6 @@ struct TrainingResults
     void resize_training_error_history(const Index&);
 
     void resize_selection_error_history(const Index&);
-
-    // Training history
 
     Tensor<type, 1> training_error_history;
 

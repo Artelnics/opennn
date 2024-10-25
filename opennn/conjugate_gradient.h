@@ -9,8 +9,6 @@
 #ifndef CONJUGATEGRADIENT_H
 #define CONJUGATEGRADIENT_H
 
-// System inlcludes
-
 #include <string>
 
 #include "config.h"

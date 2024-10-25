@@ -310,16 +310,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            //cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
-            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
-
-            //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-            
-            //system("pause");
-
             training_error += training_back_propagation.error();
-            if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
+
+            if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
             // Optimization algorithm
 
@@ -366,7 +359,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 selection_error += selection_back_propagation.error();
 
                 if(is_classification_model) 
-                    selection_accuracy += selection_back_propagation.accuracy;
+                    selection_accuracy += selection_back_propagation.accuracy(0);
             }
 
             selection_error /= type(selection_batches_number);

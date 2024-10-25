@@ -1,8 +1,6 @@
 #ifndef FORWARDPROPAGATION_H
 #define FORWARDPROPAGATION_H
 
-//#include <string>
-
 #include "neural_network.h"
 #include "batch.h"
 

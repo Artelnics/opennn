@@ -110,12 +110,13 @@ Tensor<Index, 1> GeneticAlgorithm::get_original_unused_raw_variables()
 
 void GeneticAlgorithm::set_default()
 {
-    if (training_strategy)
+    if (!training_strategy)
         return;
 
-    const Index genes_number = (training_strategy || !training_strategy->has_neural_network())
-        ? 0
-        : training_strategy->get_data_set()->get_input_and_unused_variables_number();
+    if (!training_strategy->has_neural_network())
+        return;
+
+    const Index genes_number = training_strategy->get_data_set()->get_input_and_unused_variables_number();
 
     Index individuals_number = 40;
 
@@ -1082,7 +1083,7 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_
 }
 
 
-Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& individual_raw_variables) // updated
+Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& individual_raw_variables) 
 {
     DataSet* data_set = training_strategy->get_data_set();
 

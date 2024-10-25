@@ -9,12 +9,8 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
-
-
 #include <string>
 #include <vector>
-
-// Eigen includes
 
 #include "config.h"
 #include "word_bag.h"

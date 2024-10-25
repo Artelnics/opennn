@@ -1060,7 +1060,8 @@ void DataSet::set_default_raw_variables_uses()
 
         for(Index i = raw_variables.size()-1; i >= 0; i--)
         {
-            if(raw_variables(i).type == RawVariableType::Constant || raw_variables(i).type == RawVariableType::DateTime)
+            if(raw_variables(i).type == RawVariableType::Constant 
+            || raw_variables(i).type == RawVariableType::DateTime)
             {
                 raw_variables(i).set_use(VariableUse::None);
                 continue;
@@ -6328,7 +6329,8 @@ void DataSet::fix_repeated_names()
     {
         auto result = raw_variables_count_map.insert(pair<string, Index>(raw_variables(i).name, 1));
 
-        if(!result.second) result.first->second++;
+        if(!result.second) 
+            result.first->second++;
     }
 
     for(const auto & element : raw_variables_count_map)
