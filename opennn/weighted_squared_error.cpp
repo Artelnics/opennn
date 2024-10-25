@@ -85,13 +85,13 @@ void WeightedSquaredError::set_weights()
 {
     if (!data_set) return;
 
-    if(data_set->get_target_variables_number() == 0)
+    if(data_set->get_variables_number(DataSet::VariableUse::Target) == 0)
     {
         positives_weight = type(1);
         negatives_weight = type(1);
     }
-    else if(data_set->get_target_raw_variables().size() == 1
-         && data_set->get_target_raw_variables()(0).type == DataSet::RawVariableType::Binary)
+    else if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 1
+         && data_set->get_raw_variables(DataSet::VariableUse::Target)(0).type == DataSet::RawVariableType::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set->calculate_target_distribution();
 
@@ -116,14 +116,14 @@ void WeightedSquaredError::set_normalization_coefficient()
 {
     if (!data_set) return;
 
-    if(data_set->get_target_raw_variables().size()==0)
+    if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 0)
     {
         normalization_coefficient = type(1);
     }
-    else if(data_set->get_target_raw_variables().size() == 1
-         && data_set->get_target_raw_variables()(0).type == DataSet::RawVariableType::Binary)
+    else if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 1
+         && data_set->get_raw_variables(DataSet::VariableUse::Target)(0).type == DataSet::RawVariableType::Binary)
     {
-        const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
         const Index negatives = data_set->calculate_used_negatives(target_variables_indices[0]);
 

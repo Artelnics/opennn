@@ -305,7 +305,7 @@ void TransformerTest::test_forward_propagate()
         for(Index i = 0; i < input_length; i++)
             data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
         context_variables_indices = data_set.get_context_variables_indices();
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
@@ -317,7 +317,7 @@ void TransformerTest::test_forward_propagate()
         transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, layers_number });
 
-        ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
+        ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 /*
@@ -376,7 +376,7 @@ void TransformerTest::test_forward_propagate()
         for(Index i = 0; i < input_length; i++)
             data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
         context_variables_indices = data_set.get_context_variables_indices();
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
@@ -388,7 +388,7 @@ void TransformerTest::test_forward_propagate()
         transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, layers_number });
 
-        ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
+        ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 /*

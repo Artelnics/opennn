@@ -179,7 +179,7 @@ void InputsSelection::check() const
 
     const DataSet* data_set = loss_index->get_data_set();
 
-    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
     if(selection_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");

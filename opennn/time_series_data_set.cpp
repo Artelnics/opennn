@@ -279,20 +279,14 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
 
     Tensor<RawVariable, 1> new_raw_variables;
 
-    const Index time_raw_variables_number = get_time_raw_variables_number();
+    const Index time_raw_variables_number = get_raw_variables_number(VariableUse::Time);
 
     if(time_raw_variables_number == 0)
-    {
         new_raw_variables.resize(raw_variables_number*(lags_number+steps_ahead));
-    }
     else if(time_raw_variables_number == 1)
-    {
         new_raw_variables.resize((raw_variables_number-1)*(lags_number+steps_ahead));
-    }
     else
-    {
         throw runtime_error("More than 1 time variable.");
-    }
 
     Index lag_index = lags_number - 1;
     Index ahead_index = 0;
@@ -363,7 +357,7 @@ void TimeSeriesDataSet::transform_time_series_data()
     const Index old_samples_number = data.dimension(0);
     const Index old_variables_number = data.dimension(1);
 
-    const Index time_raw_variables_number = get_time_raw_variables_number();
+    const Index time_raw_variables_number = get_raw_variables_number(VariableUse::Time);
 
     const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
 
@@ -420,9 +414,9 @@ void TimeSeriesDataSet::print() const
     if(!display) return;
 
     const Index variables_number = get_variables_number();
-    const Index input_variables_number = get_input_variables_number();
+    const Index input_variables_number = get_variables_number(VariableUse::Input);
     const Index samples_number = get_samples_number();
-    const Index target_variables_bumber = get_target_variables_number();
+    const Index target_variables_bumber = get_variables_number(VariableUse::Target);
 
     cout << "Time series data set object summary:\n"
          << "Number of samples: " << samples_number << "\n"
@@ -1192,9 +1186,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 void TimeSeriesDataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
+    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 

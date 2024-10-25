@@ -41,8 +41,8 @@ void DataSetTest::test_constructor()
 
     assert_true(data_set_3.get_variables_number() == 2, LOG);
     assert_true(data_set_3.get_samples_number() == 1, LOG);
-    assert_true(data_set_3.get_input_variables_number() == 1,LOG);
-    assert_true(data_set_3.get_target_variables_number() == 1,LOG);
+    assert_true(data_set_3.get_variables_number(DataSet::VariableUse::Input) == 1,LOG);
+    assert_true(data_set_3.get_variables_number(DataSet::VariableUse::Target) == 1,LOG);
 }
 
 
@@ -273,8 +273,8 @@ void DataSetTest::test_unuse_constant_raw_variables()
 
     data_set.unuse_constant_raw_variables();
 
-    assert_true(data_set.get_input_raw_variables_number() == 0, LOG);
-    assert_true(data_set.get_target_raw_variables_number() == 1, LOG);
+    assert_true(data_set.get_raw_variables_number(DataSet::VariableUse::Input) == 0, LOG);
+    assert_true(data_set.get_raw_variables_number(DataSet::VariableUse::Target) == 1, LOG);
 }
 
 
@@ -1000,7 +1000,7 @@ void DataSetTest::test_scrub_missing_values()
 
     data_set.scrub_missing_values();
 
-    samples_uses = data_set.get_samples_uses();
+    samples_uses = data_set.get_sample_uses();
 
     assert_true(samples_uses(1) == DataSet::SampleUse::None, LOG);
 
@@ -1402,7 +1402,7 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
-    for(Index i = 0; i <  data_set.get_input_raw_variables_number() ; i++)
+    for(Index i = 0; i <  data_set.get_raw_variables_number(DataSet::VariableUse::Input) ; i++)
     {
         assert_true(inputs_correlations(i,i).r == 1, LOG);
 
@@ -1902,9 +1902,9 @@ void DataSetTest::test_fill()
 
     data_set.set_training();
 
-    const Index training_samples_number = data_set.get_training_samples_number();
+    const Index training_samples_number = data_set.get_samples_number(DataSet::SampleUse::Training);
 
-    const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
 
     const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();

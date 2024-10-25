@@ -397,7 +397,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
         {
             if(display)
                 cout << "OpenNN Warning: ScalingLayer2D class.\n"
-                     << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+                     << "forward_propagate method.\n"
                      << "Standard deviation of variable " << i << " is zero.\n"
                      << "Those variables won't be scaled.\n";
 
