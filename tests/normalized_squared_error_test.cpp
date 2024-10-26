@@ -62,8 +62,8 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
 
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -108,8 +108,8 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         data_set.set_training();
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -151,8 +151,8 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         data_set.set_data_constant(type(0));
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -200,8 +200,8 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         data_set.set_training();
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -396,8 +396,8 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         data_set.set_training();
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -447,8 +447,8 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         data_set.set_training();
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -513,7 +513,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 
     data_set.set_raw_variables_uses(uses);
 
-    target_data = data_set.get_target_data();
+    target_data = data_set.get_data(DataSet::VariableUse::Target);
 
     Eigen::array<int, 1> dimensions({0});
     targets_mean = target_data.mean(dimensions);

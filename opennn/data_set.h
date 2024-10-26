@@ -236,14 +236,8 @@ public:
 
     const Tensor<type, 2>& get_data() const;
     Tensor<type, 2>* get_data_p();
-
     Tensor<type, 2> get_data(const SampleUse&) const;
-
-    Tensor<type, 2> get_data(const VariableUse&) const;
-
-    Tensor<type, 2> get_input_data(const Tensor<Index, 1>&) const;
-    Tensor<type, 2> get_target_data(const Tensor<Index, 1>&) const;
-
+    Tensor<type, 2> get_data(const VariableUse&) const;   
     Tensor<type, 2> get_data(const SampleUse&, const VariableUse&) const;
 
     Tensor<type, 1> get_sample_data(const Index&) const;
@@ -251,7 +245,7 @@ public:
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
 
-    Tensor<type, 2> get_raw_variables_data(const Tensor<Index, 1>&) const;
+//    Tensor<type, 2> get_raw_variables_data(const Tensor<Index, 1>&) const;
 
     Tensor<type, 2> get_raw_variable_data(const Index&) const;
     Tensor<type, 2> get_raw_variable_data(const Index&, const Tensor<Index, 1>&) const;

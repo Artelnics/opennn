@@ -2057,32 +2057,6 @@ Tensor<type, 2> DataSet::get_data(const VariableUse& variable_use) const
 }
 
 
-Tensor<type, 2> DataSet::get_input_data(const Tensor<Index, 1>& samples_indices) const
-{
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
-
-    Tensor<type, 2> input_data(samples_indices.size(), input_variables_indices.size());
-
-    fill_tensor_data(data, samples_indices, input_variables_indices, input_data.data());
-
-    return input_data;
-}
-
-
-Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& samples_indices) const
-{
-    const Index samples_number = get_samples_number();
-
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
-
-    Tensor<type, 2> target_data(samples_number, target_variables_indices.size());
-
-    fill_tensor_data(data, samples_number, target_variables_indices, target_data.data());
-
-    return target_data;
-}
-
-
 Tensor<type, 2> DataSet::get_data(const SampleUse& sample_use, const VariableUse& variable_use) const
 {
     const Tensor<Index, 1> sample_indices = get_sample_indices(sample_use);
@@ -2277,26 +2251,26 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
 }
 
 
-Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected_raw_variable_indices) const
-{
-    const Index raw_variables_number = selected_raw_variable_indices.size();
-    const Index rows_number = data.dimension(0);
+// Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected_raw_variable_indices) const
+// {
+//     const Index raw_variables_number = selected_raw_variable_indices.size();
+//     const Index rows_number = data.dimension(0);
 
-    Tensor<type, 2> data_slice(rows_number, raw_variables_number);
+//     Tensor<type, 2> data_slice(rows_number, raw_variables_number);
 
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        const Eigen::array<Index, 1> rows_number_to_reshape{{rows_number}};
+//     for(Index i = 0; i < raw_variables_number; i++)
+//     {
+//         const Eigen::array<Index, 1> rows_number_to_reshape{{rows_number}};
 
-        const Tensor<type, 2> single_raw_variable_data = get_raw_variable_data(selected_raw_variable_indices(i));
+//         const Tensor<type, 2> single_raw_variable_data = get_raw_variable_data(selected_raw_variable_indices(i));
 
-        const Tensor<type, 1> column_data = single_raw_variable_data.reshape(rows_number_to_reshape);
+//         const Tensor<type, 1> column_data = single_raw_variable_data.reshape(rows_number_to_reshape);
 
-        data_slice.chip(i,1) = column_data;
-    }
+//         data_slice.chip(i,1) = column_data;
+//     }
 
-    return data_slice;
-}
+//     return data_slice;
+// }
 
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const Tensor<Index, 1>& rows_indices) const
@@ -5936,14 +5910,8 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     Index count = 0;
 
     for(Index i = 0; i < batches_number;i++)
-    {
         for(Index j = 0; j < batch_size;++j)
-        {
-            batches(i, j) = samples_indices(count);
-
-            count++;
-        }
-    }
+            batches(i, j) = samples_indices(count++);
 
     return batches;
 }

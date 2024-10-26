@@ -1906,8 +1906,8 @@ void DataSetTest::test_fill()
 
     const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
 
-    const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
     batch.set(training_samples_number, &data_set);
     /*

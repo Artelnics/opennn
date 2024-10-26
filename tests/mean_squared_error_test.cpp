@@ -64,8 +64,8 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
 
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
 
@@ -111,8 +111,8 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
         data_set.set_training();
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -152,8 +152,8 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
         data_set.set_training();
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
