@@ -335,7 +335,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     neural_network->set_inputs_names(data_set->get_variable_names(DataSet::VariableUse::Input));
 
-    if(neural_network->has_scaling_layer_2d())
+    if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
         scaling_layer_2d->set_descriptives(input_variables_descriptives);

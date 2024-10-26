@@ -271,8 +271,6 @@ void PerceptronLayer3D::set_parameters_glorot()
 void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                Tensor<type, 3>& combinations) const
 {
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = {IndexPair<Index>(2, 0)};
-
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
     sum_matrices(thread_pool_device, biases, combinations);
@@ -392,14 +390,11 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
 
-    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
-    const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
-
     combinations_derivatives.device(*thread_pool_device) 
         = deltas * activations_derivatives;
 
     biases_derivatives.device(*thread_pool_device)
-        = combinations_derivatives.sum(Eigen::array<Index, 2>({0, 1}));
+        = combinations_derivatives.sum(sum_dimensions);
 
     synaptic_weights_derivatives.device(*thread_pool_device)
         = inputs.contract(combinations_derivatives, double_contraction_indices);

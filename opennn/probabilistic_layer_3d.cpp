@@ -351,9 +351,6 @@ void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     Tensor<type, 3>& input_derivatives = probabilistic_layer_3d_back_propagation->input_derivatives;
 
-    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
-    const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
-
     if(!built_mask)
     {
         mask.device(*thread_pool_device) = (targets != targets.constant(0)).cast<type>();
@@ -368,7 +365,7 @@ void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
     calculate_combinations_derivatives(outputs, targets, mask, combinations_derivatives);
 
     biases_derivatives.device(*thread_pool_device) 
-        = combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
+        = combinations_derivatives.sum(sum_dimensions);
 
     synaptic_weights_derivatives.device(*thread_pool_device) 
         = inputs.contract(combinations_derivatives, double_contraction_indices);

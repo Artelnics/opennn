@@ -26,9 +26,7 @@ class OptimizationAlgorithm
 
 public:
 
-   explicit OptimizationAlgorithm();
-
-   explicit OptimizationAlgorithm(LossIndex*);
+   explicit OptimizationAlgorithm(LossIndex* = nullptr);
 
    virtual ~OptimizationAlgorithm();
 
@@ -57,7 +55,7 @@ public:
 
    string write_time(const type&) const;
 
-   void set();
+   void set(LossIndex* = nullptr);
 
    virtual void set_default();
 

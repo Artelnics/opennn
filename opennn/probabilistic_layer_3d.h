@@ -9,12 +9,8 @@
 #ifndef ProbabilisticLayer3D_H
 #define ProbabilisticLayer3D_H
 
-
-
 #include <iostream>
 #include <string>
-
-
 
 #include "config.h"
 #include "layer.h"
@@ -153,10 +149,13 @@ protected:
 
    bool display = true;
 
-   const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
-
    Tensor<type, 3> empty;
 
+   const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+   const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
+
+   const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
+   const Eigen::array<Index, 2> sum_dimensions = { 0, 1 };
 };
 
 

@@ -178,7 +178,7 @@ void ImageDataSet::set(const Index& new_images_number,
     }
 
     // Samples
-    samples_uses.resize(new_images_number);
+    sample_uses.resize(new_images_number);
     split_samples_random();
 
     set_raw_variables_scalers(Scaler::ImageMinMax);
@@ -767,9 +767,9 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_number_element->GetText())
     {
-        samples_uses.resize(Index(atoi(samples_number_element->GetText())));
+        sample_uses.resize(Index(atoi(samples_number_element->GetText())));
 
-        set_training();
+        //set(DataSet::SampleUse::Training);
     }
 
     // Samples uses

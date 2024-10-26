@@ -12,33 +12,9 @@
 namespace opennn
 {
 
-TrainingStrategy::TrainingStrategy()
-{
-    set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
-
-    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
-
-    LossIndex* loss_index = get_loss_index();
-
-    set_loss_index(loss_index);
-
-    set_default();
-}
-
-
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
-    : data_set(new_data_set),
-       neural_network(new_neural_network)
 {
-    set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
-
-    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
-
-    set_loss_index_neural_network(neural_network);
-
-    set_loss_index_data_set(data_set);
-
-    set_default();
+    set(new_neural_network, new_data_set);
 }
 
 
@@ -314,19 +290,13 @@ const bool& TrainingStrategy::get_display() const
 }
 
 
-void TrainingStrategy::set()
-{
-    set_optimization_method(OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-    set_default();
-}
-
-
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
     set_neural_network(new_neural_network);
 
     set_data_set(new_data_set);
+
+    set_default();
 }
 
 
@@ -533,15 +503,18 @@ void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 }
 
 
-void TrainingStrategy::set_default() const
+void TrainingStrategy::set_default()
 {
+    loss_method = LossMethod::MEAN_SQUARED_ERROR;
+
+    optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
 }
 
 
 TrainingResults TrainingStrategy::perform_training()
 {    
-    if(neural_network->has_recurrent_layer()
-    || neural_network->has_long_short_term_memory_layer())
+    if(neural_network->has(Layer::Type::Recurrent)
+    || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
 
     set_display(display);
@@ -576,9 +549,9 @@ void TrainingStrategy::fix_forecasting()
 {
     Index time_steps = 0;
 
-    if(neural_network->has_recurrent_layer())
+    if(neural_network->has(Layer::Type::Recurrent))
         time_steps = neural_network->get_recurrent_layer()->get_timesteps();
-    else if(neural_network->has_long_short_term_memory_layer())
+    else if(neural_network->has(Layer::Type::LongShortTermMemory))
         time_steps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
     else
         return;
