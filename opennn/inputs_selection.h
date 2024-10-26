@@ -27,14 +27,17 @@ public:
 
     // Constructors
 
-    explicit InputsSelection();
-
-    explicit InputsSelection(TrainingStrategy*);
+    explicit InputsSelection(TrainingStrategy* = nullptr);
 
     // Enumerations
 
-    enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
-                           MaximumSelectionFailures, CorrelationGoal};
+    enum class StoppingCondition{MaximumTime, 
+                                 SelectionErrorGoal, 
+                                 MaximumInputs, 
+                                 MinimumInputs, 
+                                 MaximumEpochs,
+                                 MaximumSelectionFailures,  
+                                 CorrelationGoal};
 
     // Get
 
@@ -51,11 +54,11 @@ public:
     const type& get_maximum_time() const;
     const type& get_maximum_correlation() const;
     const type& get_minimum_correlation() const;
-    const type& get_tolerance() const;
+    //const type& get_tolerance() const;
 
     // Set
 
-    void set(TrainingStrategy*);
+    void set(TrainingStrategy* = nullptr);
 
     virtual void set_default();
 

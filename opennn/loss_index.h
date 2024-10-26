@@ -35,9 +35,7 @@ public:
 
    // Constructors
 
-   explicit LossIndex();
-
-   explicit LossIndex(NeuralNetwork*, DataSet*);
+   explicit LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    // Destructor
 
@@ -71,10 +69,7 @@ public:
 
    // Set
 
-   void set();
-   void set(NeuralNetwork*);
-   void set(DataSet*);
-   void set(NeuralNetwork*, DataSet*);
+   void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void set(const LossIndex&);
 

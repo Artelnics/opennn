@@ -306,7 +306,7 @@ void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inpu
 
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
 
-    Eigen::array<int, 2>& reduction_dimensions = pooling_layer_forward_propagation->reduction_dimensions;
+    const Eigen::array<int, 2>& reduction_dimensions = pooling_layer_forward_propagation->reduction_dimensions;
 
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
@@ -367,19 +367,15 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
-    Tensor<type, 2> patches_flat;
+    const Eigen::array<Index, 2> reshape_dimensions = { pool_size, output_size };
 
-    auto shuffle_dimensions = Eigen::array<Index, 4>{0, 1, 2, 3};
-
-    auto reshape_dimensions = Eigen::array<Index, 2>{ pool_size, output_size };
-
-    // @todo parallelize
+    #pragma omp parallel for
 
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
     {
-        patches_flat = image_patches.chip(batch_index, 0)
-                                    .shuffle(shuffle_dimensions)
-                                    .reshape(reshape_dimensions);
+        Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0)
+                                                    .shuffle(shuffle_dimensions)
+                                                    .reshape(reshape_dimensions);
 
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
     }
@@ -445,7 +441,7 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
     
     input_derivatives.setZero();
 
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
         for (Index channel_index = 0; channel_index < channels; channel_index++)
             for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
@@ -478,6 +474,7 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
     const Index pool_size = pool_height * pool_width;
 
     const Eigen::array<Index, 4> grad_extents = { batch_samples_number, 1, 1, 1 };
+
     Eigen::array<Index, 4> grad_offsets;
 
     Eigen::array<Index, 4> broadcast_dims;
@@ -501,7 +498,7 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     // Input derivatives
 
-    // @todo parallelize
+    //#pragma omp parallel for collapse(2)
 
     for (Index channel_index = 0; channel_index < channels; channel_index++)
         for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
@@ -514,10 +511,12 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
                 const Index width_start = output_width_index * column_stride;
                 const Index width_end = min(width_start + pool_width, input_width);
 
-                grad_offsets = { 0, output_height_index, output_width_index, channel_index };
+                const Eigen::array<Index, 4> grad_offsets = { 0, output_height_index, output_width_index, channel_index };
+
+                const Eigen::array<Index, 4> broadcast_dims = { 1, height_end - height_start, width_end - width_start, 1 };
+
                 gradient = gradient_tensor.slice(grad_offsets, grad_extents);
 
-                broadcast_dims = { 1, height_end - height_start, width_end - width_start, 1 };
                 gradient_tensor_slice = gradient.broadcast(broadcast_dims);
 
                 offsets = { 0, height_start, width_start, channel_index };
@@ -533,71 +532,47 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    // PoolingLayer layer
-
     file_stream.OpenElement("PoolingLayer");
-
-    // Layer name
 
     file_stream.OpenElement("Name");
     file_stream.PushText(name.c_str());
     file_stream.CloseElement();
 
-    // Image size
-
     file_stream.OpenElement("InputDimensions");
     file_stream.PushText(string("1 1 1").c_str());
     file_stream.CloseElement();
-
-    //Filters number
 
     file_stream.OpenElement("FiltersNumber");
     file_stream.PushText(string("9").c_str());
     file_stream.CloseElement();
 
-    // Filters size
-
     file_stream.OpenElement("FiltersSize");
     file_stream.PushText(string("9").c_str());
     file_stream.CloseElement();
-
-    // PoolingLayer method
 
     file_stream.OpenElement("PoolingMethod");
     file_stream.PushText(write_pooling_method().c_str());
     file_stream.CloseElement();
 
-    // Inputs variables dimensions
-
     file_stream.OpenElement("InputDimensions");
     file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
     file_stream.CloseElement();
-
-    // column stride
 
     file_stream.OpenElement("ColumnStride");
     file_stream.PushText(to_string(get_column_stride()).c_str());
     file_stream.CloseElement();
 
-    //Row stride
-
     file_stream.OpenElement("RowStride");
     file_stream.PushText(to_string(get_row_stride()).c_str());
     file_stream.CloseElement();
-
-    // Pool columns number
 
     file_stream.OpenElement("PoolColumnsNumber");
     file_stream.PushText(to_string(get_pool_width()).c_str());
     file_stream.CloseElement();
 
-    // Pool rows number
-
     file_stream.OpenElement("PoolRowsNumber");
     file_stream.PushText(to_string(get_pool_height()).c_str());
     file_stream.CloseElement();
-
-    // Padding width
 
     file_stream.OpenElement("PaddingWidth");
     file_stream.PushText(to_string(get_padding_width()).c_str());
@@ -611,14 +586,10 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
-    // PoolingLayer layer
-
     const tinyxml2::XMLElement* pooling_layer_element = document.FirstChildElement("PoolingLayer");
 
     if(!pooling_layer_element)
         throw runtime_error("PoolingLayer layer element is nullptr.\batch_index");
-
-    // PoolingLayer method element
 
     const tinyxml2::XMLElement* pooling_method_element = pooling_layer_element->FirstChildElement("PoolingMethod");
 
@@ -627,16 +598,10 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     set_pooling_method(pooling_method_element->GetText());
 
-    // Input variables dimensions element
-
     const tinyxml2::XMLElement* input_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
 
     if(!input_dimensions_element)
         throw runtime_error("PoolingLayer input variables dimensions element is nullptr.\batch_index");
-
-//    set_input_dimensions(input_dimensions_element->GetText());
-
-    // column stride
 
     const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
 
@@ -645,8 +610,6 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     set_column_stride(Index(stoi(column_stride_element->GetText())));
 
-    // Row stride
-
     const tinyxml2::XMLElement* row_stride_element = pooling_layer_element->FirstChildElement("RowStride");
 
     if(!row_stride_element)
@@ -654,16 +617,12 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     set_row_stride(Index(stoi(row_stride_element->GetText())));
 
-    // Pool columns number
-
     const tinyxml2::XMLElement* pool_columns_number_element = pooling_layer_element->FirstChildElement("PoolColumnsNumber");
 
     if(!pool_columns_number_element)
         throw runtime_error("PoolingLayer columns number element is nullptr.\batch_index");
 
     const string pool_columns_number_string = pool_columns_number_element->GetText();
-
-    // Pool rows number
 
     const tinyxml2::XMLElement* pool_rows_number_element = pooling_layer_element->FirstChildElement("PoolRowsNumber");
 
@@ -673,8 +632,6 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const string pool_rows_number_string = pool_rows_number_element->GetText();
 
     set_pool_size(Index(stoi(pool_rows_number_string)), Index(stoi(pool_columns_number_string)));
-
-    // Padding Width
 
     const tinyxml2::XMLElement* padding_width_element = pooling_layer_element->FirstChildElement("PaddingWidth");
 

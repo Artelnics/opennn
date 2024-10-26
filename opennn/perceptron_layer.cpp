@@ -411,7 +411,7 @@ void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& inpu
     
     combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
 
-    biases_derivatives.device(*thread_pool_device) = combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
+    biases_derivatives.device(*thread_pool_device) = combinations_derivatives.sum(sum_dimensions_1);
 
     synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(combinations_derivatives, AT_B);
 

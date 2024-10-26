@@ -131,8 +131,6 @@ public:
 
         void set_type(const string&);
 
-        //void add_category(const string&);
-
         void set_categories(const Tensor<string, 1>&);
 
         virtual void from_XML(const tinyxml2::XMLDocument&);
@@ -149,7 +147,7 @@ public:
 
     // Samples get
 
-    inline Index get_samples_number() const {return samples_uses.size();}
+    inline Index get_samples_number() const {return sample_uses.size();}
 
     Index get_samples_number(const SampleUse&) const;
 
@@ -187,7 +185,6 @@ public:
     Index get_raw_variable_index(const string&) const;
     Index get_raw_variable_index(const Index&) const;
 
-//    Tensor<Index, 1> get_raw_variable_indices(const Tensor<string, 1>&) const;
     Tensor<Index, 1> get_raw_variable_indices(const VariableUse&) const;        
     Tensor<Index, 1> get_used_raw_variables_indices() const;
 
@@ -202,9 +199,7 @@ public:
     // Variables get
 
     Index get_variables_number() const;
-
     Index get_variables_number(const VariableUse&) const;
-
     Index get_used_variables_number() const;
 
     string get_variable_name(const Index&) const;
@@ -213,7 +208,6 @@ public:
 
     Tensor<Index, 1> get_variable_indices(const Index&) const;
     Tensor<Index, 1> get_variable_indices(const VariableUse&) const;
-
     Tensor<Index, 1> get_used_variable_indices() const;
 
     Tensor<VariableUse, 1> get_variables_uses() const;
@@ -244,8 +238,6 @@ public:
     Tensor<type, 1> get_sample_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
-
-//    Tensor<type, 2> get_raw_variables_data(const Tensor<Index, 1>&) const;
 
     Tensor<type, 2> get_raw_variable_data(const Index&) const;
     Tensor<type, 2> get_raw_variable_data(const Index&, const Tensor<Index, 1>&) const;
@@ -296,7 +288,6 @@ public:
     void set(const DataSet&);
     void set(const tinyxml2::XMLDocument&);
     void set(const string&);
-//    void set(const string&, const char&, const bool&);
     void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
     void set(const Tensor<type, 1>&, const Index&);
     void set_default();
@@ -310,16 +301,7 @@ public:
 
     void set_samples_number(const Index&);
 
-    void set_training();
-    void set_selection();
-    void set_testing();
-
-    void set_training(const Tensor<Index, 1>&);
-    void set_selection(const Tensor<Index, 1>&);
-    void set_testing(const Tensor<Index, 1>&);
-
-    void set_samples_unused();
-    void set_samples_unused(const Tensor<Index, 1>&);
+    void set(const SampleUse&);
 
     void set_sample_use(const Index&, const SampleUse&);
     void set_sample_use(const Index&, const string&);
@@ -372,11 +354,9 @@ public:
     void set_variables_names(const Tensor<string, 1>&);
     void set_variable_name(const Index&, const string&);
 
-    void set_input();
-    void set_target();
-    void set_variables_unused();
+    void set(const VariableUse&);
 
-    void set_input_variables_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
     void set_target_dimensions(const dimensions&);
 
     // Data set
@@ -397,7 +377,6 @@ public:
     void set_separator(const Separator&);
     void set_separator_string(const string&);
     void set_separator_name(const string&);
-//    void set_separator(const char&);
 
     void set_codification(const Codification&);
     void set_codification(const string&);
@@ -665,7 +644,7 @@ protected:
 
     // Samples
 
-    Tensor<SampleUse, 1> samples_uses;
+    Tensor<SampleUse, 1> sample_uses;
 
     Tensor<string, 1> samples_id;
 
