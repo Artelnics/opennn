@@ -31,17 +31,19 @@ int main()
         //const Index image_height = 4;
         //const Index image_width = 4;
         //const Index channels = 1;
+
         //ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 2);
+
         //image_data_set.set_image_data_random();
         
         ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        //image_data_set.set_data_source_path("C:/mnist/train");
-        image_data_set.set_data_source_path("C:/binary_mnist");
+        image_data_set.set_data_source_path("C:/mnist/train");
+        //image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
-        //image_data_set.set_input_dimensions({22,22,1});
+        //image_data_set.set_input_dimensions({16,16,1});
 
         image_data_set.read_bmp();
 

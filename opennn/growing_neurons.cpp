@@ -75,6 +75,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+
     Index neurons_number;
 
     // Loss index
@@ -107,11 +109,10 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         // Neural network
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
-/*
-        trainable_layers[trainable_layers_number-2]->set_neurons_number(neurons_number);
 
-        trainable_layers[trainable_layers_number-1]->set_inputs_number(neurons_number);
-*/
+        neural_network->get_layer(last_trainable_layer_index-1).get()->set_neurons_number(neurons_number);
+        neural_network->get_layer(last_trainable_layer_index).get()->set_inputs_number(neurons_number);
+
         neurons_selection_results.neurons_number_history(epoch) = neurons_number;
 
         // Loss index
@@ -154,7 +155,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                  << "Selection error: " << training_results.get_selection_error() << endl
                  << "Elapsed time: " << write_time(elapsed_time) << endl;
 
-        if(neurons_selection_results.optimum_selection_error > previous_selection_error) selection_failures++;
+        if(neurons_selection_results.optimum_selection_error > previous_selection_error) 
+            selection_failures++;
 
         previous_selection_error = neurons_selection_results.optimum_selection_error;
 
@@ -220,10 +222,10 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     }
 
     // Save neural network
-/*
-    trainable_layers[trainable_layers_number-1]->set_inputs_number(neurons_selection_results.optimal_neurons_number);
-    trainable_layers[trainable_layers_number-2]->set_neurons_number(neurons_selection_results.optimal_neurons_number);
-*/
+
+    neural_network->get_layer(last_trainable_layer_index - 1).get()->set_neurons_number(neurons_number);
+    neural_network->get_layer(last_trainable_layer_index).get()->set_inputs_number(neurons_number);
+
     neural_network->set_parameters(neurons_selection_results.optimal_parameters);
 
     if(display) neurons_selection_results.print();

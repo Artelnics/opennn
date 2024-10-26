@@ -9,15 +9,11 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-
-
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <math.h>
 #include <vector>
-
-
 
 #include "config.h"
 #include "descriptives.h"

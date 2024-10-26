@@ -129,16 +129,16 @@ void ImageDataSet::set(const Index& new_images_number,
 
     model_type = ModelType::ImageClassification;
 
-    const Index target_number = (new_targets_number == 2) ? 1 : new_targets_number;
+    const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
     const Index inputs_number = new_height * new_width * new_channels;
     const Index raw_variables_number = inputs_number + 1;
-    const Index variables_number = inputs_number + target_number;
+    const Index variables_number = inputs_number + targets_number;
 
     // Dimensions
 
     input_dimensions = { new_height, new_width, new_channels };
 
-    target_dimensions = { target_number };
+    target_dimensions = { targets_number };
 
     // Data
 
@@ -149,35 +149,32 @@ void ImageDataSet::set(const Index& new_images_number,
     raw_variables.resize(raw_variables_number);
 
     for(Index i = 0; i < inputs_number; i++)
-    {
-        // @todo use set method
-        raw_variables(i).name = "p_" + to_string(i+1);
-        raw_variables(i).use = VariableUse::Input;
-        raw_variables(i).type = RawVariableType::Numeric;
-        raw_variables(i).scaler = Scaler::ImageMinMax;
-    }
+        raw_variables(i).set("p_" + to_string(i + 1), 
+                             VariableUse::Input, 
+                             RawVariableType::Numeric,
+                             Scaler::ImageMinMax);
 
-    if(target_number == 1)
+    if(targets_number == 1)
     {
-        Tensor<string, 1> categories(target_number);
+        Tensor<string, 1> categories(targets_number);
         categories.setConstant("ABC");
 
-        // @todo use set methods
-        raw_variables(raw_variables_number-1).type = RawVariableType::Binary;
-        raw_variables(raw_variables_number-1).use = VariableUse::Target;
-        raw_variables(raw_variables_number-1).name = "target";
-        raw_variables(raw_variables_number-1).set_categories(categories);
+        raw_variables(raw_variables_number - 1).set("target",
+                                                    VariableUse::Target,
+                                                    RawVariableType::Binary,
+                                                    Scaler::None,
+                                                    categories);
     }
     else
     {
-        Tensor<string, 1> categories(target_number);
+        Tensor<string, 1> categories(targets_number);
         categories.setConstant("ABC");
 
-        // @todo use set methods
-        raw_variables(raw_variables_number-1).type = RawVariableType::Categorical;
-        raw_variables(raw_variables_number-1).use = VariableUse::Target;
-        raw_variables(raw_variables_number-1).name = "target";
-        raw_variables(raw_variables_number-1).set_categories(categories);
+        raw_variables(raw_variables_number - 1).set("target",
+                                                    VariableUse::Target,
+                                                    RawVariableType::Categorical,
+                                                    Scaler::None,
+                                                    categories);
     }
 
     // Samples
@@ -670,115 +667,60 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         start_element = raw_variable_element;
 
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "raw_variable item number (" << i+1 << ") does not match (" << raw_variable_element->Attribute("Item") << ").\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") exception.");
 
         // Name
 
         const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
 
         if(!name_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Name element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Name element is nullptr.\n");
 
         if(name_element->GetText())
-        {
-            const string new_name = name_element->GetText();
-
-            raw_variables(i).name = new_name;
-        }
+            raw_variables(i).name = name_element->GetText();
 
         // Scaler
 
         const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
 
         if(!scaler_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Scaler element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Scaler element is nullptr.\n");
 
         if(scaler_element->GetText())
-        {
-            const string new_scaler = scaler_element->GetText();
-
-            raw_variables(i).set_scaler(new_scaler);
-        }
+            raw_variables(i).set_scaler(scaler_element->GetText());
 
         // raw_variable use
 
         const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
 
         if(!use_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "raw_variable use element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Raw variable use element is nullptr.\n");
 
         if(use_element->GetText())
-        {
-            const string new_raw_variable_use = use_element->GetText();
-
-            raw_variables(i).set_use(new_raw_variable_use);
-        }
+            raw_variables(i).set_use(use_element->GetText());
 
         // Type
 
         const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
 
         if(!type_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Type element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Type element is nullptr.\n");
 
         if(type_element->GetText())
-        {
-            const string new_type = type_element->GetText();
-            raw_variables(i).set_type(new_type);
-        }
+            raw_variables(i).set_type(type_element->GetText());
 
-        if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
+        if(raw_variables(i).type == RawVariableType::Categorical 
+        || raw_variables(i).type == RawVariableType::Binary)
         {
             // Categories
 
             const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
             if(!categories_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Categories element is nullptr.\n";
-
-                throw runtime_error(buffer.str());
-            }
+                throw runtime_error("Categories element is nullptr.\n");
 
             if(categories_element->GetText())
-            {
-                const string new_categories = categories_element->GetText();
-
-                raw_variables(i).categories = get_tokens(new_categories, ";");
-
-            }
+                raw_variables(i).categories = get_tokens(categories_element->GetText(), ";");
         }
     }
 
@@ -791,13 +733,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const tinyxml2::XMLElement* has_ids_element = image_data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Rows labels element is nullptr.\n";
-
-            throw runtime_error(buffer.str());
-        }
+            throw runtime_error("Rows labels element is nullptr.\n");
 
         // Samples id
 
@@ -808,10 +744,8 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) 
-            {
+            && new_rows_labels.find(";") != string::npos) 
                 separator = ';';
-            }
 
             samples_id = get_tokens(new_rows_labels, separator);
         }
@@ -822,26 +756,14 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
 
     if(!samples_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Samples element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Samples element is nullptr.\n");
 
     // Samples number
 
     const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
     if(!samples_number_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Samples number element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Samples number element is nullptr.\n");
 
     if(samples_number_element->GetText())
     {
@@ -855,13 +777,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
     if(!samples_uses_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Samples uses element is nullptr.\n";
-
-        throw runtime_error(buffer.str());
-    }
+        throw runtime_error("Samples uses element is nullptr.\n");
 
     if(samples_uses_element->GetText())
         set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
@@ -975,13 +891,9 @@ void ImageDataSet::read_bmp()
         Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
 
         if (current_height != height || current_width != width)
-        {
             bilinear_interpolation_resize_image(image_data, resized_image_data, height, width);
-        }
         else
-        {
             resized_image_data = image_data;
-        }
 
         #pragma omp parallel for
         for (Index j = 0; j < pixels_number; j++)
@@ -1021,9 +933,9 @@ void ImageDataSet::read_bmp()
         long long milliseconds = total_milliseconds % 1000;
 
         cout << endl << "Image data set loaded in: "
-            << minutes << " minutes, "
-            << seconds << " seconds, "
-            << milliseconds << " milliseconds." << endl;
+             << minutes << " minutes, "
+             << seconds << " seconds, "
+             << milliseconds << " milliseconds." << endl;
     }
 }
 

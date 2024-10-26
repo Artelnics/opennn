@@ -17,7 +17,6 @@
 #include "neural_network_forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
-//#include "strings_utilities.h"
 #include "config.h"
 #include "layer.h"
 #include "perceptron_layer.h"
@@ -332,18 +331,14 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
         {
             const Index input_index = layer_input_indices[i][k];
 
-            if (input_index != -1) {
+            if (input_index != -1) 
                 layer_output_indices[input_index].push_back(i);
-            }
         }
     }
 
     for (Index i = 0; i < layers_number; i++)
-    {
-        if (layer_output_indices[i].empty()) {
+        if (layer_output_indices[i].empty()) 
             layer_output_indices[i].push_back(-1);
-        }
-    }
 
     return layer_output_indices;
 }
@@ -412,12 +407,8 @@ BoundingLayer* NeuralNetwork::get_bounding_layer() const
 //     const Index layers_number = get_layers_number();
 
 //     for(Index i = 0; i < layers_number; i++)
-//     {
 //         if(layers[i]->get_type() == Layer::Type::Flatten)
-//         {
 //             return dynamic_cast<FlattenLayer*>(layers[i]);
-//         }
-//     }
 
 //     throw runtime_error("No flatten layer in neural network.\n");
 // }
@@ -512,7 +503,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
 
     model_type = new_model_type;
 
-    const Index complexity_size = complexity_dimensions.size();
 
     const Index inputs_number = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
 
@@ -521,112 +511,164 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     for(Index i = 0; i < inputs_number; i++)
         input_names(i) = "input_" + to_string(i+1);
 
-    if(model_type == ModelType::Approximation)
-    {
-        add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+    switch(model_type)
+    {    
+    case ModelType::Approximation:
+        set_approximation(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
+    
+    case ModelType::Classification: 
+        set_classification(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
 
-        for(Index i = 0; i < complexity_size; i++)
-        {
-            const dimensions neurons_number = {complexity_dimensions[i]};
+    case ModelType::TextClassification:
+        set_classification(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
 
-            add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                      "perceptron_layer_" + to_string(i+1));
-        }
+    case ModelType::Forecasting:
+        set_forecasting(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
 
-        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), output_dimensions, PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(complexity_size+1));
+    case ModelType::ImageClassification:
+        set_image_classification(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
+    
+    case ModelType::AutoAssociation:
+        set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
+        break;
 
-        add_layer(make_unique<UnscalingLayer>(output_dimensions));
-
-        add_layer(make_unique<BoundingLayer>(output_dimensions));
     }
-    else if(model_type == ModelType::Classification || model_type == ModelType::TextClassification)
-    {
-        for (Index i = 0; i < complexity_size; i++)
-        {
-            const dimensions neurons_number = {complexity_dimensions[i]};
-            add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                "perceptron_layer_" + to_string(i + 1));
-        }
-
-        add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
-    }
-    else if(model_type == ModelType::Forecasting)
-    {
-        add_layer(make_unique<ScalingLayer2D>(input_dimensions));
-
-        add_layer(make_unique<UnscalingLayer>(output_dimensions));
-
-        add_layer(make_unique<BoundingLayer>(output_dimensions));
-    }
-    else if(model_type == ModelType::ImageClassification)
-    {
-        add_layer(make_unique<ScalingLayer4D>(input_dimensions));
-        
-        for (Index i = 0; i < complexity_size; i++)
-        {
-            
-            const dimensions kernel_dimensions = {3, 3, get_output_dimensions()[2], complexity_dimensions[i]};
-            const dimensions convolution_stride_dimensions = {1, 1};
-            const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
-
-            //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-            //                                          kernel_dimensions,
-            //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-            //                                          convolution_stride_dimensions,
-            //                                          convolution_type),
-            //          "convolutional_layer_" + to_string(i + 1));
-            
-            const dimensions pool_dimensions = {2, 2};
-            const dimensions pooling_stride_dimensions = { 2, 2 };
-            const dimensions padding_dimensions = { 0, 0 };
-            const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
-
-            //add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
-            //                                    pool_dimensions,
-            //                                    pooling_stride_dimensions,
-            //                                    padding_dimensions,
-            //                                    pooling_method),
-            //          "pooling_layer_" + to_string(i + 1));
-            
-        }
-
-        add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
-
-        //const dimensions neurons_number = { complexity_dimensions[complexity_dimensions.size()]*2 };
-        //add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::RectifiedLinear), "perceptron_layer");
-
-        add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
-    }
-    else if(model_type == ModelType::AutoAssociation)
-    {
-/*
-        add_layer(make_unique<ScalingLayer2D>(inputs_number));
-
-        const Index mapping_neurons_number = 10;
-        const Index bottle_neck_neurons_number = complexity_dimensions[0];
-
-        add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                  "mapping_layer");
-
-        add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
-                  "bottleneck_layer");
-
-        add_layer(make_unique<PerceptronLayer>(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                  "demapping_layer");
-
-        add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, output_dimensions[0], PerceptronLayer::ActivationFunction::Linear),
-                  "output_layer");
-
-        add_layer(make_unique<UnscalingLayer>(output_dimensions[0]));
-*/
-    }
-
     const Index outputs_number = accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
 
     output_names.resize(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
         output_names(i) = "output_" + to_string(i+1);
+}
+
+
+void NeuralNetwork::set_approximation(const dimensions& input_dimensions, 
+                                      const dimensions& complexity_dimensions, 
+                                      const dimensions& output_dimensions)
+{
+    const Index complexity_size = complexity_dimensions.size();
+
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
+    for (Index i = 0; i < complexity_size; i++)
+    {
+        const dimensions neurons_number = { complexity_dimensions[i] };
+
+        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+            "perceptron_layer_" + to_string(i + 1));
+    }
+
+    add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), output_dimensions, PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(complexity_size + 1));
+
+    add_layer(make_unique<UnscalingLayer>(output_dimensions));
+
+    add_layer(make_unique<BoundingLayer>(output_dimensions));
+
+}
+
+
+void NeuralNetwork::set_classification(const dimensions& input_dimensions, 
+                                       const dimensions& complexity_dimensions, 
+                                       const dimensions& output_dimensions)
+{
+    const Index complexity_size = complexity_dimensions.size();
+
+    for (Index i = 0; i < complexity_size; i++)
+    {
+        const dimensions neurons_number = { complexity_dimensions[i] };
+
+        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+            "perceptron_layer_" + to_string(i + 1));
+    }
+
+    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
+
+}
+
+
+void NeuralNetwork::set_forecasting(const dimensions& input_dimensions, 
+                                    const dimensions& complexity_dimensions, 
+                                    const dimensions& output_dimensions)
+{
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
+    add_layer(make_unique<UnscalingLayer>(output_dimensions));
+
+    add_layer(make_unique<BoundingLayer>(output_dimensions));
+}
+
+
+void NeuralNetwork::set_auto_association(const dimensions& input_dimensions, 
+                                         const dimensions& complexity_dimensions, 
+                                         const dimensions& output_dimensions)
+{
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
+    const Index mapping_neurons_number = 10;
+    const Index bottle_neck_neurons_number = complexity_dimensions[0];
+/*
+    add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+                "mapping_layer");
+
+    add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
+                "bottleneck_layer");
+
+    add_layer(make_unique<PerceptronLayer>(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
+                "demapping_layer");
+
+    add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, output_dimensions[0], PerceptronLayer::ActivationFunction::Linear),
+                "output_layer");
+*/
+    add_layer(make_unique<UnscalingLayer>(output_dimensions));
+}
+
+
+void NeuralNetwork::set_image_classification(const dimensions& input_dimensions, 
+                                             const dimensions& complexity_dimensions, 
+                                             const dimensions& output_dimensions)
+{
+    const Index complexity_size = complexity_dimensions.size();
+
+    add_layer(make_unique<ScalingLayer4D>(input_dimensions));
+
+    for (Index i = 0; i < complexity_size; i++)
+    {
+        const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
+        const dimensions convolution_stride_dimensions = { 1, 1 };
+        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
+
+        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+            kernel_dimensions,
+            ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+            convolution_stride_dimensions,
+            convolution_type),
+            "convolutional_layer_" + to_string(i + 1));
+
+        const dimensions pool_dimensions = { 2, 2 };
+        const dimensions pooling_stride_dimensions = { 2, 2 };
+        const dimensions padding_dimensions = { 0, 0 };
+        const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
+
+        //add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
+        //                                    pool_dimensions,
+        //                                    pooling_stride_dimensions,
+        //                                    padding_dimensions,
+        //                                    pooling_method),
+        //          "pooling_layer_" + to_string(i + 1));
+
+    }
+
+    add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
+
+    //const dimensions neurons_number = { complexity_dimensions[complexity_dimensions.size()]*2 };
+    //add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::RectifiedLinear), "perceptron_layer");
+
+    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
 }
 
 
@@ -659,9 +701,7 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
     else if(new_model_type == "AutoAssociation")
         set_model_type(ModelType::AutoAssociation);
     else
-        throw runtime_error("Neural Network class exception:\n"
-                            "void set_model_type_string(const string&)\n"
-                            "Unknown model type: " + new_model_type + "\n");
+        throw runtime_error("Unknown model type: " + new_model_type + "\n");
 }
 
 
@@ -692,21 +732,6 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 
     layers[first_trainable_layer_index]->set_inputs_number(new_inputs_number);
 }
-
-
-// void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
-// {
-//     if(layers.dimension(0) == 0) return;
-
-//     Index new_inputs_number = 0;
-
-//     for(Index i = 0; i < inputs.dimension(0); i++)
-//     {
-//         if(inputs(i)) new_inputs_number++;
-//     }
-
-//     set_inputs_number(new_inputs_number);
-// }
 
 
 void NeuralNetwork::set_default()
@@ -766,7 +791,8 @@ void NeuralNetwork::set_layer_inputs_indices(const string& name,
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& name, const initializer_list<string>& new_layer_inputs_names_list)
+void NeuralNetwork::set_layer_inputs_indices(const string& name, 
+                                             const initializer_list<string>& new_layer_inputs_names_list)
 {
     Tensor<string, 1> new_layer_inputs_names(new_layer_inputs_names_list.size());
     new_layer_inputs_names.setValues(new_layer_inputs_names_list);
@@ -942,6 +968,7 @@ Index NeuralNetwork::get_trainable_layers_number() const
         else
             continue;
     }
+
     return trainable_layers_number;
 }
 
@@ -1166,7 +1193,6 @@ void NeuralNetwork::forward_propagate(const Batch& batch,
         layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
                                      is_training);
-
 }
 
 
@@ -1174,7 +1200,6 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
 {
-
     const Index layers_number = get_layers_number();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
@@ -1294,10 +1319,11 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
     {
         const Layer::Type layer_type = layers[i]->get_type();
 
-        if (layer_type != Layer::Type::Perceptron) continue;
+        if (layer_type != Layer::Type::Perceptron) 
+            continue;
 
-        information(perceptron_layer_index,0) = to_string(layers[i]->get_inputs_number());
-        information(perceptron_layer_index,1) = to_string(layers[i]->get_neurons_number());
+        information(perceptron_layer_index, 0) = to_string(layers[i]->get_inputs_number());
+        information(perceptron_layer_index, 1) = to_string(layers[i]->get_neurons_number());
 
         const PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(layers[i].get());
 
@@ -1324,7 +1350,8 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
     {
         const Layer::Type layer_type = layers[i]->get_type();
 
-        if (layer_type != Layer::Type::Probabilistic) continue;
+        if (layer_type != Layer::Type::Probabilistic) 
+            continue;
 
         information(probabilistic_layer_index,0) = to_string(layers[i]->get_inputs_number());
         information(probabilistic_layer_index,1) = to_string(layers[i]->get_neurons_number());
@@ -1587,111 +1614,133 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         if(!layer_element)
              throw runtime_error("Layer element is nullptr.");
 
-        const string layer_type = layer_element->Name();
+        const string layer_type_string = layer_element->Name();
 
         tinyxml2::XMLDocument layer_document;
         tinyxml2::XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
 
-        if(layer_type == "ScalingLayer2D")
+        // @todo
+        Layer::Type layer_type;// = string_to_layer_type(layer_type_string);
+
+        switch(layer_type)
+        {
+        case Layer::Type::Scaling2D:
         {
             unique_ptr<ScalingLayer2D> scaling_layer = make_unique<ScalingLayer2D>();
             scaling_layer->from_XML(layer_document);
             add_layer(std::move(scaling_layer));
         }
-        else if(layer_type == "Scaling4D")
+        break;
+        case Layer::Type::Scaling4D:
         {
             unique_ptr<ScalingLayer4D> scaling_layer = make_unique<ScalingLayer4D>();
             scaling_layer->from_XML(layer_document);
             add_layer(std::move(scaling_layer));
         }
-        else if(layer_type == "ConvolutionalLayer")
+        break;
+        case Layer::Type::Convolutional:
         {
             unique_ptr<ConvolutionalLayer> convolutional_layer = make_unique<ConvolutionalLayer>();
             convolutional_layer->from_XML(layer_document);
             add_layer(std::move(convolutional_layer));
         }
-        else if(layer_type == "PerceptronLayer")
+        break;
+        case Layer::Type::Perceptron:
         {
             unique_ptr<PerceptronLayer> perceptron_layer = make_unique<PerceptronLayer>();
             perceptron_layer->from_XML(layer_document);
             add_layer(std::move(perceptron_layer));
         }
-        else if(layer_type == "PerceptronLayer3D")
+        break;
+        case Layer::Type::Perceptron3D:
         {
             unique_ptr<PerceptronLayer3D> perceptron_layer_3d = make_unique<PerceptronLayer3D>();
             perceptron_layer_3d->from_XML(layer_document);
             add_layer(std::move(perceptron_layer_3d));
         }
-        else if(layer_type == "PoolingLayer")
+        break;
+        case Layer::Type::Pooling:
         {
             unique_ptr<PoolingLayer> pooling_layer = make_unique<PoolingLayer>();
             pooling_layer->from_XML(layer_document);
             add_layer(std::move(pooling_layer));
         }
-        else if(layer_type == "ProbabilisticLayer")
+        break;
+        case Layer::Type::Probabilistic:
         {
             unique_ptr<ProbabilisticLayer> probabilistic_layer = make_unique<ProbabilisticLayer>();
             probabilistic_layer->from_XML(layer_document);
             add_layer(std::move(probabilistic_layer));
         }
-        else if(layer_type == "ProbabilisticLayer3D")
+        break;
+        case Layer::Type::Probabilistic3D:
         {
             unique_ptr<ProbabilisticLayer3D> probabilistic_layer_3d = make_unique<ProbabilisticLayer3D>();
             probabilistic_layer_3d->from_XML(layer_document);
             add_layer(std::move(probabilistic_layer_3d));
         }
-        else if(layer_type == "LongShortTermMemoryLayer")
+        break;
+        case Layer::Type::LongShortTermMemory:
         {
             unique_ptr<LongShortTermMemoryLayer> long_short_term_memory_layer = make_unique<LongShortTermMemoryLayer>();
             long_short_term_memory_layer->from_XML(layer_document);
             add_layer(std::move(long_short_term_memory_layer));
         }
-        else if(layer_type == "RecurrentLayer")
+        break;
+        case Layer::Type::Recurrent:
         {
             unique_ptr<RecurrentLayer> recurrent_layer = make_unique<RecurrentLayer>();
             recurrent_layer->from_XML(layer_document);
             add_layer(std::move(recurrent_layer));
         }
-        else if(layer_type == "UnscalingLayer")
+        break;
+        case Layer::Type::Unscaling:
         {
             unique_ptr<UnscalingLayer> unscaling_layer = make_unique<UnscalingLayer>();
             unscaling_layer->from_XML(layer_document);
             add_layer(std::move(unscaling_layer));
         }
-        else if(layer_type == "BoundingLayer")
+        break;
+        case Layer::Type::Bounding:
         {
             unique_ptr<BoundingLayer> bounding_layer = make_unique<BoundingLayer>();
             bounding_layer->from_XML(layer_document);
             add_layer(std::move(bounding_layer));
         }
-        else if(layer_type == "EmbeddingLayer")
+        break;
+        case Layer::Type::Embedding:
         {
             unique_ptr<EmbeddingLayer> embedding_layer = make_unique<EmbeddingLayer>();
             embedding_layer->from_XML(layer_document);
             add_layer(std::move(embedding_layer));
         }
-        else if(layer_type == "MultiheadAttentionLayer")
+        break;
+        case Layer::Type::MultiheadAttention:
         {
             unique_ptr<MultiheadAttentionLayer> multihead_attention_layer = make_unique<MultiheadAttentionLayer>();
             multihead_attention_layer->from_XML(layer_document);
             add_layer(std::move(multihead_attention_layer));
         }
-        else if(layer_type == "AdditionLayer3D")
+        break;
+        case Layer::Type::Addition3D:
         {
             unique_ptr<AdditionLayer3D> addition_layer_3d = make_unique<AdditionLayer3D>();
             addition_layer_3d->from_XML(layer_document);
             add_layer(std::move(addition_layer_3d));
         }
-        else if(layer_type == "NormalizationLayer3D")
+        break;
+        case Layer::Type::Normalization3D:
         {
             unique_ptr<NormalizationLayer3D> normalization_layer_3d = make_unique<NormalizationLayer3D>();
             normalization_layer_3d->from_XML(layer_document);
             add_layer(std::move(normalization_layer_3d));
         }
-        else
+        break;
+        default:
         {
-            throw runtime_error("Unknown layer type: " + layer_type);
+            throw runtime_error("Unknown layer type");
+        }
         }
 
         start_element = layer_element;
@@ -1941,7 +1990,8 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
         {
             file << outputs(i, j);
 
-            if(j != outputs_number-1) file << ";";
+            if(j != outputs_number-1) 
+                file << ";";
         }
 
         file << "\n";
@@ -1979,7 +2029,6 @@ Tensor<string, 1> NeuralNetwork::get_layer_types_string() const
 
 void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
-
     batch_samples_number = new_batch_samples_number;
 
     neural_network = new_neural_network;
@@ -1998,7 +2047,7 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
             layers[i] = make_unique< PerceptronLayerBackPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
-        case Layer::Type::PerceptronLayer3D:
+        case Layer::Type::Perceptron3D:
             layers[i] = make_unique < PerceptronLayer3DBackPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
@@ -2049,7 +2098,6 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         default: break;
         }
     }
-
 }
 
 
@@ -2073,7 +2121,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
             layers[i] = make_unique<PerceptronLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
         
-        case Layer::Type::PerceptronLayer3D:
+        case Layer::Type::Perceptron3D:
             layers[i] = make_unique<PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 

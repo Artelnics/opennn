@@ -9,11 +9,7 @@
 #ifndef MULTIHEADATTENTIONLAYER_H
 #define MULTIHEADATTENTIONLAYER_H
 
-
-
 #include <string>
-
-
 
 #include "config.h"
 #include "layer.h"

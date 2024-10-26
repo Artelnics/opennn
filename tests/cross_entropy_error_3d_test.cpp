@@ -57,7 +57,7 @@ void CrossEntropyError3DTest::test_back_propagate()
 
         data_set.set_training();
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
@@ -116,7 +116,7 @@ void CrossEntropyError3DTest::test_back_propagate()
 
         data_set.set_training();
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
@@ -178,7 +178,7 @@ void CrossEntropyError3DTest::test_back_propagate()
 
         data_set.set_training();
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
@@ -259,7 +259,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
         data_set.set_training();
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
         context_variables_indices = data_set.get_context_variables_indices();
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
@@ -271,7 +271,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
                           depth, perceptron_depth, heads_number, layers_number });
         
-        ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
+        ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
         
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
         

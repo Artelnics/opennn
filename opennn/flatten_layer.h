@@ -9,12 +9,8 @@
 #ifndef FLATTENLAYER_H
 #define FLATTENLAYER_H
 
-
-
 #include <iostream>
 #include <string>
-
-
 
 #include "layer.h"
 #include "layer_forward_propagation.h"
