@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
-//#include "tensors.h"
 #include "layer_back_propagation_lm.h"
 
 namespace opennn
@@ -46,40 +45,40 @@ string Layer::get_type_string() const
     switch(layer_type)
     {
     case Type::Perceptron:
-        return "PerceptronLayer";
+        return "Perceptron";
 
-    case Type::PerceptronLayer3D:
-        return "PerceptronLayer3D";
+    case Type::Perceptron3D:
+        return "Perceptron3D";
 
     case Type::Bounding:
-        return "BoundingLayer";
+        return "Bounding";
 
     case Type::Pooling:
-        return "PoolingLayer";
+        return "Pooling";
 
     case Type::Probabilistic:
-        return "ProbabilisticLayer2D";
+        return "Probabilistic";
 
     case Type::Probabilistic3D:
-        return "ProbabilisticLayer3D";
+        return "Probabilistic3D";
 
     case Type::Convolutional:
-        return "ConvolutionalLayer";
+        return "Convolutional";
 
     case Type::LongShortTermMemory:
-        return "LongShortTermMemoryLayer";
+        return "LongShortTermMemory";
 
     case Type::Recurrent:
-        return "RecurrentLayer";
+        return "Recurrent";
 
     case Type::Scaling2D:
-        return "ScalingLayer2D";
+        return "Scaling2D";
 
     case Type::Scaling4D:
         return "Scaling4D";
 
     case Type::Unscaling:
-        return "UnscalingLayer";
+        return "Unscaling";
 
     case Type::Flatten:
         return "Flatten";
@@ -88,16 +87,16 @@ string Layer::get_type_string() const
         return "NonMaxSuppression";
 
     case Type::Addition3D:
-        return "AdditionLayer3D";
+        return "Addition3D";
 
     case Type::Normalization3D:
-        return "NormalizationLayer3D";
+        return "Normalization3D";
 
     case Type::Embedding:
-        return "EmbeddingLayer";
+        return "Embedding";
 
     case Type::MultiheadAttention:
-        return "MultiheadAttentionLayer";
+        return "MultiheadAttention";
 
     default:
         return "Unkown type";
@@ -113,8 +112,11 @@ void Layer::set_name(const string& new_name)
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool) delete thread_pool;
-    if(thread_pool_device) delete thread_pool_device;
+    if(thread_pool) 
+        delete thread_pool;
+
+    if(thread_pool_device) 
+        delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);

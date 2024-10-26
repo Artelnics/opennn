@@ -129,16 +129,16 @@ void ImageDataSet::set(const Index& new_images_number,
 
     model_type = ModelType::ImageClassification;
 
-    const Index target_number = (new_targets_number == 2) ? 1 : new_targets_number;
+    const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
     const Index inputs_number = new_height * new_width * new_channels;
     const Index raw_variables_number = inputs_number + 1;
-    const Index variables_number = inputs_number + target_number;
+    const Index variables_number = inputs_number + targets_number;
 
     // Dimensions
 
     input_dimensions = { new_height, new_width, new_channels };
 
-    target_dimensions = { target_number };
+    target_dimensions = { targets_number };
 
     // Data
 
@@ -149,35 +149,32 @@ void ImageDataSet::set(const Index& new_images_number,
     raw_variables.resize(raw_variables_number);
 
     for(Index i = 0; i < inputs_number; i++)
-    {
-        // @todo use set method
-        raw_variables(i).name = "p_" + to_string(i+1);
-        raw_variables(i).use = VariableUse::Input;
-        raw_variables(i).type = RawVariableType::Numeric;
-        raw_variables(i).scaler = Scaler::ImageMinMax;
-    }
+        raw_variables(i).set("p_" + to_string(i + 1), 
+                             VariableUse::Input, 
+                             RawVariableType::Numeric,
+                             Scaler::ImageMinMax);
 
-    if(target_number == 1)
+    if(targets_number == 1)
     {
-        Tensor<string, 1> categories(target_number);
+        Tensor<string, 1> categories(targets_number);
         categories.setConstant("ABC");
 
-        // @todo use set methods
-        raw_variables(raw_variables_number-1).type = RawVariableType::Binary;
-        raw_variables(raw_variables_number-1).use = VariableUse::Target;
-        raw_variables(raw_variables_number-1).name = "target";
-        raw_variables(raw_variables_number-1).set_categories(categories);
+        raw_variables(raw_variables_number - 1).set("target",
+                                                    VariableUse::Target,
+                                                    RawVariableType::Binary,
+                                                    Scaler::None,
+                                                    categories);
     }
     else
     {
-        Tensor<string, 1> categories(target_number);
+        Tensor<string, 1> categories(targets_number);
         categories.setConstant("ABC");
 
-        // @todo use set methods
-        raw_variables(raw_variables_number-1).type = RawVariableType::Categorical;
-        raw_variables(raw_variables_number-1).use = VariableUse::Target;
-        raw_variables(raw_variables_number-1).name = "target";
-        raw_variables(raw_variables_number-1).set_categories(categories);
+        raw_variables(raw_variables_number - 1).set("target",
+                                                    VariableUse::Target,
+                                                    RawVariableType::Categorical,
+                                                    Scaler::None,
+                                                    categories);
     }
 
     // Samples
@@ -700,7 +697,6 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             throw runtime_error("Raw variable use element is nullptr.\n");
 
         if(use_element->GetText())
-
             raw_variables(i).set_use(use_element->GetText());
 
         // Type
@@ -713,7 +709,8 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(type_element->GetText())
             raw_variables(i).set_type(type_element->GetText());
 
-        if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
+        if(raw_variables(i).type == RawVariableType::Categorical 
+        || raw_variables(i).type == RawVariableType::Binary)
         {
             // Categories
 
@@ -747,10 +744,8 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) 
-            {
+            && new_rows_labels.find(";") != string::npos) 
                 separator = ';';
-            }
 
             samples_id = get_tokens(new_rows_labels, separator);
         }
@@ -896,13 +891,9 @@ void ImageDataSet::read_bmp()
         Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
 
         if (current_height != height || current_width != width)
-        {
             bilinear_interpolation_resize_image(image_data, resized_image_data, height, width);
-        }
         else
-        {
             resized_image_data = image_data;
-        }
 
         #pragma omp parallel for
         for (Index j = 0; j < pixels_number; j++)
@@ -942,9 +933,9 @@ void ImageDataSet::read_bmp()
         long long milliseconds = total_milliseconds % 1000;
 
         cout << endl << "Image data set loaded in: "
-            << minutes << " minutes, "
-            << seconds << " seconds, "
-            << milliseconds << " milliseconds." << endl;
+             << minutes << " minutes, "
+             << seconds << " seconds, "
+             << milliseconds << " milliseconds." << endl;
     }
 }
 

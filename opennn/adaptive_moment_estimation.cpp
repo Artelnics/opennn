@@ -165,8 +165,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
    
-    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
     Tensor<Index, 1> context_variables_indices;
 
     if(is_language_model)
@@ -175,12 +175,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         context_variables_indices = language_data_set->get_context_variables_indices();
     }
 
-    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
-    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();    
+    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
@@ -192,8 +192,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
 
-    const Index training_samples_number = data_set->get_training_samples_number();
-    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
     training_samples_number < batch_samples_number
             ? training_batch_samples_number = training_samples_number
@@ -310,16 +310,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            //cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
-            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
-
-            //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-            
-            //system("pause");
-
             training_error += training_back_propagation.error();
-            if(is_classification_model) training_accuracy += training_back_propagation.accuracy;
+
+            if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
             // Optimization algorithm
 
@@ -332,7 +325,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         // Loss
 
         training_error /= type(training_batches_number);
-        if(is_classification_model)   training_accuracy /= type(training_batches_number);
+
+        if(is_classification_model)   
+            training_accuracy /= type(training_batches_number);
 
         results.training_error_history(epoch) = training_error;
         
@@ -366,7 +361,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 selection_error += selection_back_propagation.error();
 
                 if(is_classification_model) 
-                    selection_accuracy += selection_back_propagation.accuracy;
+                    selection_accuracy += selection_back_propagation.accuracy(0);
             }
 
             selection_error /= type(selection_batches_number);

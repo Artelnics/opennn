@@ -83,14 +83,15 @@ void WeightedSquaredError::set_weights(const type& new_positives_weight, const t
 
 void WeightedSquaredError::set_weights()
 {
-    if(data_set->get_target_variables_number() == 0)
+    if (!data_set) return;
+
+    if(data_set->get_variables_number(DataSet::VariableUse::Target) == 0)
     {
         positives_weight = type(1);
         negatives_weight = type(1);
     }
-    else if(data_set
-         && data_set->get_target_raw_variables().size() == 1
-         && data_set->get_target_raw_variables()(0).type == DataSet::RawVariableType::Binary)
+    else if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 1
+         && data_set->get_raw_variables(DataSet::VariableUse::Target)(0).type == DataSet::RawVariableType::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set->calculate_target_distribution();
 
@@ -113,15 +114,16 @@ void WeightedSquaredError::set_weights()
 
 void WeightedSquaredError::set_normalization_coefficient()
 {
-    if(data_set->get_target_raw_variables().size()==0)
+    if (!data_set) return;
+
+    if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 0)
     {
         normalization_coefficient = type(1);
     }
-    else if(data_set
-         && data_set->get_target_raw_variables().size() == 1
-         && data_set->get_target_raw_variables()(0).type == DataSet::RawVariableType::Binary)
+    else if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 1
+         && data_set->get_raw_variables(DataSet::VariableUse::Target)(0).type == DataSet::RawVariableType::Binary)
     {
-        const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
         const Index negatives = data_set->calculate_used_negatives(target_variables_indices[0]);
 
@@ -185,7 +187,6 @@ void WeightedSquaredError::calculate_error_lm(const Batch& batch,
                                               const ForwardPropagation&,
                                               BackPropagationLM &back_propagation) const
 {
-
     // @todo This is working???
 
     // Data set
@@ -298,23 +299,15 @@ string WeightedSquaredError::get_error_type_text() const
 
 void WeightedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // Error type
-
     file_stream.OpenElement("WeightedSquaredError");
-
-    // Positives weight
 
     file_stream.OpenElement("PositivesWeight");
     file_stream.PushText(to_string(positives_weight).c_str());
     file_stream.CloseElement();
 
-    // Negatives weight
-
     file_stream.OpenElement("NegativesWeight");
     file_stream.PushText(to_string(negatives_weight).c_str());
     file_stream.CloseElement();
-
-    // Close error
 
     file_stream.CloseElement();
 }
@@ -327,14 +320,10 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Weighted squared element is nullptr.\n");
 
-    // Positives weight
-
     const tinyxml2::XMLElement* positives_weight_element = root_element->FirstChildElement("PositivesWeight");
 
     if(positives_weight_element)
         set_positives_weight(type(atof(positives_weight_element->GetText())));
-
-    // Negatives weight
 
     const tinyxml2::XMLElement* negatives_weight_element = root_element->FirstChildElement("NegativesWeight");
 

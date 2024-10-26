@@ -447,7 +447,7 @@ Tensor<type, 1> confidence_interval_z_correlation(const type& z_correlation, con
 Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
 {
     // @todo Improve this method to be more similar to the other code.
-/*
+
     const int n = x.size();
 
     vector<pair<type, size_t> > sorted_vector(n);
@@ -478,8 +478,6 @@ Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
     TensorMap<Tensor<type, 1>> x_rank(x_rank_vector.data(), x_rank_vector.size());
 
     return x_rank;
-*/
-    return Tensor<type, 1>();
 }
 
 
@@ -565,9 +563,9 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     training_strategy.perform_training();
 
-    Tensor<type, 2> inputs = data_set.get_input_data();
+    Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
 
-    const Tensor<type, 2> targets = data_set.get_target_data();
+    const Tensor<type, 2> targets = data_set.get_data(DataSet::VariableUse::Target);
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
@@ -644,9 +642,9 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     training_strategy.perform_training();
 
-    const Tensor<type, 2> inputs = data_set.get_input_data();
+    const Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
 
-    const Tensor<type, 2> targets = data_set.get_target_data();
+    const Tensor<type, 2> targets = data_set.get_data(DataSet::VariableUse::Target);
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
@@ -721,8 +719,8 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     data_set.set_training();
 
-    const Index input_variables_number = data_set.get_input_variables_number();
-    const Index target_variables_number = data_set.get_target_variables_number();
+    const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+    const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  { input_variables_number }, {}, {target_variables_number});
@@ -746,9 +744,9 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     // Logistic correlation
 
-    const Tensor<type, 2> inputs = data_set.get_input_data();
+    const Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
 
-    const Tensor<type, 2> targets = data_set.get_target_data();
+    const Tensor<type, 2> targets = data_set.get_data(DataSet::VariableUse::Target);
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
@@ -836,8 +834,8 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     data_set.set_training();
 
-    const Index input_variables_number = data_set.get_input_variables_number();
-    const Index target_variables_number = data_set.get_target_variables_number();
+    const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+    const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  {input_variables_number }, {}, {target_variables_number});
@@ -862,9 +860,9 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     // Logistic correlation
 
-    const Tensor<type, 2> inputs = data_set.get_input_data();
+    const Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
 
-    const Tensor<type, 2> targets = data_set.get_target_data();
+    const Tensor<type, 2> targets = data_set.get_data(DataSet::VariableUse::Target);
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
@@ -894,8 +892,8 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < x.dimension(0); i++)
     {
-        if(!isnan(x(i)) && x(i) <= type(0) 
-        || !isnan(y(i)) && y(i) <= type(0))
+        if((!isnan(x(i)) && x(i) <= type(0))
+        || (!isnan(y(i)) && y(i) <= type(0)))
         {
             power_correlation.r = type(NAN);
 
