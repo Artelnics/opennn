@@ -11,17 +11,10 @@
 namespace opennn
 {
 
-ModelSelection::ModelSelection()
-{
-    set_default();
-}
-
 
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
-
-    set_default();
 }
 
 
@@ -138,6 +131,8 @@ void ModelSelection::set(TrainingStrategy* new_training_strategy)
 
     growing_inputs.set(new_training_strategy);
     genetic_algorithm.set(new_training_strategy);
+
+    set_default();
 }
 
 

@@ -155,8 +155,9 @@ public:
 
    // Layers
 
+   static bool is_trainable(const Layer::Type&);
+
    Index get_layers_number() const;
-   Index get_trainable_layers_number() const;
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
