@@ -710,11 +710,11 @@ void BackPropagation::print() const
 
 Tensor<type, 1> LossIndex::calculate_numerical_gradient() 
 {
-    const Index samples_number = data_set->get_training_samples_number();
+    const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
 
-    const Tensor<Index, 1> samples_indices = data_set->get_training_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    const Tensor<Index, 1> samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(samples_number, data_set);
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
@@ -774,7 +774,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
 Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 {
-    const Index samples_number = data_set->get_training_samples_number();
+    const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const dimensions inputs_dimensions = data_set->get_input_dimensions();
 
     Index inputs_number = 1;
@@ -784,9 +784,9 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     inputs_number *= samples_number;
 
-    const Tensor<Index, 1> samples_indices = data_set->get_training_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    const Tensor<Index, 1> samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(samples_number, data_set);
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
@@ -840,14 +840,14 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 {
     BackPropagationLM back_propagation_lm;
 
-    const Index samples_number = data_set->get_training_samples_number();
+    const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
 
     Batch batch(samples_number, data_set);
 
-    const Tensor<Index, 1> samples_indices = data_set->get_training_samples_indices();
+    const Tensor<Index, 1> samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
 
-    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 

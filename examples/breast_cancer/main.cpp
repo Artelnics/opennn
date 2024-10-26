@@ -34,8 +34,8 @@ int main()
         data_set.save("../data/data_set.xml");
         data_set.load("../data/data_set.xml");
 /*
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index input_variables_number = data_set.get_variables_number(VariableUse::Input);
+        const Index target_variables_number = data_set.get_variables_number(VariableUse::Target);
 
         // Neural network
 

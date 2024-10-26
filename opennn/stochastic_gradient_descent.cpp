@@ -200,8 +200,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     const bool has_selection = data_set->has_selection();
     
-    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
     Tensor<Index, 1> context_variables_indices;
 
     if(is_instance_of<LanguageDataSet>(data_set))
@@ -210,14 +210,14 @@ TrainingResults StochasticGradientDescent::perform_training()
         context_variables_indices = language_data_set->get_context_variables_indices();
     }
         
-    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
 
-    const Index training_samples_number = data_set->get_training_samples_number();
-    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
     
     training_samples_number < batch_samples_number
             ? training_batch_samples_number = training_samples_number
@@ -227,8 +227,8 @@ TrainingResults StochasticGradientDescent::perform_training()
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
 
-    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();

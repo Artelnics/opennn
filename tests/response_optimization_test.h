@@ -107,7 +107,7 @@ private:
         data_set.set_input_target_raw_variables_indices(inputs_index,outputs_index);
 
         neural_network_2.set(NeuralNetwork::ModelType::Approximation,
-                             { data_set.get_input_variables_number()}, {2}, {data_set.get_target_variables_number()});
+                             { data_set.get_variables_number(DataSet::VariableUse::Input)}, {2}, {data_set.get_variables_number(DataSet::VariableUse::Target)});
 
         training_strategy.set(&neural_network_2, &data_set);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
