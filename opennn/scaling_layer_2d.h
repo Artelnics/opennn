@@ -103,8 +103,6 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
-   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
-
    // Expression
 
    string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;

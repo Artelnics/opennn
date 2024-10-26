@@ -264,18 +264,18 @@ TrainingResults ConjugateGradient::perform_training()
 
     DataSet* data_set = loss_index->get_data_set();
 
-    const Index training_samples_number = data_set->get_training_samples_number();
-    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
     const bool has_selection = data_set->has_selection();
 
-    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
-    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();

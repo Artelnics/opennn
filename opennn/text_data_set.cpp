@@ -1924,7 +1924,7 @@ void TextDataSet::read_txt()
     separator = Separator::Semicolon;
     has_header = true;
 
-//    for(Index i = 0; i < get_input_raw_variables_number(); i++)
+//    for(Index i = 0; i < get_raw_variables_number(VariableUse::Input); i++)
 //        set_raw_variable_type(i, RawVariableType::Numeric);
 
 }

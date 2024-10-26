@@ -34,7 +34,7 @@ void ImageDataSetTest::test_constructor()
     assert_true(data_set_2.get_image_height() == 3, LOG);
     assert_true(data_set_2.get_image_width() == 3, LOG);
     assert_true(data_set_2.get_channels_number() == 3, LOG);
-    assert_true(data_set_2.get_target_raw_variables_number(), LOG);
+    assert_true(data_set_2.get_raw_variables_number(DataSet::VariableUse::Target), LOG);
 }
 
 
