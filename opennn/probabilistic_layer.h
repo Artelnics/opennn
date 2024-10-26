@@ -245,6 +245,8 @@ protected:
 
     Tensor<type, 2> empty;
 
+    const Eigen::array<Index, 1> sum_dimensions = {0};
+
 #ifdef OPENNN_CUDA
 #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
 #endif

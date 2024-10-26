@@ -658,10 +658,10 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
         {
             const Tensor<string,1> descriptives_string = get_tokens(descriptives_element->GetText(), " ");
 
-            descriptives[i].minimum = type(stof(descriptives_string[0]));
-            descriptives[i].maximum = type(stof(descriptives_string[1]));
-            descriptives[i].mean = type(stof(descriptives_string[2]));
-            descriptives[i].standard_deviation = type(stof(descriptives_string[3]));
+            descriptives[i].set(type(stof(descriptives_string[0])),
+                                type(stof(descriptives_string[1])),
+                                type(stof(descriptives_string[2])),
+                                type(stof(descriptives_string[3])));
         }
 
         // Scaling method

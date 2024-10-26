@@ -26,9 +26,7 @@ public:
 
     // Constructors
 
-    explicit NeuronsSelection();
-
-    explicit NeuronsSelection(TrainingStrategy*);
+    explicit NeuronsSelection(TrainingStrategy* = nullptr);
 
     // Enumerators
 
@@ -51,6 +49,8 @@ public:
     const type& get_maximum_time() const;
 
     // Set
+
+    void set(TrainingStrategy* = nullptr);
 
     void set_training_strategy(TrainingStrategy*);
 

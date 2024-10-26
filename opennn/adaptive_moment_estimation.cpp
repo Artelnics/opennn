@@ -219,14 +219,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
-    if(neural_network->has_scaling_layer_2d())
+    if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
         scaling_layer_2d->set_descriptives(input_variables_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
-    if(neural_network->has_unscaling_layer())
+    if(neural_network->has(Layer::Type::Unscaling))
     {
         target_variables_descriptives = data_set->scale_target_variables();
 
@@ -267,8 +267,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     bool shuffle = false;
 
-    if(neural_network->has_long_short_term_memory_layer()
-    || neural_network->has_recurrent_layer())
+    if(neural_network->has(Layer::Type::LongShortTermMemory)
+    || neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
 
     // Main loop
@@ -455,7 +455,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     data_set->unscale_input_variables(input_variables_descriptives);
 
-    if(neural_network->has_unscaling_layer())
+    if(neural_network->has(Layer::Type::Unscaling))
         data_set->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();

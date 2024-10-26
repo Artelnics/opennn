@@ -15,17 +15,9 @@
 namespace opennn
 {
 
-LossIndex::LossIndex()
-{
-    set_default();
-}
-
-
 LossIndex::LossIndex(NeuralNetwork* new_neural_network, DataSet* new_data_set)
-    : neural_network(new_neural_network),
-      data_set(new_data_set)
 {
-    set_default();
+    set(new_neural_network, new_data_set);
 }
 
 
@@ -63,33 +55,6 @@ bool LossIndex::has_data_set() const
 LossIndex::RegularizationMethod LossIndex::get_regularization_method() const
 {
     return regularization_method;
-}
-
-
-void LossIndex::set()
-{
-    neural_network = nullptr;
-    data_set = nullptr;
-
-    set_default();
-}
-
-
-void LossIndex::set(NeuralNetwork* new_neural_network)
-{
-    neural_network = new_neural_network;
-    data_set = nullptr;
-
-    set_default();
-}
-
-
-void LossIndex::set(DataSet* new_data_set)
-{
-    neural_network = nullptr;
-    data_set = new_data_set;
-
-    set_default();
 }
 
 
