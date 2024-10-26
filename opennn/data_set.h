@@ -309,7 +309,7 @@ public:
     const string& get_data_source_path() const;
 
     const bool& get_header_line() const;
-    const bool& get_has_ids() const;
+    const bool& get_has_sample_ids() const;
 
     Tensor<string, 1> get_sample_ids() const;
 

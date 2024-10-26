@@ -303,51 +303,38 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
     {
         raw_variable_index = i%raw_variables_number;
 
+        const RawVariable& raw_variable = raw_variables(raw_variable_index);
+
         if(time_series_raw_variables(raw_variable_index).type == RawVariableType::DateTime) continue;
 
         if(i < lags_number*raw_variables_number)
         {            
-            new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_lag_" + to_string(lag_index);
-
+            new_raw_variables(new_raw_variable_index).name = raw_variable.name + "_lag_" + to_string(lag_index);
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Input);
-
-            new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
-            new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
-
-            new_raw_variable_index++;
+            new_raw_variables(new_raw_variable_index).type = raw_variable.type;
+            new_raw_variables(new_raw_variable_index).categories = raw_variable.categories;
         }
         else if(i == raw_variables_number*(lags_number+steps_ahead) - 1)
         {            
-            new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_ahead_" + to_string(ahead_index);
-
-            new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
-            new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
-
+            new_raw_variables(new_raw_variable_index).name = raw_variable.name + "_ahead_" + to_string(ahead_index);
+            new_raw_variables(new_raw_variable_index).type = raw_variable.type;
+            new_raw_variables(new_raw_variable_index).categories = raw_variable.categories;
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Target);
-
-            new_raw_variable_index++;            
         }
         else
         {
-
-            new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_ahead_" + to_string(ahead_index);
-
-            new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
-            new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
-
+            new_raw_variables(new_raw_variable_index).name = raw_variable.name + "_ahead_" + to_string(ahead_index);
+            new_raw_variables(new_raw_variable_index).type = raw_variable.type;
+            new_raw_variables(new_raw_variable_index).categories = raw_variable.categories;
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::None);
-
-            new_raw_variable_index++;
         }
+
+        new_raw_variable_index++;
 
         if(lag_index > 0 && raw_variable_index == raw_variables_number - 1)
-        {
             lag_index--;
-        }
         else if(raw_variable_index == raw_variables_number - 1)
-        {
             ahead_index++;
-        }
     }
 
     raw_variables = new_raw_variables;
@@ -1218,9 +1205,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
                 const Index current_sample_index = used_samples_indices(i);
 
                 if(isnan(data(current_sample_index, current_variable_index)))
-                {
                     data(current_sample_index, current_variable_index) = means(j);
-                }
             }
         }
 
@@ -1235,9 +1220,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
                 const Index current_sample_index = used_samples_indices(i);
 
                 if(isnan(data(current_sample_index, current_variable_index)))
-                {
                     set_sample_use(i, "None");
-                }
             }
         }
     }
@@ -1290,17 +1273,11 @@ void TimeSeriesDataSet::impute_missing_values_mean()
                         }
 
                         if(isnan(previous_value))
-                        {
                             data(current_sample_index, current_variable_index) = type(next_value);
-                        }
                         else if(isnan(next_value))
-                        {
                             data(current_sample_index, current_variable_index) = type(previous_value);
-                        }
                         else
-                        {
                             data(current_sample_index, current_variable_index) = type((previous_value + next_value)/2);
-                        }
                     }
                 }
             }

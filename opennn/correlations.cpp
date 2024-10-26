@@ -447,7 +447,7 @@ Tensor<type, 1> confidence_interval_z_correlation(const type& z_correlation, con
 Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
 {
     // @todo Improve this method to be more similar to the other code.
-/*
+
     const int n = x.size();
 
     vector<pair<type, size_t> > sorted_vector(n);
@@ -478,8 +478,6 @@ Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
     TensorMap<Tensor<type, 1>> x_rank(x_rank_vector.data(), x_rank_vector.size());
 
     return x_rank;
-*/
-    return Tensor<type, 1>();
 }
 
 
@@ -894,8 +892,8 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < x.dimension(0); i++)
     {
-        if(!isnan(x(i)) && x(i) <= type(0) 
-        || !isnan(y(i)) && y(i) <= type(0))
+        if((!isnan(x(i)) && x(i) <= type(0))
+        || (!isnan(y(i)) && y(i) <= type(0)))
         {
             power_correlation.r = type(NAN);
 

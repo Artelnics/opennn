@@ -2156,7 +2156,7 @@ void DataSet::set_binary_raw_variables()
 
     for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
-        RawVariable raw_variable = raw_variables(raw_variable_index);
+        RawVariable& raw_variable = raw_variables(raw_variable_index);
 
         if(raw_variable.type == RawVariableType::Numeric)
         {
@@ -2177,8 +2177,6 @@ void DataSet::set_binary_raw_variables()
         {
             variable_index++;
         }
-
-        raw_variables(raw_variable_index) = raw_variable;
     }
 }
 
@@ -2301,7 +2299,7 @@ const bool& DataSet::get_header_line() const
 }
 
 
-const bool& DataSet::get_has_ids() const
+const bool& DataSet::get_has_sample_ids() const
 {
     return has_sample_ids;
 }
@@ -6381,7 +6379,8 @@ void DataSet::fix_repeated_names()
                     {
                         const Index raw_variable_index = get_raw_variable_index(i);
 
-                        if(raw_variables(raw_variable_index).type != RawVariableType::Categorical) continue;
+                        if(raw_variables(raw_variable_index).type != RawVariableType::Categorical)
+                            continue;
 
                         variables_names(i) = variables_names(i) + "_" + raw_variables(raw_variable_index).name;
                     }
