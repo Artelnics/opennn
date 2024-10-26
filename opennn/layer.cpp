@@ -225,7 +225,7 @@ void Layer::softmax(Tensor<type, 2>& y) const
 
 void Layer::softmax(Tensor<type, 3>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ { 2 }}; 
+    const Eigen::array<Index, 1> softmax_dimension{{2}}; 
     
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
@@ -255,9 +255,9 @@ void Layer::softmax(Tensor<type, 4>& y) const
     const Index channels = y.dimension(2);
     const Index blocks_number = y.dimension(3);
 
-    const Eigen::array<Index, 1> softmax_dimension{ { 0 }};
-    const Eigen::array<Index, 4> range_4{ { 1, columns_number, channels, blocks_number }};
-    const Eigen::array<Index, 4> expand_softmax_dim{ { rows_number, 1, 1, 1 }};
+    const Eigen::array<Index, 1> softmax_dimension{{0}};
+    const Eigen::array<Index, 4> range_4{{1, columns_number, channels, blocks_number}};
+    const Eigen::array<Index, 4> expand_softmax_dim{{rows_number, 1, 1, 1 }};
 
     y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
                                          .eval()

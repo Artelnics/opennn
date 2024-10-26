@@ -201,7 +201,6 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
     Tensor<type, 3>& standard_deviations = normalization_layer_3d_forward_propagation->standard_deviations;
     const type& epsilon = normalization_layer_3d_forward_propagation->epsilon;
 
-    const Eigen::array<Index, 1> normalization_axis{ { 2 }};
     const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 }};
     const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth }};
     
@@ -268,9 +267,9 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
     
     // Parameters derivatives
     
-    gammas_derivatives.device(*thread_pool_device) = (normalized_inputs * deltas).sum(Eigen::array<Index, 2>({ 0, 1 }));
+    gammas_derivatives.device(*thread_pool_device) = (normalized_inputs * deltas).sum(sum_dimensions_2);
     
-    betas_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 2>({ 0, 1 }));
+    betas_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
     
     // Input derivatives
 
@@ -280,7 +279,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     multiply_matrices(thread_pool_device, scaled_deltas, gammas);
 
-    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * normalized_inputs).sum(Eigen::array<Index, 1>({ 2 })) / (standard_deviations_matrix + epsilon);
+    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * normalized_inputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
 
     multiply_matrices(thread_pool_device, standard_deviation_derivatives, aux_2d);
 
@@ -288,7 +287,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     input_derivatives.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
 
-    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * scaled_deltas.sum(Eigen::array<Index, 1>({ 2 }));
+    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * scaled_deltas.sum(sum_dimensions_1);
 
     substract_matrices(thread_pool_device, aux_2d, input_derivatives);
 }
