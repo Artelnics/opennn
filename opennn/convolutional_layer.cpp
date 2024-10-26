@@ -95,7 +95,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                output_width,
                                                1);
 
-        convolution.device(*thread_pool_device) = inputs.convolve(kernel, convolutions_dimensions) + biases(kernel_index);
+        convolution.device(*thread_pool_device) = inputs.convolve(kernel, convolutions_dimensions_3d) + biases(kernel_index);
     }
 }
 
@@ -232,9 +232,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
     preprocess_inputs(inputs, preprocessed_inputs);
-    //cout << "inputs: " << inputs.chip(0,0) << endl;
-    //cout << "preprocessed_inputs: " << preprocessed_inputs.chip(0,0) << endl;
-    //system("pause");
+
     calculate_convolutions(preprocessed_inputs, outputs);
 
     if(batch_normalization)
@@ -304,10 +302,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = {0, 1, 2};
-    const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = {0, 1};
-
-    //Tensor<type, 3>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
 
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 
@@ -331,8 +325,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     // Convolutions derivatives
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
-
-    auto reverse_dimensions = Eigen::array<ptrdiff_t, 3>{1, 1, 0};
 
     // Biases synaptic weights and input derivatives
 
@@ -830,10 +822,10 @@ Eigen::array<pair<Index, Index>, 4> ConvolutionalLayer::get_paddings() const
     const Index pad_columns = get_padding().second;
 
     const Eigen::array<std::pair<Index, Index>, 4> paddings =
-        { std::make_pair(0, 0),
-          std::make_pair(pad_rows, pad_rows),
-          std::make_pair(pad_columns, pad_columns),
-          std::make_pair(0, 0) };
+        { make_pair(0, 0),
+          make_pair(pad_rows, pad_rows),
+          make_pair(pad_columns, pad_columns),
+          make_pair(0, 0) };
 
     return paddings;
 }

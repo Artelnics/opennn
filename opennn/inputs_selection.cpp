@@ -14,16 +14,9 @@
 namespace opennn
 {
 
-InputsSelection::InputsSelection()
-{
-    set_default();
-}
-
-
 InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
-    : training_strategy(new_training_strategy)
 {
-    set_default();
+    set(new_training_strategy);
 }
 
 

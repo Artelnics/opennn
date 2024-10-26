@@ -583,10 +583,10 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
             const Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, " ");
 
-            descriptives[i].minimum = type(stof(splitted_descriptives[0]));
-            descriptives[i].maximum = type(stof(splitted_descriptives[1]));
-            descriptives[i].mean = type(stof(splitted_descriptives[2]));
-            descriptives[i].standard_deviation = type(stof(splitted_descriptives[3]));
+            descriptives[i].set(type(stof(splitted_descriptives[0])),
+                                type(stof(splitted_descriptives[1])),
+                                type(stof(splitted_descriptives[2])),
+                                type(stof(splitted_descriptives[3])));
         }
 
         // Unscaling method

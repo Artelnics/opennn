@@ -975,7 +975,7 @@ void DataSetTest::test_scrub_missing_values()
 
     const string data_path = "../../datasets/data.dat";
 
-    Tensor<DataSet::SampleUse, 1> samples_uses;
+    Tensor<DataSet::SampleUse, 1> sample_uses;
 
     std::ofstream file;
 
@@ -1000,9 +1000,9 @@ void DataSetTest::test_scrub_missing_values()
 
     data_set.scrub_missing_values();
 
-    samples_uses = data_set.get_sample_uses();
+    sample_uses = data_set.get_sample_uses();
 
-    assert_true(samples_uses(1) == DataSet::SampleUse::None, LOG);
+    assert_true(sample_uses(1) == DataSet::SampleUse::None, LOG);
 
     // Test
 

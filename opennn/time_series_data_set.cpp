@@ -374,7 +374,7 @@ void TimeSeriesDataSet::transform_time_series_data()
         }
     }
 
-    samples_uses.resize(new_samples_number);
+    sample_uses.resize(new_samples_number);
 
     split_samples_random();
 }
@@ -1046,9 +1046,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
-        samples_uses.resize(new_samples_number);
+        sample_uses.resize(new_samples_number);
 
-        set_training();
+        set(DataSet::SampleUse::Training);
     }
 
     // Samples uses

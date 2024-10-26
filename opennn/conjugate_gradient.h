@@ -52,8 +52,6 @@ public:
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
    const Index& get_maximum_selection_failures() const;
-
-
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
 

@@ -497,7 +497,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < samples_number; i++)
         {
-            SampleUse sample_use = samples_uses(i);
+            SampleUse sample_use = sample_uses(i);
 
             buffer << Index(sample_use);
 
@@ -941,9 +941,9 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
-        samples_uses.resize(new_samples_number);
+        sample_uses.resize(new_samples_number);
 
-        set_training();
+        set(DataSet::SampleUse::Training);
     }
 
     // Samples uses

@@ -21,9 +21,6 @@
 namespace opennn
 {
 
-//struct ConvolutionalLayerForwardPropagation;
-//struct ConvolutionalLayerBackPropagation;
-
 #ifdef OPENNN_CUDA
 struct ConvolutionalLayerForwardPropagationCuda;
 struct ConvolutionalLayerBackPropagationCuda;
@@ -190,7 +187,11 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::Linear;
 
-   const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {1, 2, 3};
+   const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = { 0, 1, 2 };
+   const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = { 0, 1 };
+
+   const Eigen::array<ptrdiff_t, 3> reverse_dimensions = {1, 1, 0};
+
    const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
 
    // Batch normalization

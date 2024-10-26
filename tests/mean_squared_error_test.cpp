@@ -980,7 +980,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //    DataSet data_set(images_number,1,1);
 //    data_set.set_data_constant(3.1416);
-//    data_set.set_input_variables_dimensions(input_dimensions);
+//    data_set.set_input_dimensions(input_dimensions);
 //    data_set.set_data(data); // 2d data
 
 //    const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
@@ -1171,7 +1171,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        data(1,8) = 1; // Target
 
 //        DataSet data_set(images_number,1,1);
-//        data_set.set_input_variables_dimensions(input_dimensions);
+//        data_set.set_input_dimensions(input_dimensions);
 //        data_set.set_data(data); // 2d data
 
 //        const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
@@ -1319,7 +1319,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data(1,18) = 1; // Target
 
         DataSet data_set(images_number,1,1);
-        data_set.set_input_variables_dimensions(input_dimensions);
+        data_set.set_input_dimensions(input_dimensions);
         data_set.set_data(data); // 2d data
 
         const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
@@ -1483,7 +1483,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data(1,18) = 1; // Target
 
         DataSet data_set(images_number,1,1);
-        data_set.set_input_variables_dimensions(input_dimensions);
+        data_set.set_input_dimensions(input_dimensions);
 
         data_set.set_data(data); // 2d data
 
@@ -1695,7 +1695,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         cout << "Data: " << endl << data_set.get_data() << endl;
 
-        data_set.set_input_variables_dimensions(input_dimensions);
+        data_set.set_input_dimensions(input_dimensions);
 
         data_set.set_training();
 
@@ -1892,7 +1892,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data_set.set_data(data); // 2d data
         data_set.set_data_random();
 
-        data_set.set_input_variables_dimensions(input_dimensions);
+        data_set.set_input_dimensions(input_dimensions);
 
         data_set.set_training();
 
