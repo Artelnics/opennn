@@ -160,6 +160,7 @@ protected:
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
+    const Eigen::array<Index, 4> shuffle_dimensions = {0, 1, 2, 3};
 };
 
 
@@ -169,8 +170,6 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     explicit PoolingLayerForwardPropagation();
 
-    
-
     explicit PoolingLayerForwardPropagation(const Index&, Layer*);
     
     pair<type*, dimensions> get_outputs_pair() const final;
@@ -179,7 +178,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     void print() const;
 
-    Eigen::array<int, 2> reduction_dimensions = { 1, 2 };
+    const Eigen::array<int, 2> reduction_dimensions = { 1, 2 };
 
     Tensor<type, 4> outputs;
 

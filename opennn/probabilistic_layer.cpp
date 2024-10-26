@@ -374,8 +374,6 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_back_propagation->synaptic_weights_derivatives;
 
-    const Eigen::array<Index, 1> sum_dimensions({0});
-
     synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(combinations_derivatives, AT_B);
 
     biases_derivatives.device(*thread_pool_device) = combinations_derivatives.sum(sum_dimensions);

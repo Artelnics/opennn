@@ -80,11 +80,7 @@ public:
 
     string write_activation_function() const;
 
-    // Display messages
-
     const bool& get_display() const;
-
-    // Set
 
     void set();
 
@@ -94,32 +90,20 @@ public:
 
     void set_default();
 
-    // Architecture
-
     void set_inputs_number(const Index&) final;
     void set_neurons_number(const Index&) final;
 
-    // Parameters
-
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
-
-    // Activation functions
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
-    // Display messages
-
     void set_display(const bool&);
-
-    // Parameters initialization
 
     void set_parameters_constant(const type&) final;
 
     void set_parameters_random() final;
-
-    // Forward propagation
 
     void calculate_combinations(const Tensor<type, 2>&,
         Tensor<type, 2>&) const;
@@ -132,8 +116,6 @@ public:
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
-
-    // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
@@ -183,6 +165,7 @@ protected:
 
     bool display = true;
 
+    const Eigen::array<Index, 1> sum_dimensions_1 = {0};
 };
 
 

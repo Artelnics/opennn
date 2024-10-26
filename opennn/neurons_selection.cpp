@@ -14,16 +14,10 @@
 namespace opennn
 {
 
-NeuronsSelection::NeuronsSelection()
-{
-    set_default();
-}
-
 
 NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy)
-    : training_strategy(new_training_strategy)
 {
-    set_default();
+    set(new_training_strategy);
 }
 
 
@@ -78,6 +72,14 @@ const Index& NeuronsSelection::get_maximum_epochs_number() const
 const type& NeuronsSelection::get_maximum_time() const
 {
     return maximum_time;
+}
+
+
+void NeuronsSelection::set(TrainingStrategy* new_training_strategy)
+{
+    training_strategy = new_training_strategy;
+
+    set_default();
 }
 
 
@@ -232,10 +234,10 @@ string NeuronsSelection::write_time(const type& time) const
 
     ostringstream elapsed_time;
 
-    elapsed_time << setfill('0') 
-        << setw(2) << hours << ":"
-        << setw(2) << minutes << ":"
-        << setw(2) << seconds << endl;
+    elapsed_time << setfill('0')  << setw(2) 
+                 << hours << ":"
+                 << minutes << ":"
+                 << seconds << endl;
     
     return elapsed_time.str();
 }

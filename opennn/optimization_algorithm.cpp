@@ -17,24 +17,13 @@
 namespace opennn
 {
 
-OptimizationAlgorithm::OptimizationAlgorithm()
-{
-    const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-
-    set_default();
-}
-
-
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
-    : loss_index(new_loss_index)
 {
     const int n = omp_get_max_threads();
     thread_pool = new ThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
-    set_default();
+    set(new_loss_index);
 }
 
 
@@ -65,14 +54,7 @@ void OptimizationAlgorithm::set_hardware_use(const string& new_hardware_use)
 
 bool OptimizationAlgorithm::has_loss_index() const
 {
-    if(loss_index)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return loss_index;
 }
 
 
@@ -100,9 +82,9 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 }
 
 
-void OptimizationAlgorithm::set()
+void OptimizationAlgorithm::set(LossIndex* new_loss_index)
 {
-    loss_index = nullptr;
+    loss_index = new_loss_index;
 
     set_default();
 }
