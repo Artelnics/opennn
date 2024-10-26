@@ -194,10 +194,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     type new_minimum = type(0);
 
     if(minimum_element->GetText())
-    {
-        new_minimum = type(stod(minimum_element->GetText()));
-        set_box_plot_minimum(new_minimum);
-    }
+        set_box_plot_minimum(type(stod(minimum_element->GetText())));
 
     // First Quartile
 
@@ -206,13 +203,8 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     if(!first_quartile_element)
         throw runtime_error("FirstQuartile element is nullptr.\n");
 
-    type new_first_quartile = type(0);
-
     if(first_quartile_element->GetText())
-    {
-        new_first_quartile = type(stod(first_quartile_element->GetText()));
-        set_box_plot_first_quartile(new_first_quartile);
-    }
+        set_box_plot_first_quartile(type(stod(first_quartile_element->GetText())));
 
     // Median
 
@@ -221,13 +213,8 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     if(!median_element)
         throw runtime_error("Median element is nullptr.\n");
 
-    type new_median = type(0);
-
     if(median_element->GetText())
-    {
-        new_median = type(stod(median_element->GetText()));
-        set_box_plot_median(new_median);
-    }
+        set_box_plot_median(type(stod(median_element->GetText())));
 
     // ThirdQuartile
 
@@ -236,13 +223,8 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     if(!third_quartile_element)
         throw runtime_error("ThirdQuartile element is nullptr.\n");
 
-    type new_third_quartile = type(0);
-
     if(third_quartile_element->GetText())
-    {
-        new_third_quartile = type(stod(third_quartile_element->GetText()));
-        set_box_plot_third_quartile(new_third_quartile);
-    }
+        set_box_plot_third_quartile(type(stod(third_quartile_element->GetText())));
 
     // Maximum
 
@@ -251,13 +233,8 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
     if(!maximum_element)
         throw runtime_error("Maximum element is nullptr.\n");
 
-    type new_maximum = type(0);
-
     if(maximum_element->GetText())
-    {
-        new_maximum = type(stod(maximum_element->GetText()));
-        set_box_plot_maximum(new_maximum);
-    }
+        set_box_plot_maximum(type(stod(maximum_element->GetText())));
 }
 
 
@@ -277,13 +254,8 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
     if(!minimum_element)
         throw runtime_error("Minimum element is nullptr.\n");
 
-    type new_minimum = type(0);
-
     if(minimum_element->GetText())
-    {
-        new_minimum = type(stod(minimum_element->GetText()));
-        set_box_plot_minimum(new_minimum);
-    }
+        set_box_plot_minimum(type(stod(minimum_element->GetText())));
 
     // First Quartile
 
@@ -295,9 +267,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
     type new_maximum = type(0);
 
     if(maximum_element->GetText())
-    {
-        new_maximum = type(stod(maximum_element->GetText()));
-    }
+        set_box_plot_maximum(type(stod(maximum_element->GetText())));
 
     // Median
 
@@ -323,13 +293,12 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
     type new_standard_deviation = type(0);
 
     if(standard_deviation_element->GetText())
-    {
         new_standard_deviation = type(stod(standard_deviation_element->GetText()));
-    }
-
+/*
     Descriptives distances_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
 
     set_distances_descriptives(distances_descriptives);
+*/
 }
 
 

@@ -187,7 +187,7 @@ Tensor<type, 2> LanguageDataSet::get_testing_context_data() const
 {
     const Tensor<Index, 1> context_variables_indices = get_context_variables_indices();
 
-    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
+    const Tensor<Index, 1> testing_indices = get_sample_indices(SampleUse::Testing);
 
     Tensor<type, 2> testing_context_data_data(testing_indices.size(), context_variables_indices.size());
 

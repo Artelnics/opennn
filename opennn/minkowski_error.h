@@ -9,11 +9,7 @@
 #ifndef MINKOWSKIERROR_H
 #define MINKOWSKIERROR_H
 
-
-
 #include <string>
-
-
 
 #include "config.h"
 #include "loss_index.h"
