@@ -20,15 +20,10 @@
 namespace opennn
 {
 
-//struct LayerForwardPropagation;
-//struct LayerBackPropagation;
-//struct LayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
 struct LayerForwardPropagationCuda;
 struct LayerBackPropagationCuda;
 #endif
-
 
 class Layer
 {
@@ -41,7 +36,7 @@ public:
                     Normalization3D,
                     Convolutional,
                     Perceptron,
-                    PerceptronLayer3D,
+                    Perceptron3D,
                     Pooling,
                     Probabilistic,
                     Probabilistic3D,
@@ -55,8 +50,6 @@ public:
                     Embedding};
 
     explicit Layer();
-
-    // Destructor
 
     virtual ~Layer();
 
@@ -73,6 +66,11 @@ public:
     // Layer type
 
     Type get_type() const;
+
+    Type string_to_layer_type(const string& layer_type) const
+    {
+        return Layer::Type::Perceptron;
+    }
 
     string get_type_string() const;
 

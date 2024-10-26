@@ -560,7 +560,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
         data_set.set_training();
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
@@ -627,7 +627,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
         data_set.set_input_raw_variables(input_raw_variables_indices, input_raw_variables_use);
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
