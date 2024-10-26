@@ -830,8 +830,6 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 
     Index index = 0;
 
-    // @todo parallelize
-
     for(Index i = 0; i < layers_number; i++)
     {
         layers[i]->set_parameters(new_parameters, index);
@@ -2096,19 +2094,20 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
         if (i == first_trainable_layer_index) 
         {
             layer_input_pairs[i] = batch_input_pairs;
+
+            continue;
         }
-        else
+               
+        const Index this_layer_inputs_number = this_layer_input_indices.size();
+
+        for (Index j = 0; j < this_layer_inputs_number; j++)
         {
-            const Index this_layer_inputs_number = this_layer_input_indices.size();
+            const Index this_layer_input_index = this_layer_input_indices[j];
 
-            for (Index j = 0; j < this_layer_inputs_number; j++)
-            {
-                const Index this_layer_input_index = this_layer_input_indices[j];
-
-                layer_input_pairs[i][j] = layers[this_layer_input_index]->get_outputs_pair();
-            }
-        }
+            layer_input_pairs[i][j] = layers[this_layer_input_index]->get_outputs_pair();
+        }       
     }
+
     return layer_input_pairs;
 }
 

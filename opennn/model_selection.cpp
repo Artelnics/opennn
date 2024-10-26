@@ -11,7 +11,6 @@
 namespace opennn
 {
 
-
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);

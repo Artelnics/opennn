@@ -737,8 +737,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     const type total_ratio = training_samples_ratio + selection_samples_ratio + testing_samples_ratio;
 
-    // Get number of samples for training, selection and testing
-
     const Index selection_samples_number = Index((selection_samples_ratio * used_samples_number)/total_ratio);
     const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number)/ total_ratio);
 
@@ -757,51 +755,27 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
 
-    Index i = 0;
-    Index index;
-
-    // Training
-
-    Index count_training = 0;
-
-    while(count_training != training_samples_number)
+    auto assign_sample_use = [this, &indices](SampleUse use, Index count, Index& i) 
     {
-        index = indices(i++);
+        Index assigned_count = 0;
 
-        if (sample_uses(index) == SampleUse::None) 
-            continue;
+        while (assigned_count < count) 
+        {
+            const Index index = indices(i++);
 
-        sample_uses(index)= SampleUse::Training;
-        count_training++;
-    }
+            if (sample_uses(index) != SampleUse::None) 
+            {
+                sample_uses(index) = use;
+                assigned_count++;
+            }
+        }
+    };
 
-    // Selection
-    Index count_selection = 0;
+    Index index = 0;
 
-    while(count_selection != selection_samples_number)
-    {
-        index = indices(i++);
-
-        if (sample_uses(index) == SampleUse::None) 
-            continue;
-        
-        sample_uses(index) = SampleUse::Selection;
-        count_selection++;
-    }
-
-    // Testing
-    Index count_testing = 0;
-
-    while(count_testing != testing_samples_number)
-    {
-        index = indices(i++);
-
-        if (sample_uses(index) == SampleUse::None) 
-            continue;
-
-        sample_uses(index) = SampleUse::Testing;
-        count_testing++;
-    }
+    assign_sample_use(SampleUse::Training, training_samples_number, index);
+    assign_sample_use(SampleUse::Selection, selection_samples_number, index);
+    assign_sample_use(SampleUse::Testing, testing_samples_number, index);
 }
 
 
@@ -815,8 +789,6 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     const type total_ratio = training_samples_ratio + selection_samples_ratio + testing_samples_ratio;
 
-    // Get number of samples for training, selection and testing
-
     const Index selection_samples_number = Index(selection_samples_ratio* type(used_samples_number)/ type(total_ratio));
     const Index testing_samples_number = Index(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
     const Index training_samples_number = used_samples_number - selection_samples_number - testing_samples_number;
@@ -826,52 +798,26 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
     if(sum_samples_number != used_samples_number)
         throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
 
-    Index i = 0;
-
-    // Training
-
-    Index count_training = 0;
-
-    while(count_training != training_samples_number)
+    auto set_sample_uses = [this](SampleUse use, Index count, Index& i) 
     {
-        if(sample_uses(i) != SampleUse::None)
+        Index current_count = 0;
+
+        while (current_count < count) 
         {
-            sample_uses(i) = SampleUse::Training;
-            count_training++;
+            if (sample_uses(i) != SampleUse::None) 
+            {
+                sample_uses(i) = use;
+                current_count++;
+            }
+
+            i++;
         }
+    };
 
-        i++;
-    }
-
-    // Selection
-
-    Index count_selection = 0;
-
-    while(count_selection != selection_samples_number)
-    {
-        if(sample_uses(i) != SampleUse::None)
-        {
-            sample_uses(i) = SampleUse::Selection;
-            count_selection++;
-        }
-
-        i++;
-    }
-
-    // Testing
-
-    Index count_testing = 0;
-
-    while(count_testing != testing_samples_number)
-    {
-        if(sample_uses(i) != SampleUse::None)
-        {
-            sample_uses(i) = SampleUse::Testing;
-            count_testing++;
-        }
-
-        i++;
-    }
+    Index index = 0;
+    set_sample_uses(SampleUse::Training, training_samples_number, index);
+    set_sample_uses(SampleUse::Selection, selection_samples_number, index);
+    set_sample_uses(SampleUse::Testing, testing_samples_number, index);
 }
 
 
@@ -3714,65 +3660,43 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataSet");
 
-    // Data file
-
     file_stream.OpenElement("DataSource");
 
     file_stream.OpenElement("FileType");
     file_stream.PushText("csv");
     file_stream.CloseElement();
 
-    // Data file name
-
     file_stream.OpenElement("Path");
     file_stream.PushText(data_path.c_str());
     file_stream.CloseElement();
-
-    // Separator
 
     file_stream.OpenElement("Separator");
     file_stream.PushText(get_separator_name().c_str());
     file_stream.CloseElement();
 
-    // Has header
-
     file_stream.OpenElement("HasHeader");
     file_stream.PushText(to_string(has_header).c_str());
     file_stream.CloseElement();
-
-    // Has Ids
 
     file_stream.OpenElement("HasSamplesId");
     file_stream.PushText(to_string(has_sample_ids).c_str());
     file_stream.CloseElement();
 
-    // Missing values label
-
     file_stream.OpenElement("MissingValuesLabel");
     file_stream.PushText(missing_values_label.c_str());
     file_stream.CloseElement();
-
-    // Codification
 
     file_stream.OpenElement("Codification");
     file_stream.PushText(get_codification_string().c_str());
     file_stream.CloseElement();
 
-    // Close Data source
-
     file_stream.CloseElement();
 
-    // Raw variables
-
     file_stream.OpenElement("RawVariables");
-
-    // Raw variables number
 
     file_stream.OpenElement("RawVariablesNumber");
     file_stream.PushText(to_string(get_raw_variables_number()).c_str());
     file_stream.CloseElement();
-
-    // Raw variables items
 
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -3784,21 +3708,13 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Close raw variables
-
     file_stream.CloseElement();
 
-    // Samples
-
     file_stream.OpenElement("Samples");
-
-    // Samples number
 
     file_stream.OpenElement("SamplesNumber");
     file_stream.PushText(to_string(get_samples_number()).c_str());
     file_stream.CloseElement();
-
-    // Samples id
 
     if(has_sample_ids)
     {
@@ -3807,27 +3723,17 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Samples uses
-
     file_stream.OpenElement("SamplesUses");
     file_stream.PushText(tensor_to_string(get_samples_uses_tensor()).c_str());
     file_stream.CloseElement();
 
-    // Close samples
-
     file_stream.CloseElement();
 
-    // Missing values
-
     file_stream.OpenElement("MissingValues");
-
-    // Missing values method
 
     file_stream.OpenElement("MissingValuesMethod");
     file_stream.PushText(get_missing_values_method_string().c_str());
     file_stream.CloseElement();
-
-    // Missing values number
 
     file_stream.OpenElement("MissingValuesNumber");
     file_stream.PushText(to_string(missing_values_number).c_str());
@@ -3835,20 +3741,14 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(missing_values_number > 0)
     {
-        // Raw variables missing values number
-
         file_stream.OpenElement("RawVariablesMissingValuesNumber");
         file_stream.PushText(tensor_to_string(raw_variables_missing_values_number).c_str());
         file_stream.CloseElement();
-
-        // Rows missing values number
 
         file_stream.OpenElement("RowsMissingValuesNumber");
         file_stream.PushText(to_string(rows_missing_values_number).c_str());
         file_stream.CloseElement();
     }
-
-    // Missing values
 
     file_stream.CloseElement();
 /*
@@ -3893,21 +3793,15 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
-    // Data set element
-
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
 
-    // Data file
-
     const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
     if(!data_source_element)
         throw runtime_error("Data source element is nullptr.\n");
-
-    // Data file name
 
     const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
@@ -3917,15 +3811,11 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(data_source_path_element->GetText())
         set_data_source_path(data_source_path_element->GetText());
 
-    // Separator
-
     const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
         if(separator_element->GetText())
             set_separator_name(separator_element->GetText());
-
-    // Has raw_variables names
 
     const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
@@ -3969,22 +3859,16 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(missing_values_label_element->GetText())
             set_missing_values_label(missing_values_label_element->GetText());
 
-    // Codification
-
     const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
         if(codification_element->GetText())
             set_codification(codification_element->GetText());
 
-    // Raw variables
-
     const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
-
-    // Raw variables number
 
     const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
@@ -3993,8 +3877,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(raw_variables_number_element->GetText())
         set_raw_variables_number(Index(atoi(raw_variables_number_element->GetText())));
-
-    // Raw variables
 
     const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
@@ -4008,8 +3890,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
             throw runtime_error("Raw variable item number (" + to_string(i+1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
-        // Name
-
         const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
 
         if(!name_element)
@@ -4017,8 +3897,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(name_element->GetText())
             raw_variable.name = name_element->GetText();
-
-        // Scaler
 
         const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
 
@@ -4028,8 +3906,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(scaler_element->GetText())
             raw_variable.set_scaler(scaler_element->GetText());
 
-        // raw_variable use
-
         const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
 
         if(!use_element)
@@ -4037,8 +3913,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(use_element->GetText())
             raw_variable.set_use(use_element->GetText());
-
-        // Type
 
         const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
 
@@ -4051,8 +3925,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(raw_variable.type == RawVariableType::Categorical
         || raw_variable.type == RawVariableType::Binary)
         {
-            // Categories
-
             const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
             if(!categories_element)
@@ -4063,31 +3935,21 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Has Ids
-
     if(has_sample_ids)
     {
-        // Samples id begin tag
-
         const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
             throw runtime_error("HasSamplesId element is nullptr.\n");
 
-        // Ids
-
         if(has_ids_element->GetText())
             samples_id = get_tokens(has_ids_element->GetText(), " ");
     }
-
-    // Samples
 
     const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
     if(!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
-
-    // Samples number
 
     const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
@@ -4097,8 +3959,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(samples_number_element->GetText())
         sample_uses.resize(Index(atoi(samples_number_element->GetText())));
 
-    // Samples uses
-
     const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
     if(!samples_uses_element)
@@ -4107,14 +3967,10 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(samples_uses_element->GetText())
         set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
 
-    // Missing values
-
     const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
     if(!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
-
-    // Missing values method
 
     const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
@@ -4123,8 +3979,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_method_element->GetText())
         set_missing_values_method(missing_values_method_element->GetText());
-
-    // Missing values number
 
     const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
 
@@ -4136,8 +3990,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number > 0)
     {
-        // Raw variables Missing values number
-
         const tinyxml2::XMLElement* raw_variables_missing_values_number_element
                 = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
@@ -4154,8 +4006,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
                 raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
         }
-
-        // Rows missing values number
 
         const tinyxml2::XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
 

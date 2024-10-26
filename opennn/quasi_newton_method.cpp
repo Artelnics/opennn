@@ -227,7 +227,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
             = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); 
 
-    // Calculates Approximation
+    // Calculate approximation
 
     inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
 
@@ -596,15 +596,10 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(stop_training)
         {
             results.loss = training_back_propagation.loss;
-
             results.loss_decrease = loss_decrease;
-
             results.selection_failures = selection_failures;
-
             results.resize_training_error_history(epoch+1);
-
             results.resize_selection_error_history(has_selection ? epoch + 1 : 0);
-
             results.elapsed_time = write_time(elapsed_time);
 
             break;
@@ -638,43 +633,27 @@ void QuasiNewtonMethod::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("QuasiNewtonMethod");
 
-    // Inverse hessian approximation method
-
     file_stream.OpenElement("InverseHessianApproximationMethod");
-
     file_stream.PushText(write_inverse_hessian_approximation_method().c_str());
-
     file_stream.CloseElement();
 
-    // Learning rate algorithm
-
     learning_rate_algorithm.to_XML(file_stream);
-
-    // Minimum loss decrease
 
     file_stream.OpenElement("MinimumLossDecrease");
     file_stream.PushText(to_string(minimum_loss_decrease).c_str());
     file_stream.CloseElement();
 
-    // Loss goal
-
     file_stream.OpenElement("LossGoal");
     file_stream.PushText(to_string(training_loss_goal).c_str());
     file_stream.CloseElement();
-
-    // Maximum selection failures
 
     file_stream.OpenElement("MaximumSelectionFailures");
     file_stream.PushText(to_string(maximum_selection_failures).c_str());
     file_stream.CloseElement();
 
-    // Maximum epochs number
-
     file_stream.OpenElement("MaximumEpochsNumber");
     file_stream.PushText(to_string(maximum_epochs_number).c_str());
     file_stream.CloseElement();
-
-    // Maximum time
 
     file_stream.OpenElement("MaximumTime");
     file_stream.PushText(to_string(maximum_time).c_str());
@@ -723,53 +702,39 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Quasi-Newton method element is nullptr.\n");
 
-    // Inverse hessian approximation method
-
     const tinyxml2::XMLElement* inverse_hessian_approximation_method_element = root_element->FirstChildElement("InverseHessianApproximationMethod");
 
     if(inverse_hessian_approximation_method_element)
         set_inverse_hessian_approximation_method(inverse_hessian_approximation_method_element->GetText());
 
-    // Learning rate algorithm
-
     const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
 
-    if(learning_rate_algorithm_element)
-    {
-        tinyxml2::XMLDocument learning_rate_algorithm_document;
-        learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
-        learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
-    }
-
-    // Minimum loss decrease
-
+    if(!learning_rate_algorithm_element)
+        throw runtime_error("Learning rate algorithm element is nullptr.\n");
+    
+    tinyxml2::XMLDocument learning_rate_algorithm_document;
+    learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
+    learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
+    
     const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
 
     if(minimum_loss_decrease_element)
         set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
-
-    // Loss goal
 
     const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
 
     if(loss_goal_element)
         set_loss_goal(type(atof(loss_goal_element->GetText())));
 
-    // Maximum selection failures
-
     const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
 
     if(maximum_selection_failures_element)
         set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
 
-    // Maximum epochs number
-
     const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
     if(maximum_epochs_number_element)
         set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum time
 
     const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
 
