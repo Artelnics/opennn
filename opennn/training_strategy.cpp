@@ -540,8 +540,8 @@ void TrainingStrategy::set_default() const
 
 TrainingResults TrainingStrategy::perform_training()
 {    
-    if(neural_network->has_recurrent_layer()
-    || neural_network->has_long_short_term_memory_layer())
+    if(neural_network->has(Layer::Type::Recurrent)
+    || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
 
     set_display(display);
@@ -576,9 +576,9 @@ void TrainingStrategy::fix_forecasting()
 {
     Index time_steps = 0;
 
-    if(neural_network->has_recurrent_layer())
+    if(neural_network->has(Layer::Type::Recurrent))
         time_steps = neural_network->get_recurrent_layer()->get_timesteps();
-    else if(neural_network->has_long_short_term_memory_layer())
+    else if(neural_network->has(Layer::Type::LongShortTermMemory))
         time_steps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
     else
         return;
