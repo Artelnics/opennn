@@ -181,7 +181,7 @@ void ImageDataSet::set(const Index& new_images_number,
     sample_uses.resize(new_images_number);
     split_samples_random();
 
-    set_raw_variables_scalers(Scaler::ImageMinMax);
+    set_raw_variable_scalers(Scaler::ImageMinMax);
 }
 
 
@@ -791,7 +791,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-Tensor<Descriptives, 1> ImageDataSet::scale_input_variables()
+Tensor<Descriptives, 1> ImageDataSet::scale_variables(const VariableUse&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),

@@ -32,7 +32,7 @@ void ScalingTest::test_scale_data_mean_standard_deviation()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::MeanStandardDeviation);
+    data_set.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
 
     data_set.scale_data();
     scaled_matrix = data_set.get_data();
@@ -56,7 +56,7 @@ void ScalingTest::test_scale_data_minimum_maximum()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -77,7 +77,7 @@ void ScalingTest::test_scale_data_no_scaling()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::None);
+    data_set.set_raw_variable_scalers(Scaler::None);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -98,7 +98,7 @@ void ScalingTest::test_scale_data_standard_deviation()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::StandardDeviation);
+    data_set.set_raw_variable_scalers(Scaler::StandardDeviation);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -119,7 +119,7 @@ void ScalingTest::test_scale_data_logarithmic()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::Logarithm);
+    data_set.set_raw_variable_scalers(Scaler::Logarithm);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -144,7 +144,7 @@ void ScalingTest::test_unscale_data_mean_standard_deviation()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::MeanStandardDeviation);
+    data_set.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
 
@@ -167,7 +167,7 @@ void ScalingTest::test_unscale_data_minimum_maximum()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.scale_data();
@@ -189,7 +189,7 @@ void ScalingTest::test_unscale_data_no_scaling()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::None);
+    data_set.set_raw_variable_scalers(Scaler::None);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.unscale_data(variables_descriptives);
@@ -210,7 +210,7 @@ void ScalingTest::test_unscale_data_standard_deviation()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::StandardDeviation);
+    data_set.set_raw_variable_scalers(Scaler::StandardDeviation);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.scale_data();
@@ -232,7 +232,7 @@ void ScalingTest::test_unscale_data_logarithmic()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_raw_variables_scalers(Scaler::Logarithm);
+    data_set.set_raw_variable_scalers(Scaler::Logarithm);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.scale_data();
