@@ -528,57 +528,22 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 }
 
 
-void PoolingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void PoolingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("PoolingLayer");
 
-    file_stream.OpenElement("PoolingLayer");
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
+    add_xml_element(printer, "FiltersNumber", "9");  // @todo Static value; consider replacing with dynamic value if necessary
+    add_xml_element(printer, "FiltersSize", "9");    // Static value; consider replacing with dynamic value if necessary
+    add_xml_element(printer, "PoolingMethod", write_pooling_method());
+    add_xml_element(printer, "ColumnStride", to_string(get_column_stride()));
+    add_xml_element(printer, "RowStride", to_string(get_row_stride()));
+    add_xml_element(printer, "PoolColumnsNumber", to_string(get_pool_width()));
+    add_xml_element(printer, "PoolRowsNumber", to_string(get_pool_height()));
+    add_xml_element(printer, "PaddingWidth", to_string(get_padding_width()));
 
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("InputDimensions");
-    file_stream.PushText(string("1 1 1").c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("FiltersNumber");
-    file_stream.PushText(string("9").c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("FiltersSize");
-    file_stream.PushText(string("9").c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("PoolingMethod");
-    file_stream.PushText(write_pooling_method().c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("InputDimensions");
-    file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("ColumnStride");
-    file_stream.PushText(to_string(get_column_stride()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("RowStride");
-    file_stream.PushText(to_string(get_row_stride()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("PoolColumnsNumber");
-    file_stream.PushText(to_string(get_pool_width()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("PoolRowsNumber");
-    file_stream.PushText(to_string(get_pool_height()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("PaddingWidth");
-    file_stream.PushText(to_string(get_padding_width()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

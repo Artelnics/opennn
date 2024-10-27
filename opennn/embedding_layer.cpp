@@ -403,51 +403,18 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Embedding layer
+    printer.OpenElement("EmbeddingLayer");
 
-    file_stream.OpenElement("EmbeddingLayer");
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "Depth", to_string(get_depth()));
+    add_xml_element(printer, "PositionalEncoding", to_string(positional_encoding ? 1 : 0));
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Input dimension
-
-    file_stream.OpenElement("InputDimensions");
-    file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Embedding depth
-
-    file_stream.OpenElement("Depth");
-    file_stream.PushText(to_string(get_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Positional encoding
-
-    file_stream.OpenElement("PositionalEncoding");
-    file_stream.PushText(to_string(positional_encoding ? 1 : 0).c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Embedding layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();  
 }
 
 

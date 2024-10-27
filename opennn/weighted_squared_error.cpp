@@ -297,19 +297,14 @@ string WeightedSquaredError::get_error_type_text() const
 }
 
 
-void WeightedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void WeightedSquaredError::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("WeightedSquaredError");
+    printer.OpenElement("WeightedSquaredError");
 
-    file_stream.OpenElement("PositivesWeight");
-    file_stream.PushText(to_string(positives_weight).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "PositivesWeight", to_string(positives_weight));
+    add_xml_element(printer, "NegativesWeight", to_string(negatives_weight));
 
-    file_stream.OpenElement("NegativesWeight");
-    file_stream.PushText(to_string(negatives_weight).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

@@ -627,39 +627,21 @@ string QuasiNewtonMethod::write_optimization_algorithm_type() const
 }
 
 
-void QuasiNewtonMethod::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void QuasiNewtonMethod::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("QuasiNewtonMethod");
 
-    file_stream.OpenElement("QuasiNewtonMethod");
+    add_xml_element(printer, "InverseHessianApproximationMethod", write_inverse_hessian_approximation_method());
 
-    file_stream.OpenElement("InverseHessianApproximationMethod");
-    file_stream.PushText(write_inverse_hessian_approximation_method().c_str());
-    file_stream.CloseElement();
+    learning_rate_algorithm.to_XML(printer);
 
-    learning_rate_algorithm.to_XML(file_stream);
+    add_xml_element(printer, "MinimumLossDecrease", std::to_string(minimum_loss_decrease));
+    add_xml_element(printer, "LossGoal", std::to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", std::to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumEpochsNumber", std::to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", std::to_string(maximum_time));
 
-    file_stream.OpenElement("MinimumLossDecrease");
-    file_stream.PushText(to_string(minimum_loss_decrease).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-    file_stream.PushText(to_string(maximum_selection_failures).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

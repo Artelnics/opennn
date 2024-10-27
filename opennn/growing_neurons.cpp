@@ -275,53 +275,19 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 }
 
 
-void GrowingNeurons::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void GrowingNeurons::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("GrowingNeurons");
+    printer.OpenElement("GrowingNeurons");
 
-    // Minimum order
+    add_xml_element(printer, "MinimumNeurons", to_string(minimum_neurons));
+    add_xml_element(printer, "MaximumNeurons", to_string(maximum_neurons));
+    add_xml_element(printer, "NeuronsIncrement", to_string(neurons_increment));
+    add_xml_element(printer, "TrialsNumber", to_string(trials_number));
+    add_xml_element(printer, "SelectionErrorGoal", to_string(selection_error_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    file_stream.OpenElement("MinimumNeurons");
-    file_stream.PushText(to_string(minimum_neurons).c_str());
-    file_stream.CloseElement();
-
-    // Maximum order
-
-    file_stream.OpenElement("MaximumNeurons");
-    file_stream.PushText(to_string(maximum_neurons).c_str());
-    file_stream.CloseElement();
-
-    // Step
-
-    file_stream.OpenElement("NeuronsIncrement");
-    file_stream.PushText(to_string(neurons_increment).c_str());
-    file_stream.CloseElement();
-
-    // Trials number
-
-    file_stream.OpenElement("TrialsNumber");
-    file_stream.PushText(to_string(trials_number).c_str());
-    file_stream.CloseElement();
-
-    // Selection error goal
-
-    file_stream.OpenElement("SelectionErrorGoal");
-    file_stream.PushText(to_string(selection_error_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum selection failures
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-    file_stream.PushText(to_string(maximum_selection_failures).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

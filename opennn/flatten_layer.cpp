@@ -128,27 +128,17 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void FlattenLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void FlattenLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("FlattenLayer");
+    printer.OpenElement("FlattenLayer");
 
-    file_stream.OpenElement("InputVariablesDimension");
+    printer.OpenElement("InputVariablesDimension");
+    add_xml_element(printer, "InputHeight", to_string(get_input_height()));
+    add_xml_element(printer, "InputWidth", to_string(get_input_width()));
+    add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
+    printer.CloseElement();  
 
-    file_stream.OpenElement("InputHeight");
-    file_stream.PushText(to_string(get_input_height()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("InputWidth");
-    file_stream.PushText(to_string(get_input_width()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("InputChannels");
-    file_stream.PushText(to_string(get_input_channels()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement(); 
 }
 
 

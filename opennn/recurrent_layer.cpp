@@ -673,42 +673,16 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
-
+void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("RecurrentLayer");
 
-    // Perceptron layer
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("RecurrentLayer");
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Outputs number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Recurrent layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

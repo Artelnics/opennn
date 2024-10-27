@@ -422,47 +422,17 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
 }
 
 
-void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("ProbabilisticLayer");
 
-    // Probabilistic layer
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
+    add_xml_element(printer, "DecisionThreshold", to_string(decision_threshold));
 
-    file_stream.OpenElement("ProbabilisticLayer");
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Neurons number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Decision threshold
-
-    file_stream.OpenElement("DecisionThreshold");
-    file_stream.PushText(to_string(decision_threshold).c_str());
-    file_stream.CloseElement();
-
-    // Probabilistic layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

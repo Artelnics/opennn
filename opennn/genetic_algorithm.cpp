@@ -1291,16 +1291,13 @@ void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
     printer.OpenElement("GeneticAlgorithm");
 
     add_xml_element(printer, "PopulationSize", to_string(get_individuals_number()));
-
     add_xml_element(printer, "ElitismSize", to_string(elitism_size));
-
     add_xml_element(printer, "MutationRate", to_string(mutation_rate));
-
     add_xml_element(printer, "SelectionErrorGoal", to_string(selection_error_goal));
-
     add_xml_element(printer, "MaximumGenerationsNumber", to_string(maximum_epochs_number));
-
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+
+    printer.CloseElement();
 }
 
 
@@ -1310,7 +1307,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root)
         throw runtime_error("GeneticAlgorithm element is nullptr.\n");
-
+/*
     set_individuals_number(read_xml_value(root, "PopulationSize", get_individuals_number()));
 
     set_mutation_rate(read_xml_value(root, "MutationRate", type(0.01)));
@@ -1328,6 +1325,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     set_maximum_time(read_xml_value(root, "MaximumTime", maximum_time));
 
     set_display(read_xml_value(root, "Display", true));
+*/
 }
 
 

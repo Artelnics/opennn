@@ -197,40 +197,22 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
 }
 
 
-void ModelSelection::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ModelSelection::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Model selection
+    printer.OpenElement("ModelSelection");
 
-    file_stream.OpenElement("ModelSelection");
+    printer.OpenElement("NeuronsSelection");
+    add_xml_element(printer, "NeuronsSelectionMethod", write_neurons_selection_method());
+    growing_neurons.to_XML(printer);
+    printer.CloseElement();  
 
-    // Neurons selection
+    printer.OpenElement("InputsSelection");
+    add_xml_element(printer, "InputsSelectionMethod", write_inputs_selection_method());
+    growing_inputs.to_XML(printer);
+    genetic_algorithm.to_XML(printer);
+    printer.CloseElement(); 
 
-    file_stream.OpenElement("NeuronsSelection");
-
-    file_stream.OpenElement("NeuronsSelectionMethod");
-    file_stream.PushText(write_neurons_selection_method().c_str());
-    file_stream.CloseElement();
-
-    growing_neurons.to_XML(file_stream);
-
-    file_stream.CloseElement();
-
-    // Inputs selection
-
-    file_stream.OpenElement("InputsSelection");
-
-    file_stream.OpenElement("InputsSelectionMethod");
-    file_stream.PushText(write_inputs_selection_method().c_str());
-    file_stream.CloseElement();
-
-    growing_inputs.to_XML(file_stream);
-    genetic_algorithm.to_XML(file_stream);
-
-    file_stream.CloseElement();
-
-    // Model selection (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

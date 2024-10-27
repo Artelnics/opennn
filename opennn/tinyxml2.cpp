@@ -3049,5 +3049,12 @@ bool XMLPrinter::Visit(const XMLUnknown& unknown )
     return true;
 }
 
+void add_xml_element(tinyxml2::XMLPrinter& printer, const std::string& name, const std::string& value)
+{
+    printer.OpenElement(name.c_str());
+    printer.PushText(value.c_str());
+    printer.CloseElement();
+}
+
 }   // namespace tinyxml2
 

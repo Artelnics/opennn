@@ -548,49 +548,18 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 }
 
 
-void LevenbergMarquardtAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LevenbergMarquardtAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("LevenbergMarquardt");
 
-    file_stream.OpenElement("LevenbergMarquardt");
+    add_xml_element(printer, "DampingParameterFactor", to_string(damping_parameter_factor));
+    add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    // Damping paramterer factor.
-
-    file_stream.OpenElement("DampingParameterFactor");
-    file_stream.PushText(to_string(damping_parameter_factor).c_str());
-    file_stream.CloseElement();
-
-    // Minimum loss decrease
-
-    file_stream.OpenElement("MinimumLossDecrease");
-    file_stream.PushText(to_string(minimum_loss_decrease).c_str());
-    file_stream.CloseElement();
-
-    // Loss goal
-
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum selection failures
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-    file_stream.PushText(to_string(maximum_selection_failures).c_str());
-    file_stream.CloseElement();
-
-    // Maximum epochs number
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

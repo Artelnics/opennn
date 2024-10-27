@@ -2245,18 +2245,13 @@ type TestingAnalysis::calculate_logloss() const
 }
 
 
-void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
-    file_stream.OpenElement("TestingAnalysis");
+    printer.OpenElement("TestingAnalysis");
 
-    // Display
+    add_xml_element(printer, "Display", to_string(display));
 
-    file_stream.OpenElement("Display");
-    file_stream.PushText(to_string(display).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

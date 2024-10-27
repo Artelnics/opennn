@@ -2245,22 +2245,25 @@ private:
     XMLPrinter& operator= (const XMLPrinter&);
 };
 
-void add_xml_element(tinyxml2::XMLPrinter& printer, const std::string& name, const std::string& value)
-{
-    printer.OpenElement(name.c_str());
-    printer.PushText(value.c_str());
-    printer.CloseElement();
-}
 
+void add_xml_element(tinyxml2::XMLPrinter& printer, const std::string& name, const std::string& value);
 
-template <typename T>
-T read_xml_value(const tinyxml2::XMLElement* root, const std::string& element_name, T default_value = T())
+/*
+type read_xml_type(const tinyxml2::XMLElement* root, const std::string& element_name)
 {
     const tinyxml2::XMLElement* element = root->FirstChildElement(element_name.c_str());
 
-    return element ? static_cast<T>(std::stod(element->GetText())) : default_value;
-}
+    if(!element)
+        throw runtime_error("Element is nullptr" + element_name);
 
+    const tinyxml2::XMLText* text = element->GetText());
+
+    if(!text)
+        throw runtime_error("Text is nullptr" + element_name);
+
+    return type(stod(element->GetText()));
+}
+*/
 
 }	// tinyxml2
 

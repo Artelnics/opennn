@@ -2229,64 +2229,19 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-//    ostringstream buffer;
+    printer.OpenElement("LongShortTermMemoryLayer");
 
-    // Long short-term memory layer
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "TimeStep", to_string(get_timesteps()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "RecurrentActivationFunction", write_recurrent_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("LongShortTermMemoryLayer");
-
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Outputs number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Time step
-
-    file_stream.OpenElement("TimeStep");
-    file_stream.PushText(to_string(get_timesteps()).c_str());
-
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-
-    file_stream.PushText(write_activation_function().c_str());
-
-    file_stream.CloseElement();
-
-    // Recurrent activation function
-
-    file_stream.OpenElement("RecurrentActivationFunction");
-
-    file_stream.PushText(write_recurrent_activation_function().c_str());
-
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Long short-term memory layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

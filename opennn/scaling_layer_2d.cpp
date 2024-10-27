@@ -568,39 +568,27 @@ void ScalingLayer2D::print() const
 }
 
 
-void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("ScalingLayer2D");
+    printer.OpenElement("ScalingLayer2D");
 
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
 
     const Index neurons_number = get_neurons_number();
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(neurons_number).c_str());
-    file_stream.CloseElement();
-
     const Tensor<string, 1> scaling_methods_string = write_scalers();
 
-    for(Index i = 0; i < neurons_number; i++)
+    for (Index i = 0; i < neurons_number; i++) 
     {
-        file_stream.OpenElement("ScalingNeuron");
-        file_stream.PushAttribute("Index", int(i+1));
+        printer.OpenElement("ScalingNeuron");
+        printer.PushAttribute("Index", int(i + 1));
+        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives(i).to_tensor()));
+        add_xml_element(printer, "Scaler", scaling_methods_string(i));
 
-        file_stream.OpenElement("Descriptives");
-        file_stream.PushText(tensor_to_string(descriptives(i).to_tensor()).c_str());
-        file_stream.CloseElement();
-
-        file_stream.OpenElement("Scaler");
-        file_stream.PushText(scaling_methods_string(i).c_str());
-        file_stream.CloseElement();
-
-        file_stream.CloseElement();
+        printer.CloseElement();  
     }
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

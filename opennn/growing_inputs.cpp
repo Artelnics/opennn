@@ -391,65 +391,21 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
 }
 
 
-void GrowingInputs::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void GrowingInputs::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("GrowingInputs");
+    printer.OpenElement("GrowingInputs");
 
-    // Trials number
+    add_xml_element(printer, "TrialsNumber", to_string(trials_number));
+    add_xml_element(printer, "SelectionErrorGoal", to_string(selection_error_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MinimumInputsNumber", to_string(minimum_inputs_number));
+    add_xml_element(printer, "MaximumInputsNumber", to_string(maximum_inputs_number));
+    add_xml_element(printer, "MinimumCorrelation", to_string(minimum_correlation));
+    add_xml_element(printer, "MaximumCorrelation", to_string(maximum_correlation));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    file_stream.OpenElement("TrialsNumber");
-    file_stream.PushText(to_string(trials_number).c_str());
-    file_stream.CloseElement();
-
-    // Selection error goal
-
-    file_stream.OpenElement("SelectionErrorGoal");
-    file_stream.PushText(to_string(selection_error_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum selection failures
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-    file_stream.PushText(to_string(maximum_selection_failures).c_str());
-    file_stream.CloseElement();
-
-    // Minimum inputs number
-
-    file_stream.OpenElement("MinimumInputsNumber");
-    file_stream.PushText(to_string(minimum_inputs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum inputs number
-
-    file_stream.OpenElement("MaximumInputsNumber");
-    file_stream.PushText(to_string(maximum_inputs_number).c_str());
-    file_stream.CloseElement();
-
-    // Minimum correlation
-
-    file_stream.OpenElement("MinimumCorrelation");
-    file_stream.PushText(to_string(minimum_correlation).c_str());
-    file_stream.CloseElement();
-
-    // Maximum correlation
-
-    file_stream.OpenElement("MaximumCorrelation");
-    file_stream.PushText(to_string(maximum_correlation).c_str());
-    file_stream.CloseElement();
-
-    // Maximum iterations
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();  
 }
 
 

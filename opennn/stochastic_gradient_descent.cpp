@@ -522,51 +522,18 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 }
 
 
-void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("StochasticGradientDescent");
 
-    file_stream.OpenElement("StochasticGradientDescent");
+    add_xml_element(printer, "BatchSize", to_string(batch_samples_number));
+    add_xml_element(printer, "ApplyMomentum", to_string(momentum > type(0)));
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    add_xml_element(printer, "HardwareUse", hardware_use);
 
-    // Batch size
-
-    file_stream.OpenElement("BatchSize");
-    file_stream.PushText(to_string(batch_samples_number).c_str());
-    file_stream.CloseElement();
-
-    // Apply momentum
-
-    file_stream.OpenElement("ApplyMomentum");
-    file_stream.PushText(to_string(momentum > type(0)).c_str());
-    file_stream.CloseElement();
-
-    // Loss goal
-
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum epochs number
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    // Hardware use
-
-    file_stream.OpenElement("HardwareUse");
-    file_stream.PushText(hardware_use.c_str());
-    file_stream.CloseElement();
-
-    // End element
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

@@ -1021,57 +1021,19 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Multihead Attention layer
+    printer.OpenElement("MultiheadAttentionLayer");
 
-    file_stream.OpenElement("MultiheadAttentionLayer");
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputSize", to_string(get_input_size()));
+    add_xml_element(printer, "ContextSize", to_string(get_context_size()));
+    add_xml_element(printer, "Depth", to_string(get_depth()));
+    add_xml_element(printer, "HeadsNumber", to_string(get_heads_number()));
+    add_xml_element(printer, "CausalMask", to_string(use_causal_mask ? 1 : 0));
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Input size
-
-    file_stream.OpenElement("InputSize");
-    file_stream.PushText(to_string(get_input_size()).c_str());
-    file_stream.CloseElement();
-
-    // Context size
-
-    file_stream.OpenElement("ContextSize");
-    file_stream.PushText(to_string(get_context_size()).c_str());
-    file_stream.CloseElement();
-
-    // Embedding depth
-
-    file_stream.OpenElement("Depth");
-    file_stream.PushText(to_string(get_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Number of attention heads
-
-    file_stream.OpenElement("HeadsNumber");
-    file_stream.PushText(to_string(get_heads_number()).c_str());
-    file_stream.CloseElement();
-
-    // Use causal mask
-
-    file_stream.OpenElement("CausalMask");
-    file_stream.PushText(to_string(use_causal_mask ? 1 : 0).c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Multihead Attention layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

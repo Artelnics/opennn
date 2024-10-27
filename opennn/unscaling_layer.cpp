@@ -451,50 +451,28 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
+    printer.OpenElement("UnscalingLayer");
+
     const Index neurons_number = get_neurons_number();
-
-    // Unscaling layer
-
-    file_stream.OpenElement("UnscalingLayer");
-
-    // Unscaling neurons number
-
-    file_stream.OpenElement("UnscalingNeuronsNumber");
-    file_stream.PushText(to_string(neurons_number).c_str());
-    file_stream.CloseElement();
-
-    // Descriptives
+    add_xml_element(printer, "UnscalingNeuronsNumber", to_string(neurons_number));
 
     const Tensor<string, 1> scalers = write_unscaling_methods();
 
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        file_stream.OpenElement("UnscalingNeuron");
-        file_stream.PushAttribute("Index", int(i+1));
+    for (Index i = 0; i < neurons_number; i++) {
+        printer.OpenElement("UnscalingNeuron");
+        printer.PushAttribute("Index", int(i + 1));
 
-        //Descriptives
+        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives(i).to_tensor()));
+        add_xml_element(printer, "Scaler", scalers(i));
 
-        file_stream.OpenElement("Descriptives");
-        file_stream.PushText(tensor_to_string(descriptives(i).to_tensor()).c_str());
-        file_stream.CloseElement();
-
-        // Unscaling method
-
-        file_stream.OpenElement("Scaler");
-        file_stream.PushText(scalers(i).c_str());
-        file_stream.CloseElement();
-
-        // Unscaling neuron (end tag)
-
-        file_stream.CloseElement();
+        printer.CloseElement();  
     }
 
-    // Unscaling layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
+
 
 Tensor<string, 1> UnscalingLayer::write_scalers_text() const
 {

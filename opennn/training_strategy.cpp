@@ -588,59 +588,59 @@ void TrainingStrategy::print() const
 }
 
 
-void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("TrainingStrategy");
+    printer.OpenElement("TrainingStrategy");
 
-    // Loss index
+    printer.OpenElement("LossIndex");
 
-    file_stream.OpenElement("LossIndex");
+    add_xml_element(printer, "LossMethod", write_loss_method());
 
-    // Loss method
+    mean_squared_error.to_XML(printer);
+    normalized_squared_error.to_XML(printer);
+    Minkowski_error.to_XML(printer);
+    cross_entropy_error.to_XML(printer);
+    weighted_squared_error.to_XML(printer);
 
-    file_stream.OpenElement("LossMethod");
-    file_stream.PushText(write_loss_method().c_str());
-    file_stream.CloseElement();
-
-    mean_squared_error.to_XML(file_stream);
-    normalized_squared_error.to_XML(file_stream);
-    Minkowski_error.to_XML(file_stream);
-    cross_entropy_error.to_XML(file_stream);
-    weighted_squared_error.to_XML(file_stream);
-
-    switch(loss_method)
-    {
-    case LossMethod::MEAN_SQUARED_ERROR : mean_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::NORMALIZED_SQUARED_ERROR : normalized_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::MINKOWSKI_ERROR : Minkowski_error.write_regularization_XML(file_stream); break;
-    case LossMethod::CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream); break;
-    case LossMethod::WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::SUM_SQUARED_ERROR : sum_squared_error.write_regularization_XML(file_stream); break;
-    default: break;
+    switch (loss_method) {
+    case LossMethod::MEAN_SQUARED_ERROR:
+        mean_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::NORMALIZED_SQUARED_ERROR:
+        normalized_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::MINKOWSKI_ERROR:
+        Minkowski_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::CROSS_ENTROPY_ERROR:
+        cross_entropy_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::WEIGHTED_SQUARED_ERROR:
+        weighted_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::SUM_SQUARED_ERROR:
+        sum_squared_error.write_regularization_XML(printer);
+        break;
+    default:
+        break;
     }
 
-    file_stream.CloseElement();
+    printer.CloseElement();  
 
-    // Optimization algorithm
+    printer.OpenElement("OptimizationAlgorithm");
 
-    file_stream.OpenElement("OptimizationAlgorithm");
+    add_xml_element(printer, "OptimizationMethod", write_optimization_method());
 
-    file_stream.OpenElement("OptimizationMethod");
-    file_stream.PushText(write_optimization_method().c_str());
-    file_stream.CloseElement();
+    gradient_descent.to_XML(printer);
+    conjugate_gradient.to_XML(printer);
+    stochastic_gradient_descent.to_XML(printer);
+    adaptive_moment_estimation.to_XML(printer);
+    quasi_Newton_method.to_XML(printer);
+    Levenberg_Marquardt_algorithm.to_XML(printer);
 
-    gradient_descent.to_XML(file_stream);
-    conjugate_gradient.to_XML(file_stream);
-    stochastic_gradient_descent.to_XML(file_stream);
-    adaptive_moment_estimation.to_XML(file_stream);
-    quasi_Newton_method.to_XML(file_stream);
-    Levenberg_Marquardt_algorithm.to_XML(file_stream);
+    printer.CloseElement();  
 
-    file_stream.CloseElement();
-
-    // Close TrainingStrategy
-
-    file_stream.CloseElement();
+    printer.CloseElement();  
 }
 
 

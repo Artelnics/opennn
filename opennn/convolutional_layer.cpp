@@ -871,68 +871,21 @@ void ConvolutionalLayer::print() const
 }
 
 
-void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Convolutional layer
+    printer.OpenElement("ConvolutionalLayer");
 
-    file_stream.OpenElement("ConvolutionalLayer");
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputDimensions", dimensions_to_string(input_dimensions));
+    add_xml_element(printer, "OutputDimensions", dimensions_to_string(get_output_dimensions()));
+    add_xml_element(printer, "FiltersNumber", to_string(get_kernels_number()));
+    add_xml_element(printer, "FiltersSize", to_string(get_kernel_width()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Stride", to_string(get_row_stride()));
+    add_xml_element(printer, "ConvolutionType", write_convolution_type());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Image size
-
-    file_stream.OpenElement("InputDimensions");
-    file_stream.PushText(dimensions_to_string(input_dimensions).c_str());
-    file_stream.CloseElement();
-
-    // Outputs
-
-    file_stream.OpenElement("OutputDimensions");
-    file_stream.PushText(dimensions_to_string(get_output_dimensions()).c_str());
-
-    file_stream.CloseElement();
-
-    // Filters number
-
-    file_stream.OpenElement("FiltersNumber");
-    file_stream.PushText(to_string(get_kernels_number()).c_str());
-    file_stream.CloseElement();
-
-    // Filters size
-
-    file_stream.OpenElement("FiltersSize");
-    file_stream.PushText(to_string(get_kernel_width()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Stride
-
-    file_stream.OpenElement("Stride");
-    file_stream.PushText(to_string(get_row_stride()).c_str());
-    file_stream.CloseElement();
-
-    // Convolution Type
-
-    file_stream.OpenElement("ConvolutionType");
-    file_stream.PushText(write_convolution_type().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

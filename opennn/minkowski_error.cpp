@@ -127,21 +127,13 @@ string MinkowskiError::get_error_type_text() const
 }
 
 
-void MinkowskiError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void MinkowskiError::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Error type
+    printer.OpenElement("MinkowskiError");
 
-    file_stream.OpenElement("MinkowskiError");
+    add_xml_element(printer, "MinkowskiParameter", to_string(minkowski_parameter));
 
-    // Minkowski parameter
-
-    file_stream.OpenElement("MinkowskiParameter");
-    file_stream.PushText(to_string(minkowski_parameter).c_str());
-    file_stream.CloseElement();
-
-    // Close error
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

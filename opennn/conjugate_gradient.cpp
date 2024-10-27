@@ -610,51 +610,21 @@ string ConjugateGradient::write_training_direction_method() const
 }
 
 
-void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("ConjugateGradient");
+    printer.OpenElement("ConjugateGradient");
 
-    // Training direction method
+    add_xml_element(printer, "TrainingDirectionMethod", write_training_direction_method());
 
-    file_stream.OpenElement("TrainingDirectionMethod");
-    file_stream.PushText(write_training_direction_method().c_str());
-    file_stream.CloseElement();
+    learning_rate_algorithm.to_XML(printer);
 
-    // Learning rate algorithm
+    add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    learning_rate_algorithm.to_XML(file_stream);
-
-    // Minimum loss decrease
-
-    file_stream.OpenElement("MinimumLossDecrease");
-    file_stream.PushText(to_string(minimum_loss_decrease).c_str());
-    file_stream.CloseElement();
-
-    // Loss goal
-
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum selection failures
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-    file_stream.PushText(to_string(maximum_selection_failures).c_str());
-    file_stream.CloseElement();
-
-    // Maximum epochs number
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
