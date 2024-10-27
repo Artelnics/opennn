@@ -1109,12 +1109,12 @@ Tensor<Scaler, 1> DataSet::get_raw_variables_scalers() const
 }
 
 
-Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
+Tensor<Scaler, 1> DataSet::get_variable_scalers(const VariableUse& variable_use) const
 {
-    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
-    const Index input_variables_number = get_variables_number(VariableUse::Input);
+    const Index input_raw_variables_number = get_raw_variables_number(variable_use);
+    const Index input_variables_number = get_variables_number(variable_use);
 
-    const Tensor<RawVariable, 1> input_raw_variables = get_raw_variables(VariableUse::Input);
+    const Tensor<RawVariable, 1> input_raw_variables = get_raw_variables(variable_use);
 
     Tensor<Scaler, 1> input_variables_scalers(input_variables_number);
 
@@ -1128,28 +1128,6 @@ Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
             input_variables_scalers(index++) = input_raw_variables(i).scaler;
 
     return input_variables_scalers;
-}
-
-
-Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
-{
-    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
-    const Index target_variables_number = get_variables_number(VariableUse::Target);
-
-    const Tensor<RawVariable, 1> target_raw_variables = get_raw_variables(VariableUse::Target);
-
-    Tensor<Scaler, 1> target_variables_scalers(target_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < target_raw_variables_number; i++)
-        if(target_raw_variables(i).type == RawVariableType::Categorical)
-            for(Index j = 0; j < target_raw_variables(i).get_categories_number(); j++)
-                target_variables_scalers(index++) = target_raw_variables(i).scaler;
-        else
-            target_variables_scalers(index++) = target_raw_variables(i).scaler;
-
-    return target_variables_scalers;
 }
 
 
@@ -1492,12 +1470,12 @@ void DataSet::set_input_raw_variables_unused()
 }
 
 
-void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variables_indices, const Tensor<bool, 1>& input_raw_variables_use)
-{
-    for(Index i = 0; i < input_raw_variables_indices.size(); i++)
-        set_raw_variable_use(input_raw_variables_indices(i),
-            input_raw_variables_use(i) ? VariableUse::Input : VariableUse::None);
-}
+//void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variables_indices, const Tensor<bool, 1>& input_raw_variables_use)
+//{
+//    for(Index i = 0; i < input_raw_variables_indices.size(); i++)
+//        set_raw_variable_use(input_raw_variables_indices(i),
+//            input_raw_variables_use(i) ? VariableUse::Input : VariableUse::None);
+//}
 
 
 void DataSet::set_raw_variable_use(const Index& index, const VariableUse& new_use)
@@ -1630,7 +1608,7 @@ void DataSet::set_raw_variables_number(const Index& new_raw_variables_number)
 }
 
 
-void DataSet::set_raw_variables_scalers(const Scaler& scalers)
+void DataSet::set_raw_variable_scalers(const Scaler& scalers)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -1639,7 +1617,7 @@ void DataSet::set_raw_variables_scalers(const Scaler& scalers)
 }
 
 
-void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
+void DataSet::set_raw_variable_scalers(const Tensor<Scaler, 1>& new_scalers)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -2777,63 +2755,24 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
 }
 
 
-Index DataSet::calculate_training_negatives(const Index& target_index) const
+Index DataSet::calculate_negatives(const SampleUse& sample_use, const Index& target_index) const
 {
     Index negatives = 0;
 
-    const Tensor<Index, 1> training_indices = get_sample_indices(SampleUse::Training);
+    const Tensor<Index, 1> indices = get_sample_indices(sample_use);
 
-    const Index training_samples_number = training_indices.size();
+    const Index this_samples_number = indices.size();
 
-    for(Index i = 0; i < training_samples_number; i++)
+    for(Index i = 0; i < this_samples_number; i++)
     {
-        const Index training_index = training_indices(i);
+        const Index index = indices(i);
 
-        if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
+        if(abs(data(index, target_index)) < type(NUMERIC_LIMITS_MIN))
             negatives++;
-        else if(abs(data(training_index, target_index) - type(1)) > type(1.0e-3))
+        else if(abs(data(index, target_index) - type(1)) > type(1.0e-3))
             throw runtime_error("Training sample is neither positive nor negative: "
-                                + to_string(data(training_index, target_index)));
+                                + to_string(data(index, target_index)));
     }
-
-    return negatives;
-}
-
-
-Index DataSet::calculate_selection_negatives(const Index& target_index) const
-{
-    Index negatives = 0;
-
-    const Index selection_samples_number = get_samples_number(SampleUse::Selection);
-
-    const Tensor<Index, 1> selection_indices = get_sample_indices(SampleUse::Selection);
-
-    for(Index i = 0; i < Index(selection_samples_number); i++)
-    {
-        const Index selection_index = selection_indices(i);
-
-        if(abs(data(selection_index, target_index)) < type(NUMERIC_LIMITS_MIN))
-            negatives++;
-        else if(abs(data(selection_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
-            throw runtime_error("Selection sample is neither a positive nor a negative: "
-                                + to_string(data(selection_index, target_index)));
-    }
-
-    return negatives;
-}
-
-
-Index DataSet::calculate_testing_negatives(const Index& target_index) const
-{
-    Index negatives = 0;
-
-    const Index testing_samples_number = get_samples_number(SampleUse::Testing);
-
-    const Tensor<Index, 1> testing_indices = get_sample_indices(SampleUse::Testing);
-
-    for(Index i = 0; i < Index(testing_samples_number); i++)
-        if(data(testing_indices(i), target_index) < type(NUMERIC_LIMITS_MIN))
-            negatives++;
 
     return negatives;
 }
@@ -2959,9 +2898,9 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_categories
 }
 
 
-Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_training_samples() const
+Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives(const SampleUse& sample_use) const
 {
-    const Tensor<Index, 1> training_indices = get_sample_indices(SampleUse::Training);
+    const Tensor<Index, 1> training_indices = get_sample_indices(sample_use);
 
     const Tensor<Index, 1> used_indices = get_used_raw_variables_indices();
 
@@ -2969,33 +2908,13 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_training_s
 }
 
 
-Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_selection_samples() const
-{
-    const Tensor<Index, 1> selection_indices = get_sample_indices(SampleUse::Selection);
-
-    const Tensor<Index, 1> used_indices = get_used_raw_variables_indices();
-
-    return descriptives(data, selection_indices, used_indices);
-}
-
-
-Tensor<Descriptives, 1> DataSet::calculate_input_variables_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_variables_descriptives(const VariableUse& variable_use) const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> input_variables_indices = get_variable_indices(variable_use);
 
     return descriptives(data, used_samples_indices, input_variables_indices);
-}
-
-
-Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
-{
-    const Tensor<Index, 1> used_indices = get_used_samples_indices();
-
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
-
-    return descriptives(data, used_indices, target_variables_indices);
 }
 
 
@@ -3363,7 +3282,7 @@ void DataSet::set_default_raw_variables_scalers()
     const Index raw_variables_number = raw_variables.size();
 
     if(model_type == ModelType::ImageClassification)
-        set_raw_variables_scalers(Scaler::ImageMinMax);
+        set_raw_variable_scalers(Scaler::ImageMinMax);
     else
         for(Index i = 0; i < raw_variables_number; i++)
             raw_variables(i).scaler = (raw_variables(i).type == RawVariableType::Numeric)
@@ -3448,14 +3367,14 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
 }
 
 
-Tensor<Descriptives, 1> DataSet::scale_input_variables()
+Tensor<Descriptives, 1> DataSet::scale_variables(const VariableUse& variable_use)
 {
-    const Index input_variables_number = get_variables_number(VariableUse::Input);
+    const Index input_variables_number = get_variables_number(variable_use);
 
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
+    const Tensor<Index, 1> input_variables_indices = get_variable_indices(variable_use);
+    const Tensor<Scaler, 1> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_variables_descriptives(variable_use);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
@@ -3489,54 +3408,14 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 }
 
 
-Tensor<Descriptives, 1> DataSet::scale_target_variables()
+void DataSet::unscale_variables(const VariableUse& variable_use, 
+                                const Tensor<Descriptives, 1>& input_variables_descriptives)
 {
-    const Index target_variables_number = get_variables_number(VariableUse::Target);
+    const Index input_variables_number = get_variables_number(variable_use);
 
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
-    const Tensor<Scaler, 1> target_variables_scalers = get_target_variables_scalers();
+    const Tensor<Index, 1> input_variables_indices = get_variable_indices(variable_use);
 
-    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_target_variables_descriptives();
-
-    for(Index i = 0; i < target_variables_number; i++)
-    {
-        switch(target_variables_scalers(i))
-        {
-        case Scaler::None:
-            break;
-
-        case Scaler::MinimumMaximum:
-            scale_minimum_maximum(data, target_variables_indices(i), target_variables_descriptives(i));
-            break;
-
-        case Scaler::MeanStandardDeviation:
-            scale_mean_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
-            break;
-
-        case Scaler::StandardDeviation:
-            scale_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
-            break;
-
-        case Scaler::Logarithm:
-            scale_logarithmic(data, target_variables_indices(i));
-            break;
-
-        default:        
-            throw runtime_error("Unknown scaling targets method: " + to_string(int(target_variables_scalers(i))) + "\n");
-        }
-    }
-
-    return target_variables_descriptives;
-}
-
-
-void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_variables_descriptives)
-{
-    const Index input_variables_number = get_variables_number(VariableUse::Input);
-
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
-
-    const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
@@ -3567,42 +3446,6 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
 
         default:
             throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variables_scalers(i))) + "\n");
-        }
-    }
-}
-
-
-void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_descriptives)
-{
-    const Index target_variables_number = get_variables_number(VariableUse::Target);
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
-    const Tensor<Scaler, 1> target_variables_scalers = get_target_variables_scalers();
-
-    for(Index i = 0; i < target_variables_number; i++)
-    {
-        switch(target_variables_scalers(i))
-        {
-        case Scaler::None:
-            break;
-
-        case Scaler::MinimumMaximum:
-            unscale_minimum_maximum(data, target_variables_indices(i), targets_descriptives(i));
-            break;
-
-        case Scaler::MeanStandardDeviation:
-            unscale_mean_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
-            break;
-
-        case Scaler::StandardDeviation:
-            unscale_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
-            break;
-
-        case Scaler::Logarithm:
-            unscale_logarithmic(data, target_variables_indices(i));
-            break;
-
-        default:
-            throw runtime_error("Unknown unscaling and unscaling method.\n");
         }
     }
 }

@@ -212,8 +212,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
     const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
@@ -227,7 +227,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
-        input_variables_descriptives = data_set->scale_input_variables();
+        input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
         scaling_layer_2d->set_descriptives(input_variables_descriptives);
@@ -236,7 +236,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_target_variables();
+        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
         unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
@@ -405,10 +405,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     }
 
     if(neural_network->has(Layer::Type::Scaling2D))
-        data_set->unscale_input_variables(input_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
 
     if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_target_variables(target_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
 
     if(display) results.print();
 

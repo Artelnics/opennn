@@ -934,9 +934,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     data_set->set_input_target_raw_variables_indices(optimal_raw_variables, original_target_raw_variables_indices);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_variables_descriptives(DataSet::VariableUse::Input);
 
     // Set neural network stuff
 
