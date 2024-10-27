@@ -21,12 +21,6 @@
 namespace opennn
 {
 
-TestingAnalysis::TestingAnalysis()
-{
-    set_default();
-}
-
-
 TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : neural_network(new_neural_network),
       data_set(new_data_set)

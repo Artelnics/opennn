@@ -465,7 +465,7 @@ public:
     // Box and whiskers
 
     Tensor<BoxPlot, 1> calculate_raw_variables_box_plots() const;
-    Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
+    //Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
 

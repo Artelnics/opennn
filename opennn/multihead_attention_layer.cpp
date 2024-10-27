@@ -234,7 +234,6 @@ void MultiheadAttentionLayer::set_default()
 }
 
 
-
 void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const type* new_parameters_data = new_parameters.data();
@@ -435,8 +434,6 @@ void MultiheadAttentionLayer::build_causal_mask()
 void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
     const Index batch_samples_number = attention_scores.dimension(2);
-
-    #pragma omp parallel for
     
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {

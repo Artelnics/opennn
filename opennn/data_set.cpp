@@ -2674,17 +2674,17 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
 }
 
 
-Tensor<BoxPlot, 1> DataSet::calculate_data_raw_variables_box_plot(Tensor<type,2>& data) const
-{
-    const Index raw_variables_number = data.dimension(1);
+//Tensor<BoxPlot, 1> DataSet::calculate_data_raw_variables_box_plot(Tensor<type,2>& data) const
+//{
+//    const Index columns_number = data.dimension(1);
 
-    Tensor<BoxPlot, 1> box_plots(raw_variables_number);
+//    Tensor<BoxPlot, 1> box_plots(columns_number);
 
-    for(Index i = 0; i < raw_variables_number; i++)
-        box_plots(i) = box_plot(data.chip(i, 1));
+//    for(Index i = 0; i < columns_number; i++)
+//        box_plots(i) = box_plot(data.chip(i, 1));
 
-    return box_plots;
-}
+//    return box_plots;
+//}
 
 
 Tensor<BoxPlot, 1> DataSet::calculate_raw_variables_box_plots() const
