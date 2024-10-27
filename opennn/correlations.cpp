@@ -543,7 +543,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     DataSet data_set(data);
     data_set.set(DataSet::SampleUse::Training);
 
-    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
     neural_network.get_scaling_layer_2d()->set_display(false);
@@ -624,7 +624,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     DataSet data_set(data);
     data_set.set(DataSet::SampleUse::Training);
 
-    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1}, {}, {1});
     neural_network.get_scaling_layer_2d()->set_display(false);
