@@ -230,7 +230,7 @@ void DataSetTest::test_scale_data()
 
     data_set.set_data(data);
 
-    data_set.set_raw_variables_scalers(Scaler::None);
+    data_set.set_raw_variable_scalers(Scaler::None);
     data_descriptives = data_set.scale_data();
 
     scaled_data = data_set.get_data();
@@ -239,7 +239,7 @@ void DataSetTest::test_scale_data()
 
     // Test
 
-    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
     data_descriptives = data_set.scale_data();
 
     scaled_data = data_set.get_data();
