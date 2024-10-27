@@ -323,9 +323,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     data_set->set_input_target_raw_variables_indices(inputs_selection_results.optimal_input_raw_variables_indices, target_raw_variables_indices);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_variables_descriptives(DataSet::VariableUse::Input);
 
     set_maximum_inputs_number(data_set->get_raw_variables_number(DataSet::VariableUse::Input));
 

@@ -277,10 +277,10 @@ TrainingResults ConjugateGradient::perform_training()
     const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
     const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     // Neural network
@@ -296,7 +296,7 @@ TrainingResults ConjugateGradient::perform_training()
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_target_variables();
+        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
         unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
@@ -450,10 +450,10 @@ TrainingResults ConjugateGradient::perform_training()
             neural_network->save(neural_network_file_name);
     }
 
-    data_set->unscale_input_variables(input_variables_descriptives);
+    data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
 
     if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_target_variables(target_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
 
     if(display) results.print();
 

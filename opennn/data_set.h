@@ -244,8 +244,7 @@ public:
 
     Tensor<Scaler, 1> get_raw_variables_scalers() const;
 
-    Tensor<Scaler, 1> get_input_variables_scalers() const;
-    Tensor<Scaler, 1> get_target_variables_scalers() const;
+    Tensor<Scaler, 1> get_variable_scalers(const VariableUse&) const;
 
     // Batches get
 
@@ -353,7 +352,7 @@ public:
 
     void set_raw_variables_unused(const Tensor<Index, 1>&);
 
-    void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
+    //void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
     void set_raw_variable_use(const Index&, const VariableUse&);
     void set_raw_variable_use(const string&, const VariableUse&);
@@ -367,9 +366,9 @@ public:
 
     void set_raw_variables_number(const Index&);
 
-    void set_raw_variables_scalers(const Scaler&);
+    void set_raw_variable_scalers(const Scaler&);
 
-    void set_raw_variables_scalers(const Tensor<Scaler, 1>&);
+    void set_raw_variable_scalers(const Tensor<Scaler, 1>&);
 
     void set_binary_raw_variables();
     void unuse_constant_raw_variables();
@@ -465,12 +464,10 @@ public:
     Tensor<Descriptives, 1> calculate_raw_variables_descriptives_negative_samples() const;
     Tensor<Descriptives, 1> calculate_raw_variables_descriptives_categories(const Index&) const;
 
-    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_training_samples() const;
-    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_selection_samples() const;
+    Tensor<Descriptives, 1> calculate_raw_variables_descriptives(const SampleUse&) const;
 
-    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
-    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
-
+    Tensor<Descriptives, 1> calculate_variables_descriptives(const VariableUse&) const;
+ 
     Tensor<Descriptives, 1> calculate_testing_target_variables_descriptives() const;
 
     Tensor<type, 1> calculate_input_variables_minimums() const;
@@ -484,9 +481,7 @@ public:
     Tensor<type, 1> calculate_selection_targets_mean() const;
 
     Index calculate_used_negatives(const Index&);
-    Index calculate_training_negatives(const Index&) const;
-    Index calculate_selection_negatives(const Index&) const;
-    Index calculate_testing_negatives(const Index&) const;
+    Index calculate_negatives(const SampleUse&, const Index&) const;
 
     // Distribution
 
@@ -528,15 +523,13 @@ public:
 
     Tensor<Descriptives, 1> scale_data();
 
-    virtual Tensor<Descriptives, 1> scale_input_variables();
-    virtual Tensor<Descriptives, 1> scale_target_variables();
+    virtual Tensor<Descriptives, 1> scale_variables(const VariableUse&);
 
     // Data unscaling
 
     void unscale_data(const Tensor<Descriptives, 1>&);
 
-    void unscale_input_variables(const Tensor<Descriptives, 1>&);
-    void unscale_target_variables(const Tensor<Descriptives, 1>&);
+    void unscale_variables(const VariableUse&, const Tensor<Descriptives, 1>&);
 
     // Classification
 
