@@ -891,99 +891,29 @@ void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    // Convolution layer
-
     const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
 
-    if(!convolutional_layer_element)
-        throw runtime_error("Convolutional layer element is nullptr.\n");
+    if (!convolutional_layer_element) 
+        throw std::runtime_error("Convolutional layer element is nullptr.\n");
 
-    // Convolutional layer name element
+    set_convolution_type(read_xml_string(convolutional_layer_element, "Name"));
 
-    const tinyxml2::XMLElement* convolution_name_element = convolutional_layer_element->FirstChildElement("Name");
+    // set_input_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "InputDimensions")));
+    // set_output_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "OutputDimensions")));
 
-    if(!convolution_name_element)
-        throw runtime_error("Convolution type element is nullptr.\n");
+    //set_filters_number(read_xml_index(convolutional_layer_element, "FiltersNumber"));
 
-    set_convolution_type(convolution_name_element->GetText());
+    //set_filter_size(read_xml_index(convolutional_layer_element, "FiltersSize"));
 
-    // Input variables dimensions element
+    set_activation_function(read_xml_string(convolutional_layer_element, "ActivationFunction"));
 
-    const tinyxml2::XMLElement* input_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
+    const Index stride = read_xml_index(convolutional_layer_element, "Stride");
+    set_column_stride(stride);
+    set_row_stride(stride);
 
-    if(!input_dimensions_element)
-        throw runtime_error("Convolutional input variables dimensions element is nullptr.\n");
+    set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
 
-//    set_input_dimensions(string_to_dimensions(input_dimensions_element->GetText()));
-
-    // Outputs variables dimensions element
-
-    const tinyxml2::XMLElement* output_dimensions_element = convolutional_layer_element->FirstChildElement("OutputDimensions");
-
-    if(!output_dimensions_element)
-        throw runtime_error("Convolutional outputs variables dimensions element is nullptr.\n");
-
-    //set_output_dimensions(string_to_dimensions(output_dimensions_element->GetText()));
-
-    // Filters Number element
-
-    const tinyxml2::XMLElement* filters_number_element = convolutional_layer_element->FirstChildElement("FiltersNumber");
-
-    if(!filters_number_element)
-        throw runtime_error("Convolutional filters number element is nullptr.\n");
-
-    const string filters_number_string = filters_number_element->GetText();
-
-    // Filters Size
-
-    const tinyxml2::XMLElement* filters_size_element = convolutional_layer_element->FirstChildElement("FiltersSize");
-
-    if(!filters_size_element)
-        throw runtime_error("Convolutional filters size element is nullptr.\n");
-
-    const string filters_size_string = filters_size_element->GetText();
-
-    //    set_column_stride(Index(stoi(filters_size_element_string)));
-
-    // Activation Function
-
-    const tinyxml2::XMLElement* activation_function_element = convolutional_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("Convolutional activation function element is nullptr.\n");
-
-    set_activation_function(activation_function_element->GetText());
-
-    // Stride
-
-    const tinyxml2::XMLElement* stride_element = convolutional_layer_element->FirstChildElement("Stride");
-
-    if(!stride_element)
-        throw runtime_error("Convolutional stride element is nullptr.\n");
-
-    const string stride_string = stride_element->GetText();
-
-    set_column_stride(stoi(stride_string));
-    set_row_stride(stoi(stride_string));
-
-    // Convolution type
-
-    const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("ConvolutionType");
-
-    if(!convolution_type_element)
-        throw runtime_error("Convolutional type element is nullptr.\n");
-
-    const string convolution_type_string = convolution_type_element->GetText();
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = convolutional_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
+//    set_parameters(string_to_vector(read_xml_string(convolutional_layer_element, "Parameters")));
 }
 
 

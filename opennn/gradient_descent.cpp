@@ -487,40 +487,11 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 
-    // Minimum loss decrease
-
-    const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
-
-    if(minimum_loss_decrease_element)
-        set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
-
-    // Loss goal
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-        if(loss_goal_element)
-            set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    // Maximum selection failures
-
-    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
-
-    if(maximum_selection_failures_element)
-        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
-
-    // Maximum epochs number
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
+    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
 

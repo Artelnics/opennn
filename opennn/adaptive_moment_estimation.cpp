@@ -573,22 +573,17 @@ void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 {
-/*
+
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
 
     if(!root_element)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
-    set_batch_samples_number(read_xml_value(root_element, "BatchSize", batch_samples_number));
-
-    set_loss_goal(read_xml_value(root_element, "LossGoal", training_loss_goal));
-    
-    set_maximum_epochs_number(read_xml_value(root_element, "MaximumEpochsNumber", maximum_epochs_number));
-    
-    set_maximum_time(read_xml_value(root_element, "MaximumTime", maximum_time));
-    
-    set_hardware_use(read_xml_value(root_element, "HardwareUse", get_hardware_use()));
-*/
+    set_batch_samples_number(read_xml_index(root_element, "BatchSize"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal")); 
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));   
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));    
+    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
 

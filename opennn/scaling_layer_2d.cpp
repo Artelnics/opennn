@@ -599,78 +599,49 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");
 
-    // Name
+    name = read_xml_string(scaling_layer_element, "Name");
 
-    const tinyxml2::XMLElement* name_element = scaling_layer_element->FirstChildElement("Name");
+    const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
+    set({ neurons_number });
 
-    if(!name_element)
-        throw runtime_error("Name element is nullptr.\n");
+    const tinyxml2::XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
 
-    name = name_element->GetText();
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("Scaling neurons number element is nullptr.\n");
-
-    const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
-
-    set({neurons_number});
-
-    unsigned index = 0; // Index does not work
-
-    const tinyxml2::XMLElement* start_element = neurons_number_element;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
+    for (Index i = 0; i < neurons_number; i++) {
         const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
-
-        if(!scaling_neuron_element)
-            throw runtime_error("Scaling neuron " + to_string(i+1) + " is nullptr.\n");
-
-        scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
-
-        if(index != i+1)
-            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
-
-        // Descriptives
-
-        const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
-
-        if(!descriptives_element)
-            throw runtime_error("Descriptives element " + to_string(i+1) + " is nullptr.\n");
-
-        if(descriptives_element->GetText())
-        {
-            const Tensor<string,1> descriptives_string = get_tokens(descriptives_element->GetText(), " ");
-
-            descriptives[i].set(type(stof(descriptives_string[0])),
-                                type(stof(descriptives_string[1])),
-                                type(stof(descriptives_string[2])),
-                                type(stof(descriptives_string[3])));
+        if (!scaling_neuron_element) {
+            throw std::runtime_error("Scaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
 
-        // Scaling method
+        // Verify neuron index
+        unsigned index = 0;
+        scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
+        if (index != i + 1) {
+            throw std::runtime_error("Index " + std::to_string(index) + " is not correct.\n");
+        }
+
+        // Descriptives
+        const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+        if (!descriptives_element) {
+            throw std::runtime_error("Descriptives element " + std::to_string(i + 1) + " is nullptr.\n");
+        }
+        if (descriptives_element->GetText()) {
+            const Tensor<string, 1> descriptives_string = get_tokens(descriptives_element->GetText(), " ");
+            descriptives[i].set(
+                type(stof(descriptives_string[0])),
+                type(stof(descriptives_string[1])),
+                type(stof(descriptives_string[2])),
+                type(stof(descriptives_string[3]))
+            );
+        }
 
         const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
-
-        if(!scaling_method_element)
-            throw runtime_error("Scaling method element " + to_string(i+1) + " is nullptr.\n");
-
+        if (!scaling_method_element) {
+            throw std::runtime_error("Scaling method element " + std::to_string(i + 1) + " is nullptr.\n");
+        }
         set_scaler(i, scaling_method_element->GetText());
 
         start_element = scaling_neuron_element;
     }
-
-    // Display
-/*
-    const tinyxml2::XMLElement* display_element = scaling_layer_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
-*/
 }
 
 

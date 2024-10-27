@@ -315,15 +315,8 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Weighted squared element is nullptr.\n");
 
-    const tinyxml2::XMLElement* positives_weight_element = root_element->FirstChildElement("PositivesWeight");
-
-    if(positives_weight_element)
-        set_positives_weight(type(atof(positives_weight_element->GetText())));
-
-    const tinyxml2::XMLElement* negatives_weight_element = root_element->FirstChildElement("NegativesWeight");
-
-    if(negatives_weight_element)
-        set_negatives_weight(type(atof(negatives_weight_element->GetText())));
+    set_positives_weight(read_xml_type(root_element, "PositivesWeight"));
+    set_negatives_weight(read_xml_type(root_element, "NegativesWeight"));
 }
 
 

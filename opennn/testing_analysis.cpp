@@ -2262,12 +2262,7 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Testing analysis element is nullptr.\n");
 
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 

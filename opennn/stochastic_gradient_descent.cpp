@@ -544,65 +544,15 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Stochastic gradient descent element is nullptr.\n");
 
-    // Batch size
+    set_batch_samples_number(read_xml_index(root_element, "BatchSize"));
 
-    const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
+    const bool apply_momentum = read_xml_bool(root_element, "ApplyMomentum");
+    set_momentum(apply_momentum ? type(0.9) : type(0));
 
-    if(batch_samples_number_element)
-        set_batch_samples_number(Index(atoi(batch_samples_number_element->GetText())));
-
-    // Momentum
-
-    const tinyxml2::XMLElement* apply_momentum_element = root_element->FirstChildElement("ApplyMomentum");
-
-    if(batch_samples_number_element)
-    {
-        string new_apply_momentum_state = apply_momentum_element->GetText();
-
-        try
-        {
-            if(new_apply_momentum_state != "0")
-            {
-                set_momentum(type(0.9));
-            }
-            else
-            {
-                set_momentum(type(0));
-            }
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Loss goal
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-    if(loss_goal_element)
-        set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    // Maximum epochs number
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
-
-    // Hardware use
-
-    const tinyxml2::XMLElement* hardware_use_element = root_element->FirstChildElement("HardwareUse");
-
-    if(hardware_use_element)
-        set_hardware_use(hardware_use_element->GetText());
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
 

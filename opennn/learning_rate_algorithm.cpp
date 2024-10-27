@@ -445,26 +445,9 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Learning rate algorithm element is nullptr.\n");
 
-    // Learning rate method
-
-    const tinyxml2::XMLElement* learning_rate_method_element = root_element->FirstChildElement("LearningRateMethod");
-
-    if(learning_rate_method_element)
-        set_learning_rate_method(learning_rate_method_element->GetText());
-
-    // Learning rate tolerance
-
-    const tinyxml2::XMLElement* learning_rate_tolerance_element = root_element->FirstChildElement("LearningRateTolerance");
-
-    if(learning_rate_tolerance_element)
-        set_learning_rate_tolerance(type(atof(learning_rate_tolerance_element->GetText())));
-
-    // Display warnings
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_learning_rate_method(read_xml_string(root_element, "LearningRateMethod"));
+    set_learning_rate_tolerance(read_xml_type(root_element, "LearningRateTolerance"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 }

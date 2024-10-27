@@ -940,84 +940,26 @@ void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& 
 
 void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
-    // Multihead Attention layer
-
     const tinyxml2::XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttentionLayer");
 
     if(!multihead_attention_layer_element)
         throw runtime_error("MultiheadAttentionLayer element is nullptr.\n");
     
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = multihead_attention_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-    
-    // Input size
-
-    const tinyxml2::XMLElement* input_size_element = multihead_attention_layer_element->FirstChildElement("InputSize");
-
-    if(!input_size_element)
-        throw runtime_error("InputSize element is nullptr.\n");
-
-    if(input_size_element->GetText())
-        set_input_size(Index(stoi(input_size_element->GetText())));
-    
-    // Context size
-
-    const tinyxml2::XMLElement* context_size_element = multihead_attention_layer_element->FirstChildElement("ContextSize");
-
-    if(!context_size_element)
-        throw runtime_error("ContextSize element is nullptr.\n");
-
-    if(context_size_element->GetText())
-        set_context_size(Index(stoi(context_size_element->GetText())));
-    
-    // Embedding depth
-
-    const tinyxml2::XMLElement* depth_element = multihead_attention_layer_element->FirstChildElement("Depth");
-
-    if(!depth_element)
-        throw runtime_error("Depth element is nullptr.\n");
-
-    if(depth_element->GetText())
-        set_depth(Index(stoi(depth_element->GetText())));
-    
-    // Number of attention heads
-
-    const tinyxml2::XMLElement* heads_number_element = multihead_attention_layer_element->FirstChildElement("HeadsNumber");
-
-    if(!heads_number_element)
-        throw runtime_error("HeadsNumber element is nullptr.\n");
-
-    if(heads_number_element->GetText())
-        set_heads_number(Index(stoi(heads_number_element->GetText())));
-    
-    // Use causal mask
-
-    const tinyxml2::XMLElement* causal_mask_element = multihead_attention_layer_element->FirstChildElement("CausalMask");
-
-    if(!causal_mask_element)
-        throw runtime_error("CausalMask element is nullptr.\n");
-
-    if(causal_mask_element->GetText())
-        set_causal_mask(string(causal_mask_element->GetText()) == "true");
-    
-    // Parameters
+    set_name(read_xml_string(multihead_attention_layer_element, "Name"));
+    set_input_size(read_xml_index(multihead_attention_layer_element, "InputSize"));
+    set_context_size(read_xml_index(multihead_attention_layer_element, "ContextSize"));
+    set_depth(read_xml_index(multihead_attention_layer_element, "Depth"));
+    set_heads_number(read_xml_index(multihead_attention_layer_element, "HeadsNumber"));
+    set_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
 
     const tinyxml2::XMLElement* parameters_element = multihead_attention_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 }
 
 

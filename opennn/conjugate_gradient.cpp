@@ -632,96 +632,30 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
 
-    if(!root_element)
-        throw runtime_error("Conjugate gradient element is nullptr.\n");
-
-    // Training direction method
-
-    const tinyxml2::XMLElement* training_direction_method_element = root_element->FirstChildElement("TrainingDirectionMethod");
-
-    if(training_direction_method_element)
-        set_training_direction_method(training_direction_method_element->GetText());
-
-    // Learning rate algorithm
+    if (!root_element) 
+        throw std::runtime_error("Conjugate gradient element is nullptr.\n");
+    
+    set_training_direction_method(read_xml_string(root_element, "TrainingDirectionMethod"));
 
     const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
 
-    if(learning_rate_algorithm_element)
+    if (learning_rate_algorithm_element) 
     {
         tinyxml2::XMLDocument learning_rate_algorithm_document;
         learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 
-    // Minimum loss decrease
-
-    const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
-
-    if(minimum_loss_decrease_element)
-        set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
-
-    // Loss goal
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-    if(loss_goal_element)
-        set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    // Maximum selection failures
-
-    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
-
-    if(maximum_selection_failures_element)
-        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
-
-    // Maximum epochs number
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
-
-    // Display period
-
-    const tinyxml2::XMLElement* display_period_element = root_element->FirstChildElement("DisplayPeriod");
-
-    if(display_period_element)
-        set_display_period(Index(atoi(display_period_element->GetText())));
-
-    // Save period
-
-    const tinyxml2::XMLElement* save_period_element = root_element->FirstChildElement("SavePeriod");
-
-    if(save_period_element)
-        set_save_period(Index(atoi(save_period_element->GetText())));
-
-    // Neural network filename
-
-    const tinyxml2::XMLElement* neural_network_filename_element = root_element->FirstChildElement("NeuralNetworkFileName");
-
-    if(neural_network_filename_element)
-        set_neural_network_file_name(neural_network_filename_element->GetText());
-
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
-
-    // Hardware use
-
-    const tinyxml2::XMLElement* hardware_use_element = root_element->FirstChildElement("HardwareUse");
-
-    if(hardware_use_element)
-        set_hardware_use(hardware_use_element->GetText());
+    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_display_period(read_xml_index(root_element, "DisplayPeriod"));
+    set_save_period(read_xml_index(root_element, "SavePeriod"));
+    set_neural_network_file_name(read_xml_string(root_element, "NeuralNetworkFileName"));
+    set_display(read_xml_bool(root_element, "Display"));
+    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
 

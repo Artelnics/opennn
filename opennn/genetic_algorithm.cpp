@@ -1307,25 +1307,16 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root)
         throw runtime_error("GeneticAlgorithm element is nullptr.\n");
-/*
-    set_individuals_number(read_xml_value(root, "PopulationSize", get_individuals_number()));
 
-    set_mutation_rate(read_xml_value(root, "MutationRate", type(0.01)));
-
-    set_elitism_size(read_xml_value(root, "ElitismSize", elitism_size));
-
-    set_selection_error_goal(read_xml_value(root, "SelectionErrorGoal", selection_error_goal));
-
-    set_maximum_epochs_number(read_xml_value(root, "MaximumGenerationsNumber", maximum_epochs_number));
-
-    set_maximum_correlation(read_xml_value(root, "MaximumCorrelation", maximum_correlation));
-
-    set_minimum_correlation(read_xml_value(root, "MinimumCorrelation", minimum_correlation));
-
-    set_maximum_time(read_xml_value(root, "MaximumTime", maximum_time));
-
-    set_display(read_xml_value(root, "Display", true));
-*/
+    set_individuals_number(read_xml_index(root, "PopulationSize"));
+    set_mutation_rate(read_xml_type(root, "MutationRate"));
+    set_elitism_size(read_xml_index(root, "ElitismSize"));
+    set_selection_error_goal(read_xml_type(root, "SelectionErrorGoal"));
+    set_maximum_epochs_number(read_xml_index(root, "MaximumGenerationsNumber"));
+    set_maximum_correlation(read_xml_type(root, "MaximumCorrelation"));
+    set_minimum_correlation(read_xml_type(root, "MinimumCorrelation"));
+    set_maximum_time(read_xml_type(root, "MaximumTime"));
+    set_display(read_xml_bool(root, "Display"));
 }
 
 

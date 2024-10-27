@@ -329,54 +329,23 @@ void NormalizationLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
 
 void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
-    // Normalization layer
-
     const tinyxml2::XMLElement* normalization_layer_element = document.FirstChildElement("NormalizationLayer3D");
 
     if(!normalization_layer_element)
         throw runtime_error("NormalizationLayer3D element is nullptr.\n");
 
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = normalization_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = normalization_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Inputs depth
-
-    const tinyxml2::XMLElement* inputs_depth_element = normalization_layer_element->FirstChildElement("InputsDepth");
-
-    if(!inputs_depth_element)
-        throw runtime_error("InputsDepth element is nullptr.\n");
-
-    if(inputs_depth_element->GetText())
-        set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
-
-    // Gammas
+    set_name(read_xml_string(normalization_layer_element, "Name"));
+    set_inputs_number(read_xml_index(normalization_layer_element, "InputsNumber"));
+    set_inputs_depth(read_xml_index(normalization_layer_element, "InputsDepth"));
 
     const tinyxml2::XMLElement* parameters_element = normalization_layer_element->FirstChildElement("Parameters");
 
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 }
 
 

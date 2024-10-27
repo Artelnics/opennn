@@ -127,17 +127,14 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
 void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-/*
     const auto* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
     if (!addition_layer_element) 
         throw std::runtime_error("AdditionLayer3D element is nullptr.\n");
 
-    set_name(read_xml_value(addition_layer_element, "Name", "addition_layer_3d"));
+    set_name(read_xml_string(addition_layer_element, "Name"));
 
-    inputs_number = read_xml_value(addition_layer_element, "InputsNumber", 0);
-
-    inputs_depth = read_xml_value(addition_layer_element, "InputsDepth", 0);
-*/
+    inputs_number = read_xml_index(addition_layer_element, "InputsNumber");
+    inputs_depth = read_xml_index(addition_layer_element, "InputsDepth");
 }
 
 

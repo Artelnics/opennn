@@ -549,62 +549,24 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* pooling_layer_element = document.FirstChildElement("PoolingLayer");
 
     if(!pooling_layer_element)
         throw runtime_error("PoolingLayer layer element is nullptr.\batch_index");
 
-    const tinyxml2::XMLElement* pooling_method_element = pooling_layer_element->FirstChildElement("PoolingMethod");
+    set_pooling_method(read_xml_string(pooling_layer_element, "PoolingMethod"));
 
-    if(!pooling_method_element)
-        throw runtime_error("PoolingLayer method element is nullptr.\batch_index");
+    // @todo Input dimensions (if needed in future, placeholder for now)
 
-    set_pooling_method(pooling_method_element->GetText());
+    set_column_stride(read_xml_index(pooling_layer_element, "ColumnStride"));
 
-    const tinyxml2::XMLElement* input_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
+    set_row_stride(read_xml_index(pooling_layer_element, "RowStride"));
 
-    if(!input_dimensions_element)
-        throw runtime_error("PoolingLayer input variables dimensions element is nullptr.\batch_index");
+    const Index pool_columns = read_xml_index(pooling_layer_element, "PoolColumnsNumber");
+    const Index pool_rows = read_xml_index(pooling_layer_element, "PoolRowsNumber");
+    set_pool_size(pool_rows, pool_columns);
 
-    const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
-
-    if(!column_stride_element)
-        throw runtime_error("PoolingLayer column stride element is nullptr.\batch_index");
-
-    set_column_stride(Index(stoi(column_stride_element->GetText())));
-
-    const tinyxml2::XMLElement* row_stride_element = pooling_layer_element->FirstChildElement("RowStride");
-
-    if(!row_stride_element)
-        throw runtime_error("PoolingLayer row stride element is nullptr.\batch_index");
-
-    set_row_stride(Index(stoi(row_stride_element->GetText())));
-
-    const tinyxml2::XMLElement* pool_columns_number_element = pooling_layer_element->FirstChildElement("PoolColumnsNumber");
-
-    if(!pool_columns_number_element)
-        throw runtime_error("PoolingLayer columns number element is nullptr.\batch_index");
-
-    const string pool_columns_number_string = pool_columns_number_element->GetText();
-
-    const tinyxml2::XMLElement* pool_rows_number_element = pooling_layer_element->FirstChildElement("PoolRowsNumber");
-
-    if(!pool_rows_number_element)
-        throw runtime_error("PoolingLayer rows number element is nullptr.\batch_index");
-
-    const string pool_rows_number_string = pool_rows_number_element->GetText();
-
-    set_pool_size(Index(stoi(pool_rows_number_string)), Index(stoi(pool_columns_number_string)));
-
-    const tinyxml2::XMLElement* padding_width_element = pooling_layer_element->FirstChildElement("PaddingWidth");
-
-    if(!padding_width_element)
-        throw runtime_error("Padding width element is nullptr.\batch_index");
-
-    if(padding_width_element->GetText())
-        set_padding_width(Index(stoi(padding_width_element->GetText())));
+    set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
 }
 
 

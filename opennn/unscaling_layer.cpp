@@ -523,68 +523,39 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Unscaling layer element is nullptr.\n");
 
-    // Unscaling neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("Unscaling neurons number element is nullptr.\n");
-
-    const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
-
+    Index neurons_number = read_xml_index(root_element, "UnscalingNeuronsNumber");
     set(neurons_number);
 
-    unsigned index = 0; // Index does not work
+    const tinyxml2::XMLElement* start_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
 
-    const tinyxml2::XMLElement* start_element = neurons_number_element;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
+    for (Index i = 0; i < neurons_number; i++) {
         const tinyxml2::XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
-        start_element = unscaling_neuron_element;
-
-        if(!unscaling_neuron_element)
-            throw runtime_error("Unscaling neuron " + to_string(i+1) + " is nullptr.\n");
-
-        unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
-
-        if(index != i+1)
-            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
-
-        // Minimum
-
-        const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
-
-        if(descriptives_element->GetText())
-        {
-            const char* new_descriptives_element = descriptives_element->GetText();
-
-            const Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, " ");
-
-            descriptives[i].set(type(stof(splitted_descriptives[0])),
-                                type(stof(splitted_descriptives[1])),
-                                type(stof(splitted_descriptives[2])),
-                                type(stof(splitted_descriptives[3])));
+        if (!unscaling_neuron_element) {
+            throw std::runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
 
-        // Unscaling method
+        unsigned index = 0;
+        unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
+        if (index != i + 1) {
+            throw std::runtime_error("Index " + std::to_string(index) + " is not correct.\n");
+        }
 
-        const tinyxml2::XMLElement* unscaling_method_element = unscaling_neuron_element->FirstChildElement("Scaler");
+        const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
+        if (descriptives_element->GetText()) {
+            Tensor<string, 1> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
+            descriptives[i].set(
+                type(stof(splitted_descriptives[0])),
+                type(stof(splitted_descriptives[1])),
+                type(stof(splitted_descriptives[2])),
+                type(stof(splitted_descriptives[3])));
+        }
 
-        if(!unscaling_method_element)
-            throw runtime_error("Unscaling method element " + to_string(i+1) + " is nullptr.\n");
+        set_scaler(i, read_xml_string(unscaling_neuron_element, "Scaler"));
 
-        const string new_method = unscaling_method_element->GetText();
-
-        set_scaler(i, new_method);
+        start_element = unscaling_neuron_element;
     }
 
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 

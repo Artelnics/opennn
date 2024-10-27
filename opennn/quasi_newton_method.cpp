@@ -681,47 +681,25 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
 
-    if(!root_element)
-        throw runtime_error("Quasi-Newton method element is nullptr.\n");
-
-    const tinyxml2::XMLElement* inverse_hessian_approximation_method_element = root_element->FirstChildElement("InverseHessianApproximationMethod");
-
-    if(inverse_hessian_approximation_method_element)
-        set_inverse_hessian_approximation_method(inverse_hessian_approximation_method_element->GetText());
+    if (!root_element) 
+        throw std::runtime_error("Quasi-Newton method element is nullptr.\n");
+    
+    set_inverse_hessian_approximation_method(read_xml_string(root_element, "InverseHessianApproximationMethod"));
 
     const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
-
-    if(!learning_rate_algorithm_element)
-        throw runtime_error("Learning rate algorithm element is nullptr.\n");
+    
+    if (!learning_rate_algorithm_element) 
+        throw std::runtime_error("Learning rate algorithm element is nullptr.\n");
     
     tinyxml2::XMLDocument learning_rate_algorithm_document;
     learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
     learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
-    
-    const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
 
-    if(minimum_loss_decrease_element)
-        set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-    if(loss_goal_element)
-        set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
-
-    if(maximum_selection_failures_element)
-        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
+    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
 

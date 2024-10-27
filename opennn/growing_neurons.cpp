@@ -298,54 +298,13 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("GrowingNeurons element is nullptr.\n");
 
-    // Minimum neurons
-
-    const tinyxml2::XMLElement* minimum_neurons_element = root_element->FirstChildElement("MinimumNeurons");
-
-    if(minimum_neurons_element)
-        minimum_neurons = Index(atoi(minimum_neurons_element->GetText()));
-
-    // Maximum neurons
-
-    const tinyxml2::XMLElement* maximum_neurons_element = root_element->FirstChildElement("MaximumNeurons");
-
-    if(maximum_neurons_element)
-        maximum_neurons = Index(atoi(maximum_neurons_element->GetText()));
-
-    // Neurons increment
-
-    const tinyxml2::XMLElement* neurons_increment_element = root_element->FirstChildElement("NeuronsIncrement");
-
-    if(neurons_increment_element)
-        set_neurons_increment(Index(atoi(neurons_increment_element->GetText())));
-
-    // Trials number
-
-    const tinyxml2::XMLElement* trials_number_element = root_element->FirstChildElement("TrialsNumber");
-
-    if(trials_number_element)
-        set_trials_number(Index(atoi(trials_number_element->GetText())));
-
-    // Selection error goal
-
-    const tinyxml2::XMLElement* selection_error_goal_element = root_element->FirstChildElement("SelectionErrorGoal");
-
-    if(selection_error_goal_element)
-        set_selection_error_goal(type(atof(selection_error_goal_element->GetText())));
-
-    // Maximum selection failures
-
-    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
-
-    if(maximum_selection_failures_element)
-        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atoi(maximum_time_element->GetText())));
+    minimum_neurons = read_xml_index(root_element, "MinimumNeurons");
+    maximum_neurons = read_xml_index(root_element, "MaximumNeurons");
+    set_neurons_increment(read_xml_index(root_element, "NeuronsIncrement"));
+    set_trials_number(read_xml_index(root_element, "TrialsNumber"));
+    set_selection_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
 
