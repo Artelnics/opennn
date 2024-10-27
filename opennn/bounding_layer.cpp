@@ -280,64 +280,63 @@ void BoundingLayer::print() const
 }
 
 
-void BoundingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("BoundingLayer");
+    printer.OpenElement("BoundingLayer");
 
-    // Bounding neurons number
-
-    file_stream.OpenElement("BoundingNeuronsNumber");
+    add_xml_element(printer, "BoundingNeuronsNumber", to_string(get_neurons_number()));
 
     const Index neurons_number = get_neurons_number();
 
-    file_stream.PushText(to_string(neurons_number).c_str());
-    file_stream.CloseElement();
-
-    for(Index i = 0; i < neurons_number; i++)
+    for (Index i = 0; i < neurons_number; i++) 
     {
-        file_stream.OpenElement("Item");
-        file_stream.PushAttribute("Index", unsigned(i+1));
+        printer.OpenElement("Item");
+        printer.PushAttribute("Index", unsigned(i + 1));
 
-        // Lower bound
+        add_xml_element(printer, "LowerBound", to_string(lower_bounds[i]));
+        add_xml_element(printer, "UpperBound", to_string(upper_bounds[i]));
 
-        file_stream.OpenElement("LowerBound");
-        file_stream.PushText(to_string(lower_bounds[i]).c_str());
-        file_stream.CloseElement();
-
-        // Upper bound
-
-        file_stream.OpenElement("UpperBound");
-        file_stream.PushText(to_string(upper_bounds[i]).c_str());
-        file_stream.CloseElement();
-
-        file_stream.CloseElement();
+        printer.CloseElement(); 
     }
 
-    // Bounding method
+    add_xml_element(printer, "BoundingMethod", get_bounding_method_string());
 
-    file_stream.OpenElement("BoundingMethod");
-    file_stream.PushText(get_bounding_method_string().c_str());
-    file_stream.CloseElement();
-
-   // Display
-
-//   {
-//      file_stream.OpenElement("Display");
-
-//      buffer.str("");
-//      buffer << display;
-
-//      file_stream.PushText(buffer.str().c_str());
-
-//      file_stream.CloseElement();
-//   }
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
+    /*
+    const auto* root_element = document.FirstChildElement("BoundingLayer");
+    
+    if (!root_element)
+        throw std::runtime_error("BoundingLayer element is nullptr.\n");
+
+    const Index neurons_number = read_xml_value(root_element, "BoundingNeuronsNumber", 0);
+
+    set(neurons_number);
+
+    const auto* item_element = root_element->FirstChildElement("Item");
+
+    for (Index i = 0; i < neurons_number && item_element; i++) 
+    {
+        unsigned index = 0;
+        item_element->QueryUnsignedAttribute("Index", &index);
+
+        if (index != i + 1) 
+            throw std::runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
+        
+        lower_bounds[index - 1] = read_xml_value(item_element, "LowerBound", 0);
+        upper_bounds[index - 1] = read_xml_value(item_element, "UpperBound", 0);
+
+        item_element = item_element->NextSiblingElement("Item");
+    }
+
+    set_bounding_method(read_xml_value(bounding_layer_element, "BoundingMethod", "Bound"));
+*/
+/*
+
     const tinyxml2::XMLElement* bounding_layer_element = document.FirstChildElement("BoundingLayer");
 
     if(!bounding_layer_element)
@@ -394,6 +393,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(bounding_method_element)
         set_bounding_method(bounding_method_element->GetText());
+*/
 }
 
 

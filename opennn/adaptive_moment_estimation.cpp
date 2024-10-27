@@ -553,87 +553,42 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 }
 
 
-void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("AdaptiveMomentEstimation");
+    printer.OpenElement("AdaptiveMomentEstimation");
 
-    // Batch size
+    add_xml_element(printer, "BatchSize", to_string(batch_samples_number));
 
-    file_stream.OpenElement("BatchSize");
-    file_stream.PushText(to_string(batch_samples_number).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
 
-    // Loss goal
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
 
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    // Maximum epochs number
+    add_xml_element(printer, "HardwareUse", get_hardware_use());
 
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    // Hardware use
-
-    file_stream.OpenElement("HardwareUse");
-    file_stream.PushText(get_hardware_use().c_str());
-    file_stream.CloseElement();
-
-    // End element
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 {
+/*
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
 
     if(!root_element)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
-    // Batch size
+    set_batch_samples_number(read_xml_value(root_element, "BatchSize", batch_samples_number));
 
-    const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
-
-    if(batch_samples_number_element)
-        set_batch_samples_number(Index(atoi(batch_samples_number_element->GetText())));
-
-    // Loss goal
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-    if(loss_goal_element)
-        set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    // Maximum eochs number
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
-
-    // Hardware use
-
-    const tinyxml2::XMLElement* hardware_use_element = root_element->FirstChildElement("HardwareUse");
-
-    if(hardware_use_element)
-        set_hardware_use(hardware_use_element->GetText());
+    set_loss_goal(read_xml_value(root_element, "LossGoal", training_loss_goal));
+    
+    set_maximum_epochs_number(read_xml_value(root_element, "MaximumEpochsNumber", maximum_epochs_number));
+    
+    set_maximum_time(read_xml_value(root_element, "MaximumTime", maximum_time));
+    
+    set_hardware_use(read_xml_value(root_element, "HardwareUse", get_hardware_use()));
+*/
 }
 
 
