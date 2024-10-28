@@ -4731,9 +4731,7 @@ void DataSet::read_csv_1()
 
     if(std::regex_search(data_path, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_path);
-        file.open(file_name_wide);
+        file.open(string_to_wide_string(data_path));
     }
     else
     {
@@ -4982,9 +4980,7 @@ void DataSet::read_csv_2_simple()
 
     if(regex_search(data_path, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_path);
-        file.open(file_name_wide);
+        file.open(string_to_wide_string(data_path));
     }else
     {
         file.open(data_path.c_str());
