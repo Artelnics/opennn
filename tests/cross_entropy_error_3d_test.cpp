@@ -260,7 +260,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        context_variables_indices = data_set.get_context_variables_indices();
+        context_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Context);
         input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
         

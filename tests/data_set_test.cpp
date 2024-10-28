@@ -58,7 +58,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data_constant(type(0));
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 1, LOG);
 
@@ -73,7 +73,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data_constant(type(0));
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 4, LOG);
 
@@ -111,7 +111,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data(data);
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 3, LOG);
 

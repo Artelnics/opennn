@@ -4729,14 +4729,15 @@ void DataSet::read_csv_1()
 
 #ifdef _WIN32
 
-    if(std::regex_search(data_source_path, accent_regex))
+    if(std::regex_search(data_path, accent_regex))
     {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_source_path);
+        std::wstring file_name_wide = conv.from_bytes(data_path);
         file.open(file_name_wide);
-    }else
+    }
+    else
     {
-        file.open(data_source_path.c_str());
+        file.open(data_path.c_str());
     }
 #else
     file.open(data_path.c_str());
@@ -4979,14 +4980,14 @@ void DataSet::read_csv_2_simple()
 
 #ifdef _WIN32
 
-    if(regex_search(data_source_path, accent_regex))
+    if(regex_search(data_path, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_source_path);
+        wstring file_name_wide = conv.from_bytes(data_path);
         file.open(file_name_wide);
     }else
     {
-        file.open(data_source_path.c_str());
+        file.open(data_path.c_str());
     }
 
 #else
