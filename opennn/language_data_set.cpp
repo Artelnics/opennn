@@ -1572,7 +1572,7 @@ void LanguageDataSet::read_csv_language_model()
 
 //     read_csv_language_model();
 
-//     set_all_raw_variables_type(RawVariableType::Numeric);
+//     set_raw_variable_types(RawVariableType::Numeric);
 //     cout<<"Works properly"<<endl;
 //     for(Index i = 0; i < max_context_length + 2; i++)
 //         set_raw_variable_use(i, VariableUse::Context);
@@ -1721,7 +1721,7 @@ void LanguageDataSet::read_txt_language_model()
 
     read_csv_language_model();
 
-    set_all_raw_variables_type(RawVariableType::Numeric);
+    set_raw_variable_types(RawVariableType::Numeric);
 
     for(Index i = 0; i < max_context_length + 2; i++)
         set_raw_variable_use(i, VariableUse::Context);

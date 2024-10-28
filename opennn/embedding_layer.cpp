@@ -348,13 +348,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     positional_encoding = read_xml_bool(embedding_layer_element, "PositionalEncoding");
 
-    const tinyxml2::XMLElement* parameters_element = embedding_layer_element->FirstChildElement("Parameters");
-
-    if (!parameters_element)
-        throw std::runtime_error("Parameters element is nullptr.\n");
-
-    if (parameters_element->GetText())
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "));
 }
 
 
