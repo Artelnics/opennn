@@ -540,7 +540,8 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 
     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
-    if(use_causal_mask) apply_causal_mask(attention_scores);
+    if(use_causal_mask)
+        apply_causal_mask(attention_scores);
 /*
     softmax(attention_scores, attention_weights);
 */

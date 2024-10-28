@@ -73,113 +73,9 @@ Index LanguageDataSet::get_completion_length() const
 }
 
 
-Index LanguageDataSet::get_context_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index context_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use == VariableUse::Context)
-        {
-            context_variables_number += raw_variables(i).get_categories_number();
-        }
-    }
-
-    return context_variables_number;
-}
-
-
 const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() const
 {
     return context_dimensions;
-}
-
-
-Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
-{
-    const Index context_variables_number = get_context_variables_number();
-
-    Tensor<Index, 1> context_variables_indices(context_variables_number);
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Tensor<Index, 1> context_raw_variables_indices = get_context_raw_variables_indices();
-
-    Index context_index = 0;
-    Index context_variable_index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        const RawVariable& raw_variable = raw_variables(i);
-
-        if(raw_variable.type == RawVariableType::Categorical)
-        {
-            const Index current_categories_number = raw_variable.get_categories_number();
-
-            // @todo check, raw variables struct has changed
-
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                if(raw_variable.use == VariableUse::Context)
-                {
-                    context_variables_indices(context_index) = context_variable_index;
-                    context_index++;
-                }
-
-                context_variable_index++;
-            }
-        }
-        else if(raw_variable.use == VariableUse::Context) // Binary, numeric
-        {
-            context_variables_indices(context_index) = context_variable_index;
-            context_index++;
-            context_variable_index++;
-        }
-        else
-        {
-            context_variable_index++;
-        }
-    }
-
-    return context_variables_indices;
-}
-
-
-Index LanguageDataSet::get_context_raw_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index context_raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use == VariableUse::Context)
-        {
-            context_raw_variables_number++;
-        }
-    }
-
-    return context_raw_variables_number;
-}
-
-
-Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Index context_raw_variables_number = get_context_raw_variables_number();
-
-    Tensor<Index, 1> context_raw_variables_indices(context_raw_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::Context)
-            context_raw_variables_indices(index++) = i;
-
-    return context_raw_variables_indices;
 }
 
 
@@ -193,22 +89,6 @@ const Tensor<Tensor<string, 1>, 1> LanguageDataSet::get_targets() const
     return targets;
 }
 
-
-Tensor<type, 2> LanguageDataSet::get_context_data() const
-{
-    const Index samples_number = get_samples_number();
-
-    Tensor<Index, 1> indices;
-    initialize_sequential(indices, 0, 1, samples_number - 1);
-
-    const Tensor<Index, 1> context_variables_indices = get_context_variables_indices();
-
-    Tensor<type, 2> context_data_data(indices.size(), context_variables_indices.size());
-
-    fill_tensor_data(data, indices, context_variables_indices, context_data_data.data());
-
-    return context_data_data;
-}
 
 void LanguageDataSet::set_default_raw_variables_uses()
 {
@@ -224,7 +104,7 @@ void LanguageDataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_va
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
     context_dimensions.resize(1);
-    context_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
 }
 
 
@@ -233,7 +113,7 @@ void LanguageDataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_r
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
     context_dimensions.resize(1);
-    context_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
 }
 
 
@@ -291,7 +171,7 @@ void LanguageDataSet::set_default()
 
     context_dimensions.resize(1);
 
-    context_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
 }
 
 
@@ -663,134 +543,22 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     ostringstream buffer;
 
-    // Data set element
-
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
-
-    // Data file
 
     const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
-    // Data file name
-
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
-
-    if(!data_source_path_element)
-        throw runtime_error("Path element is nullptr.\n");
-
-    if(data_source_path_element->GetText())
-        set_data_source_path(data_source_path_element->GetText());
-
-    // Separator
-
-    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
-
-    if(separator_element)
-        if(separator_element->GetText())
-            set_separator_name(separator_element->GetText());
-        else
-            set_separator_name("Comma");
-    else
-        set_separator_name("Comma");
-
-    // Text separator
-
-    const tinyxml2::XMLElement* text_separator_element = data_source_element->FirstChildElement("Separator");
-
-    if(text_separator_element)
-    {
-        if(text_separator_element->GetText())
-        {
-            const string new_separator = text_separator_element->GetText();
-
-            try
-            {
-                set_separator_name(new_separator);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Has raw_variables names
-
-    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
-
-    if(raw_variables_names_element)
-    {
-        const string new_raw_variables_names_string = raw_variables_names_element->GetText();
-
-        try
-        {
-            set_has_header(new_raw_variables_names_string == "1");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Samples id
-
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
-
-    if(rows_label_element)
-    {
-        const string new_rows_label_string = rows_label_element->GetText();
-
-        try
-        {
-            set_has_ids(new_rows_label_string == "1");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Missing values label
-
-    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
-
-    if(missing_values_label_element)
-    {
-        if(missing_values_label_element->GetText())
-        {
-            const string new_missing_values_label = missing_values_label_element->GetText();
-
-            set_missing_values_label(new_missing_values_label);
-        }
-        else
-        {
-            set_missing_values_label("NA");
-        }
-    }
-    else
-    {
-        set_missing_values_label("NA");
-    }
-
-    // Codification
-
-    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
-
-    if(codification_element)
-    {
-        if(codification_element->GetText())
-        {
-            const string new_codification = codification_element->GetText();
-
-            set_codification(new_codification);
-        }
-    }
+    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_separator_name(read_xml_string(data_source_element, "Separator"));
+    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
+    set_codification(read_xml_string(data_source_element, "Codification"));
+    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
+    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
     // RawVariables
 
@@ -827,87 +595,23 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
             throw runtime_error("Raw_variable item number (" + to_string(i + 1) + ") exception.\n");
 
-        // Name
+        RawVariable& raw_variable = raw_variables(i);
+        raw_variable.name = read_xml_string(raw_variable_element, "Name");
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
+        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
+        raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
-        const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
-
-        if(!name_element)
-            throw runtime_error("Name element is nullptr.\n");
-
-        if(name_element->GetText())
-            raw_variables(i).name = name_element->GetText();
-
-        // Scaler
-
-        const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
-
-        if(!scaler_element)
-            throw runtime_error("Scaler element is nullptr.\n");
-
-        if(scaler_element->GetText())
-            raw_variables(i).set_scaler(scaler_element->GetText());
- 
-        // raw_variable use
-
-        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
-
-        if(!use_element)
-            throw runtime_error("raw_variable use element is nullptr.\n");
-
-        if(use_element->GetText())
-            raw_variables(i).set_use(use_element->GetText());
-
-        // Type
-
-        const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
-
-        if(!type_element)
-            throw runtime_error("Type element is nullptr.\n");
-
-        if(type_element->GetText())
-            raw_variables(i).set_type(type_element->GetText());
 
         if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
-        {
-            // Categories
+            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
 
-            const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
-
-            if(!categories_element)
-                throw runtime_error("Categories element is nullptr.\n");
-
-            if(categories_element->GetText())
-                raw_variables(i).categories = get_tokens(categories_element->GetText(), ";");
-        }
+//        raw_variable_element = raw_variable_element->NextSiblingElement("RawVariable");
     }
 
     // Rows label
 
     if(has_sample_ids)
-    {
-        // Samples id begin tag
-
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
-
-        if(!has_ids_element)
-            throw runtime_error("Rows labels element is nullptr.\n");
-
-        // Samples id
-
-        if(has_ids_element->GetText())
-        {
-            const string new_rows_labels = has_ids_element->GetText();
-
-            string separator = ",";
-
-            if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) {
-                separator = ';';
-            }
-
-            samples_id = get_tokens(new_rows_labels, separator);
-        }
-    }
+        samples_id = get_tokens(read_xml_string(data_set_element, "SamplesId"), ",");
 
     // Samples
 
@@ -1071,10 +775,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Display
 
-    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(data_set_element, "Display"));
 }
 
 

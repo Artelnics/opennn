@@ -11,8 +11,6 @@
 #include "strings_utilities.h"
 
 #include <iostream>
-#include <map>
-#include <functional>
 
 namespace opennn
 {

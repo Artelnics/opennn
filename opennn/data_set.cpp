@@ -1877,12 +1877,12 @@ Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
 {
     const Index input_variables_number = get_variables_number(VariableUse::Input);
 
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
 
     Tensor<type, 2> inputs(1, input_variables_number);
 
     for(Index i = 0; i < input_variables_number; i++)
-        inputs(0, i) = data(sample_index, input_variables_indices(i));
+        inputs(0, i) = data(sample_index, input_variable_indices(i));
 
     return inputs;
 }
@@ -1890,11 +1890,11 @@ Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
 
 Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) const
 {
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    Tensor<type, 2> sample_target_data(1, target_variables_indices.size());
+    Tensor<type, 2> sample_target_data(1, target_variable_indices.size());
 
-    fill_tensor_data(data, Tensor<Index, 1>(sample_index), target_variables_indices, sample_target_data.data());
+    fill_tensor_data(data, Tensor<Index, 1>(sample_index), target_variable_indices, sample_target_data.data());
 
     return sample_target_data;
 }
@@ -2736,7 +2736,7 @@ Index DataSet::calculate_negatives(const SampleUse& sample_use, const Index& tar
 }
 
 
-Tensor<Descriptives, 1> DataSet::calculate_variables_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_variable_descriptives() const
 {
     return descriptives(data);
 }
@@ -2756,7 +2756,7 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_positive_s
     const Index target_index = get_variable_indices(DataSet::VariableUse::Target)(0);
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
 
     const Index samples_number = used_samples_indices.size();
 
@@ -2784,7 +2784,7 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_positive_s
         }
     }
 
-    return descriptives(data, positive_used_samples_indices, input_variables_indices);
+    return descriptives(data, positive_used_samples_indices, input_variable_indices);
 }
 
 
@@ -2793,7 +2793,7 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_negative_s
     const Index target_index = get_variable_indices(DataSet::VariableUse::Target)(0);
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
 
     const Index samples_number = used_samples_indices.size();
 
@@ -2818,14 +2818,14 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_negative_s
             negative_used_samples_indices(negative_sample_index++) = sample_index;
     }
 
-    return descriptives(data, negative_used_samples_indices, input_variables_indices);
+    return descriptives(data, negative_used_samples_indices, input_variable_indices);
 }
 
 
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_categories(const Index& class_index) const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
 
     const Index samples_number = used_samples_indices.size();
 
@@ -2852,7 +2852,7 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_categories
             class_used_samples_indices(class_sample_index++) = sample_index;
     }
 
-    return descriptives(data, class_used_samples_indices, input_variables_indices);
+    return descriptives(data, class_used_samples_indices, input_variable_indices);
 }
 
 
@@ -2866,13 +2866,13 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives(const Samp
 }
 
 
-Tensor<Descriptives, 1> DataSet::calculate_variables_descriptives(const VariableUse& variable_use) const
+Tensor<Descriptives, 1> DataSet::calculate_variable_descriptives(const VariableUse& variable_use) const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(variable_use);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(variable_use);
 
-    return descriptives(data, used_samples_indices, input_variables_indices);
+    return descriptives(data, used_samples_indices, input_variable_indices);
 }
 
 
@@ -2880,9 +2880,9 @@ Tensor<Descriptives, 1> DataSet::calculate_testing_target_variables_descriptives
 {
     const Tensor<Index, 1> testing_indices = get_sample_indices(SampleUse::Testing);
 
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    return descriptives(data, testing_indices, target_variables_indices);
+    return descriptives(data, testing_indices, target_variable_indices);
 }
 
 
@@ -2920,9 +2920,9 @@ Tensor<type, 1> DataSet::calculate_used_targets_mean() const
 {
     const Tensor<Index, 1> used_indices = get_used_samples_indices();
 
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    return mean(data, used_indices, target_variables_indices);
+    return mean(data, used_indices, target_variable_indices);
 }
 
 
@@ -2930,9 +2930,9 @@ Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 {
     const Tensor<Index, 1> selection_indices = get_sample_indices(SampleUse::Selection);
 
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    return mean(data, selection_indices, target_variables_indices);
+    return mean(data, selection_indices, target_variable_indices);
 }
 
 
@@ -3253,7 +3253,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 {
     const Index variables_number = get_variables_number();
 
-    const Tensor<Descriptives, 1> variables_descriptives = calculate_variables_descriptives();
+    const Tensor<Descriptives, 1> variables_descriptives = calculate_variable_descriptives();
 
     Index raw_variable_index;
 
@@ -3329,10 +3329,10 @@ Tensor<Descriptives, 1> DataSet::scale_variables(const VariableUse& variable_use
 {
     const Index input_variables_number = get_variables_number(variable_use);
 
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(variable_use);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(variable_use);
     const Tensor<Scaler, 1> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_variables_descriptives(variable_use);
+    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_variable_descriptives(variable_use);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
@@ -3342,19 +3342,19 @@ Tensor<Descriptives, 1> DataSet::scale_variables(const VariableUse& variable_use
             break;
 
         case Scaler::MinimumMaximum:
-            scale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
+            scale_minimum_maximum(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::MeanStandardDeviation:
-            scale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            scale_mean_standard_deviation(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::StandardDeviation:
-            scale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            scale_standard_deviation(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::Logarithm:
-            scale_logarithmic(data, input_variables_indices(i));
+            scale_logarithmic(data, input_variable_indices(i));
             break;
 
         default:
@@ -3371,7 +3371,7 @@ void DataSet::unscale_variables(const VariableUse& variable_use,
 {
     const Index input_variables_number = get_variables_number(variable_use);
 
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(variable_use);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(variable_use);
 
     const Tensor<Scaler, 1> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
@@ -3383,23 +3383,23 @@ void DataSet::unscale_variables(const VariableUse& variable_use,
             break;
 
         case Scaler::MinimumMaximum:
-            unscale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
+            unscale_minimum_maximum(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::MeanStandardDeviation:
-            unscale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            unscale_mean_standard_deviation(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::StandardDeviation:
-            unscale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            unscale_standard_deviation(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::Logarithm:
-            unscale_logarithmic(data, input_variables_indices(i));
+            unscale_logarithmic(data, input_variable_indices(i));
             break;
 
         case Scaler::ImageMinMax:
-            unscale_image_minimum_maximum(data, input_variables_indices(i));
+            unscale_image_minimum_maximum(data, input_variable_indices(i));
             break;
 
         default:
@@ -3815,7 +3815,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 {
     const Index samples_number = get_samples_number();
     const Index targets_number = get_variables_number(VariableUse::Target);
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     Tensor<Index, 1> class_distribution;
 
@@ -3823,7 +3823,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
     {
         class_distribution.resize(2);
 
-        const Index target_index = target_variables_indices(0);
+        const Index target_index = target_variable_indices(0);
 
         Index positives = 0;
         Index negatives = 0;
@@ -3850,10 +3850,10 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 
             for(Index j = 0; j < targets_number; j++)
             {
-                if(isnan(data(i,target_variables_indices(j)))) 
+                if(isnan(data(i,target_variable_indices(j))))
                     continue;
 
-                if(data(i,target_variables_indices(j)) > type(0.5)) 
+                if(data(i,target_variable_indices(j)) > type(0.5))
                     class_distribution(j)++;
             }
         }
@@ -4241,14 +4241,14 @@ void DataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
-    const Index target_variables_number = target_variables_indices.size();
+    const Index target_variables_number = target_variable_indices.size();
 
     Index current_variable;
     Index current_sample;
@@ -4257,7 +4257,7 @@ void DataSet::impute_missing_values_mean()
 
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = input_variables_indices(j);
+        current_variable = input_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -4272,7 +4272,7 @@ void DataSet::impute_missing_values_mean()
 
     for(Index j = 0; j < target_variables_number; j++)
     {
-        current_variable = target_variables_indices(j);
+        current_variable = target_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -4289,20 +4289,20 @@ void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<type, 1> medians = median(data, used_samples_indices, used_variables_indices);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
-    const Index target_variables_number = target_variables_indices.size();
+    const Index target_variables_number = target_variable_indices.size();
 
     #pragma omp parallel for schedule(dynamic)
 
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        const Index current_variable = input_variables_indices(j);
+        const Index current_variable = input_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -4317,7 +4317,7 @@ void DataSet::impute_missing_values_median()
 
     for(Index j = 0; j < target_variables_number; j++)
     {
-        const Index current_variable = target_variables_indices(j);
+        const Index current_variable = target_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -4334,12 +4334,12 @@ void DataSet::impute_missing_values_interpolate()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
-    const Index target_variables_number = target_variables_indices.size();
+    const Index target_variables_number = target_variable_indices.size();
 
     Index current_variable;
     Index current_sample;
@@ -4347,7 +4347,7 @@ void DataSet::impute_missing_values_interpolate()
     #pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = input_variables_indices(j);
+        current_variable = input_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -4398,7 +4398,7 @@ void DataSet::impute_missing_values_interpolate()
     #pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < target_variables_number; j++)
     {
-        current_variable = target_variables_indices(j);
+        current_variable = target_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
