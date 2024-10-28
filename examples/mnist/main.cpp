@@ -27,7 +27,7 @@ int main()
         // Data set
         
         //Random image data set 
-        //const Index samples_number = 10;
+        //onst Index samples_number = 10;
         //const Index image_height = 4;
         //const Index image_width = 4;
         //const Index channels = 1;
@@ -38,16 +38,16 @@ int main()
         
         ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        image_data_set.set_data_source_path("C:/mnist/train");
-        //image_data_set.set_data_source_path("C:/binary_mnist");
+        //image_data_set.set_data_source_path("C:/mnist/train");
+        image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
-        //image_data_set.set_input_dimensions({16,16,1});
+        //image_data_set.set_input_dimensions({23,23,1});
 
         image_data_set.read_bmp();
 
-        //image_data_set.set_training();
+        //image_data_set.set_training(); ?????
 
         //image_data_set.print();
         //image_data_set.print_data();
@@ -69,7 +69,7 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(0);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();

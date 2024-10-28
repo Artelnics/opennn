@@ -531,8 +531,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type, 1> y_filtered = filtered_elements.second;
 
     if (x_filtered.size() == 0
-        || is_constant_vector(x_filtered)
-        || is_constant_vector(y_filtered))
+    || is_constant_vector(x_filtered)
+    || is_constant_vector(y_filtered))
     {
         correlation.r = type(NAN);
         correlation.form = Correlation::Form::Logistic;

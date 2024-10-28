@@ -2148,145 +2148,42 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
 void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
+    const tinyxml2::XMLElement* lstm_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
 
-    // LongShortTermMemoryLayer layer
-
-    const tinyxml2::XMLElement* long_short_term_memory_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
-
-    if(!long_short_term_memory_layer_element)
+    if(!lstm_layer_element)
         throw runtime_error("PerceptronLayer element is nullptr.\n");
 
-    // Layer name
+    set_name(read_xml_string(lstm_layer_element, "Name"));
+    set_inputs_number(read_xml_index(lstm_layer_element, "InputsNumber"));
+    set_neurons_number(read_xml_index(lstm_layer_element, "NeuronsNumber"));
+    set_timesteps(read_xml_index(lstm_layer_element, "TimeStep"));
+    set_activation_function(read_xml_string(lstm_layer_element, "ActivationFunction"));
+    set_recurrent_activation_function(read_xml_string(lstm_layer_element, "RecurrentActivationFunction"));
 
-    const tinyxml2::XMLElement* layer_name_element = long_short_term_memory_layer_element->FirstChildElement("Name");
+    const tinyxml2::XMLElement* parameters_element = lstm_layer_element->FirstChildElement("Parameters");
 
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = long_short_term_memory_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = long_short_term_memory_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("NeuronsNumber element is nullptr.\n");
-
-    if(neurons_number_element->GetText())
-        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-
-    // Time step
-
-    const tinyxml2::XMLElement* time_step_element = long_short_term_memory_layer_element->FirstChildElement("TimeStep");
-
-    if(!time_step_element)
-        throw runtime_error("TimeStep element is nullptr.\n");
-
-    if(time_step_element->GetText())
-        set_timesteps(Index(stoi(time_step_element->GetText())));
-
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = long_short_term_memory_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("ActivationFunction element is nullptr.\n");
-
-    if(activation_function_element->GetText())
-        set_activation_function(activation_function_element->GetText());
-
-    // Recurrent activation function
-
-    const tinyxml2::XMLElement* recurrent_activation_function_element = long_short_term_memory_layer_element->FirstChildElement("RecurrentActivationFunction");
-
-    if(!recurrent_activation_function_element)
-        throw runtime_error("ActivationFunction element is nullptr.\n");
-
-    if(recurrent_activation_function_element->GetText())
-        set_recurrent_activation_function(recurrent_activation_function_element->GetText());
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = long_short_term_memory_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 }
 
 
-void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-//    ostringstream buffer;
+    printer.OpenElement("LongShortTermMemoryLayer");
 
-    // Long short-term memory layer
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "TimeStep", to_string(get_timesteps()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "RecurrentActivationFunction", write_recurrent_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("LongShortTermMemoryLayer");
-
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Outputs number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Time step
-
-    file_stream.OpenElement("TimeStep");
-    file_stream.PushText(to_string(get_timesteps()).c_str());
-
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-
-    file_stream.PushText(write_activation_function().c_str());
-
-    file_stream.CloseElement();
-
-    // Recurrent activation function
-
-    file_stream.OpenElement("RecurrentActivationFunction");
-
-    file_stream.PushText(write_recurrent_activation_function().c_str());
-
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Long short-term memory layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

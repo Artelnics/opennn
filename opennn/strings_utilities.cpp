@@ -17,6 +17,7 @@
 #include "strings_utilities.h"
 #include "word_bag.h"
 #include "tensors.h"
+#include "data_set.h"
 
 namespace opennn
 {
@@ -1500,10 +1501,12 @@ Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents, cons
 
     Tensor<Tensor<string, 1>, 1> tokens(documents_number);
 
+
     //#pragma omp parallel for
 
-    for(Index i = 0; i < documents_number; i++)
-        tokens(i) = get_tokens(documents(i), separator);
+    for(Index i = 0; i < documents_number-1; i++)
+    tokens(i) = get_tokens(documents(i), separator);
+
 
     return tokens;
 }
@@ -1556,7 +1559,7 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
 
 Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
 {
-/*
+
     Tensor<string, 1> documents_copy(documents);
 
     to_lower(documents_copy);
@@ -1569,9 +1572,9 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     delete_non_alphanumeric(documents_copy);
 
-    return get_tokens(documents_copy);
-*/
-    return Tensor<Tensor<string, 1>, 1>();
+    return get_tokens(documents_copy," ");
+
+    //return Tensor<Tensor<string, 1>, 1>();
 }
 
 

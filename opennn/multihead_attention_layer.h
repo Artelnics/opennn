@@ -9,7 +9,7 @@
 #ifndef MULTIHEADATTENTIONLAYER_H
 #define MULTIHEADATTENTIONLAYER_H
 
-#include <string>
+#include <iostream>
 
 #include "config.h"
 #include "layer.h"
@@ -210,18 +210,14 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
-//            cout << "Attention scores:" << endl;
-//            cout << attention_scores.dimensions() << endl;
-
-
-//            cout << "Outputs dimensions:" << endl;
-//            cout << output_dimensions << endl;
-
-//            cout << "Outputs:" << endl;
-//            cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-
-//            cout << "Attention scores:" << endl;
-//            cout << attention_scores << endl;
+       cout << "Attention scores:" << endl;
+       cout << attention_scores.dimensions() << endl;
+       cout << "Outputs dimensions:" << endl;
+       //cout << output_dimensions << endl;
+       cout << "Outputs:" << endl;
+       //cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
+       cout << "Attention scores:" << endl;
+       cout << attention_scores << endl;
     }
 
     Tensor<type, 4> query;
@@ -241,7 +237,6 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 
 struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 {
-        
 
     explicit MultiheadAttentionLayerBackPropagation() : LayerBackPropagation()
     {

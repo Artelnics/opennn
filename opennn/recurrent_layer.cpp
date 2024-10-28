@@ -622,93 +622,35 @@ string RecurrentLayer::write_activation_function_expression() const
 
 void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
+    const tinyxml2::XMLElement* recurrent_layer_element = document.FirstChildElement("RecurrentLayer");
 
-    // Perceptron layer
-
-    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("RecurrentLayer");
-
-    if(!perceptron_layer_element)
+    if(!recurrent_layer_element)
         throw runtime_error("RecurrentLayer element is nullptr.\n");
 
-    // Inputs number
+    set_inputs_number(read_xml_index(recurrent_layer_element, "InputsNumber"));
+    set_neurons_number(read_xml_index(recurrent_layer_element, "NeuronsNumber"));
+    set_activation_function(read_xml_string(recurrent_layer_element, "ActivationFunction"));
 
-    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("NeuronsNumber element is nullptr.\n");
-
-    if(neurons_number_element->GetText())
-        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("ActivationFunction element is nullptr.\n");
-
-    if(activation_function_element->GetText())
-        set_activation_function(activation_function_element->GetText());
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    const tinyxml2::XMLElement* parameters_element = recurrent_layer_element->FirstChildElement("Parameters");
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 }
 
 
-void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
-
+void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("RecurrentLayer");
 
-    // Perceptron layer
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("RecurrentLayer");
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Outputs number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Recurrent layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
