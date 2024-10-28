@@ -165,14 +165,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
    
-    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    Tensor<Index, 1> context_variables_indices;
+    const Tensor<Index, 1> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    Tensor<Index, 1> context_variable_indices;
 
     if(is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-        context_variables_indices = language_data_set->get_context_variables_indices();
+        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
     }
 
     const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
@@ -180,7 +180,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const Tensor<string, 1> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
@@ -213,11 +213,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     Tensor<Index, 2> selection_batches(selection_batches_number, selection_batch_samples_number);
 
     // Neural network
-    
+
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     neural_network->set_inputs_names(input_names);
-    neural_network->set_output_namess(targets_names);
+    neural_network->set_output_namess(target_names);
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
@@ -294,9 +294,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // Data set
 
             training_batch.fill(training_batches.chip(iteration, 0),
-                                input_variables_indices,
-                                target_variables_indices,
-                                context_variables_indices);
+                                input_variable_indices,
+                                target_variable_indices,
+                                context_variable_indices);
 
             // Neural network
 
@@ -309,7 +309,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
+            //cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
+            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
 
+            //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+
+            //system("pause");
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
@@ -343,9 +349,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 // Data set
 
                 selection_batch.fill(selection_batches.chip(iteration, 0),
-                                     input_variables_indices,
-                                     target_variables_indices,
-                                     context_variables_indices);               
+                                     input_variable_indices,
+                                     target_variable_indices,
+                                     context_variable_indices);
                 // Neural network
 
                 neural_network->forward_propagate(selection_batch,
@@ -553,87 +559,37 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 }
 
 
-void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("AdaptiveMomentEstimation");
+    printer.OpenElement("AdaptiveMomentEstimation");
 
-    // Batch size
+    add_xml_element(printer, "BatchSize", to_string(batch_samples_number));
 
-    file_stream.OpenElement("BatchSize");
-    file_stream.PushText(to_string(batch_samples_number).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
 
-    // Loss goal
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
 
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    // Maximum epochs number
+    add_xml_element(printer, "HardwareUse", get_hardware_use());
 
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    // Hardware use
-
-    file_stream.OpenElement("HardwareUse");
-    file_stream.PushText(get_hardware_use().c_str());
-    file_stream.CloseElement();
-
-    // End element
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 {
+
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
 
     if(!root_element)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
-    // Batch size
-
-    const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
-
-    if(batch_samples_number_element)
-        set_batch_samples_number(Index(atoi(batch_samples_number_element->GetText())));
-
-    // Loss goal
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-    if(loss_goal_element)
-        set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    // Maximum eochs number
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
-
-    // Hardware use
-
-    const tinyxml2::XMLElement* hardware_use_element = root_element->FirstChildElement("HardwareUse");
-
-    if(hardware_use_element)
-        set_hardware_use(hardware_use_element->GetText());
+    set_batch_samples_number(read_xml_index(root_element, "BatchSize"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal")); 
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));   
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));    
+    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
 

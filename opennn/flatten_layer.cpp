@@ -128,27 +128,17 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void FlattenLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void FlattenLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("FlattenLayer");
+    printer.OpenElement("FlattenLayer");
 
-    file_stream.OpenElement("InputVariablesDimension");
+    printer.OpenElement("InputVariablesDimension");
+    add_xml_element(printer, "InputHeight", to_string(get_input_height()));
+    add_xml_element(printer, "InputWidth", to_string(get_input_width()));
+    add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
+    printer.CloseElement();  
 
-    file_stream.OpenElement("InputHeight");
-    file_stream.PushText(to_string(get_input_height()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("InputWidth");
-    file_stream.PushText(to_string(get_input_width()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("InputChannels");
-    file_stream.PushText(to_string(get_input_channels()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement(); 
 }
 
 
@@ -156,36 +146,14 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* flatten_layer_element = document.FirstChildElement("FlattenLayer");
 
-    if(!flatten_layer_element)
-        throw runtime_error("FlattenLayer element is nullptr.\n");
+    if (!flatten_layer_element) 
+        throw std::runtime_error("FlattenLayer element is nullptr.\n");
 
-    const tinyxml2::XMLElement* input_dimensions_element = flatten_layer_element->FirstChildElement("InputDimensions");
+    const Index input_height = read_xml_index(flatten_layer_element, "InputHeight");
+    const Index input_width = read_xml_index(flatten_layer_element, "InputWidth");
+    const Index input_channels = read_xml_index(flatten_layer_element, "InputChannels");
 
-    if(!input_dimensions_element)
-        throw runtime_error("InputDimensions element is nullptr.\n");
-
-    const tinyxml2::XMLElement* input_height_element = input_dimensions_element->NextSiblingElement("InputHeight");
-
-    if(!input_height_element)
-        throw runtime_error("InputHeight element is nullptr.\n");
-
-    const Index input_height = Index(atoi(input_height_element->GetText()));
-
-    const tinyxml2::XMLElement* input_width_element = input_dimensions_element->NextSiblingElement("InputWidth");
-
-    if(!input_width_element)
-        throw runtime_error("InputWidth element is nullptr.\n");
-
-    const Index input_width = Index(atoi(input_width_element->GetText()));
-
-    const tinyxml2::XMLElement* input_channels_number_element = input_dimensions_element->NextSiblingElement("InputChannels");
-
-    if(!input_channels_number_element)
-        throw runtime_error("ChannelsNumber element is nullptr.\n");
-
-    const Index input_channels = Index(atoi(input_channels_number_element->GetText()));
-
-    set({input_height, input_width, input_channels, 0});
+    set({ input_height, input_width, input_channels, 0 });
 }
 
 

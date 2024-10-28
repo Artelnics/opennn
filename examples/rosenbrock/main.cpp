@@ -40,7 +40,7 @@ int main()
 
         data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         // Neural network
 

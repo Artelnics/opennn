@@ -106,7 +106,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
-        //data_set.set_testing();
+        //data_set.set(DataSet::SampleUse::Testing);
 
         neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_random();
@@ -134,7 +134,6 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
     // Transformer model
     {
-
         Index batch_samples_number = 1;
 
         Index input_length = 2;
@@ -155,7 +154,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
                                                          input_dimensions,
                                                          context_dimension);
 
-        language_data_set.set_training();
+        language_data_set.set(DataSet::SampleUse::Training);
 
         Transformer transformer({input_length,
                                  context_length,

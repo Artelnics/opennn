@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include <fstream>
-#include <sstream>
 #include <cmath>
 #include <numeric>
 
@@ -20,12 +19,6 @@
 
 namespace opennn
 {
-
-TestingAnalysis::TestingAnalysis()
-{
-    set_default();
-}
-
 
 TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : neural_network(new_neural_network),
@@ -2251,18 +2244,13 @@ type TestingAnalysis::calculate_logloss() const
 }
 
 
-void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
-    file_stream.OpenElement("TestingAnalysis");
+    printer.OpenElement("TestingAnalysis");
 
-    // Display
+    add_xml_element(printer, "Display", to_string(display));
 
-    file_stream.OpenElement("Display");
-    file_stream.PushText(to_string(display).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -2273,12 +2261,7 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Testing analysis element is nullptr.\n");
 
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 

@@ -26,9 +26,7 @@ public:
 
    // Constructors
 
-   explicit TestingAnalysis();
-
-   explicit TestingAnalysis(NeuralNetwork*, DataSet*);
+   explicit TestingAnalysis(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     // Destructor
 
