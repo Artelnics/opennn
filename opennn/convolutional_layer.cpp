@@ -231,7 +231,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
-    preprocess_inputs(inputs, preprocessed_inputs);
+    preprocess_inputs(inputs, preprocessed_inputs); 
     //cout << "inputs: " << inputs.chip(0,0) << endl;
     //cout << "preprocessed_inputs: " << preprocessed_inputs.chip(0,0) << endl;
     //system("pause");
