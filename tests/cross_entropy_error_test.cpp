@@ -135,6 +135,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         image_data_set.set_data_source_path("data/conv_test");
 
         image_data_set.read_bmp();
+
         image_data_set.scale_variables(DataSet::VariableUse::Input);
 
         samples_number = image_data_set.get_samples_number();

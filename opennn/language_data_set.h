@@ -73,11 +73,13 @@ public:
                                                  const string& joiner = "##");
 
     void load_documents(const string&);
+
     void read_csv_3_language_model();
 
     void read_csv_language_model();
 
     void read_txt_language_model();
+
 //    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
     void write_data_file_wordpiece(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
 

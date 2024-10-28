@@ -1060,7 +1060,7 @@ void NeuralNetwork::forward_propagate(const Batch& batch,
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
-                                     is_training);
+                                     is_training);}
 }
 
 
@@ -2107,7 +2107,6 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
             throw runtime_error("Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n");
         }
     }
-}
 }
 
 // OpenNN: Open Neural Networks Library.

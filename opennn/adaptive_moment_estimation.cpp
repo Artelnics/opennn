@@ -213,7 +213,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     Tensor<Index, 2> selection_batches(selection_batches_number, selection_batch_samples_number);
 
     // Neural network
-    
+
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     neural_network->set_inputs_names(input_names);

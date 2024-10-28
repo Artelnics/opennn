@@ -1047,11 +1047,13 @@ void DataSetTest::test_calculate_used_targets_mean()
 
     Tensor<Index, 1> indices(3);
     indices.setValues({0, 1, 2});
+
     Tensor<Index, 1> training_indices(1);
     training_indices.setValues({0});
 /*
     data_set.set_training(training_indices);
 */
+
 }
 
 
@@ -1081,6 +1083,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
     selection_indices.setValues({0, 1});
 
     data_set.set(DataSet::VariableUse::Input);
+
 /*
     data_set.set_sample_uses(DataSet::SampleUse::Selection, selection_indices);
 
@@ -1846,11 +1849,13 @@ void DataSetTest::test_calculate_training_negatives()
     target_variables_indices.setValues({2});
 
     target_index = 2;
+
 /*
     data_set.set(DataSet::SampleUse::Testing);
     data_set.set_training(training_indices);
 
-    training_negatives = data_set.calculate_training_negatives(target_index);
+    //training_negatives = data_set.calculate_training_negatives(target_index);
+    training_negatives = data_set.calculate_negatives(DataSet::SampleUse::Training,target_index);
 
     assert_true(training_negatives == 1, LOG);
 */
@@ -1890,8 +1895,9 @@ void DataSetTest::test_calculate_selection_negatives()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    Index selection_negatives = data_set.calculate_selection_negatives(target_index);
-
+    //Index selection_negatives = data_set.calculate_selection_negatives(target_index);
+    Index selection_negatives = data_set.calculate_negatives(DataSet::SampleUse::Selection,target_index);
+    data_set.calculate_negatives(DataSet::SampleUse::Training,target_index);
     data = data_set.get_data();
 
     assert_true(selection_negatives == 0, LOG);
