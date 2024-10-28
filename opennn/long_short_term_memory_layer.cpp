@@ -2159,15 +2159,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
     set_timesteps(read_xml_index(lstm_layer_element, "TimeStep"));
     set_activation_function(read_xml_string(lstm_layer_element, "ActivationFunction"));
     set_recurrent_activation_function(read_xml_string(lstm_layer_element, "RecurrentActivationFunction"));
-
-    const tinyxml2::XMLElement* parameters_element = lstm_layer_element->FirstChildElement("Parameters");
-
-    if (!parameters_element) {
-        throw std::runtime_error("Parameters element is nullptr.\n");
-    }
-    if (parameters_element->GetText()) {
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
-    }
+    set_parameters(to_type_vector(read_xml_string(lstm_layer_element, "Parameters"), " "));
 }
 
 

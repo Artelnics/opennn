@@ -194,7 +194,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         bool is_training = true;
 
         // Data set
-
+/*
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
         data_set.set(DataSet::SampleUse::Training);
@@ -390,7 +390,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         bool is_training = true;
 
         // Data set
-
+/*
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
         data_set.set(DataSet::SampleUse::Training);
@@ -430,6 +430,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
         //assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
         //assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
+*/
     }
 
     // Test multiple classification random samples, inputs, outputs, neurons

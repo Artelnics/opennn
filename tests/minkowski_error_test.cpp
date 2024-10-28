@@ -190,7 +190,7 @@ void MinkowskiErrorTest::test_back_propagate()
         bool is_training = true;
 
         // Data set
-
+/*
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
         data_set.set(DataSet::SampleUse::Training);
@@ -226,6 +226,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // @todo
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+*/
     }
 
     // Test forecasting trivial

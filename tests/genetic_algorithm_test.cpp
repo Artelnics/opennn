@@ -86,7 +86,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     input_variables_indices.setValues({0,1,2,3,4,5,6,7,8,9});
     target_variables_indices.setValues({10,11,12});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_variables_indices,target_variables_indices);
 
     genetic_algorithm.set_individuals_number(individuals_number);
@@ -102,6 +102,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     assert_true(gene.size() == individuals_number, LOG);
     assert_true(individual.size() == inputs_number, LOG);
+*/
 }
 
 

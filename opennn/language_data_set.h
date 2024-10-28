@@ -74,6 +74,10 @@ public:
 
     void load_documents(const string&);
 
+    void read_csv_1();
+
+    void read_csv_2_simple();
+
     void read_csv_3_language_model();
 
     void read_csv_language_model();
