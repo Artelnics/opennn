@@ -237,7 +237,7 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -306,7 +306,7 @@ void MeanSquaredErrorTest::test_back_propagate_recurrent()
     for(Index i = 0; i < targets_number; i++)
         data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
 
-    data_set.set_training();
+    data_set.set(DataSet::SampleUse::Training);
 
     Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
@@ -366,7 +366,7 @@ void MeanSquaredErrorTest::test_back_propagate_long_short_term_memory()
     for(Index i = 0; i < targets_number; i++)
         data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
 
-    data_set.set_training();
+    data_set.set(DataSet::SampleUse::Training);
 
     Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
@@ -424,7 +424,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -477,7 +477,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -529,7 +529,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -637,7 +637,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -722,7 +722,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -806,7 +806,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -1088,7 +1088,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //        data_set.set(samples_number, inputs_number, outputs_number);
 //        data_set.set_data_random();
-//        data_set.set_training();
+//        data_set.set(DataSet::SampleUse::Training);
 
 //        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 //        input_variables_indices = data_set.get_input_variables_indices();
@@ -1697,7 +1697,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         data_set.set_input_dimensions(input_dimensions);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 //        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
@@ -1894,7 +1894,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         data_set.set_input_dimensions(input_dimensions);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 //        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();

@@ -436,11 +436,11 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     calculate_output_delta(batch, forward_propagation, back_propagation);
 
-    for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
+    for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate(layer_input_pairs[i],
-                                  layer_delta_pairs[i],
-                                  forward_propagation.layers[i],
-                                  back_propagation.neural_network.layers[i]);
+            layer_delta_pairs[i],
+            forward_propagation.layers[i],
+            back_propagation.neural_network.layers[i]);
 
 }
 

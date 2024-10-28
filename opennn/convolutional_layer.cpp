@@ -95,7 +95,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                output_width,
                                                1);
 
-        convolution.device(*thread_pool_device) = inputs.convolve(kernel, convolutions_dimensions_3d) + biases(kernel_index);
+        convolution.device(*thread_pool_device) = inputs.convolve(kernel, convolutions_dimensions) + biases(kernel_index);
     }
 }
 
@@ -231,8 +231,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
-    preprocess_inputs(inputs, preprocessed_inputs);
-
+    preprocess_inputs(inputs, preprocessed_inputs); 
+    
     calculate_convolutions(preprocessed_inputs, outputs);
 
     if(batch_normalization)
@@ -301,7 +301,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 4>& kernel_synaptic_weights_derivatives = convolutional_layer_back_propagation->kernel_synaptic_weights_derivatives;
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
-
 
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 

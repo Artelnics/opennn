@@ -558,7 +558,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
         data_set.set(data);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -617,7 +617,7 @@ void NeuralNetworkTest::test_forward_propagate()
         data.setValues({{-1,1,-1,1,1,0},{-2,2,3,1,1,0},{-3,3,5,1,1,0} });
         data_set.set(data);
         data_set.set_target();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         Tensor<Index, 1> input_raw_variables_indices(inputs_number);
         input_raw_variables_indices.setValues({ 0,1,2,3 });

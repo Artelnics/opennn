@@ -55,7 +55,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         data_set.set_raw_variable_use(0, DataSet::VariableUse::Input);
         data_set.set_raw_variable_use(1, DataSet::VariableUse::Target);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
@@ -114,7 +114,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         for(Index i = 0; i < inputs_number; i++)
             data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
@@ -176,7 +176,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         for(Index i = 0; i < inputs_number; i++)
             data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
