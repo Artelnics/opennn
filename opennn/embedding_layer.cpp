@@ -341,113 +341,35 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!embedding_layer_element)
         throw runtime_error("EmbeddingLayer element is nullptr.\n");
 
-    // Layer name
+    set_name(read_xml_string(embedding_layer_element, "Name"));
+    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
+    set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
+    set_depth(read_xml_index(embedding_layer_element, "Depth"));
 
-    const tinyxml2::XMLElement* layer_name_element = embedding_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Input dimension
-
-    const tinyxml2::XMLElement* input_dimensions_element = embedding_layer_element->FirstChildElement("InputDimensions");
-
-    if(!input_dimensions_element)
-        throw runtime_error("InputDimensions element is nullptr.\n");
-
-    if(input_dimensions_element->GetText())
-        set_input_dimensions(Index(stoi(input_dimensions_element->GetText())));
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = embedding_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Embedding depth
-
-    const tinyxml2::XMLElement* depth_element = embedding_layer_element->FirstChildElement("Depth");
-
-    if(!depth_element)
-        throw runtime_error("Depth element is nullptr.\n");
-
-    if(depth_element->GetText())
-        set_depth(Index(stoi(depth_element->GetText())));
-
-    // Positional encoding
-
-    const tinyxml2::XMLElement* positional_encoding_element = embedding_layer_element->FirstChildElement("PositionalEncoding");
-
-    if(!positional_encoding_element)
-        throw runtime_error("PositionalEncoding element is nullptr.\n");
-
-    if(positional_encoding_element->GetText())
-        positional_encoding = string(positional_encoding_element->GetText()) == "true";
-
-    // Embedding weights
+    positional_encoding = read_xml_bool(embedding_layer_element, "PositionalEncoding");
 
     const tinyxml2::XMLElement* parameters_element = embedding_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 }
 
 
-void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Embedding layer
+    printer.OpenElement("EmbeddingLayer");
 
-    file_stream.OpenElement("EmbeddingLayer");
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "Depth", to_string(get_depth()));
+    add_xml_element(printer, "PositionalEncoding", to_string(positional_encoding ? 1 : 0));
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Input dimension
-
-    file_stream.OpenElement("InputDimensions");
-    file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Embedding depth
-
-    file_stream.OpenElement("Depth");
-    file_stream.PushText(to_string(get_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Positional encoding
-
-    file_stream.OpenElement("PositionalEncoding");
-    file_stream.PushText(to_string(positional_encoding ? 1 : 0).c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Embedding layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();  
 }
 
 

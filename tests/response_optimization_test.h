@@ -70,7 +70,7 @@ private:
         Tensor<string,1> names(3);
         names.setValues({"x","y","z"});
         data_set.set_variables_names(names);
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         neural_network.set(NeuralNetwork::ModelType::Approximation,
                            {input_variables_number}, {hidden_neurons_number}, {target_variables_number});
@@ -96,7 +96,7 @@ private:
         Tensor<string,1> names_2(4);
         names_2.setValues({"x","y","z","t"});
         data_set.set_variables_names(names_2);
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         Tensor<Index,1> inputs_index(2);
         Tensor<Index,1> outputs_index(2);

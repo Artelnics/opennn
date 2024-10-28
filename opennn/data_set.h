@@ -100,10 +100,10 @@ public:
                     const Tensor<string, 1>& = Tensor<string, 1>());
 
         void set(const string&,
-            const DataSet::VariableUse&,
-            const DataSet::RawVariableType & = DataSet::RawVariableType::Numeric,
-            const Scaler & = Scaler::MeanStandardDeviation,
-            const Tensor<string, 1> & = Tensor<string, 1>());
+                 const DataSet::VariableUse&,
+                 const DataSet::RawVariableType & = DataSet::RawVariableType::Numeric,
+                 const Scaler & = Scaler::MeanStandardDeviation,
+                 const Tensor<string, 1> & = Tensor<string, 1>());
 
         string name;
 
@@ -114,6 +114,8 @@ public:
         Tensor<string, 1> categories;
 
         Scaler scaler = Scaler::None;
+
+        bool has_raw_variables_names = false;
 
         // Methods
 
@@ -432,7 +434,7 @@ public:
 
     // Descriptives
 
-    Tensor<Descriptives, 1> calculate_variables_descriptives() const;
+    Tensor<Descriptives, 1> calculate_variable_descriptives() const;
     Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
 
     Tensor<Descriptives, 1> calculate_raw_variables_descriptives_positive_samples() const;
@@ -441,7 +443,7 @@ public:
 
     Tensor<Descriptives, 1> calculate_raw_variables_descriptives(const SampleUse&) const;
 
-    Tensor<Descriptives, 1> calculate_variables_descriptives(const VariableUse&) const;
+    Tensor<Descriptives, 1> calculate_variable_descriptives(const VariableUse&) const;
  
     Tensor<Descriptives, 1> calculate_testing_target_variables_descriptives() const;
 
@@ -465,7 +467,7 @@ public:
     // Box and whiskers
 
     Tensor<BoxPlot, 1> calculate_raw_variables_box_plots() const;
-    Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
+    //Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
 
@@ -596,6 +598,9 @@ public:
     void decode(string&) const;
 
     void read_csv();
+    void read_csv_1();
+
+    void read_csv_2_simple();
 
     void prepare_line(string&) const;
     void process_tokens(Tensor<string, 1>&);

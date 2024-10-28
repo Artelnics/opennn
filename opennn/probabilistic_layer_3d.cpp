@@ -425,140 +425,41 @@ void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
 
 void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
-    // Probabilistic layer
-
     const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer3D");
 
     if(!probabilistic_layer_element)
         throw runtime_error("ProbabilisticLayer3D element is nullptr.\n");
 
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = probabilistic_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = probabilistic_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Inputs depth
-
-    const tinyxml2::XMLElement* inputs_depth_element = probabilistic_layer_element->FirstChildElement("InputsDepth");
-
-    if(!inputs_depth_element)
-        throw runtime_error("InputsDepth element is nullptr.\n");
-
-    if(inputs_depth_element->GetText())
-        set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("NeuronsNumber element is nullptr.\n");
-
-    if(neurons_number_element->GetText())
-        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-
-    // Decision threshold
-
-    const tinyxml2::XMLElement* decision_threshold_element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
-
-    if(!decision_threshold_element)
-        throw runtime_error("DecisionThreshold element is nullptr.\n");
-
-    if(decision_threshold_element->GetText())
-        set_decision_threshold(type(stod(decision_threshold_element->GetText())));
-
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("ActivationFunction element is nullptr.\n");
-
-    if(activation_function_element->GetText())
-        set_activation_function(activation_function_element->GetText());
-
-    // Parameters
+    set_name(read_xml_string(probabilistic_layer_element, "Name"));
+    set_inputs_number(read_xml_index(probabilistic_layer_element, "InputsNumber"));
+    set_inputs_depth(read_xml_index(probabilistic_layer_element, "InputsDepth"));
+    set_neurons_number(read_xml_index(probabilistic_layer_element, "NeuronsNumber"));
+    set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
+    set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
 
     const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 }
 
 
-void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("ProbabilisticLayer3D");
 
-    // Probabilistic layer
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "DecisionThreshold", to_string(get_decision_threshold()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("ProbabilisticLayer3D");
-
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Inputs depth
-
-    file_stream.OpenElement("InputsDepth");
-    file_stream.PushText(to_string(get_inputs_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Neurons number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Decision threshold
-
-    file_stream.OpenElement("DecisionThreshold");
-    file_stream.PushText(to_string(get_decision_threshold()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Biases
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Probabilistic layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

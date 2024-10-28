@@ -198,7 +198,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
-        const Index context_variables_number = language_data_set->get_context_variables_number();
+        const Index context_variables_number = language_data_set->get_variables_number(DataSet::VariableUse::Context);
 
         const Tensor<Index, 1> data_set_context_dimensions = language_data_set->get_context_variables_dimensions();
 
