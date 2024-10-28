@@ -195,7 +195,7 @@ Tensor<Index, 1> TimeSeriesDataSet::get_target_time_series_raw_variables_indices
 }
 
 
-Tensor<string, 1> TimeSeriesDataSet::get_time_series_variables_names() const
+Tensor<string, 1> TimeSeriesDataSet::get_time_series_variable_names() const
 {
     const Index variables_number = get_time_series_variables_number();
 
