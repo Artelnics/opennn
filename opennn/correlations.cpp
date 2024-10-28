@@ -715,7 +715,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     DataSet data_set(data);
 
-    data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);
+    data_set.set_input_target_raw_variable_indices(input_columns_indices, target_columns_indices);
 
     data_set.set(DataSet::SampleUse::Training);
 
@@ -830,7 +830,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     DataSet data_set(data);
 
-    data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);
+    data_set.set_input_target_raw_variable_indices(input_columns_indices, target_columns_indices);
 
     data_set.set(DataSet::SampleUse::Training);
 

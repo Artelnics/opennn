@@ -337,15 +337,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
     set_name(read_xml_string(normalization_layer_element, "Name"));
     set_inputs_number(read_xml_index(normalization_layer_element, "InputsNumber"));
     set_inputs_depth(read_xml_index(normalization_layer_element, "InputsDepth"));
-
-    const tinyxml2::XMLElement* parameters_element = normalization_layer_element->FirstChildElement("Parameters");
-
-    if (!parameters_element) {
-        throw std::runtime_error("Parameters element is nullptr.\n");
-    }
-    if (parameters_element->GetText()) {
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
-    }
+    set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "));
 }
 
 

@@ -75,7 +75,7 @@ public:
     void save_time_series_data_binary(const string&) const;
 
     Index get_time_series_variables_number() const;
-    Tensor<string, 1> get_time_series_variables_names() const;
+    Tensor<string, 1> get_time_series_variable_names() const;
 
     const Tensor<type, 2>& get_time_series_data() const;
 

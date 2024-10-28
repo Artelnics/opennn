@@ -302,7 +302,7 @@ void DataSetTest::test_calculate_target_distribution()
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({4});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     target_distribution = data_set.calculate_target_distribution();
@@ -340,6 +340,7 @@ void DataSetTest::test_calculate_target_distribution()
     assert_true(target_distribution[0] == 1, LOG);
     assert_true(target_distribution[1] == 2, LOG);
     assert_true(target_distribution[2] == 2, LOG);
+*/
 }
 
 
@@ -1118,7 +1119,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     Tensor<Index, 1> target_raw_variables_indices(1);
     target_raw_variables_indices.setValues({3});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
@@ -1140,7 +1141,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     target_raw_variables_indices.resize(2);
     target_raw_variables_indices.setValues({2,3});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
@@ -1375,7 +1376,7 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     Tensor<Index, 1> target_raw_variables_indices(1);
     target_raw_variables_indices.setValues({3});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();

@@ -60,7 +60,7 @@ int main()
                 target_columns_indices(i-variables_number) = i;
             }
         }
-
+/*
         data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);
         data_set.set(DataSet::SampleUse::Training);
 
@@ -86,7 +86,7 @@ int main()
         training_strategy.perform_training();
 
         cout << "End Classification" << endl;
-
+*/
         return 0;
     }
     catch(const exception& e)
