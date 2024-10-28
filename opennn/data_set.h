@@ -11,11 +11,7 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
-
-
 #include <string>
-
-
 
 #include "tinyxml2.h"
 #include "histogram.h"
@@ -109,7 +105,6 @@ public:
             const Scaler & = Scaler::MeanStandardDeviation,
             const Tensor<string, 1> & = Tensor<string, 1>());
 
-
         string name;
 
         DataSet::VariableUse use = DataSet::VariableUse::None;
@@ -138,8 +133,6 @@ public:
 
         void set_type(const string&);
 
-        //void add_category(const string&);
-
         void set_categories(const Tensor<string, 1>&);
 
         virtual void from_XML(const tinyxml2::XMLDocument&);
@@ -156,29 +149,23 @@ public:
 
     // Samples get
 
-    inline Index get_samples_number() const {return samples_uses.size();}
+    inline Index get_samples_number() const {return sample_uses.size();}
 
-    Index get_training_samples_number() const;
-    Index get_selection_samples_number() const;
-    Index get_testing_samples_number() const;
+    Index get_samples_number(const SampleUse&) const;
 
     Index get_used_samples_number() const;
-    Index get_unused_samples_number() const;
 
-    Tensor<Index, 1> get_training_samples_indices() const;
-    Tensor<Index, 1> get_selection_samples_indices() const;
-    Tensor<Index, 1> get_testing_samples_indices() const;
+    Tensor<Index, 1> get_sample_indices(const SampleUse&) const;
 
     Tensor<Index, 1> get_used_samples_indices() const;
-    Tensor<Index, 1> get_unused_samples_indices() const;
 
     SampleUse get_sample_use(const Index&) const;
-    const Tensor<SampleUse, 1>& get_samples_uses() const;
+    const Tensor<SampleUse, 1>& get_sample_uses() const;
 
     Tensor<Index, 1> get_samples_uses_tensor() const;
 
-    Tensor<Index, 1> get_samples_uses_numbers() const;
-    Tensor<type, 1> get_samples_uses_percentages() const;
+    Tensor<Index, 1> get_sample_use_numbers() const;
+    Tensor<type, 1> get_sample_use_percentages() const;
 
     string get_sample_string(const Index&, const string& = ",") const;
 
@@ -188,62 +175,42 @@ public:
 
     // Raw variables get
 
-    Tensor<RawVariable, 1> get_raw_variables() const;
-    Tensor<RawVariable, 1> get_input_raw_variables() const;
-    Tensor<RawVariable, 1> get_target_raw_variables() const;
-    Tensor<RawVariable, 1> get_used_raw_variables() const;
-
     inline Index get_raw_variables_number() const { return raw_variables.size(); }
+    Index get_raw_variables_number(const VariableUse&) const;
     Index get_constant_raw_variables_number() const;
-
-    Index get_input_raw_variables_number() const;
-    Index get_target_raw_variables_number() const;
-    Index get_time_raw_variables_number() const;
-    Index get_unused_raw_variables_number() const;
     Index get_used_raw_variables_number() const;
-
     Index get_input_and_unused_variables_number() const;
 
-    Tensor<Index, 1> get_raw_variables_index(const Tensor<string, 1>&) const;
+    Tensor<RawVariable, 1> get_raw_variables() const;
+    Tensor<RawVariable, 1> get_raw_variables(const VariableUse&) const;
 
     Index get_raw_variable_index(const string&) const;
     Index get_raw_variable_index(const Index&) const;
 
-    Tensor<Index, 1> get_input_raw_variables_indices() const;
-    Tensor<Index, 1> get_target_raw_variables_indices() const;
-    Tensor<Index, 1> get_unused_raw_variables_indices() const;
+    Tensor<Index, 1> get_raw_variable_indices(const VariableUse&) const;        
     Tensor<Index, 1> get_used_raw_variables_indices() const;
 
     Tensor<string, 1> get_raw_variable_names() const;
-
-    Tensor<string, 1> get_input_raw_variable_names() const;
-    Tensor<string, 1> get_target_raw_variables_names() const;
-    Tensor<string, 1> get_used_raw_variables_names() const;
+    Tensor<string, 1> get_raw_variable_names(const VariableUse&) const;
 
     RawVariableType get_raw_variable_type(const Index& index) const {return raw_variables[index].type;}
 
     VariableUse get_raw_variable_use(const Index&) const;
-    Tensor<VariableUse, 1> get_raw_variables_uses() const;
+    Tensor<VariableUse, 1> get_raw_variable_uses() const;
 
     // Variables get
 
     Index get_variables_number() const;
-
-    Index get_input_variables_number() const;
-    Index get_target_variables_number() const;
-    Index get_unused_variables_number() const;
+    Index get_variables_number(const VariableUse&) const;
     Index get_used_variables_number() const;
 
     string get_variable_name(const Index&) const;
-    Tensor<string, 1> get_variables_names() const;
-
-    Tensor<string, 1> get_input_variables_names() const;
-    Tensor<string, 1> get_target_variables_names() const;
+    Tensor<string, 1> get_variable_names() const;
+    Tensor<string, 1> get_variable_names(const VariableUse&) const;
 
     Tensor<Index, 1> get_variable_indices(const Index&) const;
-    Tensor<Index, 1> get_used_variables_indices() const;
-    Tensor<Index, 1> get_input_variables_indices() const;
-    Tensor<Index, 1> get_target_variables_indices() const;
+    Tensor<Index, 1> get_variable_indices(const VariableUse&) const;
+    Tensor<Index, 1> get_used_variable_indices() const;
 
     Tensor<VariableUse, 1> get_variables_uses() const;
 
@@ -254,8 +221,7 @@ public:
 
     Tensor<Scaler, 1> get_raw_variables_scalers() const;
 
-    Tensor<Scaler, 1> get_input_variables_scalers() const;
-    Tensor<Scaler, 1> get_target_variables_scalers() const;
+    Tensor<Scaler, 1> get_variable_scalers(const VariableUse&) const;
 
     // Batches get
 
@@ -265,32 +231,14 @@ public:
 
     const Tensor<type, 2>& get_data() const;
     Tensor<type, 2>* get_data_p();
-
-    Tensor<type, 2> get_training_data() const;
-    Tensor<type, 2> get_selection_data() const;
-    Tensor<type, 2> get_testing_data() const;
-
-    Tensor<type, 2> get_input_data() const;
-    Tensor<type, 2> get_target_data() const;
-
-    Tensor<type, 2> get_input_data(const Tensor<Index, 1>&) const;
-    Tensor<type, 2> get_target_data(const Tensor<Index, 1>&) const;
-
-    Tensor<type, 2> get_training_input_data() const;
-    Tensor<type, 2> get_training_target_data() const;
-
-    Tensor<type, 2> get_selection_input_data() const;
-    Tensor<type, 2> get_selection_target_data() const;
-
-    Tensor<type, 2> get_testing_input_data() const;
-    Tensor<type, 2> get_testing_target_data() const;
+    Tensor<type, 2> get_data(const SampleUse&) const;
+    Tensor<type, 2> get_data(const VariableUse&) const;   
+    Tensor<type, 2> get_data(const SampleUse&, const VariableUse&) const;
 
     Tensor<type, 1> get_sample_data(const Index&) const;
     Tensor<type, 1> get_sample_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
-
-    Tensor<type, 2> get_raw_variables_data(const Tensor<Index, 1>&) const;
 
     Tensor<type, 2> get_raw_variable_data(const Index&) const;
     Tensor<type, 2> get_raw_variable_data(const Index&, const Tensor<Index, 1>&) const;
@@ -311,7 +259,7 @@ public:
     const string& get_data_source_path() const;
 
     const bool& get_header_line() const;
-    const bool& get_has_ids() const;
+    const bool& get_has_sample_ids() const;
 
     Tensor<string, 1> get_sample_ids() const;
 
@@ -341,7 +289,6 @@ public:
     void set(const DataSet&);
     void set(const tinyxml2::XMLDocument&);
     void set(const string&);
-//    void set(const string&, const char&, const bool&);
     void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
     void set(const Tensor<type, 1>&, const Index&);
     void set_default();
@@ -355,16 +302,7 @@ public:
 
     void set_samples_number(const Index&);
 
-    void set_training();
-    void set_selection();
-    void set_testing();
-
-    void set_training(const Tensor<Index, 1>&);
-    void set_selection(const Tensor<Index, 1>&);
-    void set_testing(const Tensor<Index, 1>&);
-
-    void set_samples_unused();
-    void set_samples_unused(const Tensor<Index, 1>&);
+    void set(const SampleUse&);
 
     void set_sample_use(const Index&, const SampleUse&);
     void set_sample_use(const Index&, const string&);
@@ -391,7 +329,7 @@ public:
 
     void set_raw_variables_unused(const Tensor<Index, 1>&);
 
-    void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
+    //void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
     void set_raw_variable_use(const Index&, const VariableUse&);
     void set_raw_variable_use(const string&, const VariableUse&);
@@ -405,9 +343,9 @@ public:
 
     void set_raw_variables_number(const Index&);
 
-    void set_raw_variables_scalers(const Scaler&);
+    void set_raw_variable_scalers(const Scaler&);
 
-    void set_raw_variables_scalers(const Tensor<Scaler, 1>&);
+    void set_raw_variable_scalers(const Tensor<Scaler, 1>&);
 
     void set_binary_raw_variables();
     void unuse_constant_raw_variables();
@@ -417,11 +355,9 @@ public:
     void set_variables_names(const Tensor<string, 1>&);
     void set_variable_name(const Index&, const string&);
 
-    void set_input();
-    void set_target();
-    void set_variables_unused();
+    void set(const VariableUse&);
 
-    void set_input_variables_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
     void set_target_dimensions(const dimensions&);
 
     // Data set
@@ -442,7 +378,6 @@ public:
     void set_separator(const Separator&);
     void set_separator_string(const string&);
     void set_separator_name(const string&);
-//    void set_separator(const char&);
 
     void set_codification(const Codification&);
     void set_codification(const string&);
@@ -506,12 +441,10 @@ public:
     Tensor<Descriptives, 1> calculate_raw_variables_descriptives_negative_samples() const;
     Tensor<Descriptives, 1> calculate_raw_variables_descriptives_categories(const Index&) const;
 
-    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_training_samples() const;
-    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_selection_samples() const;
+    Tensor<Descriptives, 1> calculate_raw_variables_descriptives(const SampleUse&) const;
 
-    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
-    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
-
+    Tensor<Descriptives, 1> calculate_variables_descriptives(const VariableUse&) const;
+ 
     Tensor<Descriptives, 1> calculate_testing_target_variables_descriptives() const;
 
     Tensor<type, 1> calculate_input_variables_minimums() const;
@@ -525,9 +458,7 @@ public:
     Tensor<type, 1> calculate_selection_targets_mean() const;
 
     Index calculate_used_negatives(const Index&);
-    Index calculate_training_negatives(const Index&) const;
-    Index calculate_selection_negatives(const Index&) const;
-    Index calculate_testing_negatives(const Index&) const;
+    Index calculate_negatives(const SampleUse&, const Index&) const;
 
     // Distribution
 
@@ -536,7 +467,7 @@ public:
     // Box and whiskers
 
     Tensor<BoxPlot, 1> calculate_raw_variables_box_plots() const;
-    Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
+    //Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
 
@@ -569,15 +500,13 @@ public:
 
     Tensor<Descriptives, 1> scale_data();
 
-    virtual Tensor<Descriptives, 1> scale_input_variables();
-    virtual Tensor<Descriptives, 1> scale_target_variables();
+    virtual Tensor<Descriptives, 1> scale_variables(const VariableUse&);
 
     // Data unscaling
 
     void unscale_data(const Tensor<Descriptives, 1>&);
 
-    void unscale_input_variables(const Tensor<Descriptives, 1>&);
-    void unscale_target_variables(const Tensor<Descriptives, 1>&);
+    void unscale_variables(const VariableUse&, const Tensor<Descriptives, 1>&);
 
     // Classification
 
@@ -713,7 +642,7 @@ protected:
 
     // Samples
 
-    Tensor<SampleUse, 1> samples_uses;
+    Tensor<SampleUse, 1> sample_uses;
 
     Tensor<string, 1> samples_id;
 

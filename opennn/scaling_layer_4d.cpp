@@ -114,8 +114,8 @@ void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    unique_ptr<ScalingLayer4DForwardPropagation> scaling_layer_forward_propagation
-        (static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.release()));
+    ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation =
+        static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
@@ -133,39 +133,14 @@ void ScalingLayer4D::print() const
 }
 
 
-void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("Scaling4D");
 
     const Index neurons_number = get_neurons_number();
+    add_xml_element(printer, "NeuronsNumber", std::to_string(neurons_number));
 
-    // Scaling layer
-
-    file_stream.OpenElement("Scaling4D");
-
-    // Scaling neurons number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(neurons_number).c_str());
-    file_stream.CloseElement();
-
-    // Scaling neurons
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        // Scaling neuron
-
-        file_stream.OpenElement("ScalingNeuron");
-        file_stream.PushAttribute("Index", int(i+1));
-
-        // Scaling neuron (end tag)
-
-        file_stream.CloseElement();
-    }
-
-    // Scaling layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

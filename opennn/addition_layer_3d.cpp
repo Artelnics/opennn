@@ -95,8 +95,8 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
     
     const TensorMap<Tensor<type, 3>> input_2 = tensor_map_3(input_pairs[1]);
 
-    unique_ptr<AdditionLayer3DForwardPropagation> addition_layer_3d_forward_propagation 
-        (static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation.release()));
+    AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
+        static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = addition_layer_3d_forward_propagation->outputs;
 
@@ -113,8 +113,8 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     // Back propagation
 
-    unique_ptr<AdditionLayer3DBackPropagation> addition_layer_3d_back_propagation 
-        (static_cast<AdditionLayer3DBackPropagation*>(back_propagation.release()));
+    AdditionLayer3DBackPropagation* addition_layer_3d_back_propagation =
+        static_cast<AdditionLayer3DBackPropagation*>(back_propagation.get());
 
     Tensor<type, 3>& input_1_derivatives = addition_layer_3d_back_propagation->input_1_derivatives;
 
@@ -127,72 +127,28 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
 void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    // Addition layer
+    const auto* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
+    if (!addition_layer_element) 
+        throw std::runtime_error("AdditionLayer3D element is nullptr.\n");
 
-    const tinyxml2::XMLElement* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
+    set_name(read_xml_string(addition_layer_element, "Name"));
 
-    if(!addition_layer_element)
-        throw runtime_error("AdditionLayer3D element is nullptr.\n");
-
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = addition_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = addition_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        inputs_number = Index(stoi(inputs_number_element->GetText()));
-
-    // Inputs depth
-
-    const tinyxml2::XMLElement* inputs_depth_element = addition_layer_element->FirstChildElement("InputsDepth");
-
-    if(!inputs_depth_element)
-        throw runtime_error("InputsDepth element is nullptr.\n");
-
-    if(inputs_depth_element->GetText())
-        inputs_depth = Index(stoi(inputs_depth_element->GetText()));
+    inputs_number = read_xml_index(addition_layer_element, "InputsNumber");
+    inputs_depth = read_xml_index(addition_layer_element, "InputsDepth");
 }
 
 
-void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Addition layer
+    printer.OpenElement("AdditionLayer3D");
 
-    file_stream.OpenElement("AdditionLayer3D");
+    add_xml_element(printer, "Name", name);
 
-    // Layer name
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
 
-    file_stream.OpenElement("Name");   
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
 
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Inputs depth
-
-    file_stream.OpenElement("InputsDepth");
-    file_stream.PushText(to_string(get_inputs_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Addition layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

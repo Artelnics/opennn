@@ -303,8 +303,8 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    unique_ptr < ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
-            (static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.release()));
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
@@ -343,15 +343,15 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    unique_ptr<ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
-            (static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.release()));
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     // Back propagation
 
-    unique_ptr<ProbabilisticLayerBackPropagation> probabilistic_layer_back_propagation
-            (static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.release()));
+    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+            static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
     
     Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation->input_derivatives;
 
@@ -374,8 +374,6 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_back_propagation->synaptic_weights_derivatives;
 
-    const Eigen::array<Index, 1> sum_dimensions({0});
-
     synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(combinations_derivatives, AT_B);
 
     biases_derivatives.device(*thread_pool_device) = combinations_derivatives.sum(sum_dimensions);
@@ -391,8 +389,8 @@ void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    const unique_ptr<ProbabilisticLayerBackPropagation> probabilistic_layer_back_propagation
-        (static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.release()));
+    const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+        static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
 
     const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
@@ -412,8 +410,8 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
                                                            const Index& index,
                                                            Tensor<type, 2>& squared_errors_Jacobian) const
 {
-    unique_ptr<ProbabilisticLayerBackPropagationLM> probabilistic_layer_back_propagation_lm
-        (static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.release()));
+    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+        static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.get());
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
     const Index parameters_number = get_parameters_number();
@@ -424,123 +422,44 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
 }
 
 
-void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("ProbabilisticLayer");
 
-    // Probabilistic layer
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
+    add_xml_element(printer, "DecisionThreshold", to_string(decision_threshold));
 
-    file_stream.OpenElement("ProbabilisticLayer");
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Neurons number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Decision threshold
-
-    file_stream.OpenElement("DecisionThreshold");
-    file_stream.PushText(to_string(decision_threshold).c_str());
-    file_stream.CloseElement();
-
-    // Probabilistic layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
-    // Probabilistic layer
-
     const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer");
 
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic layer element is nullptr.\n");
 
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = probabilistic_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("Inputs number element is nullptr.\n");
-
-    Index new_inputs_number;
-
-    if(inputs_number_element->GetText())
-        new_inputs_number = Index(stoi(inputs_number_element->GetText()));
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("Neurons number element is nullptr.\n");
-
-    Index new_neurons_number;
-
-    if(neurons_number_element->GetText())
-        new_neurons_number = Index(stoi(neurons_number_element->GetText()));
-
+    const Index new_inputs_number = read_xml_index(probabilistic_layer_element, "InputsNumber");
+    Index new_neurons_number = read_xml_index(probabilistic_layer_element, "NeuronsNumber");
     set(new_inputs_number, new_neurons_number);
 
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("Activation function element is nullptr.\n");
-
-    if(activation_function_element->GetText())
-        set_activation_function(activation_function_element->GetText());
-
-    // Parameters
+    set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
 
     const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 
-    // Decision threshold
+    set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
 
-    const tinyxml2::XMLElement* decision_threshold_element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
-
-    if(!decision_threshold_element)
-        throw runtime_error("Decision threshold element is nullptr.\n");
-
-    if(decision_threshold_element->GetText())
-        set_decision_threshold(type(atof(decision_threshold_element->GetText())));
-
-    // Display
-
-    const tinyxml2::XMLElement* display_element = probabilistic_layer_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(probabilistic_layer_element, "Display"));
 }
 
 

@@ -27,14 +27,17 @@ public:
 
     // Constructors
 
-    explicit InputsSelection();
-
-    explicit InputsSelection(TrainingStrategy*);
+    explicit InputsSelection(TrainingStrategy* = nullptr);
 
     // Enumerations
 
-    enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
-                           MaximumSelectionFailures, CorrelationGoal};
+    enum class StoppingCondition{MaximumTime, 
+                                 SelectionErrorGoal, 
+                                 MaximumInputs, 
+                                 MinimumInputs, 
+                                 MaximumEpochs,
+                                 MaximumSelectionFailures,  
+                                 CorrelationGoal};
 
     // Get
 
@@ -51,11 +54,11 @@ public:
     const type& get_maximum_time() const;
     const type& get_maximum_correlation() const;
     const type& get_minimum_correlation() const;
-    const type& get_tolerance() const;
+    //const type& get_tolerance() const;
 
     // Set
 
-    void set(TrainingStrategy*);
+    void set(TrainingStrategy* = nullptr);
 
     virtual void set_default();
 
@@ -160,11 +163,11 @@ struct InputsSelectionResults
 
     // Mean Selection Error of different neural networks
 
-   Tensor< type, 1 >  mean_selection_error_history;
+   Tensor<type, 1>  mean_selection_error_history;
 
     // Mean Training Error of different neural networks
 
-   Tensor< type, 1 >  mean_training_error_history;
+   Tensor<type, 1> mean_training_error_history;
 
    type optimum_training_error = numeric_limits<type>::max();
 

@@ -36,9 +36,7 @@ public:
 
     // Constructors
 
-    explicit TrainingStrategy();
-
-    explicit TrainingStrategy(NeuralNetwork*, DataSet*);
+    explicit TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     // Enumerations
 
@@ -102,9 +100,8 @@ public:
 
     // Set
 
-    void set();
-    void set(NeuralNetwork*, DataSet*);
-    void set_default() const;
+    void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    void set_default();
 
     void set_threads_number(const int&);
 
@@ -221,4 +218,3 @@ private:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

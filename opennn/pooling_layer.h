@@ -83,7 +83,7 @@ public:
 
     void set(const dimensions&, const dimensions&, const dimensions&, const dimensions&, const PoolingMethod&);
 
-    void set_inputs_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
 
     void set_padding_heigth(const Index&);
     void set_padding_width(const Index&);
@@ -160,6 +160,7 @@ protected:
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
+    const Eigen::array<Index, 4> shuffle_dimensions = {0, 1, 2, 3};
 };
 
 
@@ -169,8 +170,6 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     explicit PoolingLayerForwardPropagation();
 
-    
-
     explicit PoolingLayerForwardPropagation(const Index&, Layer*);
     
     pair<type*, dimensions> get_outputs_pair() const final;
@@ -179,7 +178,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     void print() const;
 
-    Eigen::array<int, 2> reduction_dimensions = { 1, 2 };
+    const Eigen::array<int, 2> reduction_dimensions = { 1, 2 };
 
     Tensor<type, 4> outputs;
 
@@ -200,8 +199,6 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
     void set(const Index&, Layer*) final;
 
     void print() const;
-
-    // @todo What is this?
 
     Tensor<type, 4> gradient_tensor;
 

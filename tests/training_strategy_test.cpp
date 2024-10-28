@@ -59,7 +59,7 @@ void TrainingStrategyTest::test_perform_training()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data(data);
-    data_set.set_training();
+    data_set.set(DataSet::SampleUse::Training);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_random();
@@ -78,20 +78,21 @@ void TrainingStrategyTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
-    FILE *pFile;
-
     string file_name = "../data/training_strategy.xml";
 
-    pFile = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(pFile)
+    if (!file.is_open())
     {
-        tinyxml2::XMLPrinter document(pFile);
-
-        training_strategy.to_XML(document);
-
-        fclose(pFile);
+        cerr << "Error: Could not open file " << file_name << "\n";
+        return;
     }
+
+    tinyxml2::XMLPrinter document;
+
+    training_strategy.to_XML(document);
+
+    file << document.CStr();
 }
 
 

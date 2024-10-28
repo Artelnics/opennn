@@ -43,7 +43,8 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
 
-    if(neural_network->has_recurrent_layer() || neural_network->has_long_short_term_memory_layer())
+    if(neural_network->has(Layer::Type::Recurrent)
+    || neural_network->has(Layer::Type::LongShortTermMemory))
         set_time_series_normalization_coefficient();
     else
         set_normalization_coefficient();
@@ -54,7 +55,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
 {
     const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
 
-    const Tensor<type, 2> targets = data_set->get_target_data();
+    const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
 }
@@ -62,7 +63,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
-    const Tensor<type, 2> targets = data_set->get_target_data();
+    const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);
 
     const Index rows = targets.dimension(0)-1;
     const Index columns = targets.dimension(1);
@@ -112,7 +113,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
     // Data set
 
-    const Tensor<Index, 1> selection_indices = data_set->get_selection_samples_indices();
+    const Tensor<Index, 1> selection_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
     const Index selection_samples_number = selection_indices.size();
 
@@ -120,7 +121,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
     const Tensor<type, 1> selection_targets_mean = data_set->calculate_selection_targets_mean();
 
-    const Tensor<type, 2> targets = data_set->get_selection_target_data();
+    const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Selection, DataSet::VariableUse::Target);
 
     // Normalization coefficient
 

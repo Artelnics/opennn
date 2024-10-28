@@ -9,12 +9,8 @@
 #ifndef NEURONSSELECTION_H
 #define NEURONSSELECTION_H
 
-
-
 #include <iostream>
 #include <string>
-
-
 
 #include "config.h"
 #include "training_strategy.h"
@@ -30,9 +26,7 @@ public:
 
     // Constructors
 
-    explicit NeuronsSelection();
-
-    explicit NeuronsSelection(TrainingStrategy*);
+    explicit NeuronsSelection(TrainingStrategy* = nullptr);
 
     // Enumerators
 
@@ -55,6 +49,8 @@ public:
     const type& get_maximum_time() const;
 
     // Set
+
+    void set(TrainingStrategy* = nullptr);
 
     void set_training_strategy(TrainingStrategy*);
 

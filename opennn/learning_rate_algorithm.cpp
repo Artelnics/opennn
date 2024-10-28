@@ -216,7 +216,7 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*V.first;
         
-        neural_network->forward_propagate(batch.get_input_pairs(), optimization_data.potential_parameters, forward_propagation);
+        neural_network->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
@@ -296,7 +296,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction * triplet.B.first;
         
-        neural_network->forward_propagate(batch.get_input_pairs(), 
+        neural_network->forward_propagate(batch, 
             optimization_data.potential_parameters, forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
@@ -316,7 +316,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
         
-        neural_network->forward_propagate(batch.get_input_pairs(),
+        neural_network->forward_propagate(batch,
                                           optimization_data.potential_parameters,
                                           forward_propagation);
 
@@ -336,9 +336,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
             
-            neural_network->forward_propagate(batch.get_input_pairs(),
-                                                      optimization_data.potential_parameters,
-                                                      forward_propagation);
+            neural_network->forward_propagate(batch,
+                                              optimization_data.potential_parameters,
+                                              forward_propagation);
 
             loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
@@ -354,9 +354,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
         
-        neural_network->forward_propagate(batch.get_input_pairs(),
-                                                  optimization_data.potential_parameters,
-                                                  forward_propagation);
+        neural_network->forward_propagate(batch,
+                                          optimization_data.potential_parameters,
+                                          forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
@@ -373,7 +373,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
             
-            neural_network->forward_propagate(batch.get_input_pairs(), optimization_data.potential_parameters, forward_propagation);
+            neural_network->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
             loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
@@ -427,27 +427,14 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 }
 
 
-void LearningRateAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LearningRateAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Learning rate algorithm
+    printer.OpenElement("LearningRateAlgorithm");
 
-    file_stream.OpenElement("LearningRateAlgorithm");
+    add_xml_element(printer, "LearningRateMethod", write_learning_rate_method());
+    add_xml_element(printer, "LearningRateTolerance", to_string(learning_rate_tolerance));
 
-    // Learning rate method
-
-    file_stream.OpenElement("LearningRateMethod");
-    file_stream.PushText(write_learning_rate_method().c_str());
-    file_stream.CloseElement();
-
-    // Learning rate tolerance
-
-    file_stream.OpenElement("LearningRateTolerance");
-    file_stream.PushText(to_string(learning_rate_tolerance).c_str());
-    file_stream.CloseElement();
-
-    // Learning rate algorithm (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -458,26 +445,9 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Learning rate algorithm element is nullptr.\n");
 
-    // Learning rate method
-
-    const tinyxml2::XMLElement* learning_rate_method_element = root_element->FirstChildElement("LearningRateMethod");
-
-    if(learning_rate_method_element)
-        set_learning_rate_method(learning_rate_method_element->GetText());
-
-    // Learning rate tolerance
-
-    const tinyxml2::XMLElement* learning_rate_tolerance_element = root_element->FirstChildElement("LearningRateTolerance");
-
-    if(learning_rate_tolerance_element)
-        set_learning_rate_tolerance(type(atof(learning_rate_tolerance_element->GetText())));
-
-    // Display warnings
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_learning_rate_method(read_xml_string(root_element, "LearningRateMethod"));
+    set_learning_rate_tolerance(read_xml_type(root_element, "LearningRateTolerance"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 }

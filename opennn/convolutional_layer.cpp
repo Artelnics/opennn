@@ -47,42 +47,15 @@ bool ConvolutionalLayer::get_batch_normalization() const
 }
 
 
-// void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output) const
-// {
-//     switch(convolution_type)
-//     {
-//     case ConvolutionType::Valid:
-
-//         padded_output.device(*thread_pool_device) = inputs;
-
-//         return;
-
-//     case ConvolutionType::Same:
-
-//         const Index pad_rows = get_padding().first;
-//         const Index pad_columns = get_padding().second;
-
-//         Eigen::array<pair<Index, Index>, 4> paddings;
-//         paddings[0] = make_pair(0, 0);
-//         paddings[1] = make_pair(pad_rows, pad_rows);
-//         paddings[2] = make_pair(pad_columns, pad_columns);
-//         paddings[3] = make_pair(0, 0);
-
-//         padded_output.device(*thread_pool_device) = inputs.pad(paddings);
-
-//         return;
-//     }
-// }
-
-
 void ConvolutionalLayer::preprocess_inputs(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& preprocessed_inputs) const
 {
-    convolution_type == ConvolutionType::Same
-        ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
-        : preprocessed_inputs.device(*thread_pool_device) = inputs;
+    if (convolution_type == ConvolutionType::Same)
+        preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings());
+    else
+        preprocessed_inputs.device(*thread_pool_device) = inputs;
 
-    if(row_stride != 1 || column_stride != 1)
+    if (row_stride != 1 || column_stride != 1)
         preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(get_strides());
 }
 
@@ -122,7 +95,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                output_width,
                                                1);
 
-        convolution.device(*thread_pool_device) = inputs.convolve(kernel, convolutions_dimensions) + biases(kernel_index);
+        convolution.device(*thread_pool_device) = inputs.convolve(kernel, convolutions_dimensions_3d) + biases(kernel_index);
     }
 }
 
@@ -130,8 +103,8 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 void ConvolutionalLayer::normalize(unique_ptr<LayerForwardPropagation> layer_forward_propagation,
                                    const bool& is_training)
 {
-    unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation
-        (static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.release()));
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+        static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
     type* outputs_data = outputs.data();
@@ -188,15 +161,15 @@ void ConvolutionalLayer::normalize(unique_ptr<LayerForwardPropagation> layer_for
     }
 }
 
-
-void ConvolutionalLayer::shift(unique_ptr<LayerForwardPropagation> layer_forward_propagation)
+/*
+void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagation)
 {
-    unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation
-            (static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.release()));
+    ConvolutionalLayerForwardPropagation convolutional_layer_forward_propagation =
+            static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.get());
 
-    type* outputs_data = convolutional_layer_forward_propagation->outputs.data();
+    type* outputs_data = convolutional_layer_forward_propagation.outputs.data();
 
-    const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
+    const Index batch_samples_number = convolutional_layer_forward_propagation.batch_samples_number;
     const Index output_height = get_output_height();
     const Index output_width = get_output_width();
     const Index kernels_number = get_kernels_number();
@@ -214,7 +187,7 @@ void ConvolutionalLayer::shift(unique_ptr<LayerForwardPropagation> layer_forward
             = kernel_output * scales(kernel_index) + offsets(kernel_index);
     }
 }
-
+*/
 
 void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activations_derivatives) const
 {
@@ -248,9 +221,9 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
                                            const bool& is_training)
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-    
-    unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation
-            (static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.release()));
+
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+        static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
 
@@ -306,15 +279,15 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    unique_ptr<ConvolutionalLayerForwardPropagation> convolutional_layer_forward_propagation 
-            (static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.release()));
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+            static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
     // Back propagation
 
-    unique_ptr<ConvolutionalLayerBackPropagation> convolutional_layer_back_propagation 
-            (static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.release()));
+    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
+            static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get());
 
     Tensor<type, 4>& convolutions_derivatives =
         convolutional_layer_back_propagation->convolutions_derivatives;
@@ -329,10 +302,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = {0, 1, 2};
-    const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = {0, 1};
-
-    //Tensor<type, 3>& image_convolutions_derivatives = convolutional_layer_back_propagation->image_convolutions_derivatives;
 
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 
@@ -356,8 +325,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     // Convolutions derivatives
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
-
-    auto reverse_dimensions = Eigen::array<ptrdiff_t, 3>{1, 1, 0};
 
     // Biases synaptic weights and input derivatives
 
@@ -426,8 +393,8 @@ void ConvolutionalLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_
 
     // Back-propagation
 
-    unique_ptr<ConvolutionalLayerBackPropagation> convolutional_layer_back_propagation 
-        (static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.release()));
+    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
+        static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get());
 
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
@@ -795,7 +762,7 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 }
 
 
-void ConvolutionalLayer::set_inputs_dimensions(const dimensions& new_input_dimensions)
+void ConvolutionalLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 }
@@ -838,9 +805,8 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index row_stride = get_row_stride();
         const Index column_stride = get_column_stride();
 
-        const Index pad_rows = max<Index>(0, (ceil((type)input_height/row_stride) - 1) * row_stride + kernel_height - input_height) / 2;
-
-        const Index pad_columns = max<Index>(0, (ceil((type)input_width/column_stride) - 1) * column_stride + kernel_width - input_width) / 2;
+        const Index pad_rows = std::max<Index>(0, ((static_cast<float>(input_height) / row_stride) - 1) * row_stride + kernel_height - input_height) / 2;
+        const Index pad_columns = std::max<Index>(0, ((static_cast<float>(input_width) / column_stride) - 1) * column_stride + kernel_width - input_width) / 2;
 
         return make_pair(pad_rows, pad_columns);
     }
@@ -855,7 +821,7 @@ Eigen::array<pair<Index, Index>, 4> ConvolutionalLayer::get_paddings() const
     const Index pad_rows = get_padding().first;
     const Index pad_columns = get_padding().second;
 
-    const Eigen::array<pair<Index, Index>, 4> paddings =
+    const Eigen::array<std::pair<Index, Index>, 4> paddings =
         { make_pair(0, 0),
           make_pair(pad_rows, pad_rows),
           make_pair(pad_columns, pad_columns),
@@ -905,166 +871,49 @@ void ConvolutionalLayer::print() const
 }
 
 
-void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Convolutional layer
+    printer.OpenElement("ConvolutionalLayer");
 
-    file_stream.OpenElement("ConvolutionalLayer");
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputDimensions", dimensions_to_string(input_dimensions));
+    add_xml_element(printer, "OutputDimensions", dimensions_to_string(get_output_dimensions()));
+    add_xml_element(printer, "FiltersNumber", to_string(get_kernels_number()));
+    add_xml_element(printer, "FiltersSize", to_string(get_kernel_width()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Stride", to_string(get_row_stride()));
+    add_xml_element(printer, "ConvolutionType", write_convolution_type());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Image size
-
-    file_stream.OpenElement("InputDimensions");
-    file_stream.PushText(dimensions_to_string(input_dimensions).c_str());
-    file_stream.CloseElement();
-
-    // Outputs
-
-    file_stream.OpenElement("OutputDimensions");
-    file_stream.PushText(dimensions_to_string(get_output_dimensions()).c_str());
-
-    file_stream.CloseElement();
-
-    // Filters number
-
-    file_stream.OpenElement("FiltersNumber");
-    file_stream.PushText(to_string(get_kernels_number()).c_str());
-    file_stream.CloseElement();
-
-    // Filters size
-
-    file_stream.OpenElement("FiltersSize");
-    file_stream.PushText(to_string(get_kernel_width()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Stride
-
-    file_stream.OpenElement("Stride");
-    file_stream.PushText(to_string(get_row_stride()).c_str());
-    file_stream.CloseElement();
-
-    // Convolution Type
-
-    file_stream.OpenElement("ConvolutionType");
-    file_stream.PushText(write_convolution_type().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    // Convolution layer
-
     const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
 
-    if(!convolutional_layer_element)
-        throw runtime_error("Convolutional layer element is nullptr.\n");
+    if (!convolutional_layer_element) 
+        throw std::runtime_error("Convolutional layer element is nullptr.\n");
 
-    // Convolutional layer name element
+    set_convolution_type(read_xml_string(convolutional_layer_element, "Name"));
 
-    const tinyxml2::XMLElement* convolution_name_element = convolutional_layer_element->FirstChildElement("Name");
+    // set_input_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "InputDimensions")));
+    // set_output_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "OutputDimensions")));
 
-    if(!convolution_name_element)
-        throw runtime_error("Convolution type element is nullptr.\n");
+    //set_filters_number(read_xml_index(convolutional_layer_element, "FiltersNumber"));
 
-    set_convolution_type(convolution_name_element->GetText());
+    //set_filter_size(read_xml_index(convolutional_layer_element, "FiltersSize"));
 
-    // Input variables dimensions element
+    set_activation_function(read_xml_string(convolutional_layer_element, "ActivationFunction"));
 
-    const tinyxml2::XMLElement* input_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
+    const Index stride = read_xml_index(convolutional_layer_element, "Stride");
+    set_column_stride(stride);
+    set_row_stride(stride);
 
-    if(!input_dimensions_element)
-        throw runtime_error("Convolutional input variables dimensions element is nullptr.\n");
+    set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
 
-//    set_input_dimensions(string_to_dimensions(input_dimensions_element->GetText()));
-
-    // Outputs variables dimensions element
-
-    const tinyxml2::XMLElement* output_dimensions_element = convolutional_layer_element->FirstChildElement("OutputDimensions");
-
-    if(!output_dimensions_element)
-        throw runtime_error("Convolutional outputs variables dimensions element is nullptr.\n");
-
-    //set_output_dimensions(string_to_dimensions(output_dimensions_element->GetText()));
-
-    // Filters Number element
-
-    const tinyxml2::XMLElement* filters_number_element = convolutional_layer_element->FirstChildElement("FiltersNumber");
-
-    if(!filters_number_element)
-        throw runtime_error("Convolutional filters number element is nullptr.\n");
-
-    const string filters_number_string = filters_number_element->GetText();
-
-    // Filters Size
-
-    const tinyxml2::XMLElement* filters_size_element = convolutional_layer_element->FirstChildElement("FiltersSize");
-
-    if(!filters_size_element)
-        throw runtime_error("Convolutional filters size element is nullptr.\n");
-
-    const string filters_size_string = filters_size_element->GetText();
-
-    //    set_column_stride(Index(stoi(filters_size_element_string)));
-
-    // Activation Function
-
-    const tinyxml2::XMLElement* activation_function_element = convolutional_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("Convolutional activation function element is nullptr.\n");
-
-    set_activation_function(activation_function_element->GetText());
-
-    // Stride
-
-    const tinyxml2::XMLElement* stride_element = convolutional_layer_element->FirstChildElement("Stride");
-
-    if(!stride_element)
-        throw runtime_error("Convolutional stride element is nullptr.\n");
-
-    const string stride_string = stride_element->GetText();
-
-    set_column_stride(stoi(stride_string));
-    set_row_stride(stoi(stride_string));
-
-    // Convolution type
-
-    const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("ConvolutionType");
-
-    if(!convolution_type_element)
-        throw runtime_error("Convolutional type element is nullptr.\n");
-
-    const string convolution_type_string = convolution_type_element->GetText();
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = convolutional_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
+//    set_parameters(string_to_vector(read_xml_string(convolutional_layer_element, "Parameters")));
 }
 
 
@@ -1096,7 +945,7 @@ pair<type*, dimensions> ConvolutionalLayerForwardPropagation::get_outputs_pair()
 void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     batch_samples_number = new_batch_samples_number;
-
+   
     layer = new_layer;
 
     const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
@@ -1123,6 +972,8 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                    output_width,
                    kernels_number);
 
+    outputs_data = outputs.data();
+
     means.resize(kernels_number);
 
     standard_deviations.resize(kernels_number);
@@ -1132,7 +983,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                                    output_width,
                                    kernels_number);
 
-    outputs_data = outputs.data();    
 }
 
 

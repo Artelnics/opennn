@@ -14,16 +14,9 @@
 namespace opennn
 {
 
-InputsSelection::InputsSelection()
-{
-    set_default();
-}
-
-
 InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
-    : training_strategy(new_training_strategy)
 {
-    set_default();
+    set(new_training_strategy);
 }
 
 
@@ -179,7 +172,7 @@ void InputsSelection::check() const
 
     const DataSet* data_set = loss_index->get_data_set();
 
-    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
     if(selection_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
@@ -238,11 +231,11 @@ string InputsSelectionResults::write_stopping_condition() const
 
 void InputsSelectionResults::resize_history(const Index& new_size)
 {
-    const Tensor<type, 1> old_training_error_history = training_error_history;
-    const Tensor<type, 1> old_selection_error_history = selection_error_history;
+    const Tensor<type, 1> old_training_error_history(training_error_history);
+    const Tensor<type, 1> old_selection_error_history(selection_error_history);
 
-    const Tensor<type, 1> old_mean_selection_history = mean_selection_error_history;
-    const Tensor<type, 1> old_mean_training_history = mean_training_error_history;
+    const Tensor<type, 1> old_mean_selection_history(mean_selection_error_history);
+    const Tensor<type, 1> old_mean_training_history(mean_training_error_history);
 
     training_error_history.resize(new_size);
     selection_error_history.resize(new_size);
@@ -253,8 +246,8 @@ void InputsSelectionResults::resize_history(const Index& new_size)
     {
         training_error_history(i) = old_training_error_history(i);
         selection_error_history(i) = old_selection_error_history(i);
-        mean_selection_error_history(i) = old_mean_selection_history(i);
         mean_training_error_history(i) = old_mean_training_history(i);
+        mean_selection_error_history(i) = old_mean_selection_history(i);
     }
 }
 

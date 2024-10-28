@@ -9,12 +9,8 @@
 #ifndef IMAGEDATASET_H
 #define IMAGEDATASET_H
 
-
-
 #include <string>
 #include <chrono>
-
-
 
 #include "config.h"
 #include "data_set.h"
@@ -97,7 +93,7 @@ public:
     void set_random_vertical_translation_minimum(const type&);
     void set_random_vertical_translation_maximum(const type&);
 
-    Tensor<Descriptives, 1> scale_input_variables() final;
+    Tensor<Descriptives, 1> scale_variables(const VariableUse&) final;
 
     void read_bmp();
 

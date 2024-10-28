@@ -52,8 +52,6 @@ public:
     dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const final;
 
-    Tensor<type, 2> get_embedding_weights() const;
-
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
     Index get_neurons_number() const final;

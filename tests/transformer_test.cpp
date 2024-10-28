@@ -83,10 +83,10 @@ void TransformerTest::test_constructor()
 
 
 void TransformerTest::test_calculate_outputs()
-{/*
+{
     cout << "test_calculate_outputs\n";
 
-    Tensor<type, 2> input;
+    Tensor<type, 2> inputs;
     Tensor<type, 2> context;
     Tensor<type, 2> outputs;
 
@@ -104,18 +104,18 @@ void TransformerTest::test_calculate_outputs()
     perceptron_depth = 1;
     heads_number = 1;
     layers_number = 1;
-
+/*
     transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                       embedding_depth, perceptron_depth, heads_number, layers_number });
     transformer.set_parameters_constant(type(0));
 
-    input.resize(batch_samples_number, input_length);
-    input.setConstant(type(0));
+    inputs.resize(batch_samples_number, input_length);
+    inputs.setConstant(type(0));
 
     context.resize(batch_samples_number, input_length);
     context.setConstant(type(0));
 
-    outputs = transformer.calculate_outputs(input);
+    outputs = transformer.calculate_outputs(inputs, context);
 
     assert_true(outputs.dimension(0) == batch_samples_number, LOG);
     assert_true(outputs.dimension(1) == input_length, LOG);
@@ -126,9 +126,9 @@ void TransformerTest::test_calculate_outputs()
     // Test
 
     batch_samples_number = 3;
-    inputs_number = 2;
-    neurons_number = 4;
-    outputs_number = 5;
+    Index inputs_number = 2;
+    Index neurons_number = 4;
+    Index outputs_number = 5;
 
     transformer.set(Transformer::ModelType::Approximation, { inputs_number}, {neurons_number}, {outputs_number });
 
@@ -294,7 +294,7 @@ void TransformerTest::test_forward_propagate()
         
         data_set.set(data);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         for(Index i = 0; i < context_length; i++)
             data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
@@ -305,10 +305,10 @@ void TransformerTest::test_forward_propagate()
         for(Index i = 0; i < input_length; i++)
             data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
         context_variables_indices = data_set.get_context_variables_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(batch_samples_number, &data_set);
 
@@ -317,7 +317,7 @@ void TransformerTest::test_forward_propagate()
         transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, layers_number });
 
-        ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
+        ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 /*
@@ -365,7 +365,7 @@ void TransformerTest::test_forward_propagate()
 
         data_set.set(data);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         for(Index i = 0; i < context_length; i++)
             data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
@@ -376,10 +376,10 @@ void TransformerTest::test_forward_propagate()
         for(Index i = 0; i < input_length; i++)
             data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
         context_variables_indices = data_set.get_context_variables_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(batch_samples_number, &data_set);
 
@@ -388,7 +388,7 @@ void TransformerTest::test_forward_propagate()
         transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, layers_number });
 
-        ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &transformer);
+        ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 /*
@@ -405,14 +405,6 @@ void TransformerTest::test_forward_propagate()
         assert_true(check_activations_sums(probabilistic_activations), LOG);
 */
     }
-}
-
-bool TransformerTest::check_activations_sums(const Tensor<type, 3>& probabilistic_activations)
-{
-    const Tensor<type, 2> activations_sums = probabilistic_activations.sum(Eigen::array<Index, 1>({ 2 }));
-    Tensor<bool, 0> correct_activations = ((activations_sums - activations_sums.constant(1)).abs() < type(1e-2)).all();
-
-    return correct_activations(0);
 }
 
 

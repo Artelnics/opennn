@@ -27,10 +27,6 @@ void RecurrentLayerTest::test_constructor()
     Index neurons_number;
     Index time_steps;
 
-    Tensor<type, 2> synaptic_weights;
-    Tensor<type, 2> recurrent_initializer;
-    Tensor<type, 1> biases;
-
     // Test
 
     inputs_number = 1;

@@ -9,11 +9,7 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-
-
 #include <string>
-
-
 
 #include "config.h"
 #include "data_set.h"
@@ -39,9 +35,7 @@ public:
 
    // Constructors
 
-   explicit LossIndex();
-
-   explicit LossIndex(NeuralNetwork*, DataSet*);
+   explicit LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    // Destructor
 
@@ -75,10 +69,7 @@ public:
 
    // Set
 
-   void set();
-   void set(NeuralNetwork*);
-   void set(DataSet*);
-   void set(NeuralNetwork*, DataSet*);
+   void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void set(const LossIndex&);
 
@@ -110,8 +101,8 @@ public:
                                        ForwardPropagation&,
                                        BackPropagation&) const = 0;
 
-   void calculate_layers_error_gradient(const Batch& ,
-                                        ForwardPropagation& ,
+   void calculate_layers_error_gradient(const Batch&,
+                                        ForwardPropagation&,
                                         BackPropagation&) const;
 
    void assemble_layers_error_gradient(BackPropagation&) const;

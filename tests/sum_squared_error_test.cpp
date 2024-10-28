@@ -45,7 +45,7 @@ void SumSquaredErrorTest::test_constructor()
 void SumSquaredErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
-/*
+
     // Test approximation all zero
     {
         samples_number = 1;
@@ -59,12 +59,12 @@ void SumSquaredErrorTest::test_back_propagate()
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_constant(type(0));
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::DataSet::SampleUse::Training);
 
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -84,10 +84,10 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
+/*
         assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
         assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
-
+*/
         assert_true(is_zero(back_propagation.gradient), LOG);
     }
 
@@ -104,11 +104,11 @@ void SumSquaredErrorTest::test_back_propagate()
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -146,9 +146,9 @@ void SumSquaredErrorTest::test_back_propagate()
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_constant(type(0));
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -190,11 +190,11 @@ void SumSquaredErrorTest::test_back_propagate()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -221,7 +221,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
-*/
+
     // Test forecasting trivial
 
     {
@@ -235,16 +235,16 @@ void SumSquaredErrorTest::test_back_propagate()
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_constant(type(0));
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-        /*
-        //neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
+    /*
+        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
 
         neural_network.set_parameters_constant(type(0));
 
@@ -280,7 +280,7 @@ void SumSquaredErrorTest::test_back_propagate()
         data_set.set_data_random();
         data_set.set_training();
 
-        training_samples_indices = data_set.get_training_samples_indices();
+        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
@@ -330,11 +330,11 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -381,11 +381,11 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -435,11 +435,11 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);

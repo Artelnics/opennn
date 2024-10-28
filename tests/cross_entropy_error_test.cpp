@@ -46,9 +46,9 @@ void CrossEntropyErrorTest::test_back_propagate()
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_constant(type(0));
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -88,11 +88,11 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -133,21 +133,22 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         image_data_set.set_display(false);
         image_data_set.set_data_source_path("data/conv_test");
-/*
+
         image_data_set.read_bmp();
-        image_data_set.scale_input_variables();
+        //image_data_set.scale_input_variables();
+        image_data_set.scale_variables(DataSet::VariableUse::Input);
 
         samples_number = image_data_set.get_samples_number();
 
-        training_samples_indices = image_data_set.get_training_samples_indices();
-        input_variables_indices = image_data_set.get_input_variables_indices();
-        target_variables_indices = image_data_set.get_target_variables_indices();
+        training_samples_indices = image_data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = image_data_set.get_variable_indices(DataSet::VariableUse::Input);
+        target_variables_indices = image_data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &image_data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-
+/*
         neural_network.delete_layers();
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number });
@@ -164,7 +165,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         neural_network.set_parameters_constant(type(0));
         //neural_network.set_parameters_random();
-/*
+
          { // debug
             image_data_set.set_display(true);
             image_data_set.print();
@@ -214,7 +215,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         samples_number = image_data_set.get_samples_number();
 
-        training_samples_indices = image_data_set.get_training_samples_indices();
+        training_samples_indices = image_data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = image_data_set.get_input_variables_indices();
         target_variables_indices = image_data_set.get_target_variables_indices();
 
@@ -294,7 +295,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         samples_number = image_data_set.get_samples_number();
 
-        training_samples_indices = image_data_set.get_training_samples_indices();
+        training_samples_indices = image_data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = image_data_set.get_input_variables_indices();
         target_variables_indices = image_data_set.get_target_variables_indices();
 

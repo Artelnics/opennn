@@ -26,8 +26,8 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet*
 
 
 void CrossEntropyError::calculate_error(const Batch& batch,
-                     const ForwardPropagation& forward_propagation,
-                     BackPropagation& back_propagation) const
+                                        const ForwardPropagation& forward_propagation,
+                                        BackPropagation& back_propagation) const
 {      
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -88,8 +88,8 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     const Index layers_number = back_propagation.neural_network.layers.size();
 
-    unique_ptr<ProbabilisticLayerBackPropagation> probabilistic_layer_back_propagation 
-        (static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].release()));
+    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+        static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
 
     probabilistic_layer_back_propagation->targets = targets;
 
@@ -131,8 +131,8 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     // Forward propagation
 
-    const unique_ptr<ProbabilisticLayerForwardPropagation> probabilistic_layer_forward_propagation
-        (static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers[last_trainable_layer_index].release()));
+    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers[last_trainable_layer_index].get());
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
@@ -185,8 +185,6 @@ string CrossEntropyError::get_error_type_text() const
 
 void CrossEntropyError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // Error type
-
     file_stream.OpenElement("CrossEntropyError");
 
     file_stream.CloseElement();

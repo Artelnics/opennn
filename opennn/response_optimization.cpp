@@ -144,7 +144,9 @@ void ResponseOptimization::set_input_condition(const string& name,
 }
 
 
-void ResponseOptimization::set_output_condition(const string& name, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
+void ResponseOptimization::set_output_condition(const string& name,
+                                                const ResponseOptimization::Condition& condition,
+                                                const Tensor<type, 1>& values)
 {
     const Index index = neural_network->get_output_index(name);
 
@@ -152,7 +154,9 @@ void ResponseOptimization::set_output_condition(const string& name, const Respon
 }
 
 
-void ResponseOptimization::set_input_condition(const Index& index, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
+void ResponseOptimization::set_input_condition(const Index& index,
+                                               const ResponseOptimization::Condition& condition,
+                                               const Tensor<type, 1>& values)
 {
     inputs_conditions[index] = condition;
 
@@ -278,23 +282,22 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     const Index variables_number = conditions_string.size();
 
-    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-    const Tensor<string, 1> output_names = data_set->get_target_variables_names();
+    const Tensor<string, 1> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    Index index;
-
+    #pragma omp parallel for
     for(Index i = 0; i < variables_number; i++)
     {
         if(contains(input_names, names[i]))
         {
-            index = neural_network->get_input_index(names[i]);
+            const Index index = neural_network->get_input_index(names[i]);
 
             set_input_condition(index, conditions[i], values_conditions[i]);
         }
         else if(contains(output_names, names[i]))
         {
-            index = neural_network->get_output_index(names[i]);
+            const Index index = neural_network->get_output_index(names[i]);
 
             set_output_condition(index, conditions[i], values_conditions[i]);
         }
@@ -428,7 +431,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
     inputs.setZero();
 
-    const int input_raw_variables_number = data_set->get_input_raw_variables_number();
+    const int input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
     Tensor<Index, 1> used_raw_variables_indices = data_set->get_used_raw_variables_indices();
 

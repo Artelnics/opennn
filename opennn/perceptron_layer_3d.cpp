@@ -19,7 +19,7 @@ PerceptronLayer3D::PerceptronLayer3D() : Layer()
 {
     set();
 
-    layer_type = Type::PerceptronLayer3D;
+    layer_type = Type::Perceptron3D;
 }
 
 
@@ -30,7 +30,7 @@ PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number,
 {
     set(new_inputs_number, new_inputs_depth, new_neurons_number, new_activation_function);
 
-    layer_type = Type::PerceptronLayer3D;
+    layer_type = Type::Perceptron3D;
 
     name = "perceptron_layer_3d";
 }
@@ -120,25 +120,6 @@ string PerceptronLayer3D::write_activation_function() const
 
     case ActivationFunction::RectifiedLinear:
         return "RectifiedLinear";
-    /*
-    case ActivationFunction::Logistic:
-        return "Logistic";
-
-    case ActivationFunction::ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
-
-    case ActivationFunction::SoftPlus:
-        return "SoftPlus";
-
-    case ActivationFunction::SoftSign:
-        return "SoftSign";
-
-    case ActivationFunction::HardSigmoid:
-        return "HardSigmoid";
-
-    case ActivationFunction::ExponentialLinear:
-        return "ExponentialLinear";
-*/
     }
 
     return string();
@@ -186,7 +167,7 @@ void PerceptronLayer3D::set_default()
 
     display = true;
 
-    layer_type = Type::PerceptronLayer3D;
+    layer_type = Type::Perceptron3D;
 
     dropout_rate = 0;
 }
@@ -239,24 +220,12 @@ void PerceptronLayer3D::set_activation_function(const PerceptronLayer3D::Activat
 
 void PerceptronLayer3D::set_activation_function(const string& new_activation_function_name)
 {
-    if (new_activation_function_name == "Logistic")
-        ;//activation_function = ActivationFunction::Logistic;
-    else if (new_activation_function_name == "HyperbolicTangent")
+    if (new_activation_function_name == "HyperbolicTangent")
         activation_function = ActivationFunction::HyperbolicTangent;
     else if (new_activation_function_name == "Linear")
         activation_function = ActivationFunction::Linear;
     else if (new_activation_function_name == "RectifiedLinear")
         activation_function = ActivationFunction::RectifiedLinear;
-    else if (new_activation_function_name == "ScaledExponentialLinear")
-        ;//activation_function = ActivationFunction::ScaledExponentialLinear;
-    else if (new_activation_function_name == "SoftPlus")
-        ;//activation_function = ActivationFunction::SoftPlus;
-    else if (new_activation_function_name == "SoftSign")
-        ;//activation_function = ActivationFunction::SoftSign;
-    else if (new_activation_function_name == "HardSigmoid")
-        ;//activation_function = ActivationFunction::HardSigmoid;
-    else if (new_activation_function_name == "ExponentialLinear")
-        ;//activation_function = ActivationFunction::ExponentialLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
@@ -302,8 +271,6 @@ void PerceptronLayer3D::set_parameters_glorot()
 void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                Tensor<type, 3>& combinations) const
 {
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = {IndexPair<Index>(2, 0)};
-
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
     sum_matrices(thread_pool_device, biases, combinations);
@@ -353,21 +320,9 @@ void PerceptronLayer3D::calculate_activations(Tensor<type, 3>& activations, Tens
     {
     case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
 
-//    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
-
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
 
     case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
-
-//    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
-
-//    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
-
-//    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
-
-//    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
-
-//    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
 
     default: return;
     }
@@ -380,8 +335,8 @@ void PerceptronLayer3D::forward_propagate(const vector<pair<type*, dimensions>>&
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    unique_ptr<PerceptronLayer3DForwardPropagation> perceptron_layer_3d_forward_propagation 
-        (static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation.release()));
+    PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
+        static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = perceptron_layer_3d_forward_propagation->outputs;
 
@@ -418,15 +373,15 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
 
     // Forward propagation
 
-    const unique_ptr<PerceptronLayer3DForwardPropagation> perceptron_layer_3d_forward_propagation 
-            (static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation.release()));
+    const PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
+            static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
 
     // Back propagation
 
-    unique_ptr<PerceptronLayer3DBackPropagation> perceptron_layer_3d_back_propagation 
-            (static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.release()));
+    PerceptronLayer3DBackPropagation* perceptron_layer_3d_back_propagation =
+            static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
     Tensor<type, 3>& combinations_derivatives = perceptron_layer_3d_back_propagation->combinations_derivatives;
 
@@ -435,14 +390,11 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
 
-    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
-    const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
-
     combinations_derivatives.device(*thread_pool_device) 
         = deltas * activations_derivatives;
 
     biases_derivatives.device(*thread_pool_device)
-        = combinations_derivatives.sum(Eigen::array<Index, 2>({0, 1}));
+        = combinations_derivatives.sum(sum_dimensions);
 
     synaptic_weights_derivatives.device(*thread_pool_device)
         = inputs.contract(combinations_derivatives, double_contraction_indices);
@@ -468,8 +420,8 @@ void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_p
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    unique_ptr<PerceptronLayer3DBackPropagation> perceptron_layer_back_propagation
-        (static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.release()));
+    PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
+        static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
     const type* synaptic_weights_derivatives_data = perceptron_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();
@@ -488,122 +440,39 @@ void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_p
 
 void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    // Perceptron layer
-
     const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("PerceptronLayer3D");
 
     if(!perceptron_layer_element)
         throw runtime_error("PerceptronLayer3D element is nullptr.\n");
 
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Inputs depth
-
-    const tinyxml2::XMLElement* inputs_depth_element = perceptron_layer_element->FirstChildElement("InputsDepth");
-
-    if(!inputs_depth_element)
-        throw runtime_error("InputsDepth element is nullptr.\n");
-
-    if(inputs_depth_element->GetText())
-        set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("NeuronsNumber element is nullptr.\n");
-
-    if(neurons_number_element->GetText())
-        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("ActivationFunction element is nullptr.\n");
-
-    if(activation_function_element->GetText())
-        set_activation_function(activation_function_element->GetText());
-
-    // Parameters
+    set_name(read_xml_string(perceptron_layer_element, "Name"));
+    set_inputs_number(read_xml_index(perceptron_layer_element, "InputsNumber"));
+    set_inputs_depth(read_xml_index(perceptron_layer_element, "InputsDepth"));
+    set_neurons_number(read_xml_index(perceptron_layer_element, "NeuronsNumber"));
+    set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
 
     const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 }
 
 
-void PerceptronLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void PerceptronLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("PerceptronLayer3D");
 
-    // Perceptron layer
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("PerceptronLayer3D");
-
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Inputs depth
-
-    file_stream.OpenElement("InputsDepth");
-    file_stream.PushText(to_string(get_inputs_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Outputs number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Peceptron layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

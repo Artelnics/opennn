@@ -48,7 +48,7 @@ int main()
 
         language_data_set.read_txt_language_model();
 
-        language_data_set.set_raw_variables_scalers(Scaler::None);
+        //language_data_set.set_raw_variables_scalers(Scaler::None);
 
         Tensor<string, 1> completion_vocabulary = language_data_set.get_completion_vocabulary();
         Tensor<string, 1> context_vocabulary = language_data_set.get_context_vocabulary();
@@ -69,6 +69,7 @@ int main()
                                  depth, perceptron_depth, heads_number, number_of_layers });
 
         transformer.set_dropout_rate(0);
+        transformer.print();
 
         cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
 

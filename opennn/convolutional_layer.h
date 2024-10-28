@@ -21,9 +21,6 @@
 namespace opennn
 {
 
-//struct ConvolutionalLayerForwardPropagation;
-//struct ConvolutionalLayerBackPropagation;
-
 #ifdef OPENNN_CUDA
 struct ConvolutionalLayerForwardPropagationCuda;
 struct ConvolutionalLayerBackPropagationCuda;
@@ -128,17 +125,13 @@ public:
 
     void set_column_stride(const Index&);
 
-    void set_inputs_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
 
     // Initialization
 
     void set_parameters_constant(const type&);
 
     void set_parameters_random();
-
-    // Padding
-
-//    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     // Forward propagation
 
@@ -194,7 +187,11 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::Linear;
 
-   const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {1, 2, 3};
+   const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = { 0, 1, 2 };
+   const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = { 0, 1 };
+
+   const Eigen::array<ptrdiff_t, 3> reverse_dimensions = {1, 1, 0};
+
    const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
 
    // Batch normalization
@@ -217,10 +214,7 @@ protected:
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
    
-
    explicit ConvolutionalLayerForwardPropagation();
-
-   
 
    explicit ConvolutionalLayerForwardPropagation(const Index&, Layer*);
       

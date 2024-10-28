@@ -215,35 +215,25 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
 {
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
-    unique_ptr<BoundingLayerForwardPropagation> bounding_layer_forward_propagation
-        (static_cast<BoundingLayerForwardPropagation*>(forward_propagation.release()));
+    BoundingLayerForwardPropagation* bounding_layer_forward_propagation =
+        static_cast<BoundingLayerForwardPropagation*>(forward_propagation.get());
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        // @todo 
-
-        outputs.device(*thread_pool_device) = inputs;
-/*
-        const int rows_number = inputs.dimension(0);
-
-        auto broadcast_dimensions = Eigen::array<int, 2>{rows_number, 1};
-
-        outputs = inputs.minimum(lower_bounds.broadcast(broadcast_dimensions))
-                        .maximum(upper_bounds.broadcast(broadcast_dimensions));
-
-        const int rows_number = inputs.dimension(0);
+        const Index rows_number = inputs.dimension(0);
         const Index columns_number = inputs.dimension(1);
 
         #pragma omp parallel for
-        for(Index i = 0; i < rows_number; i++)
-            for(Index j = 0; j < columns_number; j++)
-                if(inputs(i, j) < lower_bounds(j))
-                    outputs(i, j) = lower_bounds(j);
-                else if(inputs(i, j) > upper_bounds(j))
-                    outputs(i, j) = upper_bounds(j);
-*/
+        for (Index j = 0; j < columns_number; j++)
+        {
+            const type& lower_bound = lower_bounds(j);
+            const type& upper_bound = upper_bounds(j);
+
+            for (Index i = 0; i < rows_number; i++)
+                outputs(i, j) = min(max(inputs(i, j), lower_bound), upper_bound);
+        }
     }
     else
     {
@@ -290,120 +280,59 @@ void BoundingLayer::print() const
 }
 
 
-void BoundingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("BoundingLayer");
+    printer.OpenElement("BoundingLayer");
 
-    // Bounding neurons number
-
-    file_stream.OpenElement("BoundingNeuronsNumber");
+    add_xml_element(printer, "BoundingNeuronsNumber", to_string(get_neurons_number()));
 
     const Index neurons_number = get_neurons_number();
 
-    file_stream.PushText(to_string(neurons_number).c_str());
-    file_stream.CloseElement();
-
-    for(Index i = 0; i < neurons_number; i++)
+    for (Index i = 0; i < neurons_number; i++) 
     {
-        file_stream.OpenElement("Item");
-        file_stream.PushAttribute("Index", unsigned(i+1));
+        printer.OpenElement("Item");
+        printer.PushAttribute("Index", unsigned(i + 1));
 
-        // Lower bound
+        add_xml_element(printer, "LowerBound", to_string(lower_bounds[i]));
+        add_xml_element(printer, "UpperBound", to_string(upper_bounds[i]));
 
-        file_stream.OpenElement("LowerBound");
-        file_stream.PushText(to_string(lower_bounds[i]).c_str());
-        file_stream.CloseElement();
-
-        // Upper bound
-
-        file_stream.OpenElement("UpperBound");
-        file_stream.PushText(to_string(upper_bounds[i]).c_str());
-        file_stream.CloseElement();
-
-        file_stream.CloseElement();
+        printer.CloseElement(); 
     }
 
-    // Bounding method
+    add_xml_element(printer, "BoundingMethod", get_bounding_method_string());
 
-    file_stream.OpenElement("BoundingMethod");
-    file_stream.PushText(get_bounding_method_string().c_str());
-    file_stream.CloseElement();
-
-   // Display
-
-//   {
-//      file_stream.OpenElement("Display");
-
-//      buffer.str("");
-//      buffer << display;
-
-//      file_stream.PushText(buffer.str().c_str());
-
-//      file_stream.CloseElement();
-//   }
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* bounding_layer_element = document.FirstChildElement("BoundingLayer");
+    const auto* root_element = document.FirstChildElement("BoundingLayer");
+    
+    if (!root_element)
+        throw std::runtime_error("BoundingLayer element is nullptr.\n");
 
-    if(!bounding_layer_element)
-        throw runtime_error("BoundingLayer element is nullptr.\n");
-
-    // Bounding neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = bounding_layer_element->FirstChildElement("BoundingNeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("BoundingNeuronsNumber element is nullptr.\n");
-
-    const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
+    const Index neurons_number = read_xml_index(root_element, "BoundingNeuronsNumber");
 
     set(neurons_number);
 
-    unsigned index = 0; // Index does not work
+    const auto* item_element = root_element->FirstChildElement("Item");
 
-    const tinyxml2::XMLElement* start_element = neurons_number_element;
-
-    for(Index i = 0; i < neurons_number; i++)
+    for (Index i = 0; i < neurons_number && item_element; i++) 
     {
-        const tinyxml2::XMLElement* item_element = start_element->NextSiblingElement("Item");
-        start_element = item_element;
-
-        if(!item_element)
-            throw runtime_error("Item " + to_string(i+1) + " is nullptr.\n");
-
+        unsigned index = 0;
         item_element->QueryUnsignedAttribute("Index", &index);
 
-        if(index != i+1)
-            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
+        if (index != i + 1) 
+            throw std::runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
+        
+        lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
+        upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");
 
-        // Lower bound
-
-        const tinyxml2::XMLElement* lower_bound_element = item_element->FirstChildElement("LowerBound");
-
-        if(lower_bound_element)
-            if(lower_bound_element->GetText())
-                lower_bounds(index-1) = type(atof(lower_bound_element->GetText()));
-
-        // Upper bound
-
-        const tinyxml2::XMLElement* upper_bound_element = item_element->FirstChildElement("UpperBound");
-
-        if(upper_bound_element)
-            if(upper_bound_element->GetText())
-                upper_bounds(index-1) = type(atof(upper_bound_element->GetText()));
+        item_element = item_element->NextSiblingElement("Item");
     }
 
-    // Bounding method
-
-    const tinyxml2::XMLElement* bounding_method_element = bounding_layer_element->FirstChildElement("BoundingMethod");
-
-    if(bounding_method_element)
-        set_bounding_method(bounding_method_element->GetText());
+    set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
 }
 
 

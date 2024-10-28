@@ -200,8 +200,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     const bool has_selection = data_set->has_selection();
     
-    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
     Tensor<Index, 1> context_variables_indices;
 
     if(is_instance_of<LanguageDataSet>(data_set))
@@ -210,14 +210,14 @@ TrainingResults StochasticGradientDescent::perform_training()
         context_variables_indices = language_data_set->get_context_variables_indices();
     }
         
-    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
 
-    const Index training_samples_number = data_set->get_training_samples_number();
-    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
     
     training_samples_number < batch_samples_number
             ? training_batch_samples_number = training_samples_number
@@ -227,21 +227,19 @@ TrainingResults StochasticGradientDescent::perform_training()
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
 
-    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
     if(!is_instance_of<LanguageDataSet>(data_set))
-        input_variables_descriptives = data_set->scale_input_variables();
+        input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
-    
-    const vector<pair<type*, dimensions>> training_inputs = training_batch.get_input_pairs();
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
@@ -259,16 +257,16 @@ TrainingResults StochasticGradientDescent::perform_training()
     neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
-    if(neural_network->has_scaling_layer_2d())
+    if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
         scaling_layer_2d->set_descriptives(input_variables_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
-    if(neural_network->has_unscaling_layer())
+    if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_target_variables();
+        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
         unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
@@ -304,8 +302,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     bool shuffle = false;
 
-    if(neural_network->has_long_short_term_memory_layer()
-    || neural_network->has_recurrent_layer())
+    if(neural_network->has(Layer::Type::LongShortTermMemory)
+    || neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
 
     // Main loop
@@ -338,7 +336,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Neural network
             
-            neural_network->forward_propagate(training_inputs,
+            neural_network->forward_propagate(training_batch,
                                               training_forward_propagation,
                                               is_training);
             
@@ -385,7 +383,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Neural network
                 
-                neural_network->forward_propagate(selection_batch.get_input_pairs(),
+                neural_network->forward_propagate(selection_batch,
                                                   selection_forward_propagation,
                                                   is_training);
 
@@ -393,7 +391,9 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Loss
 
-                loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+                loss_index->calculate_error(selection_batch, 
+                                            selection_forward_propagation, 
+                                            selection_back_propagation);
 
                 selection_error += selection_back_propagation.error();
             }
@@ -476,10 +476,10 @@ TrainingResults StochasticGradientDescent::perform_training()
     }
 
     if(!is_instance_of<LanguageDataSet>(data_set))
-        data_set->unscale_input_variables(input_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
 
-    if(neural_network->has_unscaling_layer())
-        data_set->unscale_target_variables(target_variables_descriptives);
+    if(neural_network->has(Layer::Type::Unscaling))
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
 
     if(display) results.print();
     
@@ -522,51 +522,18 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 }
 
 
-void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("StochasticGradientDescent");
 
-    file_stream.OpenElement("StochasticGradientDescent");
+    add_xml_element(printer, "BatchSize", to_string(batch_samples_number));
+    add_xml_element(printer, "ApplyMomentum", to_string(momentum > type(0)));
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    add_xml_element(printer, "HardwareUse", hardware_use);
 
-    // Batch size
-
-    file_stream.OpenElement("BatchSize");
-    file_stream.PushText(to_string(batch_samples_number).c_str());
-    file_stream.CloseElement();
-
-    // Apply momentum
-
-    file_stream.OpenElement("ApplyMomentum");
-    file_stream.PushText(to_string(momentum > type(0)).c_str());
-    file_stream.CloseElement();
-
-    // Loss goal
-
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum epochs number
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    // Hardware use
-
-    file_stream.OpenElement("HardwareUse");
-    file_stream.PushText(hardware_use.c_str());
-    file_stream.CloseElement();
-
-    // End element
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -577,65 +544,15 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Stochastic gradient descent element is nullptr.\n");
 
-    // Batch size
+    set_batch_samples_number(read_xml_index(root_element, "BatchSize"));
 
-    const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
+    const bool apply_momentum = read_xml_bool(root_element, "ApplyMomentum");
+    set_momentum(apply_momentum ? type(0.9) : type(0));
 
-    if(batch_samples_number_element)
-        set_batch_samples_number(Index(atoi(batch_samples_number_element->GetText())));
-
-    // Momentum
-
-    const tinyxml2::XMLElement* apply_momentum_element = root_element->FirstChildElement("ApplyMomentum");
-
-    if(batch_samples_number_element)
-    {
-        string new_apply_momentum_state = apply_momentum_element->GetText();
-
-        try
-        {
-            if(new_apply_momentum_state != "0")
-            {
-                set_momentum(type(0.9));
-            }
-            else
-            {
-                set_momentum(type(0));
-            }
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Loss goal
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-    if(loss_goal_element)
-        set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    // Maximum epochs number
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
-
-    // Hardware use
-
-    const tinyxml2::XMLElement* hardware_use_element = root_element->FirstChildElement("HardwareUse");
-
-    if(hardware_use_element)
-        set_hardware_use(hardware_use_element->GetText());
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
 
