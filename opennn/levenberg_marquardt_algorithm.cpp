@@ -200,20 +200,20 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     
     const bool has_selection = data_set->has_selection();
 
-    const Index training_samples_number = data_set->get_training_samples_number();
-    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
-    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
-    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
@@ -225,18 +225,18 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
-    if(neural_network->has_scaling_layer_2d())
+    if(neural_network->has(Layer::Type::Scaling2D))
     {
-        input_variables_descriptives = data_set->scale_input_variables();
+        input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
         scaling_layer_2d->set_descriptives(input_variables_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
-    if(neural_network->has_unscaling_layer())
+    if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_target_variables();
+        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
         unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
@@ -404,11 +404,11 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         
     }
 
-    if(neural_network->has_scaling_layer_2d())
-        data_set->unscale_input_variables(input_variables_descriptives);
+    if(neural_network->has(Layer::Type::Scaling2D))
+        data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
 
-    if(neural_network->has_unscaling_layer())
-        data_set->unscale_target_variables(target_variables_descriptives);
+    if(neural_network->has(Layer::Type::Unscaling))
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
 
     if(display) results.print();
 
@@ -548,49 +548,18 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 }
 
 
-void LevenbergMarquardtAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LevenbergMarquardtAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("LevenbergMarquardt");
 
-    file_stream.OpenElement("LevenbergMarquardt");
+    add_xml_element(printer, "DampingParameterFactor", to_string(damping_parameter_factor));
+    add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    // Damping paramterer factor.
-
-    file_stream.OpenElement("DampingParameterFactor");
-    file_stream.PushText(to_string(damping_parameter_factor).c_str());
-    file_stream.CloseElement();
-
-    // Minimum loss decrease
-
-    file_stream.OpenElement("MinimumLossDecrease");
-    file_stream.PushText(to_string(minimum_loss_decrease).c_str());
-    file_stream.CloseElement();
-
-    // Loss goal
-
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum selection failures
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-    file_stream.PushText(to_string(maximum_selection_failures).c_str());
-    file_stream.CloseElement();
-
-    // Maximum epochs number
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -601,49 +570,12 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
     if(!root_element)
         throw runtime_error("Levenberg-Marquardt algorithm element is nullptr.\n");
 
-    // Damping parameter factor
-
-    const tinyxml2::XMLElement* damping_parameter_factor_element
-            = root_element->FirstChildElement("DampingParameterFactor");
-
-    if(damping_parameter_factor_element)
-        set_damping_parameter_factor(type(atof(damping_parameter_factor_element->GetText())));
-
-    // Minimum loss decrease
-
-    const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
-
-    if(minimum_loss_decrease_element)
-        set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
-
-    // Loss goal
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-    if(loss_goal_element)
-        set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    // Maximum selection failures
-
-    const tinyxml2::XMLElement* maximum_selection_failures_element
-            = root_element->FirstChildElement("MaximumSelectionFailures");
-
-    if(maximum_selection_failures_element)
-        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
-
-    // Maximum epochs number
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
+    set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
+    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
 

@@ -9,11 +9,7 @@
 #ifndef MODELSELECTION_H
 #define MODELSELECTION_H
 
-
-
 #include <string>
-
-
 
 #include "training_strategy.h"
 #include "growing_neurons.h"
@@ -30,9 +26,7 @@ public:
 
     // Constructors
 
-    explicit ModelSelection();
-
-    explicit ModelSelection(TrainingStrategy*);
+    explicit ModelSelection(TrainingStrategy* = nullptr);
 
     enum class NeuronsSelectionMethod{GROWING_NEURONS};
 
@@ -53,7 +47,7 @@ public:
 
     // Set
 
-    void set(TrainingStrategy*);
+    void set(TrainingStrategy* = nullptr);
 
     void set_default();
 

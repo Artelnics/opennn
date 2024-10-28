@@ -12,33 +12,9 @@
 namespace opennn
 {
 
-TrainingStrategy::TrainingStrategy()
-{
-    set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
-
-    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
-
-    LossIndex* loss_index = get_loss_index();
-
-    set_loss_index(loss_index);
-
-    set_default();
-}
-
-
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
-    : data_set(new_data_set),
-       neural_network(new_neural_network)
 {
-    set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
-
-    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
-
-    set_loss_index_neural_network(neural_network);
-
-    set_loss_index_data_set(data_set);
-
-    set_default();
+    set(new_neural_network, new_data_set);
 }
 
 
@@ -314,19 +290,13 @@ const bool& TrainingStrategy::get_display() const
 }
 
 
-void TrainingStrategy::set()
-{
-    set_optimization_method(OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-    set_default();
-}
-
-
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
     set_neural_network(new_neural_network);
 
     set_data_set(new_data_set);
+
+    set_default();
 }
 
 
@@ -533,15 +503,18 @@ void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 }
 
 
-void TrainingStrategy::set_default() const
+void TrainingStrategy::set_default()
 {
+    loss_method = LossMethod::MEAN_SQUARED_ERROR;
+
+    optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
 }
 
 
 TrainingResults TrainingStrategy::perform_training()
 {    
-    if(neural_network->has_recurrent_layer()
-    || neural_network->has_long_short_term_memory_layer())
+    if(neural_network->has(Layer::Type::Recurrent)
+    || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
 
     set_display(display);
@@ -576,9 +549,9 @@ void TrainingStrategy::fix_forecasting()
 {
     Index time_steps = 0;
 
-    if(neural_network->has_recurrent_layer())
+    if(neural_network->has(Layer::Type::Recurrent))
         time_steps = neural_network->get_recurrent_layer()->get_timesteps();
-    else if(neural_network->has_long_short_term_memory_layer())
+    else if(neural_network->has(Layer::Type::LongShortTermMemory))
         time_steps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
     else
         return;
@@ -615,59 +588,59 @@ void TrainingStrategy::print() const
 }
 
 
-void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("TrainingStrategy");
+    printer.OpenElement("TrainingStrategy");
 
-    // Loss index
+    printer.OpenElement("LossIndex");
 
-    file_stream.OpenElement("LossIndex");
+    add_xml_element(printer, "LossMethod", write_loss_method());
 
-    // Loss method
+    mean_squared_error.to_XML(printer);
+    normalized_squared_error.to_XML(printer);
+    Minkowski_error.to_XML(printer);
+    cross_entropy_error.to_XML(printer);
+    weighted_squared_error.to_XML(printer);
 
-    file_stream.OpenElement("LossMethod");
-    file_stream.PushText(write_loss_method().c_str());
-    file_stream.CloseElement();
-
-    mean_squared_error.to_XML(file_stream);
-    normalized_squared_error.to_XML(file_stream);
-    Minkowski_error.to_XML(file_stream);
-    cross_entropy_error.to_XML(file_stream);
-    weighted_squared_error.to_XML(file_stream);
-
-    switch(loss_method)
-    {
-    case LossMethod::MEAN_SQUARED_ERROR : mean_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::NORMALIZED_SQUARED_ERROR : normalized_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::MINKOWSKI_ERROR : Minkowski_error.write_regularization_XML(file_stream); break;
-    case LossMethod::CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream); break;
-    case LossMethod::WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::SUM_SQUARED_ERROR : sum_squared_error.write_regularization_XML(file_stream); break;
-    default: break;
+    switch (loss_method) {
+    case LossMethod::MEAN_SQUARED_ERROR:
+        mean_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::NORMALIZED_SQUARED_ERROR:
+        normalized_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::MINKOWSKI_ERROR:
+        Minkowski_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::CROSS_ENTROPY_ERROR:
+        cross_entropy_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::WEIGHTED_SQUARED_ERROR:
+        weighted_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::SUM_SQUARED_ERROR:
+        sum_squared_error.write_regularization_XML(printer);
+        break;
+    default:
+        break;
     }
 
-    file_stream.CloseElement();
+    printer.CloseElement();  
 
-    // Optimization algorithm
+    printer.OpenElement("OptimizationAlgorithm");
 
-    file_stream.OpenElement("OptimizationAlgorithm");
+    add_xml_element(printer, "OptimizationMethod", write_optimization_method());
 
-    file_stream.OpenElement("OptimizationMethod");
-    file_stream.PushText(write_optimization_method().c_str());
-    file_stream.CloseElement();
+    gradient_descent.to_XML(printer);
+    conjugate_gradient.to_XML(printer);
+    stochastic_gradient_descent.to_XML(printer);
+    adaptive_moment_estimation.to_XML(printer);
+    quasi_Newton_method.to_XML(printer);
+    Levenberg_Marquardt_algorithm.to_XML(printer);
 
-    gradient_descent.to_XML(file_stream);
-    conjugate_gradient.to_XML(file_stream);
-    stochastic_gradient_descent.to_XML(file_stream);
-    adaptive_moment_estimation.to_XML(file_stream);
-    quasi_Newton_method.to_XML(file_stream);
-    Levenberg_Marquardt_algorithm.to_XML(file_stream);
+    printer.CloseElement();  
 
-    file_stream.CloseElement();
-
-    // Close TrainingStrategy
-
-    file_stream.CloseElement();
+    printer.CloseElement();  
 }
 
 

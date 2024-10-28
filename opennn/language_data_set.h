@@ -9,12 +9,8 @@
 #ifndef LANGUAGEDATASET_H
 #define LANGUAGEDATASET_H
 
-
-
 #include <string>
 #include <fstream>
-
-
 
 #include "config.h"
 #include "data_set.h"
@@ -47,8 +43,6 @@ public:
     Tensor<Index, 1> get_context_variables_indices() const;
     Index get_context_raw_variables_number() const;
     Tensor<Index, 1> get_context_raw_variables_indices() const;
-
-    Tensor<type, 2> get_testing_context_data() const;
 
     const Tensor<Tensor<string, 1>, 1> get_documents() const;
     const Tensor<Tensor<string, 1>, 1> get_targets() const;

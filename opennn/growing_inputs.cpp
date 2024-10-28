@@ -57,7 +57,7 @@ void GrowingInputs::set_default()
     {
         training_strategy->get_neural_network()->get_display();
 
-        const Index inputs_number = training_strategy->get_data_set()->get_input_raw_variables_number();
+        const Index inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input);
 
         maximum_selection_failures = 100;
 
@@ -78,7 +78,7 @@ void GrowingInputs::set_default()
 
 void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
-    const Index inputs_number = training_strategy->get_data_set()->get_input_raw_variables_number();
+    const Index inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input);
 
     maximum_inputs_number = min(new_maximum_inputs_number,inputs_number);
 }
@@ -113,9 +113,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set = loss_index->get_data_set();
 
-    const Tensor<Index, 1> target_raw_variables_indices = data_set->get_target_raw_variables_indices();
+    const Tensor<Index, 1> target_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
-    const Index original_input_raw_variables_number = data_set->get_input_raw_variables_number();
+    const Index original_input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
     const Tensor<string, 1> raw_variables_names = data_set->get_raw_variable_names();
 
@@ -133,7 +133,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
          correlations_indexes.data() + correlations_indexes.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
-    Tensor<Index, 1> input_raw_variables_indices = data_set->get_input_raw_variables_indices();
+    Tensor<Index, 1> input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
 
     Tensor<Index, 1> correlations_rank_descending(input_raw_variables_indices.size());
 
@@ -169,8 +169,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     {
         data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::Input);
 
-        Index input_raw_variables_number = data_set->get_input_raw_variables_number();
-        Index input_variables_number = data_set->get_input_variables_number();
+        Index input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
+        Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
 
         if(input_raw_variables_number >= minimum_inputs_number)
         {
@@ -184,7 +184,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                      << "Input raw_variables number: " << input_raw_variables_number << endl
                      << "Inputs: " << endl;
 
-                input_raw_variables_names = data_set->get_input_raw_variable_names();
+                input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
                 for(Index j = 0; j < input_raw_variables_number; j++) cout << "   " << input_raw_variables_names(j) << endl;
             }
@@ -214,8 +214,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 {
                     // Neural network
 
-                    inputs_selection_results.optimal_input_raw_variables_indices = data_set->get_input_raw_variables_indices();
-                    inputs_selection_results.optimal_input_raw_variables_names = data_set->get_input_raw_variable_names();
+                    inputs_selection_results.optimal_input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
+                    inputs_selection_results.optimal_input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
                     inputs_selection_results.optimal_parameters = neural_network->get_parameters();
 
@@ -323,19 +323,19 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     data_set->set_input_target_raw_variables_indices(inputs_selection_results.optimal_input_raw_variables_indices, target_raw_variables_indices);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_variables_descriptives(DataSet::VariableUse::Input);
 
-    set_maximum_inputs_number(data_set->get_input_raw_variables_number());
+    set_maximum_inputs_number(data_set->get_raw_variables_number(DataSet::VariableUse::Input));
 
     // Set neural network stuff
 
-    neural_network->set_inputs_number(data_set->get_input_variables_number());
+    neural_network->set_inputs_number(data_set->get_variables_number(DataSet::VariableUse::Input));
 
-    neural_network->set_inputs_names(data_set->get_input_variables_names());
+    neural_network->set_inputs_names(data_set->get_variable_names(DataSet::VariableUse::Input));
 
-    if(neural_network->has_scaling_layer_2d())
+    if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
         scaling_layer_2d->set_descriptives(input_variables_descriptives);
@@ -391,65 +391,21 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
 }
 
 
-void GrowingInputs::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void GrowingInputs::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("GrowingInputs");
+    printer.OpenElement("GrowingInputs");
 
-    // Trials number
+    add_xml_element(printer, "TrialsNumber", to_string(trials_number));
+    add_xml_element(printer, "SelectionErrorGoal", to_string(selection_error_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MinimumInputsNumber", to_string(minimum_inputs_number));
+    add_xml_element(printer, "MaximumInputsNumber", to_string(maximum_inputs_number));
+    add_xml_element(printer, "MinimumCorrelation", to_string(minimum_correlation));
+    add_xml_element(printer, "MaximumCorrelation", to_string(maximum_correlation));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    file_stream.OpenElement("TrialsNumber");
-    file_stream.PushText(to_string(trials_number).c_str());
-    file_stream.CloseElement();
-
-    // Selection error goal
-
-    file_stream.OpenElement("SelectionErrorGoal");
-    file_stream.PushText(to_string(selection_error_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum selection failures
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-    file_stream.PushText(to_string(maximum_selection_failures).c_str());
-    file_stream.CloseElement();
-
-    // Minimum inputs number
-
-    file_stream.OpenElement("MinimumInputsNumber");
-    file_stream.PushText(to_string(minimum_inputs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum inputs number
-
-    file_stream.OpenElement("MaximumInputsNumber");
-    file_stream.PushText(to_string(maximum_inputs_number).c_str());
-    file_stream.CloseElement();
-
-    // Minimum correlation
-
-    file_stream.OpenElement("MinimumCorrelation");
-    file_stream.PushText(to_string(minimum_correlation).c_str());
-    file_stream.CloseElement();
-
-    // Maximum correlation
-
-    file_stream.OpenElement("MaximumCorrelation");
-    file_stream.PushText(to_string(maximum_correlation).c_str());
-    file_stream.CloseElement();
-
-    // Maximum iterations
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();  
 }
 
 
@@ -460,75 +416,16 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("GrowingInputs element is nullptr.\n");
 
-    // Trials number
-
-    const tinyxml2::XMLElement* trials_number_element = root_element->FirstChildElement("TrialsNumber");
-
-    if(trials_number_element)
-        set_trials_number(Index(atoi(trials_number_element->GetText())));
-
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
-
-    // Selection error goal
-
-    const tinyxml2::XMLElement* selection_error_goal_element = root_element->FirstChildElement("SelectionErrorGoal");
-
-    if(selection_error_goal_element)
-        set_selection_error_goal(type(atof(selection_error_goal_element->GetText())));
-
-    // Maximum epochs number
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    // Maximum correlation
-
-    const tinyxml2::XMLElement* maximum_correlation_element = root_element->FirstChildElement("MaximumCorrelation");
-
-    if(maximum_correlation_element)
-        set_maximum_correlation(type(atof(maximum_correlation_element->GetText())));
-
-    // Minimum correlation
-
-    const tinyxml2::XMLElement* minimum_correlation_element = root_element->FirstChildElement("MinimumCorrelation");
-
-    if(minimum_correlation_element)
-        set_minimum_correlation(type(atof(minimum_correlation_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
-
-    // Minimum inputs number
-
-    const tinyxml2::XMLElement* minimum_inputs_number_element = root_element->FirstChildElement("MinimumInputsNumber");
-
-    if(minimum_inputs_number_element)
-        set_minimum_inputs_number(Index(atoi(minimum_inputs_number_element->GetText())));
-
-    // Maximum inputs number
-
-    const tinyxml2::XMLElement* maximum_inputs_number_element = root_element->FirstChildElement("MaximumInputsNumber");
-
-    if(maximum_inputs_number_element)
-        set_maximum_inputs_number(Index(atoi(maximum_inputs_number_element->GetText())));
-
-    // Maximum selection failures
-
-    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
-
-    if(maximum_selection_failures_element)
-        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
+    set_trials_number(read_xml_index(root_element, "TrialsNumber"));
+    set_selection_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_correlation(read_xml_type(root_element, "MaximumCorrelation"));
+    set_minimum_correlation(read_xml_type(root_element, "MinimumCorrelation"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_minimum_inputs_number(read_xml_index(root_element, "MinimumInputsNumber"));
+    set_maximum_inputs_number(read_xml_index(root_element, "MaximumInputsNumber"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 

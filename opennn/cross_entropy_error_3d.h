@@ -9,10 +9,6 @@
 #ifndef CROSSENTROPYERROR3D_H
 #define CROSSENTROPYERROR3D_H
 
-
-
-
-
 #include "loss_index.h"
 #include "data_set.h"
 
@@ -24,19 +20,14 @@ class CrossEntropyError3D : public LossIndex
 
 public:
 
-   // Constructors
-
    explicit CrossEntropyError3D();
 
    explicit CrossEntropyError3D(NeuralNetwork*, DataSet*);
-
-   // Error
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,
                         BackPropagation&) const final;
 
-   // Gradient
 
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
@@ -45,8 +36,6 @@ public:
    string get_loss_method() const final;
    string get_error_type_text() const final;
 
-   // Serialization
-
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    void to_XML(tinyxml2::XMLPrinter&) const final;
@@ -54,10 +43,6 @@ public:
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_3d_cuda.h"
     #endif
-
-protected:
-
-//   type epsilon = type(1.e-8);
 };
 
 }

@@ -3049,5 +3049,49 @@ bool XMLPrinter::Visit(const XMLUnknown& unknown )
     return true;
 }
 
+void add_xml_element(tinyxml2::XMLPrinter& printer, const std::string& name, const std::string& value)
+{
+    printer.OpenElement(name.c_str());
+    printer.PushText(value.c_str());
+    printer.CloseElement();
+}
+
+type read_xml_type(const tinyxml2::XMLElement* root, const std::string& element_name)
+{
+/*
+    const tinyxml2::XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr" + element_name);
+
+    const tinyxml2::XMLText* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr" + element_name);
+
+    return type(stod(element->GetText()));
+*/
+    return type(0);
+}
+
+
+Index read_xml_index(const tinyxml2::XMLElement* root, const std::string& element_name)
+{
+    return 0;
+}
+
+
+bool read_xml_bool(const tinyxml2::XMLElement* root, const std::string& element_name)
+{
+    return true;
+}
+
+
+string read_xml_string(const tinyxml2::XMLElement* root, const std::string& element_name)
+{
+    return string();
+}
+
+
 }   // namespace tinyxml2
 

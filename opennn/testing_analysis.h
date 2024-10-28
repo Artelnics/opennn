@@ -9,8 +9,6 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-
-
 #include <iostream>
 #include <string>
 
@@ -30,7 +28,7 @@ public:
 
    explicit TestingAnalysis();
 
-   explicit TestingAnalysis(NeuralNetwork*, DataSet*);
+   explicit TestingAnalysis(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     // Destructor
 
@@ -130,22 +128,14 @@ public:
    Tensor<Tensor<Index, 1>, 1> calculate_maximal_errors(const Index& = 10) const;
 
    Tensor<type, 2> calculate_errors() const;
-   Tensor<type, 2> calculate_binary_classification_errors() const;
-   Tensor<type, 2> calculate_multiple_classification_errors() const;
-
    Tensor<type, 1> calculate_errors(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_errors(const DataSet::SampleUse&) const;
 
-   Tensor<type, 1> calculate_training_errors() const;
-   Tensor<type, 1> calculate_binary_classification_training_errors() const;
-   Tensor<type, 1> calculate_multiple_classification_training_errors() const;
+   Tensor<type, 2> calculate_binary_classification_errors() const;
+   Tensor<type, 1> calculate_binary_classification_errors(const DataSet::SampleUse&) const;
 
-   Tensor<type, 1> calculate_selection_errors() const;
-   Tensor<type, 1> calculate_binary_classification_selection_errors() const;
-   Tensor<type, 1> calculate_multiple_classification_selection_errors() const;
-
-   Tensor<Tensor<type, 1>, 1> calculate_testing_errors() const;
-   Tensor<type, 1> calculate_binary_classification_testing_errors() const;
-   Tensor<type, 1> calculate_multiple_classification_testing_errors() const;
+   Tensor<type, 2> calculate_multiple_classification_errors() const;
+   Tensor<type, 1> calculate_multiple_classification_errors(const DataSet::SampleUse&) const;
 
    type calculate_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -192,12 +182,8 @@ public:
 
    Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-//   type calculate_area_under_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
    type calculate_area_under_curve(const Tensor<type, 2>&) const;
    type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-//   type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
-//   type calculate_optimal_threshold(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_optimal_threshold(const Tensor<type, 2>&) const;
 
    // Lift Chart

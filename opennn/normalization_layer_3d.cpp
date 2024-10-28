@@ -201,7 +201,6 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
     Tensor<type, 3>& standard_deviations = normalization_layer_3d_forward_propagation->standard_deviations;
     const type& epsilon = normalization_layer_3d_forward_propagation->epsilon;
 
-    const Eigen::array<Index, 1> normalization_axis{ { 2 }};
     const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 }};
     const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth }};
     
@@ -268,9 +267,9 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
     
     // Parameters derivatives
     
-    gammas_derivatives.device(*thread_pool_device) = (normalized_inputs * deltas).sum(Eigen::array<Index, 2>({ 0, 1 }));
+    gammas_derivatives.device(*thread_pool_device) = (normalized_inputs * deltas).sum(sum_dimensions_2);
     
-    betas_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 2>({ 0, 1 }));
+    betas_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
     
     // Input derivatives
 
@@ -280,7 +279,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     multiply_matrices(thread_pool_device, scaled_deltas, gammas);
 
-    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * normalized_inputs).sum(Eigen::array<Index, 1>({ 2 })) / (standard_deviations_matrix + epsilon);
+    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * normalized_inputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
 
     multiply_matrices(thread_pool_device, standard_deviation_derivatives, aux_2d);
 
@@ -288,7 +287,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     input_derivatives.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
 
-    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * scaled_deltas.sum(Eigen::array<Index, 1>({ 2 }));
+    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * scaled_deltas.sum(sum_dimensions_1);
 
     substract_matrices(thread_pool_device, aux_2d, input_derivatives);
 }
@@ -330,92 +329,36 @@ void NormalizationLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
 
 void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
-    // Normalization layer
-
     const tinyxml2::XMLElement* normalization_layer_element = document.FirstChildElement("NormalizationLayer3D");
 
     if(!normalization_layer_element)
         throw runtime_error("NormalizationLayer3D element is nullptr.\n");
 
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = normalization_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = normalization_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Inputs depth
-
-    const tinyxml2::XMLElement* inputs_depth_element = normalization_layer_element->FirstChildElement("InputsDepth");
-
-    if(!inputs_depth_element)
-        throw runtime_error("InputsDepth element is nullptr.\n");
-
-    if(inputs_depth_element->GetText())
-        set_inputs_depth(Index(stoi(inputs_depth_element->GetText())));
-
-    // Gammas
+    set_name(read_xml_string(normalization_layer_element, "Name"));
+    set_inputs_number(read_xml_index(normalization_layer_element, "InputsNumber"));
+    set_inputs_depth(read_xml_index(normalization_layer_element, "InputsDepth"));
 
     const tinyxml2::XMLElement* parameters_element = normalization_layer_element->FirstChildElement("Parameters");
 
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
+    if (!parameters_element) {
+        throw std::runtime_error("Parameters element is nullptr.\n");
+    }
+    if (parameters_element->GetText()) {
         set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    }
 }
 
 
-void NormalizationLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void NormalizationLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("NormalizationLayer3D");
 
-    // Normalization layer
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("NormalizationLayer3D");
-
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Inputs depth
-
-    file_stream.OpenElement("InputsDepth");
-    file_stream.PushText(to_string(get_inputs_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Normalization layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 

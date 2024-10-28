@@ -27,7 +27,7 @@ int main()
         // Data set
         
         //Random image data set 
-        //const Index samples_number = 10;
+        //onst Index samples_number = 10;
         //const Index image_height = 4;
         //const Index image_width = 4;
         //const Index channels = 1;
@@ -38,8 +38,8 @@ int main()
         
         ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        image_data_set.set_data_source_path("C:/mnist/train");
-        //image_data_set.set_data_source_path("C:/binary_mnist");
+        //image_data_set.set_data_source_path("C:/mnist/train");
+        image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
@@ -47,7 +47,7 @@ int main()
 
         image_data_set.read_bmp();
 
-        //image_data_set.set_training();
+        //image_data_set.set_training(); ?????
 
         //image_data_set.print();
         //image_data_set.print_data();

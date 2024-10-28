@@ -9,10 +9,6 @@
 #ifndef GROWINGINPUTS_H
 #define GROWINGINPUTS_H
 
-
-
-
-
 #include "training_strategy.h"
 #include "inputs_selection.h"
 

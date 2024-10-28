@@ -574,7 +574,7 @@ void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNe
             layers[i] = make_unique < MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
-        case Layer::Type::PerceptronLayer3D:
+        case Layer::Type::Perceptron3D:
             layers[i] = make_unique < PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 

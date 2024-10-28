@@ -9,11 +9,7 @@
 #ifndef MULTIHEADATTENTIONLAYER_H
 #define MULTIHEADATTENTIONLAYER_H
 
-
-
 #include <string>
-
-
 
 #include "config.h"
 #include "layer.h"
@@ -187,9 +183,9 @@ protected:
 
     bool display = true;
 
-    const Eigen::array<Index, 1> projection_sum_index = Eigen::array<Index, 1>({ 3 });
-    const Eigen::array<Index, 2> biases_derivatives_sum_indices = Eigen::array<Index, 2>({ 0, 2 });
-    const Eigen::array<Index, 2> projection_biases_derivatives_sum_indices = Eigen::array<Index, 2>({ 0, 1 });
+    const Eigen::array<Index, 1> projection_sum_index = { 3 };
+    const Eigen::array<Index, 2> biases_derivatives_sum_indices = { 0, 2 };
+    const Eigen::array<Index, 2> projection_biases_derivatives_sum_indices = { 0, 1 };
 
     const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
     const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };

@@ -71,19 +71,12 @@ public:
                   const string& name = "layer", 
                   const vector<Index>& = vector<Index>());
 
-   bool validate_layer_type(const Layer::Type) const;
+   bool validate_layer_type(const Layer::Type&) const;
 
    // Get
 
-   bool has_scaling_layer_2d() const;
-   bool has_scaling_layer_4d() const;
-   bool has_long_short_term_memory_layer() const;
-   bool has_recurrent_layer() const;
-   bool has_unscaling_layer() const;
-   bool has_bounding_layer() const;
-   bool has_probabilistic_layer() const;
-   bool has_convolutional_layer() const;
-   bool has_flatten_layer() const;
+   bool has(const Layer::Type&) const;
+
    bool is_empty() const;
 
    const Tensor<string, 1>& get_input_names() const;
@@ -129,6 +122,13 @@ public:
 
    void set(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
 
+   void set_approximation(const dimensions&, const dimensions&, const dimensions&);
+   void set_classification(const dimensions&, const dimensions&, const dimensions&);
+   void set_forecasting(const dimensions&, const dimensions&, const dimensions&);
+   void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
+   void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
+
+
    void set(const string&);
 
    void set_layers_number(const Index&);
@@ -155,8 +155,9 @@ public:
 
    // Layers
 
+   static bool is_trainable(const Layer::Type&);
+
    Index get_layers_number() const;
-   Index get_trainable_layers_number() const;
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
