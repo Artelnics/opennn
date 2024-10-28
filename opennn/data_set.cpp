@@ -4460,9 +4460,7 @@ void DataSet::open_file(const string& data_file_name, ifstream& file) const
 
     if(regex_search(data_file_name, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        const wstring file_name_wide = conv.from_bytes(data_file_name);
-        file.open(file_name_wide, ios::binary);
+        file.open(string_to_wide_string(data_file_name), ios::binary);
     }
     else
     {
@@ -4485,9 +4483,7 @@ void DataSet::open_file(const string& file_name, ofstream& file) const
 
     if(regex_search(file_name, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(file_name);
-        file.open(file_name_wide, ios::binary);
+        file.open(string_to_wide_string(file_name), ios::binary);
     }
     else
     {
