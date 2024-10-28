@@ -40,7 +40,11 @@
 #   include <cstring>
 #endif
 #include <stdint.h>
+#include <string>
 
+#include "config.h"
+
+using namespace opennn;
 
 //    TODO: intern strings instead of allocation.
 
@@ -2243,6 +2247,15 @@ private:
     XMLPrinter(const XMLPrinter&);
     XMLPrinter& operator= (const XMLPrinter&);
 };
+
+
+void add_xml_element(tinyxml2::XMLPrinter& printer, const std::string& name, const std::string& value);
+
+
+type read_xml_type(const tinyxml2::XMLElement* root, const std::string& element_name);
+Index read_xml_index(const tinyxml2::XMLElement* root, const std::string& element_name);
+bool read_xml_bool(const tinyxml2::XMLElement* root, const std::string& element_name);
+string read_xml_string(const tinyxml2::XMLElement* root, const std::string& element_name);
 
 
 }	// tinyxml2

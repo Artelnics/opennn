@@ -187,6 +187,7 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::Linear;
 
+   const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = { 1, 2, 3 };
    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = { 0, 1, 2 };
    const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = { 0, 1 };
 

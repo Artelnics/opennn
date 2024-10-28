@@ -123,9 +123,9 @@ void WeightedSquaredError::set_normalization_coefficient()
     else if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 1
          && data_set->get_raw_variables(DataSet::VariableUse::Target)(0).type == DataSet::RawVariableType::Binary)
     {
-        const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+        const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-        const Index negatives = data_set->calculate_used_negatives(target_variables_indices[0]);
+        const Index negatives = data_set->calculate_used_negatives(target_variable_indices[0]);
 
         normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
     }
@@ -297,19 +297,14 @@ string WeightedSquaredError::get_error_type_text() const
 }
 
 
-void WeightedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void WeightedSquaredError::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("WeightedSquaredError");
+    printer.OpenElement("WeightedSquaredError");
 
-    file_stream.OpenElement("PositivesWeight");
-    file_stream.PushText(to_string(positives_weight).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "PositivesWeight", to_string(positives_weight));
+    add_xml_element(printer, "NegativesWeight", to_string(negatives_weight));
 
-    file_stream.OpenElement("NegativesWeight");
-    file_stream.PushText(to_string(negatives_weight).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -320,15 +315,8 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Weighted squared element is nullptr.\n");
 
-    const tinyxml2::XMLElement* positives_weight_element = root_element->FirstChildElement("PositivesWeight");
-
-    if(positives_weight_element)
-        set_positives_weight(type(atof(positives_weight_element->GetText())));
-
-    const tinyxml2::XMLElement* negatives_weight_element = root_element->FirstChildElement("NegativesWeight");
-
-    if(negatives_weight_element)
-        set_negatives_weight(type(atof(negatives_weight_element->GetText())));
+    set_positives_weight(read_xml_type(root_element, "PositivesWeight"));
+    set_negatives_weight(read_xml_type(root_element, "NegativesWeight"));
 }
 
 

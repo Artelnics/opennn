@@ -415,11 +415,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const Tensor<Index, 1> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
-    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const Tensor<string, 1> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
@@ -435,7 +435,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
     neural_network->set_inputs_names(input_names);
-    neural_network->set_output_namess(targets_names);
+    neural_network->set_output_namess(target_names);
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
@@ -457,11 +457,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     Batch training_batch(training_samples_number, data_set);
 
-    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, data_set);
 
-    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
 
     // Loss index
 
@@ -627,39 +627,21 @@ string QuasiNewtonMethod::write_optimization_algorithm_type() const
 }
 
 
-void QuasiNewtonMethod::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void QuasiNewtonMethod::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("QuasiNewtonMethod");
 
-    file_stream.OpenElement("QuasiNewtonMethod");
+    add_xml_element(printer, "InverseHessianApproximationMethod", write_inverse_hessian_approximation_method());
 
-    file_stream.OpenElement("InverseHessianApproximationMethod");
-    file_stream.PushText(write_inverse_hessian_approximation_method().c_str());
-    file_stream.CloseElement();
+    learning_rate_algorithm.to_XML(printer);
 
-    learning_rate_algorithm.to_XML(file_stream);
+    add_xml_element(printer, "MinimumLossDecrease", std::to_string(minimum_loss_decrease));
+    add_xml_element(printer, "LossGoal", std::to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", std::to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumEpochsNumber", std::to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", std::to_string(maximum_time));
 
-    file_stream.OpenElement("MinimumLossDecrease");
-    file_stream.PushText(to_string(minimum_loss_decrease).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("LossGoal");
-    file_stream.PushText(to_string(training_loss_goal).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-    file_stream.PushText(to_string(maximum_selection_failures).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("MaximumEpochsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -699,47 +681,25 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
 
-    if(!root_element)
-        throw runtime_error("Quasi-Newton method element is nullptr.\n");
-
-    const tinyxml2::XMLElement* inverse_hessian_approximation_method_element = root_element->FirstChildElement("InverseHessianApproximationMethod");
-
-    if(inverse_hessian_approximation_method_element)
-        set_inverse_hessian_approximation_method(inverse_hessian_approximation_method_element->GetText());
+    if (!root_element) 
+        throw std::runtime_error("Quasi-Newton method element is nullptr.\n");
+    
+    set_inverse_hessian_approximation_method(read_xml_string(root_element, "InverseHessianApproximationMethod"));
 
     const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
-
-    if(!learning_rate_algorithm_element)
-        throw runtime_error("Learning rate algorithm element is nullptr.\n");
+    
+    if (!learning_rate_algorithm_element) 
+        throw std::runtime_error("Learning rate algorithm element is nullptr.\n");
     
     tinyxml2::XMLDocument learning_rate_algorithm_document;
     learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
     learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
-    
-    const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
 
-    if(minimum_loss_decrease_element)
-        set_minimum_loss_decrease(type(atof(minimum_loss_decrease_element->GetText())));
-
-    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
-
-    if(loss_goal_element)
-        set_loss_goal(type(atof(loss_goal_element->GetText())));
-
-    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionFailures");
-
-    if(maximum_selection_failures_element)
-        set_maximum_selection_failures(Index(atoi(maximum_selection_failures_element->GetText())));
-
-    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-    if(maximum_epochs_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_epochs_number_element->GetText())));
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atof(maximum_time_element->GetText())));
+    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
 

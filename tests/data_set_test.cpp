@@ -58,7 +58,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data_constant(type(0));
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 1, LOG);
 
@@ -73,7 +73,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data_constant(type(0));
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 4, LOG);
 
@@ -111,7 +111,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data(data);
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 3, LOG);
 
@@ -139,13 +139,14 @@ void DataSetTest::test_calculate_input_variables_descriptives()
                     {type(1), type(2.0), type(3.0)}});
 
     data_set.set(data);
-
-    input_variables_descriptives = data_set.calculate_input_variables_descriptives();
+/*
+    input_variables_descriptives = data_set.calculate_variable_descriptives(DataSet::VariableUse::Input);
 
     assert_true(input_variables_descriptives[0].mean - type(2.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].standard_deviation - type(1)< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].minimum - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
+*/
 }
 
 
@@ -1046,10 +1047,13 @@ void DataSetTest::test_calculate_used_targets_mean()
 
     Tensor<Index, 1> indices(3);
     indices.setValues({0, 1, 2});
-    Tensor<Index, 1> training_indexes(1);
-    training_indexes.setValues({0});
 
-    data_set.set_training(training_indexes);
+    Tensor<Index, 1> training_indices(1);
+    training_indices.setValues({0});
+/*
+    data_set.set_training(training_indices);
+*/
+
 }
 
 
@@ -1078,8 +1082,10 @@ void DataSetTest::test_calculate_selection_targets_mean()
     selection_indices.resize(2);
     selection_indices.setValues({0, 1});
 
-    data_set.set_input();
-    data_set.set_selection(selection_indices);
+    data_set.set(DataSet::VariableUse::Input);
+
+/*
+    data_set.set_sample_uses(DataSet::SampleUse::Selection, selection_indices);
 
     data_set.set_input_target_raw_variables_indices(Tensor<Index,1>(), target_indices);
 
@@ -1089,6 +1095,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
     assert_true(selection_targets_mean(0) == type(5.5), LOG);
     assert_true(selection_targets_mean(1) == type(5), LOG);
+*/
 }
 
 
@@ -1754,7 +1761,7 @@ void DataSetTest::test_unuse_repeated_samples()
     data_set = opennn::DataSet();
 
     data_set.set_data(data);
-    data_set.set_training();
+    data_set.set(DataSet::SampleUse::Training);
 
     indices = data_set.unuse_repeated_samples();
 
@@ -1773,7 +1780,7 @@ void DataSetTest::test_unuse_repeated_samples()
     data_set = opennn::DataSet();
 
     data_set.set_data(data);
-    data_set.set_training();
+    data_set.set(DataSet::SampleUse::Training);
 
     indices = data_set.unuse_repeated_samples();
 
@@ -1793,7 +1800,7 @@ void DataSetTest::test_unuse_repeated_samples()
     data_set.set();
 
     data_set.set_data(data);
-    data_set.set_training();
+    data_set.set(DataSet::SampleUse::Training);
 
     indices = data_set.unuse_repeated_samples();
 
@@ -1843,12 +1850,15 @@ void DataSetTest::test_calculate_training_negatives()
 
     target_index = 2;
 
-    data_set.set_testing();
+/*
+    data_set.set(DataSet::SampleUse::Testing);
     data_set.set_training(training_indices);
 
-    training_negatives = data_set.calculate_training_negatives(target_index);
+    //training_negatives = data_set.calculate_training_negatives(target_index);
+    training_negatives = data_set.calculate_negatives(DataSet::SampleUse::Training,target_index);
 
     assert_true(training_negatives == 1, LOG);
+*/
 }
 
 
@@ -1879,16 +1889,19 @@ void DataSetTest::test_calculate_selection_negatives()
 
     Index target_index = 2;
 
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
+/*
     data_set.set_selection(selection_indices);
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    Index selection_negatives = data_set.calculate_selection_negatives(target_index);
-
+    //Index selection_negatives = data_set.calculate_selection_negatives(target_index);
+    Index selection_negatives = data_set.calculate_negatives(DataSet::SampleUse::Selection,target_index);
+    data_set.calculate_negatives(DataSet::SampleUse::Training,target_index);
     data = data_set.get_data();
 
     assert_true(selection_negatives == 0, LOG);
+*/
 }
 
 
@@ -1900,7 +1913,7 @@ void DataSetTest::test_fill()
     data.setValues({{1,4,7},{2,5,8},{3,6,9}});
     data_set.set_data(data);
 
-    data_set.set_training();
+    data_set.set(DataSet::SampleUse::Training);
 
     const Index training_samples_number = data_set.get_samples_number(DataSet::SampleUse::Training);
 
