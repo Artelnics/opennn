@@ -1155,10 +1155,12 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
-    for(Index i = first_layer_index; i <= last_layer_index; i++)
+    for(Index i = first_layer_index; i <= last_layer_index; i++){
+        cout<<"Works properly"<<endl;
         layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
-                                     is_training);
+                                     is_training);}
+    cout<<"Works properly"<<endl;
 }
 
 

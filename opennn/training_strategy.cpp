@@ -540,7 +540,7 @@ void TrainingStrategy::set_default() const
 
 
 TrainingResults TrainingStrategy::perform_training()
-{    
+{
     if(neural_network->has_recurrent_layer()
     || neural_network->has_long_short_term_memory_layer())
         fix_forecasting();
@@ -564,7 +564,7 @@ TrainingResults TrainingStrategy::perform_training()
         case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
             return stochastic_gradient_descent.perform_training();        
 
-        case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:        
+        case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
             return adaptive_moment_estimation.perform_training();
         
         default:

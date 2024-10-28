@@ -120,6 +120,8 @@ public:
 
         Scaler scaler = Scaler::None;
 
+        bool has_raw_variables_names = false;
+
         // Methods
 
         string get_use_string() const;
@@ -667,6 +669,9 @@ public:
     void decode(string&) const;
 
     void read_csv();
+    void read_csv_1();
+
+    void read_csv_2_simple();
 
     void prepare_line(string&) const;
     void process_tokens(Tensor<string, 1>&);

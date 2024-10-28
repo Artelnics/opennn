@@ -86,7 +86,7 @@ void initialize_sequential(Tensor<Index, 1>& new_tensor,
     new_tensor.resize(new_size);
     new_tensor(0) = start;
 
-    #pragma omp parallel for
+
     for(Index i = 1; i < new_size-1; i++)
         new_tensor(i) = new_tensor(i-1) + step;
 
