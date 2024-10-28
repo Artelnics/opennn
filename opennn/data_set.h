@@ -169,12 +169,6 @@ public:
 
     string get_sample_string(const Index&, const string& = ",") const;
 
-    // Create Box plot from histogram
-
-    Tensor<type, 1> box_plot_from_histogram(const Histogram&, const Index&) const;
-
-    // Raw variables get
-
     inline Index get_raw_variables_number() const { return raw_variables.size(); }
     Index get_raw_variables_number(const VariableUse&) const;
     Index get_constant_raw_variables_number() const;
@@ -395,7 +389,6 @@ public:
     bool is_empty() const;
 
     bool is_sample_used(const Index&) const;
-    bool is_sample_unused(const Index&) const;
 
     bool has_binary_raw_variables() const;
     bool has_categorical_raw_variables() const;
@@ -446,11 +439,6 @@ public:
     Tensor<Descriptives, 1> calculate_variable_descriptives(const VariableUse&) const;
  
     Tensor<Descriptives, 1> calculate_testing_target_variables_descriptives() const;
-
-    Tensor<type, 1> calculate_input_variables_minimums() const;
-    Tensor<type, 1> calculate_target_variables_minimums() const;
-    Tensor<type, 1> calculate_input_variables_maximums() const;
-    Tensor<type, 1> calculate_target_variables_maximums() const;
 
     Tensor<type, 1> calculate_used_variables_minimums() const;
 

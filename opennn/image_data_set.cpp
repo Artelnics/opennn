@@ -154,30 +154,24 @@ void ImageDataSet::set(const Index& new_images_number,
                              RawVariableType::Numeric,
                              Scaler::ImageMinMax);
 
-    if(targets_number == 1)
-    {
-        Tensor<string, 1> categories(targets_number);
-        categories.setConstant("ABC");
+    Tensor<string, 1> categories(targets_number);
+    categories.setConstant("ABC");
 
+    if(targets_number == 1)
         raw_variables(raw_variables_number - 1).set("target",
                                                     VariableUse::Target,
                                                     RawVariableType::Binary,
                                                     Scaler::None,
                                                     categories);
-    }
     else
-    {
-        Tensor<string, 1> categories(targets_number);
-        categories.setConstant("ABC");
-
         raw_variables(raw_variables_number - 1).set("target",
                                                     VariableUse::Target,
                                                     RawVariableType::Categorical,
                                                     Scaler::None,
                                                     categories);
-    }
 
     // Samples
+
     sample_uses.resize(new_images_number);
     split_samples_random();
 
@@ -221,7 +215,8 @@ void ImageDataSet::set_image_data_random()
         {
             images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
 
-            if (remainder > 0) remainder--;
+            if (remainder > 0)
+                remainder--;
         }
 
         Index current_sample = 0;

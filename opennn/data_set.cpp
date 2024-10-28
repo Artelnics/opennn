@@ -354,12 +354,6 @@ bool DataSet::is_sample_used(const Index& index) const
 }
 
 
-bool DataSet::is_sample_unused(const Index& index) const
-{
-    return sample_uses(index) == SampleUse::None;
-}
-
-
 Tensor<Index, 1> DataSet::get_sample_use_numbers() const
 {
     Tensor<Index, 1> count(4);
@@ -1173,80 +1167,6 @@ Index DataSet::get_input_and_unused_variables_number() const
     }
 
     return raw_variables_number;
-}
-
-
-Tensor<type, 1> DataSet::box_plot_from_histogram(const Histogram& histogram, 
-                                                 const Index& bins_number) const
-{
-    const Index samples_number = get_samples_number(SampleUse::Training);
-
-    const Tensor<type, 1>relative_frequencies = histogram.frequencies.cast<type>() *
-           histogram.frequencies.constant(100.0).cast<type>() /
-           histogram.frequencies.constant(samples_number).cast<type>();
-
-    const Tensor<type, 1> bin_centers = histogram.centers;
-    const Tensor<type, 1> bin_frequencies = relative_frequencies;
-
-    vector<type> cumulative_frequencies(1000);
-
-    cumulative_frequencies[0] = bin_frequencies[0];
-
-    for(size_t i = 1; i < 1000; i++)
-        cumulative_frequencies[i] = cumulative_frequencies[i-1] + bin_frequencies[i];
-
-    const type total_frequency = cumulative_frequencies[999];
-
-    const type q1_position = type(0.25) * total_frequency;
-    const type q2_position = type(0.5) * total_frequency;
-    const type q3_position = type(0.75) * total_frequency;
-
-    size_t q1_bin = 0;
-    size_t q2_bin = 0;
-    size_t q3_bin = 0;
-
-    for(size_t i = 0; i < 1000; i++) 
-    {
-        if(cumulative_frequencies[i] >= q1_position)
-        {
-            q1_bin = i;
-            break;
-        }
-    }
-
-    for(size_t i = 0; i < 1000; i++) 
-    {
-        if(cumulative_frequencies[i] >= q2_position)
-        {
-            q2_bin = i;
-            break;
-        }
-    }
-
-    for(size_t i = 0; i < 1000; i++) 
-    {
-        if(cumulative_frequencies[i] >= q3_position)
-        {
-            q3_bin = i;
-            break;
-        }
-    }
-
-    const type bin_width = bin_centers[1] - bin_centers[0];
-
-    const type q1 = bin_centers[q1_bin] + (q1_position - cumulative_frequencies[q1_bin-1]) * bin_width / bin_frequencies[q1_bin];
-
-    const type q2 = bin_centers[q2_bin] + (q2_position - cumulative_frequencies[q2_bin-1]) * bin_width / bin_frequencies[q2_bin];
-
-    const type q3 = bin_centers[q3_bin] + (q3_position - cumulative_frequencies[q3_bin-1]) * bin_width / bin_frequencies[q3_bin];
-
-    const type minimum = bin_centers[0] - bin_width / type(2);
-    const type maximum = bin_centers[999] + bin_width / type(2);
-
-    Tensor<type, 1> iqr_values(5);
-    iqr_values.setValues({ minimum, q1, q2, q3, maximum });
-
-    return iqr_values;
 }
 
 
@@ -2885,30 +2805,6 @@ Tensor<Descriptives, 1> DataSet::calculate_testing_target_variables_descriptives
     const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     return descriptives(data, testing_indices, target_variable_indices);
-}
-
-
-Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
-{
-    return column_minimums(data, get_used_samples_indices(), get_variable_indices(DataSet::VariableUse::Input));
-}
-
-
-Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
-{
-    return column_minimums(data, get_used_samples_indices(), get_variable_indices(DataSet::VariableUse::Target));
-}
-
-
-Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
-{
-    return column_maximums(data, get_used_samples_indices(), get_variable_indices(DataSet::VariableUse::Input));
-}
-
-
-Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
-{
-    return column_maximums(data, get_used_samples_indices(), get_variable_indices(DataSet::VariableUse::Input));
 }
 
 

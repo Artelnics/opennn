@@ -8,7 +8,7 @@
 
 #include "transformer_test.h"
 
-#include "../opennn/probabilistic_layer_3d.h"
+//#include "../opennn/probabilistic_layer_3d.h"
 
 namespace opennn
 {
