@@ -55,7 +55,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         data_set.set_raw_variable_use(0, DataSet::VariableUse::Input);
         data_set.set_raw_variable_use(1, DataSet::VariableUse::Target);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
@@ -114,7 +114,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         for(Index i = 0; i < inputs_number; i++)
             data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
@@ -176,7 +176,7 @@ void CrossEntropyError3DTest::test_back_propagate()
         for(Index i = 0; i < inputs_number; i++)
             data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
 
@@ -257,7 +257,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         data_set.set_data_random_language_model(batch_samples_number, inputs_number, context_length, input_dimensions, context_dimension);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
         context_variables_indices = data_set.get_context_variables_indices();

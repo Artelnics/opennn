@@ -106,7 +106,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
         input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);

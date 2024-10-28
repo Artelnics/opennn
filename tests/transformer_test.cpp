@@ -294,7 +294,7 @@ void TransformerTest::test_forward_propagate()
         
         data_set.set(data);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         for(Index i = 0; i < context_length; i++)
             data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
@@ -365,7 +365,7 @@ void TransformerTest::test_forward_propagate()
 
         data_set.set(data);
 
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         for(Index i = 0; i < context_length; i++)
             data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);

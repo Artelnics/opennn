@@ -62,7 +62,7 @@ int main()
         }
 
         data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         // Neural network
 

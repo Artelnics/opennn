@@ -88,7 +88,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
-        data_set.set_training();
+        data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
         input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
@@ -135,7 +135,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         image_data_set.set_data_source_path("data/conv_test");
 
         image_data_set.read_bmp();
-        image_data_set.scale_input_variables();
+        image_data_set.scale_variables(DataSet::VariableUse::Input);
 
         samples_number = image_data_set.get_samples_number();
 
