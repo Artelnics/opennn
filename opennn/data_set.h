@@ -468,8 +468,6 @@ public:
 
     // Data unscaling
 
-    void unscale_data(const Tensor<Descriptives, 1>&);
-
     void unscale_variables(const VariableUse&, const Tensor<Descriptives, 1>&);
 
     // Classification
@@ -480,7 +478,7 @@ public:
 
     Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
 
-    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& cleaning_parameter);
+    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& = type(1.5));
 
     void unuse_Tukey_outliers(const type& = type(1.5));
 
@@ -559,9 +557,6 @@ public:
     void decode(string&) const;
 
     void read_csv();
-    void read_csv_1();
-
-    void read_csv_2_simple();
 
     void prepare_line(string&) const;
     void process_tokens(Tensor<string, 1>&);

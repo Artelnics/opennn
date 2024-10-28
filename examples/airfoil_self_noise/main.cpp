@@ -9,7 +9,6 @@
 #include <iostream>
 #include <string>
 #include <time.h>
-#include <memory>
 
 #include "../../opennn/data_set.h"
 #include "../../opennn/neural_network.h"
@@ -24,8 +23,9 @@ int main()
 {
     try
     {
-        srand(unsigned(time(nullptr)));                           
+        srand(unsigned(time(nullptr)));
 
+        cout << "Airfoil self noise" << endl;
 
         // Data set
 
@@ -35,8 +35,8 @@ int main()
         //data_set.save("../data/data_set.xml");
         //data_set.load("../data/data_set.xml");
 
-        //data_set.print();
-
+        data_set.print();
+/*
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
@@ -99,7 +99,7 @@ int main()
         const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

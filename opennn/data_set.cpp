@@ -1920,6 +1920,7 @@ void DataSet::set(const string& data_path,
                   const bool& new_has_ids,
                   const DataSet::Codification& new_codification)
 {
+
     set();
 
     set_default();
@@ -4169,6 +4170,7 @@ void DataSet::process_tokens(Tensor<string, 1>& tokens)
 
 void DataSet::read_csv()
 {
+
     if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
@@ -4316,24 +4318,30 @@ void DataSet::read_csv()
             }
         }
 
-        if(has_sample_ids) samples_id(sample_index) = tokens(0);
+        if(has_sample_ids)
+            samples_id(sample_index) = tokens(0);
 
-        #pragma omp parallel for
+//        #pragma omp parallel for
 
         for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
         {
+            cout << raw_variables(raw_variable_index).name << endl;
             const RawVariableType raw_variable_type = raw_variables(raw_variable_index).type;
 
             const string token = has_sample_ids ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
 
             const Tensor<Index, 1> variable_indices = get_variable_indices(raw_variable_index);
 
+            cout << sample_index << endl;
+
             if(raw_variable_type == RawVariableType::Numeric)
             {
+
                 if(token.empty() || token == missing_values_label)
                     data(sample_index, variable_indices(0)) = NAN;
                 else
                     data(sample_index, variable_indices(0)) = stof(token);
+
             }
             else if(raw_variable_type == RawVariableType::DateTime)
             {              
@@ -4383,385 +4391,12 @@ void DataSet::read_csv()
     }
 
     file.close();
-
+/*
     unuse_constant_raw_variables();
     set_binary_raw_variables();
     split_samples_random();
-
+*/
 }
-
-void DataSet::read_csv_1()
-{
-    if(display) cout << "Path: " << data_path << endl;
-
-    if(data_path.empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
-               << "Data file name is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
-
-#ifdef _WIN32
-
-    if(std::regex_search(data_path, accent_regex))
-    {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_path);
-        file.open(file_name_wide);
-    }
-    else
-    {
-        file.open(data_path.c_str());
-    }
-#else
-    file.open(data_path.c_str());
-#endif
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
-               << "Cannot open data file: " << data_path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    const string separator_char = get_separator_string();
-
-    if(display) cout << "Setting data file preview..." << endl;
-
-    Index lines_number = has_binary_raw_variables()? 4 : 3;
-
-    data_file_preview.resize(lines_number);
-
-    string line;
-
-    Index lines_count = 0;
-
-    while(file.good())
-    {
-        getline(file, line);
-
-        decode(line);
-
-        trim(line);
-
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        check_separators(line);
-
-        data_file_preview(lines_count) = get_tokens(line, separator_char);
-
-        lines_count++;
-
-        if(lines_count == lines_number) break;
-    }
-
-    file.close();
-
-    // Check empty file
-
-    if(data_file_preview(0).size() == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_1() method.\n"
-               << "File " << data_path << " is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    // Set rows labels and raw_variables names
-
-    if(display) cout << "Setting rows labels..." << endl;
-
-    string first_name = data_file_preview(0)(0);
-    transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
-
-    const Index raw_variables_number = get_has_rows_labels() ? data_file_preview(0).size()-1 : data_file_preview(0).size();
-
-    raw_variables.resize(raw_variables_number);
-
-    // Check if header has numeric value
-
-    if(has_binary_raw_variables() && has_numbers(data_file_preview(0)))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_1() method.\n"
-               << "Some raw_variables names are numeric.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    // raw_variables names
-
-    if(display) cout << "Setting raw_variables names..." << endl;
-
-    if(has_binary_raw_variables())
-    {
-        get_has_rows_labels() ? set_raw_variable_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
-                                                                             Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
-                        : set_raw_variable_names(data_file_preview(0));
-    }
-    else
-    {
-        set_raw_variable_names(get_default_raw_variables_names(raw_variables_number));
-    }
-
-    // Check raw_variables with all missing values
-
-    bool has_nans_raw_variables = false;
-
-    do
-    {
-        has_nans_raw_variables = false;
-
-        if(lines_number > 10)
-            break;
-
-        for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
-        {
-            if(get_has_rows_labels() && i == 0) continue;
-
-            // Check if all are missing values
-
-            if( data_file_preview(1)(i) == missing_values_label
-                && data_file_preview(2)(i) == missing_values_label
-                && data_file_preview(lines_number-2)(i) == missing_values_label
-                && data_file_preview(lines_number-1)(i) == missing_values_label)
-            {
-                has_nans_raw_variables = true;
-            }
-            else
-            {
-                has_nans_raw_variables = false;
-            }
-
-            if(has_nans_raw_variables)
-            {
-                lines_number++;
-                data_file_preview.resize(lines_number);
-
-                string line;
-                Index lines_count = 0;
-
-                file.open(data_path.c_str());
-
-                if(!file.is_open())
-                {
-                    ostringstream buffer;
-
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void read_csv() method.\n"
-                           << "Cannot open data file: " << data_path << "\n";
-
-                    throw runtime_error(buffer.str());
-                }
-
-                while(file.good())
-                {
-                    getline(file, line);
-                    decode(line);
-                    trim(line);
-                    erase(line, '"');
-                    if(line.empty()) continue;
-                    check_separators(line);
-                    data_file_preview(lines_count) = get_tokens(line, separator_char);
-                    lines_count++;
-                    if(lines_count == lines_number) break;
-                }
-
-                file.close();
-            }
-        }
-    }while(has_nans_raw_variables);
-
-    // raw_variables types
-
-    if(display) cout << "Setting raw_variables types..." << endl;
-
-    Index raw_variable_index = 0;
-
-    for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
-    {
-        if(get_has_rows_labels() && i == 0) continue;
-
-        string data_file_preview_1 = data_file_preview(1)(i);
-        string data_file_preview_2 = data_file_preview(2)(i);
-        string data_file_preview_3 = data_file_preview(lines_number-2)(i);
-        string data_file_preview_4 = data_file_preview(lines_number-1)(i);
-
-        /*        if(nans_columns(column_index))
-        {
-            columns(column_index).type = ColumnType::Constant;
-            column_index++;
-        }
-        else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
-            || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
-            || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
-            || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::DateTime;
-            //            time_column = raw_variables(raw_variable_index).name;
-            raw_variable_index++;
-        }
-        else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
-                 || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
-                 || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
-                 || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::Numeric;
-            raw_variable_index++;
-        }
-        else
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::Categorical;
-            raw_variable_index++;
-        }
-    }
-
-    // Resize data file preview to original
-
-    if(data_file_preview.size() > 4)
-    {
-        lines_number = has_binary_raw_variables() ? 4 : 3;
-
-        Tensor<Tensor<string, 1>, 1> data_file_preview_copy(data_file_preview);
-
-        data_file_preview.resize(lines_number);
-
-        data_file_preview(0) = data_file_preview_copy(1);
-        data_file_preview(1) = data_file_preview_copy(1);
-        data_file_preview(2) = data_file_preview_copy(2);
-        data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
-        data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
-    }
-
-}
-
-
-void DataSet::read_csv_2_simple()
-{
-    regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
-
-#ifdef _WIN32
-
-    if(regex_search(data_path, accent_regex))
-    {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_path);
-        file.open(file_name_wide);
-    }else
-    {
-        file.open(data_path.c_str());
-    }
-
-#else
-    file.open(data_path.c_str());
-#endif
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_2_simple() method.\n"
-               << "Cannot open data file: " << data_path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    string line;
-    Index line_number = 0;
-
-    if(has_binary_raw_variables())
-    {
-        while(file.good())
-        {
-            line_number++;
-
-            getline(file, line);
-
-            trim(line);
-
-            erase(line, '"');
-
-            if(line.empty()) continue;
-
-            break;
-        }
-    }
-
-    Index samples_count = 0;
-
-    Index tokens_count;
-
-    if(display) cout << "Setting data dimensions..." << endl;
-
-    const string separator_char = get_separator_string();
-
-    const Index raw_variables_number = get_raw_variables_number();
-    const Index raw_raw_variables_number = get_has_rows_labels() ? raw_variables_number + 1 : raw_variables_number;
-
-    while(file.good())
-    {
-        line_number++;
-
-        getline(file, line);
-
-        trim(line);
-
-        erase(line, '"');
-
-        if(line.empty()) continue;
-
-        tokens_count = count_tokens(line, separator_char);
-
-        if(tokens_count != raw_raw_variables_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_csv_2_simple() method.\n"
-                   << "Line " << line_number << ": Size of tokens("
-                   << tokens_count << ") is not equal to number of raw_variables("
-                   << raw_raw_variables_number << ").\n";
-
-            throw runtime_error(buffer.str());
-        }
-
-        samples_count++;
-    }
-
-    file.close();
-
-    data.resize(samples_count, raw_variables_number);
-
-    set_default_raw_variables_uses();
-
-    //samples_uses.resize(samples_count);
-    //samples_uses.setConstant(SampleUse::Training);
-
-    split_samples_random();
-
-}
-
-
 
 
 Tensor<string, 1> DataSet::get_default_raw_variables_names(const Index& raw_variables_number)

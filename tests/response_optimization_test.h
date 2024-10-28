@@ -66,7 +66,7 @@ private:
             data(i,2) = data(i,0) * data(i,0) + data(i,1) * data(i,1) + 1;
 
         data_set.set(data);
-
+/*
         Tensor<string,1> names(3);
         names.setValues({"x","y","z"});
         data_set.set_variables_names(names);
@@ -113,7 +113,7 @@ private:
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.set_display(false);
         training_strategy.perform_training();
-
+*/
     };
 };
 
