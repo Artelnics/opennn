@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-
 #include <algorithm>
 #include <cmath>
 #include <ctime>
@@ -16,12 +14,10 @@
 #include <stdio.h>
 #include <random>
 
-
-
 #include "tensors.h"
 #include "correlations.h"
 #include "genetic_algorithm.h"
-
+#include "tinyxml2.h"
 
 namespace opennn
 {
@@ -936,7 +932,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_variables_descriptives(DataSet::VariableUse::Input);
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
 
     // Set neural network stuff
 
@@ -1290,121 +1286,37 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
 }
 
 
-void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    const Index individuals_number = get_individuals_number();
+    printer.OpenElement("GeneticAlgorithm");
 
-    file_stream.OpenElement("GeneticAlgorithm");
+    add_xml_element(printer, "PopulationSize", to_string(get_individuals_number()));
+    add_xml_element(printer, "ElitismSize", to_string(elitism_size));
+    add_xml_element(printer, "MutationRate", to_string(mutation_rate));
+    add_xml_element(printer, "SelectionErrorGoal", to_string(selection_error_goal));
+    add_xml_element(printer, "MaximumGenerationsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    // Population size
-
-    file_stream.OpenElement("PopulationSize");
-    file_stream.PushText(to_string(individuals_number).c_str());
-    file_stream.CloseElement();
-
-    // Elitism size
-
-    file_stream.OpenElement("ElitismSize");
-    file_stream.PushText(to_string(elitism_size).c_str());
-    file_stream.CloseElement();
-
-    // Mutation rate
-
-    file_stream.OpenElement("MutationRate");
-    file_stream.PushText(to_string(mutation_rate).c_str());
-    file_stream.CloseElement();
-
-    // Selection error goal
-
-    file_stream.OpenElement("SelectionErrorGoal");
-    file_stream.PushText(to_string(selection_error_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum iterations
-
-    file_stream.OpenElement("MaximumGenerationsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("GeneticAlgorithm");
+    const tinyxml2::XMLElement* root = document.FirstChildElement("GeneticAlgorithm");
 
-    if(!root_element)
+    if(!root)
         throw runtime_error("GeneticAlgorithm element is nullptr.\n");
 
-    // Population size
-
-    const tinyxml2::XMLElement* population_size_element = root_element->FirstChildElement("PopulationSize");
-
-    if(population_size_element)
-        set_individuals_number(Index(atoi(population_size_element->GetText())));
-
-    // Mutation rate
-
-    const tinyxml2::XMLElement* mutation_rate_element = root_element->FirstChildElement("MutationRate");
-
-    if(mutation_rate_element)
-        set_mutation_rate(type(atof(mutation_rate_element->GetText())));
-
-    // Elitism size
-
-    const tinyxml2::XMLElement* elitism_size_element = root_element->FirstChildElement("ElitismSize");
-
-    if(elitism_size_element)
-        set_elitism_size(Index(atoi(elitism_size_element->GetText())));
-
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
-
-    // Selection error goal
-
-    const tinyxml2::XMLElement* selection_error_goal_element = root_element->FirstChildElement("SelectionErrorGoal");
-
-    if(selection_error_goal_element)
-        set_selection_error_goal(type(atof(selection_error_goal_element->GetText())));
-
-    // Maximum generations number
-
-    const tinyxml2::XMLElement* maximum_generations_number_element = root_element->FirstChildElement("MaximumGenerationsNumber");
-
-    if(maximum_generations_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_generations_number_element->GetText())));
-
-    // Maximum correlation
-
-    const tinyxml2::XMLElement* maximum_correlation_element = root_element->FirstChildElement("MaximumCorrelation");
-
-    if(maximum_correlation_element)
-        set_maximum_correlation(type(atof(maximum_correlation_element->GetText())));
-
-    // Minimum correlation
-
-    const tinyxml2::XMLElement* minimum_correlation_element = root_element->FirstChildElement("MinimumCorrelation");
-
-    if(minimum_correlation_element)
-        set_minimum_correlation(type(atof(minimum_correlation_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atoi(maximum_time_element->GetText())));
+    set_individuals_number(read_xml_index(root, "PopulationSize"));
+    set_mutation_rate(read_xml_type(root, "MutationRate"));
+    set_elitism_size(read_xml_index(root, "ElitismSize"));
+    set_selection_error_goal(read_xml_type(root, "SelectionErrorGoal"));
+    set_maximum_epochs_number(read_xml_index(root, "MaximumGenerationsNumber"));
+    set_maximum_correlation(read_xml_type(root, "MaximumCorrelation"));
+    set_minimum_correlation(read_xml_type(root, "MinimumCorrelation"));
+    set_maximum_time(read_xml_type(root, "MaximumTime"));
+    set_display(read_xml_bool(root, "Display"));
 }
 
 

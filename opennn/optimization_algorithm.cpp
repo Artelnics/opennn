@@ -174,19 +174,13 @@ void OptimizationAlgorithm::check() const
 }
 
 
-void OptimizationAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void OptimizationAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("OptimizationAlgorithm");
 
-    file_stream.OpenElement("OptimizationAlgorithm");
+    add_xml_element(printer, "Display", std::to_string(display));
 
-    // Display
-
-    file_stream.OpenElement("Display");
-    file_stream.PushText(to_string(display).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -197,12 +191,7 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Optimization algorithm element is nullptr.\n");
 
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 

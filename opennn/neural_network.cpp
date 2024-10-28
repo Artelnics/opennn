@@ -408,7 +408,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
 
     model_type = new_model_type;
 
-
     const Index inputs_number = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
 
     input_names.resize(inputs_number);
@@ -545,7 +544,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     {
         const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions convolution_stride_dimensions = { 1, 1 };
-        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
+        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
         add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
             kernel_dimensions,
@@ -559,12 +558,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions padding_dimensions = { 0, 0 };
         const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
 
-        //add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
-        //                                    pool_dimensions,
-        //                                    pooling_stride_dimensions,
-        //                                    padding_dimensions,
-        //                                    pooling_method),
-        //          "pooling_layer_" + to_string(i + 1));
+        add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
+                                            pool_dimensions,
+                                            pooling_stride_dimensions,
+                                            padding_dimensions,
+                                            pooling_method),
+                  "pooling_layer_" + to_string(i + 1));
 
     }
 
@@ -1044,8 +1043,8 @@ void NeuralNetwork::set_parameters_random() const
 
 
 void NeuralNetwork::forward_propagate(const Batch& batch,
-                                      ForwardPropagation& forward_propagation,
-                                      const bool& is_training) const
+    ForwardPropagation& forward_propagation,
+    const bool& is_training) const
 {
 
     const Index layers_number = get_layers_number();
@@ -1058,10 +1057,10 @@ void NeuralNetwork::forward_propagate(const Batch& batch,
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
 
-    for(Index i = first_layer_index; i <= last_layer_index; i++)
+    for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
-                                     is_training);
+                                     is_training);}
 }
 
 
@@ -1236,122 +1235,73 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 }
 
 
-void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    file_stream.OpenElement("NeuralNetwork");
+    printer.OpenElement("NeuralNetwork");
 
-    // Inputs
-
-    file_stream.OpenElement("Inputs");
-
-    // Inputs number
-
+    printer.OpenElement("Inputs");
     const Index inputs_number = get_inputs_number();
+    add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
-    file_stream.OpenElement("InputsNumber");   
-    file_stream.PushText(to_string(inputs_number).c_str());
-    file_stream.CloseElement();
+    if (input_names.size() != inputs_number) 
+        throw runtime_error("Size of input names is not equal to inputs number");
 
-    // Inputs names
-
-    for(Index i = 0; i < inputs_number; i++)
+    for (Index i = 0; i < inputs_number; i++) 
     {
-        if(input_names.size() != inputs_number)
-            throw runtime_error("Size of inputs name is not equal to inputs number");
-
-        file_stream.OpenElement("Input");
-        file_stream.PushAttribute("Index", to_string(i+1).c_str());
-        file_stream.PushText(input_names[i].c_str());
-        file_stream.CloseElement();
+        printer.OpenElement("Input");
+        printer.PushAttribute("Index", to_string(i + 1).c_str());
+        printer.PushText(input_names[i].c_str());
+        printer.CloseElement();
     }
 
-    // Inputs (end tag)
+    printer.CloseElement();
 
-    file_stream.CloseElement();
-
-    // Layers
-
-    file_stream.OpenElement("Layers");
-
-    // Layers number
-
+    printer.OpenElement("Layers");
     const Index layers_number = get_layers_number();
+    add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
-    file_stream.OpenElement("LayersNumber");
-    file_stream.PushText(to_string(layers_number).c_str());
-    file_stream.CloseElement();
+    for (Index i = 0; i < layers_number; i++) 
+        layers[i]->to_XML(printer);
 
-    // Layers
-
-    for(Index i = 0; i < layers_number; i++)
-        layers[i]->to_XML(file_stream);
-
+    printer.OpenElement("LayersInputsIndices");
     ostringstream buffer;
-
-    // Layers inputs indices
-
-    file_stream.OpenElement("LayersInputsIndices");
-
-    for(Index i = 0; i < Index(layer_input_indices.size()); i++)
+    
+    for (Index i = 0; i < Index(layer_input_indices.size()); i++) 
     {
-        file_stream.OpenElement("LayerInputsIndices");
-
-        file_stream.PushAttribute("LayerIndex", to_string(i+1).c_str());
+        printer.OpenElement("LayerInputsIndices");
+        printer.PushAttribute("LayerIndex", to_string(i + 1).c_str());
 
         const vector<Index>& indices = layer_input_indices[i];
-
+        
         buffer.str("");
-
-        for(Index j = 0; j < Index(indices.size()); j++)
+        
+        for (Index j = 0; j < Index(indices.size()); j++) 
         {
             buffer << indices[j];
-
-            if(j != indices.size() - 1)
-                buffer << " ";
+            if (j != indices.size() - 1) buffer << " ";
         }
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
+        printer.PushText(buffer.str().c_str());
+        printer.CloseElement();
     }
 
-    file_stream.CloseElement();
+    printer.CloseElement(); 
+    printer.CloseElement(); 
 
-    // Layers (end tag)
-
-    file_stream.CloseElement();
-
-    // Ouputs
-
-    file_stream.OpenElement("Outputs");
-
-    // Outputs number
-
+    printer.OpenElement("Outputs");
     const Index outputs_number = output_names.size();
-    file_stream.OpenElement("OutputsNumber");
-    file_stream.PushText(to_string(outputs_number).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
-    // Outputs names
-
-    for(Index i = 0; i < output_names.size(); i++)
+    for (Index i = 0; i < outputs_number; i++) 
     {
-        file_stream.OpenElement("Output");
-
-        file_stream.PushAttribute("Index", to_string(i+1).c_str());
-
-        file_stream.PushText(output_names[i].c_str());
-
-        file_stream.CloseElement();
+        printer.OpenElement("Output");
+        printer.PushAttribute("Index", to_string(i + 1).c_str());
+        printer.PushText(output_names[i].c_str());
+        printer.CloseElement();
     }
 
-    //Outputs (end tag)
+    printer.CloseElement(); 
 
-    file_stream.CloseElement();
-
-    // Neural network (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -2157,7 +2107,6 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
             throw runtime_error("Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n");
         }
     }
-}
 }
 
 // OpenNN: Open Neural Networks Library.

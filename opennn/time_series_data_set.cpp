@@ -1176,14 +1176,14 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
-    const Tensor<Index, 1> input_variables_indices = get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
     const Index used_samples_number = used_samples_indices.size();
     const Index used_variables_number = used_variables_indices.size();
-    const Index target_variables_number = target_variables_indices.size();
+    const Index target_variables_number = target_variable_indices.size();
 
     //Index current_variable_index;
     //Index current_sample_index;
@@ -1194,7 +1194,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < used_variables_number - target_variables_number; j++)
         {
-            const Index current_variable_index = input_variables_indices(j);
+            const Index current_variable_index = input_variable_indices(j);
 
             for(Index i = 0; i < used_samples_number; i++)
             {
@@ -1209,7 +1209,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < target_variables_number; j++)
         {
-            const Index current_variable_index = target_variables_indices(j);
+            const Index current_variable_index = target_variable_indices(j);
 
             for(Index i = 0; i < used_samples_number; i++)
             {

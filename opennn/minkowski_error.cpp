@@ -127,21 +127,13 @@ string MinkowskiError::get_error_type_text() const
 }
 
 
-void MinkowskiError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void MinkowskiError::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Error type
+    printer.OpenElement("MinkowskiError");
 
-    file_stream.OpenElement("MinkowskiError");
+    add_xml_element(printer, "MinkowskiParameter", to_string(minkowski_parameter));
 
-    // Minkowski parameter
-
-    file_stream.OpenElement("MinkowskiParameter");
-    file_stream.PushText(to_string(minkowski_parameter).c_str());
-    file_stream.CloseElement();
-
-    // Close error
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -152,12 +144,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Minkowski error element is nullptr.\n");
 
-    // Minkowski parameter
-
-    const tinyxml2::XMLElement* minkowski_parameter_element = root_element->FirstChildElement("MinkowskiParameter");
-
-    if(minkowski_parameter_element)
-        set_Minkowski_parameter(type(atof(minkowski_parameter_element->GetText())));
+    set_Minkowski_parameter(read_xml_type(root_element, "MinkowskiParameter"));
 }
 }
 

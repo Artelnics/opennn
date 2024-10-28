@@ -27,13 +27,13 @@ KMeans::KMeans(Index clusters,
 void KMeans::fit(const Tensor<type, 2>& data)
 {
     const Index rows_number = data.dimension(0);
-    const Index raw_variables_number = data.dimension(1);
+    const Index columns_number = data.dimension(1);
 
     Tensor<type, 1> row(rows_number);
-    Tensor<type, 1> center(raw_variables_number);
-    Tensor<type, 1> center_sum(raw_variables_number);
+    Tensor<type, 1> center(columns_number);
+    Tensor<type, 1> center_sum(columns_number);
 
-    cluster_centers.resize(clusters_number, raw_variables_number);
+    cluster_centers.resize(clusters_number, columns_number);
     rows_cluster_labels.resize(rows_number);
 
     set_centers_random(data);
@@ -166,16 +166,13 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
 
 Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_values) const
 {
-
-    Index cluster_number = sum_squared_error_values.dimension(0);
+    const Index cluster_number = sum_squared_error_values.dimension(0);
 
     Tensor<type, 1> initial_endpoint(2);
-    initial_endpoint(0) = type(1);
-    initial_endpoint(1) = type(sum_squared_error_values(0));
+    initial_endpoint.setValues({ type(1), type(sum_squared_error_values(0)) });
 
     Tensor<type, 1> final_endpoint(2);
-    final_endpoint(0) = type(clusters_number);
-    final_endpoint(1) = sum_squared_error_values(clusters_number -1);
+    final_endpoint.setValues({ type(clusters_number), sum_squared_error_values(clusters_number - 1) });
 
     type max_distance = type(0);
     Index optimal_clusters_number = 1;
@@ -185,8 +182,7 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
 
     for(Index cluster_index = 1; cluster_index <= cluster_number; cluster_index++)
     {
-        current_point(0) = type(cluster_index);
-        current_point(1) = sum_squared_error_values(cluster_index-1);
+        current_point.setValues({ type(cluster_index), sum_squared_error_values(cluster_index - 1) });
          
         perpendicular_distance
             = type(abs((final_endpoint(1) - initial_endpoint(1)) * current_point(0) -
@@ -238,9 +234,7 @@ void KMeans::set_centers_random(const Tensor<type, 2>& data)
     uniform_int_distribution<> index_distribution(0, data_size - 1);
 
     for(Index i = 0; i < clusters_number; i++)
-    {
         cluster_centers.chip(i, 0) = data.chip(index_distribution(gen), 0);
-    }
 }
 
 }
