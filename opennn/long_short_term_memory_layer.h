@@ -188,27 +188,13 @@ protected:
 
 struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
-                                                        Layer* new_layer = nullptr)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit LongShortTermMemoryLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
         
     pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Current inputs: " << endl
-             << current_inputs << endl
-             << "Current input activations: " << endl
-             << current_input_activations << endl
-             << "Current input activations derivatives: " << endl
-             << current_input_activations_derivatives << endl;
-     }
-
+    void print() const;
 
     Tensor<type, 1> current_inputs;
 
@@ -249,12 +235,7 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number = 0, 
-                                                     Layer* new_layer = nullptr)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit LongShortTermMemoryLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
@@ -262,9 +243,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     void set_derivatives_zero();
 
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 1> current_deltas;
 

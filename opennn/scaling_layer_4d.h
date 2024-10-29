@@ -67,23 +67,14 @@ protected:
 
 
 struct ScalingLayer4DForwardPropagation : LayerForwardPropagation
-{
-   
-    explicit ScalingLayer4DForwardPropagation(const Index& new_batch_samples_number = 0, Layer* new_layer = nullptr)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+{   
+    explicit ScalingLayer4DForwardPropagation(const Index& = 0, Layer* = nullptr);
         
     pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Scaling Outputs:" << endl
-             << outputs.dimensions() << endl;
-    }
+    void print() const;
 
     Tensor<type, 4> outputs;
 };

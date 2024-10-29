@@ -628,6 +628,13 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -645,6 +652,13 @@ void ScalingLayer2DForwardPropagation::set(const Index& new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
+}
+
+
+void ScalingLayer2DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+         << outputs << endl;
 }
 
 }

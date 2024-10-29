@@ -460,6 +460,13 @@ void PerceptronLayer3DForwardPropagation::print() const
 }
 
 
+PerceptronLayer3DForwardPropagation::PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() const
 {
     PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
@@ -509,6 +516,22 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
     combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
+
+
+void PerceptronLayer3DBackPropagation::print() const
+{
+    cout << "Biases derivatives:" << endl
+         << biases_derivatives << endl
+         << "Synaptic weights derivatives:" << endl
+         << synaptic_weights_derivatives << endl;
+}
+
+
+PerceptronLayer3DBackPropagation::PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

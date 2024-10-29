@@ -162,6 +162,13 @@ void FlattenLayer::print() const
 }
 
 
+FlattenLayerForwardPropagation::FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -182,6 +189,13 @@ void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 }
 
 
+void FlattenLayerForwardPropagation::print() const
+{
+    cout << "Flatten Outputs:" << endl
+         << outputs.dimensions() << endl;
+}
+
+
 void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -196,7 +210,18 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
                              input_dimensions[0],
                              input_dimensions[1],
                              input_dimensions[2]);
+}
 
+
+void FlattenLayerBackPropagation::print() const
+{
+}
+
+
+FlattenLayerBackPropagation::FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

@@ -2183,6 +2183,13 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
 }
 
 
+LongShortTermMemoryLayerForwardPropagation::LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -2236,6 +2243,17 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
     output_activations_derivatives.resize(batch_samples_number, neurons_number);
 
     hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+}
+
+
+void LongShortTermMemoryLayerForwardPropagation::print() const
+{
+    cout << "Current inputs: " << endl
+         << current_inputs << endl
+         << "Current input activations: " << endl
+         << current_input_activations << endl
+         << "Current input activations derivatives: " << endl
+         << current_input_activations_derivatives << endl;
 }
 
 
@@ -2293,6 +2311,13 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
 }
 
 
+LongShortTermMemoryLayerBackPropagation::LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 vector<pair<type*, dimensions>> LongShortTermMemoryLayerBackPropagation::get_input_derivative_pairs() const
 {
     const Index inputs_number = layer->get_inputs_number();
@@ -2325,6 +2350,11 @@ void LongShortTermMemoryLayerBackPropagation::set_derivatives_zero()
     hidden_states_weights_derivatives.setZero();
     hidden_states_recurrent_weights_derivatives.setZero();
     hidden_states_biases_derivatives.setZero();
+}
+
+
+void LongShortTermMemoryLayerBackPropagation::print() const
+{
 }
 
 }

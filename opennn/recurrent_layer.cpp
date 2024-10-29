@@ -625,6 +625,12 @@ void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+RecurrentLayerForwardPropagation::RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer) : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -647,6 +653,11 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number
     current_activations_derivatives.resize(batch_samples_number, neurons_number);
 
     activations_derivatives.resize(batch_samples_number, time_steps, neurons_number);
+}
+
+
+void RecurrentLayerForwardPropagation::print() const
+{
 }
 
 
@@ -679,6 +690,19 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
     const Index time_steps = 0;
 
     input_derivatives.resize(batch_samples_number, time_steps, inputs_number);
+}
+
+
+void RecurrentLayerBackPropagation::print() const
+{
+
+}
+
+
+RecurrentLayerBackPropagation::RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

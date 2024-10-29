@@ -144,6 +144,13 @@ void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+AdditionLayer3DForwardPropagation::AdditionLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() const
 {
     AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
@@ -170,6 +177,13 @@ void AdditionLayer3DForwardPropagation::set(const Index& new_batch_samples_numbe
 }
 
 
+void AdditionLayer3DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+         << outputs << endl;
+}
+
+
 void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -183,6 +197,18 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
 
     input_1_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
     input_2_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
+
+
+void AdditionLayer3DBackPropagation::print() const
+{
+}
+
+
+AdditionLayer3DBackPropagation::AdditionLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

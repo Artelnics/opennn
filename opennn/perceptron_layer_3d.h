@@ -138,12 +138,7 @@ protected:
 
 struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 {
-    explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number = 0, 
-                                                 Layer* new_layer = nullptr)
-     : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit PerceptronLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
@@ -159,24 +154,13 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 {
-    explicit PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number = 0, 
-                                              Layer* new_layer = 0)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit PerceptronLayer3DBackPropagation(const Index& = 0, Layer* = 0);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Biases derivatives:" << endl
-             << biases_derivatives << endl
-             << "Synaptic weights derivatives:" << endl
-             << synaptic_weights_derivatives << endl;
-    }
+    void print() const;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;

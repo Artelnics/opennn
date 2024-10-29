@@ -165,18 +165,13 @@ protected:
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit RecurrentLayerForwardPropagation(const Index& new_batch_samples_number = 0, Layer* new_layer = nullptr) : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit RecurrentLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 2> outputs;
 
@@ -189,20 +184,13 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 
 struct RecurrentLayerBackPropagation : LayerBackPropagation
 {
-    explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number = 0, Layer* new_layer = nullptr)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit RecurrentLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-
-    }
+    void print() const;
 
     //Tensor<type, 1> current_deltas;
 

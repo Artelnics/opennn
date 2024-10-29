@@ -176,6 +176,13 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+ScalingLayer4DForwardPropagation::ScalingLayer4DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() const
 {
     const ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(layer);
@@ -195,6 +202,13 @@ void ScalingLayer4DForwardPropagation::set(const Index& new_batch_samples_number
     const dimensions output_dimensions = layer->get_output_dimensions();
 
     outputs.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
+}
+
+
+void ScalingLayer4DForwardPropagation::print() const
+{
+    cout << "Scaling Outputs:" << endl
+         << outputs.dimensions() << endl;
 }
 
 }

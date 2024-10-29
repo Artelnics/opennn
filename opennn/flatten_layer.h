@@ -92,24 +92,14 @@ protected:
 
 
 struct FlattenLayerForwardPropagation : LayerForwardPropagation
-{
-     
-   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-       : LayerForwardPropagation()
-   {
-       set(new_batch_samples_number, new_layer);
-   }
+{     
+   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer);
       
    pair<type*, dimensions> get_outputs_pair() const final;
 
    void set(const Index& = 0, Layer* = nullptr) final;
 
-   void print() const
-   {
-       cout << "Flatten Outputs:" << endl
-            << outputs.dimensions() << endl;
-   }
-
+   void print() const;
 
    Tensor<type, 2> outputs;
 };
@@ -117,20 +107,13 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
 struct FlattenLayerBackPropagation : LayerBackPropagation
 {
-    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number = 0, 
-                                         Layer* new_layer = nullptr)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit FlattenLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 4> input_derivatives;
 };

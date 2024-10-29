@@ -164,27 +164,14 @@ protected:
 struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 {
 
-    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                                       Layer* new_layer = nullptr);
                 
     pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-       cout << "Attention scores:" << endl
-            << attention_scores.dimensions() << endl
-            << "Outputs dimensions:" << endl;
-       //cout << output_dimensions << endl;
-       cout << "Outputs:" << endl;
-       //cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-       cout << "Attention scores:" << endl;
-       cout << attention_scores << endl;
-    }
+    void print() const;
 
     Tensor<type, 4> query;
     Tensor<type, 4> key;
@@ -204,20 +191,13 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number = 0, 
-                                                    Layer* new_layer = nullptr)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 4> error_attention_scores_derivatives;
     Tensor<type, 4> error_attention_weights_derivatives;

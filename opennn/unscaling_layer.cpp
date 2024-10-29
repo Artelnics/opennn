@@ -525,6 +525,13 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+UnscalingLayerForwardPropagation::UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -542,6 +549,13 @@ void UnscalingLayerForwardPropagation::set(const Index& new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
+}
+
+
+void UnscalingLayerForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+        << outputs << endl;
 }
 
 }

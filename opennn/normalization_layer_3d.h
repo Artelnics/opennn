@@ -110,24 +110,14 @@ protected:
 
 
 struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
-{
-        
-    explicit NormalizationLayer3DForwardPropagation(const Index& new_batch_samples_number = 0, 
-                                                    Layer* new_layer = nullptr)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+{        
+    explicit NormalizationLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index& = 0, Layer* = 0) final;
 
-    void print() const
-    {
-        cout << "Outputs:" << endl
-             << outputs << endl;
-    }
+    void print() const;
 
     Tensor<type, 3> outputs;
     Tensor<type, 3> normalized_inputs;
@@ -143,23 +133,13 @@ struct NormalizationLayer3DBackPropagation : LayerBackPropagation
 {
 
     explicit NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number = 0, 
-                                                 Layer* new_layer = nullptr)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+                                                 Layer* new_layer = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Gammas derivatives:" << endl
-             << gammas_derivatives << endl
-             << "Betas derivatives:" << endl
-             << betas_derivatives << endl;
-    }
+    void print() const;
 
     Tensor<type, 1> gammas_derivatives;
     Tensor<type, 1> betas_derivatives;

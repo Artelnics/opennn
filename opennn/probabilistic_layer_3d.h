@@ -146,22 +146,13 @@ protected:
 
 struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 {
-    explicit ProbabilisticLayer3DForwardPropagation(const Index& new_batch_samples_number = 0, 
-                                                    Layer* new_layer = nullptr)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }    
+    explicit ProbabilisticLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
     
     pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Outputs:" << endl
-             << outputs << endl;
-    }
+    void print() const;
 
     Tensor<type, 3> outputs;
 };
@@ -169,25 +160,13 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 
 struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 {
-    explicit ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number = 0, 
-                                                 Layer* new_layer = nullptr)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit ProbabilisticLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Biases derivatives:" << endl;
-        cout << biases_derivatives << endl;
-
-        cout << "Synaptic weights derivatives:" << endl;
-        cout << synaptic_weights_derivatives << endl;
-    }
+    void print() const;
 
     Tensor<type, 2> targets;
     Tensor<type, 2> mask;
