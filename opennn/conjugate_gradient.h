@@ -130,11 +130,9 @@ private:
 
 struct ConjugateGradientData : public OptimizationAlgorithmData
 {
-    explicit ConjugateGradientData();
+    explicit ConjugateGradientData(ConjugateGradient* = nullptr);
 
-    explicit ConjugateGradientData(ConjugateGradient*);
-
-    void set(ConjugateGradient*);
+    void set(ConjugateGradient* = nullptr);
 
     virtual void print() const;
 

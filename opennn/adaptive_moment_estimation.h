@@ -127,11 +127,9 @@ private:
 
 struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 {
-    explicit AdaptiveMomentEstimationData();
+    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation* = nullptr);
 
-    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation*);
-
-    void set(AdaptiveMomentEstimation*);
+    void set(AdaptiveMomentEstimation* = nullptr);
 
     virtual void print() const;
 

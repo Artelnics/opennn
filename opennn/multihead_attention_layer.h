@@ -160,12 +160,9 @@ protected:
     const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 };
 
+
 struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 {
-        
-    explicit MultiheadAttentionLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
 
     explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
@@ -175,13 +172,13 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
                 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {
-       cout << "Attention scores:" << endl;
-       cout << attention_scores.dimensions() << endl;
-       cout << "Outputs dimensions:" << endl;
+       cout << "Attention scores:" << endl
+            << attention_scores.dimensions() << endl
+            << "Outputs dimensions:" << endl;
        //cout << output_dimensions << endl;
        cout << "Outputs:" << endl;
        //cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
@@ -207,13 +204,8 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit MultiheadAttentionLayerBackPropagation() : LayerBackPropagation()
-    {
-
-    }
-
-
-    explicit MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number = 0, 
+                                                    Layer* new_layer = nullptr)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -221,7 +213,7 @@ struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

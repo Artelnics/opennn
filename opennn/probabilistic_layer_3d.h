@@ -146,13 +146,8 @@ protected:
 
 struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 {
-    
-
-    explicit ProbabilisticLayer3DForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    explicit ProbabilisticLayer3DForwardPropagation(const Index new_batch_samples_number, Layer* new_layer)
+    explicit ProbabilisticLayer3DForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                                    Layer* new_layer = nullptr)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -160,7 +155,7 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {
@@ -174,11 +169,8 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 
 struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 {
-    explicit ProbabilisticLayer3DBackPropagation() : LayerBackPropagation()
-    {
-    }
-
-    explicit ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number = 0, 
+                                                 Layer* new_layer = nullptr)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -186,7 +178,7 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

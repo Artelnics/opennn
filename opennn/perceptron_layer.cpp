@@ -630,13 +630,6 @@ pair<type *, dimensions> PerceptronLayerForwardPropagation::get_outputs_pair() c
 }
 
 
-PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-
-}
-
-
 PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation(const Index &new_batch_samples_number,
                                                                      Layer *new_layer)
 : LayerForwardPropagation()
@@ -651,13 +644,6 @@ void PerceptronLayerForwardPropagation::print() const
          << outputs << endl 
          << "Activations derivatives:" << endl
          << activations_derivatives << endl;
-}
-
-
-PerceptronLayerBackPropagation::PerceptronLayerBackPropagation()
-    : LayerBackPropagation()
-{
-
 }
 
 
@@ -707,13 +693,6 @@ void PerceptronLayerBackPropagation::print() const
          << biases_derivatives << endl
          << "Synaptic weights derivatives:" << endl
          << synaptic_weights_derivatives << endl;
-}
-
-
-PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM()
-    : LayerBackPropagationLM()
-{
-
 }
 
 

@@ -33,7 +33,7 @@ class FlattenLayer : public Layer
 
 public:
 
-    explicit FlattenLayer(const dimensions&);
+    explicit FlattenLayer(const dimensions& = {0,0,0});
 
     dimensions get_input_dimensions() const;
     Index get_outputs_number() const;
@@ -46,7 +46,7 @@ public:
     Index get_input_width() const;
     Index get_neurons_number() const;
 
-    void set(const dimensions & = {});
+    void set(const dimensions & = {0,0,0});
 
     void set_default();
 
@@ -93,32 +93,21 @@ protected:
 
 struct FlattenLayerForwardPropagation : LayerForwardPropagation
 {
-   
-
-   explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
-   {
-   }
-
-   
-
+     
    explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
        : LayerForwardPropagation()
    {
        set(new_batch_samples_number, new_layer);
    }
-   
-   
+      
    pair<type*, dimensions> get_outputs_pair() const final;
 
-
-   void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
+   void set(const Index& = 0, Layer* = nullptr) final;
 
    void print() const
    {
-       cout << "Flatten Outputs:" << endl;
-
-       cout << outputs.dimensions() << endl;
+       cout << "Flatten Outputs:" << endl
+            << outputs.dimensions() << endl;
    }
 
 
@@ -128,15 +117,8 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
 struct FlattenLayerBackPropagation : LayerBackPropagation
 {
-
-    
-
-    explicit FlattenLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
-
-
-    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number = 0, 
+                                         Layer* new_layer = nullptr)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -144,7 +126,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

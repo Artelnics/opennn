@@ -44,13 +44,11 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
 struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {
-    explicit ProbabilisticLayerBackPropagation();
-
-    explicit ProbabilisticLayerBackPropagation(const Index&, Layer*);
+    explicit ProbabilisticLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -70,12 +68,8 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
-    explicit ProbabilisticLayerBackPropagationLM() : LayerBackPropagationLM()
-    {
-
-    }
-
-    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number = 0, 
+                                                 Layer* new_layer = nullptr)
         : LayerBackPropagationLM()
     {
         set(new_batch_samples_number, new_layer);
@@ -86,7 +80,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
         return vector<pair<type*, dimensions>>();
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

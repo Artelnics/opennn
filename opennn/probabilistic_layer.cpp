@@ -623,11 +623,6 @@ void ProbabilisticLayerForwardPropagation::print() const
 }
 
 
-ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation() : LayerBackPropagation() 
-{
-}
-
-
 ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(const Index &new_batch_samples_number, Layer *new_layer)
     : LayerBackPropagation() 
 {

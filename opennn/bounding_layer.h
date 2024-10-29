@@ -105,12 +105,9 @@ private:
 
 struct BoundingLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit BoundingLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
 
-
-    explicit BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit BoundingLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                             Layer* new_layer = nullptr)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -118,7 +115,7 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
         
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

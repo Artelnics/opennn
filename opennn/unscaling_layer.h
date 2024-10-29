@@ -101,33 +101,21 @@ protected:
 
 struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 {
-    
-
-    explicit UnscalingLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    
-
-    explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number = 0, Layer* new_layer = 0)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
     
-    
     pair<type*, dimensions> get_outputs_pair() const final;
 
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
+        cout << "Outputs:" << endl
+             << outputs << endl;
     }
-
 
     Tensor<type, 2> outputs;
 };

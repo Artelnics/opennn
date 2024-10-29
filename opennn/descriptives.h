@@ -21,7 +21,7 @@ struct Descriptives {
 
   Tensor<type, 1> to_tensor() const;
 
-  void set(const type&, const type&, const type&, const type&);
+  void set(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
 
   void set_minimum(const type&);
 

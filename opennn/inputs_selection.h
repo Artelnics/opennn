@@ -105,22 +105,14 @@ protected:
 
 struct InputsSelectionResults
 {
-    
-
-    explicit InputsSelectionResults()
-    {
-    }
-
-    // Maximum epochs number constructor
-
-    explicit InputsSelectionResults(const Index& maximum_epochs_number)
+    explicit InputsSelectionResults(const Index& maximum_epochs_number = 0)
     {
         set(maximum_epochs_number);
     }
 
     Index get_epochs_number() const;
 
-    void set(const Index& maximum_epochs_number);
+    void set(const Index& = 0);
 
    string write_stopping_condition() const;
 

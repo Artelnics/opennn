@@ -1018,11 +1018,6 @@ BackPropagationLM::BackPropagationLM(const Index &new_batch_samples_number, Loss
     set(new_batch_samples_number, new_loss_index);
 }
 
-
-BackPropagationLM::BackPropagationLM() 
-{
-}
-
 } // namespace opennn
 
 // OpenNN: Open Neural Networks Library.

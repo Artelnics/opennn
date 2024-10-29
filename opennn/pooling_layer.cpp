@@ -568,13 +568,8 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-PoolingLayerForwardPropagation::PoolingLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-}
-
-
-PoolingLayerForwardPropagation::PoolingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+PoolingLayerForwardPropagation::PoolingLayerForwardPropagation(const Index& new_batch_samples_number, 
+                                                               Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_samples_number, new_layer);
@@ -634,11 +629,6 @@ void PoolingLayerForwardPropagation::print() const
          << outputs(0) << endl
          << "Image patches" << endl
          << image_patches << endl;
-}
-
-
-PoolingLayerBackPropagation::PoolingLayerBackPropagation() : LayerBackPropagation()
-{
 }
 
 

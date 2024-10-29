@@ -116,13 +116,8 @@ protected:
 struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 {
 
-
-    explicit EmbeddingLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-
-    explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                              Layer* new_layer = nullptr)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -130,7 +125,7 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {
@@ -158,13 +153,8 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 
 struct EmbeddingLayerBackPropagation : LayerBackPropagation
 {
-
-    explicit EmbeddingLayerBackPropagation() : LayerBackPropagation()
-    {
-
-    }
-
-    explicit EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit EmbeddingLayerBackPropagation(const Index& new_batch_samples_number = 0, 
+                                           Layer* new_layer = nullptr)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -175,7 +165,7 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
         return vector<pair<type*, dimensions>>();
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

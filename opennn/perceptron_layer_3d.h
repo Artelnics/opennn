@@ -138,11 +138,8 @@ protected:
 
 struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 {
-    explicit PerceptronLayer3DForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                                 Layer* new_layer = nullptr)
      : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -150,7 +147,7 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -162,14 +159,8 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 {
-    
-
-    explicit PerceptronLayer3DBackPropagation() : LayerBackPropagation()
-    {
-
-    }
-
-    explicit PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number = 0, 
+                                              Layer* new_layer = 0)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -177,7 +168,7 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

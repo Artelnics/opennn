@@ -213,13 +213,11 @@ protected:
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
    
-   explicit ConvolutionalLayerForwardPropagation();
-
-   explicit ConvolutionalLayerForwardPropagation(const Index&, Layer*);
+   explicit ConvolutionalLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
       
    pair<type*, dimensions> get_outputs_pair() const final;
 
-   void set(const Index&, Layer*) final;
+   void set(const Index& = 0, Layer* = nullptr) final;
 
    void print() const;
 
@@ -236,13 +234,11 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
-   explicit ConvolutionalLayerBackPropagation();
-
    explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
 
    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-   void set(const Index&, Layer*) final;
+   void set(const Index& = 0, Layer* = nullptr) final;
 
    void print() const;
 

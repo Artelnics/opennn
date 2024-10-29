@@ -2067,7 +2067,8 @@ void ForwardPropagation::print() const
 }
 
 
-void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network)
+void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number, 
+                                         NeuralNetwork* new_neural_network)
 {
     batch_samples_number = new_batch_samples_number;
 

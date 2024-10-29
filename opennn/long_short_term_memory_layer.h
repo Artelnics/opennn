@@ -188,22 +188,16 @@ protected:
 
 struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit LongShortTermMemoryLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    explicit LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                                        Layer* new_layer = nullptr)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
-    
-    
+        
     pair<type*, dimensions> get_outputs_pair() const final;
 
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {
@@ -254,11 +248,9 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
 struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 {
-    explicit LongShortTermMemoryLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
 
-    explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number = 0, 
+                                                     Layer* new_layer = nullptr)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -266,7 +258,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void set_derivatives_zero();
 

@@ -652,12 +652,8 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
-{
-}
-
-
-ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) : OptimizationAlgorithmData()
+ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) 
+    : OptimizationAlgorithmData()
 {
     set(new_conjugate_gradient);
 }

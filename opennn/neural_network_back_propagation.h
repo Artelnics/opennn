@@ -13,14 +13,12 @@ namespace opennn
 
 struct NeuralNetworkBackPropagation
 {
-    NeuralNetworkBackPropagation() {}
-
-    NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network)
+    NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network = nullptr)
     {
         neural_network = new_neural_network;
     }
 
-    void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network);
+    void set(const Index& = 0, NeuralNetwork* = nullptr);
 
     const vector<unique_ptr<LayerBackPropagation>>& get_layers() const
     {

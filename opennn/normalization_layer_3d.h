@@ -112,11 +112,8 @@ protected:
 struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
 {
         
-    explicit NormalizationLayer3DForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    explicit NormalizationLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit NormalizationLayer3DForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                                    Layer* new_layer = nullptr)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -124,12 +121,12 @@ struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = 0) final;
 
     void print() const
     {
         cout << "Outputs:" << endl
-                << outputs << endl;
+             << outputs << endl;
     }
 
     Tensor<type, 3> outputs;
@@ -144,14 +141,9 @@ struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
 
 struct NormalizationLayer3DBackPropagation : LayerBackPropagation
 {
-        
 
-    explicit NormalizationLayer3DBackPropagation() : LayerBackPropagation()
-    {
-
-    }
-
-    explicit NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number = 0, 
+                                                 Layer* new_layer = nullptr)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -159,14 +151,14 @@ struct NormalizationLayer3DBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {
         cout << "Gammas derivatives:" << endl
-                << gammas_derivatives << endl
-                << "Betas derivatives:" << endl
-                << betas_derivatives << endl;
+             << gammas_derivatives << endl
+             << "Betas derivatives:" << endl
+             << betas_derivatives << endl;
     }
 
     Tensor<type, 1> gammas_derivatives;

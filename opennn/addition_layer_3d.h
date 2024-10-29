@@ -76,11 +76,8 @@ protected:
 
 struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
 {
-    explicit AdditionLayer3DForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    explicit AdditionLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit AdditionLayer3DForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                               Layer* new_layer = nullptr)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -88,12 +85,12 @@ struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& new_batch_samples_number = 0, Layer* new_layer = nullptr) final;
 
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
+        cout << "Outputs:" << endl
+             << outputs << endl;
     }
 
     Tensor<type, 3> outputs;
@@ -103,12 +100,8 @@ struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
 struct AdditionLayer3DBackPropagation : LayerBackPropagation
 {
 
-    explicit AdditionLayer3DBackPropagation() : LayerBackPropagation()
-    {
-
-    }
-
-    explicit AdditionLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit AdditionLayer3DBackPropagation(const Index& new_batch_samples_number = 0, 
+                                            Layer* new_layer = nullptr)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -116,7 +109,7 @@ struct AdditionLayer3DBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

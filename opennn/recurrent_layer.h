@@ -165,19 +165,14 @@ protected:
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit RecurrentLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-
-    explicit RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer) : LayerForwardPropagation()
+    explicit RecurrentLayerForwardPropagation(const Index& new_batch_samples_number = 0, Layer* new_layer = nullptr) : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {
@@ -194,11 +189,7 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 
 struct RecurrentLayerBackPropagation : LayerBackPropagation
 {
-    explicit RecurrentLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
-
-    explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number = 0, Layer* new_layer = nullptr)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
@@ -206,7 +197,7 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {

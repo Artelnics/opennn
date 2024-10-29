@@ -913,12 +913,6 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-}
-
-
 ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagation()
 {
@@ -986,11 +980,6 @@ void ConvolutionalLayerForwardPropagation::print() const
          << outputs << endl
          << "Activations derivatives:" << endl
          << activations_derivatives << endl;
-}
-
-
-ConvolutionalLayerBackPropagation::ConvolutionalLayerBackPropagation() : LayerBackPropagation()
-{
 }
 
 

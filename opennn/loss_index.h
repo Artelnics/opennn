@@ -204,11 +204,9 @@ protected:
 
 struct BackPropagationLM
 {
-    BackPropagationLM();
+    explicit BackPropagationLM(const Index& = 0, LossIndex* = nullptr);
 
-    explicit BackPropagationLM(const Index&, LossIndex*);
-
-    void set(const Index&, LossIndex*);
+    void set(const Index& = 0, LossIndex* = nullptr);
 
     void print() const;
     

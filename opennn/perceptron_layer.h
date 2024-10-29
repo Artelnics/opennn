@@ -149,13 +149,11 @@ protected:
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit PerceptronLayerForwardPropagation();
-
-    explicit PerceptronLayerForwardPropagation(const Index&, Layer*);
+    explicit PerceptronLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -167,13 +165,11 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-    explicit PerceptronLayerBackPropagation();
-
-    explicit PerceptronLayerBackPropagation(const Index&, Layer*);
+    explicit PerceptronLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -187,13 +183,11 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
-    explicit PerceptronLayerBackPropagationLM();
-
-    explicit PerceptronLayerBackPropagationLM(const Index&, Layer*);
+    explicit PerceptronLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -201,7 +195,6 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     Tensor<type, 2> input_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;
-
 };
 
 

@@ -87,8 +87,8 @@ public:
 
        inline void print() const
        {
-           cout << struct_to_string();
-           cout << "Lenght: " << get_length() << endl;
+           cout << struct_to_string()
+                << "Lenght: " << get_length() << endl;
        }
 
 
