@@ -44,20 +44,12 @@ public:
 
     enum class ConvolutionType{Valid, Same};
 
-    // Constructors
-
-    explicit ConvolutionalLayer();
-
-    explicit ConvolutionalLayer(const dimensions&,                                // Input dimensions {height,width,channels}
+    explicit ConvolutionalLayer(const dimensions& = {0, 0, 0},                                // Input dimensions {height,width,channels}
                                 const dimensions& = {1, 1, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                                 const ActivationFunction& = ActivationFunction::Linear,
                                 const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
                                 const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
                                 const string = "convolutional_layer");
-
-    // Destructor
-
-    // Get
 
     bool is_empty() const;
 

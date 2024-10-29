@@ -15,13 +15,6 @@
 namespace opennn
 {
 
-ConvolutionalLayer::ConvolutionalLayer() : Layer()
-{
-    layer_type = Layer::Type::Convolutional;
-    name = "convolutional_layer";
-}
-
-
 ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_kernel_dimensions,
                                        const ConvolutionalLayer::ActivationFunction& new_activation_function,

@@ -15,12 +15,6 @@
 namespace opennn
 {
 
-ScalingLayer2D::ScalingLayer2D() : Layer()
-{
-    set();
-}
-
-
 ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -178,16 +172,6 @@ Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
 const bool& ScalingLayer2D::get_display() const
 {
     return display;
-}
-
-
-void ScalingLayer2D::set()
-{
-    descriptives.resize(0);
-
-    scalers.resize(0);
-
-    set_default();
 }
 
 

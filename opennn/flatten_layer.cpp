@@ -12,13 +12,6 @@
 namespace opennn
 {
 
-FlattenLayer::FlattenLayer() : Layer()
-{
-    layer_type = Layer::Type::Flatten;
-    name = "flatten_layer";
-}
-
-
 FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);

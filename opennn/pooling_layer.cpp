@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-PoolingLayer::PoolingLayer() : Layer()
-{
-    set_default();
-}
-
-
 PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions, 
                            const dimensions& new_pool_dimensions,
                            const dimensions& new_stride_dimensions,

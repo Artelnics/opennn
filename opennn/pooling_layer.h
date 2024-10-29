@@ -21,11 +21,6 @@ namespace opennn
 
 class ConvolutionalLayer;
 
-struct PoolingLayerForwardPropagation;
-struct PoolingLayerBackPropagation;
-struct ConvolutionalLayerForwardPropagation;
-struct ConvolutionalLayerBackPropagation;
-
 #ifdef OPENNN_CUDA
 struct PoolingLayerForwardPropagationCuda;
 struct PoolingLayerBackPropagationCuda;

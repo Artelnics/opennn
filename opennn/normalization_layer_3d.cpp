@@ -13,13 +13,6 @@
 namespace opennn
 {
 
-NormalizationLayer3D::NormalizationLayer3D() : Layer()
-{
-    set();
-
-    layer_type = Type::Normalization3D;
-}
-
 
 NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
                                             const Index& new_inputs_depth) : Layer()
@@ -83,12 +76,6 @@ Tensor<type, 1> NormalizationLayer3D::get_parameters() const
 const bool& NormalizationLayer3D::get_display() const
 {
     return display;
-}
-
-
-void NormalizationLayer3D::set()
-{
-    set_default();
 }
 
 

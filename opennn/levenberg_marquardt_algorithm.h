@@ -27,15 +27,7 @@ class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 
 public:
 
-   // Constructors
-
-   explicit LevenbergMarquardtAlgorithm();
-
-   explicit LevenbergMarquardtAlgorithm(LossIndex*);
-
-   // Get
-
-   // Stopping criteria
+   explicit LevenbergMarquardtAlgorithm(LossIndex* = nullptr);
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
@@ -44,8 +36,6 @@ public:
 
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
-
-   // Utilities
 
    const type& get_damping_parameter() const;
 

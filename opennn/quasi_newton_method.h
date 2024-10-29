@@ -27,17 +27,9 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 
 public:
 
-   // Enumerations
-
    enum class InverseHessianApproximationMethod{DFP, BFGS};
 
-   // Constructors
-
-   explicit QuasiNewtonMethod();
-
-   explicit QuasiNewtonMethod(LossIndex*);
-
-   // Get
+   explicit QuasiNewtonMethod(LossIndex* = nullptr);
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm();

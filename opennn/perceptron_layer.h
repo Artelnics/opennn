@@ -20,13 +20,6 @@
 namespace opennn
 {
 
-struct LayerForwardPropagation;
-struct LayerBackPropagation;
-
-struct PerceptronLayerForwardPropagation;
-struct PerceptronLayerBackPropagation;
-struct PerceptronLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct PerceptronLayerForwardPropagationCuda;
     struct PerceptronLayerBackPropagationCuda;
@@ -50,21 +43,13 @@ public:
         HardSigmoid
     };
 
-    // Constructors
-
-    explicit PerceptronLayer();
-
-    explicit PerceptronLayer(const dimensions&,
-                             const dimensions&,
+    explicit PerceptronLayer(const dimensions& = {0},
+                             const dimensions& = {0},
                              const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
                              const string = "perceptron");
 
-    // Get
-
     Index get_inputs_number() const final;
     Index get_neurons_number() const final;
-
-    // Parameters
 
     Tensor<type, 1> get_parameters() const final;
 
@@ -75,18 +60,14 @@ public:
 
     dimensions get_output_dimensions() const final;
 
-    // Activation functions
-
     const PerceptronLayer::ActivationFunction& get_activation_function() const;
 
     string write_activation_function() const;
 
     const bool& get_display() const;
 
-    void set();
-
-    void set(const Index&,
-             const Index&,
+    void set(const Index& = 0,
+             const Index& = 0,
              const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
              const string = "perceptron_layer");
 
@@ -137,13 +118,9 @@ public:
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
-    // Expression   
-
     string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
     string write_activation_function_expression() const;
-
-    // Serialization
 
     void print() const;
 
@@ -153,7 +130,6 @@ public:
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
     #endif
-
 
 protected:
 

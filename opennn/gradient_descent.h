@@ -27,11 +27,7 @@ class GradientDescent : public OptimizationAlgorithm
 
 public:
 
-   // Constructors
-
-   explicit GradientDescent(); 
-
-   explicit GradientDescent(LossIndex*);
+   explicit GradientDescent(LossIndex* = nullptr);
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm();

@@ -24,11 +24,7 @@ class BoundingLayer : public Layer
 
 public:
 
-   // Constructors
-
-   explicit BoundingLayer();
-
-   explicit BoundingLayer(const dimensions&);
+   explicit BoundingLayer(const dimensions& = {});
 
    // Enumerations
 
@@ -57,9 +53,7 @@ public:
 
    // Variables bounds
 
-   void set();
-   void set(const Index&);
-   void set(const tinyxml2::XMLDocument&);
+   void set(const Index& = 0);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;

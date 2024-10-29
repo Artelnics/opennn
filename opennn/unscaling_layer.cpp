@@ -13,11 +13,6 @@
 namespace opennn
 {
 
-UnscalingLayer::UnscalingLayer() : Layer()
-{
-    set();
-}
-
 
 UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions) : Layer()
 {
@@ -208,16 +203,6 @@ const bool& UnscalingLayer::get_display() const
 }
 
 
-void UnscalingLayer::set()
-{
-    descriptives.resize(0);
-
-    scalers.resize(0);
-
-    set_default();
-}
-
-
 void UnscalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
@@ -259,14 +244,6 @@ void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const 
     descriptives = new_descriptives;
 
     scalers = new_scalers;
-}
-
-
-void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_document)
-{
-    set_default();
-
-    from_XML(new_unscaling_layer_document);
 }
 
 

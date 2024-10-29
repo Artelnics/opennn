@@ -20,10 +20,6 @@
 namespace opennn
 {
 
-//    struct AdditionLayer3DForwardPropagation;
-//    struct AdditionLayer3DBackPropagation;
-//    struct AdditionLayer3DBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct AdditionLayer3DForwardPropagationCuda;
     struct AdditionLayer3DBackPropagationCuda;
@@ -34,7 +30,6 @@ class AdditionLayer3D : public Layer
 
 public:
 
-//    explicit AdditionLayer3D();
     explicit AdditionLayer3D(const Index& = 0, const Index& = 0);
 
     Index get_inputs_number() const final;
@@ -44,7 +39,6 @@ public:
 
     const bool& get_display() const;
 
-//    void set();
     void set(const Index& = 0, const Index& = 0);
 
     void set_default();

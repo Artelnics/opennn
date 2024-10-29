@@ -12,13 +12,6 @@
 namespace opennn
 {
 
-BoundingLayer::BoundingLayer() : Layer()
-{
-    set();
-
-    set_default();
-}
-
 
 BoundingLayer::BoundingLayer(const dimensions& neurons_number) : Layer()
 {
@@ -82,30 +75,11 @@ bool BoundingLayer::is_empty() const
 }
 
 
-void BoundingLayer::set()
-{
-    bounding_method = BoundingMethod::Bounding;
-
-    lower_bounds.resize(0);
-    upper_bounds.resize(0);
-
-    set_default();
-}
-
-
 void BoundingLayer::set(const Index& new_neurons_number)
 {
     set_neurons_number(new_neurons_number);
 
     set_default();
-}
-
-
-void BoundingLayer::set(const tinyxml2::XMLDocument& bounding_layer_document)
-{
-    set_default();
-
-    from_XML(bounding_layer_document);
 }
 
 

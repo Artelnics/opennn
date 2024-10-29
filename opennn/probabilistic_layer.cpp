@@ -141,16 +141,6 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 }
 
 
-void ProbabilisticLayer::set()
-{
-    biases.resize(0);
-
-    synaptic_weights.resize(0,0);
-
-    set_default();
-}
-
-
 void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const string new_name)
 {
     biases.resize(new_neurons_number);
@@ -583,12 +573,6 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& input_names
     buffer << write_activations(output_names);
 
     return buffer.str();
-}
-
-ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-
 }
 
 

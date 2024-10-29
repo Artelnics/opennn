@@ -28,15 +28,9 @@ class LearningRateAlgorithm
 
 public:
 
-   // Enumerations
-
    enum class LearningRateMethod{GoldenSection, BrentMethod};
 
-   // Constructors
-
-   explicit LearningRateAlgorithm();
-
-   explicit LearningRateAlgorithm(LossIndex*);
+   explicit LearningRateAlgorithm(LossIndex* = nullptr);
 
    virtual ~LearningRateAlgorithm();
 
@@ -143,8 +137,7 @@ public:
   
    // Set
 
-   void set();
-   void set(LossIndex*);
+   void set(LossIndex* = nullptr);
 
    void set_loss_index(LossIndex*);
    void set_threads_number(const int&);

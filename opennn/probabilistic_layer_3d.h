@@ -20,9 +20,6 @@
 namespace opennn
 {
 
-struct ProbabilisticLayer3DForwardPropagation;
-struct ProbabilisticLayer3DBackPropagation;
-
 #ifdef OPENNN_CUDA
 struct ProbabilisticLayer3DForwardPropagationCuda;
 struct ProbabilisticLayer3DBackPropagationCuda;
@@ -34,17 +31,9 @@ class ProbabilisticLayer3D : public Layer
 
 public:
 
-   // Constructors
-
-   explicit ProbabilisticLayer3D();
-
-   explicit ProbabilisticLayer3D(const Index&, const Index&, const Index&);
-
-   // Enumerations
+   explicit ProbabilisticLayer3D(const Index& = 0, const Index& = 0, const Index& = 0);
 
    enum class ActivationFunction{Softmax, Competitive};
-
-   // Get
 
    Index get_inputs_number() const final;
    Index get_inputs_depth() const;
@@ -63,10 +52,7 @@ public:
 
    const bool& get_display() const;
 
-   // Set
-
-   void set();
-   void set(const Index&, const Index&, const Index&);
+   void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
    void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);

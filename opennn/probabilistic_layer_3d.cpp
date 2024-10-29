@@ -13,12 +13,6 @@
 namespace opennn
 {
 
-ProbabilisticLayer3D::ProbabilisticLayer3D()
-{
-    set();
-}
-
-
 ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
 {
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
@@ -122,18 +116,6 @@ Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
     memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size()*sizeof(type));
 
     return parameters;
-}
-
-
-void ProbabilisticLayer3D::set()
-{
-    inputs_number = 0;
-    
-    biases.resize(0);
-
-    synaptic_weights.resize(0,0);
-
-    set_default();
 }
 
 

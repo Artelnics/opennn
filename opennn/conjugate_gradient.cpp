@@ -17,13 +17,6 @@
 namespace opennn
 {
 
-ConjugateGradient::ConjugateGradient()
-    : OptimizationAlgorithm()
-{
-    set_default();
-}
-
-
 ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {

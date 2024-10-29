@@ -33,13 +33,7 @@ class FlattenLayer : public Layer
 
 public:
 
-    // Constructors
-
-    explicit FlattenLayer();
-
     explicit FlattenLayer(const dimensions&);
-
-    // Get
 
     dimensions get_input_dimensions() const;
     Index get_outputs_number() const;
@@ -52,12 +46,7 @@ public:
     Index get_input_width() const;
     Index get_neurons_number() const;
 
-    // Set
-
-    void set();
-    void set(const Index&);
-    void set(const dimensions&);
-    void set(const tinyxml2::XMLDocument&);
+    void set(const dimensions & = {});
 
     void set_default();
 

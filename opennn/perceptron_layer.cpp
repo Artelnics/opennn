@@ -15,14 +15,6 @@
 namespace opennn
 {
 
-PerceptronLayer::PerceptronLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::Perceptron;
-}
-
-
 PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
                                  const dimensions& new_output_dimensions,
                                  const ActivationFunction& new_activation_function,
@@ -145,16 +137,6 @@ string PerceptronLayer::write_activation_function() const
 const bool& PerceptronLayer::get_display() const
 {
     return display;
-}
-
-
-void PerceptronLayer::set()
-{
-    biases.resize(0);
-
-    synaptic_weights.resize(0, 0);
-
-    set_default();
 }
 
 

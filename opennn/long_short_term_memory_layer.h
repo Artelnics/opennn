@@ -38,13 +38,7 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   // Constructors
-
-   explicit LongShortTermMemoryLayer();
-
-   explicit LongShortTermMemoryLayer(const Index&, const Index&, const Index&);
-
-   // Get
+   explicit LongShortTermMemoryLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
    bool is_empty() const;
 
@@ -58,26 +52,17 @@ public:
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
 
-   // Activation functions
-
    const LongShortTermMemoryLayer::ActivationFunction& get_activation_function() const;
    const LongShortTermMemoryLayer::ActivationFunction& get_recurrent_activation_function() const;
 
    string write_activation_function() const;
    string write_recurrent_activation_function() const;
 
-   // Display messages
-
    const bool& get_display() const;
 
-   // Set
-
-   void set();
-   void set(const Index&, const Index&, const Index&);
+   void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
    void set_default();
-
-   // Architecture
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;

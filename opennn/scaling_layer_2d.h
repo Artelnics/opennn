@@ -24,21 +24,13 @@ class ScalingLayer2D : public Layer
 
 public:
 
-   // Constructors
-
-   explicit ScalingLayer2D();
-
-   explicit ScalingLayer2D(const dimensions&);
-
-   // Get
+   explicit ScalingLayer2D(const dimensions& = {0});
 
    dimensions get_output_dimensions() const;
 
    Index get_inputs_number() const final;
    dimensions get_input_dimensions() const;
    Index get_neurons_number() const final;
-
-   // Inputs descriptives
 
    Tensor<Descriptives, 1> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
@@ -48,28 +40,19 @@ public:
    Tensor<type, 1> get_means() const;
    Tensor<type, 1> get_standard_deviations() const;
 
-   // Variables scaling and unscaling
-
    Tensor<Scaler, 1> get_scaling_methods() const;
 
    Tensor<string, 1> write_scalers() const;
    Tensor<string, 1> write_scalers_text() const;
 
-   // Display messages
-
    const bool& get_display() const;
 
-   // Set
-
-   void set();
-   void set(const dimensions&);
+   void set(const dimensions& = {0});
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
 
    void set_default();
-
-   // Descriptives
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
    void set_item_descriptives(const Index&, const Descriptives&);
@@ -81,8 +64,6 @@ public:
 
    void set_min_max_range(const type& min, const type& max);
 
-   // Scaling method
-
    void set_scalers(const Tensor<Scaler, 1>&);
    void set_scalers(const Tensor<string, 1>&);
 
@@ -91,19 +72,13 @@ public:
    void set_scalers(const Scaler&);
    void set_scalers(const string&);
 
-   // Display messages
-
    void set_display(const bool&);
-
-   // Check
 
    bool is_empty() const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
-
-   // Expression
 
    string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
@@ -114,8 +89,6 @@ public:
    string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-   // Serialization
 
    void print() const;
 

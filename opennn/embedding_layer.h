@@ -19,12 +19,6 @@
 namespace opennn
 {
 
-class Layer;
-
-struct EmbeddingLayerForwardPropagation;
-struct EmbeddingLayerBackPropagation;
-struct EmbeddingLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
 struct EmbeddingLayerForwardPropagationCuda;
 struct EmbeddingLayerBackPropagationCuda;
@@ -35,8 +29,6 @@ class EmbeddingLayer : public Layer
 {
 
 public:
-
-//    explicit EmbeddingLayer();
 
     explicit EmbeddingLayer(const Index& = 0,
                             const Index& = 0,
@@ -57,7 +49,6 @@ public:
 
     const bool& get_display() const;
 
-//    void set();
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
     void set_default();

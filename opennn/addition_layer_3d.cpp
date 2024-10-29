@@ -13,12 +13,6 @@
 namespace opennn
 {
 
-// AdditionLayer3D::AdditionLayer3D() : Layer()
-// {
-//     set();
-// }
-
-
 AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth) : Layer()
 {
     set(new_inputs_number, new_inputs_depth);
@@ -47,12 +41,6 @@ const bool& AdditionLayer3D::get_display() const
 {
     return display;
 }
-
-
-// void AdditionLayer3D::set()
-// {
-//     set_default();
-// }
 
 
 void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)

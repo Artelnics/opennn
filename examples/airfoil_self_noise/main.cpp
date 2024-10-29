@@ -103,9 +103,9 @@ int main()
 
 //        cout << outputs << endl;
 */
-        PerceptronLayer perceptron_layer({3},{2});
+//        PerceptronLayer perceptron_layer({3},{2});
 
-        perceptron_layer.print();
+//        perceptron_layer.print();
 
         cout << "Good bye!" << endl;
 

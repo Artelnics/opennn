@@ -16,14 +16,6 @@
 namespace opennn
 {
 
-LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::LongShortTermMemory;
-}
-
-
 LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_number, 
                                                    const Index& new_neurons_number, 
                                                    const Index& new_timesteps) : Layer()
@@ -199,12 +191,6 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function() const
 const bool& LongShortTermMemoryLayer::get_display() const
 {
     return display;
-}
-
-
-void LongShortTermMemoryLayer::set()
-{
-    set_default();
 }
 
 

@@ -13,11 +13,7 @@ namespace opennn
 
 struct Descriptives {
 
-  explicit Descriptives();
-
-  // Values constructor.
-
-  explicit Descriptives(const type&, const type&, const type&, const type&);
+  explicit Descriptives(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
 
   explicit Descriptives(const Tensor<type, 1>&);
 

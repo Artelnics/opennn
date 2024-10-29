@@ -25,9 +25,7 @@ class UnscalingLayer : public Layer
 
 public:
 
-   explicit UnscalingLayer();
-
-   explicit UnscalingLayer(const dimensions&);
+   explicit UnscalingLayer(const dimensions& = {0});
    
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
@@ -46,11 +44,9 @@ public:
 
    const bool& get_display() const;
 
-   void set();
-   void set(const Index&);
+   void set(const Index& = 0);
    void set(const Tensor<Descriptives, 1>&);
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
-   void set(const tinyxml2::XMLDocument&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;

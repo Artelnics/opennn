@@ -21,10 +21,6 @@
 namespace opennn
 {
 
-struct ProbabilisticLayerForwardPropagation;
-struct ProbabilisticLayerBackPropagation;
-struct ProbabilisticLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct ProbabilisticLayerForwardPropagationCuda;
     struct ProbabilisticLayerBackPropagationCuda;
@@ -33,13 +29,11 @@ struct ProbabilisticLayerBackPropagationLM;
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit ProbabilisticLayerForwardPropagation();
-
-    explicit ProbabilisticLayerForwardPropagation(const Index&, Layer*);
+    explicit ProbabilisticLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type *, dimensions> get_outputs_pair() const final;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -155,8 +149,9 @@ public:
 
     // Set
 
-    void set();
-    void set(const Index&, const Index&, const string = "probabilistic_layer");
+    void set(const Index& = 0, 
+             const Index& = 0, 
+             const string = "probabilistic_layer");
 
     void set_inputs_number(const Index&) final;
     void set_neurons_number(const Index&) final;

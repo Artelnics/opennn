@@ -24,13 +24,7 @@ class ScalingLayer4D : public Layer
 
 public:
 
-   // Constructors
-
-   explicit ScalingLayer4D();
-
-   explicit ScalingLayer4D(const dimensions&);
-
-   // Get
+   explicit ScalingLayer4D(const dimensions& = {0, 0, 0, 0});
 
    dimensions get_output_dimensions() const;
 
@@ -38,35 +32,21 @@ public:
    dimensions get_input_dimensions() const;
    Index get_neurons_number() const final;
 
-   // Display messages
-
    const bool& get_display() const;
 
-   // Set
-
-   void set();
-   void set(const dimensions&);
-   void set(const tinyxml2::XMLDocument&);
+   void set(const dimensions& = { 0, 0, 0, 0 });
 
    void set_default();
 
-   // Descriptives
-
    void set_min_max_range(const type& min, const type& max);
 
-   // Display messages
-
    void set_display(const bool&);
-
-   // Check
 
    bool is_empty() const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
-
-   // Serialization
 
    void print() const;
 

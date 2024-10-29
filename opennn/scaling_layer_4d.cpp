@@ -13,12 +13,6 @@
 namespace opennn
 {
 
-ScalingLayer4D::ScalingLayer4D() : Layer()
-{    
-    set();
-}
-
-
 ScalingLayer4D::ScalingLayer4D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -55,25 +49,11 @@ const bool& ScalingLayer4D::get_display() const
 }
 
 
-void ScalingLayer4D::set()
-{
-    set_default();
-}
-
-
 void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
     set_default();
-}
-
-
-void ScalingLayer4D::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
-{
-    set_default();
-
-    from_XML(new_scaling_layer_document);
 }
 
 
@@ -160,7 +140,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
 
-    set(neurons_number);
+    set({ neurons_number });
 
     unsigned index = 0; // Index does not work
 

@@ -15,14 +15,6 @@
 namespace opennn
 {
 
-PerceptronLayer3D::PerceptronLayer3D() : Layer()
-{
-    set();
-
-    layer_type = Type::Perceptron3D;
-}
-
-
 PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number,
                                      const Index& new_inputs_depth,
                                      const Index& new_neurons_number,
@@ -129,16 +121,6 @@ string PerceptronLayer3D::write_activation_function() const
 const bool& PerceptronLayer3D::get_display() const
 {
     return display;
-}
-
-
-void PerceptronLayer3D::set()
-{
-    biases.resize(0);
-
-    synaptic_weights.resize(0, 0);
-
-    set_default();
 }
 
 

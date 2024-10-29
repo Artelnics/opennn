@@ -24,15 +24,9 @@ class NeuronsSelection
 {
 public:
 
-    // Constructors
+    enum class StoppingCondition { MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons };
 
     explicit NeuronsSelection(TrainingStrategy* = nullptr);
-
-    // Enumerators
-
-    enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons};
-
-    // Get
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -47,8 +41,6 @@ public:
     const type& get_selection_error_goal() const;
     const Index& get_maximum_epochs_number() const;
     const type& get_maximum_time() const;
-
-    // Set
 
     void set(TrainingStrategy* = nullptr);
 
@@ -66,17 +58,11 @@ public:
     void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
 
-    // Loss calculation
-
     string write_stopping_condition(const TrainingResults&) const;
-
-    // Neuron selection
 
     void delete_selection_history();
     void delete_training_error_history();
     void check() const;
-
-    // Utilities
 
     virtual NeuronsSelectionResults perform_neurons_selection() = 0;
 

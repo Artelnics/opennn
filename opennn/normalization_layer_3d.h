@@ -19,8 +19,6 @@
 
 namespace opennn
 {
-struct NormalizationLayer3DForwardPropagation;
-struct NormalizationLayer3DBackPropagation;
 
 #ifdef OPENNN_CUDA
 struct NormalizationLayer3DForwardPropagationCuda;
@@ -32,51 +30,30 @@ class NormalizationLayer3D : public Layer
 
 public:
 
-    // Constructors
-
-    explicit NormalizationLayer3D();
-
-    explicit NormalizationLayer3D(const Index&, const Index&);
-
-    // Get
+    explicit NormalizationLayer3D(const Index& = 0, const Index& = 0);
 
     Index get_inputs_number() const final;
     Index get_inputs_depth() const;
 
     dimensions get_output_dimensions() const final;
 
-    // Parameters
-
     Index get_gammas_number() const;
     Index get_betas_number() const;
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
 
-    // Display messages
-
     const bool& get_display() const;
 
-    // Set
-
-    void set();
-    void set(const Index&, const Index&);
+    void set(const Index& = 0, const Index& = 0);
 
     void set_default();
-
-    // Architecture
 
     void set_inputs_number(const Index&);
     void set_inputs_depth(const Index&);
 
-    // Parameters
-
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
-    // Display messages
-
     void set_display(const bool&);
-
-    // Parameters initialization
 
     void set_gammas_constant(const type&);
     void set_betas_constant(const type&);
@@ -85,13 +62,9 @@ public:
     void set_parameters_constant(const type&) final;
     void set_parameters_random() final;
 
-    // Forward propagation
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                             unique_ptr<LayerForwardPropagation>&,
                             const bool&) final;
-
-    // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
@@ -103,8 +76,6 @@ public:
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                             const Index&,
                             Tensor<type, 1>&) const final;
-
-    // Serialization
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void to_XML(tinyxml2::XMLPrinter&) const final;

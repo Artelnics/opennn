@@ -20,9 +20,6 @@
 namespace opennn
 {
 
-struct PerceptronLayer3DForwardPropagation;
-struct PerceptronLayer3DBackPropagation;
-
 #ifdef OPENNN_CUDA
 struct PerceptronLayer3DForwardPropagationCuda;
 struct PerceptronLayer3DBackPropagationCuda;
@@ -38,11 +35,9 @@ public:
                                   Linear,
                                   RectifiedLinear};
 
-   explicit PerceptronLayer3D();
-
-   explicit PerceptronLayer3D(const Index&,
-                              const Index&,
-                              const Index&,
+   explicit PerceptronLayer3D(const Index& = 0,
+                              const Index& = 0,
+                              const Index& = 0,
                               const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
    Index get_inputs_number() const final;
@@ -63,10 +58,9 @@ public:
 
    const bool& get_display() const;
 
-   void set();
-   void set(const Index&,
-            const Index&,
-            const Index&,
+   void set(const Index& = 0,
+            const Index& = 0,
+            const Index& = 0,
             const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
    void set_default();

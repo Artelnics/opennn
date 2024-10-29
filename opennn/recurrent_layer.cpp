@@ -16,15 +16,9 @@
 namespace opennn
 {
 
-RecurrentLayer::RecurrentLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::Recurrent;
-}
-
-
-RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps) : Layer()
+RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, 
+                               const Index& new_neurons_number, 
+                               const Index& new_timesteps) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_timesteps);
 
@@ -156,12 +150,6 @@ string RecurrentLayer::write_activation_function() const
 const bool& RecurrentLayer::get_display() const
 {
     return display;
-}
-
-
-void RecurrentLayer::set()
-{
-    set_default();
 }
 
 

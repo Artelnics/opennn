@@ -19,9 +19,6 @@
 namespace opennn
 {
 
-struct RecurrentLayerForwardPropagation;
-struct RecurrentLayerBackPropagation;
-
 #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
@@ -41,13 +38,7 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   // Constructors
-
-   explicit RecurrentLayer();
-
-   explicit RecurrentLayer(const Index&, const Index&, const Index&);
-
-   // Get
+   explicit RecurrentLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
    bool is_empty() const;
 
@@ -81,8 +72,7 @@ public:
 
    // Set
 
-   void set();
-   void set(const Index&, const Index&, const Index&);
+   void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
    void set_default();
 

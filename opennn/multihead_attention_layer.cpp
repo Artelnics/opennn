@@ -13,14 +13,6 @@
 namespace opennn
 {
 
-MultiheadAttentionLayer::MultiheadAttentionLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::MultiheadAttention;
-}
-
-
 MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
                                                  const Index& new_context_size,
                                                  const Index& new_depth,
@@ -174,30 +166,6 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 const bool& MultiheadAttentionLayer::get_display() const
 {
     return display;
-}
-
-
-void MultiheadAttentionLayer::set()
-{
-    input_size = 0;
-
-    depth = 0;
-
-    heads_number = 0;
-
-    query_weights.resize(0, 0, 0);
-    query_biases.resize(0, 0);
-
-    key_weights.resize(0, 0, 0);
-    key_biases.resize(0, 0);
-
-    value_weights.resize(0, 0, 0);
-    value_biases.resize(0, 0);
-
-    projection_weights.resize(0, 0, 0);
-    projection_biases.resize(0);
-
-    set_default();
 }
 
 
