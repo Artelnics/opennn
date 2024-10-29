@@ -151,18 +151,6 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_
 }
 
 
-void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_layer)
-{
-    set_default();
-
-    activation_function = other_probabilistic_layer.activation_function;
-
-    decision_threshold = other_probabilistic_layer.decision_threshold;
-
-    display = other_probabilistic_layer.display;
-}
-
-
 void ProbabilisticLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number = new_inputs_number;

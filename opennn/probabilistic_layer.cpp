@@ -29,12 +29,16 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number,
 }
 
 
-ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
+ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions,
+                                       const dimensions& new_output_dimensions,
+                                       const string new_name)
 {
     set(new_input_dimensions[0], new_output_dimensions[0]);
 
     if(new_output_dimensions[0] > 1)
         activation_function = ActivationFunction::Softmax;
+
+    name = new_name;
 }
 
 
@@ -147,7 +151,7 @@ void ProbabilisticLayer::set()
 }
 
 
-void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
+void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const string new_name)
 {
     biases.resize(new_neurons_number);
 
@@ -155,20 +159,11 @@ void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_ne
 
     set_parameters_random();
 
+    name = new_name;
+
     set_default();
 }
 
-
-void ProbabilisticLayer::set(const ProbabilisticLayer& other_probabilistic_layer)
-{
-    set_default();
-
-    activation_function = other_probabilistic_layer.activation_function;
-
-    decision_threshold = other_probabilistic_layer.decision_threshold;
-
-    display = other_probabilistic_layer.display;
-}
 
 
 void ProbabilisticLayer::set_inputs_number(const Index& new_inputs_number)
@@ -210,8 +205,6 @@ void ProbabilisticLayer::set_decision_threshold(const type& new_decision_thresho
 
 void ProbabilisticLayer::set_default()
 {
-    name = "probabilistic_layer";
-
     layer_type = Layer::Type::Probabilistic;
 
     const Index neurons_number = get_neurons_number();

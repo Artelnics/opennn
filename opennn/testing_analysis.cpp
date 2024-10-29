@@ -151,15 +151,15 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     if(testing_samples_number == 0)
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
+    const Tensor<type, 2> testing_input_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
-    const Tensor<type, 2> testing_targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
+    const Tensor<type, 2> testing_target_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<type, 2> testing_outputs = neural_network->calculate_outputs(testing_inputs);
+    const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs(testing_input_data);
 
     // Testing analysis
 
@@ -167,14 +167,12 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     for(Index i = 0;  i < outputs_number; i++)
     {
-        const Tensor<type, 1> targets = testing_targets.chip(i,1);
-        const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
+        const Tensor<type, 1> targets = testing_target_data.chip(i,1);
+        const Tensor<type, 1> outputs = testing_output_data.chip(i,1);
 
-        const type determination_coefficient = calculate_determination_coefficient(outputs, targets);
+        const type determination = calculate_determination(outputs, targets);
 
-        goodness_of_fit_results[i].targets = targets;
-        goodness_of_fit_results[i].outputs = outputs;
-        goodness_of_fit_results[i].determination = determination_coefficient;
+        goodness_of_fit_results[i].set(targets, outputs, determination);
     }
 
     return goodness_of_fit_results;
@@ -780,7 +778,7 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, 
 }
 
 
-type TestingAnalysis::calculate_determination_coefficient(const Tensor<type, 1>& outputs, const Tensor<type, 1>& targets) const
+type TestingAnalysis::calculate_determination(const Tensor<type, 1>& outputs, const Tensor<type, 1>& targets) const
 {
     const Tensor<type, 0> targets_mean = targets.mean();
     const Tensor<type, 0> outputs_mean = outputs.mean();

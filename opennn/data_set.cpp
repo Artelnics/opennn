@@ -1740,6 +1740,19 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
 }
 
 
+Tensor<Tensor<Index, 1>, 1> DataSet::get_variable_indices() const
+{
+    const Index raw_variables_number = get_raw_variables_number();
+
+    Tensor<Tensor<Index, 1>, 1> indices(raw_variables_number);
+
+    for(Index i = 0; i < raw_variables_number; i++)
+        indices(i) = get_variable_indices(i);
+
+    return indices;
+}
+
+
 Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) const
 {
     Index index = 0;
@@ -1749,21 +1762,22 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) 
             ? raw_variables(i).categories.size()
             : 1;
 
-    if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
-    {
-        Tensor<Index, 1> variable_indices(raw_variables(raw_variable_index).categories.size());
+    const RawVariable& raw_variable = raw_variables(raw_variable_index);
 
-        for(Index j = 0; j<raw_variables(raw_variable_index).categories.size(); j++)
-            variable_indices(j) = index+j;
-
-        return variable_indices;
-    }
-    else
+    if(raw_variable.type == RawVariableType::Categorical)
     {
-        const Tensor<Index, 1> indices = {index};
+        Tensor<Index, 1> indices(raw_variable.categories.size());
+
+        for(Index j = 0; j < raw_variable.categories.size(); j++)
+            indices(j) = index + j;
 
         return indices;
     }
+
+    Tensor<Index, 1> indices(1);
+    indices(0) = index;
+
+    return indices;
 }
 
 
@@ -2017,24 +2031,6 @@ void DataSet::set(const Index& new_samples_number,
 
     sample_uses.resize(new_samples_number);
     split_samples_random();
-}
-
-
-void DataSet::set(const DataSet& other_data_set)
-{
-    data_path = other_data_set.data_path;
-
-    has_header = other_data_set.has_header;
-
-    separator = other_data_set.separator;
-
-    missing_values_label = other_data_set.missing_values_label;
-
-    data = other_data_set.data;
-
-    raw_variables = other_data_set.raw_variables;
-
-    display = other_data_set.display;
 }
 
 
@@ -4266,6 +4262,8 @@ void DataSet::read_csv()
 
     const Index variables_number = get_variables_number();
 
+    const Tensor<Tensor<Index, 1>, 1> all_variable_indices = get_variable_indices();
+
     data.resize(samples_number, variables_number);
     data.setZero();
 
@@ -4321,26 +4319,23 @@ void DataSet::read_csv()
         if(has_sample_ids)
             samples_id(sample_index) = tokens(0);
 
-//        #pragma omp parallel for
+        #pragma omp parallel for
 
         for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
         {
-            cout << raw_variables(raw_variable_index).name << endl;
             const RawVariableType raw_variable_type = raw_variables(raw_variable_index).type;
 
-            const string token = has_sample_ids ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
+            const string token = has_sample_ids
+                ? tokens(raw_variable_index+1)
+                : tokens(raw_variable_index);
 
-            const Tensor<Index, 1> variable_indices = get_variable_indices(raw_variable_index);
-
-            cout << sample_index << endl;
+            const Tensor<Index, 1>& variable_indices = all_variable_indices(raw_variable_index);
 
             if(raw_variable_type == RawVariableType::Numeric)
             {
-
-                if(token.empty() || token == missing_values_label)
-                    data(sample_index, variable_indices(0)) = NAN;
-                else
-                    data(sample_index, variable_indices(0)) = stof(token);
+                (token.empty() || token == missing_values_label)
+                    ? data(sample_index, variable_indices(0)) = NAN
+                    : data(sample_index, variable_indices(0)) = stof(token);
 
             }
             else if(raw_variable_type == RawVariableType::DateTime)
@@ -4369,7 +4364,9 @@ void DataSet::read_csv()
             {
                 if(contains(positive_words, token) || contains(negative_words, token))
                 {
-                    data(sample_index, variable_indices(0)) = contains(positive_words, token) ? 1 : 0;
+                    data(sample_index, variable_indices(0)) = contains(positive_words, token)
+                        ? 1
+                        : 0;
                 }
                 else
                 {
@@ -4391,11 +4388,10 @@ void DataSet::read_csv()
     }
 
     file.close();
-/*
+
     unuse_constant_raw_variables();
     set_binary_raw_variables();
     split_samples_random();
-*/
 }
 
 
@@ -4575,16 +4571,14 @@ void DataSet::check_separators(const string& line) const
     {
         if(line.find(',') != string::npos)
             throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is space (' ').");
-
-        if(line.find(';') != string::npos)
+        else if(line.find(';') != string::npos)
             throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is space (' ').");
     }
     else if(separator == Separator::Tab)
     {
         if(line.find(',') != string::npos)
             throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is tab ('   ').");
-
-        if(line.find(';') != string::npos)
+        else if(line.find(';') != string::npos)
             throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is tab ('   ').");
     }
     else if(separator == Separator::Comma)

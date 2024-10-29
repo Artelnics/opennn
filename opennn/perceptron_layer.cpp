@@ -23,10 +23,15 @@ PerceptronLayer::PerceptronLayer() : Layer()
 }
 
 
-PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions,
-                                 const ActivationFunction& new_activation_function)
+PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
+                                 const dimensions& new_output_dimensions,
+                                 const ActivationFunction& new_activation_function,
+                                 const string new_layer_name)
 {
-    set(new_input_dimensions[0], new_output_dimensions[0], new_activation_function);
+    set(new_input_dimensions[0],
+        new_output_dimensions[0],
+        new_activation_function,
+        new_layer_name);
 }
 
 
@@ -153,8 +158,10 @@ void PerceptronLayer::set()
 }
 
 
-void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neurons_number,
-                          const PerceptronLayer::ActivationFunction& new_activation_function)
+void PerceptronLayer::set(const Index& new_inputs_number,
+                          const Index& new_neurons_number,
+                          const PerceptronLayer::ActivationFunction& new_activation_function,
+                          const string new_name)
 {
     biases.resize(new_neurons_number);
 
@@ -164,14 +171,14 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
 
     activation_function = new_activation_function;
 
+    name = new_name;
+
     set_default();
 }
 
 
 void PerceptronLayer::set_default()
 {
-    name = "perceptron_layer";
-
     display = true;
 
     layer_type = Type::Perceptron;

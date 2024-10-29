@@ -83,7 +83,6 @@ public:
 
    void set();
    void set(const Index&, const Index&, const Index&);
-   void set(const RecurrentLayer&);
 
    void set_default();
 

@@ -51,7 +51,6 @@ public:
    void set(const Tensor<Descriptives, 1>&);
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
-   void set(const UnscalingLayer&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;

@@ -233,16 +233,6 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 }
 
 
-void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_layer)
-{
-    activation_function = other_neuron_layer.activation_function;
-
-    display = other_neuron_layer.display;
-
-    set_default();
-}
-
-
 void LongShortTermMemoryLayer::set_default()
 {
     name = "long_short_term_memory_layer";
