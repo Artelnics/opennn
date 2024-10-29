@@ -67,8 +67,8 @@ public:
 
    // APPENDING LAYERS
 
-   void add_layer(unique_ptr<Layer>, 
-                  const string& name = "layer", 
+   void add_layer(unique_ptr<Layer>,
+                  const string& name = "layer",
                   const vector<Index>& = vector<Index>());
 
    bool validate_layer_type(const Layer::Type&) const;

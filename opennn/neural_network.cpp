@@ -72,7 +72,6 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const
     layer_input_indices.push_back(input_indices.empty() 
         ? std::vector<Index>(1, old_layers_number - 1) 
         : input_indices);
-
     layers[old_layers_number]->set_name(name);
 }
 
@@ -214,7 +213,7 @@ Index NeuralNetwork::get_layer_index(const string& name) const
         if(layers[i]->get_name() == name)
             return i;
 
-    throw runtime_error("Layer not found" + name);
+    throw runtime_error("Layer not found " + name);
 }
 
 
