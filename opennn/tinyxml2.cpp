@@ -3061,12 +3061,12 @@ type read_xml_type(const tinyxml2::XMLElement* root, const std::string& element_
     const tinyxml2::XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr" + element_name);
+        throw runtime_error("Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
     if(!text)
-        throw runtime_error("Text is nullptr" + element_name);
+        throw runtime_error("Text is nullptr " + element_name);
 
     return type(stod(text));
 }
@@ -3077,12 +3077,12 @@ Index read_xml_index(const tinyxml2::XMLElement* root, const std::string& elemen
     const tinyxml2::XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr" + element_name);
+        throw runtime_error("Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
     if(!text)
-        throw runtime_error("Text is nullptr" + element_name);
+        throw runtime_error("Text is nullptr " + element_name);
 
     return Index(stoi(text));
 }
@@ -3093,12 +3093,12 @@ bool read_xml_bool(const tinyxml2::XMLElement* root, const std::string& element_
     const tinyxml2::XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr" + element_name);
+        throw runtime_error("Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
     if(!text)
-        throw runtime_error("Text is nullptr" + element_name);
+        throw runtime_error("Text is nullptr " + element_name);
 
     return bool(stoi(text));
 }
@@ -3109,12 +3109,12 @@ string read_xml_string(const tinyxml2::XMLElement* root, const std::string& elem
     const tinyxml2::XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr" + element_name);
+        throw runtime_error("Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
     if(!text)
-        throw runtime_error("Text is nullptr" + element_name);
+        throw runtime_error("Text is nullptr: " + element_name);
 
     return string(text);
 }

@@ -150,6 +150,8 @@ void DataSet::RawVariable::set_scaler(const string& new_scaler)
         set_scaler(Scaler::StandardDeviation);
     else if(new_scaler == "Logarithm")
         set_scaler(Scaler::Logarithm);
+    else if (new_scaler == "ImageMinMax")
+        set_scaler(Scaler::ImageMinMax);
     else
         throw runtime_error("Unknown scaler: " + new_scaler + "\n");
 }
@@ -1369,8 +1371,6 @@ void DataSet::set(const VariableUse& variable_use)
 void DataSet::set_raw_variables_number(const Index& new_raw_variables_number)
 {
     raw_variables.resize(new_raw_variables_number);
-
-    set_default_raw_variables_uses();
 }
 
 
@@ -3282,11 +3282,11 @@ void DataSet::print() const
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
    
-    print_dimensions(input_dimensions);
+    print_dimensions(get_input_dimensions());
          
     cout << "Target variables dimensions: ";
     
-    print_dimensions(target_dimensions);
+    print_dimensions(get_target_dimensions());
     
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
@@ -4442,6 +4442,8 @@ string DataSet::RawVariable::get_scaler_string() const
         return "StandardDeviation";
     case Scaler::Logarithm:
         return "Logarithm";
+    case Scaler::ImageMinMax:
+        return "ImageMinMax";
     default:
         return "";
     }
