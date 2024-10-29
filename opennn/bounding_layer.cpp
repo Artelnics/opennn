@@ -330,7 +330,7 @@ pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() cons
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return { outputs_data, { batch_samples_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, neurons_number } };
 }
 
 
@@ -343,8 +343,6 @@ void BoundingLayerForwardPropagation::set(const Index& new_batch_samples_number,
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
-
-    outputs_data = outputs.data();
 }
 
 }

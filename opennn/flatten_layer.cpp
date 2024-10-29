@@ -173,7 +173,7 @@ pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {batch_samples_number, neurons_number}};
+    return {(type*)outputs.data(), {batch_samples_number, neurons_number}};
 }
 
 
@@ -186,8 +186,6 @@ void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, 
     const Index neurons_number = layer->get_neurons_number();
 
     outputs.resize(batch_samples_number, neurons_number);
-
-    outputs_data = outputs.data();
 }
 
 

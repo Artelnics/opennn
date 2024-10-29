@@ -229,45 +229,25 @@ void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationF
 void PerceptronLayer::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
-    {
         activation_function = ActivationFunction::Logistic;
-    }
     else if(new_activation_function_name == "HyperbolicTangent")
-    {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
     else if(new_activation_function_name == "Linear")
-    {
         activation_function = ActivationFunction::Linear;
-    }
     else if(new_activation_function_name == "RectifiedLinear")
-    {
         activation_function = ActivationFunction::RectifiedLinear;
-    }
     else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
         activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
     else if(new_activation_function_name == "SoftPlus")
-    {
         activation_function = ActivationFunction::SoftPlus;
-    }
     else if(new_activation_function_name == "SoftSign")
-    {
         activation_function = ActivationFunction::SoftSign;
-    }
     else if(new_activation_function_name == "HardSigmoid")
-    {
         activation_function = ActivationFunction::HardSigmoid;
-    }
     else if(new_activation_function_name == "ExponentialLinear")
-    {
         activation_function = ActivationFunction::ExponentialLinear;
-    }
     else
-    {
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-    }
 }
 
 
@@ -364,10 +344,9 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
     calculate_combinations(inputs,
                            outputs);
 
-    if(is_training && dropout_rate > type(0))
-    {
-        dropout(outputs);
-    }
+    // @todo
+    //if(is_training && dropout_rate > type(0))
+        //dropout(outputs);
 
     if(is_training)
     {
@@ -571,7 +550,11 @@ void PerceptronLayer::print() const
     cout << "Perceptron layer" << endl
          << "Inputs number: " << get_inputs_number() << endl
          << "Neurons number: " << get_neurons_number() << endl
+         << "Biases dimensions: " << biases.dimensions() << endl
          << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
+
+    cout << biases << endl;
+    cout << synaptic_weights << endl;
 }
 
 
@@ -650,10 +633,10 @@ void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_numbe
     const Index neurons_number = layer->get_neurons_number();
     
     outputs.resize(batch_samples_number, neurons_number);
-    
-    outputs_data = outputs.data();
-    
+       
     activations_derivatives.resize(batch_samples_number, neurons_number);
+
+    activations_derivatives.setConstant((type)NAN);
 }
 
 
@@ -661,7 +644,7 @@ pair<type *, dimensions> PerceptronLayerForwardPropagation::get_outputs_pair() c
 {
     const Index neurons_number = layer->get_neurons_number();
     
-    return pair<type *, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, neurons_number}});
 }
 
 

@@ -26,7 +26,7 @@ int main()
         srand(unsigned(time(nullptr)));
 
         cout << "Airfoil self noise" << endl;
-
+/*
         // Data set
 
         //        DataSet data_set("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true);
@@ -47,6 +47,8 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
+
+
 
         // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
         // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
@@ -87,7 +89,7 @@ int main()
 //        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
 
         // Deploy
-/*
+
         NeuralNetwork new_neural_network("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
         Tensor<type, 2> inputs(1, input_variables_number);
@@ -101,6 +103,10 @@ int main()
 
 //        cout << outputs << endl;
 */
+        PerceptronLayer perceptron_layer({3},{2});
+
+        perceptron_layer.print();
+
         cout << "Good bye!" << endl;
 
         return 0;

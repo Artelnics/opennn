@@ -159,7 +159,7 @@ pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() co
     const Index inputs_number = addition_layer_3d->get_inputs_number();
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
-    return {outputs_data, {batch_samples_number, inputs_number, inputs_depth}};
+    return {(type*)outputs.data(), {batch_samples_number, inputs_number, inputs_depth}};
 }
 
 
@@ -175,8 +175,6 @@ void AdditionLayer3DForwardPropagation::set(const Index& new_batch_samples_numbe
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
     outputs.resize(batch_samples_number, inputs_number, inputs_depth);
-
-    outputs_data = outputs.data();
 }
 
 

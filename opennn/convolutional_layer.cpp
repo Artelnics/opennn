@@ -941,7 +941,7 @@ pair<type*, dimensions> ConvolutionalLayerForwardPropagation::get_outputs_pair()
     const Index output_width = convolutional_layer->get_output_width();
     const Index kernels_number = convolutional_layer->get_kernels_number();
 
-    return {outputs_data, {batch_samples_number, output_height, output_width, kernels_number}};
+    return {(type*)outputs.data(), {batch_samples_number, output_height, output_width, kernels_number}};
 }
 
 
@@ -975,8 +975,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                    output_width,
                    kernels_number);
 
-    outputs_data = outputs.data();
-
     means.resize(kernels_number);
 
     standard_deviations.resize(kernels_number);
@@ -985,7 +983,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                                    output_height,
                                    output_width,
                                    kernels_number);
-
 }
 
 

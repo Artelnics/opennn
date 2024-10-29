@@ -2201,7 +2201,7 @@ pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {{batch_samples_number, neurons_number}}};
+    return {(type*)outputs.data(), {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -2215,7 +2215,6 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
-    outputs_data = outputs.data();
 
     previous_cell_states.resize(neurons_number);
     previous_hidden_states.resize(neurons_number);

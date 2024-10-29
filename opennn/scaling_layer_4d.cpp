@@ -146,8 +146,6 @@ void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("Scaling4D");
 
     if(!scaling_layer_element)
@@ -181,7 +179,6 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
         if(index != i+1)
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
 
-
         // Scaling method
 
         const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
@@ -205,7 +202,7 @@ pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() con
 
     const dimensions output_dimensions = scaling_layer_4d->get_output_dimensions();
 
-    return {outputs_data, {batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]}};
+    return {(type*)outputs.data(), {batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]}};
 }
 
 
@@ -218,8 +215,6 @@ void ScalingLayer4DForwardPropagation::set(const Index& new_batch_samples_number
     const dimensions output_dimensions = layer->get_output_dimensions();
 
     outputs.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
-
-    outputs_data = outputs.data();
 }
 
 }

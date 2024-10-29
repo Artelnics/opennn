@@ -375,7 +375,7 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 
     const Index depth = embedding_layer->get_depth();
     
-    return {outputs_data, {batch_samples_number, inputs_number, depth}};
+    return {(type*)outputs.data(), {batch_samples_number, inputs_number, depth}};
 }
 
 
@@ -394,8 +394,6 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
     // Outputs
 
     outputs.resize(batch_samples_number, inputs_number, depth);
-
-    outputs_data = outputs.data();
 
     if(embedding_layer->get_positional_encoding())
         build_positional_encoding_matrix();

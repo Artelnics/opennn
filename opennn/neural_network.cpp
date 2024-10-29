@@ -520,11 +520,13 @@ void NeuralNetwork::set_auto_association(const dimensions& input_dimensions,
                                          const dimensions& complexity_dimensions, 
                                          const dimensions& output_dimensions)
 {
-    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+// @todo
 
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+/*
     const Index mapping_neurons_number = 10;
     const Index bottle_neck_neurons_number = complexity_dimensions[0];
-/*
+
     add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
                 "mapping_layer");
 
@@ -1097,11 +1099,13 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     const Index batch_samples_number = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
-    ForwardPropagation forward_propagation(batch_samples_number, this);
+    ForwardPropagation forward_propagation(batch_samples_number, this);        
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
     forward_propagate({input_pair}, forward_propagation);
+
+    forward_propagation.print();
 
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
@@ -2057,7 +2061,7 @@ void ForwardPropagation::print() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
+        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_name() << endl;
 
         layers[i]->print();
     }
@@ -2093,7 +2097,8 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
         }
     }
 }
-}
+
+} // Namespace
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

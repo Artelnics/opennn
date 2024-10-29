@@ -389,9 +389,9 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
     {
         scaler = scalers(i);
 
-        const TensorMap<Tensor<type, 1>> input_column(inputs.data() + i * samples_number, samples_number);
+        const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
         
-        TensorMap<Tensor<type, 1>> output_column(outputs.data() + i * samples_number, samples_number);
+        TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
         
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
@@ -649,7 +649,7 @@ pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {batch_samples_number, neurons_number}};
+    return {(type*)outputs.data(), {batch_samples_number, neurons_number}};
 }
 
 
@@ -662,8 +662,6 @@ void ScalingLayer2DForwardPropagation::set(const Index& new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
-
-    outputs_data = outputs.data();
 }
 
 }

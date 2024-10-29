@@ -604,7 +604,7 @@ pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair(
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type *, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, neurons_number}});
 }
 
 
@@ -617,8 +617,6 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
     const Index neurons_number = layer->get_neurons_number();
 
     outputs.resize(batch_samples_number, neurons_number);
-
-    outputs_data = outputs.data();
 
     activations_derivatives.resize(0, 0);
 
