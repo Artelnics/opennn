@@ -59,7 +59,7 @@ NeuralNetwork::NeuralNetwork(const string& file_name)
 }
 
 
-void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const vector<Index>& input_indices)
+void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& input_indices)
 {
     const Layer::Type layer_type = layer->get_type();
 
@@ -265,7 +265,7 @@ ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
 
     for(Index i = 0; i < layers_number; i++)
         if(layers[i]->get_type() == Layer::Type::Scaling2D)
-            return dynamic_cast<ScalingLayer2D*>(layers[i].get());
+            return static_cast<ScalingLayer2D*>(layers[i].get());
 
     throw runtime_error("No scaling layer 2d in neural network.\n");
 }
@@ -463,11 +463,16 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
     {
         const dimensions neurons_number = { complexity_dimensions[i] };
 
-        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-            "perceptron_layer_" + to_string(i + 1));
+        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+                                               neurons_number,
+                                               PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                                               "perceptron_layer_" + to_string(i + 1)));
     }
 
-    add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), output_dimensions, PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(complexity_size + 1));
+    add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+                                           output_dimensions,
+                                           PerceptronLayer::ActivationFunction::Linear,
+                                           "perceptron_layer_" + to_string(complexity_size + 1)));
 
     add_layer(make_unique<UnscalingLayer>(output_dimensions));
 
@@ -486,11 +491,15 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
     {
         const dimensions neurons_number = { complexity_dimensions[i] };
 
-        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-            "perceptron_layer_" + to_string(i + 1));
+        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+                                               neurons_number,
+                                               PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                                               "perceptron_layer_" + to_string(i + 1)));
     }
 
-    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
+    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
+                                              output_dimensions,
+                                              "probabilistic_layer"));
 
 }
 
@@ -511,11 +520,13 @@ void NeuralNetwork::set_auto_association(const dimensions& input_dimensions,
                                          const dimensions& complexity_dimensions, 
                                          const dimensions& output_dimensions)
 {
-    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+// @todo
 
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+/*
     const Index mapping_neurons_number = 10;
     const Index bottle_neck_neurons_number = complexity_dimensions[0];
-/*
+
     add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
                 "mapping_layer");
 
@@ -550,8 +561,8 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
             kernel_dimensions,
             ConvolutionalLayer::ActivationFunction::RectifiedLinear,
             convolution_stride_dimensions,
-            convolution_type),
-            "convolutional_layer_" + to_string(i + 1));
+            convolution_type,
+            "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -562,8 +573,8 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                             pool_dimensions,
                                             pooling_stride_dimensions,
                                             padding_dimensions,
-                                            pooling_method),
-                  "pooling_layer_" + to_string(i + 1));
+                                            pooling_method,
+                                            "pooling_layer_" + to_string(i + 1)));
 
     }
 
@@ -572,7 +583,9 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     //const dimensions neurons_number = { complexity_dimensions[complexity_dimensions.size()]*2 };
     //add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::RectifiedLinear), "perceptron_layer");
 
-    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
+    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
+                                              output_dimensions,
+                                              "probabilistic_layer"));
 }
 
 
@@ -709,11 +722,7 @@ void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& n
 {
     const Index layer_index = get_layer_index(name);
 
-    vector<Index> new_layer_input_indices(1);
-
-    new_layer_input_indices[0] = get_layer_index(new_layer_inputs_name);
-
-    layer_input_indices[layer_index] = new_layer_input_indices;
+    layer_input_indices[layer_index] = {get_layer_index(new_layer_inputs_name)};
 }
 
 
@@ -1042,28 +1051,6 @@ void NeuralNetwork::set_parameters_random() const
 }
 
 
-void NeuralNetwork::forward_propagate(const Batch& batch,
-    ForwardPropagation& forward_propagation,
-    const bool& is_training) const
-{
-
-    const Index layers_number = get_layers_number();
-
-    const Index first_trainable_layer_index = get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = get_last_trainable_layer_index();
-
-    const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
-    const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
-
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
-
-    for (Index i = first_layer_index; i <= last_layer_index; i++)
-        layers[i]->forward_propagate(layer_input_pairs[i],
-                                     forward_propagation.layers[i],
-                                     is_training);}
-}
-
-
 void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
@@ -1086,7 +1073,7 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 }
 
 
-void NeuralNetwork::forward_propagate(const Batch& batch,
+void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
                                       const Tensor<type, 1>& new_parameters,
                                       ForwardPropagation& forward_propagation) const
 {
@@ -1096,7 +1083,7 @@ void NeuralNetwork::forward_propagate(const Batch& batch,
 
     const bool is_training = true;
 
-    forward_propagate(batch, forward_propagation, is_training);
+    forward_propagate(input_pair, forward_propagation, is_training);
 
     set_parameters(original_parameters);
 }
@@ -1112,11 +1099,13 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     const Index batch_samples_number = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
-    ForwardPropagation forward_propagation(batch_samples_number, this);
+    ForwardPropagation forward_propagation(batch_samples_number, this);        
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
     forward_propagate({input_pair}, forward_propagation);
+
+    forward_propagation.print();
 
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
@@ -1439,8 +1428,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         tinyxml2::XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
 
-        // @todo
-        Layer::Type layer_type;// = string_to_layer_type(layer_type_string);
+        const Layer::Type layer_type = layers[i]->string_to_layer_type(layer_type_string);
 
         switch(layer_type)
         {
@@ -2072,7 +2060,7 @@ void ForwardPropagation::print() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
+        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_name() << endl;
 
         layers[i]->print();
     }
@@ -2108,6 +2096,8 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
         }
     }
 }
+
+} // Namespace
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

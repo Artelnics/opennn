@@ -900,7 +900,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
 
             inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }

@@ -361,7 +361,7 @@ pair<type*, dimensions> NormalizationLayer3DForwardPropagation::get_outputs_pair
     const Index inputs_number = normalization_layer_3d->get_inputs_number();
     const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
-    return { (type*)outputs_data, { batch_samples_number, inputs_number, inputs_depth } };
+    return { (type*)outputs.data(), { batch_samples_number, inputs_number, inputs_depth } };
 }
 
 
@@ -377,8 +377,6 @@ void NormalizationLayer3DForwardPropagation::set(const Index& new_batch_samples_
     const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
     outputs.resize(batch_samples_number, inputs_number, inputs_depth);
-
-    outputs_data = outputs.data();
 
     normalized_inputs.resize(batch_samples_number, inputs_number, inputs_depth);
 

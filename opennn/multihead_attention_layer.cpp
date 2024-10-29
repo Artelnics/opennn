@@ -980,7 +980,7 @@ pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_p
 
     const Index depth = multihead_attention_layer->get_depth();
 
-    return { (type*)outputs_data, {{ batch_samples_number, input_size, depth }} };
+    return { (type*)outputs.data(), {{ batch_samples_number, input_size, depth }} };
 }
 
 
@@ -1005,8 +1005,6 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_sampl
     // Outputs
 
     outputs.resize(batch_samples_number, input_size, depth);
-
-    outputs_data = outputs.data();
 
     // Rest of quantities
 

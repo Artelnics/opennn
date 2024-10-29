@@ -56,7 +56,8 @@ public:
 
     explicit PerceptronLayer(const dimensions&,
                              const dimensions&,
-                             const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
+                             const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                             const string = "perceptron");
 
     // Get
 
@@ -85,8 +86,9 @@ public:
     void set();
 
     void set(const Index&,
-        const Index&,
-        const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
+             const Index&,
+             const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+             const string = "perceptron_layer");
 
     void set_default();
 

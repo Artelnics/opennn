@@ -486,7 +486,7 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     const Index inputs_number = perceptron_layer_3d->get_inputs_number();
 
-    return { outputs_data, { batch_samples_number, inputs_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, inputs_number, neurons_number } };
 }
 
 
@@ -503,8 +503,6 @@ void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_num
     const Index inputs_number = perceptron_layer_3d->get_inputs_number();
 
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
-
-    outputs_data = outputs.data();
 
     activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 }

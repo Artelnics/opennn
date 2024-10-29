@@ -150,6 +150,8 @@ void DataSet::RawVariable::set_scaler(const string& new_scaler)
         set_scaler(Scaler::StandardDeviation);
     else if(new_scaler == "Logarithm")
         set_scaler(Scaler::Logarithm);
+    else if (new_scaler == "ImageMinMax")
+        set_scaler(Scaler::ImageMinMax);
     else
         throw runtime_error("Unknown scaler: " + new_scaler + "\n");
 }
@@ -1369,8 +1371,6 @@ void DataSet::set(const VariableUse& variable_use)
 void DataSet::set_raw_variables_number(const Index& new_raw_variables_number)
 {
     raw_variables.resize(new_raw_variables_number);
-
-    set_default_raw_variables_uses();
 }
 
 
@@ -1740,6 +1740,19 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
 }
 
 
+Tensor<Tensor<Index, 1>, 1> DataSet::get_variable_indices() const
+{
+    const Index raw_variables_number = get_raw_variables_number();
+
+    Tensor<Tensor<Index, 1>, 1> indices(raw_variables_number);
+
+    for(Index i = 0; i < raw_variables_number; i++)
+        indices(i) = get_variable_indices(i);
+
+    return indices;
+}
+
+
 Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) const
 {
     Index index = 0;
@@ -1749,21 +1762,22 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) 
             ? raw_variables(i).categories.size()
             : 1;
 
-    if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
-    {
-        Tensor<Index, 1> variable_indices(raw_variables(raw_variable_index).categories.size());
+    const RawVariable& raw_variable = raw_variables(raw_variable_index);
 
-        for(Index j = 0; j<raw_variables(raw_variable_index).categories.size(); j++)
-            variable_indices(j) = index+j;
-
-        return variable_indices;
-    }
-    else
+    if(raw_variable.type == RawVariableType::Categorical)
     {
-        const Tensor<Index, 1> indices = {index};
+        Tensor<Index, 1> indices(raw_variable.categories.size());
+
+        for(Index j = 0; j < raw_variable.categories.size(); j++)
+            indices(j) = index + j;
 
         return indices;
     }
+
+    Tensor<Index, 1> indices(1);
+    indices(0) = index;
+
+    return indices;
 }
 
 
@@ -2017,24 +2031,6 @@ void DataSet::set(const Index& new_samples_number,
 
     sample_uses.resize(new_samples_number);
     split_samples_random();
-}
-
-
-void DataSet::set(const DataSet& other_data_set)
-{
-    data_path = other_data_set.data_path;
-
-    has_header = other_data_set.has_header;
-
-    separator = other_data_set.separator;
-
-    missing_values_label = other_data_set.missing_values_label;
-
-    data = other_data_set.data;
-
-    raw_variables = other_data_set.raw_variables;
-
-    display = other_data_set.display;
 }
 
 
@@ -3137,9 +3133,9 @@ void DataSet::set_data_random()
 void DataSet::to_XML(tinyxml2::XMLPrinter& printer) const
 {
     if (model_type == ModelType::Forecasting)
-        throw std::runtime_error("Forecasting");
+        throw runtime_error("Forecasting");
     if (model_type == ModelType::ImageClassification)
-        throw std::runtime_error("Image classification");
+        throw runtime_error("Image classification");
 
     printer.OpenElement("DataSet");
 
@@ -3195,11 +3191,11 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
     if (!data_set_element) 
-        throw std::runtime_error("Data set element is nullptr.\n");
+        throw runtime_error("Data set element is nullptr.\n");
     
     const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
     if (!data_source_element) 
-        throw std::runtime_error("Data source element is nullptr.\n");
+        throw runtime_error("Data source element is nullptr.\n");
     
     set_data_source_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));
@@ -3210,7 +3206,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
     if (!raw_variables_element) {
-        throw std::runtime_error("RawVariables element is nullptr.\n");
+        throw runtime_error("RawVariables element is nullptr.\n");
     }
     set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
@@ -3221,7 +3217,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         start_element = raw_variable_element;
 
         if (raw_variable_element->Attribute("Item") != std::to_string(i + 1)) {
-            throw std::runtime_error("Raw variable item number (" + std::to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
+            throw runtime_error("Raw variable item number (" + std::to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
         }
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
@@ -3241,7 +3237,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     // Samples
     const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
     if (!samples_element) {
-        throw std::runtime_error("Samples element is nullptr.\n");
+        throw runtime_error("Samples element is nullptr.\n");
     }
     sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
     set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
@@ -3249,7 +3245,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     // Missing values
     const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
     if (!missing_values_element) {
-        throw std::runtime_error("Missing values element is nullptr.\n");
+        throw runtime_error("Missing values element is nullptr.\n");
     }
     set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
     missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
@@ -3286,11 +3282,11 @@ void DataSet::print() const
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
    
-    print_dimensions(input_dimensions);
+    print_dimensions(get_input_dimensions());
          
     cout << "Target variables dimensions: ";
     
-    print_dimensions(target_dimensions);
+    print_dimensions(get_target_dimensions());
     
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
@@ -4266,6 +4262,8 @@ void DataSet::read_csv()
 
     const Index variables_number = get_variables_number();
 
+    const Tensor<Tensor<Index, 1>, 1> all_variable_indices = get_variable_indices();
+
     data.resize(samples_number, variables_number);
     data.setZero();
 
@@ -4321,26 +4319,23 @@ void DataSet::read_csv()
         if(has_sample_ids)
             samples_id(sample_index) = tokens(0);
 
-//        #pragma omp parallel for
+        #pragma omp parallel for
 
         for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
         {
-            cout << raw_variables(raw_variable_index).name << endl;
             const RawVariableType raw_variable_type = raw_variables(raw_variable_index).type;
 
-            const string token = has_sample_ids ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
+            const string token = has_sample_ids
+                ? tokens(raw_variable_index+1)
+                : tokens(raw_variable_index);
 
-            const Tensor<Index, 1> variable_indices = get_variable_indices(raw_variable_index);
-
-            cout << sample_index << endl;
+            const Tensor<Index, 1>& variable_indices = all_variable_indices(raw_variable_index);
 
             if(raw_variable_type == RawVariableType::Numeric)
             {
-
-                if(token.empty() || token == missing_values_label)
-                    data(sample_index, variable_indices(0)) = NAN;
-                else
-                    data(sample_index, variable_indices(0)) = stof(token);
+                (token.empty() || token == missing_values_label)
+                    ? data(sample_index, variable_indices(0)) = NAN
+                    : data(sample_index, variable_indices(0)) = stof(token);
 
             }
             else if(raw_variable_type == RawVariableType::DateTime)
@@ -4369,7 +4364,9 @@ void DataSet::read_csv()
             {
                 if(contains(positive_words, token) || contains(negative_words, token))
                 {
-                    data(sample_index, variable_indices(0)) = contains(positive_words, token) ? 1 : 0;
+                    data(sample_index, variable_indices(0)) = contains(positive_words, token)
+                        ? 1
+                        : 0;
                 }
                 else
                 {
@@ -4391,11 +4388,10 @@ void DataSet::read_csv()
     }
 
     file.close();
-/*
+
     unuse_constant_raw_variables();
     set_binary_raw_variables();
     split_samples_random();
-*/
 }
 
 
@@ -4446,6 +4442,8 @@ string DataSet::RawVariable::get_scaler_string() const
         return "StandardDeviation";
     case Scaler::Logarithm:
         return "Logarithm";
+    case Scaler::ImageMinMax:
+        return "ImageMinMax";
     default:
         return "";
     }
@@ -4569,16 +4567,14 @@ void DataSet::check_separators(const string& line) const
     {
         if(line.find(',') != string::npos)
             throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is space (' ').");
-
-        if(line.find(';') != string::npos)
+        else if(line.find(';') != string::npos)
             throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is space (' ').");
     }
     else if(separator == Separator::Tab)
     {
         if(line.find(',') != string::npos)
             throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is tab ('   ').");
-
-        if(line.find(';') != string::npos)
+        else if(line.find(';') != string::npos)
             throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is tab ('   ').");
     }
     else if(separator == Separator::Comma)
