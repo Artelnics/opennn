@@ -288,7 +288,7 @@ TrainingResults GradientDescent::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch, 
+        neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation, 
                                           is_training);
 
@@ -307,7 +307,7 @@ TrainingResults GradientDescent::perform_training()
 
         if(has_selection)
         {
-            neural_network->forward_propagate(selection_batch, 
+            neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                               selection_forward_propagation, 
                                               is_training);
 

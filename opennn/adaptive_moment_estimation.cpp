@@ -222,6 +222,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+
         scaling_layer_2d->set_descriptives(input_variables_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
@@ -300,7 +301,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
 
-            neural_network->forward_propagate(training_batch,
+            neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
 
@@ -354,7 +355,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      context_variable_indices);
                 // Neural network
 
-                neural_network->forward_propagate(selection_batch,
+                neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                                   selection_forward_propagation,
                                                   is_training);
                 
