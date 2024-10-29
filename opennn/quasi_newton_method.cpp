@@ -415,11 +415,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const Tensor<Index, 1> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
-    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const Tensor<string, 1> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
@@ -435,7 +435,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
     neural_network->set_inputs_names(input_names);
-    neural_network->set_output_namess(targets_names);
+    neural_network->set_output_namess(target_names);
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
@@ -457,11 +457,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     Batch training_batch(training_samples_number, data_set);
 
-    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, data_set);
 
-    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
 
     // Loss index
 

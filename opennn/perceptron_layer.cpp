@@ -11,8 +11,6 @@
 #include "strings_utilities.h"
 
 #include <iostream>
-#include <map>
-#include <functional>
 
 namespace opennn
 {
@@ -581,16 +579,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
     set_inputs_number(read_xml_index(perceptron_layer_element, "InputsNumber"));
     set_neurons_number(read_xml_index(perceptron_layer_element, "NeuronsNumber"));
     set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
-
-    // Parameters
-    const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
-
-    if (!parameters_element) {
-        throw std::runtime_error("Parameters element is nullptr.\n");
-    }
-    if (parameters_element->GetText()) {
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
-    }
+    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "));
 }
 
 

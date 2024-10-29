@@ -9,9 +9,10 @@
 #include <set>
 #include <map>
 #include <numeric>
+#include <regex>
+#include <codecvt>
 
 #include "language_data_set.h"
-#include "tensors.h"
 #include "strings_utilities.h"
 
 namespace opennn
@@ -73,113 +74,9 @@ Index LanguageDataSet::get_completion_length() const
 }
 
 
-Index LanguageDataSet::get_context_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index context_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use == VariableUse::Context)
-        {
-            context_variables_number += raw_variables(i).get_categories_number();
-        }
-    }
-
-    return context_variables_number;
-}
-
-
 const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() const
 {
     return context_dimensions;
-}
-
-
-Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
-{
-    const Index context_variables_number = get_context_variables_number();
-
-    Tensor<Index, 1> context_variables_indices(context_variables_number);
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Tensor<Index, 1> context_raw_variables_indices = get_context_raw_variables_indices();
-
-    Index context_index = 0;
-    Index context_variable_index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        const RawVariable& raw_variable = raw_variables(i);
-
-        if(raw_variable.type == RawVariableType::Categorical)
-        {
-            const Index current_categories_number = raw_variable.get_categories_number();
-
-            // @todo check, raw variables struct has changed
-
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                if(raw_variable.use == VariableUse::Context)
-                {
-                    context_variables_indices(context_index) = context_variable_index;
-                    context_index++;
-                }
-
-                context_variable_index++;
-            }
-        }
-        else if(raw_variable.use == VariableUse::Context) // Binary, numeric
-        {
-            context_variables_indices(context_index) = context_variable_index;
-            context_index++;
-            context_variable_index++;
-        }
-        else
-        {
-            context_variable_index++;
-        }
-    }
-
-    return context_variables_indices;
-}
-
-
-Index LanguageDataSet::get_context_raw_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index context_raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use == VariableUse::Context)
-        {
-            context_raw_variables_number++;
-        }
-    }
-
-    return context_raw_variables_number;
-}
-
-
-Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Index context_raw_variables_number = get_context_raw_variables_number();
-
-    Tensor<Index, 1> context_raw_variables_indices(context_raw_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::Context)
-            context_raw_variables_indices(index++) = i;
-
-    return context_raw_variables_indices;
 }
 
 
@@ -193,22 +90,6 @@ const Tensor<Tensor<string, 1>, 1> LanguageDataSet::get_targets() const
     return targets;
 }
 
-
-Tensor<type, 2> LanguageDataSet::get_context_data() const
-{
-    const Index samples_number = get_samples_number();
-
-    Tensor<Index, 1> indices;
-    initialize_sequential(indices, 0, 1, samples_number - 1);
-
-    const Tensor<Index, 1> context_variables_indices = get_context_variables_indices();
-
-    Tensor<type, 2> context_data_data(indices.size(), context_variables_indices.size());
-
-    fill_tensor_data(data, indices, context_variables_indices, context_data_data.data());
-
-    return context_data_data;
-}
 
 void LanguageDataSet::set_default_raw_variables_uses()
 {
@@ -224,7 +105,7 @@ void LanguageDataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_va
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
     context_dimensions.resize(1);
-    context_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
 }
 
 
@@ -233,7 +114,7 @@ void LanguageDataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_r
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
     context_dimensions.resize(1);
-    context_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
 }
 
 
@@ -291,7 +172,7 @@ void LanguageDataSet::set_default()
 
     context_dimensions.resize(1);
 
-    context_dimensions.setConstant(get_context_variables_number());
+    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
 }
 
 
@@ -663,134 +544,22 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     ostringstream buffer;
 
-    // Data set element
-
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
-
-    // Data file
 
     const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
-    // Data file name
-
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
-
-    if(!data_source_path_element)
-        throw runtime_error("Path element is nullptr.\n");
-
-    if(data_source_path_element->GetText())
-        set_data_source_path(data_source_path_element->GetText());
-
-    // Separator
-
-    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
-
-    if(separator_element)
-        if(separator_element->GetText())
-            set_separator_name(separator_element->GetText());
-        else
-            set_separator_name("Comma");
-    else
-        set_separator_name("Comma");
-
-    // Text separator
-
-    const tinyxml2::XMLElement* text_separator_element = data_source_element->FirstChildElement("Separator");
-
-    if(text_separator_element)
-    {
-        if(text_separator_element->GetText())
-        {
-            const string new_separator = text_separator_element->GetText();
-
-            try
-            {
-                set_separator_name(new_separator);
-            }
-            catch(const exception& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Has raw_variables names
-
-    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
-
-    if(raw_variables_names_element)
-    {
-        const string new_raw_variables_names_string = raw_variables_names_element->GetText();
-
-        try
-        {
-            set_has_header(new_raw_variables_names_string == "1");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Samples id
-
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
-
-    if(rows_label_element)
-    {
-        const string new_rows_label_string = rows_label_element->GetText();
-
-        try
-        {
-            set_has_ids(new_rows_label_string == "1");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Missing values label
-
-    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
-
-    if(missing_values_label_element)
-    {
-        if(missing_values_label_element->GetText())
-        {
-            const string new_missing_values_label = missing_values_label_element->GetText();
-
-            set_missing_values_label(new_missing_values_label);
-        }
-        else
-        {
-            set_missing_values_label("NA");
-        }
-    }
-    else
-    {
-        set_missing_values_label("NA");
-    }
-
-    // Codification
-
-    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
-
-    if(codification_element)
-    {
-        if(codification_element->GetText())
-        {
-            const string new_codification = codification_element->GetText();
-
-            set_codification(new_codification);
-        }
-    }
+    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_separator_name(read_xml_string(data_source_element, "Separator"));
+    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
+    set_codification(read_xml_string(data_source_element, "Codification"));
+    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
+    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
     // RawVariables
 
@@ -827,87 +596,23 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
             throw runtime_error("Raw_variable item number (" + to_string(i + 1) + ") exception.\n");
 
-        // Name
+        RawVariable& raw_variable = raw_variables(i);
+        raw_variable.name = read_xml_string(raw_variable_element, "Name");
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
+        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
+        raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
-        const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
-
-        if(!name_element)
-            throw runtime_error("Name element is nullptr.\n");
-
-        if(name_element->GetText())
-            raw_variables(i).name = name_element->GetText();
-
-        // Scaler
-
-        const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
-
-        if(!scaler_element)
-            throw runtime_error("Scaler element is nullptr.\n");
-
-        if(scaler_element->GetText())
-            raw_variables(i).set_scaler(scaler_element->GetText());
- 
-        // raw_variable use
-
-        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
-
-        if(!use_element)
-            throw runtime_error("raw_variable use element is nullptr.\n");
-
-        if(use_element->GetText())
-            raw_variables(i).set_use(use_element->GetText());
-
-        // Type
-
-        const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
-
-        if(!type_element)
-            throw runtime_error("Type element is nullptr.\n");
-
-        if(type_element->GetText())
-            raw_variables(i).set_type(type_element->GetText());
 
         if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
-        {
-            // Categories
+            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
 
-            const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
-
-            if(!categories_element)
-                throw runtime_error("Categories element is nullptr.\n");
-
-            if(categories_element->GetText())
-                raw_variables(i).categories = get_tokens(categories_element->GetText(), ";");
-        }
+//        raw_variable_element = raw_variable_element->NextSiblingElement("RawVariable");
     }
 
     // Rows label
 
     if(has_sample_ids)
-    {
-        // Samples id begin tag
-
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
-
-        if(!has_ids_element)
-            throw runtime_error("Rows labels element is nullptr.\n");
-
-        // Samples id
-
-        if(has_ids_element->GetText())
-        {
-            const string new_rows_labels = has_ids_element->GetText();
-
-            string separator = ",";
-
-            if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) {
-                separator = ';';
-            }
-
-            samples_id = get_tokens(new_rows_labels, separator);
-        }
-    }
+        samples_id = get_tokens(read_xml_string(data_set_element, "SamplesId"), ",");
 
     // Samples
 
@@ -1071,10 +776,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Display
 
-    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(data_set_element, "Display"));
 }
 
 
@@ -1558,8 +1260,7 @@ void LanguageDataSet::load_documents(const string& path)
         if(file.peek() == EOF) break;
     }
 
-    file.close();
-
+    //file.close();
     Tensor<string, 1> document(lines_number);
     Tensor<string, 1> document_target(lines_number);
 
@@ -1597,6 +1298,9 @@ void LanguageDataSet::load_documents(const string& path)
             else
 
                 document(lines_count) += " " + tokens(0);
+
+
+            lines_count++;
         }
         else
         {
@@ -1678,22 +1382,18 @@ void LanguageDataSet::read_csv_3_language_model()
             if(has_sample_ids && j == 0)
             {
                 samples_id(sample_index) = tokens(j);
-            }
-            else if(tokens(j) == missing_values_label || tokens(j).empty())
-            {
+
+                continue;
+            }            
+
+            if(tokens(j) == missing_values_label || tokens(j).empty())
                 data(sample_index, raw_variable_index) = type(NAN);
-                raw_variable_index++;
-            }
             else if(is_float)
-            {
                 data(sample_index, raw_variable_index) = type(strtof(tokens(j).data(), nullptr));
-                raw_variable_index++;
-            }
             else
-            {
                 data(sample_index, raw_variable_index) = type(stof(tokens(j)));
-                raw_variable_index++;
-            }
+
+            raw_variable_index++;
         }
 
         raw_variable_index = 0;
@@ -1710,15 +1410,554 @@ void LanguageDataSet::read_csv_3_language_model()
 }
 
 
-void LanguageDataSet::read_csv_language_model()
+void LanguageDataSet::read_csv_1()
 {
-//    read_csv_1();
+    if(display) cout << "Path: " << data_path << endl;
 
-//    read_csv_2_simple();
+    if(data_path.empty())
+    {
+        ostringstream buffer;
 
-//    read_csv_3_language_model();
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Data file name is empty.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+#ifdef _WIN32
+
+    if(std::regex_search(data_path, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_path);
+        file.open(file_name_wide);
+    }
+    else
+    {
+        file.open(data_path.c_str());
+    }
+#else
+    file.open(data_path.c_str());
+#endif
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Cannot open data file: " << data_path << "\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    const string separator_char = get_separator_string();
+
+    if(display) cout << "Setting data file preview..." << endl;
+
+    Index lines_number = has_binary_raw_variables()? 4 : 3;
+
+    data_file_preview.resize(lines_number);
+
+    string line;
+
+    Index lines_count = 0;
+
+    while(file.good())
+    {
+        getline(file, line);
+
+        decode(line);
+
+        trim(line);
+
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        check_separators(line);
+
+        data_file_preview(lines_count) = get_tokens(line, separator_char);
+
+        lines_count++;
+
+        if(lines_count == lines_number) break;
+    }
+
+    file.close();
+
+    // Check empty file
+
+    if(data_file_preview(0).size() == 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv_1() method.\n"
+               << "File " << data_path << " is empty.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    // Set rows labels and raw_variables names
+
+    if(display) cout << "Setting rows labels..." << endl;
+
+    string first_name = data_file_preview(0)(0);
+    transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
+
+    const Index raw_variables_number = get_has_rows_labels() ? data_file_preview(0).size()-1 : data_file_preview(0).size();
+
+    raw_variables.resize(raw_variables_number);
+
+    // Check if header has numeric value
+
+    if(has_binary_raw_variables() && has_numbers(data_file_preview(0)))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv_1() method.\n"
+               << "Some raw_variables names are numeric.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    // raw_variables names
+
+    if(display) cout << "Setting raw_variables names..." << endl;
+
+    if(has_binary_raw_variables())
+    {
+        get_has_rows_labels() ? set_raw_variable_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
+                                                                                  Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
+                              : set_raw_variable_names(data_file_preview(0));
+    }
+    else
+    {
+        set_raw_variable_names(get_default_raw_variables_names(raw_variables_number));
+    }
+
+    // Check raw_variables with all missing values
+
+    bool has_nans_raw_variables = false;
+
+    do
+    {
+        has_nans_raw_variables = false;
+
+        if(lines_number > 10)
+            break;
+
+        for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
+        {
+            if(get_has_rows_labels() && i == 0) continue;
+
+            // Check if all are missing values
+
+            if( data_file_preview(1)(i) == missing_values_label
+                && data_file_preview(2)(i) == missing_values_label
+                && data_file_preview(lines_number-2)(i) == missing_values_label
+                && data_file_preview(lines_number-1)(i) == missing_values_label)
+            {
+                has_nans_raw_variables = true;
+            }
+            else
+            {
+                has_nans_raw_variables = false;
+            }
+
+            if(has_nans_raw_variables)
+            {
+                lines_number++;
+                data_file_preview.resize(lines_number);
+
+                string line;
+                Index lines_count = 0;
+
+                file.open(data_path.c_str());
+
+                if(!file.is_open())
+                {
+                    ostringstream buffer;
+
+                    buffer << "OpenNN Exception: DataSet class.\n"
+                           << "void read_csv() method.\n"
+                           << "Cannot open data file: " << data_path << "\n";
+
+                    throw runtime_error(buffer.str());
+                }
+
+                while(file.good())
+                {
+                    getline(file, line);
+                    decode(line);
+                    trim(line);
+                    erase(line, '"');
+                    if(line.empty()) continue;
+                    check_separators(line);
+                    data_file_preview(lines_count) = get_tokens(line, separator_char);
+                    lines_count++;
+                    if(lines_count == lines_number) break;
+                }
+
+                file.close();
+            }
+        }
+    }while(has_nans_raw_variables);
+
+    // raw_variables types
+
+    if(display) cout << "Setting raw_variables types..." << endl;
+
+    Index raw_variable_index = 0;
+
+    for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
+    {
+        if(get_has_rows_labels() && i == 0) continue;
+
+        string data_file_preview_1 = data_file_preview(1)(i);
+        string data_file_preview_2 = data_file_preview(2)(i);
+        string data_file_preview_3 = data_file_preview(lines_number-2)(i);
+        string data_file_preview_4 = data_file_preview(lines_number-1)(i);
+
+        /*        if(nans_columns(column_index))
+        {
+            columns(column_index).type = ColumnType::Constant;
+            column_index++;
+        }
+        else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+            || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
+            || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
+            || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
+        {
+            raw_variables(raw_variable_index).type = RawVariableType::DateTime;
+            //            time_column = raw_variables(raw_variable_index).name;
+            raw_variable_index++;
+        }
+        else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
+                 || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
+                 || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
+                 || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
+        {
+            raw_variables(raw_variable_index).type = RawVariableType::Numeric;
+            raw_variable_index++;
+        }
+        else
+        {
+            raw_variables(raw_variable_index).type = RawVariableType::Categorical;
+            raw_variable_index++;
+        }
+    }
+
+    // Resize data file preview to original
+
+    if(data_file_preview.size() > 4)
+    {
+        lines_number = has_binary_raw_variables() ? 4 : 3;
+
+        Tensor<Tensor<string, 1>, 1> data_file_preview_copy(data_file_preview);
+
+        data_file_preview.resize(lines_number);
+
+        data_file_preview(0) = data_file_preview_copy(1);
+        data_file_preview(1) = data_file_preview_copy(1);
+        data_file_preview(2) = data_file_preview_copy(2);
+        data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
+        data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
+    }
+
 }
 
+
+void LanguageDataSet::read_csv_2_simple()
+{
+    regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+#ifdef _WIN32
+
+    if(regex_search(data_path, accent_regex))
+    {
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        wstring file_name_wide = conv.from_bytes(data_path);
+        file.open(file_name_wide);
+    }else
+    {
+        file.open(data_path.c_str());
+    }
+
+#else
+    file.open(data_path.c_str());
+#endif
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv_2_simple() method.\n"
+               << "Cannot open data file: " << data_path << "\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    string line;
+    Index line_number = 0;
+
+    if(has_binary_raw_variables())
+    {
+        while(file.good())
+        {
+            line_number++;
+
+            getline(file, line);
+
+            trim(line);
+
+            erase(line, '"');
+
+            if(line.empty()) continue;
+
+            break;
+        }
+    }
+
+    Index samples_count = 0;
+
+    Index tokens_count;
+
+    if(display) cout << "Setting data dimensions..." << endl;
+
+    const string separator_char = get_separator_string();
+
+    const Index raw_variables_number = get_raw_variables_number();
+    const Index raw_raw_variables_number = get_has_rows_labels() ? raw_variables_number + 1 : raw_variables_number;
+
+    while(file.good())
+    {
+        line_number++;
+
+        getline(file, line);
+
+        trim(line);
+
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        tokens_count = count_tokens(line, separator_char);
+
+        if(tokens_count != raw_raw_variables_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_csv_2_simple() method.\n"
+                   << "Line " << line_number << ": Size of tokens("
+                   << tokens_count << ") is not equal to number of raw_variables("
+                   << raw_raw_variables_number << ").\n";
+
+            throw runtime_error(buffer.str());
+        }
+
+        samples_count++;
+    }
+
+    file.close();
+
+    data.resize(samples_count, raw_variables_number);
+
+    set_default_raw_variables_uses();
+
+    //samples_uses.resize(samples_count);
+    //samples_uses.setConstant(SampleUse::Training);
+
+    split_samples_random();
+
+}
+
+
+
+void LanguageDataSet::read_csv_language_model()
+{
+    read_csv_1();
+
+    read_csv_2_simple();
+
+    read_csv_3_language_model();
+}
+
+// void DataSet::read_csv()
+// {
+//     read_csv_1();
+
+//     if(!has_time_raw_variables() && !has_categorical_raw_variables())
+//     {
+//         read_csv_2_simple();
+
+//         read_csv_3_simple();
+//     }
+//     else
+//     {
+//         read_csv_2_complete();
+
+//         read_csv_3_complete();
+//     }
+// }
+
+
+// void LanguageDataSet::read_txt_language_model()
+// {
+//     cout << "Reading .txt file..." << endl;
+
+//     load_documents(data_path);
+
+//     Index entry_number = documents(0).size();
+
+
+//     for(Index i = 1; i < documents.size(); i++)
+//         entry_number += documents(i).size();
+
+//     Index completion_entry_number = targets(0).size();
+
+//     for(Index i = 1; i < targets.size(); i++)
+//         completion_entry_number += targets(i).size();
+
+//     if(entry_number != completion_entry_number)
+//         throw runtime_error("Context number of entries (" + to_string(entry_number) + ") not equal to completion number of entries (" + to_string(completion_entry_number) + ").\n");
+
+//     Tensor<string, 1> context(entry_number);
+
+//     Index entry_index = 0;
+
+
+//     for(Index i = 0; i < documents.size(); i++)
+//         for(Index j = 0; j < documents(i).size(); j++)
+//             context(entry_index++) = documents(i)(j);
+
+
+//     Tensor<string, 1> completion(entry_number);
+
+//     entry_index = 0;
+
+//     for(Index i = 0; i < targets.size(); i++)
+//         for(Index j = 0; j < targets(i).size(); j++)
+//             completion(entry_index++) = targets(i)(j);
+
+//     cout << "Processing documents..." << endl;
+
+//     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(context);
+//     const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess_language_documents(completion);
+
+//     bool imported_vocabulary = false;
+
+//     if(context_vocabulary_path.empty() || completion_vocabulary_path.empty())
+//     {
+//         cout << "Calculating vocabularies..." << endl;
+
+//         const Index target_vocabulary_size = 8000;
+
+//         vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
+
+//         context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
+//         completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
+//     }
+//     else
+//     {
+//         cout << "Importing vocabularies..." << endl;
+
+//         //imported_vocabulary = true;
+//         import_vocabulary(context_vocabulary_path, context_vocabulary);
+//         import_vocabulary(completion_vocabulary_path, completion_vocabulary);
+//     }
+
+//     const Index LIMIT = 126;
+
+//     Index max_context_tokens = context_tokens(0).size();
+
+//     for(Index i = 0; i < entry_number; i++)
+//         if(context_tokens(i).size() > max_context_tokens)
+//             max_context_tokens = context_tokens(i).size();
+
+//     max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
+
+//     Index max_completion_tokens = completion_tokens(0).size();
+
+//     for(Index i = 0; i < entry_number; i++)
+//         if(completion_tokens(i).size() > max_completion_tokens)
+//             max_completion_tokens = completion_tokens(i).size();
+
+//     max_completion_length = max_completion_tokens > LIMIT + 1 ? LIMIT + 1 : max_completion_tokens;
+
+//     // Output
+
+//     cout << "Writting data file..." << endl;
+    
+//     string transformed_data_path = data_path;
+//     replace(transformed_data_path,".txt","_data.txt");
+//     replace(transformed_data_path,".csv","_data.csv");
+
+//     ofstream file;
+//     file.open(transformed_data_path);
+
+//     // @todo maybe context does NOT need start and end tokens
+
+//     for(Index i  = type(0); i < max_context_length + 2; i++) // there is start and end indicators
+//         file << "context_token_position_" << i << ";";
+
+//     for(Index i  = type(0); i < max_completion_length + 1; i++)
+//         file << "input_token_position_" << i << ";";
+
+//     for(Index i  = type(0); i < max_completion_length; i++)
+//         file << "target_token_position_" << i << ";";
+
+//     file << "target_token_position_" << max_completion_length << "\n";
+
+//     // Data file preview
+
+//     Index preview_size = 4;
+
+//     text_data_file_preview.resize(preview_size, 2);
+
+//     for(Index i = 0; i < preview_size - 1; i++)
+//     {
+//         text_data_file_preview(i,0) = context(i);
+//         text_data_file_preview(i,1) = completion(i);
+//     }
+
+//     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
+//     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
+    
+//     //if(!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
+//     //else
+//     write_data_file_wordpiece(file, context_tokens, completion_tokens);
+
+//     file.close();
+
+//     data_path = transformed_data_path;
+//     separator = Separator::Semicolon;
+//     has_header = true;
+
+
+//     read_csv_language_model();
+
+//     set_raw_variable_types(RawVariableType::Numeric);
+//     cout<<"Works properly"<<endl;
+//     for(Index i = 0; i < max_context_length + 2; i++)
+//         set_raw_variable_use(i, VariableUse::Context);
+
+//     for(Index i = 0; i < max_completion_length + 1; i++)
+//         set_raw_variable_use(i + max_context_length + 2, VariableUse::Input);
+
+//     for(Index i = 0; i < max_completion_length + 1; i++)
+//         set_raw_variable_use(i + max_context_length + max_completion_length + 3, VariableUse::Target);
+//     cout<<"Works properly"<<endl;
+// }
 
 void LanguageDataSet::read_txt_language_model()
 {
@@ -1732,7 +1971,7 @@ void LanguageDataSet::read_txt_language_model()
         entry_number += documents(i).size();
 
     Index completion_entry_number = targets(0).size();
-    
+
     for(Index i = 1; i < targets.size(); i++)
         completion_entry_number += targets(i).size();
 
@@ -1751,9 +1990,9 @@ void LanguageDataSet::read_txt_language_model()
 
     entry_index = 0;
 
-    for(Index i = 0; i < targets.size(); i++)
+    for (Index i = 0; i < targets.size(); i++)
     {
-        for(Index j = 0; j < targets(i).size(); j++)
+        for (Index j = 0; j < targets(i).size(); j++)
         {
             completion(entry_index) = targets(i)(j);
             entry_index++;
@@ -1765,9 +2004,9 @@ void LanguageDataSet::read_txt_language_model()
     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(context);
     const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess_language_documents(completion);
 
-    //bool imported_vocabulary = false;
+    bool imported_vocabulary = false;
 
-    if(context_vocabulary_path.empty() || completion_vocabulary_path.empty())
+    if (context_vocabulary_path.empty() || completion_vocabulary_path.empty())
     {
         cout << "Calculating vocabularies..." << endl;
 
@@ -1781,7 +2020,7 @@ void LanguageDataSet::read_txt_language_model()
     {
         cout << "Importing vocabularies..." << endl;
 
-        //imported_vocabulary = true;
+        imported_vocabulary = true;
         import_vocabulary(context_vocabulary_path, context_vocabulary);
         import_vocabulary(completion_vocabulary_path, completion_vocabulary);
     }
@@ -1790,9 +2029,8 @@ void LanguageDataSet::read_txt_language_model()
 
     Index max_context_tokens = context_tokens(0).size();
 
-    for(Index i = 0; i < entry_number; i++)
-    {
-        if(context_tokens(i).size() > max_context_tokens) 
+    for(Index i = 0; i < entry_number; i++){
+        if(context_tokens(i).size() > max_context_tokens)
             max_context_tokens = context_tokens(i).size();
     }
 
@@ -1801,7 +2039,7 @@ void LanguageDataSet::read_txt_language_model()
     Index max_completion_tokens = completion_tokens(0).size();
 
     for(Index i = 0; i < entry_number; i++){
-        if(completion_tokens(i).size() > max_completion_tokens) 
+        if(completion_tokens(i).size() > max_completion_tokens)
             max_completion_tokens = completion_tokens(i).size();
     }
 
@@ -1810,17 +2048,17 @@ void LanguageDataSet::read_txt_language_model()
     // Output
 
     cout << "Writting data file..." << endl;
-    
+
     string transformed_data_path = data_path;
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
-    ofstream file;
+    std::ofstream file;
     file.open(transformed_data_path);
 
     // @todo maybe context does NOT need start and end tokens
 
-    for(Index i  = type(0); i < max_context_length + 2; i++) // there is start and end indicators
+    for(Index i  = type(0); i < max_context_length + 2; i++) /// there is start and end indicators
         file << "context_token_position_" << i << ";";
 
     for(Index i  = type(0); i < max_completion_length + 1; i++)
@@ -1828,9 +2066,8 @@ void LanguageDataSet::read_txt_language_model()
 
     for(Index i  = type(0); i < max_completion_length; i++)
         file << "target_token_position_" << i << ";";
-
     file << "target_token_position_" << max_completion_length << "\n";
-    
+
     // Data file preview
 
     Index preview_size = 4;
@@ -1845,30 +2082,30 @@ void LanguageDataSet::read_txt_language_model()
 
     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
-    
-    //if(!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
+
+    //if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
     //else
     write_data_file_wordpiece(file, context_tokens, completion_tokens);
-    
+
     file.close();
 
     data_path = transformed_data_path;
     separator = Separator::Semicolon;
-    has_header = true;
+    bool has_raw_variables_names = true;
 
     read_csv_language_model();
 
-    set_all_raw_variables_type(RawVariableType::Numeric);
+    set_raw_variable_types(RawVariableType::Numeric);
 
     for(Index i = 0; i < max_context_length + 2; i++)
         set_raw_variable_use(i, VariableUse::Context);
 
-    for(Index i = 0; i < max_completion_length + 1; i++)
+    for (Index i = 0; i < max_completion_length + 1; i++)
         set_raw_variable_use(i + max_context_length + 2, VariableUse::Input);
 
-    for(Index i = 0; i < max_completion_length + 1; i++)
+    for (Index i = 0; i < max_completion_length + 1; i++)
         set_raw_variable_use(i + max_context_length + max_completion_length + 3, VariableUse::Target);
-    
+
 }
 
 

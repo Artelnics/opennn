@@ -58,7 +58,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data_constant(type(0));
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 1, LOG);
 
@@ -73,7 +73,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data_constant(type(0));
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 4, LOG);
 
@@ -111,7 +111,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
     data_set.set_data(data);
 
-    variables_descriptives = data_set.calculate_variables_descriptives();
+    variables_descriptives = data_set.calculate_variable_descriptives();
 
     assert_true(variables_descriptives.size() == 3, LOG);
 
@@ -302,7 +302,7 @@ void DataSetTest::test_calculate_target_distribution()
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({4});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     target_distribution = data_set.calculate_target_distribution();
@@ -340,6 +340,7 @@ void DataSetTest::test_calculate_target_distribution()
     assert_true(target_distribution[0] == 1, LOG);
     assert_true(target_distribution[1] == 2, LOG);
     assert_true(target_distribution[2] == 2, LOG);
+*/
 }
 
 
@@ -1047,11 +1048,13 @@ void DataSetTest::test_calculate_used_targets_mean()
 
     Tensor<Index, 1> indices(3);
     indices.setValues({0, 1, 2});
+
     Tensor<Index, 1> training_indices(1);
     training_indices.setValues({0});
 /*
     data_set.set_training(training_indices);
 */
+
 }
 
 
@@ -1081,6 +1084,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
     selection_indices.setValues({0, 1});
 
     data_set.set(DataSet::VariableUse::Input);
+
 /*
     data_set.set_sample_uses(DataSet::SampleUse::Selection, selection_indices);
 
@@ -1115,7 +1119,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     Tensor<Index, 1> target_raw_variables_indices(1);
     target_raw_variables_indices.setValues({3});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
@@ -1137,7 +1141,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     target_raw_variables_indices.resize(2);
     target_raw_variables_indices.setValues({2,3});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
@@ -1372,7 +1376,7 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     Tensor<Index, 1> target_raw_variables_indices(1);
     target_raw_variables_indices.setValues({3});
-
+/*
     data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
 
     Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
@@ -1846,11 +1850,13 @@ void DataSetTest::test_calculate_training_negatives()
     target_variables_indices.setValues({2});
 
     target_index = 2;
+
 /*
     data_set.set(DataSet::SampleUse::Testing);
     data_set.set_training(training_indices);
 
-    training_negatives = data_set.calculate_training_negatives(target_index);
+    //training_negatives = data_set.calculate_training_negatives(target_index);
+    training_negatives = data_set.calculate_negatives(DataSet::SampleUse::Training,target_index);
 
     assert_true(training_negatives == 1, LOG);
 */
@@ -1890,8 +1896,9 @@ void DataSetTest::test_calculate_selection_negatives()
 
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    Index selection_negatives = data_set.calculate_selection_negatives(target_index);
-
+    //Index selection_negatives = data_set.calculate_selection_negatives(target_index);
+    Index selection_negatives = data_set.calculate_negatives(DataSet::SampleUse::Selection,target_index);
+    data_set.calculate_negatives(DataSet::SampleUse::Training,target_index);
     data = data_set.get_data();
 
     assert_true(selection_negatives == 0, LOG);

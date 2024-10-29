@@ -444,19 +444,12 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("Probabilistic layer element is nullptr.\n");
 
     const Index new_inputs_number = read_xml_index(probabilistic_layer_element, "InputsNumber");
-    Index new_neurons_number = read_xml_index(probabilistic_layer_element, "NeuronsNumber");
+    const Index new_neurons_number = read_xml_index(probabilistic_layer_element, "NeuronsNumber");
+
     set(new_inputs_number, new_neurons_number);
 
-    set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
-
-    const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
-    if (!parameters_element) {
-        throw std::runtime_error("Parameters element is nullptr.\n");
-    }
-    if (parameters_element->GetText()) {
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
-    }
-
+    set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));    
+    set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
     set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
 
     set_display(read_xml_bool(probabilistic_layer_element, "Display"));

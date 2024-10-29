@@ -540,7 +540,8 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 
     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
-    if(use_causal_mask) apply_causal_mask(attention_scores);
+    if(use_causal_mask)
+        apply_causal_mask(attention_scores);
 /*
     softmax(attention_scores, attention_weights);
 */
@@ -951,15 +952,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
     set_depth(read_xml_index(multihead_attention_layer_element, "Depth"));
     set_heads_number(read_xml_index(multihead_attention_layer_element, "HeadsNumber"));
     set_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
-
-    const tinyxml2::XMLElement* parameters_element = multihead_attention_layer_element->FirstChildElement("Parameters");
-    
-    if (!parameters_element) {
-        throw std::runtime_error("Parameters element is nullptr.\n");
-    }
-    if (parameters_element->GetText()) {
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
-    }
+    set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "));
 }
 
 

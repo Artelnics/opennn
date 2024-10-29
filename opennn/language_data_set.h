@@ -23,11 +23,7 @@ class LanguageDataSet : public DataSet
 
 public:
 
-    // DEFAULT CONSTRUCTOR
-
     explicit LanguageDataSet();
-
-//    string get_text_separator_string() const;
 
     Tensor<string, 1> get_context_vocabulary() const;
     Tensor<string, 1> get_completion_vocabulary() const;
@@ -38,25 +34,16 @@ public:
     Index get_context_length() const;
     Index get_completion_length() const;
 
-    Index get_context_variables_number() const;
     const Tensor<Index, 1>& get_context_variables_dimensions() const;
-    Tensor<Index, 1> get_context_variables_indices() const;
-    Index get_context_raw_variables_number() const;
-    Tensor<Index, 1> get_context_raw_variables_indices() const;
 
     const Tensor<Tensor<string, 1>, 1> get_documents() const;
     const Tensor<Tensor<string, 1>, 1> get_targets() const;
-
-    Tensor<type, 2> get_context_data() const;
 
     void set_default_raw_variables_uses();
     void set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses);
     void set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses);
 
     void set_context_variables_dimensions(const Tensor<Index, 1>& new_context_dimensions);
-
-//    void set_text_separator(const Separator&);
-//    void set_text_separator(const string&);
 
     void set_context_vocabulary_path(const string&);
     void set_completion_vocabulary_path(const string&);
@@ -86,13 +73,19 @@ public:
                                                  const string& joiner = "##");
 
     void load_documents(const string&);
+
+    void read_csv_1();
+
+    void read_csv_2_simple();
+
     void read_csv_3_language_model();
 
     void read_csv_language_model();
 
     void read_txt_language_model();
+
 //    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
-    void write_data_file_wordpiece(std::ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
+    void write_data_file_wordpiece(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
 
 private:
 

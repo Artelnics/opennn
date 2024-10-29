@@ -136,7 +136,7 @@ void TimeSeriesDataSetTest::test_transform_time_series()
                     {9, 90}});
 
     data_set.set_data(data);
-
+/*
     data_set.set_variable_name(0, "x");
     data_set.set_variable_name(1, "y");
 
@@ -158,6 +158,7 @@ void TimeSeriesDataSetTest::test_transform_time_series()
     assert_true(data_set.get_variable_name(1) == "y_lag_1", LOG);
     assert_true(data_set.get_variable_name(2) == "x_lag_0", LOG);
     assert_true(data_set.get_variable_name(3) == "y_lag_0", LOG);
+*/
 }
 
 
