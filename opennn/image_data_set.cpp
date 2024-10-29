@@ -18,6 +18,11 @@ namespace opennn
 
 ImageDataSet::ImageDataSet() : DataSet()
 {
+    set_default();
+
+    model_type = ModelType::ImageClassification;
+
+    input_dimensions.resize(3);
     input_dimensions = { 0,0,0 };
 }
 
@@ -175,7 +180,6 @@ void ImageDataSet::set(const Index& new_images_number,
     sample_uses.resize(new_images_number);
     split_samples_random();
 
-    set_raw_variable_scalers(Scaler::ImageMinMax);
 }
 
 
@@ -487,302 +491,94 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
-    ostringstream buffer;
-
-    // Data set element
-
     const tinyxml2::XMLElement* image_data_set_element = data_set_document.FirstChildElement("ImageDataSet");
 
-    if(!image_data_set_element)
-        throw runtime_error("Data set element is nullptr.\n");
+    if (!image_data_set_element)
+        throw runtime_error("ImageDataSet element is nullptr.\n");
 
-    // Data file
+    // Data Source
 
     const tinyxml2::XMLElement* data_source_element = image_data_set_element->FirstChildElement("DataSource");
 
-    if(!data_source_element)
-        throw runtime_error("Data source element is nullptr.\n");
+    if (!data_source_element)
+        throw runtime_error("Element is nullptr: DataSource");
 
-    // File type
+    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    const tinyxml2::XMLElement* file_type_element = data_source_element->FirstChildElement("FileType");
+    // Input dimensions
 
-    if(!file_type_element)
-        throw runtime_error("FileType element is nullptr.\n");
-
-    if(file_type_element->GetText())
-        set_data_source_path(file_type_element->GetText());
-
-    // Data file name
-
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
-
-    if(!data_source_path_element)
-        throw runtime_error("Path element is nullptr.\n");
-
-    if(data_source_path_element->GetText())
-        set_data_source_path(data_source_path_element->GetText());
-
-    // Samples id
-
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
-
-    if(rows_label_element)
-    {
-        const string new_rows_label_string = rows_label_element->GetText();
-
-        try
-        {
-            set_has_ids(new_rows_label_string == "1");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Channels
-
-    const tinyxml2::XMLElement* channels_number_element = data_source_element->FirstChildElement("Channels");
-
-    if(channels_number_element)
-        if(channels_number_element->GetText())
-            set_channels_number(Index(atoi(channels_number_element->GetText())));
-
-    // Width
-
-    const tinyxml2::XMLElement* image_width_element = data_source_element->FirstChildElement("Width");
-
-    if(image_width_element)
-        if(image_width_element->GetText())
-            set_image_width(Index(atoi(image_width_element->GetText())));
-
-    // Height
-
-    const tinyxml2::XMLElement* image_height_element = data_source_element->FirstChildElement("Height");
-
-    if(image_height_element)
-        if(image_height_element->GetText())
-            set_image_height(Index(atoi(image_height_element->GetText())));
+    set_input_dimensions({ read_xml_index(data_source_element, "Height"),
+                           read_xml_index(data_source_element, "Width"),
+                           read_xml_index(data_source_element, "Channels") });
 
     // Padding
 
-    const tinyxml2::XMLElement* image_padding_element = data_source_element->FirstChildElement("Padding");
+    set_image_padding(read_xml_index(data_source_element, "Padding"));
 
-    if(image_padding_element)
-        if(image_padding_element->GetText())
-            set_image_padding(Index(atoi(image_padding_element->GetText())));
+    // Codification
 
-    // Data augmentation
+    set_codification(read_xml_string(data_source_element, "Codification"));
 
-    const tinyxml2::XMLElement* random_reflection_axis_element_x = data_source_element->FirstChildElement("RandomReflectionAxisX");
+    // Augmentation
 
-    if(random_reflection_axis_element_x)
-        if(random_reflection_axis_element_x->GetText())
-            set_random_reflection_axis_x(Index(atoi(random_reflection_axis_element_x->GetText())));
+    set_random_reflection_axis_x(read_xml_index(data_source_element, "RandomReflectionAxisX"));
+    set_random_reflection_axis_y(read_xml_index(data_source_element, "RandomReflectionAxisY"));
+    set_random_rotation_minimum(type(atof(read_xml_string(data_source_element, "RandomRotationMinimum").c_str())));
+    set_random_rotation_maximum(type(atof(read_xml_string(data_source_element, "RandomRotationMaximum").c_str())));
+    set_random_horizontal_translation_minimum(type(atof(read_xml_string(data_source_element, "RandomHorizontalTranslationMinimum").c_str())));
+    set_random_horizontal_translation_maximum(type(atof(read_xml_string(data_source_element, "RandomHorizontalTranslationMaximum").c_str())));
+    set_random_vertical_translation_minimum(type(atof(read_xml_string(data_source_element, "RandomVerticalTranslationMinimum").c_str())));
+    set_random_vertical_translation_maximum(type(atof(read_xml_string(data_source_element, "RandomVerticalTranslationMaximum").c_str())));
 
-    const tinyxml2::XMLElement* random_reflection_axis_element_y = data_source_element->FirstChildElement("RandomReflectionAxisY");
-
-    if(random_reflection_axis_element_x)
-        if(random_reflection_axis_element_x->GetText())
-            set_random_reflection_axis_y(Index(atoi(random_reflection_axis_element_y->GetText())));
-
-    const tinyxml2::XMLElement* random_rotation_minimum = data_source_element->FirstChildElement("RandomRotationMinimum");
-
-    if(random_rotation_minimum)
-        if(random_rotation_minimum->GetText())
-            set_random_rotation_minimum(type(atoi(random_rotation_minimum->GetText())));
-
-    const tinyxml2::XMLElement* random_rotation_maximum = data_source_element->FirstChildElement("RandomRotationMaximum");
-
-    if(random_rotation_maximum)
-        if(random_rotation_maximum->GetText())
-            set_random_rotation_minimum(type(atoi(random_rotation_maximum->GetText())));
-
-    const tinyxml2::XMLElement* random_horizontal_translation_minimum = data_source_element->FirstChildElement("RandomHorizontalTranslationMinimum");
-
-    if(random_horizontal_translation_minimum)
-        if(random_horizontal_translation_minimum->GetText())
-            set_random_horizontal_translation_minimum(type(atoi(random_horizontal_translation_minimum->GetText())));
-
-    const tinyxml2::XMLElement* random_vertical_translation_minimum = data_source_element->FirstChildElement("RandomVerticalTranslationMinimum");
-
-    if(random_vertical_translation_minimum)
-        if(random_vertical_translation_minimum->GetText())
-            set_random_vertical_translation_minimum(type(atoi(random_vertical_translation_minimum->GetText())));
-
-    const tinyxml2::XMLElement* random_horizontal_translation_maximum = data_source_element->FirstChildElement("RandomHorizontalTranslationMaximum");
-
-    if(random_horizontal_translation_maximum)
-        if(random_horizontal_translation_maximum->GetText())
-            set_random_horizontal_translation_maximum(type(atoi(random_horizontal_translation_maximum->GetText())));
-
-    const tinyxml2::XMLElement* random_vertical_translation_maximum = data_source_element->FirstChildElement("RandomVerticalTranslationMaximum");
-
-    if(random_vertical_translation_maximum)
-        if(random_vertical_translation_maximum->GetText())
-            set_random_vertical_translation_maximum(type(atoi(random_vertical_translation_maximum->GetText())));
-
-    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
-
-    if(codification_element)
-        if(codification_element->GetText())
-            set_codification(codification_element->GetText());
-
-    // RawVariables
+    // Raw Variables
 
     const tinyxml2::XMLElement* raw_variables_element = image_data_set_element->FirstChildElement("RawVariables");
 
-    if(!raw_variables_element)
+    if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
 
-    // Raw variables number
+    const Index raw_variables_number = read_xml_index(raw_variables_element, "RawVariablesNumber");
 
-    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    set_raw_variables_number(raw_variables_number);
 
-    if(!raw_variables_number_element)
-        throw runtime_error("RawVariablesNumber element is nullptr.\n");
+    const tinyxml2::XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
-    Index new_raw_variables_number = 0;
+    Index target_count = 0;
 
-    if(raw_variables_number_element->GetText())
-    {
-        new_raw_variables_number = Index(atoi(raw_variables_number_element->GetText()));
-
-        set_raw_variables_number(new_raw_variables_number);
-    }
-
-    // Raw variables
-
-    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
-
-    for(Index i = 0; i < new_raw_variables_number; i++)
+    for (Index i = 0; i < raw_variables_number; i++)
     {
         const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        if(raw_variable_element->Attribute("Item") != to_string(i+1))
-            throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") exception.");
+        raw_variables(i).name = read_xml_string(start_element, "Name");
+        raw_variables(i).set_scaler(read_xml_string(start_element, "Scaler"));
+        raw_variables(i).set_use(read_xml_string(start_element, "Use"));
+        raw_variables(i).set_type(read_xml_string(start_element, "Type"));
 
-        // Name
-
-        const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
-
-        if(!name_element)
-            throw runtime_error("Name element is nullptr.\n");
-
-        if(name_element->GetText())
-            raw_variables(i).name = name_element->GetText();
-
-        // Scaler
-
-        const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
-
-        if(!scaler_element)
-            throw runtime_error("Scaler element is nullptr.\n");
-
-        if(scaler_element->GetText())
-            raw_variables(i).set_scaler(scaler_element->GetText());
-
-        // raw_variable use
-
-        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
-
-        if(!use_element)
-            throw runtime_error("Raw variable use element is nullptr.\n");
-
-        if(use_element->GetText())
-            raw_variables(i).set_use(use_element->GetText());
-
-        // Type
-
-        const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
-
-        if(!type_element)
-            throw runtime_error("Type element is nullptr.\n");
-
-        if(type_element->GetText())
-            raw_variables(i).set_type(type_element->GetText());
-
-        if(raw_variables(i).type == RawVariableType::Categorical 
-        || raw_variables(i).type == RawVariableType::Binary)
+        if (raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
         {
-            // Categories
-
-            const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
-
-            if(!categories_element)
-                throw runtime_error("Categories element is nullptr.\n");
-
-            if(categories_element->GetText())
-                raw_variables(i).categories = get_tokens(categories_element->GetText(), ";");
+            raw_variables(i).categories = get_tokens(read_xml_string(start_element, "Categories"), ";");
+            target_count++;
         }
     }
 
-    // Rows label
-
-    if(has_sample_ids)
-    {
-        // Samples id begin tag
-
-        const tinyxml2::XMLElement* has_ids_element = image_data_set_element->FirstChildElement("HasSamplesId");
-
-        if(!has_ids_element)
-            throw runtime_error("Rows labels element is nullptr.\n");
-
-        // Samples id
-
-        if(has_ids_element->GetText())
-        {
-            const string new_rows_labels = has_ids_element->GetText();
-
-            string separator = ",";
-
-            if(new_rows_labels.find(",") == string::npos
-            && new_rows_labels.find(";") != string::npos) 
-                separator = ';';
-
-            samples_id = get_tokens(new_rows_labels, separator);
-        }
-    }
+    const Index targets_number = (target_count == 2) ? 1 : target_count;
+    set_target_dimensions({ targets_number });
 
     // Samples
 
+    if (has_sample_ids)
+        samples_id = get_tokens(read_xml_string(image_data_set_element, "Ids"), ",");
+
     const tinyxml2::XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
 
-    if(!samples_element)
+    if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
-    // Samples number
+    sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
+    set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
 
-    const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
-
-    if(!samples_number_element)
-        throw runtime_error("Samples number element is nullptr.\n");
-
-    if(samples_number_element->GetText())
-    {
-        sample_uses.resize(Index(atoi(samples_number_element->GetText())));
-
-        //set(DataSet::SampleUse::Training);
-    }
-
-    // Samples uses
-
-    const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
-
-    if(!samples_uses_element)
-        throw runtime_error("Samples uses element is nullptr.\n");
-
-    if(samples_uses_element->GetText())
-        set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
-
-    // Display
-
-    const tinyxml2::XMLElement* display_element = image_data_set_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
 }
 
 

@@ -48,6 +48,8 @@ int main()
         //image_data_set.set_input_dimensions({23,23,1});
 
         image_data_set.read_bmp();
+
+        image_data_set.print();
         /*
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLPrinter printer;
@@ -64,6 +66,7 @@ int main()
         */
         
         ImageDataSet loaded_image_data_set;
+
         tinyxml2::XMLDocument loaded_doc;
         if (loaded_doc.LoadFile(filename) == tinyxml2::XML_SUCCESS) {
             loaded_image_data_set.from_XML(loaded_doc);
@@ -77,16 +80,15 @@ int main()
         //image_data_set.set(DataSet::SampleUse::Training);
 
         loaded_image_data_set.print();
-        image_data_set.print();
-        system("pause");
+
         //image_data_set.print_data();
 
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            image_data_set.get_input_dimensions(),
+            loaded_image_data_set.get_input_dimensions(),
             { 1 },
-            image_data_set.get_target_dimensions());
+            loaded_image_data_set.get_target_dimensions());
 
         neural_network.print();
 
