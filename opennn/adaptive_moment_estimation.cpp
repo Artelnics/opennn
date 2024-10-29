@@ -165,14 +165,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
    
-    const Tensor<Index, 1> input_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    Tensor<Index, 1> context_variables_indices;
+    const Tensor<Index, 1> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    Tensor<Index, 1> context_variable_indices;
 
     if(is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-        context_variables_indices = language_data_set->get_context_variables_indices();
+        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
     }
 
     const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
@@ -180,7 +180,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-    const Tensor<string, 1> targets_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const Tensor<string, 1> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
@@ -217,7 +217,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     neural_network->set_inputs_names(input_names);
-    neural_network->set_output_namess(targets_names);
+    neural_network->set_output_namess(target_names);
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
@@ -294,9 +294,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // Data set
 
             training_batch.fill(training_batches.chip(iteration, 0),
-                                input_variables_indices,
-                                target_variables_indices,
-                                context_variables_indices);
+                                input_variable_indices,
+                                target_variable_indices,
+                                context_variable_indices);
 
             // Neural network
 
@@ -349,9 +349,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 // Data set
 
                 selection_batch.fill(selection_batches.chip(iteration, 0),
-                                     input_variables_indices,
-                                     target_variables_indices,
-                                     context_variables_indices);               
+                                     input_variable_indices,
+                                     target_variable_indices,
+                                     context_variable_indices);
                 // Neural network
 
                 neural_network->forward_propagate(selection_batch,

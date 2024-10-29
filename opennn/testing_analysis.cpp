@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include <fstream>
-#include <sstream>
 #include <cmath>
 #include <numeric>
 

@@ -123,9 +123,9 @@ void WeightedSquaredError::set_normalization_coefficient()
     else if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 1
          && data_set->get_raw_variables(DataSet::VariableUse::Target)(0).type == DataSet::RawVariableType::Binary)
     {
-        const Tensor<Index, 1> target_variables_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+        const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-        const Index negatives = data_set->calculate_used_negatives(target_variables_indices[0]);
+        const Index negatives = data_set->calculate_used_negatives(target_variable_indices[0]);
 
         normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
     }
