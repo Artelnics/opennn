@@ -338,9 +338,6 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 {
     const Index batch_samples_number = inputs.dimension(0);
 
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-
     const Index output_width = get_output_width();
     const Index output_height = get_output_height();
     const Index channels = get_channels_number();
@@ -425,8 +422,6 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
 {
     const Index batch_samples_number = inputs.dimension(0);
 
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
     const Index channels = inputs.dimension(3);
 
     const Index output_height = deltas.dimension(1);

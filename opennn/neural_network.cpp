@@ -1428,8 +1428,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         tinyxml2::XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
 
-        // @todo
-        Layer::Type layer_type;// = string_to_layer_type(layer_type_string);
+        const Layer::Type layer_type = layers[i]->string_to_layer_type(layer_type_string);
 
         switch(layer_type)
         {

@@ -520,13 +520,13 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     for (Index i = 0; i < neurons_number; i++) {
         const tinyxml2::XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
         if (!unscaling_neuron_element) {
-            throw std::runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
+            throw runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
 
         unsigned index = 0;
         unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
         if (index != i + 1) {
-            throw std::runtime_error("Index " + std::to_string(index) + " is not correct.\n");
+            throw runtime_error("Index " + std::to_string(index) + " is not correct.\n");
         }
 
         const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");

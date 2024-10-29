@@ -633,7 +633,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
 
     if (!root_element) 
-        throw std::runtime_error("Conjugate gradient element is nullptr.\n");
+        throw runtime_error("Conjugate gradient element is nullptr.\n");
     
     set_training_direction_method(read_xml_string(root_element, "TrainingDirectionMethod"));
 

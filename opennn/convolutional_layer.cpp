@@ -897,7 +897,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
 
     if (!convolutional_layer_element) 
-        throw std::runtime_error("Convolutional layer element is nullptr.\n");
+        throw runtime_error("Convolutional layer element is nullptr.\n");
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Name"));
 

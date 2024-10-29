@@ -300,7 +300,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const auto* root_element = document.FirstChildElement("BoundingLayer");
     
     if (!root_element)
-        throw std::runtime_error("BoundingLayer element is nullptr.\n");
+        throw runtime_error("BoundingLayer element is nullptr.\n");
 
     const Index neurons_number = read_xml_index(root_element, "BoundingNeuronsNumber");
 
@@ -314,7 +314,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
         item_element->QueryUnsignedAttribute("Index", &index);
 
         if (index != i + 1) 
-            throw std::runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
+            throw runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
         
         lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
         upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");

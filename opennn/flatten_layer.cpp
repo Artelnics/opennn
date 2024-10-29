@@ -147,7 +147,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* flatten_layer_element = document.FirstChildElement("FlattenLayer");
 
     if (!flatten_layer_element) 
-        throw std::runtime_error("FlattenLayer element is nullptr.\n");
+        throw runtime_error("FlattenLayer element is nullptr.\n");
 
     const Index input_height = read_xml_index(flatten_layer_element, "InputHeight");
     const Index input_width = read_xml_index(flatten_layer_element, "InputWidth");

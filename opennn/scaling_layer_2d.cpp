@@ -373,7 +373,6 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
     ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation =
@@ -609,20 +608,20 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
     for (Index i = 0; i < neurons_number; i++) {
         const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
         if (!scaling_neuron_element) {
-            throw std::runtime_error("Scaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
+            throw runtime_error("Scaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
 
         // Verify neuron index
         unsigned index = 0;
         scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
         if (index != i + 1) {
-            throw std::runtime_error("Index " + std::to_string(index) + " is not correct.\n");
+            throw runtime_error("Index " + std::to_string(index) + " is not correct.\n");
         }
 
         // Descriptives
         const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
         if (!descriptives_element) {
-            throw std::runtime_error("Descriptives element " + std::to_string(i + 1) + " is nullptr.\n");
+            throw runtime_error("Descriptives element " + std::to_string(i + 1) + " is nullptr.\n");
         }
         if (descriptives_element->GetText()) {
             const Tensor<string, 1> descriptives_string = get_tokens(descriptives_element->GetText(), " ");
@@ -636,7 +635,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 
         const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
         if (!scaling_method_element) {
-            throw std::runtime_error("Scaling method element " + std::to_string(i + 1) + " is nullptr.\n");
+            throw runtime_error("Scaling method element " + std::to_string(i + 1) + " is nullptr.\n");
         }
         set_scaler(i, scaling_method_element->GetText());
 
