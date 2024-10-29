@@ -187,16 +187,6 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 }
 
 
-void RecurrentLayer::set(const RecurrentLayer& other_neuron_layer)
-{
-    activation_function = other_neuron_layer.activation_function;
-
-    display = other_neuron_layer.display;
-
-    set_default();
-}
-
-
 void RecurrentLayer::set_default()
 {
     name = "recurrent_layer";
@@ -651,7 +641,7 @@ pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {{batch_samples_number, neurons_number}}};
+    return {(type*)outputs.data(), {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -664,8 +654,6 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number
     const Index time_steps = 0;
 
     batch_samples_number = new_batch_samples_number;
-
-//    outputs_data = outputs.data();
 
     current_inputs.resize(batch_samples_number, inputs_number);
     current_activations_derivatives.resize(batch_samples_number, neurons_number);

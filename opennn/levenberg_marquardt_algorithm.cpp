@@ -285,7 +285,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch,
+        neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation,
                                           is_training);
         
@@ -299,7 +299,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         
         if(has_selection)
         {           
-            neural_network->forward_propagate(selection_batch,
+            neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                               selection_forward_propagation,
                                               is_training);
 
@@ -367,7 +367,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -448,7 +448,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
         
-        neural_network->forward_propagate(batch,
+        neural_network->forward_propagate(batch.get_input_pairs(),
                                           potential_parameters,
                                           forward_propagation);
 

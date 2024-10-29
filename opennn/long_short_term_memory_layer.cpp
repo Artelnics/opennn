@@ -233,16 +233,6 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 }
 
 
-void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_layer)
-{
-    activation_function = other_neuron_layer.activation_function;
-
-    display = other_neuron_layer.display;
-
-    set_default();
-}
-
-
 void LongShortTermMemoryLayer::set_default()
 {
     name = "long_short_term_memory_layer";
@@ -2211,7 +2201,7 @@ pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {{batch_samples_number, neurons_number}}};
+    return {(type*)outputs.data(), {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -2225,7 +2215,6 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
-    outputs_data = outputs.data();
 
     previous_cell_states.resize(neurons_number);
     previous_hidden_states.resize(neurons_number);

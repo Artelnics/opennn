@@ -222,6 +222,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+
         scaling_layer_2d->set_descriptives(input_variables_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
@@ -300,7 +301,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
 
-            neural_network->forward_propagate(training_batch,
+            neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
 
@@ -309,13 +310,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
-            //cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
-            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
 
-            //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-
-            //system("pause");
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
@@ -354,7 +349,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      context_variable_indices);
                 // Neural network
 
-                neural_network->forward_propagate(selection_batch,
+                neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                                   selection_forward_propagation,
                                                   is_training);
                 
@@ -396,7 +391,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
 
             stop_training = true;
 

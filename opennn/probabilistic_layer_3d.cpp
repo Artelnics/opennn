@@ -151,18 +151,6 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_
 }
 
 
-void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_layer)
-{
-    set_default();
-
-    activation_function = other_probabilistic_layer.activation_function;
-
-    decision_threshold = other_probabilistic_layer.decision_threshold;
-
-    display = other_probabilistic_layer.display;
-}
-
-
 void ProbabilisticLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number = new_inputs_number;
@@ -463,7 +451,7 @@ pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
-    return {outputs_data, {batch_samples_number, inputs_number, neurons_number}};
+    return {(type*)outputs.data(), {batch_samples_number, inputs_number, neurons_number}};
 }
 
 
@@ -479,8 +467,6 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
     
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
-    
-    outputs_data = outputs.data();
 }
 
 

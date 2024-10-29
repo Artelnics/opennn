@@ -74,7 +74,6 @@ public:
 
    void set();
    void set(const Index&, const Index&, const Index&);
-   void set(const LongShortTermMemoryLayer&);
 
    void set_default();
 

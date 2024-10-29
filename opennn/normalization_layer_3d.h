@@ -141,11 +141,9 @@ protected:
 struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
 {
         
-
     explicit NormalizationLayer3DForwardPropagation() : LayerForwardPropagation()
     {
     }
-
 
     explicit NormalizationLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()

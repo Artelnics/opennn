@@ -83,7 +83,6 @@ public:
 
    void set();
    void set(const Index&, const Index&, const Index&);
-   void set(const RecurrentLayer&);
 
    void set_default();
 
@@ -193,6 +192,8 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     void print() const
     {
     }
+
+    Tensor<type, 2> outputs;
 
     Tensor<type, 2> current_inputs;
     Tensor<type, 2> current_activations_derivatives;

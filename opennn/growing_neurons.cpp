@@ -188,7 +188,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl <<  "Maximum epochs number reached: " << epoch << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumEpochs;
         }

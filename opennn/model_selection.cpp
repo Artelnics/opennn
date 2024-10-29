@@ -221,7 +221,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ModelSelection");
     
     if (!root_element) 
-        throw std::runtime_error("Model Selection element is nullptr.\n");
+        throw runtime_error("Model Selection element is nullptr.\n");
     
     const tinyxml2::XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronsSelection");
 

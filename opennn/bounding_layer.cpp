@@ -109,16 +109,6 @@ void BoundingLayer::set(const tinyxml2::XMLDocument& bounding_layer_document)
 }
 
 
-void BoundingLayer::set(const BoundingLayer& other_bounding_layer)
-{
-    lower_bounds = other_bounding_layer.lower_bounds;
-
-    upper_bounds = other_bounding_layer.upper_bounds;
-
-    display = other_bounding_layer.display;
-}
-
-
 void BoundingLayer::set_bounding_method(const BoundingMethod& new_method)
 {
     bounding_method = new_method;
@@ -310,7 +300,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const auto* root_element = document.FirstChildElement("BoundingLayer");
     
     if (!root_element)
-        throw std::runtime_error("BoundingLayer element is nullptr.\n");
+        throw runtime_error("BoundingLayer element is nullptr.\n");
 
     const Index neurons_number = read_xml_index(root_element, "BoundingNeuronsNumber");
 
@@ -324,7 +314,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
         item_element->QueryUnsignedAttribute("Index", &index);
 
         if (index != i + 1) 
-            throw std::runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
+            throw runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
         
         lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
         upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");
@@ -340,7 +330,7 @@ pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() cons
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return { outputs_data, { batch_samples_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, neurons_number } };
 }
 
 
@@ -353,8 +343,6 @@ void BoundingLayerForwardPropagation::set(const Index& new_batch_samples_number,
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
-
-    outputs_data = outputs.data();
 }
 
 }
