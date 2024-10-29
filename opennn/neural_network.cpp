@@ -558,12 +558,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions padding_dimensions = { 0, 0 };
         const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
 
-        add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
-                                            pool_dimensions,
-                                            pooling_stride_dimensions,
-                                            padding_dimensions,
-                                            pooling_method),
-                  "pooling_layer_" + to_string(i + 1));
+        //add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
+        //                                    pool_dimensions,
+        //                                    pooling_stride_dimensions,
+        //                                    padding_dimensions,
+        //                                    pooling_method),
+        //          "pooling_layer_" + to_string(i + 1));
 
     }
 

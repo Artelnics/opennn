@@ -25,6 +25,8 @@ int main()
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Data set
+
+        const char* filename = "C:/xmltest/data_set_mnist_binary.xml";
         
         //Random image data set 
         //onst Index samples_number = 10;
@@ -46,10 +48,37 @@ int main()
         //image_data_set.set_input_dimensions({23,23,1});
 
         image_data_set.read_bmp();
+        /*
+        tinyxml2::XMLDocument doc;
+        tinyxml2::XMLPrinter printer;
+        image_data_set.to_XML(printer);
+        doc.Parse(printer.CStr());
 
-        //image_data_set.set_training(); ?????
+        if (doc.SaveFile(filename) == tinyxml2::XML_SUCCESS) {
+            cout << "XML saved in " << filename << endl;
+        }
+        else {
+            cout << "Error saving XML." << endl;
+            return 1;
+        }
+        */
+        
+        ImageDataSet loaded_image_data_set;
+        tinyxml2::XMLDocument loaded_doc;
+        if (loaded_doc.LoadFile(filename) == tinyxml2::XML_SUCCESS) {
+            loaded_image_data_set.from_XML(loaded_doc);
+            cout << "XML loaded from " << filename << endl;
+        }
+        else {
+            cout << "Error loading XML." << endl;
+            return 1;
+        }
+        
+        //image_data_set.set(DataSet::SampleUse::Training);
 
-        //image_data_set.print();
+        loaded_image_data_set.print();
+        image_data_set.print();
+        system("pause");
         //image_data_set.print_data();
 
         // Neural network
