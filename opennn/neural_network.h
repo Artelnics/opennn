@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "config.h"
-#include "batch.h"
 #include "layer.h"
 #include "perceptron_layer.h"
 //#include "perceptron_layer_3d.h"
@@ -229,15 +228,11 @@ public:
 
    void save_outputs(Tensor<type, 2>&, const string&);
 
-   void forward_propagate(const Batch&, 
-                          ForwardPropagation&, 
-                          const bool& = false) const;
-
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           ForwardPropagation&,
                           const bool& = false) const;
 
-   void forward_propagate(const Batch&,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
 

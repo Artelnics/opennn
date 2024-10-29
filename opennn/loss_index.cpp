@@ -708,7 +708,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        parameters_forward(i) += h;
        
-       neural_network->forward_propagate(batch,
+       neural_network->forward_propagate(batch.get_input_pairs(),
                                          parameters_forward,
                                          forward_propagation);
 
@@ -720,7 +720,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        parameters_backward(i) -= h;
 
-       neural_network->forward_propagate(batch,
+       neural_network->forward_propagate(batch.get_input_pairs(),
                                          parameters_backward,
                                          forward_propagation);
 
@@ -778,7 +778,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
         input_pairs[0].first[i] += h;
 
-        neural_network->forward_propagate(batch, forward_propagation);
+        neural_network->forward_propagate(input_pairs, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
         error_forward = back_propagation.error();
@@ -787,7 +787,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
         input_pairs[0].first[i] -= h;
 
-        neural_network->forward_propagate(batch, forward_propagation);
+        neural_network->forward_propagate(input_pairs, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
         error_backward = back_propagation.error();
@@ -826,7 +826,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
     back_propagation_lm.set(samples_number, this);
     
-    neural_network->forward_propagate(batch,
+    neural_network->forward_propagate(batch.get_input_pairs(),
                                       parameters,
                                       forward_propagation);
 
@@ -849,7 +849,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
         h = calculate_h(parameters(j));
 
         parameters_backward(j) -= h;
-        neural_network->forward_propagate(batch,
+        neural_network->forward_propagate(batch.get_input_pairs(),
                                           parameters_backward,
                                           forward_propagation);
 
@@ -863,7 +863,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
         parameters_forward(j) += h;
 
-        neural_network->forward_propagate(batch,
+        neural_network->forward_propagate(batch.get_input_pairs(),
                                           parameters_forward,
                                           forward_propagation);
 

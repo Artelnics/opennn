@@ -51,8 +51,8 @@ int main()
         // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
         // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
-        neural_network.print();
-/*
+        //        neural_network.print();
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -68,7 +68,7 @@ int main()
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        //training_strategy.set_maximum_epochs_number(100000);
+        training_strategy.set_maximum_epochs_number(10);
 
         //training_strategy.save("../data/training_strategy.xml");
         //training_strategy.load("../data/training_strategy.xml");
@@ -87,7 +87,7 @@ int main()
 //        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
 
         // Deploy
-
+/*
         NeuralNetwork new_neural_network("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
         Tensor<type, 2> inputs(1, input_variables_number);

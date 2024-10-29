@@ -265,7 +265,7 @@ ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
 
     for(Index i = 0; i < layers_number; i++)
         if(layers[i]->get_type() == Layer::Type::Scaling2D)
-            return dynamic_cast<ScalingLayer2D*>(layers[i].get());
+            return static_cast<ScalingLayer2D*>(layers[i].get());
 
     throw runtime_error("No scaling layer 2d in neural network.\n");
 }
@@ -1058,28 +1058,6 @@ void NeuralNetwork::set_parameters_random() const
 }
 
 
-void NeuralNetwork::forward_propagate(const Batch& batch,
-    ForwardPropagation& forward_propagation,
-    const bool& is_training) const
-{
-
-    const Index layers_number = get_layers_number();
-
-    const Index first_trainable_layer_index = get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = get_last_trainable_layer_index();
-
-    const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
-    const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
-
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
-
-    for (Index i = first_layer_index; i <= last_layer_index; i++)
-        layers[i]->forward_propagate(layer_input_pairs[i],
-                                     forward_propagation.layers[i],
-                                     is_training);}
-}
-
-
 void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
@@ -1102,7 +1080,7 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 }
 
 
-void NeuralNetwork::forward_propagate(const Batch& batch,
+void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
                                       const Tensor<type, 1>& new_parameters,
                                       ForwardPropagation& forward_propagation) const
 {
@@ -1112,7 +1090,7 @@ void NeuralNetwork::forward_propagate(const Batch& batch,
 
     const bool is_training = true;
 
-    forward_propagate(batch, forward_propagation, is_training);
+    forward_propagate(input_pair, forward_propagation, is_training);
 
     set_parameters(original_parameters);
 }
@@ -2123,6 +2101,7 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
             throw runtime_error("Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n");
         }
     }
+}
 }
 
 // OpenNN: Open Neural Networks Library.

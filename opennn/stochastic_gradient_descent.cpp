@@ -336,7 +336,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Neural network
             
-            neural_network->forward_propagate(training_batch,
+            neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
             
@@ -383,7 +383,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Neural network
                 
-                neural_network->forward_propagate(selection_batch,
+                neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                                   selection_forward_propagation,
                                                   is_training);
 
@@ -391,7 +391,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Loss
 
-                loss_index->calculate_error(selection_batch, 
+                loss_index->calculate_error(selection_batch,
                                             selection_forward_propagation, 
                                             selection_back_propagation);
 
