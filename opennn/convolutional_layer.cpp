@@ -26,10 +26,11 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_kernel_dimensions,
                                        const ConvolutionalLayer::ActivationFunction& new_activation_function,
                                        const dimensions& new_stride_dimensions,
-                                       const ConvolutionalLayer::ConvolutionType& new_convolution_type) : Layer()
+                                       const ConvolutionalLayer::ConvolutionType& new_convolution_type,
+                                       const string new_name) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
-    name = "convolutional_layer";
+    name = new_name;
 
     set(new_input_dimensions, new_kernel_dimensions, new_activation_function, new_stride_dimensions, new_convolution_type);
 }
@@ -618,7 +619,8 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions,
                              const ConvolutionalLayer::ActivationFunction& new_activation_function,
                              const dimensions& new_stride_dimensions,
-                             const ConvolutionType& new_convolution_type)
+                             const ConvolutionType& new_convolution_type,
+                             const string new_name)
 {
     if(new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions must be 3");
@@ -670,6 +672,8 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
     scales.resize(kernels_number);
     offsets.resize(kernels_number);
+
+    name = new_name;
 }
 
 

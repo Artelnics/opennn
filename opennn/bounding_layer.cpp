@@ -109,16 +109,6 @@ void BoundingLayer::set(const tinyxml2::XMLDocument& bounding_layer_document)
 }
 
 
-void BoundingLayer::set(const BoundingLayer& other_bounding_layer)
-{
-    lower_bounds = other_bounding_layer.lower_bounds;
-
-    upper_bounds = other_bounding_layer.upper_bounds;
-
-    display = other_bounding_layer.display;
-}
-
-
 void BoundingLayer::set_bounding_method(const BoundingMethod& new_method)
 {
     bounding_method = new_method;

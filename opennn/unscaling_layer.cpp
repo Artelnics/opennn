@@ -270,16 +270,6 @@ void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_docume
 }
 
 
-void UnscalingLayer::set(const UnscalingLayer& new_unscaling_layer)
-{
-    descriptives = new_unscaling_layer.descriptives;
-
-    scalers = new_unscaling_layer.scalers;
-
-    display = new_unscaling_layer.display;
-}
-
-
 void UnscalingLayer::set_default()
 {
     name = "unscaling_layer";

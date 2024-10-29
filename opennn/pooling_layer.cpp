@@ -24,9 +24,15 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions,
                            const dimensions& new_pool_dimensions,
                            const dimensions& new_stride_dimensions,
                            const dimensions& new_padding_dimensions,
-                           const PoolingMethod& new_pooling_method) : Layer()
+                           const PoolingMethod& new_pooling_method,
+                           const string new_name) : Layer()
 {
-    set(new_input_dimensions, new_pool_dimensions, new_stride_dimensions, new_padding_dimensions, new_pooling_method);
+    set(new_input_dimensions,
+        new_pool_dimensions,
+        new_stride_dimensions,
+        new_padding_dimensions,
+        new_pooling_method,
+        new_name);
 }
 
 
@@ -167,7 +173,8 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
                        const dimensions& new_pool_dimensions,
                        const dimensions& new_stride_dimensions,
                        const dimensions& new_padding_dimensions,
-                       const PoolingMethod& new_pooling_method)
+                       const PoolingMethod& new_pooling_method,
+                       const string new_name)
 {
     if(new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions must be 3");
@@ -205,6 +212,8 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
     padding_width = new_padding_dimensions[1];
 
     set_pooling_method(new_pooling_method);
+
+    name = new_name;
 
     set_default();
 }

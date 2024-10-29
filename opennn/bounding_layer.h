@@ -60,7 +60,6 @@ public:
    void set();
    void set(const Index&);
    void set(const tinyxml2::XMLDocument&);
-   void set(const BoundingLayer&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;

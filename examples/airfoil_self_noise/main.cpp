@@ -35,8 +35,9 @@ int main()
         //data_set.save("../data/data_set.xml");
         //data_set.load("../data/data_set.xml");
 
-        data_set.print();
-/*
+        //data_set.print();
+        //data_set.print_data();
+
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
@@ -51,7 +52,7 @@ int main()
         // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
         neural_network.print();
-
+/*
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -82,8 +83,8 @@ int main()
 
         // Save results
         
-        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
+//        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+//        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
 
         // Deploy
 

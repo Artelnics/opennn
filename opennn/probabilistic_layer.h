@@ -130,7 +130,10 @@ public:
     explicit ProbabilisticLayer();
 
     explicit ProbabilisticLayer(const Index&, const Index&);
-    explicit ProbabilisticLayer(const dimensions&, const dimensions&);
+
+    explicit ProbabilisticLayer(const dimensions&,
+                                const dimensions&,
+                                const string = "probabilistic_layer");
 
     // Get
 
@@ -153,8 +156,7 @@ public:
     // Set
 
     void set();
-    void set(const Index&, const Index&);
-    void set(const ProbabilisticLayer&);
+    void set(const Index&, const Index&, const string = "probabilistic_layer");
 
     void set_inputs_number(const Index&) final;
     void set_neurons_number(const Index&) final;

@@ -59,7 +59,7 @@ NeuralNetwork::NeuralNetwork(const string& file_name)
 }
 
 
-void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const string& name, const vector<Index>& input_indices)
+void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& input_indices)
 {
     const Layer::Type layer_type = layer->get_type();
 
@@ -463,11 +463,16 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
     {
         const dimensions neurons_number = { complexity_dimensions[i] };
 
-        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-            "perceptron_layer_" + to_string(i + 1));
+        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+                                               neurons_number,
+                                               PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                                               "perceptron_layer_" + to_string(i + 1)));
     }
 
-    add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), output_dimensions, PerceptronLayer::ActivationFunction::Linear), "perceptron_layer_" + to_string(complexity_size + 1));
+    add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+                                           output_dimensions,
+                                           PerceptronLayer::ActivationFunction::Linear,
+                                           "perceptron_layer_" + to_string(complexity_size + 1)));
 
     add_layer(make_unique<UnscalingLayer>(output_dimensions));
 
@@ -486,11 +491,15 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
     {
         const dimensions neurons_number = { complexity_dimensions[i] };
 
-        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-            "perceptron_layer_" + to_string(i + 1));
+        add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+                                               neurons_number,
+                                               PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                                               "perceptron_layer_" + to_string(i + 1)));
     }
 
-    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
+    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
+                                              output_dimensions,
+                                              "probabilistic_layer"));
 
 }
 
@@ -550,8 +559,8 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
             kernel_dimensions,
             ConvolutionalLayer::ActivationFunction::RectifiedLinear,
             convolution_stride_dimensions,
-            convolution_type),
-            "convolutional_layer_" + to_string(i + 1));
+            convolution_type,
+            "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -562,8 +571,8 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                             pool_dimensions,
                                             pooling_stride_dimensions,
                                             padding_dimensions,
-                                            pooling_method),
-                  "pooling_layer_" + to_string(i + 1));
+                                            pooling_method,
+                                            "pooling_layer_" + to_string(i + 1)));
 
     }
 
@@ -572,7 +581,9 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     //const dimensions neurons_number = { complexity_dimensions[complexity_dimensions.size()]*2 };
     //add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::RectifiedLinear), "perceptron_layer");
 
-    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(), output_dimensions), "probabilistic_layer");
+    add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
+                                              output_dimensions,
+                                              "probabilistic_layer"));
 }
 
 
@@ -709,11 +720,7 @@ void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& n
 {
     const Index layer_index = get_layer_index(name);
 
-    vector<Index> new_layer_input_indices(1);
-
-    new_layer_input_indices[0] = get_layer_index(new_layer_inputs_name);
-
-    layer_input_indices[layer_index] = new_layer_input_indices;
+    layer_input_indices[layer_index] = {get_layer_index(new_layer_inputs_name)};
 }
 
 

@@ -67,7 +67,6 @@ public:
 
    void set();
    void set(const Index&, const Index&, const Index&);
-   void set(const ProbabilisticLayer3D&);
 
    void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);

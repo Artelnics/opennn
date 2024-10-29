@@ -187,16 +187,6 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 }
 
 
-void RecurrentLayer::set(const RecurrentLayer& other_neuron_layer)
-{
-    activation_function = other_neuron_layer.activation_function;
-
-    display = other_neuron_layer.display;
-
-    set_default();
-}
-
-
 void RecurrentLayer::set_default()
 {
     name = "recurrent_layer";

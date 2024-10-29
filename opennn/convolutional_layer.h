@@ -52,7 +52,8 @@ public:
                                 const dimensions& = {1, 1, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                                 const ActivationFunction& = ActivationFunction::Linear,
                                 const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
-                                const ConvolutionType& = ConvolutionType::Valid); // Convolution type (Valid || Same)                   
+                                const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
+                                const string = "convolutional_layer");
 
     // Destructor
 
@@ -109,7 +110,12 @@ public:
 
     // Set
 
-    void set(const dimensions&, const dimensions&, const ActivationFunction&, const dimensions&, const ConvolutionType&);
+    void set(const dimensions&,
+             const dimensions&,
+             const ActivationFunction&,
+             const dimensions&,
+             const ConvolutionType&,
+             const string = "convolutional_layer");
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
