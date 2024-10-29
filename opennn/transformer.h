@@ -41,8 +41,8 @@ public:
              const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number);
 
     void set_dropout_rate(const type&);
-    void set_input_vocabulary(Tensor<string, 1>&);
-    void set_context_vocabulary(Tensor<string, 1>&);
+    void set_input_vocabulary(const Tensor<string, 1>&);
+    void set_context_vocabulary(const Tensor<string, 1>&);
 
     string calculate_outputs(const string&, const bool& = true);
     Tensor<type, 3> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&);
