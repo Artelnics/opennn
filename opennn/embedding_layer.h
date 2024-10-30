@@ -9,6 +9,8 @@
 #ifndef EMBEDDINGLAYER_H
 #define EMBEDDINGLAYER_H
 
+#include <iostream>
+
 #include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
@@ -16,12 +18,6 @@
 
 namespace opennn
 {
-
-class Layer;
-
-struct EmbeddingLayerForwardPropagation;
-struct EmbeddingLayerBackPropagation;
-struct EmbeddingLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
 struct EmbeddingLayerForwardPropagationCuda;
@@ -34,15 +30,10 @@ class EmbeddingLayer : public Layer
 
 public:
 
-    // Constructors
-
-    explicit EmbeddingLayer();
-
-    explicit EmbeddingLayer(const Index&,
-                            const Index&,
-                            const Index&,
+    explicit EmbeddingLayer(const Index& = 0,
+                            const Index& = 0,
+                            const Index& = 0,
                             const bool& = false);
-    // Get
 
     Index get_input_dimension() const;
     Index get_inputs_number() const;
@@ -56,49 +47,36 @@ public:
     Tensor<type, 1> get_parameters() const final;
     Index get_neurons_number() const final;
 
-    // Display messages
-
     const bool& get_display() const;
 
-    // Set
-
-    void set();
-    void set(const Index&, const Index&, const Index&, const bool& = false);
+    void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
     void set_default();
 
-    // Architecture
+//    void set_input_dimensions(const Index&);
+//    void set_inputs_number(const Index&);
+//    void set_depth(const Index&);
 
-    void set_input_dimensions(const Index&);
-    void set_inputs_number(const Index&);
-    void set_depth(const Index&);
     void set_dropout_rate(const type&);
 
     void set_embedding_weights();
+    void set_inputs_number(const Index& new_inputs_number);
+    void set_input_dimensions(const Index& new_inputs_dimension);
+    void set_depth(const Index& new_depth);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
     void set_parameters_random() final;
     void set_parameters_constant(const type&) final;
 
-    // Display messages
-
     void set_display(const bool&);
-
-    // Dropout
 
     void dropout(Tensor<type, 3>&) const;
 
-    // Embedding lookup
-
     void lookup_embedding(const Tensor<type, 2>&, Tensor<type, 3>&);
-
-    // Embedding layer outputs
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
-
-    // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
@@ -110,10 +88,6 @@ public:
     void insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                          const Index& index, 
                          Tensor<type, 1>& gradient) const;
-
-    // Serialization
-
-    // @todo
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void to_XML(tinyxml2::XMLPrinter&) const final;
@@ -132,98 +106,56 @@ protected:
 
     //Index depth;
 
-    type dropout_rate;
-
     Tensor<type, 2> embedding_weights;
+
+    type dropout_rate;
 
     bool positional_encoding;
 
     bool display = true;
 
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
-    };
+};
 
 
 struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
-    {
-        
+{
+    explicit EmbeddingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-        explicit EmbeddingLayerForwardPropagation() : LayerForwardPropagation()
-        {
-        }
+    pair<type*, dimensions> get_outputs_pair() const final;
 
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-        explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-            : LayerForwardPropagation()
-        {
-            set(new_batch_samples_number, new_layer);
-        }
-                
-        pair<type*, dimensions> get_outputs_pair() const final;
+    void print() const;
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void build_positional_encoding_matrix();
 
-        void print() const
-        {
-//            cout << "Attention scores:" << endl;
-//            cout << attention_scores.dimensions() << endl;
-//            cout << "Outputs dimensions:" << endl;
-//            cout << output_dimensions << endl;
-//            cout << "Outputs:" << endl;
-//            cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-//            cout << "Attention scores:" << endl;
-//            cout << attention_scores << endl;
-        }
+    bool built_positional_encoding_matrix = false;
 
-        void build_positional_encoding_matrix();
+    Tensor<type, 2> positional_encoding;
 
-        // Struct members
-
-        bool built_positional_encoding_matrix = false;
-
-        Tensor<type, 2> positional_encoding;
-
-        Tensor<type, 3> outputs;
-    };
+    Tensor<type, 3> outputs;
+};
 
 
 struct EmbeddingLayerBackPropagation : LayerBackPropagation
-    {
-        
+{
+    explicit EmbeddingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-        explicit EmbeddingLayerBackPropagation() : LayerBackPropagation()
-        {
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-        }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
+    void print() const;
 
-        explicit EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-            : LayerBackPropagation()
-        {
-            set(new_batch_samples_number, new_layer);
-        }
-
-        vector<pair<type*, dimensions>> get_input_derivative_pairs() const
-        {
-            return vector<pair<type*, dimensions>>();
-        }
-
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-        void print() const
-        {
-        }
-
-        Tensor<type, 2> sample_deltas;
-        Tensor<type, 2> embedding_weights_derivatives;
-    };
-
+    Tensor<type, 2> sample_deltas;
+    Tensor<type, 2> embedding_weights_derivatives;
+};
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/embedding_layer_forward_propagation_cuda.h"
     #include "../../opennn_cuda/opennn_cuda/embedding_layer_back_propagation_cuda.h"
 #endif
-
 
 }
 

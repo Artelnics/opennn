@@ -12,13 +12,6 @@
 namespace opennn
 {
 
-FlattenLayer::FlattenLayer() : Layer()
-{
-    layer_type = Layer::Type::Flatten;
-    name = "flatten_layer";
-}
-
-
 FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -147,7 +140,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* flatten_layer_element = document.FirstChildElement("FlattenLayer");
 
     if (!flatten_layer_element) 
-        throw std::runtime_error("FlattenLayer element is nullptr.\n");
+        throw runtime_error("FlattenLayer element is nullptr.\n");
 
     const Index input_height = read_xml_index(flatten_layer_element, "InputHeight");
     const Index input_width = read_xml_index(flatten_layer_element, "InputWidth");
@@ -169,11 +162,18 @@ void FlattenLayer::print() const
 }
 
 
+FlattenLayerForwardPropagation::FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {batch_samples_number, neurons_number}};
+    return {(type*)outputs.data(), {batch_samples_number, neurons_number}};
 }
 
 
@@ -186,8 +186,13 @@ void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, 
     const Index neurons_number = layer->get_neurons_number();
 
     outputs.resize(batch_samples_number, neurons_number);
+}
 
-    outputs_data = outputs.data();
+
+void FlattenLayerForwardPropagation::print() const
+{
+    cout << "Flatten Outputs:" << endl
+         << outputs.dimensions() << endl;
 }
 
 
@@ -205,7 +210,18 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
                              input_dimensions[0],
                              input_dimensions[1],
                              input_dimensions[2]);
+}
 
+
+void FlattenLayerBackPropagation::print() const
+{
+}
+
+
+FlattenLayerBackPropagation::FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

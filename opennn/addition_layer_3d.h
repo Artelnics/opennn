@@ -20,142 +20,92 @@
 namespace opennn
 {
 
-//    struct AdditionLayer3DForwardPropagation;
-//    struct AdditionLayer3DBackPropagation;
-//    struct AdditionLayer3DBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct AdditionLayer3DForwardPropagationCuda;
     struct AdditionLayer3DBackPropagationCuda;
 #endif
 
-    class AdditionLayer3D : public Layer
-    {
+class AdditionLayer3D : public Layer
+{
 
-    public:
+public:
 
-        // Constructors
+    explicit AdditionLayer3D(const Index& = 0, const Index& = 0);
 
-        explicit AdditionLayer3D();
-        explicit AdditionLayer3D(const Index&, const Index&);
+    Index get_inputs_number() const final;
+    Index get_inputs_depth() const;
 
-        // Get
+    dimensions get_output_dimensions() const final;
 
-        Index get_inputs_number() const final;
-        Index get_inputs_depth() const;
+    const bool& get_display() const;
 
-        dimensions get_output_dimensions() const final;
+    void set(const Index& = 0, const Index& = 0);
 
-        // Display messages
+    void set_default();
 
-        const bool& get_display() const;
+    void set_inputs_number(const Index&);
+    void set_inputs_depth(const Index&);
 
-        // Set
+    void set_display(const bool&);
 
-        void set();
-        void set(const Index&, const Index&);
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) final;
 
-        void set_default();
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
-        void set_inputs_depth(const Index&);
-
-        // Display messages
-
-        void set_display(const bool&);
-
-        // Forward propagation
-
-        void forward_propagate(const vector<pair<type*, dimensions>>&,
-                               unique_ptr<LayerForwardPropagation>&,
-                               const bool&) final;
-
-        // Gradient
-
-        void back_propagate(const vector<pair<type*, dimensions>>&,
-                            const vector<pair<type*, dimensions>>&,
-                            unique_ptr<LayerForwardPropagation>&,
-                            unique_ptr<LayerBackPropagation>&) const final;
-
-        // Serialization
-
-        void from_XML(const tinyxml2::XMLDocument&) final;
-        void to_XML(tinyxml2::XMLPrinter&) const final;
-
-        #ifdef OPENNN_CUDA
-            #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_cuda.h"
-        #endif
-
-    protected:
-
-        // MEMBERS
-
-        Index inputs_number = 0;
-
-        Index inputs_depth = 0;
-
-        bool display = true;
-    };
-
-
-    struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
-    {
-        
-
-        explicit AdditionLayer3DForwardPropagation() : LayerForwardPropagation()
-        {
-        }
-
-        explicit AdditionLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-            : LayerForwardPropagation()
-        {
-            set(new_batch_samples_number, new_layer);
-        }
-
-        pair<type*, dimensions> get_outputs_pair() const final;
-
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-        void print() const
-        {
-            cout << "Outputs:" << endl;
-            cout << outputs << endl;
-        }
-
-        Tensor<type, 3> outputs;
-    };
-
-
-    struct AdditionLayer3DBackPropagation : LayerBackPropagation
-    {
-   
-        explicit AdditionLayer3DBackPropagation() : LayerBackPropagation()
-        {
-
-        }
-
-
-        explicit AdditionLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-            : LayerBackPropagation()
-        {
-            set(new_batch_samples_number, new_layer);
-        }
-
-        vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
-
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-        void print() const
-        {
-        }
-
-        Tensor<type, 3> input_1_derivatives;
-        Tensor<type, 3> input_2_derivatives;
-    };
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void to_XML(tinyxml2::XMLPrinter&) const final;
 
     #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_forward_propagation_cuda.h"
-        #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_back_propagation_cuda.h"
+        #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_cuda.h"
     #endif
+
+protected:
+
+    Index inputs_number = 0;
+
+    Index inputs_depth = 0;
+
+    bool display = true;
+};
+
+
+struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
+{
+    explicit AdditionLayer3DForwardPropagation(const Index& = 0, Layer* new_layer = nullptr);
+
+    pair<type*, dimensions> get_outputs_pair() const final;
+
+    void set(const Index& = 0, Layer* = nullptr) final;
+
+    void print() const;
+
+    Tensor<type, 3> outputs;
+};
+
+
+struct AdditionLayer3DBackPropagation : LayerBackPropagation
+{
+    explicit AdditionLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+
+    void set(const Index& = 0, Layer* = nullptr) final;
+
+    void print() const;
+
+    Tensor<type, 3> input_1_derivatives;
+    Tensor<type, 3> input_2_derivatives;
+};
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_back_propagation_cuda.h"
+#endif
 }
 
 #endif

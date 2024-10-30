@@ -27,17 +27,9 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 
 public:
 
-   // Enumerations
-
    enum class InverseHessianApproximationMethod{DFP, BFGS};
 
-   // Constructors
-
-   explicit QuasiNewtonMethod();
-
-   explicit QuasiNewtonMethod(LossIndex*);
-
-   // Get
+   explicit QuasiNewtonMethod(LossIndex* = nullptr);
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm();
@@ -125,16 +117,12 @@ private:
 struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 {
 
-    explicit QuasiNewtonMehtodData()
-    {
-    }
-
-    explicit QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method)
+    explicit QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method = nullptr)
     {
         set(new_quasi_newton_method);
     }
 
-    void set(QuasiNewtonMethod* new_quasi_newton_method);
+    void set(QuasiNewtonMethod* = nullptr);
 
     virtual void print() const
     {
@@ -147,10 +135,6 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
     QuasiNewtonMethod* quasi_newton_method = nullptr;
 
     // Neural network data
-
-//    Tensor<type, 1> potential_parameters;
-//    Tensor<type, 1> training_direction;
-//    type initial_learning_rate = type(0);
 
     Tensor<type, 1> old_parameters;
     Tensor<type, 1> parameters_difference;

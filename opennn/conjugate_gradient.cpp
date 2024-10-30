@@ -17,13 +17,6 @@
 namespace opennn
 {
 
-ConjugateGradient::ConjugateGradient()
-    : OptimizationAlgorithm()
-{
-    set_default();
-}
-
-
 ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
@@ -341,7 +334,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Neural network
 
-        neural_network->forward_propagate(training_batch, training_forward_propagation, is_training);
+        neural_network->forward_propagate(training_batch.get_input_pairs(), training_forward_propagation, is_training);
 
         // Loss index
 
@@ -354,7 +347,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(has_selection)
         {
-            neural_network->forward_propagate(selection_batch, selection_forward_propagation, is_training);
+            neural_network->forward_propagate(selection_batch.get_input_pairs(), selection_forward_propagation, is_training);
 
             loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
@@ -398,7 +391,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -633,7 +626,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
 
     if (!root_element) 
-        throw std::runtime_error("Conjugate gradient element is nullptr.\n");
+        throw runtime_error("Conjugate gradient element is nullptr.\n");
     
     set_training_direction_method(read_xml_string(root_element, "TrainingDirectionMethod"));
 
@@ -659,12 +652,8 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
-{
-}
-
-
-ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) : OptimizationAlgorithmData()
+ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) 
+    : OptimizationAlgorithmData()
 {
     set(new_conjugate_gradient);
 }

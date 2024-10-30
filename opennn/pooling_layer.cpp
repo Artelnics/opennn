@@ -14,19 +14,19 @@
 namespace opennn
 {
 
-PoolingLayer::PoolingLayer() : Layer()
-{
-    set_default();
-}
-
-
 PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions, 
                            const dimensions& new_pool_dimensions,
                            const dimensions& new_stride_dimensions,
                            const dimensions& new_padding_dimensions,
-                           const PoolingMethod& new_pooling_method) : Layer()
+                           const PoolingMethod& new_pooling_method,
+                           const string new_name) : Layer()
 {
-    set(new_input_dimensions, new_pool_dimensions, new_stride_dimensions, new_padding_dimensions, new_pooling_method);
+    set(new_input_dimensions,
+        new_pool_dimensions,
+        new_stride_dimensions,
+        new_padding_dimensions,
+        new_pooling_method,
+        new_name);
 }
 
 
@@ -167,7 +167,8 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
                        const dimensions& new_pool_dimensions,
                        const dimensions& new_stride_dimensions,
                        const dimensions& new_padding_dimensions,
-                       const PoolingMethod& new_pooling_method)
+                       const PoolingMethod& new_pooling_method,
+                       const string new_name)
 {
     if(new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions must be 3");
@@ -205,6 +206,8 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
     padding_width = new_padding_dimensions[1];
 
     set_pooling_method(new_pooling_method);
+
+    name = new_name;
 
     set_default();
 }
@@ -329,9 +332,6 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 {
     const Index batch_samples_number = inputs.dimension(0);
 
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-
     const Index output_width = get_output_width();
     const Index output_height = get_output_height();
     const Index channels = get_channels_number();
@@ -416,8 +416,6 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
 {
     const Index batch_samples_number = inputs.dimension(0);
 
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
     const Index channels = inputs.dimension(3);
 
     const Index output_height = deltas.dimension(1);
@@ -570,13 +568,8 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-PoolingLayerForwardPropagation::PoolingLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-}
-
-
-PoolingLayerForwardPropagation::PoolingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+PoolingLayerForwardPropagation::PoolingLayerForwardPropagation(const Index& new_batch_samples_number, 
+                                                               Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_samples_number, new_layer);
@@ -591,7 +584,7 @@ pair<type*, dimensions> PoolingLayerForwardPropagation::get_outputs_pair() const
     const Index output_width = pooling_layer->get_output_width();
     const Index channels = pooling_layer->get_channels_number();
 
-    return {outputs_data, {batch_samples_number, output_height, output_width, channels}};
+    return {(type*)outputs.data(), {batch_samples_number, output_height, output_width, channels}};
 }
 
 
@@ -616,8 +609,6 @@ void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, 
                    output_width,
                    channels);
 
-    outputs_data = outputs.data();
-    
     image_patches.resize(batch_samples_number,
                          pool_height,
                          pool_width,
@@ -638,11 +629,6 @@ void PoolingLayerForwardPropagation::print() const
          << outputs(0) << endl
          << "Image patches" << endl
          << image_patches << endl;
-}
-
-
-PoolingLayerBackPropagation::PoolingLayerBackPropagation() : LayerBackPropagation()
-{
 }
 
 

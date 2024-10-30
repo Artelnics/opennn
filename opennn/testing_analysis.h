@@ -24,11 +24,7 @@ class TestingAnalysis
 
 public: 
 
-   // Constructors
-
    explicit TestingAnalysis(NeuralNetwork* = nullptr, DataSet* = nullptr);
-
-    // Destructor
 
    virtual ~TestingAnalysis();
 
@@ -39,6 +35,13 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
+       void set(const Tensor<type, 1>& new_targets, const Tensor<type, 1>& new_outputs, const type& new_determination)
+       {
+           targets = new_targets;
+           outputs = new_outputs;
+           determination = new_determination;
+       }
+
        void save(const string& file_name) const;
 
        void print() const
@@ -48,7 +51,7 @@ public:
 
            // cout << targets << endl;
            // cout << outputs << endl;
-       }
+       }              
     };
 
 
@@ -143,7 +146,7 @@ public:
 
    type calculate_masked_accuracy(const Tensor<type, 3>&, const Tensor<type, 2>&) const;
 
-   type calculate_determination_coefficient(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   type calculate_determination(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
    // Goodness-of-fit analysis
 

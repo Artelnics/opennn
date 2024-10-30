@@ -41,25 +41,6 @@ bool calculate_random_bool()
 }
 
 
-template<int rank>
-void set_random(Tensor<type, rank>& tensor, const type& minimum, const type& maximum)
-{
-    random_device rd;
-    mt19937 gen(rd());
-
-    uniform_real_distribution<type> distribution(minimum, maximum);
-
-    for (Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(gen);
-}
-
-
-template void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum);
-template void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum);
-template void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum);
-template void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum);
-
-
 void initialize_sequential(Tensor<type, 1>& vector)
 {
     #pragma omp parallel for

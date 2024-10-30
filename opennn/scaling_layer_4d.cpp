@@ -13,12 +13,6 @@
 namespace opennn
 {
 
-ScalingLayer4D::ScalingLayer4D() : Layer()
-{    
-    set();
-}
-
-
 ScalingLayer4D::ScalingLayer4D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -55,25 +49,11 @@ const bool& ScalingLayer4D::get_display() const
 }
 
 
-void ScalingLayer4D::set()
-{
-    set_default();
-}
-
-
 void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
     set_default();
-}
-
-
-void ScalingLayer4D::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
-{
-    set_default();
-
-    from_XML(new_scaling_layer_document);
 }
 
 
@@ -146,8 +126,6 @@ void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
     const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("Scaling4D");
 
     if(!scaling_layer_element)
@@ -162,7 +140,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
 
-    set(neurons_number);
+    set({ neurons_number });
 
     unsigned index = 0; // Index does not work
 
@@ -181,7 +159,6 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
         if(index != i+1)
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
 
-
         // Scaling method
 
         const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
@@ -199,13 +176,20 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+ScalingLayer4DForwardPropagation::ScalingLayer4DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() const
 {
     const ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(layer);
 
     const dimensions output_dimensions = scaling_layer_4d->get_output_dimensions();
 
-    return {outputs_data, {batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]}};
+    return {(type*)outputs.data(), {batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]}};
 }
 
 
@@ -218,8 +202,13 @@ void ScalingLayer4DForwardPropagation::set(const Index& new_batch_samples_number
     const dimensions output_dimensions = layer->get_output_dimensions();
 
     outputs.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
+}
 
-    outputs_data = outputs.data();
+
+void ScalingLayer4DForwardPropagation::print() const
+{
+    cout << "Scaling Outputs:" << endl
+         << outputs.dimensions() << endl;
 }
 
 }

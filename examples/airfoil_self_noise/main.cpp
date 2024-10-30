@@ -26,7 +26,7 @@ int main()
         srand(unsigned(time(nullptr)));
 
         cout << "Airfoil self noise" << endl;
-
+/*
         // Data set
 
         //        DataSet data_set("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true);
@@ -35,8 +35,9 @@ int main()
         //data_set.save("../data/data_set.xml");
         //data_set.load("../data/data_set.xml");
 
-        data_set.print();
-/*
+        //data_set.print();
+        //data_set.print_data();
+
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
@@ -47,10 +48,12 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
 
+
+
         // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
         // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
-        neural_network.print();
+        //        neural_network.print();
 
         // Training strategy
 
@@ -67,7 +70,7 @@ int main()
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        //training_strategy.set_maximum_epochs_number(100000);
+        training_strategy.set_maximum_epochs_number(10);
 
         //training_strategy.save("../data/training_strategy.xml");
         //training_strategy.load("../data/training_strategy.xml");
@@ -82,8 +85,8 @@ int main()
 
         // Save results
         
-        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
+//        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+//        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
 
         // Deploy
 
@@ -100,6 +103,10 @@ int main()
 
 //        cout << outputs << endl;
 */
+//        PerceptronLayer perceptron_layer({3},{2});
+
+//        perceptron_layer.print();
+
         cout << "Good bye!" << endl;
 
         return 0;

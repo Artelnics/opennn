@@ -15,21 +15,15 @@
 namespace opennn
 {
 
-ConvolutionalLayer::ConvolutionalLayer() : Layer()
-{
-    layer_type = Layer::Type::Convolutional;
-    name = "convolutional_layer";
-}
-
-
 ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_kernel_dimensions,
                                        const ConvolutionalLayer::ActivationFunction& new_activation_function,
                                        const dimensions& new_stride_dimensions,
-                                       const ConvolutionalLayer::ConvolutionType& new_convolution_type) : Layer()
+                                       const ConvolutionalLayer::ConvolutionType& new_convolution_type,
+                                       const string new_name) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
-    name = "convolutional_layer";
+    name = new_name;
 
     set(new_input_dimensions, new_kernel_dimensions, new_activation_function, new_stride_dimensions, new_convolution_type);
 }
@@ -618,7 +612,8 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions,
                              const ConvolutionalLayer::ActivationFunction& new_activation_function,
                              const dimensions& new_stride_dimensions,
-                             const ConvolutionType& new_convolution_type)
+                             const ConvolutionType& new_convolution_type,
+                             const string new_name)
 {
     if(new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions must be 3");
@@ -670,6 +665,8 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
 
     scales.resize(kernels_number);
     offsets.resize(kernels_number);
+
+    name = new_name;
 }
 
 
@@ -893,7 +890,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
 
     if (!convolutional_layer_element) 
-        throw std::runtime_error("Convolutional layer element is nullptr.\n");
+        throw runtime_error("Convolutional layer element is nullptr.\n");
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Name"));
 
@@ -916,12 +913,6 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-}
-
-
 ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagation()
 {
@@ -937,7 +928,7 @@ pair<type*, dimensions> ConvolutionalLayerForwardPropagation::get_outputs_pair()
     const Index output_width = convolutional_layer->get_output_width();
     const Index kernels_number = convolutional_layer->get_kernels_number();
 
-    return {outputs_data, {batch_samples_number, output_height, output_width, kernels_number}};
+    return {(type*)outputs.data(), {batch_samples_number, output_height, output_width, kernels_number}};
 }
 
 
@@ -971,8 +962,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                    output_width,
                    kernels_number);
 
-    outputs_data = outputs.data();
-
     means.resize(kernels_number);
 
     standard_deviations.resize(kernels_number);
@@ -981,7 +970,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                                    output_height,
                                    output_width,
                                    kernels_number);
-
 }
 
 
@@ -992,11 +980,6 @@ void ConvolutionalLayerForwardPropagation::print() const
          << outputs << endl
          << "Activations derivatives:" << endl
          << activations_derivatives << endl;
-}
-
-
-ConvolutionalLayerBackPropagation::ConvolutionalLayerBackPropagation() : LayerBackPropagation()
-{
 }
 
 

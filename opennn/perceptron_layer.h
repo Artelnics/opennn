@@ -20,13 +20,6 @@
 namespace opennn
 {
 
-struct LayerForwardPropagation;
-struct LayerBackPropagation;
-
-struct PerceptronLayerForwardPropagation;
-struct PerceptronLayerBackPropagation;
-struct PerceptronLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct PerceptronLayerForwardPropagationCuda;
     struct PerceptronLayerBackPropagationCuda;
@@ -50,20 +43,13 @@ public:
         HardSigmoid
     };
 
-    // Constructors
-
-    explicit PerceptronLayer();
-
-    explicit PerceptronLayer(const dimensions&,
-                             const dimensions&,
-                             const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
-
-    // Get
+    explicit PerceptronLayer(const dimensions& = {0},
+                             const dimensions& = {0},
+                             const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                             const string = "perceptron");
 
     Index get_inputs_number() const final;
     Index get_neurons_number() const final;
-
-    // Parameters
 
     Tensor<type, 1> get_parameters() const final;
 
@@ -74,19 +60,16 @@ public:
 
     dimensions get_output_dimensions() const final;
 
-    // Activation functions
-
     const PerceptronLayer::ActivationFunction& get_activation_function() const;
 
     string write_activation_function() const;
 
     const bool& get_display() const;
 
-    void set();
-
-    void set(const Index&,
-        const Index&,
-        const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
+    void set(const Index& = 0,
+             const Index& = 0,
+             const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+             const string = "perceptron_layer");
 
     void set_default();
 
@@ -135,13 +118,9 @@ public:
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
-    // Expression   
-
     string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
     string write_activation_function_expression() const;
-
-    // Serialization
 
     void print() const;
 
@@ -151,7 +130,6 @@ public:
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
     #endif
-
 
 protected:
 
@@ -171,13 +149,11 @@ protected:
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit PerceptronLayerForwardPropagation();
-
-    explicit PerceptronLayerForwardPropagation(const Index&, Layer*);
+    explicit PerceptronLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -189,13 +165,11 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-    explicit PerceptronLayerBackPropagation();
-
-    explicit PerceptronLayerBackPropagation(const Index&, Layer*);
+    explicit PerceptronLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -209,13 +183,11 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
-    explicit PerceptronLayerBackPropagationLM();
-
-    explicit PerceptronLayerBackPropagationLM(const Index&, Layer*);
+    explicit PerceptronLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -223,7 +195,6 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     Tensor<type, 2> input_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;
-
 };
 
 

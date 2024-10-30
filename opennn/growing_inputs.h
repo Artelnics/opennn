@@ -20,21 +20,13 @@ class GrowingInputs : public InputsSelection
 
 public:
 
-    // Constructors
-
-    explicit GrowingInputs();
-
-    explicit GrowingInputs(TrainingStrategy*);
-
-    // Get
+    explicit GrowingInputs(TrainingStrategy* = nullptr);
 
     const Index& get_maximum_inputs_number() const;
 
     const Index& get_minimum_inputs_number() const;
 
     const Index& get_maximum_selection_failures() const;
-
-    // Set
 
     virtual void set_default() final;
 
@@ -44,11 +36,7 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    // Neurons selection
-
     InputsSelectionResults perform_inputs_selection() final;
-
-    // Serialization
 
     Tensor<string, 2> to_string_matrix() const;
 
@@ -61,7 +49,7 @@ public:
 
 private:
 
-    Index maximum_inputs_number;
+    Index maximum_inputs_number = 1;
 
     Index minimum_inputs_number = 1;
 

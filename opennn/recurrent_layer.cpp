@@ -16,15 +16,9 @@
 namespace opennn
 {
 
-RecurrentLayer::RecurrentLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::Recurrent;
-}
-
-
-RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps) : Layer()
+RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, 
+                               const Index& new_neurons_number, 
+                               const Index& new_timesteps) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_timesteps);
 
@@ -159,12 +153,6 @@ const bool& RecurrentLayer::get_display() const
 }
 
 
-void RecurrentLayer::set()
-{
-    set_default();
-}
-
-
 void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
 {
     biases.resize(new_neurons_number);
@@ -182,16 +170,6 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
     time_steps = new_timesteps;
 
     set_parameters_random();
-
-    set_default();
-}
-
-
-void RecurrentLayer::set(const RecurrentLayer& other_neuron_layer)
-{
-    activation_function = other_neuron_layer.activation_function;
-
-    display = other_neuron_layer.display;
 
     set_default();
 }
@@ -647,11 +625,17 @@ void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+RecurrentLayerForwardPropagation::RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer) : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {{batch_samples_number, neurons_number}}};
+    return {(type*)outputs.data(), {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -665,12 +649,15 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     batch_samples_number = new_batch_samples_number;
 
-//    outputs_data = outputs.data();
-
     current_inputs.resize(batch_samples_number, inputs_number);
     current_activations_derivatives.resize(batch_samples_number, neurons_number);
 
     activations_derivatives.resize(batch_samples_number, time_steps, neurons_number);
+}
+
+
+void RecurrentLayerForwardPropagation::print() const
+{
 }
 
 
@@ -703,6 +690,19 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
     const Index time_steps = 0;
 
     input_derivatives.resize(batch_samples_number, time_steps, inputs_number);
+}
+
+
+void RecurrentLayerBackPropagation::print() const
+{
+
+}
+
+
+RecurrentLayerBackPropagation::RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

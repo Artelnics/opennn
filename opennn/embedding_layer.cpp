@@ -13,12 +13,12 @@
 namespace opennn
 {
 
-EmbeddingLayer::EmbeddingLayer() : Layer()
-{
-    set();
+// EmbeddingLayer::EmbeddingLayer() : Layer()
+// {
+//     set();
 
-    layer_type = Type::Embedding;
-}
+//     layer_type = Type::Embedding;
+// }
 
 
 EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
@@ -98,20 +98,20 @@ const bool& EmbeddingLayer::get_display() const
 }
 
 
-void EmbeddingLayer::set()
-{
-    //input_dimensions = 0;
+// void EmbeddingLayer::set()
+// {
+//     //input_dimensions = 0;
 
-    inputs_number = 0;
+//     inputs_number = 0;
 
-    //depth = 0;
+//     //depth = 0;
 
-    positional_encoding = false;
+//     positional_encoding = false;
 
-    embedding_weights.resize(0, 0);
+//     embedding_weights.resize(0, 0);
 
-    set_default();
-}
+//     set_default();
+// }
 
 
 void EmbeddingLayer::set(const Index& new_inputs_dimension,
@@ -145,17 +145,17 @@ void EmbeddingLayer::set_default()
 }
 
 
+void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
+{
+    inputs_number = new_inputs_number;
+}
+
+
 void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
 {  
     embedding_weights.resize(new_inputs_dimension, get_depth());
 
     set_parameters_random();
-}
-
-
-void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
-{
-    inputs_number = new_inputs_number;
 }
 
 
@@ -344,9 +344,9 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("EmbeddingLayer element is nullptr.\n");
 
     set_name(read_xml_string(embedding_layer_element, "Name"));
-    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
-    set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
-    set_depth(read_xml_index(embedding_layer_element, "Depth"));
+//    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
+//    set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
+//    set_depth(read_xml_index(embedding_layer_element, "Depth"));
 
     positional_encoding = read_xml_bool(embedding_layer_element, "PositionalEncoding");
 
@@ -369,6 +369,13 @@ void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+EmbeddingLayerForwardPropagation::EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() const
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
@@ -377,7 +384,7 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 
     const Index depth = embedding_layer->get_depth();
     
-    return {outputs_data, {batch_samples_number, inputs_number, depth}};
+    return {(type*)outputs.data(), {batch_samples_number, inputs_number, depth}};
 }
 
 
@@ -397,10 +404,21 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     outputs.resize(batch_samples_number, inputs_number, depth);
 
-    outputs_data = outputs.data();
-
     if(embedding_layer->get_positional_encoding())
         build_positional_encoding_matrix();
+}
+
+
+void EmbeddingLayerForwardPropagation::print() const
+{
+    cout << "Attention scores:" << endl;
+    //       cout << attention_scores.dimensions() << endl;
+    cout << "Outputs dimensions:" << endl;
+    //       cout << output_dimensions << endl;
+    cout << "Outputs:" << endl;
+    //       cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
+    cout << "Attention scores:" << endl;
+    //       cout << attention_scores << endl;
 }
 
 
@@ -428,6 +446,19 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 }
 
 
+EmbeddingLayerBackPropagation::EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
+vector<pair<type*, dimensions>> EmbeddingLayerBackPropagation::get_input_derivative_pairs() const
+{
+    return vector<pair<type*, dimensions>>();
+}
+
+
 void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -442,6 +473,11 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension, depth);
+}
+
+
+void EmbeddingLayerBackPropagation::print() const
+{
 }
 
 }

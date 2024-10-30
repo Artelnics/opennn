@@ -13,10 +13,6 @@
 namespace opennn
 {
 
-ResponseOptimization::ResponseOptimization()
-{
-}
-
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : data_set(new_data_set)
 {

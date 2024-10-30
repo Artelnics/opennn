@@ -197,6 +197,7 @@ public:
     Tensor<string, 1> get_variable_names() const;
     Tensor<string, 1> get_variable_names(const VariableUse&) const;
 
+    Tensor<Tensor<Index, 1>, 1> get_variable_indices() const;
     Tensor<Index, 1> get_variable_indices(const Index&) const;
     Tensor<Index, 1> get_variable_indices(const VariableUse&) const;
     Tensor<Index, 1> get_used_variable_indices() const;
@@ -269,8 +270,6 @@ public:
     void set(const Tensor<type, 2>&);
     void set(const Index&, const Index&);
     void set(const Index&, const Index&, const Index&);
-    void set(const DataSet&);
-    void set(const tinyxml2::XMLDocument&);
     void set(const string&);
     void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
     void set(const Tensor<type, 1>&, const Index&);
@@ -557,6 +556,8 @@ public:
     void decode(string&) const;
 
     void read_csv();
+
+
 
     void prepare_line(string&) const;
     void process_tokens(Tensor<string, 1>&);

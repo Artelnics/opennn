@@ -21,11 +21,6 @@ namespace opennn
 
 class ConvolutionalLayer;
 
-struct PoolingLayerForwardPropagation;
-struct PoolingLayerBackPropagation;
-struct ConvolutionalLayerForwardPropagation;
-struct ConvolutionalLayerBackPropagation;
-
 #ifdef OPENNN_CUDA
 struct PoolingLayerForwardPropagationCuda;
 struct PoolingLayerBackPropagationCuda;
@@ -47,7 +42,8 @@ public:
                           const dimensions& = { 1, 1 }, // Pool dimensions {pool_height,pool_width}
                           const dimensions& = { 1, 1 }, // Stride dimensions {row_stride, column_stride}
                           const dimensions& = { 0, 0 }, // Padding dimensions {padding_heigth, padding_width}
-                          const PoolingMethod& = PoolingMethod::AveragePooling);
+                          const PoolingMethod& = PoolingMethod::AveragePooling,
+                          const string = "pooling_layer");
 
     // Get
 
@@ -81,7 +77,12 @@ public:
 
     // Set
 
-    void set(const dimensions&, const dimensions&, const dimensions&, const dimensions&, const PoolingMethod&);
+    void set(const dimensions&,
+             const dimensions&,
+             const dimensions&,
+             const dimensions&,
+             const PoolingMethod&,
+             const string = "pooling_layer");
 
     void set_input_dimensions(const dimensions&);
 
@@ -167,14 +168,11 @@ protected:
 struct PoolingLayerForwardPropagation : LayerForwardPropagation
 {
     
-
-    explicit PoolingLayerForwardPropagation();
-
-    explicit PoolingLayerForwardPropagation(const Index&, Layer*);
+    explicit PoolingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
     
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -190,13 +188,11 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
 struct PoolingLayerBackPropagation : LayerBackPropagation
 {
-    explicit PoolingLayerBackPropagation();
-
-    explicit PoolingLayerBackPropagation(const Index&, Layer*);
+    explicit PoolingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 

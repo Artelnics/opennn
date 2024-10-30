@@ -22,18 +22,10 @@
 namespace opennn
 {
 
-GeneticAlgorithm::GeneticAlgorithm()
-    : InputsSelection()
-{
-    set_default();
-}
-
 
 GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
 {
-//    set(new_training_strategy);
-
     set_default();
 }
 
@@ -900,7 +892,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
 
             inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }

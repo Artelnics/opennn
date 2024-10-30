@@ -30,14 +30,8 @@ class AdaptiveMomentEstimation : public OptimizationAlgorithm
     
 public:
 
-   // Constructors
-
-   explicit AdaptiveMomentEstimation();
-
-   explicit AdaptiveMomentEstimation(LossIndex*);   
+   explicit AdaptiveMomentEstimation(LossIndex* = nullptr);   
    
-   // Training operators
-
    const type& get_learning_rate() const;
    const type& get_beta_1() const;
    const type& get_beta_2() const;
@@ -133,11 +127,9 @@ private:
 
 struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 {
-    explicit AdaptiveMomentEstimationData();
+    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation* = nullptr);
 
-    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation*);
-
-    void set(AdaptiveMomentEstimation*);
+    void set(AdaptiveMomentEstimation* = nullptr);
 
     virtual void print() const;
 

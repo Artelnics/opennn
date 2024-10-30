@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "config.h"
-#include "batch.h"
 #include "layer.h"
 #include "perceptron_layer.h"
 //#include "perceptron_layer_3d.h"
@@ -67,8 +66,12 @@ public:
 
    // APPENDING LAYERS
 
-   void add_layer(unique_ptr<Layer>,
-                  const string& name = "layer",
+// <<<<<<< HEAD
+//    void add_layer(unique_ptr<Layer>,
+//                   const string& name = "layer",
+// =======
+   void add_layer(unique_ptr<Layer>, 
+// >>>>>>> bbe36ab124548818a7b9142637218330d67590f2
                   const vector<Index>& = vector<Index>());
 
    bool validate_layer_type(const Layer::Type&) const;
@@ -127,7 +130,6 @@ public:
    void set_forecasting(const dimensions&, const dimensions&, const dimensions&);
    void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
    void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
-
 
    void set(const string&);
 
@@ -230,15 +232,11 @@ public:
 
    void save_outputs(Tensor<type, 2>&, const string&);
 
-   void forward_propagate(const Batch&, 
-                          ForwardPropagation&, 
-                          const bool& = false) const;
-
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           ForwardPropagation&,
                           const bool& = false) const;
 
-   void forward_propagate(const Batch&,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
 

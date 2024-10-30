@@ -12,14 +12,13 @@ namespace opennn
 
 struct ForwardPropagation
 {
-    ForwardPropagation() {}
-
-    ForwardPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
+    ForwardPropagation(const Index& new_batch_samples_number = 0, 
+                       NeuralNetwork* new_neural_network = nullptr)
     {
         set(new_batch_samples_number, new_neural_network);
     }
 
-    void set(const Index&, NeuralNetwork*);
+    void set(const Index& = 0, NeuralNetwork* = nullptr);
 
     pair<type*, dimensions> get_last_trainable_layer_outputs_pair() const;
 

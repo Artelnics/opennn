@@ -12,12 +12,6 @@
 namespace opennn
 {
 
-LearningRateAlgorithm::LearningRateAlgorithm()
-{
-    set_default();
-}
-
-
 LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index)
     : loss_index(new_loss_index)
 {
@@ -74,14 +68,6 @@ const type& LearningRateAlgorithm::get_learning_rate_tolerance() const
 const bool& LearningRateAlgorithm::get_display() const
 {
     return display;
-}
-
-
-void LearningRateAlgorithm::set()
-{
-    loss_index = nullptr;
-
-    set_default();
 }
 
 
@@ -216,7 +202,7 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*V.first;
         
-        neural_network->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        neural_network->forward_propagate(batch.get_input_pairs(), optimization_data.potential_parameters, forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
@@ -296,7 +282,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction * triplet.B.first;
         
-        neural_network->forward_propagate(batch, 
+        neural_network->forward_propagate(batch.get_input_pairs(),
             optimization_data.potential_parameters, forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
@@ -316,7 +302,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
         
-        neural_network->forward_propagate(batch,
+        neural_network->forward_propagate(batch.get_input_pairs(),
                                           optimization_data.potential_parameters,
                                           forward_propagation);
 
@@ -336,7 +322,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
             
-            neural_network->forward_propagate(batch,
+            neural_network->forward_propagate(batch.get_input_pairs(),
                                               optimization_data.potential_parameters,
                                               forward_propagation);
 
@@ -354,7 +340,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
         
-        neural_network->forward_propagate(batch,
+        neural_network->forward_propagate(batch.get_input_pairs(),
                                           optimization_data.potential_parameters,
                                           forward_propagation);
 
@@ -373,7 +359,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
             
-            neural_network->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+            neural_network->forward_propagate(batch.get_input_pairs(), optimization_data.potential_parameters, forward_propagation);
 
             loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
