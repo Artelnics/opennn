@@ -24,7 +24,7 @@ class BoundingLayer : public Layer
 
 public:
 
-   explicit BoundingLayer(const dimensions& = {});
+   explicit BoundingLayer(const dimensions& = {}, const string& = "bounding_layer");
 
    // Enumerations
 
@@ -53,7 +53,7 @@ public:
 
    // Variables bounds
 
-   void set(const Index& = 0);
+   void set(const Index& = 0, const string& = "bounding_layer");
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -68,8 +68,6 @@ public:
    void set_upper_bound(const Index&, const type&);
 
    void set_display(const bool&);
-
-   void set_default();
 
    // Lower and upper bounds
 

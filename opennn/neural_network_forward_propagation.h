@@ -2,7 +2,6 @@
 #define FORWARDPROPAGATION_H
 
 #include "neural_network.h"
-#include "batch.h"
 
 using namespace std;
 using namespace Eigen;
@@ -12,11 +11,8 @@ namespace opennn
 
 struct ForwardPropagation
 {
-    ForwardPropagation(const Index& new_batch_samples_number = 0, 
-                       NeuralNetwork* new_neural_network = nullptr)
-    {
-        set(new_batch_samples_number, new_neural_network);
-    }
+    ForwardPropagation(const Index& new_batch_samples_number = 0,
+                       NeuralNetwork* new_neural_network = nullptr);
 
     void set(const Index& = 0, NeuralNetwork* = nullptr);
 

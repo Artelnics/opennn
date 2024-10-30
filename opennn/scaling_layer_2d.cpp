@@ -366,14 +366,17 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
 
-    Scaler scaler;
-    
     for(Index i = 0; i < neurons_number; i++)
     {
-        scaler = scalers(i);
+        const Scaler& scaler = scalers(i);
 
-        const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
-        
+        // @todo What's going on with this?
+
+        //const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
+
+        const TensorMap<Tensor<type, 1>> input_column((type*) inputs.data() + i * inputs.dimension(0),
+                                                      inputs.dimension(0));
+
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
         
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
@@ -390,7 +393,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
         switch(scaler)
         {
         case Scaler::None:
-            output_column = input_column;
+            output_column.device(*thread_pool_device) = input_column;
         break;
         case Scaler::MinimumMaximum:
         {

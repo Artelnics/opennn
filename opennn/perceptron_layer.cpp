@@ -264,42 +264,38 @@ void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
 
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
-    type random;
-
     for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
     {
         TensorMap<Tensor<type, 1>> column = tensor_map(outputs, neuron_index);
 
-        random = calculate_random_uniform(type(0), type(1));
-
-        random < dropout_rate ? column.setZero()
+        calculate_random_uniform(type(0), type(1)) < dropout_rate ? column.setZero()
                               : column = column*scaling_factor;
     }
 }
 
 
 void PerceptronLayer::calculate_activations(Tensor<type, 2>& activations,
-                                            Tensor<type, 2>& activations_derivatives) const
+                                            Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives);return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives);return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-	case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;        
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives);return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives);return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: return;
     }
@@ -326,9 +322,9 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     if(is_training)
     {
-        Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
+        Tensor<type, 2>& activation_derivatives = perceptron_layer_forward_propagation->activation_derivatives;
 
-        calculate_activations(outputs, activations_derivatives);
+        calculate_activations(outputs, activation_derivatives);
     }
     else
     {
@@ -352,7 +348,7 @@ void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& inpu
     const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
+    const Tensor<type, 2>& activation_derivatives = perceptron_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
@@ -369,7 +365,7 @@ void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation->input_derivatives;
     
-    combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+    combinations_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
 
     biases_derivatives.device(*thread_pool_device) = combinations_derivatives.sum(sum_dimensions_1);
 
@@ -398,8 +394,8 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
     const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 2>& activations_derivatives 
-        = perceptron_layer_forward_propagation->activations_derivatives;
+    const Tensor<type, 2>& activation_derivatives
+        = perceptron_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
@@ -416,7 +412,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 
     // Parameters derivatives
     
-    combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+    combinations_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
 
     Index synaptic_weight_index = 0;
 
@@ -529,7 +525,9 @@ void PerceptronLayer::print() const
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
 
+    cout << "Biases:" << endl;
     cout << biases << endl;
+    cout << "Synaptic weights:" << endl;
     cout << synaptic_weights << endl;
 }
 
@@ -610,9 +608,9 @@ void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_numbe
     
     outputs.resize(batch_samples_number, neurons_number);
        
-    activations_derivatives.resize(batch_samples_number, neurons_number);
+    activation_derivatives.resize(batch_samples_number, neurons_number);
 
-    activations_derivatives.setConstant((type)NAN);
+    activation_derivatives.setConstant((type)NAN);
 }
 
 
@@ -635,9 +633,9 @@ PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation(const Index
 void PerceptronLayerForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
-         << outputs << endl 
-         << "Activations derivatives:" << endl
-         << activations_derivatives << endl;
+         << outputs << endl
+         << "Activation derivatives:" << endl
+         << activation_derivatives << endl;
 }
 
 

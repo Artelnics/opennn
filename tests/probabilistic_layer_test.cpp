@@ -112,21 +112,21 @@ void ProbabilisticLayerTest::test_calculate_activations()
     combinations.setConstant({ type(-1.55) });
 
     activations.resize(samples_number, neurons_number);
-    activations_derivatives.resize(samples_number, neurons_number);
+    activation_derivatives.resize(samples_number, neurons_number);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     probabilistic_layer.calculate_activations(combinations,
-                                              activations_derivatives);
+                                              activation_derivatives);
 
     assert_true(abs(activations(0, 0) - type(0.175)) < type(1e-2), LOG);
 
     assert_true(
-        activations_derivatives.rank() == 2 &&
-        activations_derivatives.dimension(0) == inputs_number &&
-        activations_derivatives.dimension(1) == neurons_number, LOG);
+        activation_derivatives.rank() == 2 &&
+        activation_derivatives.dimension(0) == inputs_number &&
+        activation_derivatives.dimension(1) == neurons_number, LOG);
 
-    assert_true(abs(activations_derivatives(0, 0) - type(0.1444)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0, 0) - type(0.1444)) < type(1e-3), LOG);
 }
 
 

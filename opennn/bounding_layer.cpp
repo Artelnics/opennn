@@ -13,11 +13,9 @@ namespace opennn
 {
 
 
-BoundingLayer::BoundingLayer(const dimensions& neurons_number) : Layer()
+BoundingLayer::BoundingLayer(const dimensions& neurons_number, const string& new_name) : Layer()
 {
     set(neurons_number[0]);
-
-    set_default();
 }
 
 
@@ -75,11 +73,11 @@ bool BoundingLayer::is_empty() const
 }
 
 
-void BoundingLayer::set(const Index& new_neurons_number)
+void BoundingLayer::set(const Index& new_neurons_number, const string& new_name)
 {
     set_neurons_number(new_neurons_number);
 
-    name = "bounding_layer";
+    name = new_name;
 
     bounding_method = BoundingMethod::Bounding;
 
@@ -101,11 +99,6 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
         bounding_method = BoundingMethod::Bounding;
     else
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
-}
-
-
-void BoundingLayer::set_default()
-{
 }
 
 

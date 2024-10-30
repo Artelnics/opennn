@@ -290,15 +290,15 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
 }
 
 
-void PerceptronLayer3D::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activations_derivatives) const
+void PerceptronLayer3D::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activation_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
     default: return;
     }
@@ -324,9 +324,9 @@ void PerceptronLayer3D::forward_propagate(const vector<pair<type*, dimensions>>&
         if(dropout_rate > type(0))
             dropout(outputs);
 
-        Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
+        Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
 
-        calculate_activations(outputs, activations_derivatives);
+        calculate_activations(outputs, activation_derivatives);
     }
     else
     {
@@ -352,7 +352,7 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
     const PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
             static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
+    const Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
 
     // Back propagation
 
@@ -367,7 +367,7 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
     Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
 
     combinations_derivatives.device(*thread_pool_device) 
-        = deltas * activations_derivatives;
+        = deltas * activation_derivatives;
 
     biases_derivatives.device(*thread_pool_device)
         = combinations_derivatives.sum(sum_dimensions);
@@ -449,8 +449,8 @@ void PerceptronLayer3DForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl
-         << "Activations derivatives:" << endl
-         << activations_derivatives << endl;
+         << "Activation derivatives:" << endl
+         << activation_derivatives << endl;
 }
 
 
@@ -487,7 +487,7 @@ void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_num
 
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
 
-    activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+    activation_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 }
 
 

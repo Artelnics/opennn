@@ -214,10 +214,10 @@ void PerceptronLayerTest::test_calculate_activations()
     Tensor<type, 2> inputs(1,1);
     Tensor<type, 2> combinations(1,1);
     Tensor<type, 2> activations(1,1);
-    Tensor<type, 2> activations_derivatives(1,1);
+    Tensor<type, 2> activation_derivatives(1,1);
 
     Tensor<Index, 1> dimensions(2);
-    dimensions = get_dimensions(activations_derivatives);
+    dimensions = get_dimensions(activation_derivatives);
 
     // Test
 
@@ -228,57 +228,57 @@ void PerceptronLayerTest::test_calculate_activations()
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(0.731)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(0.196)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(0.196)) < type(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(0.761)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(0.41997)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(0.41997)) < type(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(1)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(1)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(1)) < type(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(1)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(1)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(1)) < type(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(1.05)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(1.05)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(1.05)) < type(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(1.313)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(0.731)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(0.731)) < type(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(0.5)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(0.25)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(0.25)) < type(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
     activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activations_derivatives);
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
     assert_true(abs(activations(0,0) - type(0.7)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0) - type(0.2)) < type(1e-3), LOG);
+    assert_true(abs(activation_derivatives(0,0) - type(0.2)) < type(1e-3), LOG);
 }
 
 
@@ -320,8 +320,8 @@ void PerceptronLayerTest::test_forward_propagate()
     assert_true(abs(outputs(0,0) - type(3)) < type(1e-3), LOG);
     assert_true(abs(outputs(0,1) - type(3)) < type(1e-3), LOG);
 
-    assert_true(abs(perceptron_layer_forward_propagation.activations_derivatives(0,0) - type(1)) < type(1e-3), LOG);
-    assert_true(abs(perceptron_layer_forward_propagation.activations_derivatives(0,1) - type(1)) < type(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3), LOG);
 
     // Test
 
@@ -348,8 +348,8 @@ void PerceptronLayerTest::test_forward_propagate()
 
     assert_true(abs(outputs(0,0) - type(0.99505)) < type(1e-3), LOG);
     assert_true(abs(outputs(0,1) - type(0.99505)) < type(1e-3), LOG);
-    assert_true(abs(perceptron_layer_forward_propagation.activations_derivatives(0,0) - type(0.00986)) < type(1e-3), LOG);
-    assert_true(abs(perceptron_layer_forward_propagation.activations_derivatives(0,1) - type(0.00986)) < type(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(0.00986)) < type(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(0.00986)) < type(1e-3), LOG);
 
     // Test
 

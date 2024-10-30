@@ -56,7 +56,7 @@ void RecurrentLayerTest::test_calculate_activations()
 
     Tensor<type, 1> combinations;
     Tensor<type, 1> activations;
-    Tensor<type, 1> activations_derivatives;
+    Tensor<type, 1> activation_derivatives;
 
     Tensor<type, 1> numerical_activation_derivative;
     Tensor<type, 0> maximum_difference;

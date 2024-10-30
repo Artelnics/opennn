@@ -438,54 +438,54 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
 
 
 void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activations, 
-                                                     Tensor<type, 1>& activations_derivatives) const
+                                                     Tensor<type, 1>& activation_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: throw runtime_error("Unknown activation function");
     }
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activations_derivatives) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activation_derivatives) const
 {
     switch(recurrent_activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: throw runtime_error("Unknown activation function");
     }
