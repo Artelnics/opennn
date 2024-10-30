@@ -13,12 +13,6 @@
 namespace opennn
 {
 
-ProbabilisticLayer3D::ProbabilisticLayer3D()
-{
-    set();
-}
-
-
 ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
 {
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
@@ -122,18 +116,6 @@ Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
     memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size()*sizeof(type));
 
     return parameters;
-}
-
-
-void ProbabilisticLayer3D::set()
-{
-    inputs_number = 0;
-    
-    biases.resize(0);
-
-    synaptic_weights.resize(0,0);
-
-    set_default();
 }
 
 
@@ -444,6 +426,13 @@ void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+ProbabilisticLayer3DForwardPropagation::ProbabilisticLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair() const
 {
     ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
@@ -451,7 +440,7 @@ pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
-    return {outputs_data, {batch_samples_number, inputs_number, neurons_number}};
+    return {(type*)outputs.data(), {batch_samples_number, inputs_number, neurons_number}};
 }
 
 
@@ -467,8 +456,13 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
     
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
-    
-    outputs_data = outputs.data();
+}
+
+
+void ProbabilisticLayer3DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+        << outputs << endl;
 }
 
 
@@ -494,6 +488,22 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
+
+
+void ProbabilisticLayer3DBackPropagation::print() const
+{
+    cout << "Biases derivatives:" << endl
+         << biases_derivatives << endl
+         << "Synaptic weights derivatives:" << endl
+         << synaptic_weights_derivatives << endl;
+}
+
+
+ProbabilisticLayer3DBackPropagation::ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

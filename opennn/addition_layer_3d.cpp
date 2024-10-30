@@ -13,12 +13,6 @@
 namespace opennn
 {
 
-AdditionLayer3D::AdditionLayer3D() : Layer()
-{
-    set();
-}
-
-
 AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth) : Layer()
 {
     set(new_inputs_number, new_inputs_depth);
@@ -49,12 +43,6 @@ const bool& AdditionLayer3D::get_display() const
 }
 
 
-void AdditionLayer3D::set()
-{
-    set_default();
-}
-
-
 void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
     inputs_number = new_inputs_number;
@@ -72,6 +60,12 @@ void AdditionLayer3D::set_default()
     display = true;
 
     layer_type = Type::Addition3D;
+}
+
+
+void AdditionLayer3D::set_inputs_number(const Index& new_inputs_number)
+{
+    inputs_number = new_inputs_number;
 }
 
 
@@ -128,13 +122,13 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
 void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
     const auto* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
-    if (!addition_layer_element) 
-        throw std::runtime_error("AdditionLayer3D element is nullptr.\n");
 
-    set_name(read_xml_string(addition_layer_element, "Name"));
+    if (!addition_layer_element)
+        throw runtime_error("AdditionLayer3D element is nullptr.\n");
 
-    inputs_number = read_xml_index(addition_layer_element, "InputsNumber");
-    inputs_depth = read_xml_index(addition_layer_element, "InputsDepth");
+    set_name(read_xml_string(addition_layer_element, "Name"));    
+    set_inputs_number(read_xml_index(addition_layer_element, "InputsNumber"));
+    set_inputs_depth(read_xml_index(addition_layer_element, "InputsDepth"));
 }
 
 
@@ -143,12 +137,17 @@ void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
     printer.OpenElement("AdditionLayer3D");
 
     add_xml_element(printer, "Name", name);
-
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
-
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
 
     printer.CloseElement();
+}
+
+
+AdditionLayer3DForwardPropagation::AdditionLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 
@@ -159,7 +158,7 @@ pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() co
     const Index inputs_number = addition_layer_3d->get_inputs_number();
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
-    return {outputs_data, {batch_samples_number, inputs_number, inputs_depth}};
+    return {(type*)outputs.data(), {batch_samples_number, inputs_number, inputs_depth}};
 }
 
 
@@ -175,8 +174,13 @@ void AdditionLayer3DForwardPropagation::set(const Index& new_batch_samples_numbe
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
     outputs.resize(batch_samples_number, inputs_number, inputs_depth);
+}
 
-    outputs_data = outputs.data();
+
+void AdditionLayer3DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+         << outputs << endl;
 }
 
 
@@ -193,6 +197,18 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
 
     input_1_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
     input_2_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
+
+
+void AdditionLayer3DBackPropagation::print() const
+{
+}
+
+
+AdditionLayer3DBackPropagation::AdditionLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

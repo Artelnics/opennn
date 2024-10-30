@@ -44,20 +44,12 @@ public:
 
     enum class ConvolutionType{Valid, Same};
 
-    // Constructors
-
-    explicit ConvolutionalLayer();
-
-    explicit ConvolutionalLayer(const dimensions&,                                // Input dimensions {height,width,channels}
+    explicit ConvolutionalLayer(const dimensions& = {0, 0, 0},                                // Input dimensions {height,width,channels}
                                 const dimensions& = {1, 1, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                                 const ActivationFunction& = ActivationFunction::Linear,
                                 const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
                                 const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
                                 const string = "convolutional_layer");
-
-    // Destructor
-
-    // Get
 
     bool is_empty() const;
 
@@ -221,13 +213,11 @@ protected:
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
    
-   explicit ConvolutionalLayerForwardPropagation();
-
-   explicit ConvolutionalLayerForwardPropagation(const Index&, Layer*);
+   explicit ConvolutionalLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
       
    pair<type*, dimensions> get_outputs_pair() const final;
 
-   void set(const Index&, Layer*) final;
+   void set(const Index& = 0, Layer* = nullptr) final;
 
    void print() const;
 
@@ -244,13 +234,11 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
-   explicit ConvolutionalLayerBackPropagation();
-
    explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
 
    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-   void set(const Index&, Layer*) final;
+   void set(const Index& = 0, Layer* = nullptr) final;
 
    void print() const;
 

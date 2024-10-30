@@ -14,13 +14,6 @@
 namespace opennn
 {
 
-QuasiNewtonMethod::QuasiNewtonMethod()
-    : OptimizationAlgorithm()
-{
-    set_default();
-}
-
-
 QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
@@ -682,14 +675,14 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
 
     if (!root_element) 
-        throw std::runtime_error("Quasi-Newton method element is nullptr.\n");
+        throw runtime_error("Quasi-Newton method element is nullptr.\n");
     
     set_inverse_hessian_approximation_method(read_xml_string(root_element, "InverseHessianApproximationMethod"));
 
     const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
     
     if (!learning_rate_algorithm_element) 
-        throw std::runtime_error("Learning rate algorithm element is nullptr.\n");
+        throw runtime_error("Learning rate algorithm element is nullptr.\n");
     
     tinyxml2::XMLDocument learning_rate_algorithm_document;
     learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));

@@ -15,14 +15,6 @@
 namespace opennn
 {
 
-PerceptronLayer3D::PerceptronLayer3D() : Layer()
-{
-    set();
-
-    layer_type = Type::Perceptron3D;
-}
-
-
 PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number,
                                      const Index& new_inputs_depth,
                                      const Index& new_neurons_number,
@@ -129,16 +121,6 @@ string PerceptronLayer3D::write_activation_function() const
 const bool& PerceptronLayer3D::get_display() const
 {
     return display;
-}
-
-
-void PerceptronLayer3D::set()
-{
-    biases.resize(0);
-
-    synaptic_weights.resize(0, 0);
-
-    set_default();
 }
 
 
@@ -478,6 +460,13 @@ void PerceptronLayer3DForwardPropagation::print() const
 }
 
 
+PerceptronLayer3DForwardPropagation::PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() const
 {
     PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
@@ -486,7 +475,7 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     const Index inputs_number = perceptron_layer_3d->get_inputs_number();
 
-    return { outputs_data, { batch_samples_number, inputs_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, inputs_number, neurons_number } };
 }
 
 
@@ -503,8 +492,6 @@ void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_num
     const Index inputs_number = perceptron_layer_3d->get_inputs_number();
 
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
-
-    outputs_data = outputs.data();
 
     activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 }
@@ -529,6 +516,22 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
     combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
+
+
+void PerceptronLayer3DBackPropagation::print() const
+{
+    cout << "Biases derivatives:" << endl
+         << biases_derivatives << endl
+         << "Synaptic weights derivatives:" << endl
+         << synaptic_weights_derivatives << endl;
+}
+
+
+PerceptronLayer3DBackPropagation::PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

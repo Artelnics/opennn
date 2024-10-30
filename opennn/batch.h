@@ -16,9 +16,7 @@ namespace opennn
 
 struct Batch
 {
-    Batch() {}
-
-    Batch(const Index&, DataSet*);
+    Batch(const Index& = 0, DataSet* = nullptr);
 
     virtual ~Batch();
 
@@ -30,7 +28,7 @@ struct Batch
 
     bool is_empty() const;
 
-    void set(const Index&, DataSet*);
+    void set(const Index& = 0, DataSet* = nullptr);
 
     void fill(const Tensor<Index, 1>&, 
               const Tensor<Index, 1>&, 

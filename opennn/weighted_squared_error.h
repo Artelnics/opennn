@@ -24,20 +24,12 @@ class WeightedSquaredError : public LossIndex
 
 public:
 
-   // Constructors
-
-   explicit WeightedSquaredError();
-
-   explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
-
-   // Get
+   explicit WeightedSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    type get_positives_weight() const;
    type get_negatives_weight() const;
 
    type get_normalizaton_coefficient() const;
-
-   // Set
 
    void set_default();
 

@@ -25,14 +25,11 @@ class ResponseOptimization
 
 public:
 
-    explicit ResponseOptimization();
+    enum class Condition { None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum };
 
     explicit ResponseOptimization(NeuralNetwork*);
 
-    explicit ResponseOptimization(NeuralNetwork*,DataSet*);
-
-
-   enum class Condition{None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
+    explicit ResponseOptimization(NeuralNetwork*, DataSet*);
 
    // Get
 

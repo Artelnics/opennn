@@ -11,13 +11,6 @@
 namespace opennn
 {
 
-GrowingNeurons::GrowingNeurons()
-    : NeuronsSelection()
-{
-    set_default();
-}
-
-
 GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
     : NeuronsSelection(new_training_strategy)
 {

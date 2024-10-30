@@ -12,13 +12,6 @@
 namespace opennn
 {
 
-BoundingLayer::BoundingLayer() : Layer()
-{
-    set();
-
-    set_default();
-}
-
 
 BoundingLayer::BoundingLayer(const dimensions& neurons_number) : Layer()
 {
@@ -82,30 +75,11 @@ bool BoundingLayer::is_empty() const
 }
 
 
-void BoundingLayer::set()
-{
-    bounding_method = BoundingMethod::Bounding;
-
-    lower_bounds.resize(0);
-    upper_bounds.resize(0);
-
-    set_default();
-}
-
-
 void BoundingLayer::set(const Index& new_neurons_number)
 {
     set_neurons_number(new_neurons_number);
 
     set_default();
-}
-
-
-void BoundingLayer::set(const tinyxml2::XMLDocument& bounding_layer_document)
-{
-    set_default();
-
-    from_XML(bounding_layer_document);
 }
 
 
@@ -300,7 +274,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
     const auto* root_element = document.FirstChildElement("BoundingLayer");
     
     if (!root_element)
-        throw std::runtime_error("BoundingLayer element is nullptr.\n");
+        throw runtime_error("BoundingLayer element is nullptr.\n");
 
     const Index neurons_number = read_xml_index(root_element, "BoundingNeuronsNumber");
 
@@ -314,7 +288,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
         item_element->QueryUnsignedAttribute("Index", &index);
 
         if (index != i + 1) 
-            throw std::runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
+            throw runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
         
         lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
         upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");
@@ -326,11 +300,18 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+BoundingLayerForwardPropagation::BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return { outputs_data, { batch_samples_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, neurons_number } };
 }
 
 
@@ -343,8 +324,13 @@ void BoundingLayerForwardPropagation::set(const Index& new_batch_samples_number,
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
+}
 
-    outputs_data = outputs.data();
+
+void BoundingLayerForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+         << outputs << endl;
 }
 
 }

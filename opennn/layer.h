@@ -55,6 +55,9 @@ public:
 
     string get_name() const;
 
+    string layer_type_to_string(const Layer::Type&);
+    Type string_to_layer_type(const string&);
+
     // Get neurons number
 
     virtual Index get_inputs_number() const;
@@ -66,8 +69,6 @@ public:
     // Layer type
 
     Type get_type() const;
-
-    static Type string_to_layer_type(const string&);
 
     string get_type_string() const;
 

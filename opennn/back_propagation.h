@@ -12,14 +12,12 @@ namespace opennn
 
 struct BackPropagation
 {
-    explicit BackPropagation() {}
-
-    explicit BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index)
+    explicit BackPropagation(const Index& new_batch_samples_number = 0, LossIndex* new_loss_index = nullptr)
     {
         set(new_batch_samples_number, new_loss_index);
     }
 
-    void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
+    void set(const Index& new_batch_samples_number = 0, LossIndex* new_loss_index = nullptr);
 
     vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs() const;
 

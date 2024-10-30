@@ -520,11 +520,13 @@ void NeuralNetwork::set_auto_association(const dimensions& input_dimensions,
                                          const dimensions& complexity_dimensions, 
                                          const dimensions& output_dimensions)
 {
-    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+// @todo
 
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+/*
     const Index mapping_neurons_number = 10;
     const Index bottle_neck_neurons_number = complexity_dimensions[0];
-/*
+
     add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
                 "mapping_layer");
 
@@ -1097,11 +1099,13 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     const Index batch_samples_number = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
-    ForwardPropagation forward_propagation(batch_samples_number, this);
+    ForwardPropagation forward_propagation(batch_samples_number, this);        
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
     forward_propagate({input_pair}, forward_propagation);
+
+    forward_propagation.print();
 
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
@@ -1424,7 +1428,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         tinyxml2::XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
 
-        Layer::Type layer_type = Layer::string_to_layer_type(layer_type_string);
+        const Layer::Type layer_type = layers[i]->string_to_layer_type(layer_type_string);
 
         switch(layer_type)
         {
@@ -1830,6 +1834,12 @@ Tensor<string, 1> NeuralNetwork::get_layer_types_string() const
 }
 
 
+inline NeuralNetworkBackPropagation::NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network)
+{
+    neural_network = new_neural_network;
+}
+
+
 void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
     batch_samples_number = new_batch_samples_number;
@@ -1900,6 +1910,36 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
 
         default: break;
         }
+    }
+}
+
+
+const vector<unique_ptr<LayerBackPropagation>>& NeuralNetworkBackPropagation::get_layers() const
+{
+    return layers;
+}
+
+
+NeuralNetwork* NeuralNetworkBackPropagation::get_neural_network() const
+{
+    return neural_network;
+}
+
+
+void NeuralNetworkBackPropagation::print() const
+{
+    cout << "Neural network back-propagation" << endl;
+
+    const Index layers_number = layers.size();
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        cout << "Layer " << i << ": ";
+        cout << neural_network->get_layer(i)->get_type_string() << endl;
+
+        if (!layers[i]) continue;
+
+        layers[i]->print();
     }
 }
 
@@ -2056,14 +2096,15 @@ void ForwardPropagation::print() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
+        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_name() << endl;
 
         layers[i]->print();
     }
 }
 
 
-void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network)
+void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number, 
+                                         NeuralNetwork* new_neural_network)
 {
     batch_samples_number = new_batch_samples_number;
 
@@ -2092,7 +2133,8 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_samples_number, N
         }
     }
 }
-}
+
+} // Namespace
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

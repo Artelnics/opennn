@@ -15,13 +15,6 @@
 namespace opennn
 {
 
-ConvolutionalLayer::ConvolutionalLayer() : Layer()
-{
-    layer_type = Layer::Type::Convolutional;
-    name = "convolutional_layer";
-}
-
-
 ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_kernel_dimensions,
                                        const ConvolutionalLayer::ActivationFunction& new_activation_function,
@@ -894,7 +887,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
 
     if (!convolutional_layer_element) 
-        throw std::runtime_error("Convolutional layer element is nullptr.\n");
+        throw runtime_error("Convolutional layer element is nullptr.\n");
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Name"));
 
@@ -917,12 +910,6 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-}
-
-
 ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagation()
 {
@@ -938,7 +925,7 @@ pair<type*, dimensions> ConvolutionalLayerForwardPropagation::get_outputs_pair()
     const Index output_width = convolutional_layer->get_output_width();
     const Index kernels_number = convolutional_layer->get_kernels_number();
 
-    return {outputs_data, {batch_samples_number, output_height, output_width, kernels_number}};
+    return {(type*)outputs.data(), {batch_samples_number, output_height, output_width, kernels_number}};
 }
 
 
@@ -972,8 +959,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                    output_width,
                    kernels_number);
 
-    outputs_data = outputs.data();
-
     means.resize(kernels_number);
 
     standard_deviations.resize(kernels_number);
@@ -982,7 +967,6 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
                                    output_height,
                                    output_width,
                                    kernels_number);
-
 }
 
 
@@ -993,11 +977,6 @@ void ConvolutionalLayerForwardPropagation::print() const
          << outputs << endl
          << "Activations derivatives:" << endl
          << activations_derivatives << endl;
-}
-
-
-ConvolutionalLayerBackPropagation::ConvolutionalLayerBackPropagation() : LayerBackPropagation()
-{
 }
 
 

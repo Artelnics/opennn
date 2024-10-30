@@ -68,18 +68,6 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 }
 
 
-void LossIndex::set(const LossIndex& other_error_term)
-{
-    neural_network = other_error_term.neural_network;
-
-    data_set = other_error_term.data_set;
-
-    regularization_method = other_error_term.regularization_method;
-
-    display = other_error_term.display;
-}
-
-
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
     if(thread_pool) delete thread_pool;
@@ -1028,11 +1016,6 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
 BackPropagationLM::BackPropagationLM(const Index &new_batch_samples_number, LossIndex *new_loss_index) 
 {
     set(new_batch_samples_number, new_loss_index);
-}
-
-
-BackPropagationLM::BackPropagationLM() 
-{
 }
 
 } // namespace opennn

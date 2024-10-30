@@ -28,6 +28,131 @@ Layer::~Layer()
 }
 
 
+string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
+{
+    switch(this_layer_type)
+    {
+    case Type::Perceptron:
+        return "Perceptron";
+
+    case Type::Perceptron3D:
+        return "Perceptron3D";
+
+    case Type::Bounding:
+        return "Bounding";
+
+    case Type::Pooling:
+        return "Pooling";
+
+    case Type::Probabilistic:
+        return "Probabilistic";
+
+    case Type::Probabilistic3D:
+        return "Probabilistic3D";
+
+    case Type::Convolutional:
+        return "Convolutional";
+
+    case Type::LongShortTermMemory:
+        return "LongShortTermMemory";
+
+    case Type::Recurrent:
+        return "Recurrent";
+
+    case Type::Scaling2D:
+        return "Scaling2D";
+
+    case Type::Scaling4D:
+        return "Scaling4D";
+
+    case Type::Unscaling:
+        return "Unscaling";
+
+    case Type::Flatten:
+        return "Flatten";
+
+    case Type::NonMaxSuppression:
+        return "NonMaxSuppression";
+
+    case Type::Addition3D:
+        return "Addition3D";
+
+    case Type::Normalization3D:
+        return "Normalization3D";
+
+    case Type::Embedding:
+        return "Embedding";
+
+    case Type::MultiheadAttention:
+        return "MultiheadAttention";
+
+    default:
+        throw runtime_error("Unknown layer type.");
+    }
+
+}
+
+
+Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
+{
+    if(this_layer_type == "Perceptron")
+        return Type::Perceptron;
+
+    if(this_layer_type == "Perceptron3D")
+        return Type::Perceptron3D;
+
+    if(this_layer_type == "Bounding")
+        return Type::Bounding;
+
+    if(this_layer_type == "Pooling")
+        return Type::Pooling;
+
+    if(this_layer_type == "Probabilistic")
+        return Type::Probabilistic;
+
+    if(this_layer_type == "Probabilistic3D")
+        return Type::Probabilistic3D;
+
+    if(this_layer_type == "Convolutional")
+        return Type::Convolutional;
+
+    if(this_layer_type == "LongShortTermMemory")
+        return Type::LongShortTermMemory;
+
+    if(this_layer_type == "Recurrent")
+        return Type::Recurrent;
+
+    if(this_layer_type == "Scaling2D")
+        return Type::Scaling2D;
+
+    if(this_layer_type == "Scaling4D")
+        return Type::Scaling4D;
+
+    if(this_layer_type == "Unscaling")
+        return Type::Unscaling;
+
+    if(this_layer_type == "Flatten")
+        return Type::Flatten;
+
+    if(this_layer_type == "NonMaxSuppression")
+        return Type::NonMaxSuppression;
+
+    if(this_layer_type == "Addition3D")
+        return Type::Addition3D;
+
+    if(this_layer_type == "Normalization3D")
+        return Type::Normalization3D;
+
+    if(this_layer_type == "Embedding")
+        return Type::Embedding;
+
+    if(this_layer_type == "MultiheadAttention")
+        return Type::MultiheadAttention;
+
+    throw runtime_error("Unknown layer type.");
+}
+
+
 string Layer::get_name() const
 {
     return name;
@@ -37,49 +162,6 @@ string Layer::get_name() const
 Layer::Type Layer::get_type () const
 {
     return layer_type;
-}
-
-
-Layer::Type Layer::string_to_layer_type(const string& layer_type)
-{
-    if (layer_type == "Perceptron") 
-        return Layer::Type::Perceptron;
-    if (layer_type == "Perceptron3D") 
-        return Layer::Type::Perceptron3D;
-    if (layer_type == "Bounding") 
-        return Layer::Type::Bounding;
-    if (layer_type == "Pooling") 
-        return Layer::Type::Pooling;
-    if (layer_type == "Probabilistic") 
-        return Layer::Type::Probabilistic;
-    if (layer_type == "Probabilistic3D") 
-        return Layer::Type::Probabilistic3D;
-    if (layer_type == "Convolutional") 
-        Layer::Type::Convolutional;
-    if (layer_type == "LongShortTermMemory") 
-        return Layer::Type::LongShortTermMemory;
-    if (layer_type == "Recurrent") 
-        return Layer::Type::Recurrent;
-    if (layer_type == "Scaling2D") 
-        return Layer::Type::Scaling2D;
-    if (layer_type == "Scaling4D") 
-        return Layer::Type::Scaling4D;
-    if (layer_type == "Unscaling") 
-        return Layer::Type::Unscaling;
-    if (layer_type == "Flatten") 
-        return Layer::Type::Flatten;
-    if (layer_type == "NonMaxSuppression") 
-        return Layer::Type::NonMaxSuppression;
-    if (layer_type == "Addition3D") 
-        return Layer::Type::Addition3D;
-    if (layer_type == "Normalization3D") 
-        return Layer::Type::Normalization3D;
-    if (layer_type == "Embedding") 
-        return Layer::Type::Embedding;
-    if (layer_type == "MultiheadAttention") 
-        return Layer::Type::MultiheadAttention;
-
-    throw runtime_error("Unknown layer type string: " + layer_type);
 }
 
 

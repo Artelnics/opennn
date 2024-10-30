@@ -17,13 +17,6 @@
 namespace opennn
 {
 
-ConjugateGradient::ConjugateGradient()
-    : OptimizationAlgorithm()
-{
-    set_default();
-}
-
-
 ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
@@ -633,7 +626,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
 
     if (!root_element) 
-        throw std::runtime_error("Conjugate gradient element is nullptr.\n");
+        throw runtime_error("Conjugate gradient element is nullptr.\n");
     
     set_training_direction_method(read_xml_string(root_element, "TrainingDirectionMethod"));
 
@@ -659,12 +652,8 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
-{
-}
-
-
-ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) : OptimizationAlgorithmData()
+ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) 
+    : OptimizationAlgorithmData()
 {
     set(new_conjugate_gradient);
 }

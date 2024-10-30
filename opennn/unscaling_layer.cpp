@@ -13,11 +13,6 @@
 namespace opennn
 {
 
-UnscalingLayer::UnscalingLayer() : Layer()
-{
-    set();
-}
-
 
 UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions) : Layer()
 {
@@ -208,16 +203,6 @@ const bool& UnscalingLayer::get_display() const
 }
 
 
-void UnscalingLayer::set()
-{
-    descriptives.resize(0);
-
-    scalers.resize(0);
-
-    set_default();
-}
-
-
 void UnscalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
@@ -259,14 +244,6 @@ void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const 
     descriptives = new_descriptives;
 
     scalers = new_scalers;
-}
-
-
-void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_document)
-{
-    set_default();
-
-    from_XML(new_unscaling_layer_document);
 }
 
 
@@ -377,7 +354,6 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation =
@@ -391,9 +367,9 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
     {
         const Scaler& scaler = scalers(i);
 
-        const TensorMap<Tensor<type, 1>> input_column(inputs.data() + i * samples_number, samples_number);
+        const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
 
-        TensorMap<Tensor<type, 1>> output_column(outputs.data() + i * samples_number, samples_number);
+        TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
 
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
@@ -521,13 +497,13 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     for (Index i = 0; i < neurons_number; i++) {
         const tinyxml2::XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
         if (!unscaling_neuron_element) {
-            throw std::runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
+            throw runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
 
         unsigned index = 0;
         unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
         if (index != i + 1) {
-            throw std::runtime_error("Index " + std::to_string(index) + " is not correct.\n");
+            throw runtime_error("Index " + std::to_string(index) + " is not correct.\n");
         }
 
         const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
@@ -549,11 +525,18 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+UnscalingLayerForwardPropagation::UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return { outputs_data, { batch_samples_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, neurons_number } };
 }
 
 
@@ -566,8 +549,13 @@ void UnscalingLayerForwardPropagation::set(const Index& new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
+}
 
-    outputs_data = outputs.data();
+
+void UnscalingLayerForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+        << outputs << endl;
 }
 
 }

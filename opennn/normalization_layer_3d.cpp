@@ -13,13 +13,6 @@
 namespace opennn
 {
 
-NormalizationLayer3D::NormalizationLayer3D() : Layer()
-{
-    set();
-
-    layer_type = Type::Normalization3D;
-}
-
 
 NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
                                             const Index& new_inputs_depth) : Layer()
@@ -83,12 +76,6 @@ Tensor<type, 1> NormalizationLayer3D::get_parameters() const
 const bool& NormalizationLayer3D::get_display() const
 {
     return display;
-}
-
-
-void NormalizationLayer3D::set()
-{
-    set_default();
 }
 
 
@@ -354,6 +341,13 @@ void NormalizationLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+NormalizationLayer3DForwardPropagation::NormalizationLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> NormalizationLayer3DForwardPropagation::get_outputs_pair() const
 {
     NormalizationLayer3D* normalization_layer_3d = static_cast<NormalizationLayer3D*>(layer);
@@ -361,7 +355,7 @@ pair<type*, dimensions> NormalizationLayer3DForwardPropagation::get_outputs_pair
     const Index inputs_number = normalization_layer_3d->get_inputs_number();
     const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
-    return { (type*)outputs_data, { batch_samples_number, inputs_number, inputs_depth } };
+    return { (type*)outputs.data(), { batch_samples_number, inputs_number, inputs_depth } };
 }
 
 
@@ -378,12 +372,17 @@ void NormalizationLayer3DForwardPropagation::set(const Index& new_batch_samples_
 
     outputs.resize(batch_samples_number, inputs_number, inputs_depth);
 
-    outputs_data = outputs.data();
-
     normalized_inputs.resize(batch_samples_number, inputs_number, inputs_depth);
 
     means.resize(batch_samples_number, inputs_number, inputs_depth);
     standard_deviations.resize(batch_samples_number, inputs_number, inputs_depth);
+}
+
+
+void NormalizationLayer3DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+        << outputs << endl;
 }
 
 
@@ -407,6 +406,22 @@ void NormalizationLayer3DBackPropagation::set(const Index& new_batch_samples_num
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 
+}
+
+
+void NormalizationLayer3DBackPropagation::print() const
+{
+    cout << "Gammas derivatives:" << endl
+        << gammas_derivatives << endl
+        << "Betas derivatives:" << endl
+        << betas_derivatives << endl;
+}
+
+
+NormalizationLayer3DBackPropagation::NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

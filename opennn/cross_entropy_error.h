@@ -20,13 +20,7 @@ class CrossEntropyError : public LossIndex
 
 public:
 
-   // Constructors
-
-   explicit CrossEntropyError();
-
-   explicit CrossEntropyError(NeuralNetwork*, DataSet*);
-
-   // Error
+   explicit CrossEntropyError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,

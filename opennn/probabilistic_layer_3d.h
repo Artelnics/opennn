@@ -20,9 +20,6 @@
 namespace opennn
 {
 
-struct ProbabilisticLayer3DForwardPropagation;
-struct ProbabilisticLayer3DBackPropagation;
-
 #ifdef OPENNN_CUDA
 struct ProbabilisticLayer3DForwardPropagationCuda;
 struct ProbabilisticLayer3DBackPropagationCuda;
@@ -34,17 +31,9 @@ class ProbabilisticLayer3D : public Layer
 
 public:
 
-   // Constructors
-
-   explicit ProbabilisticLayer3D();
-
-   explicit ProbabilisticLayer3D(const Index&, const Index&, const Index&);
-
-   // Enumerations
+   explicit ProbabilisticLayer3D(const Index& = 0, const Index& = 0, const Index& = 0);
 
    enum class ActivationFunction{Softmax, Competitive};
-
-   // Get
 
    Index get_inputs_number() const final;
    Index get_inputs_depth() const;
@@ -63,10 +52,7 @@ public:
 
    const bool& get_display() const;
 
-   // Set
-
-   void set();
-   void set(const Index&, const Index&, const Index&);
+   void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
    void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);
@@ -160,27 +146,13 @@ protected:
 
 struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 {
-    
-
-    explicit ProbabilisticLayer3DForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    explicit ProbabilisticLayer3DForwardPropagation(const Index new_batch_samples_number, Layer* new_layer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }    
+    explicit ProbabilisticLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
     
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Outputs:" << endl
-             << outputs << endl;
-    }
+    void print() const;
 
     Tensor<type, 3> outputs;
 };
@@ -188,28 +160,13 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 
 struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 {
-    explicit ProbabilisticLayer3DBackPropagation() : LayerBackPropagation()
-    {
-    }
-
-    explicit ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit ProbabilisticLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Biases derivatives:" << endl;
-        cout << biases_derivatives << endl;
-
-        cout << "Synaptic weights derivatives:" << endl;
-        cout << synaptic_weights_derivatives << endl;
-    }
+    void print() const;
 
     Tensor<type, 2> targets;
     Tensor<type, 2> mask;

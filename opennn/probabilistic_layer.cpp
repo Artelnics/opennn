@@ -141,16 +141,6 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 }
 
 
-void ProbabilisticLayer::set()
-{
-    biases.resize(0);
-
-    synaptic_weights.resize(0,0);
-
-    set_default();
-}
-
-
 void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const string new_name)
 {
     biases.resize(new_neurons_number);
@@ -585,12 +575,6 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& input_names
     return buffer.str();
 }
 
-ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-
-}
-
 
 ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
     const Index& new_batch_samples_number, Layer *new_layer)
@@ -604,7 +588,7 @@ pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair(
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type *, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, neurons_number}});
 }
 
 
@@ -617,8 +601,6 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
     const Index neurons_number = layer->get_neurons_number();
 
     outputs.resize(batch_samples_number, neurons_number);
-
-    outputs_data = outputs.data();
 
     activations_derivatives.resize(0, 0);
 
@@ -638,11 +620,6 @@ void ProbabilisticLayerForwardPropagation::print() const
     if(neurons_number == 1)
        cout << "Activations derivatives:" << endl
             << activations_derivatives << endl;
-}
-
-
-ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation() : LayerBackPropagation() 
-{
 }
 
 
