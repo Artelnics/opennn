@@ -1338,94 +1338,352 @@ void LanguageDataSet::load_documents(const string& path)
 }
 
 
-void LanguageDataSet::read_csv_3_language_model()
+// void LanguageDataSet::extractDataPreview()
+// {
+//     ifstream file(data_path.c_str());
+
+//     const bool is_float = is_same<type, float>::value;
+
+//     const string separator_string = get_separator_string();
+
+//     string line;
+
+//     //skip_header(file);
+
+//     // Read data
+
+//     const Index raw_variables_number = has_sample_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
+
+//     Tensor<string, 1> tokens(raw_variables_number);
+
+//     const Index samples_number = data.dimension(0);
+
+//     if(has_sample_ids) samples_id.resize(samples_number);
+
+//     if(display) cout << "Reading data..." << endl;
+
+//     Index sample_index = 0;
+//     Index raw_variable_index = 0;
+
+//     while(getline(file, line))
+//     {
+//         prepare_line(line);
+
+//         if(line.empty()) continue;
+
+//         fill_tokens(line, separator_string, tokens);
+
+//         for(Index j = 0; j < raw_variables_number; j++)
+//         {
+//             trim(tokens(j));
+
+//             if(has_sample_ids && j == 0){
+//                 samples_id(sample_index) = tokens(j); continue;
+//             }
+//             if(tokens(j) == missing_values_label || tokens(j).empty())
+//                 data(sample_index, raw_variable_index++) = type(NAN);
+//             else if(is_float)
+//                 data(sample_index, raw_variable_index++) = type(strtof(tokens(j).data(), nullptr));
+//             else
+//                 data(sample_index, raw_variable_index++) = type(stof(tokens(j)));
+//         }
+//         raw_variable_index = 0;
+//         sample_index++;
+//     }
+
+//     data_file_preview(has_header ? 3 : 2) = tokens;
+
+//     file.close();
+
+//     if(display) cout << "Data read successfully..." << endl;
+// }
+
+
+// void LanguageDataSet::readDataFilePreview()
+// {
+//     if (display) cout << "Path: " << data_path << endl;
+//     if (data_path.empty()) throw runtime_error("Data file name is empty.");
+
+//     std::ifstream file;
+
+// #ifdef _WIN32
+
+//     if(std::regex_search(data_path, accent_regex))
+//     {
+//         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+//         std::wstring file_name_wide = conv.from_bytes(data_path);
+//         file.open(file_name_wide);
+//     }
+//     else
+//     {
+//         file.open(data_path.c_str());
+//     }
+// #else
+//     file.open(data_path.c_str());
+// #endif
+
+//     if (!file.is_open()) throw runtime_error("Cannot open data file: " + data_path);
+
+
+//     const string separator_char = get_separator_string();
+
+
+//     if(display) cout << "Setting data file preview..." << endl;
+
+//     Index lines_number = has_binary_raw_variables()? 4 : 3;
+
+//     data_file_preview.resize(lines_number);
+
+//     string line;
+
+//     Index lines_count = 0;
+//     while (file.good() && lines_count < data_file_preview.size())
+//     {
+//         getline(file, line);
+//         decode(line);
+//         trim(line);
+//         erase(line, '"');
+//         if (line.empty()) continue;
+//         check_separators(line);
+//         data_file_preview(lines_count++) = get_tokens(line, separator_char);
+//     }
+
+//     file.close();
+
+//     if(data_file_preview(0).size() == 0)
+//     {
+//         ostringstream buffer;
+
+//         buffer << "OpenNN Exception: DataSet class.\n"
+//                << "void read_csv_1() method.\n"
+//                << "File " << data_path << " is empty.\n";
+
+//         throw runtime_error(buffer.str());
+//     }
+
+//     // Set rows labels and raw_variables names
+
+//     if(display) cout << "Setting rows labels..." << endl;
+
+//     string first_name = data_file_preview(0)(0);
+//     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
+
+//     const Index raw_variables_number = get_has_rows_labels() ? data_file_preview(0).size()-1 : data_file_preview(0).size();
+
+//     raw_variables.resize(raw_variables_number);
+
+//     // Check if header has numeric value
+
+//     if(has_binary_raw_variables() && has_numbers(data_file_preview(0))){
+//         ostringstream buffer;
+
+//         buffer << "OpenNN Exception: DataSet class.\n"
+//                << "void read_csv_1() method.\n"
+//                << "Some raw_variables names are numeric.\n";
+
+//         throw runtime_error(buffer.str());
+//     }
+
+//     // raw_variables names
+
+//     if(display) cout << "Setting raw_variables names..." << endl;
+
+//     if(has_binary_raw_variables()){
+//         get_has_rows_labels() ? set_raw_variable_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
+//                                                                                   Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
+//                               : set_raw_variable_names(data_file_preview(0));
+//     }
+//     else{
+//         set_raw_variable_names(get_default_raw_variables_names(raw_variables_number));
+//     }
+
+//     // Check raw_variables with all missing values
+
+//     bool has_nans_raw_variables = false;
+
+//     do
+//     {
+//         has_nans_raw_variables = false;
+
+//         if(lines_number > 10)
+//             break;
+
+//         for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
+//         {
+//             if(get_has_rows_labels() && i == 0) continue;
+
+//             // Check if all are missing values
+
+//             if( data_file_preview(1)(i) == missing_values_label
+//                 && data_file_preview(2)(i) == missing_values_label
+//                 && data_file_preview(lines_number-2)(i) == missing_values_label
+//                 && data_file_preview(lines_number-1)(i) == missing_values_label)
+//             {
+//                 has_nans_raw_variables = true;
+//             }
+//             else
+//             {
+//                 has_nans_raw_variables = false;
+//             }
+
+//             if(has_nans_raw_variables)
+//             {
+//                 lines_number++;
+//                 data_file_preview.resize(lines_number);
+
+//                 string line;
+//                 Index lines_count = 0;
+
+//                 file.open(data_path.c_str());
+
+//                 if(!file.is_open())
+//                 {
+//                     ostringstream buffer;
+
+//                     buffer << "OpenNN Exception: DataSet class.\n"
+//                            << "void read_csv() method.\n"
+//                            << "Cannot open data file: " << data_path << "\n";
+
+//                     throw runtime_error(buffer.str());
+//                 }
+
+//                 while(file.good())
+//                 {
+//                     getline(file, line);
+//                     decode(line);
+//                     trim(line);
+//                     erase(line, '"');
+//                     if(line.empty()) continue;
+//                     check_separators(line);
+//                     data_file_preview(lines_count) = get_tokens(line, separator_char);
+//                     lines_count++;
+//                     if(lines_count == lines_number) break;
+//                 }
+//                 file.close();
+//             }
+//         }
+//     }while(has_nans_raw_variables);
+
+//     // raw_variables types
+
+//     if(display) cout << "Setting raw_variables types..." << endl;
+
+//     Index raw_variable_index = 0;
+
+//     for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
+//     {
+//         if(get_has_rows_labels() && i == 0) continue;
+
+//         string data_file_preview_1 = data_file_preview(1)(i);
+//         string data_file_preview_2 = data_file_preview(2)(i);
+//         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
+//         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
+
+//         string preview1 = data_file_preview(1)(i);
+//         string preview2 = data_file_preview(2)(i);
+//         string preview_last1 = data_file_preview(data_file_preview.size() - 2)(i);
+//         string preview_last2 = data_file_preview(data_file_preview.size() - 1)(i);
+
+//         if (is_date_time_string(preview1) || is_date_time_string(preview2) || is_date_time_string(preview_last1) || is_date_time_string(preview_last2))
+//             raw_variables(i).type = RawVariableType::DateTime;
+//         else if (is_numeric_string(preview1) || is_numeric_string(preview2) || is_numeric_string(preview_last1) || is_numeric_string(preview_last2))
+//             raw_variables(i).type = RawVariableType::Numeric;
+//         else
+//             raw_variables(i).type = RawVariableType::Categorical;
+
+
+//     }
+
+//     // Resize data file preview to original
+
+//     if(data_file_preview.size() > 4)
+//     {
+//         lines_number = has_binary_raw_variables() ? 4 : 3;
+
+//         Tensor<Tensor<string, 1>, 1> data_file_preview_copy(data_file_preview);
+
+//         data_file_preview.resize(lines_number);
+
+//         data_file_preview(0) = data_file_preview_copy(1);
+//         data_file_preview(1) = data_file_preview_copy(1);
+//         data_file_preview(2) = data_file_preview_copy(2);
+//         data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
+//         data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
+//     }
+// }
+
+// void LanguageDataSet::validateDataIntegrity()
+// {
+//     regex accent_regex("[\\xC0-\\xFF]");
+//     std::ifstream file;
+
+// #ifdef _WIN32
+
+//     if(regex_search(data_path, accent_regex))
+//     {
+//         wstring_convert<codecvt_utf8<wchar_t>> conv;
+//         wstring file_name_wide = conv.from_bytes(data_path);
+//         file.open(file_name_wide);
+//     }else
+//     {
+//         file.open(data_path.c_str());
+//     }
+
+// #else
+//     file.open(data_path.c_str());
+// #endif
+
+//     if (!file.is_open()) throw runtime_error("Cannot open data file: " + data_path);
+
+//     string line;
+//     Index line_number = 0;
+
+//     Index samples_count = 0;
+//     const string separator_char = get_separator_string();
+//     const Index raw_variables_number = get_has_rows_labels() ? get_raw_variables_number() + 1 : get_raw_variables_number();
+
+//     while (getline(file, line))
+//     {
+//         line_number++;
+//         trim(line);
+//         erase(line, '"');
+//         if (line.empty()) continue;
+
+//         if (count_tokens(line, separator_char) != raw_variables_number)
+//             throw runtime_error("Line " + to_string(line_number) + ": Incorrect number of tokens.");
+
+//         samples_count++;
+//     }
+
+
+//     file.close();
+
+//     data.resize(samples_count, get_raw_variables_number());
+
+//     set_default_raw_variables_uses();
+
+//     //samples_uses.resize(samples_count);
+//     //samples_uses.setConstant(SampleUse::Training);
+
+//     split_samples_random();
+// }
+
+
+
+// void LanguageDataSet::read_csv_language_model()
+// {
+//     read_csv_1();
+
+//     read_csv_2_simple();
+
+//     read_csv_3_language_model();
+// }
+
+void LanguageDataSet::read_csv_language_model()
 {
-    ifstream file;
+    if (display) cout << "Path: " << data_path << endl;
+    if (data_path.empty()) throw runtime_error("Data file name is empty.");
 
-    open_file(data_path, file);
-
-    const bool is_float = is_same<type, float>::value;
-
-    const string separator_string = get_separator_string();
-
-    string line;
-
-    //skip_header(file);
-
-    // Read data
-
-    const Index raw_variables_number = has_sample_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
-
-    Tensor<string, 1> tokens(raw_variables_number);
-
-    const Index samples_number = data.dimension(0);
-
-    if(has_sample_ids) samples_id.resize(samples_number);
-
-    if(display) cout << "Reading data..." << endl;
-
-    Index sample_index = 0;
-    Index raw_variable_index = 0;
-
-    while(getline(file, line))
-    {
-        prepare_line(line);
-
-        if(line.empty()) continue;
-
-        fill_tokens(line, separator_string, tokens);
-
-        for(Index j = 0; j < raw_variables_number; j++)
-        {
-            trim(tokens(j));
-
-            if(has_sample_ids && j == 0)
-            {
-                samples_id(sample_index) = tokens(j);
-
-                continue;
-            }            
-
-            if(tokens(j) == missing_values_label || tokens(j).empty())
-                data(sample_index, raw_variable_index) = type(NAN);
-            else if(is_float)
-                data(sample_index, raw_variable_index) = type(strtof(tokens(j).data(), nullptr));
-            else
-                data(sample_index, raw_variable_index) = type(stof(tokens(j)));
-
-            raw_variable_index++;
-        }
-
-        raw_variable_index = 0;
-        sample_index++;
-    }
-
-    const Index data_file_preview_index = has_header ? 3 : 2;
-
-    data_file_preview(data_file_preview_index) = tokens;
-
-    file.close();
-
-    if(display) cout << "Data read successfully..." << endl;
-}
-
-
-void LanguageDataSet::read_csv_1()
-{
-    if(display) cout << "Path: " << data_path << endl;
-
-    if(data_path.empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
-               << "Data file name is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    std::regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
 
 #ifdef _WIN32
@@ -1444,18 +1702,11 @@ void LanguageDataSet::read_csv_1()
     file.open(data_path.c_str());
 #endif
 
-    if(!file.is_open())
-    {
-        ostringstream buffer;
+    if (!file.is_open()) throw runtime_error("Cannot open data file: " + data_path);
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
-               << "Cannot open data file: " << data_path << "\n";
 
-        throw runtime_error(buffer.str());
-    }
+    string separator_char = get_separator_string();
 
-    const string separator_char = get_separator_string();
 
     if(display) cout << "Setting data file preview..." << endl;
 
@@ -1466,31 +1717,18 @@ void LanguageDataSet::read_csv_1()
     string line;
 
     Index lines_count = 0;
-
-    while(file.good())
+    while (file.good() && lines_count < data_file_preview.size())
     {
         getline(file, line);
-
         decode(line);
-
         trim(line);
-
         erase(line, '"');
-
-        if(line.empty()) continue;
-
+        if (line.empty()) continue;
         check_separators(line);
-
-        data_file_preview(lines_count) = get_tokens(line, separator_char);
-
-        lines_count++;
-
-        if(lines_count == lines_number) break;
+        data_file_preview(lines_count++) = get_tokens(line, separator_char);
     }
 
     file.close();
-
-    // Check empty file
 
     if(data_file_preview(0).size() == 0)
     {
@@ -1510,14 +1748,13 @@ void LanguageDataSet::read_csv_1()
     string first_name = data_file_preview(0)(0);
     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
 
-    const Index raw_variables_number = get_has_rows_labels() ? data_file_preview(0).size()-1 : data_file_preview(0).size();
+    Index raw_variables_number = get_has_rows_labels() ? data_file_preview(0).size()-1 : data_file_preview(0).size();
 
     raw_variables.resize(raw_variables_number);
 
     // Check if header has numeric value
 
-    if(has_binary_raw_variables() && has_numbers(data_file_preview(0)))
-    {
+    if(has_binary_raw_variables() && has_numbers(data_file_preview(0))){
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
@@ -1531,14 +1768,12 @@ void LanguageDataSet::read_csv_1()
 
     if(display) cout << "Setting raw_variables names..." << endl;
 
-    if(has_binary_raw_variables())
-    {
+    if(has_binary_raw_variables()){
         get_has_rows_labels() ? set_raw_variable_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
                                                                                   Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
                               : set_raw_variable_names(data_file_preview(0));
     }
-    else
-    {
+    else{
         set_raw_variable_names(get_default_raw_variables_names(raw_variables_number));
     }
 
@@ -1604,7 +1839,6 @@ void LanguageDataSet::read_csv_1()
                     lines_count++;
                     if(lines_count == lines_number) break;
                 }
-
                 file.close();
             }
         }
@@ -1625,33 +1859,19 @@ void LanguageDataSet::read_csv_1()
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
 
-        /*        if(nans_columns(column_index))
-        {
-            columns(column_index).type = ColumnType::Constant;
-            column_index++;
-        }
-        else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
-            || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
-            || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
-            || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::DateTime;
-            //            time_column = raw_variables(raw_variable_index).name;
-            raw_variable_index++;
-        }
-        else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
-                 || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
-                 || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
-                 || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::Numeric;
-            raw_variable_index++;
-        }
+        string preview1 = data_file_preview(1)(i);
+        string preview2 = data_file_preview(2)(i);
+        string preview_last1 = data_file_preview(data_file_preview.size() - 2)(i);
+        string preview_last2 = data_file_preview(data_file_preview.size() - 1)(i);
+
+        if (is_date_time_string(preview1) || is_date_time_string(preview2) || is_date_time_string(preview_last1) || is_date_time_string(preview_last2))
+            raw_variables(i).type = RawVariableType::DateTime;
+        else if (is_numeric_string(preview1) || is_numeric_string(preview2) || is_numeric_string(preview_last1) || is_numeric_string(preview_last2))
+            raw_variables(i).type = RawVariableType::Numeric;
         else
-        {
-            raw_variables(raw_variable_index).type = RawVariableType::Categorical;
-            raw_variable_index++;
-        }
+            raw_variables(i).type = RawVariableType::Categorical;
+
+
     }
 
     // Resize data file preview to original
@@ -1671,13 +1891,9 @@ void LanguageDataSet::read_csv_1()
         data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
     }
 
-}
 
-
-void LanguageDataSet::read_csv_2_simple()
-{
     regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    //std::ifstream file;
 
 #ifdef _WIN32
 
@@ -1695,82 +1911,32 @@ void LanguageDataSet::read_csv_2_simple()
     file.open(data_path.c_str());
 #endif
 
-    if(!file.is_open())
-    {
-        ostringstream buffer;
+    if (!file.is_open()) throw runtime_error("Cannot open data file: " + data_path);
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_2_simple() method.\n"
-               << "Cannot open data file: " << data_path << "\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    string line;
+    //string line;
     Index line_number = 0;
 
-    if(has_binary_raw_variables())
-    {
-        while(file.good())
-        {
-            line_number++;
-
-            getline(file, line);
-
-            trim(line);
-
-            erase(line, '"');
-
-            if(line.empty()) continue;
-
-            break;
-        }
-    }
-
     Index samples_count = 0;
+    separator_char = get_separator_string();
+    raw_variables_number = get_has_rows_labels() ? get_raw_variables_number() + 1 : get_raw_variables_number();
 
-    Index tokens_count;
-
-    if(display) cout << "Setting data dimensions..." << endl;
-
-    const string separator_char = get_separator_string();
-
-    const Index raw_variables_number = get_raw_variables_number();
-    const Index raw_raw_variables_number = get_has_rows_labels() ? raw_variables_number + 1 : raw_variables_number;
-
-    while(file.good())
+    while (getline(file, line))
     {
         line_number++;
-
-        getline(file, line);
-
         trim(line);
-
         erase(line, '"');
+        if (line.empty()) continue;
 
-        if(line.empty()) continue;
-
-        tokens_count = count_tokens(line, separator_char);
-
-        if(tokens_count != raw_raw_variables_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_csv_2_simple() method.\n"
-                   << "Line " << line_number << ": Size of tokens("
-                   << tokens_count << ") is not equal to number of raw_variables("
-                   << raw_raw_variables_number << ").\n";
-
-            throw runtime_error(buffer.str());
-        }
+        if (count_tokens(line, separator_char) != raw_variables_number)
+            throw runtime_error("Line " + to_string(line_number) + ": Incorrect number of tokens.");
 
         samples_count++;
     }
 
+
     file.close();
 
-    data.resize(samples_count, raw_variables_number);
+    data.resize(samples_count, get_raw_variables_number());
 
     set_default_raw_variables_uses();
 
@@ -1779,17 +1945,63 @@ void LanguageDataSet::read_csv_2_simple()
 
     split_samples_random();
 
-}
 
+    //ifstream file(data_path.c_str());
 
+    const bool is_float = is_same<type, float>::value;
 
-void LanguageDataSet::read_csv_language_model()
-{
-    read_csv_1();
+    const string separator_string = get_separator_string();
 
-    read_csv_2_simple();
+    //string line;
 
-    read_csv_3_language_model();
+    //skip_header(file);
+
+    // Read data
+
+    raw_variables_number = has_sample_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
+
+    Tensor<string, 1> tokens(raw_variables_number);
+
+    const Index samples_number = data.dimension(0);
+
+    if(has_sample_ids) samples_id.resize(samples_number);
+
+    if(display) cout << "Reading data..." << endl;
+
+    Index sample_index = 0;
+    raw_variable_index = 0;
+
+    while(getline(file, line))
+    {
+        prepare_line(line);
+
+        if(line.empty()) continue;
+
+        fill_tokens(line, separator_string, tokens);
+
+        for(Index j = 0; j < raw_variables_number; j++)
+        {
+            trim(tokens(j));
+
+            if(has_sample_ids && j == 0){
+                samples_id(sample_index) = tokens(j); continue;
+            }
+            if(tokens(j) == missing_values_label || tokens(j).empty())
+                data(sample_index, raw_variable_index++) = type(NAN);
+            else if(is_float)
+                data(sample_index, raw_variable_index++) = type(strtof(tokens(j).data(), nullptr));
+            else
+                data(sample_index, raw_variable_index++) = type(stof(tokens(j)));
+        }
+        raw_variable_index = 0;
+        sample_index++;
+    }
+
+    data_file_preview(has_header ? 3 : 2) = tokens;
+
+    file.close();
+
+    if(display) cout << "Data read successfully..." << endl;
 }
 
 // void DataSet::read_csv()
@@ -2003,6 +2215,7 @@ void LanguageDataSet::read_txt_language_model()
 
     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(context);
     const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess_language_documents(completion);
+
 
     bool imported_vocabulary = false;
 

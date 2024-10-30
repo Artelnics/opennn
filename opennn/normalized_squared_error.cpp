@@ -44,7 +44,7 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
     data_set = new_data_set;
 
     if(neural_network->has(Layer::Type::Recurrent)
-    || neural_network->has(Layer::Type::LongShortTermMemory))
+        || neural_network->has(Layer::Type::LongShortTermMemory))
         set_time_series_normalization_coefficient();
     else
         set_normalization_coefficient();
@@ -54,9 +54,10 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 void NormalizedSquaredError::set_normalization_coefficient()
 {
     const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
-
+    cout<<"Works properly"<<endl;
+    data_set->get_data(DataSet::VariableUse::Target);
+    cout<<"Works properly"<<endl;
     const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);
-
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
 }
 

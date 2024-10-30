@@ -53,12 +53,18 @@ int main()
         Tensor<string, 1> completion_vocabulary = language_data_set.get_completion_vocabulary();
         Tensor<string, 1> context_vocabulary = language_data_set.get_context_vocabulary();
 
+        cout<<completion_vocabulary.dimensions()<<endl;
+        cout<<completion_vocabulary(100)<<endl;
+        cout<<context_vocabulary.dimensions()<<endl;
+        cout<<context_vocabulary(100)<<endl;
+
         // Neural network
 
         Index input_length = language_data_set.get_completion_length();
         Index context_length = language_data_set.get_context_length();
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         Index context_dimension = language_data_set.get_context_vocabulary_size();
+
 
         Index number_of_layers = 1;
         Index depth = 64;
@@ -69,7 +75,6 @@ int main()
                                  depth, perceptron_depth, heads_number, number_of_layers });
 
         transformer.set_dropout_rate(0);
-        transformer.print();
 
         cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
 

@@ -126,11 +126,11 @@ protected:
 
     // MEMBERS
 
-    Index input_dimensions;
+    //Index input_dimensions;
 
     Index inputs_number;
 
-    Index depth;
+    //Index depth;
 
     type dropout_rate;
 

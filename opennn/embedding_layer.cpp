@@ -36,19 +36,19 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
 
 Index EmbeddingLayer::get_input_dimension() const
 {
-    return input_dimensions;
+    return embedding_weights.dimension(0);
 }
 
 
 Index EmbeddingLayer::get_inputs_number() const
 {
-    return inputs_number;
+    return embedding_weights.dimension(0);
 }
 
 
 Index EmbeddingLayer::get_depth() const
 {
-    return depth;
+    return embedding_weights.dimension(1);
 }
 
 
@@ -66,7 +66,7 @@ dimensions EmbeddingLayer::get_input_dimensions() const
 
 dimensions EmbeddingLayer::get_output_dimensions() const
 {
-    return { inputs_number, depth };
+    return { inputs_number, get_depth() };
 }
 
 
@@ -88,7 +88,7 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 
 Index EmbeddingLayer::get_neurons_number() const
 {
-    return inputs_number * depth;
+    return inputs_number * get_depth();
 }
 
 
@@ -100,11 +100,11 @@ const bool& EmbeddingLayer::get_display() const
 
 void EmbeddingLayer::set()
 {
-    input_dimensions = 0;
+    //input_dimensions = 0;
 
     inputs_number = 0;
 
-    depth = 0;
+    //depth = 0;
 
     positional_encoding = false;
 
@@ -119,13 +119,15 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
                          const Index& new_depth,
                          const bool& new_positional_encoding)
 {
-    input_dimensions = new_inputs_dimension;
+    //input_dimensions = new_inputs_dimension;
 
     inputs_number = new_inputs_number;
 
-    depth = new_depth;
+    //depth = new_depth;
 
-    set_embedding_weights();
+    embedding_weights.resize(new_inputs_dimension, new_depth);
+
+    set_parameters_random();
 
     positional_encoding = new_positional_encoding;
 
@@ -144,10 +146,10 @@ void EmbeddingLayer::set_default()
 
 
 void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
-{
-    input_dimensions = new_inputs_dimension;
+{  
+    embedding_weights.resize(new_inputs_dimension, get_depth());
 
-    set_embedding_weights();
+    set_parameters_random();
 }
 
 
@@ -159,9 +161,9 @@ void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
 
 void EmbeddingLayer::set_depth(const Index& new_depth)
 {
-    depth = new_depth;
+    embedding_weights.resize(get_input_dimension(), new_depth);
 
-    set_embedding_weights();
+    set_parameters_random();
 }
 
 
@@ -171,12 +173,12 @@ void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-void EmbeddingLayer::set_embedding_weights()
-{
-    embedding_weights.resize(input_dimensions, depth);
+// void EmbeddingLayer::set_embedding_weights()
+// {
+//     embedding_weights.resize(input_dimensions, depth);
 
-    set_parameters_random();
-}
+//     set_parameters_random();
+// }
 
 
 void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
@@ -253,7 +255,7 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     if(positional_encoding)
     {
-        outputs.device(*thread_pool_device) = outputs * outputs.constant(sqrt(depth));
+        outputs.device(*thread_pool_device) = outputs * outputs.constant(sqrt(get_depth()));
 
         const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
         
@@ -295,7 +297,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     {
         if(positional_encoding)
             sample_deltas.device(*thread_pool_device) 
-                = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
+                = deltas.chip(i, 0) * sample_deltas.constant(sqrt(get_depth()));
         else
             sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
