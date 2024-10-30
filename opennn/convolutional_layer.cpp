@@ -30,9 +30,8 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const string new_name) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
-    name = new_name;
 
-    set(new_input_dimensions, new_kernel_dimensions, new_activation_function, new_stride_dimensions, new_convolution_type);
+    set(new_input_dimensions, new_kernel_dimensions, new_activation_function, new_stride_dimensions, new_convolution_type, new_name);
 }
 
 
@@ -622,8 +621,6 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                              const ConvolutionType& new_convolution_type,
                              const string new_name)
 {
-    if(new_input_dimensions.size() != 3)
-        throw runtime_error("Input dimensions must be 3");
 
     if(new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
@@ -637,21 +634,18 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     if (new_kernel_dimensions[2] != new_input_dimensions[2])
         throw runtime_error("kernel_channels must match input_channels dimension");
 
-    if (new_stride_dimensions[0] <= 0 || new_stride_dimensions[1] <= 0)
-        throw runtime_error("Stride dimensions cannot be 0 or lower");
-
     if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[0])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
     
-    input_dimensions = new_input_dimensions;
+    set_input_dimensions(new_input_dimensions);
 
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];
     const Index kernel_channels = new_kernel_dimensions[2];
     const Index kernels_number = new_kernel_dimensions[3];
 
-    row_stride = new_stride_dimensions[0];
-    column_stride = new_stride_dimensions[1];
+    set_row_stride(new_stride_dimensions[0]);
+    set_column_stride(new_stride_dimensions[1]);
 
     set_activation_function(new_activation_function);
 
@@ -673,7 +667,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     scales.resize(kernels_number);
     offsets.resize(kernels_number);
 
-    name = new_name;
+    set_name(new_name);
 }
 
 
@@ -767,6 +761,9 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 
 void ConvolutionalLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+    if (new_input_dimensions.size() != 3)
+        throw runtime_error("Input new_input_dimensions.size() must be 3");
+
     input_dimensions = new_input_dimensions;
 }
 

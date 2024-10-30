@@ -67,10 +67,7 @@ public:
 
     Type get_type() const;
 
-    Type string_to_layer_type(const string& layer_type) const
-    {
-        return Layer::Type::Perceptron;
-    }
+    static Type string_to_layer_type(const string&);
 
     string get_type_string() const;
 

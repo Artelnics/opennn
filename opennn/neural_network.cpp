@@ -860,9 +860,9 @@ Index NeuralNetwork::get_layers_number() const
 bool NeuralNetwork::is_trainable(const Layer::Type& layer_type)
 {
     return layer_type != Layer::Type::Scaling2D &&
-        layer_type != Layer::Type::Scaling4D &&
-        layer_type != Layer::Type::Unscaling &&
-        layer_type != Layer::Type::Bounding;
+           layer_type != Layer::Type::Scaling4D &&
+           layer_type != Layer::Type::Unscaling &&
+           layer_type != Layer::Type::Bounding;
 }
 
 
@@ -1254,7 +1254,7 @@ void NeuralNetwork::to_XML(tinyxml2::XMLPrinter& printer) const
     for (Index i = 0; i < Index(layer_input_indices.size()); i++) 
     {
         printer.OpenElement("LayerInputsIndices");
-        printer.PushAttribute("LayerIndex", to_string(i + 1).c_str());
+        printer.PushAttribute("LayerIndex", to_string(i).c_str());
 
         const vector<Index>& indices = layer_input_indices[i];
         
@@ -1424,8 +1424,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         tinyxml2::XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
 
-        // @todo
-        Layer::Type layer_type;// = string_to_layer_type(layer_type_string);
+        Layer::Type layer_type = Layer::string_to_layer_type(layer_type_string);
 
         switch(layer_type)
         {

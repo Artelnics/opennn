@@ -49,7 +49,7 @@ int main()
 
         image_data_set.read_bmp();
 
-        image_data_set.print();
+        //image_data_set.print();
         /*
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLPrinter printer;
@@ -79,7 +79,7 @@ int main()
         
         //image_data_set.set(DataSet::SampleUse::Training);
 
-        loaded_image_data_set.print();
+        //loaded_image_data_set.print();
 
         //image_data_set.print_data();
 
@@ -91,6 +91,25 @@ int main()
             loaded_image_data_set.get_target_dimensions());
 
         neural_network.print();
+
+        const string nn_filename = "C:/xmltest/neural_network_mnist_binary.xml";
+        neural_network.save(nn_filename);
+
+        NeuralNetwork loaded_neural_network;
+        tinyxml2::XMLDocument loaded_nn_doc;
+
+        if (loaded_nn_doc.LoadFile(nn_filename.c_str()) == tinyxml2::XML_SUCCESS) {
+            loaded_neural_network.from_XML(loaded_nn_doc);
+            cout << "NN XML loaded from " << filename << endl;
+        }
+        else {
+            cout << "Error loading XML." << endl;
+            return 1;
+        }
+
+        loaded_neural_network.print();
+
+        system("pause");
 
         // Training strategy
  

@@ -27,6 +27,8 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions,
                            const PoolingMethod& new_pooling_method,
                            const string new_name) : Layer()
 {
+    layer_type = Layer::Type::Pooling;
+
     set(new_input_dimensions,
         new_pool_dimensions,
         new_stride_dimensions,
@@ -176,9 +178,6 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
                        const PoolingMethod& new_pooling_method,
                        const string new_name)
 {
-    if(new_input_dimensions.size() != 3)
-        throw runtime_error("Input dimensions must be 3");
-
     if(new_pool_dimensions.size() != 2)
         throw runtime_error("Pool dimensions must be 2");
 
@@ -200,20 +199,19 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
     if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
         throw runtime_error("Padding dimensions cannot be lower than 0");
 
-    input_dimensions = new_input_dimensions;
+    set_input_dimensions(new_input_dimensions);
 
-    pool_height = new_pool_dimensions[0];
-    pool_width = new_pool_dimensions[1];
+    set_pool_size(new_pool_dimensions[0], new_pool_dimensions[1]);
+    
+    set_row_stride(new_stride_dimensions[0]);
+    set_column_stride(new_stride_dimensions[1]);
 
-    row_stride = new_stride_dimensions[0];
-    column_stride = new_stride_dimensions[1];
-
-    padding_heigth = new_padding_dimensions[0];
-    padding_width = new_padding_dimensions[1];
+    set_padding_heigth(new_padding_dimensions[0]);
+    set_padding_width(new_padding_dimensions[1]);
 
     set_pooling_method(new_pooling_method);
 
-    name = new_name;
+    set_name(new_name);
 
     set_default();
 }
@@ -221,6 +219,9 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
 
 void PoolingLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+    if (new_input_dimensions.size() != 3)
+        throw runtime_error("Input dimensions must be 3");
+
     input_dimensions = new_input_dimensions;
 }
 

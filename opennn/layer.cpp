@@ -40,6 +40,49 @@ Layer::Type Layer::get_type () const
 }
 
 
+Layer::Type Layer::string_to_layer_type(const string& layer_type)
+{
+    if (layer_type == "Perceptron") 
+        return Layer::Type::Perceptron;
+    if (layer_type == "Perceptron3D") 
+        return Layer::Type::Perceptron3D;
+    if (layer_type == "Bounding") 
+        return Layer::Type::Bounding;
+    if (layer_type == "Pooling") 
+        return Layer::Type::Pooling;
+    if (layer_type == "Probabilistic") 
+        return Layer::Type::Probabilistic;
+    if (layer_type == "Probabilistic3D") 
+        return Layer::Type::Probabilistic3D;
+    if (layer_type == "Convolutional") 
+        Layer::Type::Convolutional;
+    if (layer_type == "LongShortTermMemory") 
+        return Layer::Type::LongShortTermMemory;
+    if (layer_type == "Recurrent") 
+        return Layer::Type::Recurrent;
+    if (layer_type == "Scaling2D") 
+        return Layer::Type::Scaling2D;
+    if (layer_type == "Scaling4D") 
+        return Layer::Type::Scaling4D;
+    if (layer_type == "Unscaling") 
+        return Layer::Type::Unscaling;
+    if (layer_type == "Flatten") 
+        return Layer::Type::Flatten;
+    if (layer_type == "NonMaxSuppression") 
+        return Layer::Type::NonMaxSuppression;
+    if (layer_type == "Addition3D") 
+        return Layer::Type::Addition3D;
+    if (layer_type == "Normalization3D") 
+        return Layer::Type::Normalization3D;
+    if (layer_type == "Embedding") 
+        return Layer::Type::Embedding;
+    if (layer_type == "MultiheadAttention") 
+        return Layer::Type::MultiheadAttention;
+
+    throw runtime_error("Unknown layer type string: " + layer_type);
+}
+
+
 string Layer::get_type_string() const
 {
     switch(layer_type)
