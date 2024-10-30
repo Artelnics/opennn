@@ -151,7 +151,17 @@ void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_ne
 
     name = new_name;
 
-    set_default();
+    layer_type = Layer::Type::Probabilistic;
+
+    const Index neurons_number = get_neurons_number();
+
+    neurons_number == 1
+        ? activation_function = ActivationFunction::Logistic
+        : activation_function = ActivationFunction::Softmax;
+
+    decision_threshold = type(0.5);
+
+    display = true;
 }
 
 
@@ -190,22 +200,6 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 void ProbabilisticLayer::set_decision_threshold(const type& new_decision_threshold)
 {
     decision_threshold = new_decision_threshold;
-}
-
-
-void ProbabilisticLayer::set_default()
-{
-    layer_type = Layer::Type::Probabilistic;
-
-    const Index neurons_number = get_neurons_number();
-
-    neurons_number == 1 
-        ? activation_function = ActivationFunction::Logistic
-        : activation_function = ActivationFunction::Softmax;
-
-    decision_threshold = type(0.5);
-
-    display = true;
 }
 
 

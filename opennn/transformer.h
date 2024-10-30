@@ -57,7 +57,7 @@ public:
 
 protected:
 
-    string name = "transformer";
+    //string name = "transformer";
 
     Index input_length;
 

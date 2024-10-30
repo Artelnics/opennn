@@ -1917,7 +1917,7 @@ void LanguageDataSet::read_csv_language_model()
     Index line_number = 0;
 
     Index samples_count = 0;
-    separator_char = get_separator_string();
+    //separator_char = get_separator_string();
     raw_variables_number = get_has_rows_labels() ? get_raw_variables_number() + 1 : get_raw_variables_number();
 
     while (getline(file, line))

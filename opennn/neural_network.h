@@ -66,12 +66,8 @@ public:
 
    // APPENDING LAYERS
 
-// <<<<<<< HEAD
-//    void add_layer(unique_ptr<Layer>,
-//                   const string& name = "layer",
-// =======
+
    void add_layer(unique_ptr<Layer>, 
-// >>>>>>> bbe36ab124548818a7b9142637218330d67590f2
                   const vector<Index>& = vector<Index>());
 
    bool validate_layer_type(const Layer::Type&) const;

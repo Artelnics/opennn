@@ -13,7 +13,7 @@ namespace opennn
 
 struct NeuralNetworkBackPropagation
 {
-    NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network = nullptr);
+    NeuralNetworkBackPropagation(const Index& = 0, NeuralNetwork* = nullptr);
 
     void set(const Index& = 0, NeuralNetwork* = nullptr);
 

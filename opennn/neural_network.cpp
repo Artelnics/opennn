@@ -1833,9 +1833,9 @@ Tensor<string, 1> NeuralNetwork::get_layer_types_string() const
 }
 
 
-inline NeuralNetworkBackPropagation::NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network)
+NeuralNetworkBackPropagation::NeuralNetworkBackPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
-    neural_network = new_neural_network;
+    set(new_batch_samples_number, new_neural_network);
 }
 
 

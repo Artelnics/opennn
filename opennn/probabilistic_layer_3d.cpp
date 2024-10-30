@@ -129,7 +129,15 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_
 
     set_parameters_glorot();
 
-    set_default();
+    name = "probabilistic_layer_3d";
+
+    layer_type = Layer::Type::Probabilistic3D;
+
+    activation_function = ActivationFunction::Softmax;
+
+    decision_threshold = type(0.5);
+
+    display = true;
 }
 
 
@@ -178,20 +186,6 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
 void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_threshold)
 {
     decision_threshold = new_decision_threshold;
-}
-
-
-void ProbabilisticLayer3D::set_default()
-{
-    name = "probabilistic_layer_3d";
-    
-    layer_type = Layer::Type::Probabilistic3D;
-    
-    activation_function = ActivationFunction::Softmax;
-
-    decision_threshold = type(0.5);
-
-    display = true;
 }
 
 

@@ -8,7 +8,6 @@
 
 #include "tensors.h"
 #include "scaling_layer_4d.h"
-#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -53,12 +52,6 @@ void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
-    set_default();
-}
-
-
-void ScalingLayer4D::set_default()
-{
     set_min_max_range(type(0), type(255));
 
     display = true;

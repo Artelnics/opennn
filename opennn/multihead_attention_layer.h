@@ -64,8 +64,6 @@ public:
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const Index& = 0);
 
-    void set_default();
-
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
     void set_input_size(const Index&);

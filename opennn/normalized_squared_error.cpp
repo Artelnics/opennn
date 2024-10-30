@@ -48,7 +48,6 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 void NormalizedSquaredError::set_normalization_coefficient()
 {
     const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
-    cout<<"Works properly"<<endl;
     data_set->get_data(DataSet::VariableUse::Target);
     cout<<"Works properly"<<endl;
     const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);

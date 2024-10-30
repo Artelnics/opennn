@@ -1631,7 +1631,7 @@ Tensor<type, 2> DataSet::get_data(const SampleUse& sample_use) const
 
 
 Tensor<type, 2> DataSet::get_data(const VariableUse& variable_use) const
-{
+{cout<<"Works properly"<<endl;
     const Index samples_number = get_samples_number();
 
     Tensor<Index, 1> indices;

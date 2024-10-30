@@ -155,12 +155,6 @@ void PerceptronLayer::set(const Index& new_inputs_number,
 
     name = new_name;
 
-    set_default();
-}
-
-
-void PerceptronLayer::set_default()
-{
     display = true;
 
     layer_type = Type::Perceptron;

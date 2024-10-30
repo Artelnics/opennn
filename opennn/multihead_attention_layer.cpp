@@ -186,12 +186,6 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
     scaling_factor = type(1) / type(sqrt(hidden_depth));
 
-    set_default();
-}
-
-
-void MultiheadAttentionLayer::set_default()
-{
     name = "multihead_attention_layer";
 
     display = true;

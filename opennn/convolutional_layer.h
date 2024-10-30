@@ -45,7 +45,7 @@ public:
     enum class ConvolutionType{Valid, Same};
 
     explicit ConvolutionalLayer(const dimensions& = {0, 0, 0},                                // Input dimensions {height,width,channels}
-                                const dimensions& = {1, 1, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
+                                const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                                 const ActivationFunction& = ActivationFunction::Linear,
                                 const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
                                 const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
@@ -102,11 +102,11 @@ public:
 
     // Set
 
-    void set(const dimensions&,
-             const dimensions&,
-             const ActivationFunction&,
-             const dimensions&,
-             const ConvolutionType&,
+    void set(const dimensions& = {0, 0, 0},
+             const dimensions& = {3, 3, 1, 1},
+             const ActivationFunction& = ActivationFunction::Linear,
+             const dimensions& = {1, 1},
+             const ConvolutionType& = ConvolutionType::Valid,
              const string = "convolutional_layer");
 
     void set_activation_function(const ActivationFunction&);
@@ -234,7 +234,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
-   explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
+   explicit ConvolutionalLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 

@@ -139,12 +139,6 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     activation_function = new_activation_function;
 
-    set_default();
-}
-
-
-void PerceptronLayer3D::set_default()
-{
     name = "perceptron_layer_3d";
 
     display = true;

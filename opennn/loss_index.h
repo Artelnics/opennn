@@ -67,8 +67,6 @@ public:
 
    virtual void set_data_set(DataSet*);
 
-   void set_default();
-
    void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
    void set_regularization_weight(const type&);

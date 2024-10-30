@@ -54,9 +54,9 @@ int main()
         Tensor<string, 1> context_vocabulary = language_data_set.get_context_vocabulary();
 
         cout<<completion_vocabulary.dimensions()<<endl;
-        cout<<completion_vocabulary(100)<<endl;
+        cout<<completion_vocabulary<<endl;
         cout<<context_vocabulary.dimensions()<<endl;
-        cout<<context_vocabulary(100)<<endl;
+        cout<<context_vocabulary<<endl;
 
         // Neural network
 

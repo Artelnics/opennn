@@ -131,12 +131,6 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 
     positional_encoding = new_positional_encoding;
 
-    set_default();
-}
-
-
-void EmbeddingLayer::set_default()
-{
     name = "embedding_layer";
 
     display = true;
