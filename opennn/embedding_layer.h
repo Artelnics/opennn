@@ -51,8 +51,6 @@ public:
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
-    void set_default();
-
 //    void set_input_dimensions(const Index&);
 //    void set_inputs_number(const Index&);
 //    void set_depth(const Index&);

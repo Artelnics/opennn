@@ -79,7 +79,11 @@ void BoundingLayer::set(const Index& new_neurons_number)
 {
     set_neurons_number(new_neurons_number);
 
-    set_default();
+    name = "bounding_layer";
+
+    bounding_method = BoundingMethod::Bounding;
+
+    layer_type = Layer::Type::Bounding;
 }
 
 
@@ -102,11 +106,6 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 
 void BoundingLayer::set_default()
 {
-    name = "bounding_layer";
-
-    bounding_method = BoundingMethod::Bounding;
-
-    layer_type = Layer::Type::Bounding;
 }
 
 

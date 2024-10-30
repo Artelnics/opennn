@@ -24,10 +24,7 @@ class NormalizedSquaredError : public LossIndex
 
 public:
 
-
-   explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
-
-   explicit NormalizedSquaredError();   
+   explicit NormalizedSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     type get_normalization_coefficient() const;
     type get_selection_normalization_coefficient() const;

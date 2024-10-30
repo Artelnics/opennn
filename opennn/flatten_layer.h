@@ -48,13 +48,7 @@ public:
 
     void set(const dimensions & = {0,0,0});
 
-    void set_default();
-
-    // Display messages
-
 //    void set_display(const bool&);
-
-    // Check
 
 //    bool is_empty() const;
 
@@ -92,8 +86,8 @@ protected:
 
 
 struct FlattenLayerForwardPropagation : LayerForwardPropagation
-{     
-   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer);
+{
+   explicit FlattenLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
       
    pair<type*, dimensions> get_outputs_pair() const final;
 

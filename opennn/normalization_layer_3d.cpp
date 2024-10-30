@@ -86,21 +86,16 @@ void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_
     inputs_depth = new_inputs_depth;
 
     gammas.resize(inputs_depth);
+    gammas.setConstant(1);
+
     betas.resize(inputs_depth);
+    betas.setZero();
 
-    set_default();
-}
-
-
-void NormalizationLayer3D::set_default()
-{
     name = "normalization_layer_3d";
 
     display = true;
 
     layer_type = Type::Normalization3D;
-
-    set_parameters_default();
 }
 
 
@@ -142,13 +137,6 @@ void NormalizationLayer3D::set_gammas_constant(const type& value)
 void NormalizationLayer3D::set_betas_constant(const type& value)
 {
     betas.setConstant(value);
-}
-
-
-void NormalizationLayer3D::set_parameters_default()
-{
-    gammas.setConstant(1);
-    betas.setZero();
 }
 
 
