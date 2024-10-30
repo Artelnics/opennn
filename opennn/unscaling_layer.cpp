@@ -223,32 +223,6 @@ void UnscalingLayer::set(const Index& new_neurons_number)
 
     scalers.setConstant(Scaler::MinimumMaximum);
 
-    set_default();
-}
-
-
-void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
-{
-    descriptives = new_descriptives;
-
-    scalers.resize(new_descriptives.size());
-
-    scalers.setConstant(Scaler::MinimumMaximum);
-
-    set_default();
-}
-
-
-void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
-{
-    descriptives = new_descriptives;
-
-    scalers = new_scalers;
-}
-
-
-void UnscalingLayer::set_default()
-{
     name = "unscaling_layer";
 
     set_scalers(Scaler::MinimumMaximum);
@@ -259,6 +233,13 @@ void UnscalingLayer::set_default()
 
     layer_type = Type::Unscaling;
 }
+
+
+void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
+{
+    descriptives = new_descriptives;
+}
+
 
 
 void UnscalingLayer::set_min_max_range(const type min, const type max)

@@ -171,12 +171,6 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 
     set_parameters_random();
 
-    set_default();
-}
-
-
-void RecurrentLayer::set_default()
-{
     name = "recurrent_layer";
 
     display = true;

@@ -64,7 +64,15 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
     data_set = new_data_set;
 
-    set_default();
+    delete thread_pool;
+    delete thread_pool_device;
+
+    const int n = omp_get_max_threads();
+
+    thread_pool = new ThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+
+    regularization_method = RegularizationMethod::L2;
 }
 
 
@@ -87,20 +95,6 @@ void LossIndex::set_neural_network(NeuralNetwork* new_neural_network)
 void LossIndex::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
-}
-
-
-void LossIndex::set_default()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-
-    const int n = omp_get_max_threads();
-
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-
-    regularization_method = RegularizationMethod::L2;
 }
 
 

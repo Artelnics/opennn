@@ -64,8 +64,6 @@ public:
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
 
-   void set_default();
-
    // Parameters
 
    Index get_parameters_number() const final;

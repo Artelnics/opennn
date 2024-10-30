@@ -62,8 +62,6 @@ public:
 
    void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   void set_default();
-
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
 

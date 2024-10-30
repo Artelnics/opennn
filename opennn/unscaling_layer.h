@@ -45,13 +45,10 @@ public:
    const bool& get_display() const;
 
    void set(const Index& = 0);
-   void set(const Tensor<Descriptives, 1>&);
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
-
-   void set_default();
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
 

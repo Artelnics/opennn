@@ -63,8 +63,6 @@ public:
             const Index& = 0,
             const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
-   void set_default();
-
    void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;

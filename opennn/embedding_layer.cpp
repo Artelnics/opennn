@@ -125,20 +125,12 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 
     depth = new_depth;
 
-
     embedding_weights.resize(input_dimensions, depth);
 
     set_parameters_random();
 
-
     positional_encoding = new_positional_encoding;
 
-    set_default();
-}
-
-
-void EmbeddingLayer::set_default()
-{
     name = "embedding_layer";
 
     display = true;

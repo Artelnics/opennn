@@ -215,13 +215,8 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 
     set_parameters_random();
 
-    set_default();
-}
-
-
-void LongShortTermMemoryLayer::set_default()
-{
     name = "long_short_term_memory_layer";
+
     layer_type = Type::LongShortTermMemory;
 }
 

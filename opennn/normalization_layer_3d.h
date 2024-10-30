@@ -46,8 +46,6 @@ public:
 
     void set(const Index& = 0, const Index& = 0);
 
-    void set_default();
-
     void set_inputs_number(const Index&);
     void set_inputs_depth(const Index&);
 
@@ -58,7 +56,6 @@ public:
     void set_gammas_constant(const type&);
     void set_betas_constant(const type&);
 
-    void set_parameters_default();
     void set_parameters_constant(const type&) final;
     void set_parameters_random() final;
 

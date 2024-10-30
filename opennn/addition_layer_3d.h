@@ -41,8 +41,6 @@ public:
 
     void set(const Index& = 0, const Index& = 0);
 
-    void set_default();
-
     void set_inputs_number(const Index&);
     void set_inputs_depth(const Index&);
 
