@@ -250,6 +250,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     AdaptiveMomentEstimationData optimization_data(this);
 
+
     bool stop_training = false;
     bool is_training = true;
 

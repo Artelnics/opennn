@@ -14,9 +14,10 @@ namespace opennn
 {
 
 
-UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions) : Layer()
+UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions, const string& layer_name)
+    : Layer()
 {
-    set(new_input_dimensions[0]);
+    set(new_input_dimensions[0]);      
 }
 
 
@@ -215,7 +216,7 @@ void UnscalingLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void UnscalingLayer::set(const Index& new_neurons_number)
+void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name)
 {
     descriptives.resize(new_neurons_number);
 
@@ -223,7 +224,7 @@ void UnscalingLayer::set(const Index& new_neurons_number)
 
     scalers.setConstant(Scaler::MinimumMaximum);
 
-    name = "unscaling_layer";
+    name = new_name;
 
     set_scalers(Scaler::MinimumMaximum);
 

@@ -107,7 +107,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
 /*
     Tensor<type, 3> combinations;
     Tensor<type, 3> activations;
-    Tensor<type, 4> activations_derivatives;
+    Tensor<type, 4> activation_derivatives;
 
     {
         // Test 1
@@ -125,21 +125,21 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        activations_derivatives.resize(samples_number, inputs_number, neurons_number, neurons_number);
-        activations_derivatives.setConstant(type(0));
+        activation_derivatives.resize(samples_number, inputs_number, neurons_number, neurons_number);
+        activation_derivatives.setConstant(type(0));
 
         probabilistic_layer_3d.calculate_activations_derivatives(combinations,
                                                                  activations,
-                                                                 activations_derivatives);
+                                                                 activation_derivatives);
 
         assert_true(
-            activations_derivatives.rank() == 4 &&
-            activations_derivatives.dimension(0) == samples_number &&
-            activations_derivatives.dimension(1) == inputs_number &&
-            activations_derivatives.dimension(2) == neurons_number &&
-            activations_derivatives.dimension(3) == neurons_number, LOG);
+            activation_derivatives.rank() == 4 &&
+            activation_derivatives.dimension(0) == samples_number &&
+            activation_derivatives.dimension(1) == inputs_number &&
+            activation_derivatives.dimension(2) == neurons_number &&
+            activation_derivatives.dimension(3) == neurons_number, LOG);
 
-        assert_true(activations_derivatives(0, 0, 0, 0) == type(0), LOG);
+        assert_true(activation_derivatives(0, 0, 0, 0) == type(0), LOG);
     }
 
 
@@ -159,33 +159,33 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        activations_derivatives.resize(samples_number, inputs_number, neurons_number, neurons_number);
-        activations_derivatives.setConstant(type(0));
+        activation_derivatives.resize(samples_number, inputs_number, neurons_number, neurons_number);
+        activation_derivatives.setConstant(type(0));
 
         probabilistic_layer_3d.calculate_activations_derivatives(combinations,
                                                                  activations,
-                                                                 activations_derivatives);
+                                                                 activation_derivatives);
 
         assert_true(
-            activations_derivatives.rank() == 4 &&
-            activations_derivatives.dimension(0) == samples_number &&
-            activations_derivatives.dimension(1) == inputs_number &&
-            activations_derivatives.dimension(2) == neurons_number &&
-            activations_derivatives.dimension(3) == neurons_number, LOG);
+            activation_derivatives.rank() == 4 &&
+            activation_derivatives.dimension(0) == samples_number &&
+            activation_derivatives.dimension(1) == inputs_number &&
+            activation_derivatives.dimension(2) == neurons_number &&
+            activation_derivatives.dimension(3) == neurons_number, LOG);
 
-        assert_true(check_softmax_derivatives(activations, activations_derivatives), LOG);
+        assert_true(check_softmax_derivatives(activations, activation_derivatives), LOG);
         
         /*
         assert_true(
-            abs(activations_derivatives(0, 0, 0, 0) - (activations(0, 0, 0) - activations(0, 0, 0) * activations(0, 0, 0))) < type(1e-3) &&
-            abs(activations_derivatives(0, 0, 0, 1) - (-activations(0, 0, 0) * activations(0, 0, 1))) < type(1e-3) &&
-            abs(activations_derivatives(0, 0, 0, 2) - (-activations(0, 0, 0) * activations(0, 0, 2))) < type(1e-3) &&
-            abs(activations_derivatives(0, 0, 1, 0) - (-activations(0, 0, 1) * activations(0, 0, 0))) < type(1e-3) &&
-            abs(activations_derivatives(0, 0, 1, 1) - (activations(0, 0, 1) - activations(0, 0, 1) * activations(0, 0, 1))) < type(1e-3) &&
-            abs(activations_derivatives(0, 0, 1, 2) - (-activations(0, 0, 1) * activations(0, 0, 2))) < type(1e-3) &&
-            abs(activations_derivatives(0, 0, 2, 0) - (-activations(0, 0, 2) * activations(0, 0, 0))) < type(1e-3) &&
-            abs(activations_derivatives(0, 0, 2, 1) - (-activations(0, 0, 2) * activations(0, 0, 1))) < type(1e-3) &&
-            abs(activations_derivatives(0, 0, 2, 2) - (activations(0, 0, 2) - activations(0, 0, 2) * activations(0, 0, 2))) < type(1e-3), LOG);
+            abs(activation_derivatives(0, 0, 0, 0) - (activations(0, 0, 0) - activations(0, 0, 0) * activations(0, 0, 0))) < type(1e-3) &&
+            abs(activation_derivatives(0, 0, 0, 1) - (-activations(0, 0, 0) * activations(0, 0, 1))) < type(1e-3) &&
+            abs(activation_derivatives(0, 0, 0, 2) - (-activations(0, 0, 0) * activations(0, 0, 2))) < type(1e-3) &&
+            abs(activation_derivatives(0, 0, 1, 0) - (-activations(0, 0, 1) * activations(0, 0, 0))) < type(1e-3) &&
+            abs(activation_derivatives(0, 0, 1, 1) - (activations(0, 0, 1) - activations(0, 0, 1) * activations(0, 0, 1))) < type(1e-3) &&
+            abs(activation_derivatives(0, 0, 1, 2) - (-activations(0, 0, 1) * activations(0, 0, 2))) < type(1e-3) &&
+            abs(activation_derivatives(0, 0, 2, 0) - (-activations(0, 0, 2) * activations(0, 0, 0))) < type(1e-3) &&
+            abs(activation_derivatives(0, 0, 2, 1) - (-activations(0, 0, 2) * activations(0, 0, 1))) < type(1e-3) &&
+            abs(activation_derivatives(0, 0, 2, 2) - (activations(0, 0, 2) - activations(0, 0, 2) * activations(0, 0, 2))) < type(1e-3), LOG);
         
     }
 
@@ -205,25 +205,25 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
 
-        activations_derivatives.resize(samples_number, inputs_number, neurons_number, neurons_number);
-        activations_derivatives.setConstant(type(0));
+        activation_derivatives.resize(samples_number, inputs_number, neurons_number, neurons_number);
+        activation_derivatives.setConstant(type(0));
 
         probabilistic_layer_3d.calculate_activations_derivatives(combinations,
                                                                  activations,
-                                                                 activations_derivatives);
+                                                                 activation_derivatives);
 
         assert_true(
-            activations_derivatives.rank() == 4 &&
-            activations_derivatives.dimension(0) == samples_number &&
-            activations_derivatives.dimension(1) == inputs_number &&
-            activations_derivatives.dimension(2) == neurons_number &&
-            activations_derivatives.dimension(3) == neurons_number, LOG);
+            activation_derivatives.rank() == 4 &&
+            activation_derivatives.dimension(0) == samples_number &&
+            activation_derivatives.dimension(1) == inputs_number &&
+            activation_derivatives.dimension(2) == neurons_number &&
+            activation_derivatives.dimension(3) == neurons_number, LOG);
 
-        assert_true(check_softmax_derivatives(activations, activations_derivatives), LOG);
+        assert_true(check_softmax_derivatives(activations, activation_derivatives), LOG);
     }*/
 }
 
-bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activations, Tensor<type, 4>& activations_derivatives) const
+bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activations, Tensor<type, 4>& activation_derivatives) const
 {
     for(Index i = 0; i < samples_number; i++)
     {
@@ -235,12 +235,12 @@ bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activa
                 {
                     if(k == v)
                     {
-                        if(activations_derivatives(i, j, k, v) != activations(i, j, k) - activations(i, j, k) * activations(i, j, k))
+                        if(activation_derivatives(i, j, k, v) != activations(i, j, k) - activations(i, j, k) * activations(i, j, k))
                             return false;
                     }
                     else
                     {
-                        if(activations_derivatives(i, j, k, v) != -activations(i, j, k) * activations(i, j, v))
+                        if(activation_derivatives(i, j, k, v) != -activations(i, j, k) * activations(i, j, v))
                             return false;
                     }
                 }

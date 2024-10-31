@@ -146,7 +146,7 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 3> outputs;
 
-    Tensor<type, 3> activations_derivatives;
+    Tensor<type, 3> activation_derivatives;
 };
 
 

@@ -38,7 +38,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     void print() const;
 
     Tensor<type, 2> outputs;
-    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> activation_derivatives;
 };
 
 

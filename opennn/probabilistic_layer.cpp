@@ -256,13 +256,13 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 
 void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations,
-                                               Tensor<type, 2>& activations_derivatives) const
+                                               Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
     case ActivationFunction::Logistic:
         /*
-        logistic(combinations, activations_derivatives);
+        logistic(combinations, activation_derivatives);
         */
         return;
 
@@ -293,9 +293,9 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
     }
     else if (neurons_number == 1 && is_training)
     {
-        Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+        Tensor<type, 2>& activation_derivatives = probabilistic_layer_forward_propagation->activation_derivatives;
 
-        logistic(outputs, activations_derivatives);
+        logistic(outputs, activation_derivatives);
     }
     else if (neurons_number > 1)
     {
@@ -336,9 +336,9 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     if(neurons_number == 1)
     {
-        const Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+        const Tensor<type, 2>& activation_derivatives = probabilistic_layer_forward_propagation->activation_derivatives;
 
-        combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+        combinations_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
     }
     else
     {
@@ -596,10 +596,10 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
 
     outputs.resize(batch_samples_number, neurons_number);
 
-    activations_derivatives.resize(0, 0);
+    activation_derivatives.resize(0, 0);
 
     if(neurons_number == 1)
-        activations_derivatives.resize(batch_samples_number, neurons_number);
+        activation_derivatives.resize(batch_samples_number, neurons_number);
 }
 
 
@@ -612,8 +612,8 @@ void ProbabilisticLayerForwardPropagation::print() const
     const Index neurons_number = layer->get_neurons_number();
 
     if(neurons_number == 1)
-       cout << "Activations derivatives:" << endl
-            << activations_derivatives << endl;
+       cout << "Activation derivatives:" << endl
+            << activation_derivatives << endl;
 }
 
 
