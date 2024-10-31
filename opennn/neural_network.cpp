@@ -73,7 +73,6 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
         ? std::vector<Index>(1, old_layers_number - 1) 
         : input_indices);
 
-    layers[old_layers_number]->set_name(name);
 }
 
 
@@ -1394,18 +1393,11 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
     if(!layers_element)
         throw runtime_error("Layers element is nullptr.\n");
 
-    // Layers types
-
-    const tinyxml2::XMLElement* layers_number_element = layers_element->FirstChildElement("LayersNumber");
-
-    if(!layers_number_element)
-        throw runtime_error("LayersNumber element is nullptr.\n");
-
-    const Index layers_number = Index(atoi(layers_number_element->GetText()));
+    const Index layers_number = read_xml_index(layers_element, "LayersNumber");
 
     // Add layers
 
-    const tinyxml2::XMLElement* start_element = layers_number_element;
+    const tinyxml2::XMLElement* start_element = layers_element->FirstChildElement("LayersNumber");
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -1420,152 +1412,134 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         tinyxml2::XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
 
-        const Layer::Type layer_type = layers[i]->string_to_layer_type(layer_type_string);
-
-        switch(layer_type)
-        {
-        case Layer::Type::Scaling2D:
-        {
+        if (layer_type_string == "Scaling2D") {
             unique_ptr<ScalingLayer2D> scaling_layer = make_unique<ScalingLayer2D>();
             scaling_layer->from_XML(layer_document);
             add_layer(std::move(scaling_layer));
         }
-        break;
-        case Layer::Type::Scaling4D:
-        {
+        else if (layer_type_string == "Scaling4D") {
             unique_ptr<ScalingLayer4D> scaling_layer = make_unique<ScalingLayer4D>();
             scaling_layer->from_XML(layer_document);
             add_layer(std::move(scaling_layer));
         }
-        break;
-        case Layer::Type::Convolutional:
-        {
+        else if (layer_type_string == "Convolutional") {
             unique_ptr<ConvolutionalLayer> convolutional_layer = make_unique<ConvolutionalLayer>();
             convolutional_layer->from_XML(layer_document);
             add_layer(std::move(convolutional_layer));
         }
-        break;
-        case Layer::Type::Perceptron:
-        {
+        else if (layer_type_string == "Perceptron") {
             unique_ptr<PerceptronLayer> perceptron_layer = make_unique<PerceptronLayer>();
             perceptron_layer->from_XML(layer_document);
             add_layer(std::move(perceptron_layer));
         }
-        break;
-        case Layer::Type::Perceptron3D:
-        {
+        else if (layer_type_string == "Perceptron3D") {
             unique_ptr<PerceptronLayer3D> perceptron_layer_3d = make_unique<PerceptronLayer3D>();
             perceptron_layer_3d->from_XML(layer_document);
             add_layer(std::move(perceptron_layer_3d));
         }
-        break;
-        case Layer::Type::Pooling:
-        {
+        else if (layer_type_string == "Pooling") {
             unique_ptr<PoolingLayer> pooling_layer = make_unique<PoolingLayer>();
             pooling_layer->from_XML(layer_document);
             add_layer(std::move(pooling_layer));
         }
-        break;
-        case Layer::Type::Probabilistic:
-        {
+        else if (layer_type_string == "Flatten") {
+            unique_ptr<FlattenLayer> flatten_layer = make_unique<FlattenLayer>();
+            flatten_layer->from_XML(layer_document);
+            add_layer(std::move(flatten_layer));
+        }
+        else if (layer_type_string == "Probabilistic") {
             unique_ptr<ProbabilisticLayer> probabilistic_layer = make_unique<ProbabilisticLayer>();
             probabilistic_layer->from_XML(layer_document);
             add_layer(std::move(probabilistic_layer));
         }
-        break;
-        case Layer::Type::Probabilistic3D:
-        {
+        else if (layer_type_string == "Probabilistic3D") {
             unique_ptr<ProbabilisticLayer3D> probabilistic_layer_3d = make_unique<ProbabilisticLayer3D>();
             probabilistic_layer_3d->from_XML(layer_document);
             add_layer(std::move(probabilistic_layer_3d));
         }
-        break;
-        case Layer::Type::LongShortTermMemory:
-        {
+        else if (layer_type_string == "LongShortTermMemory") {
             unique_ptr<LongShortTermMemoryLayer> long_short_term_memory_layer = make_unique<LongShortTermMemoryLayer>();
             long_short_term_memory_layer->from_XML(layer_document);
             add_layer(std::move(long_short_term_memory_layer));
         }
-        break;
-        case Layer::Type::Recurrent:
-        {
+        else if (layer_type_string == "Recurrent") {
             unique_ptr<RecurrentLayer> recurrent_layer = make_unique<RecurrentLayer>();
             recurrent_layer->from_XML(layer_document);
             add_layer(std::move(recurrent_layer));
         }
-        break;
-        case Layer::Type::Unscaling:
-        {
+        else if (layer_type_string == "Unscaling") {
             unique_ptr<UnscalingLayer> unscaling_layer = make_unique<UnscalingLayer>();
             unscaling_layer->from_XML(layer_document);
             add_layer(std::move(unscaling_layer));
         }
-        break;
-        case Layer::Type::Bounding:
-        {
+        else if (layer_type_string == "Bounding") {
             unique_ptr<BoundingLayer> bounding_layer = make_unique<BoundingLayer>();
             bounding_layer->from_XML(layer_document);
             add_layer(std::move(bounding_layer));
         }
-        break;
-        case Layer::Type::Embedding:
-        {
+        else if (layer_type_string == "Embedding") {
             unique_ptr<EmbeddingLayer> embedding_layer = make_unique<EmbeddingLayer>();
             embedding_layer->from_XML(layer_document);
             add_layer(std::move(embedding_layer));
         }
-        break;
-        case Layer::Type::MultiheadAttention:
-        {
+        else if (layer_type_string == "MultiheadAttention") {
             unique_ptr<MultiheadAttentionLayer> multihead_attention_layer = make_unique<MultiheadAttentionLayer>();
             multihead_attention_layer->from_XML(layer_document);
             add_layer(std::move(multihead_attention_layer));
         }
-        break;
-        case Layer::Type::Addition3D:
-        {
-            unique_ptr<AdditionLayer3D> addition_layer_3d = make_unique<AdditionLayer3D>();
+        else if (layer_type_string == "Addition3D") {
+            unique_ptr<AdditionLayer3D> addition_layer_3d = std::make_unique<AdditionLayer3D>();
             addition_layer_3d->from_XML(layer_document);
             add_layer(std::move(addition_layer_3d));
         }
-        break;
-        case Layer::Type::Normalization3D:
-        {
+        else if (layer_type_string == "Normalization3D") {
             unique_ptr<NormalizationLayer3D> normalization_layer_3d = make_unique<NormalizationLayer3D>();
             normalization_layer_3d->from_XML(layer_document);
             add_layer(std::move(normalization_layer_3d));
         }
-        break;
-        default:
-        {
+        else {
             throw runtime_error("Unknown layer type");
-        }
         }
 
         start_element = layer_element;
+        
     }
 
     // Layers inputs indices
-/*
+
     const tinyxml2::XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayersInputsIndices");
 
     if(!layer_input_indices_element)
         throw runtime_error("LayersInputsIndices element is nullptr.\n");
 
+    layer_input_indices.clear(); // @todo .clear because they are already saved from Add layers for (is this code needed?)
     layer_input_indices.resize(layers.size());
 
     for(const tinyxml2::XMLElement* layer_inputs_indices_element = layer_input_indices_element->FirstChildElement("LayerInputsIndices");
         layer_inputs_indices_element;
         layer_inputs_indices_element = layer_inputs_indices_element->NextSiblingElement("LayerInputsIndices"))
     {
-        if(layer_inputs_indices_element->GetText())
-        {
-//            const Index layer_index = Index(stoi(layer_inputs_indices_element->Attribute("LayerIndex"))) - 1;
-//            const string indices_string = layer_inputs_indices_element->GetText();
-//            layer_input_indices[layer_index] = to_type_vector(indices_string, ' ').cast<Index>();
+        int layer_index;
+
+        if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS) {
+            throw runtime_error("Error: LayerIndex attribute missing or invalid.\n");
         }
+
+        const char* text = layer_inputs_indices_element->GetText();
+        if (!text) {
+            throw runtime_error("Error: LayerInputsIndices element is missing a value.\n");
+        }
+
+        Index input_index;
+        try {
+            input_index = stoi(text);
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: LayerInputsIndices value is not a valid integer.\n");
+        }
+
+        layer_input_indices[layer_index].push_back(input_index);
     }
-*/
 }
 
 

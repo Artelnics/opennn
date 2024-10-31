@@ -401,7 +401,7 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
 
 void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("ProbabilisticLayer");
+    printer.OpenElement("Probabilistic");
 
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
@@ -415,7 +415,7 @@ void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer");
+    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic");
 
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic layer element is nullptr.\n");
@@ -428,8 +428,6 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));    
     set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
     set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
-
-    set_display(read_xml_bool(probabilistic_layer_element, "Display"));
 }
 
 

@@ -14,10 +14,9 @@ namespace opennn
 
 FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
 {
-    set(new_input_dimensions);
-
     layer_type = Type::Flatten;
-    name = "flatten_layer";
+
+    set(new_input_dimensions);
 }
 
 
@@ -71,8 +70,6 @@ Index FlattenLayer::get_neurons_number() const
 
 void FlattenLayer::set(const dimensions& new_input_dimensions)
 {
-    name = "flatten_layer";
-
     input_dimensions = new_input_dimensions;
 }
 
@@ -123,13 +120,11 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
 
 void FlattenLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("FlattenLayer");
+    printer.OpenElement("Flatten");
 
-    printer.OpenElement("InputVariablesDimension");
     add_xml_element(printer, "InputHeight", to_string(get_input_height()));
     add_xml_element(printer, "InputWidth", to_string(get_input_width()));
     add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
-    printer.CloseElement();  
 
     printer.CloseElement(); 
 }
@@ -137,7 +132,7 @@ void FlattenLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* flatten_layer_element = document.FirstChildElement("FlattenLayer");
+    const tinyxml2::XMLElement* flatten_layer_element = document.FirstChildElement("Flatten");
 
     if (!flatten_layer_element) 
         throw runtime_error("FlattenLayer element is nullptr.\n");
@@ -146,7 +141,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     const Index input_width = read_xml_index(flatten_layer_element, "InputWidth");
     const Index input_channels = read_xml_index(flatten_layer_element, "InputChannels");
 
-    set({ input_height, input_width, input_channels, 0 });
+    set({ input_height, input_width, input_channels });
 }
 
 

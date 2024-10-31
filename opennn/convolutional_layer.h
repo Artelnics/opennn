@@ -44,7 +44,7 @@ public:
 
     enum class ConvolutionType{Valid, Same};
 
-    explicit ConvolutionalLayer(const dimensions& = {0, 0, 0},                                // Input dimensions {height,width,channels}
+    explicit ConvolutionalLayer(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
                                 const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                                 const ActivationFunction& = ActivationFunction::Linear,
                                 const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}

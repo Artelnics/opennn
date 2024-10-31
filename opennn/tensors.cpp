@@ -1537,6 +1537,87 @@ string dimensions_to_string(const dimensions& x, const string& separator)
 }
 
 
+dimensions string_to_dimensions(const string& x, const string& separator) {
+
+    dimensions result;
+
+    if (x.empty()) {
+        throw std::runtime_error("Error: Input string must not be empty.\n");
+    }
+
+    size_t start = 0;
+    size_t end = x.find(separator);
+
+    while (end != string::npos) {
+        string token = x.substr(start, end - start);
+
+        try {
+            result.push_back(stoi(token));
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
+
+        start = end + separator.length();
+        end = x.find(separator, start);
+    }
+
+    if (start < x.size()) {
+        string token = x.substr(start);
+        try {
+            result.push_back(stoi(token));
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
+    }
+
+    return result;
+}
+
+
+Tensor<type, 1> string_to_tensor(const string& x, const string& separator) {
+    if (x.empty()) {
+        throw runtime_error("Error: Input string must not be empty.\n");
+    }
+
+    dimensions temp_dimensions;
+    size_t start = 0;
+    size_t end = x.find(separator);
+
+    while (end != string::npos) {
+        string token = x.substr(start, end - start);
+
+        try {
+            temp_dimensions.push_back(std::stoi(token));
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
+
+        start = end + separator.length();
+        end = x.find(separator, start);
+    }
+
+    if (start < x.size()) {
+        string token = x.substr(start);
+        try {
+            temp_dimensions.push_back(stoi(token));
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
+    }
+
+    Tensor<type, 1> tensor(temp_dimensions.size());
+    for (size_t i = 0; i < temp_dimensions.size(); ++i) {
+        tensor(i) = temp_dimensions[i];
+    }
+
+    return tensor;
+}
+
+
 string tensor_to_string(const Tensor<type, 1>& x, const string& separator)
 {
     const Index size = x.size();

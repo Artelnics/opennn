@@ -25,8 +25,6 @@ int main()
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Data set
-
-        const char* filename = "C:/xmltest/data_set_mnist_binary.xml";
         
         //Random image data set 
         //onst Index samples_number = 10;
@@ -49,67 +47,18 @@ int main()
 
         image_data_set.read_bmp();
 
-        //image_data_set.print();
-        /*
-        tinyxml2::XMLDocument doc;
-        tinyxml2::XMLPrinter printer;
-        image_data_set.to_XML(printer);
-        doc.Parse(printer.CStr());
-
-        if (doc.SaveFile(filename) == tinyxml2::XML_SUCCESS) {
-            cout << "XML saved in " << filename << endl;
-        }
-        else {
-            cout << "Error saving XML." << endl;
-            return 1;
-        }
-        */
-        
-        ImageDataSet loaded_image_data_set;
-
-        tinyxml2::XMLDocument loaded_doc;
-        if (loaded_doc.LoadFile(filename) == tinyxml2::XML_SUCCESS) {
-            loaded_image_data_set.from_XML(loaded_doc);
-            cout << "XML loaded from " << filename << endl;
-        }
-        else {
-            cout << "Error loading XML." << endl;
-            return 1;
-        }
+        //image_data_set.print();      
         
         //image_data_set.set(DataSet::SampleUse::Training);
-
-        //loaded_image_data_set.print();
-
-        //image_data_set.print_data();
 
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            loaded_image_data_set.get_input_dimensions(),
+            image_data_set.get_input_dimensions(),
             { 1 },
-            loaded_image_data_set.get_target_dimensions());
+            image_data_set.get_target_dimensions());
 
         neural_network.print();
-
-        const string nn_filename = "C:/xmltest/neural_network_mnist_binary.xml";
-        neural_network.save(nn_filename);
-
-        NeuralNetwork loaded_neural_network;
-        tinyxml2::XMLDocument loaded_nn_doc;
-
-        if (loaded_nn_doc.LoadFile(nn_filename.c_str()) == tinyxml2::XML_SUCCESS) {
-            loaded_neural_network.from_XML(loaded_nn_doc);
-            cout << "NN XML loaded from " << filename << endl;
-        }
-        else {
-            cout << "Error loading XML." << endl;
-            return 1;
-        }
-
-        loaded_neural_network.print();
-
-        system("pause");
 
         // Training strategy
  
