@@ -16,14 +16,6 @@
 namespace opennn
 {
 
-LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::LongShortTermMemory;
-}
-
-
 LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_number, 
                                                    const Index& new_neurons_number, 
                                                    const Index& new_timesteps) : Layer()
@@ -202,12 +194,6 @@ const bool& LongShortTermMemoryLayer::get_display() const
 }
 
 
-void LongShortTermMemoryLayer::set()
-{
-    set_default();
-}
-
-
 void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
 {
     input_biases.resize(new_neurons_number);
@@ -229,13 +215,8 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 
     set_parameters_random();
 
-    set_default();
-}
-
-
-void LongShortTermMemoryLayer::set_default()
-{
     name = "long_short_term_memory_layer";
+
     layer_type = Type::LongShortTermMemory;
 }
 
@@ -457,54 +438,54 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
 
 
 void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activations, 
-                                                     Tensor<type, 1>& activations_derivatives) const
+                                                     Tensor<type, 1>& activation_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: throw runtime_error("Unknown activation function");
     }
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activations_derivatives) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activation_derivatives) const
 {
     switch(recurrent_activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: throw runtime_error("Unknown activation function");
     }
@@ -2197,6 +2178,13 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
 }
 
 
+LongShortTermMemoryLayerForwardPropagation::LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -2250,6 +2238,17 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
     output_activations_derivatives.resize(batch_samples_number, neurons_number);
 
     hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+}
+
+
+void LongShortTermMemoryLayerForwardPropagation::print() const
+{
+    cout << "Current inputs: " << endl
+         << current_inputs << endl
+         << "Current input activations: " << endl
+         << current_input_activations << endl
+         << "Current input activations derivatives: " << endl
+         << current_input_activations_derivatives << endl;
 }
 
 
@@ -2307,6 +2306,13 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
 }
 
 
+LongShortTermMemoryLayerBackPropagation::LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 vector<pair<type*, dimensions>> LongShortTermMemoryLayerBackPropagation::get_input_derivative_pairs() const
 {
     const Index inputs_number = layer->get_inputs_number();
@@ -2339,6 +2345,11 @@ void LongShortTermMemoryLayerBackPropagation::set_derivatives_zero()
     hidden_states_weights_derivatives.setZero();
     hidden_states_recurrent_weights_derivatives.setZero();
     hidden_states_biases_derivatives.setZero();
+}
+
+
+void LongShortTermMemoryLayerBackPropagation::print() const
+{
 }
 
 }

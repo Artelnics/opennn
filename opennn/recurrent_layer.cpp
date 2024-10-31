@@ -16,15 +16,9 @@
 namespace opennn
 {
 
-RecurrentLayer::RecurrentLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::Recurrent;
-}
-
-
-RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps) : Layer()
+RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, 
+                               const Index& new_neurons_number, 
+                               const Index& new_timesteps) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_timesteps);
 
@@ -159,12 +153,6 @@ const bool& RecurrentLayer::get_display() const
 }
 
 
-void RecurrentLayer::set()
-{
-    set_default();
-}
-
-
 void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
 {
     biases.resize(new_neurons_number);
@@ -183,12 +171,6 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 
     set_parameters_random();
 
-    set_default();
-}
-
-
-void RecurrentLayer::set_default()
-{
     name = "recurrent_layer";
 
     display = true;
@@ -325,27 +307,27 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 
 void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
-                                           Tensor<type, 2>& activations_derivatives) const
+                                           Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
-        case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+        case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+        case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+        case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-        case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+        case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+        case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
         default: throw runtime_error("Unknown activation function");
     }
@@ -366,7 +348,7 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
-    Tensor<type, 3>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
+    Tensor<type, 3>& activation_derivatives = recurrent_layer_forward_propagation->activation_derivatives;
 
     Tensor<type, 2>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
 
@@ -389,7 +371,7 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
         {
             calculate_activations(current_hidden_states, current_activations_derivatives);
 
-            activations_derivatives.chip(time_step, 1) = current_activations_derivatives;
+            activation_derivatives.chip(time_step, 1) = current_activations_derivatives;
         }
         
         hidden_states.chip(time_step, 1) = current_hidden_states;
@@ -418,7 +400,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
-    const Tensor<type, 3>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
+    const Tensor<type, 3>& activation_derivatives = recurrent_layer_forward_propagation->activation_derivatives;
 
     Tensor<type, 2>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
 
@@ -464,7 +446,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample_index, 0);
 
-        get_row(current_activations_derivatives, activations_derivatives, sample_index);
+        get_row(current_activations_derivatives, activation_derivatives, sample_index);
 
         if(sample_index % time_steps == 0)
         {
@@ -637,6 +619,12 @@ void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+RecurrentLayerForwardPropagation::RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer) : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -658,7 +646,12 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number
     current_inputs.resize(batch_samples_number, inputs_number);
     current_activations_derivatives.resize(batch_samples_number, neurons_number);
 
-    activations_derivatives.resize(batch_samples_number, time_steps, neurons_number);
+    activation_derivatives.resize(batch_samples_number, time_steps, neurons_number);
+}
+
+
+void RecurrentLayerForwardPropagation::print() const
+{
 }
 
 
@@ -691,6 +684,19 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
     const Index time_steps = 0;
 
     input_derivatives.resize(batch_samples_number, time_steps, inputs_number);
+}
+
+
+void RecurrentLayerBackPropagation::print() const
+{
+
+}
+
+
+RecurrentLayerBackPropagation::RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

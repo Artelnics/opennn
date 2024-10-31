@@ -33,15 +33,9 @@ class LossIndex
 
 public:
 
-   // Constructors
-
    explicit LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
-   // Destructor
-
    virtual ~LossIndex();
-
-   // Methods
 
    enum class RegularizationMethod{L1, L2, NoRegularization};
 
@@ -63,23 +57,15 @@ public:
 
    bool has_data_set() const;
 
-   // Get
-
    RegularizationMethod get_regularization_method() const;
 
-   // Set
-
    void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
-
-   void set(const LossIndex&);
 
    void set_threads_number(const int&);
 
    void set_neural_network(NeuralNetwork*);
 
    virtual void set_data_set(DataSet*);
-
-   void set_default();
 
    void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
@@ -216,11 +202,9 @@ protected:
 
 struct BackPropagationLM
 {
-    BackPropagationLM();
+    explicit BackPropagationLM(const Index& = 0, LossIndex* = nullptr);
 
-    explicit BackPropagationLM(const Index&, LossIndex*);
-
-    void set(const Index&, LossIndex*);
+    void set(const Index& = 0, LossIndex* = nullptr);
 
     void print() const;
     

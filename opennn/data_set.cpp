@@ -2034,17 +2034,6 @@ void DataSet::set(const Index& new_samples_number,
 }
 
 
-void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
-{
-    if(thread_pool) delete thread_pool;
-    if(thread_pool_device) delete thread_pool_device;
-
-    set_default();
-
-    from_XML(data_set_document);
-}
-
-
 void DataSet::set(const string& file_name)
 {
     load(file_name);

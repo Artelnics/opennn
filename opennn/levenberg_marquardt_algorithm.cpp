@@ -13,13 +13,6 @@
 namespace opennn
 {
 
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
-    : OptimizationAlgorithm()
-{
-    set_default();
-}
-
-
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {

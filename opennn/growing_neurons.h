@@ -24,9 +24,7 @@ public:
 
     // Constructors
 
-    explicit GrowingNeurons();
-
-    explicit GrowingNeurons(TrainingStrategy*);
+    explicit GrowingNeurons(TrainingStrategy* = nullptr);
 
     // Get
 

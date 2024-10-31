@@ -56,7 +56,7 @@ public:
     string get_name() const;
 
     string layer_type_to_string(const Layer::Type&);
-    Layer::Type string_to_layer_type(const string&);
+    Type string_to_layer_type(const string&);
 
     // Get neurons number
 
@@ -69,11 +69,6 @@ public:
     // Layer type
 
     Type get_type() const;
-
-    Type string_to_layer_type(const string& layer_type) const
-    {
-        return Layer::Type::Perceptron;
-    }
 
     string get_type_string() const;
 

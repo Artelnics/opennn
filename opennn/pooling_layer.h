@@ -21,16 +21,10 @@ namespace opennn
 
 class ConvolutionalLayer;
 
-struct PoolingLayerForwardPropagation;
-struct PoolingLayerBackPropagation;
-struct ConvolutionalLayerForwardPropagation;
-struct ConvolutionalLayerBackPropagation;
-
 #ifdef OPENNN_CUDA
 struct PoolingLayerForwardPropagationCuda;
 struct PoolingLayerBackPropagationCuda;
 #endif
-
 
 class PoolingLayer : public Layer
 {
@@ -39,18 +33,12 @@ public:
 
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    // Constructors
-
-    explicit PoolingLayer();
-
-    explicit PoolingLayer(const dimensions&,            // Input dimensions {height,width,channels}
-                          const dimensions& = { 1, 1 }, // Pool dimensions {pool_height,pool_width}
-                          const dimensions& = { 1, 1 }, // Stride dimensions {row_stride, column_stride}
-                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_heigth, padding_width}
-                          const PoolingMethod& = PoolingMethod::AveragePooling,
+    explicit PoolingLayer(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
+                          const dimensions& = { 2, 2 }, // Pool dimensions {pool_height,pool_width}
+                          const dimensions& = { 2, 2 }, // Stride dimensions {row_stride, column_stride}
+                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_height, padding_width}
+                          const PoolingMethod& = PoolingMethod::MaxPooling,
                           const string = "pooling_layer");
-
-    // Get
 
     dimensions get_input_dimensions() const;
 
@@ -67,7 +55,7 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_padding_heigth() const;
+    Index get_padding_height() const;
     Index get_padding_width() const;
 
     Index get_row_stride() const;
@@ -80,18 +68,16 @@ public:
 
     string write_pooling_method() const;
 
-    // Set
-
-    void set(const dimensions&,
-             const dimensions&,
-             const dimensions&,
-             const dimensions&,
-             const PoolingMethod&,
+    void set(const dimensions& = {0, 0, 0},
+             const dimensions& = {1, 1},
+             const dimensions& = {1, 1},
+             const dimensions& = {0, 0},
+             const PoolingMethod& = PoolingMethod::MaxPooling,
              const string = "pooling_layer");
 
     void set_input_dimensions(const dimensions&);
 
-    void set_padding_heigth(const Index&);
+    void set_padding_height(const Index&);
     void set_padding_width(const Index&);
 
     void set_row_stride(const Index&);
@@ -104,10 +90,6 @@ public:
 
     void set_default();
 
-    // Outputs
-
-    // First order activations
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
@@ -119,8 +101,6 @@ public:
     void forward_propagate_average_pooling(const Tensor<type, 4>&,
                                            unique_ptr<LayerForwardPropagation>&,
                                            const bool&) const;
-
-    // Back-propagation
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
@@ -135,8 +115,6 @@ public:
     void back_propagate_average_pooling(const Tensor<type, 4>&,
                                         const Tensor<type, 4>&,
                                         unique_ptr<LayerBackPropagation>&) const;
-
-    // Serialization
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void to_XML(tinyxml2::XMLPrinter&) const final;
@@ -155,7 +133,7 @@ protected:
 
     Index pool_width = 1;
 
-    Index padding_heigth = 0;
+    Index padding_height = 0;
 
     Index padding_width = 0;
 
@@ -171,16 +149,12 @@ protected:
 
 
 struct PoolingLayerForwardPropagation : LayerForwardPropagation
-{
-    
-
-    explicit PoolingLayerForwardPropagation();
-
-    explicit PoolingLayerForwardPropagation(const Index&, Layer*);
+{   
+    explicit PoolingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
     
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -196,17 +170,15 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
 struct PoolingLayerBackPropagation : LayerBackPropagation
 {
-    explicit PoolingLayerBackPropagation();
-
-    explicit PoolingLayerBackPropagation(const Index&, Layer*);
+    explicit PoolingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
-    Tensor<type, 4> gradient_tensor;
+    Tensor<type, 4> deltas_by_pool_size;
 
     Tensor<type, 4> input_derivatives;
 

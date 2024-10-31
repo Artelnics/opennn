@@ -12,17 +12,11 @@
 namespace opennn
 {
 
-Descriptives::Descriptives()
-{
-}
-
-
 Descriptives::Descriptives(const type& new_minimum,
                            const type& new_maximum,
                            const type& new_mean,
                            const type& new_standard_deviation)
 {
-
     minimum = new_minimum;
     maximum = new_maximum;
     mean = new_mean;
@@ -203,13 +197,6 @@ void Descriptives::save(const string &file_name) const
     // Close file
 
     file.close();
-}
-
-
-Histogram::Histogram() 
-{
-    centers.resize(0);
-    frequencies.resize(0);
 }
 
 

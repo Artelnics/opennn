@@ -13,14 +13,6 @@
 namespace opennn
 {
 
-MultiheadAttentionLayer::MultiheadAttentionLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::MultiheadAttention;
-}
-
-
 MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
                                                  const Index& new_context_size,
                                                  const Index& new_depth,
@@ -177,30 +169,6 @@ const bool& MultiheadAttentionLayer::get_display() const
 }
 
 
-void MultiheadAttentionLayer::set()
-{
-    input_size = 0;
-
-    depth = 0;
-
-    heads_number = 0;
-
-    query_weights.resize(0, 0, 0);
-    query_biases.resize(0, 0);
-
-    key_weights.resize(0, 0, 0);
-    key_biases.resize(0, 0);
-
-    value_weights.resize(0, 0, 0);
-    value_biases.resize(0, 0);
-
-    projection_weights.resize(0, 0, 0);
-    projection_biases.resize(0);
-
-    set_default();
-}
-
-
 void MultiheadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_context_size,
                                   const Index& new_depth,
@@ -218,12 +186,6 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
     scaling_factor = type(1) / type(sqrt(hidden_depth));
 
-    set_default();
-}
-
-
-void MultiheadAttentionLayer::set_default()
-{
     name = "multihead_attention_layer";
 
     display = true;
@@ -972,6 +934,13 @@ void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+MultiheadAttentionLayerForwardPropagation::MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_pair() const
 {
     MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
@@ -1022,6 +991,19 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_sampl
 }
 
 
+void MultiheadAttentionLayerForwardPropagation::print() const
+{
+    cout << "Attention scores:" << endl
+        << attention_scores.dimensions() << endl
+        << "Outputs dimensions:" << endl;
+    //cout << output_dimensions << endl;
+    cout << "Outputs:" << endl;
+    //cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
+    cout << "Attention scores:" << endl;
+    cout << attention_scores << endl;
+}
+
+
 void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -1061,6 +1043,18 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
 
     input_derivatives.resize(batch_samples_number, input_size, depth);
     context_derivatives.resize(batch_samples_number, context_size, depth);
+}
+
+
+void MultiheadAttentionLayerBackPropagation::print() const
+{
+}
+
+
+MultiheadAttentionLayerBackPropagation::MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

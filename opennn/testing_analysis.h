@@ -24,11 +24,7 @@ class TestingAnalysis
 
 public: 
 
-   // Constructors
-
    explicit TestingAnalysis(NeuralNetwork* = nullptr, DataSet* = nullptr);
-
-    // Destructor
 
    virtual ~TestingAnalysis();
 

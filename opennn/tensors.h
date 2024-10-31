@@ -205,6 +205,9 @@ Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const 
 // Conversion
 
 string dimensions_to_string(const dimensions&, const string& = " ");
+dimensions string_to_dimensions(const string&, const string& = " ");
+Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
+
 string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
 string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
 string string_tensor_to_string(const Tensor<string, 1>&, const string& = " ");

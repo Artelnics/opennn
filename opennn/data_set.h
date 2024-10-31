@@ -295,7 +295,6 @@ public:
     void set(const Tensor<type, 2>&);
     void set(const Index&, const Index&);
     void set(const Index&, const Index&, const Index&);
-    void set(const tinyxml2::XMLDocument&);
     void set(const string&);
     void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
     void set(const Tensor<type, 1>&, const Index&);

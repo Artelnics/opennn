@@ -13,15 +13,11 @@
 namespace opennn
 {
 
-UnscalingLayer::UnscalingLayer() : Layer()
-{
-    set();
-}
 
-
-UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions) : Layer()
+UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions, const string& layer_name)
+    : Layer()
 {
-    set(new_input_dimensions[0]);
+    set(new_input_dimensions[0]);      
 }
 
 
@@ -208,16 +204,6 @@ const bool& UnscalingLayer::get_display() const
 }
 
 
-void UnscalingLayer::set()
-{
-    descriptives.resize(0);
-
-    scalers.resize(0);
-
-    set_default();
-}
-
-
 void UnscalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
@@ -230,7 +216,7 @@ void UnscalingLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void UnscalingLayer::set(const Index& new_neurons_number)
+void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name)
 {
     descriptives.resize(new_neurons_number);
 
@@ -238,41 +224,7 @@ void UnscalingLayer::set(const Index& new_neurons_number)
 
     scalers.setConstant(Scaler::MinimumMaximum);
 
-    set_default();
-}
-
-
-void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
-{
-    descriptives = new_descriptives;
-
-    scalers.resize(new_descriptives.size());
-
-    scalers.setConstant(Scaler::MinimumMaximum);
-
-    set_default();
-}
-
-
-void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
-{
-    descriptives = new_descriptives;
-
-    scalers = new_scalers;
-}
-
-
-void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_document)
-{
-    set_default();
-
-    from_XML(new_unscaling_layer_document);
-}
-
-
-void UnscalingLayer::set_default()
-{
-    name = "unscaling_layer";
+    name = new_name;
 
     set_scalers(Scaler::MinimumMaximum);
 
@@ -282,6 +234,13 @@ void UnscalingLayer::set_default()
 
     layer_type = Type::Unscaling;
 }
+
+
+void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
+{
+    descriptives = new_descriptives;
+}
+
 
 
 void UnscalingLayer::set_min_max_range(const type min, const type max)
@@ -548,6 +507,13 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+UnscalingLayerForwardPropagation::UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -565,6 +531,13 @@ void UnscalingLayerForwardPropagation::set(const Index& new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
+}
+
+
+void UnscalingLayerForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+        << outputs << endl;
 }
 
 }

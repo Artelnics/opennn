@@ -19,10 +19,6 @@
 namespace opennn
 {
 
-struct MultiheadAttentionLayerForwardPropagation;
-struct MultiheadAttentionLayerBackPropagation;
-struct MultiheadAttentionLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct MultiheadAttentionLayerForwardPropagationCuda;
     struct MultiheadAttentionLayerBackPropagationCuda;
@@ -33,17 +29,11 @@ class MultiheadAttentionLayer : public Layer
 
 public:
 
-    // Constructors
-
-    explicit MultiheadAttentionLayer();
-
-    explicit MultiheadAttentionLayer(const Index&,
-                                     const Index&,
-                                     const Index&,
-                                     const Index&,
+    explicit MultiheadAttentionLayer(const Index& = 0,
+                                     const Index& = 0,
+                                     const Index& = 0,
+                                     const Index& = 0,
                                      const bool & = false);
-
-    // Get
 
     bool is_empty() const;
 
@@ -70,18 +60,9 @@ public:
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
 
-    // Display messages
-
     const bool& get_display() const;
 
-    // Set
-
-    void set();
-    void set(const Index&, const Index&, const Index&, const Index&);
-
-    void set_default();
-
-    // Architecture
+    void set(const Index& = 0, const Index& = 0, const Index& = 0, const Index& = 0);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
@@ -98,20 +79,14 @@ public:
     void set_dropout_rate(const type&);
     void set_causal_mask(const bool&);
 
-    // Display messages
-
     void set_display(const bool&);
 
     void build_causal_mask();
     void apply_causal_mask(Tensor<type, 4>&) const;
 
-    // Linear transformation & projection
-
     void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
-
-    // Attention computation
 
     void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
 
@@ -119,13 +94,9 @@ public:
 
     void dropout(Tensor<type, 4>&) const;
 
-    // Multihead Attention layer outputs
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
-
-    // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
@@ -135,10 +106,6 @@ public:
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          const Index&,
                          Tensor<type, 1>&) const final;
-
-    // Serialization
-
-    // @todo
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void to_XML(tinyxml2::XMLPrinter&) const final;
@@ -191,34 +158,18 @@ protected:
     const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 };
 
+
 struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 {
-        
-    explicit MultiheadAttentionLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
 
-    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
+                                                       Layer* new_layer = nullptr);
                 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-       cout << "Attention scores:" << endl;
-       cout << attention_scores.dimensions() << endl;
-       cout << "Outputs dimensions:" << endl;
-       //cout << output_dimensions << endl;
-       cout << "Outputs:" << endl;
-       //cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-       cout << "Attention scores:" << endl;
-       cout << attention_scores << endl;
-    }
+    void print() const;
 
     Tensor<type, 4> query;
     Tensor<type, 4> key;
@@ -238,25 +189,13 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit MultiheadAttentionLayerBackPropagation() : LayerBackPropagation()
-    {
-
-    }
-
-
-    explicit MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 4> error_attention_scores_derivatives;
     Tensor<type, 4> error_attention_weights_derivatives;

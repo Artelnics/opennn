@@ -23,23 +23,13 @@ class MinkowskiError : public LossIndex
 
 public:
 
-   // Constructors
-
-   explicit MinkowskiError();
-
-   explicit MinkowskiError(NeuralNetwork*, DataSet*);
-
-   // Get
+   explicit MinkowskiError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    type get_Minkowski_parameter() const;
-
-   // Set
 
    void set_default();
 
    void set_Minkowski_parameter(const type&);
-
-   // loss
 
    void calculate_error(const Batch& batch,
                         const ForwardPropagation& forward_propagation,
@@ -48,8 +38,6 @@ public:
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
                                BackPropagation&) const final;
-
-   // Serialization
 
    string get_loss_method() const final;
    string get_error_type_text() const final;

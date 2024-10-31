@@ -15,13 +15,6 @@
 namespace opennn
 {
 
-ConvolutionalLayer::ConvolutionalLayer() : Layer()
-{
-    layer_type = Layer::Type::Convolutional;
-    name = "convolutional_layer";
-}
-
-
 ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_kernel_dimensions,
                                        const ConvolutionalLayer::ActivationFunction& new_activation_function,
@@ -30,9 +23,8 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
                                        const string new_name) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
-    name = new_name;
 
-    set(new_input_dimensions, new_kernel_dimensions, new_activation_function, new_stride_dimensions, new_convolution_type);
+    set(new_input_dimensions, new_kernel_dimensions, new_activation_function, new_stride_dimensions, new_convolution_type, new_name);
 }
 
 
@@ -190,27 +182,27 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
 }
 */
 
-void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activations_derivatives) const
+void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activation_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: return;
     }
@@ -230,7 +222,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     Tensor<type, 4>& preprocessed_inputs = convolutional_layer_forward_propagation->preprocessed_inputs;
 
-    Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
+    Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
     preprocess_inputs(inputs, preprocessed_inputs); 
     
@@ -247,7 +239,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     }
 
     if(is_training)
-        calculate_activations(outputs, activations_derivatives);
+        calculate_activations(outputs, activation_derivatives);
     else
         calculate_activations(outputs, empty);
 }
@@ -283,7 +275,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
+    const Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
@@ -324,7 +316,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Convolutions derivatives
 
-    convolutions_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
+    convolutions_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
 
     // Biases synaptic weights and input derivatives
 
@@ -622,8 +614,6 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                              const ConvolutionType& new_convolution_type,
                              const string new_name)
 {
-    if(new_input_dimensions.size() != 3)
-        throw runtime_error("Input dimensions must be 3");
 
     if(new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
@@ -637,21 +627,18 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     if (new_kernel_dimensions[2] != new_input_dimensions[2])
         throw runtime_error("kernel_channels must match input_channels dimension");
 
-    if (new_stride_dimensions[0] <= 0 || new_stride_dimensions[1] <= 0)
-        throw runtime_error("Stride dimensions cannot be 0 or lower");
-
     if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[0])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
     
-    input_dimensions = new_input_dimensions;
+    set_input_dimensions(new_input_dimensions);
 
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];
     const Index kernel_channels = new_kernel_dimensions[2];
     const Index kernels_number = new_kernel_dimensions[3];
 
-    row_stride = new_stride_dimensions[0];
-    column_stride = new_stride_dimensions[1];
+    set_row_stride(new_stride_dimensions[0]);
+    set_column_stride(new_stride_dimensions[1]);
 
     set_activation_function(new_activation_function);
 
@@ -673,7 +660,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     scales.resize(kernels_number);
     offsets.resize(kernels_number);
 
-    name = new_name;
+    set_name(new_name);
 }
 
 
@@ -767,6 +754,9 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 
 void ConvolutionalLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+    if (new_input_dimensions.size() != 3)
+        throw runtime_error("Input new_input_dimensions.size() must be 3");
+
     input_dimensions = new_input_dimensions;
 }
 
@@ -876,15 +866,17 @@ void ConvolutionalLayer::print() const
 
 void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("ConvolutionalLayer");
+    printer.OpenElement("Convolutional");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputDimensions", dimensions_to_string(input_dimensions));
-    add_xml_element(printer, "OutputDimensions", dimensions_to_string(get_output_dimensions()));
-    add_xml_element(printer, "FiltersNumber", to_string(get_kernels_number()));
-    add_xml_element(printer, "FiltersSize", to_string(get_kernel_width()));
+    //add_xml_element(printer, "OutputDimensions", dimensions_to_string(get_output_dimensions()));
+    add_xml_element(printer, "KernelsNumber", to_string(get_kernels_number()));
+    add_xml_element(printer, "KernelsHeight", to_string(get_kernel_height()));
+    add_xml_element(printer, "KernelsWidth", to_string(get_kernel_width()));
+    add_xml_element(printer, "KernelsChannels", to_string(get_kernel_channels()));
     add_xml_element(printer, "ActivationFunction", write_activation_function());
-    add_xml_element(printer, "Stride", to_string(get_row_stride()));
+    add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "ConvolutionType", write_convolution_type());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
@@ -894,35 +886,38 @@ void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
+    const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("Convolutional");
 
     if (!convolutional_layer_element) 
         throw runtime_error("Convolutional layer element is nullptr.\n");
 
-    set_convolution_type(read_xml_string(convolutional_layer_element, "Name"));
+    set_name(read_xml_string(convolutional_layer_element, "Name"));
 
-    // set_input_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "InputDimensions")));
-    // set_output_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "OutputDimensions")));
+    set_input_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "InputDimensions")));
 
-    //set_filters_number(read_xml_index(convolutional_layer_element, "FiltersNumber"));
+    //set_output_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "OutputDimensions")));
 
-    //set_filter_size(read_xml_index(convolutional_layer_element, "FiltersSize"));
+    const Index kernel_height = read_xml_index(convolutional_layer_element, "KernelsHeight");
+    const Index kernel_width = read_xml_index(convolutional_layer_element, "KernelsWidth");
+    const Index kernel_channels = read_xml_index(convolutional_layer_element, "KernelsChannels");
+    const Index kernels_number = read_xml_index(convolutional_layer_element, "KernelsNumber");
+    
+    biases.resize(kernels_number);
+
+    synaptic_weights.resize(kernel_height,
+        kernel_width,
+        kernel_channels,
+        kernels_number);
 
     set_activation_function(read_xml_string(convolutional_layer_element, "ActivationFunction"));
 
-    const Index stride = read_xml_index(convolutional_layer_element, "Stride");
-    set_column_stride(stride);
-    set_row_stride(stride);
+    const dimensions stride_dimensions = string_to_dimensions(read_xml_string(convolutional_layer_element, "StrideDimensions"));
+    set_column_stride(stride_dimensions[0]);
+    set_row_stride(stride_dimensions[1]);
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
 
-//    set_parameters(string_to_vector(read_xml_string(convolutional_layer_element, "Parameters")));
-}
-
-
-ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
+    set_parameters(string_to_tensor(read_xml_string(convolutional_layer_element, "Parameters")));
 }
 
 
@@ -979,7 +974,7 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
 
     standard_deviations.resize(kernels_number);
 
-    activations_derivatives.resize(batch_samples_number,
+    activation_derivatives.resize(batch_samples_number,
                                    output_height,
                                    output_width,
                                    kernels_number);
@@ -991,13 +986,8 @@ void ConvolutionalLayerForwardPropagation::print() const
     cout << "Convolutional layer" << endl
          << "Outputs:" << endl
          << outputs << endl
-         << "Activations derivatives:" << endl
-         << activations_derivatives << endl;
-}
-
-
-ConvolutionalLayerBackPropagation::ConvolutionalLayerBackPropagation() : LayerBackPropagation()
-{
+         << "Activation derivatives:" << endl
+         << activation_derivatives << endl;
 }
 
 

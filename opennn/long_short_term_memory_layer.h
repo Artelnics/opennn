@@ -38,13 +38,7 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   // Constructors
-
-   explicit LongShortTermMemoryLayer();
-
-   explicit LongShortTermMemoryLayer(const Index&, const Index&, const Index&);
-
-   // Get
+   explicit LongShortTermMemoryLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
    bool is_empty() const;
 
@@ -58,26 +52,15 @@ public:
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
 
-   // Activation functions
-
    const LongShortTermMemoryLayer::ActivationFunction& get_activation_function() const;
    const LongShortTermMemoryLayer::ActivationFunction& get_recurrent_activation_function() const;
 
    string write_activation_function() const;
    string write_recurrent_activation_function() const;
 
-   // Display messages
-
    const bool& get_display() const;
 
-   // Set
-
-   void set();
-   void set(const Index&, const Index&, const Index&);
-
-   void set_default();
-
-   // Architecture
+   void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -203,33 +186,13 @@ protected:
 
 struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit LongShortTermMemoryLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    explicit LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
-    
-    
+    explicit LongShortTermMemoryLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+        
     pair<type*, dimensions> get_outputs_pair() const final;
 
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-
-    void print() const
-    {
-        cout << "Current inputs: " << endl
-             << current_inputs << endl
-             << "Current input activations: " << endl
-             << current_input_activations << endl
-             << "Current input activations derivatives: " << endl
-             << current_input_activations_derivatives << endl;
-     }
-
+    void print() const;
 
     Tensor<type, 1> current_inputs;
 
@@ -269,25 +232,16 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
 struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 {
-    explicit LongShortTermMemoryLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
 
-    explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit LongShortTermMemoryLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void set_derivatives_zero();
 
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 1> current_deltas;
 

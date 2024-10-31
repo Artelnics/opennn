@@ -12,19 +12,10 @@
 namespace opennn
 {
 
-BoundingLayer::BoundingLayer() : Layer()
-{
-    set();
 
-    set_default();
-}
-
-
-BoundingLayer::BoundingLayer(const dimensions& neurons_number) : Layer()
+BoundingLayer::BoundingLayer(const dimensions& neurons_number, const string& new_name) : Layer()
 {
     set(neurons_number[0]);
-
-    set_default();
 }
 
 
@@ -82,30 +73,15 @@ bool BoundingLayer::is_empty() const
 }
 
 
-void BoundingLayer::set()
-{
-    bounding_method = BoundingMethod::Bounding;
-
-    lower_bounds.resize(0);
-    upper_bounds.resize(0);
-
-    set_default();
-}
-
-
-void BoundingLayer::set(const Index& new_neurons_number)
+void BoundingLayer::set(const Index& new_neurons_number, const string& new_name)
 {
     set_neurons_number(new_neurons_number);
 
-    set_default();
-}
+    name = new_name;
 
+    bounding_method = BoundingMethod::Bounding;
 
-void BoundingLayer::set(const tinyxml2::XMLDocument& bounding_layer_document)
-{
-    set_default();
-
-    from_XML(bounding_layer_document);
+    layer_type = Layer::Type::Bounding;
 }
 
 
@@ -123,16 +99,6 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
         bounding_method = BoundingMethod::Bounding;
     else
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
-}
-
-
-void BoundingLayer::set_default()
-{
-    name = "bounding_layer";
-
-    bounding_method = BoundingMethod::Bounding;
-
-    layer_type = Layer::Type::Bounding;
 }
 
 
@@ -326,6 +292,13 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+BoundingLayerForwardPropagation::BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -343,6 +316,13 @@ void BoundingLayerForwardPropagation::set(const Index& new_batch_samples_number,
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
+}
+
+
+void BoundingLayerForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+         << outputs << endl;
 }
 
 }

@@ -34,11 +34,7 @@ class TrainingStrategy
 
 public:
 
-    // Constructors
-
     explicit TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
-
-    // Enumerations
 
     enum class LossMethod
     {

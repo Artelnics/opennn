@@ -25,21 +25,18 @@ class InputsSelection
 {
 public:
 
-    // Constructors
+    enum class StoppingCondition {
+        MaximumTime,
+        SelectionErrorGoal,
+        MaximumInputs,
+        MinimumInputs,
+        MaximumEpochs,
+        MaximumSelectionFailures,
+        CorrelationGoal
+    };
+
 
     explicit InputsSelection(TrainingStrategy* = nullptr);
-
-    // Enumerations
-
-    enum class StoppingCondition{MaximumTime, 
-                                 SelectionErrorGoal, 
-                                 MaximumInputs, 
-                                 MinimumInputs, 
-                                 MaximumEpochs,
-                                 MaximumSelectionFailures,  
-                                 CorrelationGoal};
-
-    // Get
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -54,9 +51,6 @@ public:
     const type& get_maximum_time() const;
     const type& get_maximum_correlation() const;
     const type& get_minimum_correlation() const;
-    //const type& get_tolerance() const;
-
-    // Set
 
     void set(TrainingStrategy* = nullptr);
 
@@ -74,11 +68,7 @@ public:
 
     string write_stopping_condition(const TrainingResults&) const;
 
-    // inputs selection
-
     void check() const;
-
-    // Utilities
 
     Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&) const;
 
@@ -115,22 +105,14 @@ protected:
 
 struct InputsSelectionResults
 {
-    
-
-    explicit InputsSelectionResults()
-    {
-    }
-
-    // Maximum epochs number constructor
-
-    explicit InputsSelectionResults(const Index& maximum_epochs_number)
+    explicit InputsSelectionResults(const Index& maximum_epochs_number = 0)
     {
         set(maximum_epochs_number);
     }
 
     Index get_epochs_number() const;
 
-    void set(const Index& maximum_epochs_number);
+    void set(const Index& = 0);
 
    string write_stopping_condition() const;
 

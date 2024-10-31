@@ -15,12 +15,6 @@
 namespace opennn
 {
 
-ScalingLayer2D::ScalingLayer2D() : Layer()
-{
-    set();
-}
-
-
 ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -178,16 +172,6 @@ Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
 const bool& ScalingLayer2D::get_display() const
 {
     return display;
-}
-
-
-void ScalingLayer2D::set()
-{
-    descriptives.resize(0);
-
-    scalers.resize(0);
-
-    set_default();
 }
 
 
@@ -382,14 +366,17 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
 
-    Scaler scaler;
-    
     for(Index i = 0; i < neurons_number; i++)
     {
-        scaler = scalers(i);
+        const Scaler& scaler = scalers(i);
 
-        const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
-        
+        // @todo What's going on with this?
+
+        //const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
+
+        const TensorMap<Tensor<type, 1>> input_column((type*) inputs.data() + i * inputs.dimension(0),
+                                                      inputs.dimension(0));
+
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
         
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
@@ -406,7 +393,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
         switch(scaler)
         {
         case Scaler::None:
-            output_column = input_column;
+            output_column.device(*thread_pool_device) = input_column;
         break;
         case Scaler::MinimumMaximum:
         {
@@ -644,6 +631,13 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
@@ -661,6 +655,13 @@ void ScalingLayer2DForwardPropagation::set(const Index& new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
+}
+
+
+void ScalingLayer2DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+         << outputs << endl;
 }
 
 }

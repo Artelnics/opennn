@@ -125,20 +125,12 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 
     depth = new_depth;
 
-
     embedding_weights.resize(input_dimensions, depth);
 
     set_parameters_random();
 
-
     positional_encoding = new_positional_encoding;
 
-    set_default();
-}
-
-
-void EmbeddingLayer::set_default()
-{
     name = "embedding_layer";
 
     display = true;
@@ -371,6 +363,13 @@ void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+EmbeddingLayerForwardPropagation::EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() const
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
@@ -404,6 +403,19 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 }
 
 
+void EmbeddingLayerForwardPropagation::print() const
+{
+    cout << "Attention scores:" << endl;
+    //       cout << attention_scores.dimensions() << endl;
+    cout << "Outputs dimensions:" << endl;
+    //       cout << output_dimensions << endl;
+    cout << "Outputs:" << endl;
+    //       cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
+    cout << "Attention scores:" << endl;
+    //       cout << attention_scores << endl;
+}
+
+
 void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
@@ -428,6 +440,19 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 }
 
 
+EmbeddingLayerBackPropagation::EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
+vector<pair<type*, dimensions>> EmbeddingLayerBackPropagation::get_input_derivative_pairs() const
+{
+    return vector<pair<type*, dimensions>>();
+}
+
+
 void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -442,6 +467,11 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension, depth);
+}
+
+
+void EmbeddingLayerBackPropagation::print() const
+{
 }
 
 }
