@@ -9,11 +9,7 @@
 #ifndef PERCEPTRONLAYER_H
 #define PERCEPTRONLAYER_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "layer.h"
@@ -60,7 +56,7 @@ public:
 
     explicit PerceptronLayer(const dimensions&,
                              const dimensions&,
-                             const ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
+                             const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
     // Get
 
@@ -69,8 +65,6 @@ public:
 
     // Parameters
 
-    const Tensor<type, 1>& get_biases() const;
-    const Tensor<type, 2>& get_synaptic_weights() const;
     Tensor<type, 1> get_parameters() const final;
 
     Index get_biases_number() const;
@@ -99,7 +93,6 @@ public:
         const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
     void set_default();
-    void set_name(const string&);
 
     // Architecture
 
@@ -107,9 +100,6 @@ public:
     void set_neurons_number(const Index&) final;
 
     // Parameters
-
-    void set_biases(const Tensor<type, 1>&);
-    void set_synaptic_weights(const Tensor<type, 2>&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
@@ -125,9 +115,6 @@ public:
 
     // Parameters initialization
 
-    
-    
-
     void set_parameters_constant(const type&) final;
 
     void set_parameters_random() final;
@@ -142,27 +129,27 @@ public:
     void calculate_activations(Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-        LayerForwardPropagation*,
-        const bool&) final;
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) final;
 
     // Gradient
 
-    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                        const Tensor<pair<type*, dimensions>, 1>&,
-                        LayerForwardPropagation*,
-                        LayerBackPropagation*) const final;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
-    void back_propagate_lm(const Tensor<pair<type*, dimensions>, 1>&,
-                           const Tensor<pair<type*, dimensions>, 1>&,
-                           LayerForwardPropagation*,
-                           LayerBackPropagationLM*) const final;
+    void back_propagate_lm(const vector<pair<type*, dimensions>>&,
+                           const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           unique_ptr<LayerBackPropagationLM>&) const final;
 
-    void insert_gradient(LayerBackPropagation*,
+    void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          const Index&,
                          Tensor<type, 1>&) const final;
 
-    void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
+    void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
@@ -173,6 +160,8 @@ public:
     string write_activation_function_expression() const;
 
     // Serialization
+
+    void print() const;
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void to_XML(tinyxml2::XMLPrinter&) const final;
@@ -203,8 +192,6 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
     explicit PerceptronLayerForwardPropagation(const Index&, Layer*);
 
-    virtual ~PerceptronLayerForwardPropagation();
-
     pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index&, Layer*) final;
@@ -219,19 +206,15 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-    // Default constructor
-
     explicit PerceptronLayerBackPropagation();
 
     explicit PerceptronLayerBackPropagation(const Index&, Layer*);
 
-    virtual ~PerceptronLayerBackPropagation();
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index&, Layer*) final;
 
     void print() const;
-
-    //Tensor<type, 2> deltas;
 
     Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;
@@ -243,13 +226,11 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
-    // Default constructor
-
     explicit PerceptronLayerBackPropagationLM();
 
     explicit PerceptronLayerBackPropagationLM(const Index&, Layer*);
 
-    virtual ~PerceptronLayerBackPropagationLM();
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index&, Layer*) final;
 

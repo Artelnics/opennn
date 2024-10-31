@@ -63,26 +63,23 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     Tensor<type, 2>& errors = back_propagation.errors;
-    type& error = back_propagation.error;
+    
+    Tensor<type, 0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = outputs - targets;
 
-    Tensor<type, 0> minkowski_error;
+    error.device(*thread_pool_device) = (errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter) / type(batch_samples_number);
 
-    minkowski_error.device(*thread_pool_device) = (errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter);
-
-    error = minkowski_error(0)/type(batch_samples_number);
-
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -94,9 +91,9 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 
     // Back propagation
    
-    const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
+    const pair<type*, dimensions> delta_pairs = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 

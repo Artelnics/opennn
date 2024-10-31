@@ -24,8 +24,6 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
                        ? 3
                        : 1;
     
-    // const Index channels = channels;
-    
     Index padding = 0;
 
     const Index width = width_no_padding;
@@ -48,35 +46,67 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     Tensor<unsigned char, 3> image(height, width, channels);
 
-    const Index xxx = width * channels + padding;
+    const Index image_pixels = width * channels + padding;
 
     for(Index i = 0; i < height; i++)
         for(Index j = 0; j < width; ++j)
             for(Index k = 0; k < channels; ++k)
-                image(i, j, k) = raw_image[i*xxx  + j*channels + k];
+                image(i, j, k) = raw_image[i*image_pixels + j*channels + k];
     
     return image;
+}
+
+
+void bilinear_interpolation_resize_image(const Tensor<unsigned char, 3>& input_image, Tensor<unsigned char, 3>& output_image, Index output_height, Index output_width)
+{
+    const Index input_height = input_image.dimension(0);
+    const Index input_width = input_image.dimension(1);
+    const Index channels = input_image.dimension(2);
+
+    const type scale_y = static_cast<float>(input_height) / output_height;
+    const type scale_x = static_cast<float>(input_width) / output_width;
+
+    for (Index c = 0; c < channels; ++c)
+    {
+        for (Index y = 0; y < output_height; ++y)
+        {
+            const type in_y = y * scale_y;
+            const Index y0 = static_cast<Index>(in_y);
+            const type y_weight = in_y - y0;
+            const Index y1 = min(y0 + 1, input_height - 1);
+
+            for (Index x = 0; x < output_width; ++x)
+            {
+                const type in_x = x * scale_x;
+                const Index x0 = static_cast<Index>(in_x);
+                const type x_weight = in_x - x0;
+                const Index x1 = min(x0 + 1, input_width - 1);
+
+                const type value = (1 - y_weight) * ((1 - x_weight) * input_image(y0, x0, c) + x_weight * input_image(y0, x1, c)) +
+                    y_weight * ((1 - x_weight) * input_image(y1, x0, c) + x_weight * input_image(y1, x1, c));
+
+                output_image(y, x, c) = static_cast<unsigned char>(value);
+            }
+        }
+    }
 }
 
 
 void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
                      TensorMap<Tensor<type, 3>>& image)
 {
-    const Eigen::array<bool, 3> reflect_horizontal_dimensions = {false, true, false};
+    const Eigen::array<bool, 3> reflect_horizontal_dimensions = { false, true, false };
 
-    Tensor<type, 3> reversed_image = image.reverse(reflect_horizontal_dimensions);
-
-    image = reversed_image;
+    image = image.reverse(reflect_horizontal_dimensions);
 }
 
 
 void reflect_image_y(const ThreadPoolDevice* thread_pool_device,
-                     const Tensor<type, 3>& input,
-                     Tensor<type, 3>& output)
+                     TensorMap<Tensor<type, 3>>& image)
 {
-    const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
+    const Eigen::array<bool, 3> reflect_vertical_dimensions = { true, false, false };
 
-    output.device(*thread_pool_device) = input.reverse(reflect_vertical_dimesions);
+    image = image.reverse(reflect_vertical_dimensions);
 }
 
 

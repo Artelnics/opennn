@@ -19,11 +19,6 @@ RecurrentLayerTest::RecurrentLayerTest() : UnitTesting()
 }
 
 
-RecurrentLayerTest::~RecurrentLayerTest()
-{
-}
-
-
 void RecurrentLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -59,15 +54,6 @@ void RecurrentLayerTest::test_constructor()
 }
 
 
-void RecurrentLayerTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    RecurrentLayer* recurrent_layer = new RecurrentLayer;
-    delete recurrent_layer;
-}
-
-
 void RecurrentLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
@@ -99,7 +85,7 @@ void RecurrentLayerTest::test_forward_propagate()
     Tensor<type, 2> new_recurrent_weights;
     Tensor<type, 1> new_biases;
 
-    pair<type*, dimensions> inputs_pair;
+    pair<type*, dimensions> input_pairs;
 
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
@@ -115,10 +101,10 @@ void RecurrentLayerTest::test_forward_propagate()
     Tensor<type*, 1> input_data(1);
     input_data(0) = inputs.data();
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 /*
-    recurrent_layer.forward_propagate(tensor_wrapper(inputs_pair), &recurrent_layer_forward_propagation, is_training);
+    recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
 
     outputs = recurrent_layer_forward_propagation.outputs;
     
@@ -150,10 +136,10 @@ void RecurrentLayerTest::test_forward_propagate()
 
     parameters = recurrent_layer.get_parameters();
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    recurrent_layer.forward_propagate(tensor_wrapper(inputs_pair), &recurrent_layer_forward_propagation, is_training);
+    recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
 
     outputs = recurrent_layer_forward_propagation.outputs;
 */
@@ -164,11 +150,7 @@ void RecurrentLayerTest::run_test_case()
 {
     cout << "Running recurrent layer test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-
-    test_destructor();
 
     test_calculate_activations();
 

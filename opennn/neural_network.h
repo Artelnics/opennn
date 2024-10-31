@@ -9,29 +9,27 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
+#include <memory>
 
 #include "config.h"
+#include "batch.h"
 #include "layer.h"
 #include "perceptron_layer.h"
-#include "perceptron_layer_3d.h"
-#include "addition_layer_3d.h"
-#include "normalization_layer_3d.h"
+//#include "perceptron_layer_3d.h"
+//#include "addition_layer_3d.h"
+//#include "normalization_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
-#include "probabilistic_layer_3d.h"
-#include "flatten_layer.h"
-#include "pooling_layer.h"
-#include "convolutional_layer.h"
+//#include "probabilistic_layer_3d.h"
+//#include "flatten_layer.h"
+//#include "pooling_layer.h"
+//#include "convolutional_layer.h"
 #include "long_short_term_memory_layer.h"
-#include "multihead_attention_layer.h"
+//#include "multihead_attention_layer.h"
 #include "embedding_layer.h"
 #include "recurrent_layer.h"
 
@@ -57,7 +55,8 @@ public:
                         Classification,
                         Forecasting,
                         ImageClassification,
-                        TextClassification};
+                        YoloV2,
+                        TextClassification,};
 
    // Constructors
 
@@ -67,19 +66,13 @@ public:
 
    explicit NeuralNetwork(const string&);
 
-   explicit NeuralNetwork(const Tensor<Layer*, 1>&);
-
-   // Destructor
-
-   virtual ~NeuralNetwork();
-
    // APPENDING LAYERS
 
-   void delete_layers();
+   void add_layer(unique_ptr<Layer>, 
+                  const string& name = "layer", 
+                  const vector<Index>& = vector<Index>());
 
-   void add_layer(Layer*, const string& name = "layer");
-
-   bool validate_layer_type(const Layer::Type);
+   bool validate_layer_type(const Layer::Type) const;
 
    // Get
 
@@ -105,15 +98,16 @@ public:
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
-   Tensor<Layer*, 1> get_layers() const;
-   Layer* get_layer(const Index&) const;
-   Layer* get_layer(const string&) const;
-   Tensor<Layer*, 1> get_trainable_layers() const;
-//   Tensor<Index, 1> get_trainable_layers_indices() const;
+   const vector<unique_ptr<Layer>>& get_layers() const;
+   const unique_ptr<Layer>& get_layer(const Index&) const;
+   const unique_ptr<Layer>& get_layer(const string&) const;
 
    Index get_layer_index(const string&) const;
 
-   const Tensor<Tensor<Index, 1>, 1>& get_layers_input_indices() const;
+   const vector<vector<Index>>& get_layer_input_indices() const;
+   vector<vector<Index>> get_layer_output_indices() const;
+
+   Index find_input_index(const vector<Index>&, const Index&) const;
 
    ScalingLayer2D* get_scaling_layer_2d() const;
    ScalingLayer4D* get_scaling_layer_4d() const;
@@ -126,7 +120,6 @@ public:
    LongShortTermMemoryLayer* get_long_short_term_memory_layer() const;
    RecurrentLayer* get_recurrent_layer() const;
 
-   Layer* get_last_trainable_layer() const;
    PerceptronLayer* get_first_perceptron_layer() const;
 
    const bool& get_display() const;
@@ -140,10 +133,9 @@ public:
    void set(const string&);
 
    void set_layers_number(const Index&);
-   void set_layers(Tensor<Layer*, 1>&);
 
-   void set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
-   void set_layer_inputs_indices(const Index&, const Tensor<Index, 1>&);
+   void set_layer_input_indices(const vector<vector<Index>>&);
+   void set_layer_inputs_indices(const Index&, const vector<Index>&);
 
    void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
    void set_layer_inputs_indices(const string&, const initializer_list<string>&);
@@ -155,9 +147,8 @@ public:
    void set_output_namess(const Tensor<string, 1>&);
 
    void set_inputs_number(const Index&);
-   //void set_inputs_number(const Tensor<bool, 1>&);
 
-   virtual void set_default();
+   void set_default();
 
    void set_threads_number(const int&);
 
@@ -178,8 +169,8 @@ public:
    Index get_long_short_term_memory_layers_number() const;
    Index get_recurrent_layers_number() const;
 
-   bool is_input_layer(const Tensor<Index, 1>&) const;
-   bool is_context_layer(const Tensor<Index, 1>&) const;
+   bool is_input_layer(const vector<Index>&) const;
+   bool is_context_layer(const vector<Index>&) const;
 
    // Architecture
 
@@ -187,18 +178,12 @@ public:
    Index get_outputs_number() const;
    dimensions get_output_dimensions() const;
 
-   //Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
-   //Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
-
-   Tensor<Index, 1> get_architecture() const;
-
    // Parameters
 
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
-   Tensor<Index, 1> get_layers_parameters_numbers() const;
-   Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
+   vector<Index> get_layer_parameter_numbers() const;
 
    void set_parameters(const Tensor<type, 1>&) const;
 
@@ -214,53 +199,54 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
 
+   Tensor<type, 2> calculate_scaled_outputs(const Tensor<type, 2>&)
+   {
+       return Tensor<type, 2>();
+   }
+
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
    // Serialization
 
-   Tensor<string, 2> get_information() const;
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&);
    void inputs_from_XML(const tinyxml2::XMLDocument&);
    void layers_from_XML(const tinyxml2::XMLDocument&);
    void outputs_from_XML(const tinyxml2::XMLDocument&);
 
-   virtual void to_XML(tinyxml2::XMLPrinter&) const;
+   void to_XML(tinyxml2::XMLPrinter&) const;
 
    void print() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
 
-   virtual void load(const string&) final;
+   void load(const string&);
    void load_parameters_binary(const string&);
 
    Tensor<string, 1> get_layer_names() const;
    Tensor<string, 1> get_layer_types_string() const;
 
-   // Expression
+   void save_outputs(Tensor<type, 2>&, const string&);
 
-   string write_expression() const;
+   void forward_propagate(const Batch&, 
+                          ForwardPropagation&, 
+                          const bool& = false) const;
 
-   string write_expression_python() const;
-   string write_expression_c() const;
-   string write_expression_api() const;
-   string write_expression_javascript() const;
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          ForwardPropagation&,
+                          const bool& = false) const;
+
+   void forward_propagate(const Batch&,
+                          const Tensor<type, 1>&, 
+                          ForwardPropagation&) const;
 
    void save_expression_c(const string&) const;
    void save_expression_python(const string&) const;
    void save_expression_api(const string&) const;
    void save_expression_javascript(const string&) const;
-   void save_outputs(Tensor<type, 2>&, const string&);
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
-                          ForwardPropagation&, 
-                          const bool& = false) const;
-
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
-                          const Tensor<type, 1>&, 
-                          ForwardPropagation&) const;
 
 #ifdef OPENNN_CUDA
 #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
@@ -272,13 +258,13 @@ protected:
 
    NeuralNetwork::ModelType model_type;
 
-   Tensor<string, 1> inputs_name;
+   Tensor<string, 1> input_names;
 
    Tensor<string, 1> output_names;
 
-   Tensor<Layer*, 1> layers;
+   vector<unique_ptr<Layer>> layers;
 
-   Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
+   vector<vector<Index>> layer_input_indices;
 
    ThreadPool* thread_pool;
    ThreadPoolDevice* thread_pool_device;

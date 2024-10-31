@@ -16,10 +16,9 @@ using namespace fs;
 namespace opennn
 {
 
-
 ImageDataSet::ImageDataSet() : DataSet()
 {
-
+    input_dimensions = { 0,0,0 };
 }
 
 
@@ -151,6 +150,7 @@ void ImageDataSet::set(const Index& new_images_number,
 
     for(Index i = 0; i < inputs_number; i++)
     {
+        // @todo use set method
         raw_variables(i).name = "p_" + to_string(i+1);
         raw_variables(i).use = VariableUse::Input;
         raw_variables(i).type = RawVariableType::Numeric;
@@ -162,6 +162,7 @@ void ImageDataSet::set(const Index& new_images_number,
         Tensor<string, 1> categories(target_number);
         categories.setConstant("ABC");
 
+        // @todo use set methods
         raw_variables(raw_variables_number-1).type = RawVariableType::Binary;
         raw_variables(raw_variables_number-1).use = VariableUse::Target;
         raw_variables(raw_variables_number-1).name = "target";
@@ -172,6 +173,7 @@ void ImageDataSet::set(const Index& new_images_number,
         Tensor<string, 1> categories(target_number);
         categories.setConstant("ABC");
 
+        // @todo use set methods
         raw_variables(raw_variables_number-1).type = RawVariableType::Categorical;
         raw_variables(raw_variables_number-1).use = VariableUse::Target;
         raw_variables(raw_variables_number-1).name = "target";
@@ -179,7 +181,6 @@ void ImageDataSet::set(const Index& new_images_number,
     }
 
     // Samples
-
     samples_uses.resize(new_images_number);
     split_samples_random();
 
@@ -236,6 +237,7 @@ void ImageDataSet::set_image_data_random()
                     data(current_sample, j) = rand() % 256;
 
                 data(current_sample, k + inputs_number) = 1;
+
                 current_sample++;
             }
         }
@@ -243,6 +245,18 @@ void ImageDataSet::set_image_data_random()
 
     if (display)
         cout << endl << "Random image data set generated." << endl;
+}
+
+
+void ImageDataSet::set_input_dimensions(const dimensions& new_input_dimensions)
+{
+    if (new_input_dimensions.size() != 3)
+        throw runtime_error("Dimensions size error: input_dimensions must have 3 dimensions {input_height, input_width, input_channels}");
+
+    if (new_input_dimensions[2] != 1 && new_input_dimensions[2] != 3)
+        throw runtime_error("input_dimensions[2] error: input_channels must have 1 or 3 channels {input_height, input_width, input_channels}");
+
+    input_dimensions = new_input_dimensions;
 }
 
 
@@ -450,7 +464,6 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Ids");
         file_stream.PushText(string_tensor_to_string(samples_id).c_str());
-
         file_stream.CloseElement();
     }
 
@@ -795,12 +808,12 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             string separator = ",";
 
             if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) {
+                    && new_rows_labels.find(";") != string::npos) 
+            {
                 separator = ';';
             }
 
             samples_id = get_tokens(new_rows_labels, separator);
-
         }
     }
 
@@ -832,9 +845,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_number_element->GetText())
     {
-        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
-
-        samples_uses.resize(new_samples_number);
+        samples_uses.resize(Index(atoi(samples_number_element->GetText())));
 
         set_training();
     }
@@ -853,9 +864,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     }
 
     if(samples_uses_element->GetText())
-    {
         set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
-    }
 
     // Display
 
@@ -882,6 +891,8 @@ Tensor<Descriptives, 1> ImageDataSet::scale_input_variables()
 
 void ImageDataSet::read_bmp()
 {
+    chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
+
     vector<fs::path> directory_path;
     vector<string> image_path;
 
@@ -912,11 +923,22 @@ void ImageDataSet::read_bmp()
         images_number[i+1] = samples_number;
     }
 
-    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0]/*.string()*/);
+    Index height, width, image_channels;
 
-    const Index height = image_data.dimension(0);
-    const Index width = image_data.dimension(1);
-    const Index image_channels = image_data.dimension(2);
+    if (input_dimensions[0] > 0 && input_dimensions[1] > 0 && input_dimensions[2] > 0)
+    {
+        height = input_dimensions[0];
+        width = input_dimensions[1];
+        image_channels = input_dimensions[2];
+    }
+    else
+    {
+        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0]);
+
+        height = image_data.dimension(0);
+        width = image_data.dimension(1);
+        image_channels = image_data.dimension(2);
+    }
 
     const Index inputs_number = height * width * image_channels;
     const Index raw_variables_number = inputs_number + 1;
@@ -939,15 +961,31 @@ void ImageDataSet::read_bmp()
     data.setZero();
 
     #pragma omp parallel for
-    for(Index i = 0; i < samples_number; i++)
+    for (Index i = 0; i < samples_number; i++)
     {
-        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i]/*.string()*/);
+        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i]);
 
-        if(pixels_number != image_data.size())
-            throw runtime_error("Different image sizes.\n");
+        const Index current_height = image_data.dimension(0);
+        const Index current_width = image_data.dimension(1);
+        const Index current_channels = image_data.dimension(2);
 
-        for(Index j = 0; j < pixels_number; j++)
-            data(i, j) = image_data(j);
+        if (current_channels != image_channels)
+            throw runtime_error("Different number of channels in image: " + image_path[i] + "\n");
+
+        Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
+
+        if (current_height != height || current_width != width)
+        {
+            bilinear_interpolation_resize_image(image_data, resized_image_data, height, width);
+        }
+        else
+        {
+            resized_image_data = image_data;
+        }
+
+        #pragma omp parallel for
+        for (Index j = 0; j < pixels_number; j++)
+            data(i, j) = resized_image_data(j);
 
         if (targets_number == 1)
         {
@@ -968,12 +1006,25 @@ void ImageDataSet::read_bmp()
             }
         }
 
-        if(display && i % 1000 == 0)
+        if (display && i % 1000 == 0)
             display_progress_bar(i, samples_number - 1000);
     }
+    
+    if (display)
+    {
+        chrono::high_resolution_clock::time_point end_time = chrono::high_resolution_clock::now();
+        chrono::milliseconds duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
 
-    if(display)
-        cout << endl << "Image data set loaded." << endl;        
+        long long total_milliseconds = duration.count();
+        long long minutes = total_milliseconds / 60000;
+        long long seconds = (total_milliseconds % 60000) / 1000;
+        long long milliseconds = total_milliseconds % 1000;
+
+        cout << endl << "Image data set loaded in: "
+            << minutes << " minutes, "
+            << seconds << " seconds, "
+            << milliseconds << " milliseconds." << endl;
+    }
 }
 
 } // opennn namespace

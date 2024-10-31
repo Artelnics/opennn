@@ -63,78 +63,6 @@ Index LongShortTermMemoryLayer::get_parameters_number() const
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::get_forget_biases() const
-{
-    return forget_biases;
-}
-
-
-Tensor<type, 1> LongShortTermMemoryLayer::get_input_biases() const
-{
-    return input_biases;
-}
-
-
-Tensor<type, 1> LongShortTermMemoryLayer::get_state_biases() const
-{
-    return state_biases;
-}
-
-
-Tensor<type, 1> LongShortTermMemoryLayer::get_output_biases() const
-{
-    return output_biases;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_forget_weights() const
-{
-    return forget_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_input_weights() const
-{
-    return input_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_state_weights() const
-{
-    return state_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_output_weights() const
-{
-    return output_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_forget_recurrent_weights() const
-{
-    return forget_recurrent_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_input_recurrent_weights() const
-{
-    return input_recurrent_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_state_recurrent_weights() const
-{
-    return state_recurrent_weights;
-}
-
-
-Tensor<type, 2> LongShortTermMemoryLayer::get_output_recurrent_weights() const
-{
-    return output_recurrent_weights;
-}
-
-
 Index LongShortTermMemoryLayer::get_timesteps() const
 {
     return time_steps;
@@ -322,12 +250,6 @@ void LongShortTermMemoryLayer::set_default()
 }
 
 
-void LongShortTermMemoryLayer::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
@@ -343,79 +265,6 @@ void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_numbe
     const Index time_steps = get_timesteps();
 
     set(inputs_number, new_neurons_number, time_steps);
-}
-
-
-void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_biases)
-{
-    forget_biases = new_biases;
-}
-
-
-void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biases)
-{
-    input_biases = new_biases;
-}
-
-
-void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biases)
-{
-    state_biases = new_biases;
-}
-
-
-void LongShortTermMemoryLayer::set_output_biases(const Tensor<type, 1>& new_biases)
-{
-    output_biases = new_biases;
-}
-
-
-void LongShortTermMemoryLayer::set_forget_weights(const Tensor<type, 2>& new_forget_weights)
-{
-    forget_weights = new_forget_weights;
-}
-
-
-void LongShortTermMemoryLayer::set_input_weights(const Tensor<type, 2>& new_input_weight)
-{
-    input_weights = new_input_weight;
-}
-
-
-void LongShortTermMemoryLayer::set_state_weights(const Tensor<type, 2>& new_state_weights)
-{
-    state_weights = new_state_weights;
-}
-
-
-void LongShortTermMemoryLayer::set_output_weights(const Tensor<type, 2>& new_output_weight)
-{
-    output_weights = new_output_weight;
-
-}
-
-
-void LongShortTermMemoryLayer::set_forget_recurrent_weights(const Tensor<type, 2>& new_forget_recurrent_weight)
-{
-    forget_recurrent_weights = new_forget_recurrent_weight;
-}
-
-
-void LongShortTermMemoryLayer::set_input_recurrent_weights(const Tensor<type, 2>& new_input_recurrent_weight)
-{
-    input_recurrent_weights = new_input_recurrent_weight;
-}
-
-
-void LongShortTermMemoryLayer::set_state_recurrent_weights(const Tensor<type, 2>& new_state_recurrent_weight)
-{
-    state_recurrent_weights = new_state_recurrent_weight;
-}
-
-
-void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2>& new_output_recurrent_weight)
-{
-    output_recurrent_weights = new_output_recurrent_weight;
 }
 
 
@@ -492,45 +341,25 @@ void LongShortTermMemoryLayer::set_activation_function(const LongShortTermMemory
 void LongShortTermMemoryLayer::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
-    {
         activation_function = ActivationFunction::Logistic;
-    }
     else if(new_activation_function_name == "HyperbolicTangent")
-    {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
     else if(new_activation_function_name == "Linear")
-    {
         activation_function = ActivationFunction::Linear;
-    }
     else if(new_activation_function_name == "RectifiedLinear")
-    {
         activation_function = ActivationFunction::RectifiedLinear;
-    }
     else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
         activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
     else if(new_activation_function_name == "SoftPlus")
-    {
         activation_function = ActivationFunction::SoftPlus;
-    }
     else if(new_activation_function_name == "SoftSign")
-    {
         activation_function = ActivationFunction::SoftSign;
-    }
     else if(new_activation_function_name == "HardSigmoid")
-    {
         activation_function = ActivationFunction::HardSigmoid;
-    }
     else if(new_activation_function_name == "ExponentialLinear")
-    {
         activation_function = ActivationFunction::ExponentialLinear;
-    }
     else
-    {
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-    }
 }
 
 
@@ -543,45 +372,25 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const LongShort
 void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& new_recurrent_activation_function_name)
 {
     if(new_recurrent_activation_function_name == "Logistic")
-    {
         recurrent_activation_function = ActivationFunction::Logistic;
-    }
     else if(new_recurrent_activation_function_name == "HyperbolicTangent")
-    {
         recurrent_activation_function = ActivationFunction::HyperbolicTangent;
-    }
     else if(new_recurrent_activation_function_name == "Linear")
-    {
         recurrent_activation_function = ActivationFunction::Linear;
-    }
     else if(new_recurrent_activation_function_name == "RectifiedLinear")
-    {
         recurrent_activation_function = ActivationFunction::RectifiedLinear;
-    }
     else if(new_recurrent_activation_function_name == "ScaledExponentialLinear")
-    {
         recurrent_activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
     else if(new_recurrent_activation_function_name == "SoftPlus")
-    {
         recurrent_activation_function = ActivationFunction::SoftPlus;
-    }
     else if(new_recurrent_activation_function_name == "SoftSign")
-    {
         recurrent_activation_function = ActivationFunction::SoftSign;
-    }
     else if(new_recurrent_activation_function_name == "HardSigmoid")
-    {
         recurrent_activation_function = ActivationFunction::HardSigmoid;
-    }
     else if(new_recurrent_activation_function_name == "ExponentialLinear")
-    {
         recurrent_activation_function = ActivationFunction::ExponentialLinear;
-    }
     else
-    {
         throw runtime_error("Unknown activation function: " + new_recurrent_activation_function_name + ".\n");
-    }
 }
 
 
@@ -712,18 +521,17 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& 
 }
 
 
-void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                                 LayerForwardPropagation* forward_propagation,
+void LongShortTermMemoryLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                                 unique_ptr<LayerForwardPropagation>& forward_propagation,
                                                  const bool& is_training)
 {
 
-    const Index samples_number = inputs_pair(0).second[0];
-    const Index inputs_number = inputs_pair(0).second[1];
+    const Index samples_number = input_pairs[0].second[0];
 
-    LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
-            = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
+    LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
+            static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.get());
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_number);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     Tensor<type, 1>& current_inputs = long_short_term_memory_layer_forward_propagation->current_inputs;
 
     Tensor<type, 2, RowMajor>& forget_activations = long_short_term_memory_layer_forward_propagation->forget_activations;
@@ -885,52 +693,50 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
 }
 
 
-void LongShortTermMemoryLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                              const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
-                                              LayerForwardPropagation* forward_propagation,
-                                              LayerBackPropagation* back_propagation) const
+void LongShortTermMemoryLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                              const vector<pair<type*, dimensions>>& delta_pairs,
+                                              unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                              unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
-
-    const TensorMap<Tensor<type, 2>> deltas(deltas_pair(0).first, deltas_pair(0).second[0], deltas_pair(0).second[1]);
-
-    LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
-            static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
+     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
+            static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.get());
 
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
-            static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
-    
-    calculate_forget_parameters_derivatives(inputs,
+            static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation.get());
+/*
+    calculate_forget_parameter_derivatives(inputs,
                                             deltas,
                                             long_short_term_memory_layer_forward_propagation,
                                             long_short_term_memory_layer_back_propagation);
 
-    calculate_input_parameters_derivatives(inputs,
+    calculate_input_parameter_derivatives(inputs,
                                            deltas,
                                            long_short_term_memory_layer_forward_propagation,
                                            long_short_term_memory_layer_back_propagation);
 
-    calculate_state_parameters_derivatives(inputs,
+    calculate_state_parameter_derivatives(inputs,
                                            deltas,
                                            long_short_term_memory_layer_forward_propagation,
                                            long_short_term_memory_layer_back_propagation);
 
-    calculate_output_parameters_derivatives(inputs,
+    calculate_output_parameter_derivatives(inputs,
                                             deltas,
                                             long_short_term_memory_layer_forward_propagation,
                                             long_short_term_memory_layer_back_propagation);
-    
+*/
     // @todo Calculate inputs derivatives
 }
 
 
-void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Tensor<type, 2>& inputs,
-                                                                       const Tensor<type, 2>& deltas,
-                                                                       LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation,
-                                                                       LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation) const
+void LongShortTermMemoryLayer::calculate_forget_parameter_derivatives(const Tensor<type, 2>& inputs,
+                                                                      const Tensor<type, 2>& deltas,
+                                                                      unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
+                                                                      unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_layer_back_propagation) const
 {
-
+/*
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = inputs_number * neurons_number;
@@ -1038,9 +844,9 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
         get_row(current_hidden_states_activations_derivatives, hidden_states_activations_derivatives, sample);
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
-/*
+
         calculate_activations(current_cell_states);
-*/
+
         // FORGET PARAMETERS DERIVATIVES
 
         if(sample % time_steps == 0)
@@ -1236,15 +1042,16 @@ void LongShortTermMemoryLayer::calculate_forget_parameters_derivatives(const Ten
 
         forget_biases_derivatives.device(*thread_pool_device) += hidden_states_biases_derivatives.contract(current_deltas, A_B);
     }
+    */
 }
 
 
-void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tensor<type, 2>& inputs,
-                                                                      const Tensor<type, 2>& deltas,
-                                                                      LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation,
-                                                                      LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation) const
+void LongShortTermMemoryLayer::calculate_input_parameter_derivatives(const Tensor<type, 2>& inputs,
+                                                                     const Tensor<type, 2>& deltas,
+                                                                     unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
+                                                                     unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_layer_back_propagation) const
 {
-
+/*
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = inputs_number * neurons_number;
@@ -1353,9 +1160,9 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
         get_row(current_hidden_states_activations_derivatives, hidden_states_activations_derivatives, sample);
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
-/*
+
         calculate_activations(current_cell_states);
-*/
+
         // INPUT PARAMETERS DERIVATIVES
 
         if(sample % time_steps == 0)
@@ -1551,15 +1358,17 @@ void LongShortTermMemoryLayer::calculate_input_parameters_derivatives(const Tens
 
         input_biases_derivatives.device(*thread_pool_device) += hidden_states_biases_derivatives.contract(current_deltas, A_B);
     }
+*/
 }
 
 
-void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tensor<type, 2>& inputs,
-                                                                      const Tensor<type, 2>& deltas,
-                                                                      LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation,
-                                                                      LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation) const
+void LongShortTermMemoryLayer::calculate_state_parameter_derivatives(
+        const Tensor<type, 2>& inputs,
+        const Tensor<type, 2>& deltas,
+        unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
+        unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_layer_back_propagation) const
 {
-
+/*
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = inputs_number * neurons_number;
@@ -1667,9 +1476,9 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
         get_row(current_hidden_states_activations_derivatives, hidden_states_activations_derivatives, sample);
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
-/*
+
         calculate_activations(current_cell_states);
-*/
+
         // STATE PARAMETERS DERIVATIVES
 
         if(sample % time_steps == 0)
@@ -1865,15 +1674,17 @@ void LongShortTermMemoryLayer::calculate_state_parameters_derivatives(const Tens
 
         state_biases_derivatives.device(*thread_pool_device) += hidden_states_biases_derivatives.contract(current_deltas, A_B);
     }
+*/
 }
 
 
-void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Tensor<type, 2>& inputs,
-                                                                       const Tensor<type, 2>& deltas,
-                                                                       LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation,
-                                                                       LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation) const
+void LongShortTermMemoryLayer::calculate_output_parameter_derivatives(
+    const Tensor<type, 2>& inputs,
+    const Tensor<type, 2>& deltas,
+    unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
+    unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_layer_back_propagation) const
 {
-	
+/*
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = inputs_number * neurons_number;
@@ -1981,9 +1792,9 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
         get_row(current_hidden_states_activations_derivatives, hidden_states_activations_derivatives, sample);
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
-/*
+
         calculate_activations(current_cell_states);
-*/
+
         // OUTPUT PARAMETERS DERIVATIVES
 
         if(sample % time_steps == 0)
@@ -2179,19 +1990,19 @@ void LongShortTermMemoryLayer::calculate_output_parameters_derivatives(const Ten
 
         output_biases_derivatives.device(*thread_pool_device) += hidden_states_biases_derivatives.contract(current_deltas, A_B);
     }
+*/
 }
 
 
-void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propagation,
+void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                                const Index& index,
                                                Tensor<type, 1>& gradient) const
-{
-    
+{    
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
 
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
-            static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
+            static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation.get());
 
     type* gradient_data = gradient.data();
 
@@ -2251,7 +2062,7 @@ void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propag
 }
 
 
-string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& output_names) const
+string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -2265,7 +2076,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
         buffer << "forget_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[i] << " + ";
 
         for(Index j = 0; j < inputs_number; j++)
-            buffer << inputs_name[j] << " * (" << forget_weights(j,i) << ") + ";
+            buffer << input_names[j] << " * (" << forget_weights(j,i) << ") + ";
 
         for(Index k = 0; k < neurons_number-1; k++)
             buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << forget_recurrent_weights(k,i) << ") + ";
@@ -2280,7 +2091,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
        buffer << "input_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << input_biases[i] << " + ";
 
        for(Index j = 0; j < inputs_number; j++)
-           buffer << inputs_name[j] << " * (" << input_weights(j,i) << ") + ";
+           buffer << input_names[j] << " * (" << input_weights(j,i) << ") + ";
 
        for(Index k = 0; k < neurons_number-1; k++)
            buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << input_recurrent_weights(k,i) << ") + ";
@@ -2294,7 +2105,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
        buffer << "state_gate_" << to_string(i) << " = " << write_activation_function_expression() << " (" << state_biases[i] << " + ";
 
        for(Index j = 0; j < inputs_number; j++)
-           buffer << inputs_name[j] << " * (" << state_weights(j,i) << ") + ";
+           buffer << input_names[j] << " * (" << state_weights(j,i) << ") + ";
 
        for(Index k = 0; k < neurons_number-1; k++)
            buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << state_recurrent_weights(k,i) << ") + ";
@@ -2309,7 +2120,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
        buffer << "output_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << output_biases[i] << " + ";
 
        for(Index j = 0; j < inputs_number; j++)
-           buffer << inputs_name[j] << " * (" << output_weights(j,i) << ") + ";
+           buffer << input_names[j] << " * (" << output_weights(j,i) << ") + ";
 
        for(Index k = 0; k < neurons_number-1; k++)
            buffer << "hidden_state_" << to_string(k) << "(t-1) * (" << output_recurrent_weights(k,i) << ") + ";
@@ -2511,7 +2322,7 @@ pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { {batch_samples_number, neurons_number} });
+    return {outputs_data, {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -2615,10 +2426,14 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
     output_combinations_biases_derivatives.resize(neurons_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number);
+}
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
+
+vector<pair<type*, dimensions>> LongShortTermMemoryLayerBackPropagation::get_input_derivative_pairs() const
+{
+    const Index inputs_number = layer->get_inputs_number();
+
+    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}}};
 }
 
 

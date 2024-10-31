@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
+
 
 #include <iostream>
 #include <time.h>
@@ -481,7 +481,7 @@ int main()
           tests_failed_count += image_data_set_test.get_tests_failed_count();
       }
 
-      else if(test == "suite"/* || test == ""*/)
+      else if(test == "suite")
       {
           // tensors
 

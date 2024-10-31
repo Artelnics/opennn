@@ -27,12 +27,7 @@ public:
 
    explicit ImageDataSetTest();
 
-   virtual ~ImageDataSetTest();
-
-   // Constructor and destructor
-
    void test_constructor();
-   void test_destructor();
 
    // Unit testing
 

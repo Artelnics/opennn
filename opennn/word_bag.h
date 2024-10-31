@@ -6,7 +6,6 @@
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
-
 using namespace std;
 using namespace Eigen;
 
@@ -16,8 +15,6 @@ namespace opennn
 struct WordBag
 {
     explicit WordBag() {}
-
-    virtual ~WordBag() {}
 
     Tensor<string, 1> words;
     Tensor<Index, 1> frequencies;

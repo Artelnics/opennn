@@ -25,16 +25,9 @@ StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 }
 
 
-StochasticGradientDescentTest::~StochasticGradientDescentTest()
-{
-}
-
-
 void StochasticGradientDescentTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     StochasticGradientDescent stochastic_gradient_descent_1;
     assert_true(!stochastic_gradient_descent_1.has_loss_index(), LOG);
@@ -43,15 +36,6 @@ void StochasticGradientDescentTest::test_constructor()
 
     StochasticGradientDescent stochastic_gradient_descent_2(&sum_squared_error);
     assert_true(stochastic_gradient_descent_2.has_loss_index(), LOG);
-}
-
-
-void StochasticGradientDescentTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    StochasticGradientDescent* stochastic_gradient_descent = new StochasticGradientDescent;
-    delete stochastic_gradient_descent;
 }
 
 
@@ -143,7 +127,7 @@ void StochasticGradientDescentTest::test_transformer_training()
     Index depth;
     Index perceptron_depth;
     Index heads_number;
-    Index number_of_layers;
+    Index layers_number;
 
     Transformer transformer;
 
@@ -163,12 +147,12 @@ void StochasticGradientDescentTest::test_transformer_training()
     depth = 4;
     perceptron_depth = 6;
     heads_number = 4;
-    number_of_layers = 1;
+    layers_number = 1;
 
     data_set.set_data_random_language_model(samples_number, inputs_number, context_length, input_dimensions, context_dimension);
 
     transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
-                        depth, perceptron_depth, heads_number, number_of_layers });
+                        depth, perceptron_depth, heads_number, layers_number });
 
     stochastic_gradient_descent.set_loss_goal(NUMERIC_LIMITS_MIN);
 
@@ -225,11 +209,7 @@ void StochasticGradientDescentTest::run_test_case()
 {
     cout << "Running stochastic gradient descent test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-
-    test_destructor();
 
     // Training
 

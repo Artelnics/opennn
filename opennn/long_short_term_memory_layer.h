@@ -9,12 +9,8 @@
 #ifndef LONGSHORTTERMMEMORYLAYER_H
 #define LONGSHORTTERMMEMORYLAYER_H
 
-// System includes
-
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "layer.h"
@@ -48,7 +44,6 @@ public:
 
    explicit LongShortTermMemoryLayer(const Index&, const Index&, const Index&);
 
-
    // Get
 
    bool is_empty() const;
@@ -57,23 +52,6 @@ public:
    Index get_neurons_number() const final;
 
    dimensions get_output_dimensions() const final;
-
-   // Parameters
-
-   Tensor<type, 1> get_input_biases() const;
-   Tensor<type, 1> get_forget_biases() const;
-   Tensor<type, 1> get_state_biases() const;
-   Tensor<type, 1> get_output_biases() const;
-
-   Tensor<type, 2> get_input_weights() const;
-   Tensor<type, 2> get_forget_weights() const;
-   Tensor<type, 2> get_state_weights() const;
-   Tensor<type, 2> get_output_weights() const;
-
-   Tensor<type, 2> get_input_recurrent_weights() const;
-   Tensor<type, 2> get_forget_recurrent_weights() const;
-   Tensor<type, 2> get_state_recurrent_weights() const;
-   Tensor<type, 2> get_output_recurrent_weights() const;
 
    Index get_timesteps() const;
 
@@ -99,29 +77,11 @@ public:
    void set(const LongShortTermMemoryLayer&);
 
    void set_default();
-   void set_name(const string&);
 
    // Architecture
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
-
-   // Parameters
-
-   void set_input_biases(const Tensor<type, 1>&);
-   void set_forget_biases(const Tensor<type, 1>&);
-   void set_state_biases(const Tensor<type, 1>&);
-   void set_output_biases(const Tensor<type, 1>&);
-
-   void set_input_weights(const Tensor<type, 2>&);
-   void set_forget_weights(const Tensor<type, 2>&);
-   void set_state_weights(const Tensor<type, 2>&);
-   void set_output_weights(const Tensor<type, 2>&);
-
-   void set_input_recurrent_weights(const Tensor<type, 2>&);
-   void set_forget_recurrent_weights(const Tensor<type, 2>&);
-   void set_state_recurrent_weights(const Tensor<type, 2>&);
-   void set_output_recurrent_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
 
@@ -160,47 +120,46 @@ public:
    void calculate_recurrent_activations(Tensor<type, 1>&,
                                         Tensor<type, 1>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                          LayerForwardPropagation*,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Back propagation
 
-   void insert_gradient(LayerBackPropagation*,
+   void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index& ,
                         Tensor<type, 1>&) const final;
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                       const Tensor<pair<type*, dimensions>, 1>&,
-                       LayerForwardPropagation*,
-                       LayerBackPropagation*) const final;
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                       const vector<pair<type*, dimensions>>&,
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
-   void calculate_forget_parameters_derivatives(const Tensor<type, 2>&,
-                                                const Tensor<type, 2>&,
-                                                LongShortTermMemoryLayerForwardPropagation*,
-                                                LongShortTermMemoryLayerBackPropagation*) const;
-
-   void calculate_input_parameters_derivatives(const Tensor<type, 2>&,
+   void calculate_forget_parameter_derivatives(const Tensor<type, 2>&,
                                                const Tensor<type, 2>&,
-                                               LongShortTermMemoryLayerForwardPropagation*,
-                                               LongShortTermMemoryLayerBackPropagation*) const;
+                                               unique_ptr<LongShortTermMemoryLayerForwardPropagation>&,
+                                               unique_ptr<LongShortTermMemoryLayerBackPropagation>&) const;
 
-   void calculate_state_parameters_derivatives(const Tensor<type, 2>&,
+   void calculate_input_parameter_derivatives(const Tensor<type, 2>&,
+                                              const Tensor<type, 2>&,
+                                              unique_ptr<LongShortTermMemoryLayerForwardPropagation>&,
+                                              unique_ptr<LongShortTermMemoryLayerBackPropagation>&) const;
+
+   void calculate_state_parameter_derivatives(const Tensor<type, 2>&,
+                                              const Tensor<type, 2>&,
+                                              unique_ptr<LongShortTermMemoryLayerForwardPropagation>&,
+                                              unique_ptr<LongShortTermMemoryLayerBackPropagation>&) const;
+
+   void calculate_output_parameter_derivatives(const Tensor<type, 2>&,
                                                const Tensor<type, 2>&,
-                                               LongShortTermMemoryLayerForwardPropagation*,
-                                               LongShortTermMemoryLayerBackPropagation*) const;
-
-   void calculate_output_parameters_derivatives(const Tensor<type, 2>&,
-                                                const Tensor<type, 2>&,
-                                                LongShortTermMemoryLayerForwardPropagation*,
-                                                LongShortTermMemoryLayerBackPropagation*) const;
+                                               unique_ptr<LongShortTermMemoryLayerForwardPropagation>&,
+                                               unique_ptr<LongShortTermMemoryLayerBackPropagation>&) const;
 
    // Expression
 
    string write_recurrent_activation_function_expression() const;
 
    string write_activation_function_expression() const;
-
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
@@ -264,14 +223,12 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
-        cout << "Current inputs: " << endl;
-        cout << current_inputs << endl;
-
-        cout << "Current input activations: " << endl;
-        cout << current_input_activations << endl;
-
-        cout << "Current input activations derivatives: " << endl;
-        cout << current_input_activations_derivatives << endl;
+        cout << "Current inputs: " << endl
+             << current_inputs << endl
+             << "Current input activations: " << endl
+             << current_input_activations << endl
+             << "Current input activations derivatives: " << endl
+             << current_input_activations_derivatives << endl;
      }
 
 
@@ -317,17 +274,13 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     {
     }
 
-    virtual ~LongShortTermMemoryLayerBackPropagation()
-    {
-    }
-
-
     explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
 
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
@@ -381,11 +334,9 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> input_derivatives;
 };
 
-
 }
 
 #endif
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

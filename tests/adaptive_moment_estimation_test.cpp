@@ -24,16 +24,9 @@ AdaptiveMomentEstimationTest::AdaptiveMomentEstimationTest() : UnitTesting()
 }
 
 
-AdaptiveMomentEstimationTest::~AdaptiveMomentEstimationTest()
-{
-}
-
-
 void AdaptiveMomentEstimationTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     AdaptiveMomentEstimation adaptive_moment_estimation_1;
     assert_true(!adaptive_moment_estimation_1.has_loss_index(), LOG);
@@ -42,16 +35,6 @@ void AdaptiveMomentEstimationTest::test_constructor()
 
     AdaptiveMomentEstimation adaptive_moment_estimation_2(&mean_squared_error);
     assert_true(adaptive_moment_estimation_2.has_loss_index(), LOG);
-}
-
-
-void AdaptiveMomentEstimationTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    AdaptiveMomentEstimation* adaptive_moment_estimation = new AdaptiveMomentEstimation;
-
-    delete adaptive_moment_estimation;
 }
 
 
@@ -162,18 +145,26 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         Index depth = 4;
         Index perceptron_depth = 6;
         Index heads_number = 4;
-        Index number_of_layers = 1;
-
-        bool is_training = true;
+        Index layers_number = 1;
 
         LanguageDataSet language_data_set;
 
-        language_data_set.set_data_random_language_model(batch_samples_number, input_length, context_length, input_dimensions, context_dimension);
+        language_data_set.set_data_random_language_model(batch_samples_number,
+                                                         input_length,
+                                                         context_length,
+                                                         input_dimensions,
+                                                         context_dimension);
 
         language_data_set.set_training();
 
-        Transformer transformer({ input_length, context_length, input_dimensions, context_dimension,
-                          depth, perceptron_depth, heads_number, number_of_layers });
+        Transformer transformer({input_length,
+                                 context_length,
+                                 input_dimensions,
+                                 context_dimension,
+                                 depth,
+                                 perceptron_depth,
+                                 heads_number,
+                                 layers_number});
 
         type training_loss_goal = type(0.05);
 
@@ -201,10 +192,7 @@ void AdaptiveMomentEstimationTest::run_test_case()
 {
     cout << "Running Adaptive Moment Estimation (ADAM) test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Training
 

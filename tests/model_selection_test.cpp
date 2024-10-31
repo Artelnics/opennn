@@ -21,11 +21,6 @@ ModelSelectionTest::ModelSelectionTest() : UnitTesting()
 }
 
 
-ModelSelectionTest::~ModelSelectionTest() 
-{
-}
-
-
 void ModelSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -36,16 +31,6 @@ void ModelSelectionTest::test_constructor()
     ModelSelection model_selection_2;
 
     assert_true(!model_selection_2.has_training_strategy(), LOG);
-}
-
-
-void ModelSelectionTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    ModelSelection* model_selection = new ModelSelection;
-
-    delete model_selection;
 }
 
 
@@ -75,14 +60,6 @@ void ModelSelectionTest::test_perform_neurons_selection()
     assert_true(model_selection.get_neurons_selection_method() == ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS, LOG);
     assert_true(results.optimum_selection_error != 0.0, LOG);
     assert_true(results.optimal_neurons_number >= 1 , LOG);
-}
-
-
-void ModelSelectionTest::test_to_XML()
-{
-    cout << "test_to_XML\n";
-
-    model_selection.save("../data/model_selection.xml");
 }
 
 
@@ -118,10 +95,7 @@ void ModelSelectionTest::run_test_case()
 {
     cout << "Running model selection test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Model selection
 

@@ -17,11 +17,6 @@ GrowingNeuronsTest::GrowingNeuronsTest() : UnitTesting()
 }
 
 
-GrowingNeuronsTest::~GrowingNeuronsTest()
-{
-}
-
-
 void GrowingNeuronsTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -33,16 +28,6 @@ void GrowingNeuronsTest::test_constructor()
     GrowingNeurons growing_neurons_2;
 
     assert_true(!growing_neurons_2.has_training_strategy(), LOG);
-}
-
-
-void GrowingNeuronsTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    GrowingNeurons* growing_neurons = new GrowingNeurons;
-
-    delete growing_neurons;
 }
 
 
@@ -162,10 +147,7 @@ void GrowingNeuronsTest::run_test_case()
 {
     cout << "Running growing neurons test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Order selection
 

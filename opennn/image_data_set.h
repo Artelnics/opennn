@@ -9,11 +9,8 @@
 #ifndef IMAGEDATASET_H
 #define IMAGEDATASET_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
+#include <chrono>
 
 #include "config.h"
 #include "data_set.h"
@@ -35,20 +32,8 @@
 // namespace fs = ghc::filesystem;
 // #endif
 
-#ifdef _WIN32
-    // Windows-specific includes
-    #include <filesystem>
-    namespace fs = std::filesystem;
-#else
-    // AlmaLinux-specific includes
-    #include "filesystem.h"  // Assuming `ghc::filesystem` is a separate header
-    namespace fs = ghc::filesystem;
-#endif
-
-// #include "filesystem.h"
-// namespace fs = ghc::filesystem;
-
-//using namespace fs;
+#include <filesystem>
+namespace fs = std::filesystem;
 
 namespace opennn
 {
@@ -84,6 +69,7 @@ public:
 
     void set_image_data_random();
 
+    void set_input_dimensions(const dimensions&);
     void set_channels_number(const int&);
     void set_image_width(const int&);
     void set_image_height(const int&);

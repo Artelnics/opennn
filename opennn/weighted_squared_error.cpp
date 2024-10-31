@@ -88,7 +88,7 @@ void WeightedSquaredError::set_weights()
         positives_weight = type(1);
         negatives_weight = type(1);
     }
-    else if(data_set != nullptr
+    else if(data_set
          && data_set->get_target_raw_variables().size() == 1
          && data_set->get_target_raw_variables()(0).type == DataSet::RawVariableType::Binary)
     {
@@ -117,7 +117,7 @@ void WeightedSquaredError::set_normalization_coefficient()
     {
         normalization_coefficient = type(1);
     }
-    else if(data_set != nullptr
+    else if(data_set
          && data_set->get_target_raw_variables().size() == 1
          && data_set->get_target_raw_variables()(0).type == DataSet::RawVariableType::Binary)
     {
@@ -152,45 +152,32 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const Index total_samples_number = data_set->get_samples_number();
 
-    // Neural network
-
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
     // Batch
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
-
-    const pair<type*, dimensions> outputs_pair = probabilistic_layer_forward_propagation->get_outputs_pair();
-
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
     Tensor<type, 2>& errors = back_propagation.errors;
 
-    type& error = back_propagation.error;
+    Tensor<type, 0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = (outputs - targets).square();
-    
-    Tensor<type, 0> weighted_squared_error;
-
-    weighted_squared_error.device(*thread_pool_device)
-        = ((targets == type(0)).select(negatives_weight*errors, positives_weight*errors)).sum();
 
     const type coefficient = type(total_samples_number) / (type(batch_samples_number) * normalization_coefficient);
 
-    error = weighted_squared_error(0)*coefficient;
+    error.device(*thread_pool_device)
+        = ((targets == type(0)).select(negatives_weight*errors, positives_weight*errors)).sum()*coefficient;
 }
 
 
@@ -213,15 +200,11 @@ void WeightedSquaredError::calculate_error_lm(const Batch& batch,
 
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    type& error = back_propagation.error;
-
-    Tensor<type, 0> weighted_squared_error;
+    Tensor<type, 0>& error = back_propagation.error;
 
     const type coefficient = type(total_samples_number) / (type(batch_samples_number) * normalization_coefficient);
 
-    weighted_squared_error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
-
-    error = weighted_squared_error();
+    error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
 }
 
 
@@ -237,17 +220,13 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     const Index batch_samples_number = batch.targets_dimensions[0];
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
-
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
-
     // Back propagation
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 
-    const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
+    const pair<type*, dimensions> delta_pairs = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
     const type coefficient = type(2*total_samples_number)/(type(batch_samples_number)*normalization_coefficient);
 
@@ -255,11 +234,11 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 }
 
 
-// @todo Add gradient and hessian weighted squared error code (insted of normalized squared error)
-
 void WeightedSquaredError::calculate_error_gradient_lm(const Batch& batch,
                                                        BackPropagationLM& back_propagation_lm) const
 {
+    // @todo Add gradient and hessian weighted squared error code (insted of normalized squared error)
+
     // Data set
 
     const Index total_samples_number = data_set->get_samples_number();
@@ -277,8 +256,7 @@ void WeightedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     const type coefficient = type(2*total_samples_number) / type(batch_samples_number*normalization_coefficient);
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
-    
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;   
 }
 
 
@@ -369,34 +347,26 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
                                                        const ForwardPropagation& forward_propagation,
                                                        BackPropagationLM& back_propagation_lm) const
 {
-    // Neural network
-
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
     // Batch
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
-
-    const pair<type*, dimensions> outputs_pair = probabilistic_layer_forward_propagation->get_outputs_pair();
-
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
     // @todo
-
-    //squared_errors.device(*thread_pool_device) = 0;
+/*
+    squared_errors.device(*thread_pool_device) = 0;
+*/
 }
 
 }

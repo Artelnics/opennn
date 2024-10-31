@@ -1,12 +1,4 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C R O S S   E N T R O P Y   E R R O R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-#include "cross_entropy_error.h"
+#include "yolo_v2_error.h"
 #include "neural_network_forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
@@ -14,21 +6,21 @@
 namespace opennn
 {
 
-CrossEntropyError::CrossEntropyError() : LossIndex()
+YoloV2Error::YoloV2Error() : LossIndex()
 {
 }
 
 
-CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+YoloV2Error::YoloV2Error(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
 }
 
 
-void CrossEntropyError::calculate_error(const Batch& batch,
+void YoloV2Error::calculate_error(const Batch& batch,
                                         const ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation) const
-{      
+{
     const Index outputs_number = neural_network->get_outputs_number();
 
     (outputs_number == 1)
@@ -37,7 +29,7 @@ void CrossEntropyError::calculate_error(const Batch& batch,
 }
 
 
-void CrossEntropyError::calculate_binary_error(const Batch& batch,
+void YoloV2Error::calculate_binary_error(const Batch& batch,
                                                const ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
@@ -59,21 +51,21 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) 
+    error.device(*thread_pool_device)
         = ((targets * outputs.log() + (type(1) - targets) * ((type(1) - outputs).log())).sum()) / type(-batch_samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
-void CrossEntropyError::calculate_multiple_error(const Batch& batch,
+void YoloV2Error::calculate_multiple_error(const Batch& batch,
                                                  const ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
     // Batch
 
     const Index batch_samples_number = batch.get_batch_samples_number();
-    
+
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
@@ -81,10 +73,10 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-    
+
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
-    cout<<targets<<endl<<endl<<outputs<<endl;
+    // cout<<targets<<endl<<endl<<outputs<<endl;
 
     // Back propagation
 
@@ -97,25 +89,25 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1/*batch_samples_number*/);
+    error.device(*thread_pool_device) = (targets*outputs/*.log()*/).sum() / type(-1/*batch_samples_number*/);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
-void CrossEntropyError::calculate_output_delta(const Batch& batch,
+void YoloV2Error::calculate_output_delta(const Batch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
-     const Index outputs_number = neural_network->get_outputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
-     (outputs_number == 1)
-         ? calculate_binary_output_delta(batch, forward_propagation, back_propagation)
-         : calculate_multiple_output_delta(batch, forward_propagation, back_propagation);
+    (outputs_number == 1)
+        ? calculate_binary_output_delta(batch, forward_propagation, back_propagation)
+        : calculate_multiple_output_delta(batch, forward_propagation, back_propagation);
 }
 
 
-void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
+void YoloV2Error::calculate_binary_output_delta(const Batch& batch,
                                                       ForwardPropagation& forward_propagation,
                                                       BackPropagation& back_propagation) const
 {
@@ -145,11 +137,11 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device)
-            = (-targets/outputs + (type(1) - targets)/(type(1) - outputs))/type(batch_samples_number);
+        = (-targets/outputs + (type(1) - targets)/(type(1) - outputs))/type(batch_samples_number);
 }
 
 
-void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
+void YoloV2Error::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
@@ -173,34 +165,34 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 }
 
 
-string CrossEntropyError::get_loss_method() const
+string YoloV2Error::get_loss_method() const
 {
-    return "CROSS_ENTROPY_ERROR";
+    return "YOLO_V2_ERROR";
 }
 
 
-string CrossEntropyError::get_error_type_text() const
+string YoloV2Error::get_error_type_text() const
 {
-    return "Cross entropy error";
+    return "YOLOv2 error";
 }
 
 
-void CrossEntropyError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void YoloV2Error::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
-    file_stream.OpenElement("CrossEntropyError");
+    file_stream.OpenElement("YOLOv2Error");
 
     file_stream.CloseElement();
 }
 
 
-void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
+void YoloV2Error::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("CrossEntropyError");
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("YOLOv2Error");
 
     if(!root_element)
-        throw runtime_error("Cross entropy error element is nullptr.\n");
+        throw runtime_error("YOLOv2 error element is nullptr.\n");
 
     // Regularization
 

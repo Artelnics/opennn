@@ -18,11 +18,6 @@ PoolingLayerTest::PoolingLayerTest() : UnitTesting()
 }
 
 
-PoolingLayerTest::~PoolingLayerTest()
-{
-}
-
-
 void PoolingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -41,12 +36,6 @@ void PoolingLayerTest::test_constructor()
 
     assert_true(pooling_layer.get_pool_height() == 3 
                 && pooling_layer.get_pool_width() == 2, LOG);
-}
-
-
-void PoolingLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
 }
 
 
@@ -115,11 +104,7 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
 
     type* outputs_data = outputs_pair.first;
 
-    TensorMap<Tensor<type, 4>> outputs(outputs_data,
-                               outputs_pair.second[0],
-                               outputs_pair.second[1],
-                               outputs_pair.second[2],
-                               outputs_pair.second[3]);
+    TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
     assert_true(outputs(0, 0, 0, 0) == type(255)
                 && outputs(1, 0, 0, 0) == type(254), LOG);
@@ -277,11 +262,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
 
     type* outputs_data = outputs_pair.first;
 
-    TensorMap<Tensor<type, 4>> outputs(outputs_data,
-                                       outputs_pair.second[0],
-                                       outputs_pair.second[1],
-                                       outputs_pair.second[2],
-                                       outputs_pair.second[3]);
+    TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
     assert_true(round(outputs(0, 0, 0, 0)) == type(14)
                 && round(outputs(1, 0, 0, 0)) == type(19), LOG);
@@ -380,10 +361,7 @@ void PoolingLayerTest::run_test_case()
 {
    cout << "Running pooling layer test case...\n";
 
-   // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Outputs
 

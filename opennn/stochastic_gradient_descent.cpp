@@ -99,13 +99,6 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_learning_rate <= type(0))
-        throw runtime_error("initial_learning_rate must be greater than 0.\n");
-
-#endif
-
     initial_learning_rate = new_learning_rate;
 }
 
@@ -158,7 +151,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment;
     
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
-    
+
     if(momentum <= type(0))
     {
         parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
@@ -186,8 +179,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 
     optimization_data.iteration++;
-
-    // Update parameters
 
     neural_network->set_parameters(parameters);
 }
@@ -236,7 +227,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
@@ -249,8 +240,6 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
-    
-    const Tensor<pair<type*, dimensions>, 1> training_inputs = training_batch.get_inputs_pair();
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
@@ -265,7 +254,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_inputs_names(inputs_name);
+    neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer_2d())
@@ -347,7 +336,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Neural network
             
-            neural_network->forward_propagate(training_inputs,
+            neural_network->forward_propagate(training_batch,
                                               training_forward_propagation,
                                               is_training);
             
@@ -357,9 +346,9 @@ TrainingResults StochasticGradientDescent::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            results.training_error_history(epoch) = training_back_propagation.error;
+            results.training_error_history(epoch) = training_back_propagation.error();
 
-            training_error += training_back_propagation.error;
+            training_error += training_back_propagation.error();
             //training_loss += training_back_propagation.loss;
             
             // Gradient
@@ -394,17 +383,19 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Neural network
                 
-                neural_network->forward_propagate(selection_batch.get_inputs_pair(),
-                                                          selection_forward_propagation,
-                                                          is_training);
+                neural_network->forward_propagate(selection_batch,
+                                                  selection_forward_propagation,
+                                                  is_training);
 
                 results.selection_error_history(epoch) = selection_error;
 
                 // Loss
 
-                loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+                loss_index->calculate_error(selection_batch, 
+                                            selection_forward_propagation, 
+                                            selection_back_propagation);
 
-                selection_error += selection_back_propagation.error;
+                selection_error += selection_back_propagation.error();
             }
 
             selection_error /= type(selection_batches_number);
@@ -506,37 +497,23 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(7, 2);
 
-    // Initial learning rate
-
     labels_values(0,0) = "Inital learning rate";
     labels_values(0,1) = to_string(double(initial_learning_rate));
-
-    // Initial decay
 
     labels_values(1,0) = "Inital decay";
     labels_values(1,1) = to_string(double(initial_decay));
 
-    // Momentum
-
     labels_values(2,0) = "Apply momentum";    
     momentum > type(0) ? labels_values(2,1) = "true" : labels_values(2,1) = "false";
-
-    // Training loss goal
 
     labels_values(3,0) = "Training loss goal";
     labels_values(3,1) = to_string(double(training_loss_goal));
 
-    // Maximum epochs number
-
     labels_values(4,0) = "Maximum epochs number";
     labels_values(4,1) = to_string(maximum_epochs_number);
 
-    // Maximum time
-
     labels_values(5,0) = "Maximum time";
     labels_values(5,1) = write_time(maximum_time);
-
-    // Batch samples number
 
     labels_values(6,0) = "Batch samples number";
     labels_values(6,1) = to_string(batch_samples_number);

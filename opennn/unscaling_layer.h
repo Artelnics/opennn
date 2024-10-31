@@ -9,12 +9,12 @@
 #ifndef UNSCALINGLAYER_H
 #define UNSCALINGLAYER_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "layer.h"
@@ -34,9 +34,7 @@ public:
    explicit UnscalingLayer();
 
    explicit UnscalingLayer(const dimensions&);
-/*
-   explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
-*/
+   
    // Get  
 
    Index get_inputs_number() const final;
@@ -100,13 +98,17 @@ public:
 
    bool is_empty() const;
 
-   void check_range(const Tensor<type, 1>&) const;
-
    // Forward propagation
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
+                          const bool&) final;
 
    // Serialization
+
+   Tensor<string, 1> write_scalers_text() const;
+
+   void print() const;
 
    void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
@@ -132,13 +134,13 @@ protected:
 
 struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
+    
 
     explicit UnscalingLayerForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-    // Constructor
+    
 
     explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()

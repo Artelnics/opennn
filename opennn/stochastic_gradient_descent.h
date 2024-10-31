@@ -9,8 +9,6 @@
 #ifndef STOCHASTICGRADIENTDESCENT_H
 #define STOCHASTICGRADIENTDESCENT_H
 
-// System includes
-
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -21,10 +19,7 @@
 #include <cmath>
 #include <ctime>
 
-// OpenNN includes
-
 #include "config.h"
-
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 
@@ -142,8 +137,6 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
     {
         set(new_stochastic_gradient_descent);
     }
-
-    virtual ~StochasticGradientDescentData() {}
 
     void set(StochasticGradientDescent* new_stochastic_gradient_descent);
 

@@ -9,11 +9,11 @@
 #ifndef LEVENBERGMARQUARDTALGORITHM_H
 #define LEVENBERGMARQUARDTALGORITHM_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "optimization_algorithm.h"
@@ -139,8 +139,6 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
     {
         set(new_Levenberg_Marquardt_method);
     }
-
-    virtual ~LevenbergMarquardtAlgorithmData() {}
 
     void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method);
 

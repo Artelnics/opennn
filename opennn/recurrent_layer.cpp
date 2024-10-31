@@ -73,24 +73,6 @@ Index RecurrentLayer::get_timesteps() const
 }
 
 
-Tensor<type, 1> RecurrentLayer::get_biases() const
-{
-    return biases;
-}
-
-
-const Tensor<type, 2>& RecurrentLayer::get_input_weights() const
-{
-    return input_weights;
-}
-
-
-const Tensor<type, 2>& RecurrentLayer::get_recurrent_weights() const
-{
-    return recurrent_weights;
-}
-
-
 Index RecurrentLayer::get_biases_number() const
 {
     return biases.size();
@@ -140,54 +122,6 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
 const RecurrentLayer::ActivationFunction& RecurrentLayer::get_activation_function() const
 {
     return activation_function;
-}
-
-
-Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) const
-{
-    const Index biases_number = get_biases_number();
-    const Index input_weights_number = get_input_weights_number();
-
-    Tensor<type, 1> new_biases(biases_number);
-
-    new_biases = parameters.slice(Eigen::array<Index, 1>({input_weights_number}), Eigen::array<Index, 1>({biases_number}));
-
-    Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
-
-    return new_biases.reshape(two_dim);
-}
-
-
-Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& parameters) const
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-    const Index input_weights_number = get_input_weights_number();
-
-    const Tensor<type, 1> new_inputs_weights
-            = parameters.slice(Eigen::array<Index, 1>({0}), Eigen::array<Index, 1>({input_weights_number}));
-
-    const Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
-
-    return new_inputs_weights.reshape(two_dim);
-}
-
-
-Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& parameters) const
-{
-    const Index neurons_number = get_neurons_number();
-    const Index recurrent_weights_number = recurrent_weights.size();
-
-    const Index parameters_size = parameters.size();
-
-    const Index start_recurrent_weights_number = (parameters_size - recurrent_weights_number);
-
-    const Tensor<type, 1> new_synaptic_weights
-            = parameters.slice(Eigen::array<Index, 1>({start_recurrent_weights_number}), Eigen::array<Index, 1>({recurrent_weights_number}));
-
-    const Eigen::array<Index, 2> two_dim{{neurons_number, neurons_number}};
-
-    return new_synaptic_weights.reshape(two_dim);
 }
 
 
@@ -307,24 +241,6 @@ void RecurrentLayer::set_timesteps(const Index& new_timesteps)
 }
 
 
-void RecurrentLayer::set_biases(const Tensor<type, 1>& new_biases)
-{
-    biases = new_biases;
-}
-
-
-void RecurrentLayer::set_input_weights(const Tensor<type, 2>& new_input_weights)
-{
-    input_weights = new_input_weights;
-}
-
-
-void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_weights)
-{
-    recurrent_weights = new_recurrent_weights;
-}
-
-
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index biases_number = get_biases_number();
@@ -354,45 +270,25 @@ void RecurrentLayer::set_activation_function(const RecurrentLayer::ActivationFun
 void RecurrentLayer::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
-    {
         activation_function = ActivationFunction::Logistic;
-    }
     else if(new_activation_function_name == "HyperbolicTangent")
-    {
         activation_function = ActivationFunction::HyperbolicTangent;
-    }
     else if(new_activation_function_name == "Linear")
-    {
         activation_function = ActivationFunction::Linear;
-    }
     else if(new_activation_function_name == "RectifiedLinear")
-    {
         activation_function = ActivationFunction::RectifiedLinear;
-    }
     else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
         activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
     else if(new_activation_function_name == "SoftPlus")
-    {
         activation_function = ActivationFunction::SoftPlus;
-    }
     else if(new_activation_function_name == "SoftSign")
-    {
         activation_function = ActivationFunction::SoftSign;
-    }
     else if(new_activation_function_name == "HardSigmoid")
-    {
         activation_function = ActivationFunction::HardSigmoid;
-    }
     else if(new_activation_function_name == "ExponentialLinear")
-    {
         activation_function = ActivationFunction::ExponentialLinear;
-    }
     else
-    {
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-    }
 }
 
 
@@ -466,21 +362,17 @@ void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                       LayerForwardPropagation* forward_propagation,
+void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    const Index batch_size = inputs_pair(0).second[0];
-    const Index time_steps = inputs_pair(0).second[1];
-    const Index inputs_number = inputs_pair(0).second[2];
+    const Index batch_size = input_pairs[0].second[0];
+    const Index time_steps = input_pairs[0].second[1];
 
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
-        = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
+    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
+        static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
 
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, 
-                                            batch_size,
-                                            time_steps,
-                                            inputs_number);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -515,27 +407,24 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                    const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
-                                    LayerForwardPropagation* forward_propagation,
-                                    LayerBackPropagation* back_propagation) const
+void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                    const vector<pair<type*, dimensions>>& delta_pairs,
+                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index samples_number = inputs_pair(0).second[0];
+    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
-            static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
+            static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
 
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
-            static_cast<RecurrentLayerBackPropagation*>(back_propagation);
+            static_cast<RecurrentLayerBackPropagation*>(back_propagation.get());
 
     // Forward propagation
 
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, 
-                                            samples_number,
-                                            time_steps,
-                                            inputs_number);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -545,10 +434,7 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 
     // Back propagation
 
-    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first, 
-                                            samples_number, 
-                                            time_steps,
-                                            neurons_number);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     const bool& is_first_layer = recurrent_layer_back_propagation->is_first_layer;
 
@@ -580,11 +466,7 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
     const Eigen::array<IndexPair<Index>, 1> combinations_weights_indices = { IndexPair<Index>(2, 0) };
 
     for (Index time_step = 0; time_step < time_steps; time_step++)
-    {
         current_inputs = inputs.chip(time_step, 1);
-
-    }
-
 /*
     for(Index sample_index = 0; sample_index < samples_number; sample_index++)
     {
@@ -672,7 +554,7 @@ void RecurrentLayer::back_propagate(const Tensor<pair<type*, dimensions>, 1>& in
 }
 
 
-void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
+void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                      const Index& index,
                                      Tensor<type, 1>& gradient) const
 {
@@ -682,7 +564,7 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
     type* gradient_data = gradient.data();
 
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
-        static_cast<RecurrentLayerBackPropagation*>(back_propagation);
+        static_cast<RecurrentLayerBackPropagation*>(back_propagation.get());
 
     #pragma omp parallel sections
     {
@@ -704,7 +586,7 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
-string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_name,
+string RecurrentLayer::write_expression(const Tensor<string, 1>& input_names,
                                         const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
@@ -715,12 +597,10 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_name,
 
         buffer << output_names(j) << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
 
-        for(Index i = 0; i < inputs_name.size() - 1; i++)
-        {
-           buffer << " (" << inputs_name[i] << "*" << synaptic_weights_column(i) << ") +";
-        }
+        for(Index i = 0; i < input_names.size() - 1; i++)
+           buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
 
-        buffer << " (" << inputs_name[inputs_name.size() - 1] << "*" << synaptic_weights_column[inputs_name.size() - 1] << "));\n";
+        buffer << " (" << input_names[input_names.size() - 1] << "*" << synaptic_weights_column[input_names.size() - 1] << "));\n";
     }
 
     return buffer.str();
@@ -836,7 +716,7 @@ pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { {batch_samples_number, neurons_number} });
+    return {outputs_data, {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -888,10 +768,14 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
     const Index time_steps = 0;
 
     input_derivatives.resize(batch_samples_number, time_steps, inputs_number);
+}
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number };
+
+vector<pair<type*, dimensions>> RecurrentLayerBackPropagation::get_input_derivative_pairs() const
+{
+    const Index inputs_number = layer->get_inputs_number();
+
+    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}}};
 }
 
 }

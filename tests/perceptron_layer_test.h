@@ -24,13 +24,7 @@ public:
 
     explicit PerceptronLayerTest();
 
-    virtual ~PerceptronLayerTest();
-
-    // Constructor and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Combination
 

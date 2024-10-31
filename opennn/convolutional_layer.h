@@ -9,11 +9,7 @@
 #ifndef CONVOLUTIONALLAYER_H
 #define CONVOLUTIONALLAYER_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
 
 #include "tinyxml2.h"
 #include "layer.h"
@@ -25,8 +21,8 @@
 namespace opennn
 {
 
-struct ConvolutionalLayerForwardPropagation;
-struct ConvolutionalLayerBackPropagation;
+//struct ConvolutionalLayerForwardPropagation;
+//struct ConvolutionalLayerBackPropagation;
 
 #ifdef OPENNN_CUDA
 struct ConvolutionalLayerForwardPropagationCuda;
@@ -55,17 +51,17 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const dimensions&, const dimensions& = {1, 1, 1, 1});
+    explicit ConvolutionalLayer(const dimensions&,                                // Input dimensions {height,width,channels}
+                                const dimensions& = {1, 1, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
+                                const ActivationFunction& = ActivationFunction::Linear,
+                                const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
+                                const ConvolutionType& = ConvolutionType::Valid); // Convolution type (Valid || Same)                   
 
     // Destructor
 
     // Get
 
     bool is_empty() const;
-
-    const Tensor<type, 1>& get_biases() const;
-
-    const Tensor<type, 4>& get_synaptic_weights() const;
 
     bool get_batch_normalization() const;
 
@@ -116,16 +112,10 @@ public:
 
     // Set
 
-    void set(const dimensions&, const dimensions&);
-
-    void set_name(const string&);
+    void set(const dimensions&, const dimensions&, const ActivationFunction&, const dimensions&, const ConvolutionType&);
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
-
-    void set_biases(const Tensor<type, 1>&);
-
-    void set_synaptic_weights(const Tensor<type, 4>&);
 
     void set_batch_normalization(const bool&);
 
@@ -138,7 +128,7 @@ public:
 
     void set_column_stride(const Index&);
 
-    void set_inputs_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
 
     // Initialization
 
@@ -158,24 +148,24 @@ public:
     void calculate_convolutions(const Tensor<type, 4>&,
                                 Tensor<type, 4>&) const;
 
-    void normalize(LayerForwardPropagation*, const bool&);
+    void normalize(unique_ptr<LayerForwardPropagation>, const bool&);
 
-    void shift(LayerForwardPropagation*);
+    void shift(unique_ptr<LayerForwardPropagation>);
 
     void calculate_activations(Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                           LayerForwardPropagation*,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
    // Back propagation
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                       const vector<pair<type*, dimensions>>&,
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
-   void insert_gradient(LayerBackPropagation*,
+   void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index&,
                         Tensor<type, 1>&) const final;
 
@@ -226,11 +216,8 @@ protected:
 
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
-   // Default constructor
-
+   
    explicit ConvolutionalLayerForwardPropagation();
-
-   // Constructor
 
    explicit ConvolutionalLayerForwardPropagation(const Index&, Layer*);
       
@@ -257,13 +244,13 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
 
-   virtual ~ConvolutionalLayerBackPropagation();
+   vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
    void set(const Index&, Layer*) final;
 
    void print() const;
 
-   Tensor<type, 3> image_convolutions_derivatives;
+   //Tensor<type, 3> image_convolutions_derivatives;
 
    Tensor<type, 4> kernel_synaptic_weights_derivatives;
    Tensor<type, 4> convolutions_derivatives;

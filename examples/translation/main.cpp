@@ -8,7 +8,7 @@
 
 // This is a classical pattern recognition problem.
 
-// System includes
+
 
 #include <iostream>
 #include <fstream>
@@ -17,7 +17,7 @@
 #include <cstring>
 #include <time.h>
 
-// OpenNN includes
+
 
 #include "../../opennn/opennn.h"
 

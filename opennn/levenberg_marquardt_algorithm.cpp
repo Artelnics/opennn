@@ -109,56 +109,24 @@ void LevenbergMarquardtAlgorithm::set_default()
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const type& new_damping_parameter)
 {
-    if(new_damping_parameter <= minimum_damping_parameter)
-    {
-        damping_parameter = minimum_damping_parameter;
-    }
-    else if(new_damping_parameter >= maximum_damping_parameter)
-    {
-        damping_parameter = maximum_damping_parameter;
-    }
-    else
-    {
-        damping_parameter = new_damping_parameter;
-    }
+    damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
 }
 
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_damping_parameter_factor)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_damping_parameter_factor <= type(0))
-        throw runtime_error("Damping parameter factor must be greater than zero.");
-
-#endif
-
     damping_parameter_factor = new_damping_parameter_factor;
 }
 
 
 void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_minimum_damping_parameter)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_damping_parameter <= type(0))
-        throw runtime_error("Minimum damping parameter must be greater than zero.");
-
-#endif
-
     minimum_damping_parameter = new_minimum_damping_parameter;
 }
 
 
 void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_maximum_damping_parameter)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_damping_parameter <= type(0))
-        throw runtime_error("Maximum damping parameter must be greater than zero.");
-
-#endif
-
     maximum_damping_parameter = new_maximum_damping_parameter;
 }
 
@@ -241,7 +209,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
@@ -254,7 +222,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     
-    neural_network->set_inputs_names(inputs_name);
+    neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer_2d())
@@ -277,12 +245,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    const Tensor<pair<type*, dimensions>, 1> training_inputs_pair = training_batch.get_inputs_pair();
-
     Batch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
-
-    const Tensor<pair<type*, dimensions>, 1> selection_inputs_pair = selection_batch.get_inputs_pair();
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
@@ -321,7 +285,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_inputs_pair,
+        neural_network->forward_propagate(training_batch,
                                           training_forward_propagation,
                                           is_training);
         
@@ -331,11 +295,11 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                       training_forward_propagation,
                                       training_back_propagation_lm);
         
-        results.training_error_history(epoch) = training_back_propagation_lm.error;
+        results.training_error_history(epoch) = training_back_propagation_lm.error();
         
         if(has_selection)
         {           
-            neural_network->forward_propagate(selection_inputs_pair,
+            neural_network->forward_propagate(selection_batch,
                                               selection_forward_propagation,
                                               is_training);
 
@@ -351,7 +315,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                            selection_forward_propagation,
                                            selection_back_propagation_lm);
 
-            results.selection_error_history(epoch) = selection_back_propagation_lm.error;
+            results.selection_error_history(epoch) = selection_back_propagation_lm.error();
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) 
                 selection_failures++;
@@ -422,15 +386,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         if(stop_training)
         {
             results.loss = training_back_propagation_lm.loss;
-
             results.loss_decrease = loss_decrease;
-
             results.selection_failures = selection_failures;
-
             results.resize_training_error_history(epoch+1);
-
             results.resize_selection_error_history(has_selection ? epoch + 1 : 0);
-
             results.elapsed_time = write_time(elapsed_time);
 
             break;
@@ -462,16 +421,13 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
-    
-    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
-
     const type regularization_weight = loss_index->get_regularization_weight();
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     
     Tensor<type, 1>& parameters = back_propagation_lm.parameters;
     
-    type& error = back_propagation_lm.error;
+    type& error = back_propagation_lm.error();
     type& loss = back_propagation_lm.loss;
 
     const Tensor<type, 1>& gradient = back_propagation_lm.gradient;
@@ -492,7 +448,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
         
-        neural_network->forward_propagate(inputs_pair,
+        neural_network->forward_propagate(batch,
                                           potential_parameters,
                                           forward_propagation);
 
@@ -536,25 +492,20 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     if(!success)
     {
+        const type epsilon = numeric_limits<type>::epsilon();
+
         #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
                 parameters_increment(i) = type(0);
             }
-            else if(gradient(i) > type(0))
+            else
             {
-                parameters(i) -= numeric_limits<type>::epsilon();
-
-                parameters_increment(i) = -numeric_limits<type>::epsilon();
-            }
-            else if(gradient(i) < type(0))
-            {
-                parameters(i) += numeric_limits<type>::epsilon();
-
-                parameters_increment(i) = numeric_limits<type>::epsilon();
+                parameters_increment(i) = (gradient(i) > type(0)) ? -epsilon : epsilon;
+                parameters(i) += parameters_increment(i);
             }
         }
     }
@@ -575,32 +526,20 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(7, 2);
 
-    // Damping parameter factor
-
     labels_values(0,0) = "Damping parameter factor";
     labels_values(0,1) = to_string(double(damping_parameter_factor));
-
-    // Minimum loss decrease
 
     labels_values(2,0) = "Minimum loss decrease";
     labels_values(2,1) = to_string(double(minimum_loss_decrease));
 
-    // Loss goal
-
     labels_values(3,0) = "Loss goal";
     labels_values(3,1) = to_string(double(training_loss_goal));
-
-    // Maximum selection failures
 
     labels_values(4,0) = "Maximum selection error increases";
     labels_values(4,1) = to_string(maximum_selection_failures);
 
-    // Maximum epochs number
-
     labels_values(5,0) = "Maximum epochs number";
     labels_values(5,1) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels_values(6,0) = "Maximum time";
     labels_values(6,1) = write_time(maximum_time);

@@ -37,13 +37,17 @@ class PoolingLayer : public Layer
 
 public:
 
-    enum class PoolingMethod{NoPooling, MaxPooling, AveragePooling};
+    enum class PoolingMethod{MaxPooling, AveragePooling};
 
     // Constructors
 
     explicit PoolingLayer();
 
-    explicit PoolingLayer(const dimensions&, const dimensions& = {1, 1});
+    explicit PoolingLayer(const dimensions&,            // Input dimensions {height,width,channels}
+                          const dimensions& = { 1, 1 }, // Pool dimensions {pool_height,pool_width}
+                          const dimensions& = { 1, 1 }, // Stride dimensions {row_stride, column_stride}
+                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_heigth, padding_width}
+                          const PoolingMethod& = PoolingMethod::AveragePooling);
 
     // Get
 
@@ -77,11 +81,9 @@ public:
 
     // Set
 
-    void set(const dimensions&, const dimensions&);
+    void set(const dimensions&, const dimensions&, const dimensions&, const dimensions&, const PoolingMethod&);
 
-    void set_name(const string&);
-
-    void set_inputs_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
 
     void set_padding_heigth(const Index&);
     void set_padding_width(const Index&);
@@ -100,37 +102,33 @@ public:
 
     // First order activations
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                           LayerForwardPropagation*,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
-    void forward_propagate_no_pooling(const Tensor<type, 4>&,
-                                      LayerForwardPropagation*,
-                                      const bool&);
-
     void forward_propagate_max_pooling(const Tensor<type, 4>&,
-                                       LayerForwardPropagation*,
+                                       unique_ptr<LayerForwardPropagation>&,
                                        const bool&) const;
 
     void forward_propagate_average_pooling(const Tensor<type, 4>&,
-                                           LayerForwardPropagation*,
+                                           unique_ptr<LayerForwardPropagation>&,
                                            const bool&) const;
 
     // Back-propagation
 
-    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                        const Tensor<pair<type*, dimensions>, 1>&,
-                        LayerForwardPropagation*,
-                        LayerBackPropagation*) const final;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
     void back_propagate_max_pooling(const Tensor<type, 4>&,
                                     const Tensor<type, 4>&,
-                                    LayerForwardPropagation*,
-                                    LayerBackPropagation*) const;
+                                    unique_ptr<LayerForwardPropagation>&,
+                                    unique_ptr<LayerBackPropagation>&) const;
 
     void back_propagate_average_pooling(const Tensor<type, 4>&,
                                         const Tensor<type, 4>&,
-                                        LayerBackPropagation*) const;
+                                        unique_ptr<LayerBackPropagation>&) const;
 
     // Serialization
 
@@ -161,20 +159,17 @@ protected:
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
-    const Eigen::array<ptrdiff_t, 4> average_pooling_dimensions = {0, 1, 2, 3}; // For average pooling
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
-
-
 };
 
 
 struct PoolingLayerForwardPropagation : LayerForwardPropagation
 {
-    // Default constructor
+    
 
     explicit PoolingLayerForwardPropagation();
 
-    // Constructor
+    
 
     explicit PoolingLayerForwardPropagation(const Index&, Layer*);
     
@@ -184,7 +179,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     void print() const;
 
-    Tensor<type, 4> pool;
+    Eigen::array<int, 2> reduction_dimensions = { 1, 2 };
 
     Tensor<type, 4> outputs;
 
@@ -196,16 +191,17 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
 struct PoolingLayerBackPropagation : LayerBackPropagation
 {
-
     explicit PoolingLayerBackPropagation();
 
     explicit PoolingLayerBackPropagation(const Index&, Layer*);
 
-    virtual ~PoolingLayerBackPropagation();
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index&, Layer*) final;
 
     void print() const;
+
+    Tensor<type, 4> gradient_tensor;
 
     Tensor<type, 4> input_derivatives;
 

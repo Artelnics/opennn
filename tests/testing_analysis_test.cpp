@@ -18,11 +18,6 @@ TestingAnalysisTest::TestingAnalysisTest() : UnitTesting()
 }
 
 
-TestingAnalysisTest::~TestingAnalysisTest()
-{
-}
-
-
 void TestingAnalysisTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -31,18 +26,9 @@ void TestingAnalysisTest::test_constructor()
 
     TestingAnalysis testing_analysis(&neural_network,&data_set);
 
-    assert_true(testing_analysis.get_neural_network() != nullptr, LOG);
+    assert_true(testing_analysis.get_neural_network(), LOG);
 
-    assert_true(testing_analysis.get_data_set() != nullptr, LOG);
-}
-
-
-void TestingAnalysisTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    TestingAnalysis* testing_analysis = new TestingAnalysis;
-    delete testing_analysis;
+    assert_true(testing_analysis.get_data_set(), LOG);
 }
 
 
@@ -1137,10 +1123,7 @@ void TestingAnalysisTest::run_test_case()
 {
     cout << "Running testing analysis test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Error data
 

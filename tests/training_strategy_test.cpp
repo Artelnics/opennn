@@ -17,11 +17,6 @@ TrainingStrategyTest::TrainingStrategyTest() : UnitTesting()
 }
 
 
-TrainingStrategyTest::~TrainingStrategyTest()
-{
-}
-
-
 void TrainingStrategyTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -30,18 +25,8 @@ void TrainingStrategyTest::test_constructor()
 
     TrainingStrategy training_strategy_1(&neural_network, &data_set);
 
-    assert_true(training_strategy.get_neural_network() != nullptr, LOG);
-    assert_true(training_strategy.get_data_set() != nullptr, LOG);
-}
-
-
-void TrainingStrategyTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    TrainingStrategy* training_strategy = new TrainingStrategy(&neural_network, &data_set);
-
-    delete training_strategy;
+    assert_true(training_strategy.get_neural_network(), LOG);
+    assert_true(training_strategy.get_data_set(), LOG);
 }
 
 
@@ -56,7 +41,7 @@ void TrainingStrategyTest::test_perform_training()
     Index neurons_number;
 
     Tensor<type, 2> data;
-/*
+
     // Test
 
     samples_number = 5;
@@ -85,7 +70,7 @@ void TrainingStrategyTest::test_perform_training()
     training_strategy.set_display(false);
 
     training_strategy.perform_training();
-*/
+
 }
 
 
@@ -93,20 +78,21 @@ void TrainingStrategyTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
-    FILE *pFile;
-
     string file_name = "../data/training_strategy.xml";
 
-    pFile = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(pFile)
+    if (!file.is_open())
     {
-        tinyxml2::XMLPrinter document(pFile);
-
-        training_strategy.to_XML(document);
-
-        fclose(pFile);
+        cerr << "Error: Could not open file " << file_name << "\n";
+        return;
     }
+
+    tinyxml2::XMLPrinter document;
+
+    training_strategy.to_XML(document);
+
+    file << document.CStr();
 }
 
 
@@ -158,10 +144,7 @@ void TrainingStrategyTest::run_test_case()
 {
     cout << "Running training strategy test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Training
 

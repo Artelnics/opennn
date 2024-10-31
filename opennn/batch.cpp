@@ -20,61 +20,71 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
                  const Tensor<Index, 1>& context_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
-    
-    fill_tensor_data(data, samples_indices, inputs_indices, input_data);
 
-    if(has_context)
+    ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
+
+    if (image_data_set && image_data_set->get_augmentation())
+    {
+
+        ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
+/*
+        // @TODO
+        Tensor<type, 2>& augmented_data = perform_augmentation(data);
+
+        fill_tensor_data(augmented_data, samples_indices, inputs_indices, input_data);
+*/
+    }
+    else
+    {
+        fill_tensor_data(data, samples_indices, inputs_indices, input_data);
+    }
+
+    if (has_context)
         fill_tensor_data(data, samples_indices, context_indices, context_data);
 
     fill_tensor_data(data, samples_indices, targets_indices, targets_data);
 }
 
 
-void Batch::perform_augmentation() const
+Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 {
     ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
 
     const dimensions& input_dimensions = data_set->get_input_dimensions();
 
-    const Index rows_number = input_dimensions[0];
-    const Index columns_number = input_dimensions[1];
+    const Index input_height = input_dimensions[0];
+    const Index input_width = input_dimensions[1];
     const Index channels = input_dimensions[2];
-    const Index input_size = rows_number*columns_number*channels;
 
     TensorMap<Tensor<type, 4>> inputs(input_data,
                                       batch_size,
-                                      rows_number,
-                                      columns_number,
+                                      input_height,
+                                      input_width,
                                       channels);
-
+   
     const bool random_reflection_axis_x = image_data_set->get_random_reflection_axis_x();
     const bool random_reflection_axis_y = image_data_set->get_random_reflection_axis_y();
     const type random_rotation_minimum = image_data_set->get_random_rotation_minimum();
     const type random_rotation_maximum = image_data_set->get_random_rotation_maximum();
-    const type random_rescaling_minimum = type(0);
-    const type random_rescaling_maximum = type(0);
     const type random_horizontal_translation_minimum = image_data_set->get_random_horizontal_translation_minimum();
     const type random_horizontal_translation_maximum = image_data_set->get_random_horizontal_translation_maximum();
     const type random_vertical_translation_minimum = image_data_set->get_random_vertical_translation_minimum();
     const type random_vertical_translation_maximum = image_data_set->get_random_vertical_translation_maximum();
 
-    type* input_data = inputs.data();
-
-    for(Index batch = 0; batch < batch_size; batch++)
+    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
     {
-        TensorMap<Tensor<type, 3>> image(input_data + batch*input_size,
-                                         rows_number,
-                                         columns_number,
-                                         channels);
+        const Tensor<type, 3> image = inputs.chip(batch_index, 0);
+        cout << image << endl;
+        system("pause");
 
         if(random_reflection_axis_x)
         {
-            reflect_image_x(thread_pool_device, image);
+            //reflect_image_x(thread_pool_device, image);
         }
 
         if(random_reflection_axis_y)
         {
-            //reflect_image_y(thread_pool_device, image, image);
+            //reflect_image_y(thread_pool_device, image);
         }
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
@@ -86,24 +96,18 @@ void Batch::perform_augmentation() const
             //rotate_image(thread_pool_device, image, image, angle);
         }
 
-        if(random_rescaling_minimum != 0 && random_rescaling_maximum != 0)
-        {
-            const type rescaling = random_rescaling_minimum < random_rescaling_maximum
-                                 ? random_rescaling_minimum + type(rand())
-                                 : random_rescaling_maximum;
-
-            rescale_image(thread_pool_device, image, image, rescaling);
-        }
-
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
         {
-            const type translation = random_horizontal_translation_minimum < random_rescaling_maximum
+            const type translation = random_horizontal_translation_minimum < random_horizontal_translation_maximum
                                    ? random_horizontal_translation_minimum + type(rand())
-                                   : random_rescaling_maximum;
+                                   : random_horizontal_translation_maximum;
 
             //translate_image(thread_pool_device, image, image, translation);
         }
-    }  
+    } 
+
+    Tensor<type, 2> todo;
+    return todo;
 }
 
 
@@ -186,6 +190,8 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
     targets_data = targets_tensor.data();
 
+
+
     // LanguageDataSet
 
     if(is_instance_of<LanguageDataSet>(data_set))
@@ -240,15 +246,12 @@ void Batch::print() const
     const Index inputs_rank = input_dimensions.size();
     const Index targets_rank = targets_dimensions.size();
 
-    cout << "Batch" << endl;
-
-    cout << "Inputs:" << endl;
-    cout << "Inputs dimensions:" << endl;
+    cout << "Batch" << endl
+         << "Inputs:" << endl
+         << "Inputs dimensions:" << endl;
 
     for(Index i = 0; i < inputs_rank; i++)
-    {
         cout << input_dimensions[i] << endl;
-    }
 
     if(inputs_rank == 4)
     {
@@ -261,14 +264,11 @@ void Batch::print() const
         cout << inputs << endl;
     }
 
-    cout << "Targets:" << endl;
-
-    cout << "Targets dimensions:" << endl;
+    cout << "Targets:" << endl
+         << "Targets dimensions:" << endl;
 
     for(Index i = 0; i < targets_rank; i++)
-    {
         cout << targets_dimensions[i] << endl;
-    }
 
     const TensorMap<Tensor<type, 2>> targets(targets_data,
                                              targets_dimensions[0],
@@ -278,39 +278,23 @@ void Batch::print() const
 }
 
 
-Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
+vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 {
-    Tensor<pair<type*, dimensions>, 1> inputs;
+    vector<pair<type*, dimensions>> input_pairs(has_context ? 2 : 1);
 
-    if(!has_context)
-    {
-        inputs.resize(1);
-        inputs(0).first = input_data;
-        inputs(0).second = input_dimensions;
-    }
-    else
-    {
-        inputs.resize(2);
-
-        inputs(0).first = input_data;
-        inputs(0).second = input_dimensions;
-
-        inputs(1).first = context_data;
-        inputs(1).second = context_dimensions;
-    }
-
-    return inputs;
+    input_pairs[0] = { input_data, input_dimensions };
+    
+    if (has_context)
+        input_pairs[1] = { context_data, context_dimensions };
+    
+    return input_pairs;
 }
 
 
 pair<type*, dimensions> Batch::get_targets_pair() const
 {
-    pair<type *, dimensions> targets;
-
-    targets.first = targets_data;
-    targets.second = targets_dimensions;
-
-    return targets;
+    if(data_set->get_model_type() == DataSet::ModelType::ObjectDetection) return {targets_data, {batch_size, targets_dimensions[1] * targets_dimensions[2] * targets_dimensions[3]}};
+    return { targets_data , targets_dimensions };
 }
 
 }

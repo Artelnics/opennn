@@ -172,13 +172,8 @@ Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
     Index index = 0;
 
     for(Index i = 0; i < raw_variables_number; i++)
-    {
         if(raw_variables(i).use == VariableUse::Context)
-        {
-            context_raw_variables_indices(index) = i;
-            index++;
-        }
-    }
+            context_raw_variables_indices(index++) = i;
 
     return context_raw_variables_indices;
 }
@@ -305,7 +300,7 @@ void LanguageDataSet::set_data_random_language_model(const Index& batch_samples_
                                                      const Index& completion_dimension,
                                                      const Index& context_dimension)
 {
-    data_path = "";
+    data_path.clear();
 
     set(batch_samples_number, context_length + 2 * completion_length);
 
@@ -1334,8 +1329,7 @@ void LanguageDataSet::import_vocabulary(const string& path, Tensor<string, 1>& v
     {
         if(line.empty()) continue;
 
-        vocabulary(count) = line;
-        count++;
+        vocabulary(count++) = line;
 
         if(file.peek() == EOF) break;
     }
@@ -1801,7 +1795,7 @@ void LanguageDataSet::load_documents(const string& path)
 
     Index tokens_number = 0;
 
-    string delimiter = "";
+    string delimiter;
     const string separator = get_separator_string();
 
     while(getline(file, line))
@@ -1849,7 +1843,7 @@ void LanguageDataSet::load_documents(const string& path)
 
             document(lines_count) += " " + tokens(0);
             document_target(lines_count) += tokens(1);
-            delimiter = "";
+            delimiter.clear();
             lines_count++;
         }
 

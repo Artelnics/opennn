@@ -110,18 +110,14 @@ bool ScalingLayer4D::is_empty() const
 }
 
 
-void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                     LayerForwardPropagation* forward_propagation,
-                                     const bool& is_training)
+void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                       const bool& is_training)
 {
-    ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation
-            = static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation);
+    ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation =
+        static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.get());
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
-                                            inputs_pair(0).second[0],
-                                            inputs_pair(0).second[1],
-                                            inputs_pair(0).second[2],
-                                            inputs_pair(0).second[3]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
     Tensor<type, 4>& outputs = scaling_layer_forward_propagation->outputs;
 
@@ -230,21 +226,23 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 
 pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(layer);
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number, 1, 1 });
+    const dimensions output_dimensions = scaling_layer_4d->get_output_dimensions();
+
+    return {outputs_data, {batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]}};
 }
 
 
 void ScalingLayer4DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-    layer = new_layer;
-
-    const Index neurons_number = layer->get_neurons_number();
-
     batch_samples_number = new_batch_samples_number;
 
-    outputs.resize(batch_samples_number, neurons_number,1,1);
+    layer = new_layer;
+
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    outputs.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
 
     outputs_data = outputs.data();
 }

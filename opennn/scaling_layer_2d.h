@@ -9,12 +9,8 @@
 #ifndef SCALINGLAYER2D_H
 #define SCALINGLAYER2D_H
 
-// System includes
-
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "scaling.h"
 #include "layer.h"
@@ -33,8 +29,6 @@ public:
    explicit ScalingLayer2D();
 
    explicit ScalingLayer2D(const dimensions&);
-
-   explicit ScalingLayer2D(const Tensor<Descriptives, 1>&);
 
    // Get
 
@@ -69,9 +63,6 @@ public:
 
    void set();
    void set(const dimensions&);
-   // void set(const Tensor<Descriptives, 1>&);
-   // void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
-   // void set(const tinyxml2::XMLDocument&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -108,9 +99,9 @@ public:
 
    bool is_empty() const;
 
-   void check_range(const Tensor<type, 1>&) const;
-
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
+                          const bool&) final;
 
    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
@@ -146,42 +137,29 @@ protected:
    type max_range;
 
    bool display = true;
-
 };
 
 
 struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
-
     explicit ScalingLayer2DForwardPropagation() : LayerForwardPropagation()
     {
     }
-
-
-    virtual ~ScalingLayer2DForwardPropagation()
-    {
-    }
-
-    // Constructor
 
     explicit ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
-    
-    
+       
     pair<type*, dimensions> get_outputs_pair() const final;
-
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
+        cout << "Outputs:" << endl
+             << outputs << endl;
     }
 
     Tensor<type, 2> outputs;

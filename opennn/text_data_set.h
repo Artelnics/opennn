@@ -9,11 +9,7 @@
 #ifndef TEXTDATASET_H
 #define TEXTDATASET_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "data_set.h"

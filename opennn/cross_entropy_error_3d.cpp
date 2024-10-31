@@ -37,27 +37,20 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const Index outputs_number = targets_pair.second[1];
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first,
-                                             batch_samples_number,
-                                             outputs_number);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
     
     // Forward propagation
     
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const Index outputs_depth = outputs_pair.second[2];
-    
-    const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
-                                             batch_samples_number,
-                                             outputs_number,
-                                             outputs_depth);
+    const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
     
     // Back propagation
 
     const Index layers_number = back_propagation.neural_network.layers.size();
     
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
-        static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(layers_number - 1));
+        static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
         
     probabilistic_layer_3d_back_propagation->targets = targets;
     
@@ -67,7 +60,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     Tensor<bool, 2>& mask = back_propagation.mask;
     bool& built_mask = back_propagation.built_mask;
     
-    Tensor<type, 0> cross_entropy_error;
+    Tensor<type, 0>& error = back_propagation.error;
 
     if(!built_mask)
     {
@@ -85,9 +78,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
 
-    cross_entropy_error.device(*thread_pool_device) = errors.sum();
-
-    back_propagation.error = cross_entropy_error(0) / mask_sum(0);
+    error.device(*thread_pool_device) = errors.sum() / mask_sum(0);
 
     // Masked accuracy
     
@@ -103,7 +94,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     back_propagation.accuracy = accuracy(0);
     
-    if(isnan(back_propagation.error)) throw runtime_error("Error is NAN");
+    if(isnan(error())) throw runtime_error("Error is NAN");
 }
 
 
@@ -150,13 +141,8 @@ void CrossEntropyError3D::from_XML(const tinyxml2::XMLDocument& document)
     // Regularization
 
     tinyxml2::XMLDocument regularization_document;
-
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-
-    tinyxml2::XMLNode* element_clone = regularization_element->DeepClone(&regularization_document);
-
-    regularization_document.InsertFirstChild(element_clone);
-
+    regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
     regularization_from_XML(regularization_document);
 }
 

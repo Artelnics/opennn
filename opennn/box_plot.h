@@ -1,7 +1,6 @@
 #ifndef BOXPLOT_H
 #define BOXPLOT_H
 
-
 #include "config.h"
 
 using namespace std;
@@ -12,21 +11,17 @@ namespace opennn
 
 struct BoxPlot {
 
-    type minimum = type(0);
+    type minimum = type(NAN);
 
-    type first_quartile = type(0);
+    type first_quartile = type(NAN);
 
-    type median = type(0);
+    type median = type(NAN);
 
-    type third_quartile = type(0);
+    type third_quartile = type(NAN);
 
-    type maximum = type(0);
-
-    // Default constructor.
+    type maximum = type(NAN);
 
     explicit BoxPlot() {}
-
-    // Values constructor.
 
     explicit BoxPlot(const type&, const type&, const type&, const type&, const type&);
 

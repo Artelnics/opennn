@@ -55,6 +55,7 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 INCLUDEPATH += ../eigen
 
 HEADERS += \
+    ../blank/yolo_dataset.h \
     codification.h \
     cross_entropy_error_3d.h \
     embedding_layer.h \
@@ -97,6 +98,7 @@ HEADERS += \
     long_short_term_memory_layer.h \
     recurrent_layer.h \
     neural_network.h \
+    model_expression.h \
     neural_network_forward_propagation.h \
     neural_network_back_propagation.h \
     neural_network_back_propagation_lm.h \
@@ -141,7 +143,8 @@ HEADERS += \
     normalization_layer_3d.h \
     non_max_suppression_layer.h \
     opennn.h \
-    yolo_dataset.h
+    yolo_dataset.h \
+    yolo_v2_error.h\
 
 SOURCES += \
     cross_entropy_error_3d.cpp \
@@ -209,4 +212,6 @@ SOURCES += \
     addition_layer_3d.cpp \
     normalization_layer_3d.cpp \
     unit_testing.cpp \
-    non_max_suppression_layer.cpp
+    non_max_suppression_layer.cpp \
+    yolo_dataset.cpp \
+    yolo_v2_error.cpp

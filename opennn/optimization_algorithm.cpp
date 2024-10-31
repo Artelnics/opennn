@@ -47,13 +47,6 @@ OptimizationAlgorithm::~OptimizationAlgorithm()
 
 LossIndex* OptimizationAlgorithm::get_loss_index() const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!loss_index)
-        throw runtime_error("Loss index pointer is nullptr.\n");
-
-#endif
-
     return loss_index;
 }
 
@@ -117,8 +110,8 @@ void OptimizationAlgorithm::set()
 
 void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete thread_pool;
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool) delete thread_pool;
+    if(thread_pool_device) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -175,10 +168,7 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 //         const type distance = l2_distance(input_row, output_row)/inputs_number;
 
 //         if(!isnan(distance))
-//         {
-//             distances(distance_index) = l2_distance(input_row, output_row)/inputs_number;
-//             distance_index++;
-//         }
+//             distances(distance_index++) = l2_distance(input_row, output_row)/inputs_number;
 //     }
 
 //     return box_plot(distances);
@@ -199,19 +189,6 @@ void OptimizationAlgorithm::set_default()
 
 void OptimizationAlgorithm::check() const
 {
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(!loss_index)
-        throw runtime_error("Pointer to loss index is nullptr.\n");
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    if(neural_network == nullptr)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
-
-#endif
 }
 
 
@@ -260,14 +237,13 @@ void OptimizationAlgorithm::print() const
 
 void OptimizationAlgorithm::save(const string& file_name) const
 {
-    FILE * file = fopen(file_name.c_str(), "w");
+    FILE* file = fopen(file_name.c_str(), "w");
 
-    if(file)
-    {
-        tinyxml2::XMLPrinter printer(file);
-        to_XML(printer);
-        fclose(file);
-    }
+    if(!file) return;
+
+    tinyxml2::XMLPrinter printer(file);
+    to_XML(printer);
+    fclose(file);
 }
 
 
@@ -386,17 +362,6 @@ void TrainingResults::resize_selection_error_history(const Index& new_size)
 
 string OptimizationAlgorithm::write_time(const type& time) const
 {
-
-#ifdef OPENNN_DEBUG
-
-    if(time > type(3600e5))
-        throw runtime_error("Time must be lower than 10e5 seconds.\n");
-
-    if(time < type(0))
-        throw runtime_error("Time must be greater than 0.\n");
-
-#endif
-
     const int hours = int(time) / 3600;
     int seconds = int(time) % 3600;
     const int minutes = seconds / 60;
@@ -404,9 +369,10 @@ string OptimizationAlgorithm::write_time(const type& time) const
 
     ostringstream elapsed_time;
 
-    elapsed_time << setfill('0') << setw(2) << hours << ":"
-                 << setfill('0') << setw(2) << minutes << ":"
-                 << setfill('0') << setw(2) << seconds;
+    elapsed_time << setfill('0')
+        << setw(2) << hours << ":"
+        << setw(2) << minutes << ":"
+        << setw(2) << seconds << endl;
 
     return elapsed_time.str();
 }
@@ -419,16 +385,12 @@ void TrainingResults::save(const string& file_name) const
     std::ofstream file;
     file.open(file_name);
 
-    if(file)
-    {
-        for(Index i = 0; i < final_results.dimension(0); i++)
-        {
-            file << final_results(i,0) << "; " << final_results(i,1) << "\n";
-        }
+    if(!file) return;
 
-        file.close();
-    }
+    for(Index i = 0; i < final_results.dimension(0); i++)
+        file << final_results(i,0) << "; " << final_results(i,1) << "\n";
 
+    file.close();
 }
 
 

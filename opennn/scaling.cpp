@@ -163,33 +163,22 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& raw_variable_index)
     type min_value = numeric_limits<type>::max();
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         if(!isnan(matrix(i,raw_variable_index)) && matrix(i,raw_variable_index) < min_value)
-        {
             min_value = matrix(i,raw_variable_index);
-        }
-    }
 
     if(min_value <= type(0))
     {
         const type offset = abs(min_value) + type(1) + NUMERIC_LIMITS_MIN;
 
         for(Index i = 0; i < matrix.dimension(0); i++)
-        {
             if(!isnan(matrix(i,raw_variable_index)))
-            {
                 matrix(i,raw_variable_index) += offset;
-            }
-        }
     }
 
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i,raw_variable_index) = log(matrix(i,raw_variable_index));
-    }
-
 }
 
 

@@ -13,8 +13,6 @@
 
 #include <string>
 
-// OpenNN includes
-
 #include "config.h"
 #include "tinyxml2.h"
 #include "loss_index.h"

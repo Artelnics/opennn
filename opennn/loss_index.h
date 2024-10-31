@@ -9,11 +9,11 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "data_set.h"
@@ -53,26 +53,11 @@ public:
 
    inline NeuralNetwork* get_neural_network() const 
    {
-        #ifdef OPENNN_DEBUG
-
-        if(!neural_network)
-             throw runtime_error("Neural network pointer is nullptr.\n");
-
-        #endif
-
       return neural_network;
    }
 
-
    inline DataSet* get_data_set() const 
    {
-        #ifdef OPENNN_DEBUG
-
-        if(!data_set)
-             throw runtime_error("DataSet pointer is nullptr.\n");
-
-        #endif
-
       return data_set;
    }
 
@@ -113,21 +98,6 @@ public:
 
    virtual void set_normalization_coefficient() {}
 
-   bool has_selection() const;
-
-   Index find_input_index(const Tensor<Index, 1>&, const Index) const;
-
-   // Numerical differentiation
-
-   type calculate_eta() const;
-   type calculate_h(const type&) const;
-
-   Tensor<type, 1> calculate_numerical_gradient();
-
-   Tensor<type, 2> calculate_numerical_jacobian();
-
-   Tensor<type, 1> calculate_numerical_inputs_derivatives();
-
    // Back propagation
 
    virtual void calculate_error(const Batch&,
@@ -140,8 +110,8 @@ public:
                                        ForwardPropagation&,
                                        BackPropagation&) const = 0;
 
-   void calculate_layers_error_gradient(const Batch& ,
-                                        ForwardPropagation& ,
+   void calculate_layers_error_gradient(const Batch&,
+                                        ForwardPropagation&,
                                         BackPropagation&) const;
 
    void assemble_layers_error_gradient(BackPropagation&) const;
@@ -154,7 +124,7 @@ public:
 
    void calculate_errors_lm(const Batch&,
                             const ForwardPropagation&,
-                            BackPropagationLM&) const; // general
+                            BackPropagationLM&) const; 
 
    virtual void calculate_squared_errors_lm(const Batch&,
                                             const ForwardPropagation&,
@@ -207,6 +177,14 @@ public:
 
    void check() const;
 
+   // Numerical differentiation
+
+   static type calculate_h(const type&);
+
+   Tensor<type, 1> calculate_numerical_gradient();
+   Tensor<type, 2> calculate_numerical_jacobian();
+   Tensor<type, 1> calculate_numerical_inputs_derivatives();
+
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
         #include "../../opennn_cuda/opennn_cuda/loss_index_cuda.h"
@@ -255,20 +233,18 @@ struct BackPropagationLM
 
     void print() const;
     
-    void set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
-
     pair<type*, dimensions> get_output_deltas_pair() const;
 
-    Index batch_samples_number = 0;
+    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs() const;
 
-    Tensor<Tensor<Index, 1>, 1> layers_outputs_indices;
+    Index batch_samples_number = 0;
 
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;
 
     LossIndex* loss_index = nullptr;
 
-    type error = type(0);
+    Tensor<type, 0> error;
     type regularization = type(0);
     type loss = type(0);
 

@@ -118,17 +118,11 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(
 void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& new_inverse_hessian_approximation_method_name)
 {
     if(new_inverse_hessian_approximation_method_name == "DFP")
-    {
         inverse_hessian_approximation_method = InverseHessianApproximationMethod::DFP;
-    }
     else if(new_inverse_hessian_approximation_method_name == "BFGS")
-    {
         inverse_hessian_approximation_method = InverseHessianApproximationMethod::BFGS;
-    }
     else
-    {
         throw runtime_error("Unknown inverse hessian approximation method: " + new_inverse_hessian_approximation_method_name + ".\n");
-    }
 }
 
 
@@ -203,7 +197,6 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
         return;
 
     default:
-
         throw runtime_error("Unknown inverse hessian approximation method.\n");
     }
 }
@@ -232,7 +225,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); // Ok , auto?
+            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); 
 
     // Calculates Approximation
 
@@ -276,20 +269,20 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
             = parameters_difference/parameters_difference_dot_gradient_difference(0)
             - old_inverse_hessian_dot_gradient_difference/gradient_dot_hessian_dot_gradient(0);
 
-    // Calculates Approximation
+    // Calculate approximation
 
     inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
 
     inverse_hessian.device(*thread_pool_device) 
         += self_kronecker_product(thread_pool_device, parameters_difference)
-        / parameters_difference_dot_gradient_difference(0); // Ok
+        / parameters_difference_dot_gradient_difference(0); 
 
     inverse_hessian.device(*thread_pool_device)
         -= self_kronecker_product(thread_pool_device, old_inverse_hessian_dot_gradient_difference)
-        / gradient_dot_hessian_dot_gradient(0); // Ok
+        / gradient_dot_hessian_dot_gradient(0); 
 
     inverse_hessian.device(*thread_pool_device)
-        += self_kronecker_product(thread_pool_device, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
+        += self_kronecker_product(thread_pool_device, BFGS)*(gradient_dot_hessian_dot_gradient(0)); 
 }
 
 
@@ -299,12 +292,6 @@ void QuasiNewtonMethod::update_parameters(
         BackPropagation& back_propagation,
         QuasiNewtonMehtodData& optimization_data) const
 {
-    #ifdef OPENNN_DEBUG
-
-        check();
-
-    #endif
-
     Tensor<type, 1>& parameters = back_propagation.parameters;
     const Tensor<type, 1>& gradient = back_propagation.gradient;
 
@@ -329,24 +316,20 @@ void QuasiNewtonMethod::update_parameters(
 
     // Get training direction
 
-    if(optimization_data.epoch == 0 || is_zero(parameters_difference) || is_zero(gradient_difference))
-    {
+    if(optimization_data.epoch == 0 
+    || is_zero(parameters_difference) 
+    || is_zero(gradient_difference))
         set_identity(inverse_hessian);
-    }
     else
-    {
         calculate_inverse_hessian_approximation(optimization_data);
-    }
 
     training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, A_B);
 
     training_slope.device(*thread_pool_device) = gradient.contract(training_direction, AT_B);
 
     if(training_slope(0) >= type(0))
-    {
         training_direction.device(*thread_pool_device) = -gradient;
-    }
-
+ 
     // Get learning rate
 
     optimization_data.epoch == 0
@@ -371,27 +354,22 @@ void QuasiNewtonMethod::update_parameters(
     }
     else
     {
+        const type epsilon = std::numeric_limits<type>::epsilon();
+
         const Index parameters_number = parameters.size();
 
         #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
                 parameters_increment(i) = type(0);
             }
-            else if(gradient(i) > type(0))
+            else
             {
-                parameters(i) -= numeric_limits<type>::epsilon();
-
-                parameters_increment(i) = -numeric_limits<type>::epsilon();
-            }
-            else if(gradient(i) < type(0))
-            {
-                parameters(i) += numeric_limits<type>::epsilon();
-
-                parameters_increment(i) = numeric_limits<type>::epsilon();
+                parameters_increment(i) = (gradient(i) > type(0)) ? -epsilon : epsilon;
+                parameters(i) += parameters_increment(i);
             }
         }
 
@@ -416,14 +394,8 @@ void QuasiNewtonMethod::update_parameters(
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
-
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     // Start training
+
     if(display) cout << "Training with quasi-Newton method...\n";
     TrainingResults results(maximum_epochs_number+1);
 
@@ -446,7 +418,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_name = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
@@ -462,7 +434,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
-    neural_network->set_inputs_names(inputs_name);
+    neural_network->set_inputs_names(input_names);
     neural_network->set_output_namess(targets_names);
 
     if(neural_network->has_scaling_layer_2d())
@@ -525,29 +497,40 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
         
-        neural_network->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
+        neural_network->forward_propagate(training_batch, 
+                                          training_forward_propagation, 
+                                          is_training);
         
         // Loss index
 
-        loss_index->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+        loss_index->back_propagate(training_batch, 
+                                   training_forward_propagation, 
+                                   training_back_propagation);
 
-        results.training_error_history(epoch) = training_back_propagation.error;
+        results.training_error_history(epoch) = training_back_propagation.error();
 
         // Update parameters
 
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        update_parameters(training_batch, 
+                          training_forward_propagation, 
+                          training_back_propagation, 
+                          optimization_data);
 
         // Selection error
 
         if(has_selection)
         {            
-            neural_network->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
+            neural_network->forward_propagate(selection_batch, 
+                selection_forward_propagation,
+                is_training);
 
             // Loss Index
 
-            loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            loss_index->calculate_error(selection_batch, 
+                                        selection_forward_propagation, 
+                                        selection_back_propagation);
 
-            results.selection_error_history(epoch) = selection_back_propagation.error;
+            results.selection_error_history(epoch) = selection_back_propagation.error();
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
@@ -705,42 +688,26 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(8, 2);
 
-    // Inverse hessian approximation method
-
     labels_values(0,0) = "Inverse hessian approximation method";
     labels_values(0,1) = write_inverse_hessian_approximation_method();
-
-    // Learning rate method
 
     labels_values(1,0) = "Learning rate method";
     labels_values(1,1) = learning_rate_algorithm.write_learning_rate_method();
 
-    // Loss tolerance
-
     labels_values(2,0) = "Learning rate tolerance";
     labels_values(2,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
-
-    // Minimum loss decrease
 
     labels_values(3,0) = "Minimum loss decrease";
     labels_values(3,1) = to_string(double(minimum_loss_decrease));
 
-    // Loss goal
-
     labels_values(4,0) = "Loss goal";
     labels_values(4,1) = to_string(double(training_loss_goal));
-
-    // Maximum selection failures
 
     labels_values(5,0) = "Maximum selection error increases";
     labels_values(5,1) = to_string(maximum_selection_failures);
 
-    // Maximum epochs number
-
     labels_values(6,0) = "Maximum epochs number";
     labels_values(6,1) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels_values(7,0) = "Maximum time";
     labels_values(7,1) = write_time(maximum_time);
@@ -770,10 +737,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
     if(learning_rate_algorithm_element)
     {
         tinyxml2::XMLDocument learning_rate_algorithm_document;
-        tinyxml2::XMLNode* element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
-
-        learning_rate_algorithm_document.InsertFirstChild(element_clone);
-
+        learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
 

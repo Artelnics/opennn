@@ -47,9 +47,6 @@ namespace opennn
 
         // Parameters
 
-        const Tensor<type, 1>& get_gammas() const;
-        const Tensor<type, 1>& get_betas() const;
-
         Index get_gammas_number() const;
         Index get_betas_number() const;
         Index get_parameters_number() const final;
@@ -65,7 +62,6 @@ namespace opennn
         void set(const Index&, const Index&);
 
         void set_default();
-        void set_name(const string&);
 
         // Architecture
 
@@ -73,9 +69,6 @@ namespace opennn
         void set_inputs_depth(const Index&);
 
         // Parameters
-
-        void set_gammas(const Tensor<type, 1>&);
-        void set_betas(const Tensor<type, 1>&);
 
         void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
@@ -94,20 +87,20 @@ namespace opennn
 
         // Forward propagation
 
-        void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                               LayerForwardPropagation*,
+        void forward_propagate(const vector<pair<type*, dimensions>>&,
+                               unique_ptr<LayerForwardPropagation>&,
                                const bool&) final;
 
         // Gradient
 
-        void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                      const Tensor<pair<type*, dimensions>, 1>&,
-                                      LayerForwardPropagation*,
-                                      LayerBackPropagation*) const final;
+        void back_propagate(const vector<pair<type*, dimensions>>&,
+                            const vector<pair<type*, dimensions>>&,
+                            unique_ptr<LayerForwardPropagation>&,
+                            unique_ptr<LayerBackPropagation>&) const final;
 
-        void add_deltas(const Tensor<pair<type*, dimensions>, 1>& deltas_pair) const;
+        void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-        void insert_gradient(LayerBackPropagation*,
+        void insert_gradient(unique_ptr<LayerBackPropagation>&,
                              const Index&,
                              Tensor<type, 1>&) const final;
 
@@ -141,7 +134,7 @@ namespace opennn
 
     struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
     {
-        // Default constructor
+        
 
         explicit NormalizationLayer3DForwardPropagation() : LayerForwardPropagation()
         {
@@ -154,22 +147,14 @@ namespace opennn
             set(new_batch_samples_number, new_layer);
         }
 
-
-        virtual ~NormalizationLayer3DForwardPropagation()
-        {
-        }
-
-
         pair<type*, dimensions> get_outputs_pair() const final;
-
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
         void print() const
         {
-            cout << "Outputs:" << endl;
-            cout << outputs << endl;
+            cout << "Outputs:" << endl
+                 << outputs << endl;
         }
 
         Tensor<type, 3> outputs;
@@ -184,13 +169,12 @@ namespace opennn
 
     struct NormalizationLayer3DBackPropagation : LayerBackPropagation
     {
-        // Default constructor
+        
 
         explicit NormalizationLayer3DBackPropagation() : LayerBackPropagation()
         {
 
         }
-
 
         explicit NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
             : LayerBackPropagation()
@@ -198,21 +182,16 @@ namespace opennn
             set(new_batch_samples_number, new_layer);
         }
 
-
-        virtual ~NormalizationLayer3DBackPropagation()
-        {
-        }
+        vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
         void print() const
         {
-            cout << "Gammas derivatives:" << endl;
-            cout << gammas_derivatives << endl;
-
-            cout << "Betas derivatives:" << endl;
-            cout << betas_derivatives << endl;
+            cout << "Gammas derivatives:" << endl
+                 << gammas_derivatives << endl
+                 << "Betas derivatives:" << endl
+                 << betas_derivatives << endl;
         }
 
         Tensor<type, 1> gammas_derivatives;
@@ -230,7 +209,6 @@ namespace opennn
         #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_forward_propagation_cuda.h"
         #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_back_propagation_cuda.h"
     #endif
-
 
 }
 

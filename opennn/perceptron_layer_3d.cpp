@@ -62,9 +62,7 @@ Index PerceptronLayer3D::get_neurons_number() const
 
 dimensions PerceptronLayer3D::get_output_dimensions() const
 {
-    Index neurons_number = get_neurons_number();
-
-    return { inputs_number, neurons_number };
+    return { inputs_number, get_neurons_number() };
 }
 
 
@@ -89,51 +87,6 @@ Index PerceptronLayer3D::get_parameters_number() const
 type PerceptronLayer3D::get_dropout_rate() const
 {
     return dropout_rate;
-}
-
-
-const Tensor<type, 1>& PerceptronLayer3D::get_biases() const
-{
-    return biases;
-}
-
-
-const Tensor<type, 2>& PerceptronLayer3D::get_synaptic_weights() const
-{
-    return synaptic_weights;
-}
-
-
-Tensor<type, 2> PerceptronLayer3D::get_synaptic_weights(const Tensor<type, 1>& parameters) const
-{
-    const Index inputs_depth = get_inputs_depth();
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index synaptic_weights_number = get_synaptic_weights_number();
-
-    const Index parameters_size = parameters.size();
-
-    const Index start_synaptic_weights_number = (parameters_size - synaptic_weights_number);
-
-    const Tensor<type, 1> new_synaptic_weights = parameters.slice(Eigen::array<Index, 1>({start_synaptic_weights_number}), Eigen::array<Index, 1>({synaptic_weights_number}));
-
-    const Eigen::array<Index, 2> two_dim{{inputs_depth, neurons_number}};
-
-    return new_synaptic_weights.reshape(two_dim);
-}
-
-
-Tensor<type, 2> PerceptronLayer3D::get_biases(const Tensor<type, 1>& parameters) const
-{
-    const Index biases_number = biases.size();
-
-    const Tensor<type, 1> new_biases = parameters.slice(Eigen::array<Index, 1>({0}), Eigen::array<Index, 1>({biases_number}));
-
-    const Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
-
-    return new_biases.reshape(two_dim);
-
 }
 
 
@@ -167,7 +120,6 @@ string PerceptronLayer3D::write_activation_function() const
 
     case ActivationFunction::RectifiedLinear:
         return "RectifiedLinear";
-
     /*
     case ActivationFunction::Logistic:
         return "Logistic";
@@ -240,12 +192,6 @@ void PerceptronLayer3D::set_default()
 }
 
 
-void PerceptronLayer3D::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void PerceptronLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number = new_inputs_number;
@@ -269,18 +215,6 @@ void PerceptronLayer3D::set_neurons_number(const Index& new_neurons_number)
     biases.resize(new_neurons_number);
 
     synaptic_weights.resize(inputs_depth, new_neurons_number);
-}
-
-
-void PerceptronLayer3D::set_biases(const Tensor<type, 1>& new_biases)
-{
-    biases = new_biases;
-}
-
-
-void PerceptronLayer3D::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
-{
-    synaptic_weights = new_synaptic_weights;
 }
 
 
@@ -359,21 +293,14 @@ void PerceptronLayer3D::set_parameters_glorot()
     const type minimum = -limit;
     const type maximum = limit;
 
-#pragma omp parallel for
-
+    #pragma omp parallel for
     for(Index i = 0; i < synaptic_weights.size(); i++)
-    {
-        const type random = type(rand() / (RAND_MAX + 1.0));
-
-        synaptic_weights(i) = minimum + (maximum - minimum) * random;
-    }
+        synaptic_weights(i) = minimum + (maximum - minimum)*type(rand() / (RAND_MAX + 1.0));
 }
 
 
 void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
-                                             const Tensor<type, 1>& biases,
-                                             const Tensor<type, 2>& synaptic_weights,
-                                             Tensor<type, 3>& combinations) const
+                                               Tensor<type, 3>& combinations) const
 {
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = {IndexPair<Index>(2, 0)};
 
@@ -411,20 +338,17 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
     */
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
-    type random;
+    #pragma omp parallel for
 
     for(Index i = 0; i < outputs.size(); i++)
-    {
-        random = calculate_random_uniform(type(0), type(1));
-
-        outputs(i) = (random < dropout_rate) ? 0 : outputs(i) * scaling_factor;
-    }
+        outputs(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate) 
+            ? 0 
+            : outputs(i) * scaling_factor;
 }
 
 
 void PerceptronLayer3D::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activations_derivatives) const
 {
-
     switch(activation_function)
     {
     case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
@@ -450,83 +374,68 @@ void PerceptronLayer3D::calculate_activations(Tensor<type, 3>& activations, Tens
 }
 
 
-void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                        LayerForwardPropagation* layer_forward_propagation,
-                                        const bool& is_training)
+void PerceptronLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                          unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                          const bool& is_training)
 {
-/*
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
-        static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation);
+        static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = perceptron_layer_3d_forward_propagation->outputs;
 
     calculate_combinations(inputs,
-                           biases,
-                           synaptic_weights,
                            outputs);
 
     if(is_training)
     {
         if(dropout_rate > type(0))
-        {
             dropout(outputs);
-        }
 
         Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
 
-        calculate_activations_derivatives(outputs,
-                                          outputs,
-                                          activations_derivatives);
+        calculate_activations(outputs, activations_derivatives);
     }
     else
     {
-        calculate_activations(outputs,
-                              outputs);
+        calculate_activations(outputs, empty);
     }
-*/
 }
 
 
-void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                       const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
-                                       LayerForwardPropagation* forward_propagation,
-                                       LayerBackPropagation* back_propagation) const
+void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                       const vector<pair<type*, dimensions>>& delta_pairs,
+                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                       unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first,
-                                            inputs_pair(0).second[0],
-                                            inputs_pair(0).second[1],
-                                            inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    if(deltas_pair.size() > 1)     add_deltas(deltas_pair);
+    if(delta_pairs.size() > 1)     
+        add_deltas(delta_pairs);
 
-    const TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
-                                            deltas_pair(0).second[0],
-                                            deltas_pair(0).second[1],
-                                            deltas_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     // Forward propagation
 
     const PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
-            static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation);
+            static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
 
     // Back propagation
 
     PerceptronLayer3DBackPropagation* perceptron_layer_3d_back_propagation =
-            static_cast<PerceptronLayer3DBackPropagation*>(back_propagation);
+            static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
     Tensor<type, 3>& combinations_derivatives = perceptron_layer_3d_back_propagation->combinations_derivatives;
 
-    Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
-
     Tensor<type, 1>& biases_derivatives = perceptron_layer_3d_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_3d_back_propagation->synaptic_weights_derivatives;
-   
-    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
 
+    Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
+
+    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
     const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
 
     combinations_derivatives.device(*thread_pool_device) 
@@ -543,27 +452,16 @@ void PerceptronLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>&
 }
 
 
-void PerceptronLayer3D::add_deltas(const Tensor<pair<type*, dimensions>, 1>& deltas_pair) const
+void PerceptronLayer3D::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
 {
-    TensorMap<Tensor<type, 3>> deltas(deltas_pair(0).first,
-                                      deltas_pair(0).second[0],
-                                      deltas_pair(0).second[1],
-                                      deltas_pair(0).second[2]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
-    for(Index i = 1; i < deltas_pair.size(); i++)
-    {
-        const TensorMap<Tensor<type, 3>> other_deltas(deltas_pair(i).first,
-                                                      deltas_pair(i).second[0],
-                                                      deltas_pair(i).second[1],
-                                                      deltas_pair(i).second[2]);
-
-        deltas.device(*thread_pool_device) += other_deltas;
-    }
+    for(Index i = 1; i < Index(delta_pairs.size()); i++)
+        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
 }
 
 
-
-void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
+void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                       const Index& index,
                                       Tensor<type, 1>& gradient) const
 {
@@ -571,7 +469,7 @@ void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
-        static_cast<PerceptronLayer3DBackPropagation*>(back_propagation);
+        static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
     const type* synaptic_weights_derivatives_data = perceptron_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();
@@ -711,11 +609,10 @@ void PerceptronLayer3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void PerceptronLayer3DForwardPropagation::print() const
 {
-    cout << "Outputs:" << endl;
-    cout << outputs << endl;
-
-    cout << "Activations derivatives:" << endl;
-    cout << activations_derivatives << endl;
+    cout << "Outputs:" << endl
+         << outputs << endl
+         << "Activations derivatives:" << endl
+         << activations_derivatives << endl;
 }
 
 
@@ -727,7 +624,7 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     const Index inputs_number = perceptron_layer_3d->get_inputs_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, neurons_number });
+    return { outputs_data, { batch_samples_number, inputs_number, neurons_number } };
 }
 
 
@@ -770,10 +667,18 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
     combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
+
+vector<pair<type*, dimensions>> PerceptronLayer3DBackPropagation::get_input_derivative_pairs() const
+{
+    PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
+
+    const Index inputs_number = perceptron_layer_3d->get_inputs_number();
+    const Index inputs_depth = perceptron_layer_3d->get_inputs_depth();
+
+    return {{(type*)(input_derivatives.data()),
+            {batch_samples_number, inputs_number, inputs_depth}}};
 }
 
 

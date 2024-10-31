@@ -19,16 +19,9 @@ GradientDescentTest::GradientDescentTest() : UnitTesting()
 }
 
 
-GradientDescentTest::~GradientDescentTest()
-{
-}
-
-
 void GradientDescentTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     GradientDescent gradient_descent_1;
     assert_true(!gradient_descent_1.has_loss_index(), LOG);
@@ -37,16 +30,6 @@ void GradientDescentTest::test_constructor()
 
     GradientDescent gradient_descent_2(&sum_squared_error);
     assert_true(gradient_descent_2.has_loss_index(), LOG);
-}
-
-
-void GradientDescentTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    GradientDescent* gradient_descent = new GradientDescent;
-
-    delete gradient_descent;
 }
 
 
@@ -100,7 +83,6 @@ void GradientDescentTest::test_perform_training()
 
     training_results = gradient_descent.perform_training();
     error = training_results.get_training_error();
-
 /*
     assert_true(error < old_error, LOG);
 
@@ -141,10 +123,7 @@ void GradientDescentTest::run_test_case()
 {
     cout << "Running gradient descent test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Training
 

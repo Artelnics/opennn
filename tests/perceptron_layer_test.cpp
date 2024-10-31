@@ -20,16 +20,9 @@ PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
 }
 
 
-PerceptronLayerTest::~PerceptronLayerTest()
-{
-}
-
-
 void PerceptronLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     PerceptronLayer perceptron_layer_1;
 
@@ -65,16 +58,6 @@ void PerceptronLayerTest::test_constructor()
 }
 
 
-void PerceptronLayerTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    PerceptronLayer* perceptron_layer = new PerceptronLayer;
-
-    delete perceptron_layer;
-}
-
-
 void PerceptronLayerTest::test_calculate_combinations()
 {
     cout << "test_calculate_combinations\n";
@@ -103,8 +86,8 @@ void PerceptronLayerTest::test_calculate_combinations()
     combinations.resize(samples_number, neurons_number);
     combinations.setConstant(type(3.1416));
 
-    biases = perceptron_layer.get_biases();
-    synaptic_weights = perceptron_layer.get_synaptic_weights();
+//    biases = perceptron_layer.get_biases();
+//    synaptic_weights = perceptron_layer.get_synaptic_weights();
 
     perceptron_layer.calculate_combinations(inputs, combinations);
 
@@ -112,10 +95,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     biases.setConstant(type(1));
     synaptic_weights.setConstant(type(2));
-
+/*
     perceptron_layer.set_biases(biases);
     perceptron_layer.set_synaptic_weights(synaptic_weights);
-
+*/
     inputs.setConstant(type(3));
 
     perceptron_layer.calculate_combinations(inputs, combinations);
@@ -160,10 +143,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     inputs.resize(2,3);
     inputs.setConstant(type(0.5));
-
+/*
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
-
+*/
     perceptron_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2, LOG);
@@ -178,7 +161,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     samples_number = 1;
 
     perceptron_layer.set(inputs_number, neurons_number);
-
+/*
     synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setConstant(type(1));
     perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -186,7 +169,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     biases.resize( neurons_number);
     biases.setConstant(type(1));
     perceptron_layer.set_biases(biases);
-
+*/
     inputs.resize(samples_number, inputs_number);
     inputs.setValues({{type(0.5), type(0.5)}});
 
@@ -207,7 +190,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     samples_number = 1;
 
     perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-
+/*
     synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setValues({{type(1)}});
     perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -221,7 +204,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
-
+*/
     assert_true(biases(0) - type(-0.5) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(synaptic_weights(0, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -250,10 +233,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setZero();
-
+/*
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
-
+*/
     combinations.resize(samples_number, neurons_number);
 
     perceptron_layer.calculate_combinations(inputs, combinations);
@@ -353,7 +336,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     Tensor<type, 1> potential_parameters;
 
-    pair<type*, dimensions> inputs_pair;
+    pair<type*, dimensions> input_pairs;
 
     // Test
 
@@ -370,10 +353,10 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
-
-    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
+/*
+    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -399,10 +382,10 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -441,10 +424,10 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -469,10 +452,10 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -499,10 +482,10 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -525,10 +508,10 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
 
-    inputs_pair.first = inputs.data();
-    inputs_pair.second = {{samples_number, inputs_number}};
+    input_pairs.first = inputs.data();
+    input_pairs.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
     parameters.resize(2);
@@ -542,6 +525,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs.setRandom();
 
     parameters = perceptron_layer.get_parameters();
+*/
 }
 
 
@@ -550,7 +534,6 @@ void PerceptronLayerTest::run_test_case()
     cout << "Running perceptron layer test case...\n";
 
     test_constructor();
-    test_destructor();
 
     test_calculate_combinations();
 

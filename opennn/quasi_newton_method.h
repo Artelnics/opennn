@@ -9,19 +9,13 @@
 #ifndef QUASINEWTONMETHOD_H
 #define QUASINEWTONMETHOD_H
 
-// System includes
-
 #include <string>
 #include <iostream>
-
-// OpenNN includes
 
 #include "config.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
-
-//using Eigen::MatrixXd;
 
 namespace opennn
 {
@@ -140,17 +134,14 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
         set(new_quasi_newton_method);
     }
 
-    virtual ~QuasiNewtonMehtodData() {}
-
     void set(QuasiNewtonMethod* new_quasi_newton_method);
 
     virtual void print() const
     {
-        cout << "Training Direction:" << endl;
-        cout << training_direction << endl;
-
-        cout << "Learning rate:" << endl;
-        cout << learning_rate << endl;
+        cout << "Training Direction:" << endl
+             << training_direction << endl
+             << "Learning rate:" << endl
+             << learning_rate << endl;
     }
 
     QuasiNewtonMethod* quasi_newton_method = nullptr;

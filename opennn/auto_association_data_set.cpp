@@ -75,7 +75,6 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
             new_raw_variables(index).set_use(DataSet::VariableUse::Input);
             new_raw_variables(index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
-            index++;
         }
         else
         {
@@ -83,8 +82,9 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
             new_raw_variables(index).set_use(DataSet::VariableUse::Target);
             new_raw_variables(index).type = raw_variables(raw_variable_index).type;
             new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
-            index++;
         }
+
+        index++;
     }
 
     raw_variables = new_raw_variables;
@@ -133,15 +133,13 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 
     while(count_training != training_samples_number)
     {
-        index = indices(i);
+        index = indices(i++);
 
         if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index)= SampleUse::Training;
             count_training++;
         }
-
-        i++;
     }
 
     // Testing
@@ -150,15 +148,13 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 
     while(count_testing != testing_samples_number)
     {
-        index = indices(i);
+        index = indices(i++);
 
         if(samples_uses(index) != SampleUse::None)
         {
             samples_uses(index) = SampleUse::Testing;
             count_testing++;
         }
-
-        i++;
     }
 }
 

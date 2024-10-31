@@ -25,6 +25,7 @@
 #include "levenberg_marquardt_algorithm.h"
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
+#include "yolo_v2_error.h"
 
 namespace opennn
 {
@@ -50,7 +51,8 @@ public:
         MINKOWSKI_ERROR,
         WEIGHTED_SQUARED_ERROR,
         CROSS_ENTROPY_ERROR,
-        CROSS_ENTROPY_ERROR_3D
+        CROSS_ENTROPY_ERROR_3D,
+        YOLO_V2_ERROR
     };
 
     enum class OptimizationMethod
@@ -176,6 +178,8 @@ private:
 
     LossMethod loss_method;
 
+    YoloV2Error yolov2_error;
+
     // Optimization algorithm
 
     GradientDescent gradient_descent;
@@ -221,4 +225,3 @@ private:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "bounding_layer.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -41,15 +42,6 @@ Index BoundingLayer::get_inputs_number() const
 
 type BoundingLayer::get_lower_bound(const Index& i) const
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(i >= neurons_number)
-        throw runtime_error("Index must be less than number of bounding neurons.\n");
-
-#endif
-
     return lower_bounds[i];
 }
 
@@ -68,25 +60,12 @@ Index BoundingLayer::get_neurons_number() const
 
 dimensions BoundingLayer::get_output_dimensions() const
 {
-    const Index neurons_number = get_neurons_number();
-
-    return { neurons_number };
+    return { get_neurons_number() };
 }
 
 
 type BoundingLayer::get_upper_bound(const Index& i) const
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(neurons_number == 0)
-        throw runtime_error("Number of bounding neurons is zero.\n");
-    else if(i >= neurons_number)
-        throw runtime_error("Index must be less than number of bounding neurons.\n");
-
-#endif
-
     return upper_bounds(i);
 }
 
@@ -184,20 +163,11 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef OPENNN_DEBUG
-
-    if(index >= neurons_number)
-        throw runtime_error("Index of bounding neurons must be less than number of bounding neurons.\n");
-
-#endif
-
     if(lower_bounds.size() != neurons_number)
     {
         lower_bounds.resize(neurons_number);
         lower_bounds.setConstant(-numeric_limits<type>::max());
     }
-
-    // Set lower bound of single neuron
 
     lower_bounds[index] = new_lower_bound;
 }
@@ -205,17 +175,6 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
 
 void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(new_lower_bounds.size() != neurons_number)
-        throw runtime_error("Size must be equal to number of bounding neurons number.\n");
-
-#endif
-
-    // Set lower bound of bounding neurons
-
     lower_bounds = new_lower_bounds;
 }
 
@@ -240,13 +199,6 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef OPENNN_DEBUG
-
-    if(index >= neurons_number)
-        throw runtime_error("Index of bounding neuron must be less than number of bounding neurons.\n");
-
-#endif
-
     if(upper_bounds.size() != neurons_number)
     {
         upper_bounds.resize(neurons_number);
@@ -254,18 +206,17 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
     }
 
     upper_bounds[index] = new_upper_bound;
-
 }
 
 
-void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                      LayerForwardPropagation* forward_propagation,
+void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                      unique_ptr<LayerForwardPropagation>& forward_propagation,
                                       const bool& is_training)
 {
-    const TensorMap<Tensor<type,2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
+    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
-    BoundingLayerForwardPropagation* bounding_layer_forward_propagation
-            = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);
+    BoundingLayerForwardPropagation* bounding_layer_forward_propagation =
+        static_cast<BoundingLayerForwardPropagation*>(forward_propagation.get());
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
@@ -304,21 +255,15 @@ void BoundingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& 
 string BoundingLayer::get_bounding_method_string() const
 {
     if(bounding_method == BoundingMethod::Bounding)
-    {
         return "BoundingLayer";
-    }
     else if(bounding_method == BoundingMethod::NoBounding)
-    {
         return "NoBounding";
-    }
     else
-    {
         throw runtime_error("Unknown bounding method.\n");
-    }
 }
 
 
-string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, const Tensor<string, 1>& output_names) const
+string BoundingLayer::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
@@ -329,17 +274,19 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_name, con
         const Index neurons_number = get_neurons_number();
 
         for(Index i = 0; i < neurons_number; i++)
-        {
-            buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_name[i] << ")\n";
-            buffer << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
-        }
-    }
-    else
-    {
-        buffer << "";
+            buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
+                   << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
     }
 
     return buffer.str();
+}
+
+
+void BoundingLayer::print() const
+{
+    cout << "Bounding layer" << endl
+         << "Lower bounds: " << lower_bounds << endl
+         << "Upper bounds: " << upper_bounds << endl;
 }
 
 
@@ -359,7 +306,6 @@ void BoundingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
     for(Index i = 0; i < neurons_number; i++)
     {
         file_stream.OpenElement("Item");
-
         file_stream.PushAttribute("Index", unsigned(i+1));
 
         // Lower bound
@@ -465,7 +411,7 @@ pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() cons
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
+    return { outputs_data, { batch_samples_number, neurons_number } };
 }
 
 

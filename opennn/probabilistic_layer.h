@@ -9,15 +9,10 @@
 #ifndef PROBABILISTICLAYER_H
 #define PROBABILISTICLAYER_H
 
-// System includes
-
 #include <iostream>
 #include <string>
 
-// OpenNN includes
-
 #include "config.h"
-
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
@@ -38,13 +33,9 @@ struct ProbabilisticLayerBackPropagationLM;
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
-
     explicit ProbabilisticLayerForwardPropagation();
 
     explicit ProbabilisticLayerForwardPropagation(const Index&, Layer*);
-
-    virtual ~ProbabilisticLayerForwardPropagation();
 
     pair<type *, dimensions> get_outputs_pair() const final;
 
@@ -61,9 +52,9 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {
     explicit ProbabilisticLayerBackPropagation();
 
-    virtual ~ProbabilisticLayerBackPropagation();
-
     explicit ProbabilisticLayerBackPropagation(const Index&, Layer*);
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index&, Layer*) final;
 
@@ -90,27 +81,23 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 
     }
 
-
     explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagationLM()
     {
         set(new_batch_samples_number, new_layer);
     }
 
-
-    virtual ~ProbabilisticLayerBackPropagationLM()
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const
     {
-
+        return vector<pair<type*, dimensions>>();
     }
-
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
     void print() const
     {
-        cout << "Squared errors Jacobian: " << endl;
-        cout << squared_errors_Jacobian << endl;
+        cout << "Squared errors Jacobian: " << endl
+             << squared_errors_Jacobian << endl;
     }
 
     Tensor<type, 1> deltas_row;
@@ -169,13 +156,8 @@ public:
     void set(const Index&, const Index&);
     void set(const ProbabilisticLayer&);
 
-    void set_name(const string&);
-
     void set_inputs_number(const Index&) final;
     void set_neurons_number(const Index&) final;
-
-    void set_biases(const Tensor<type, 1>&);
-    void set_synaptic_weights(const Tensor<type, 2>&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
     void set_decision_threshold(const type&);
@@ -186,9 +168,6 @@ public:
     void set_default();
 
     // Parameters
-
-    const Tensor<type, 1>& get_biases() const;
-    const Tensor<type, 2>& get_synaptic_weights() const;
 
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
@@ -203,39 +182,36 @@ public:
 
     void set_parameters_random() final;
 
-    //void insert_parameters(const Tensor<type, 1>&, const Index&);
-
     // Forward propagation
 
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
 
-    void calculate_activations_derivatives(const Tensor<type, 2>&,
-                                           Tensor<type, 2>&,
-                                           Tensor<type, 2>&) const;
+    void calculate_activations(const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
     // Outputs
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                           LayerForwardPropagation*,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     // Gradient
 
-    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                        const Tensor<pair<type*, dimensions>, 1>&,
-                        LayerForwardPropagation*,
-                        LayerBackPropagation*) const final;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
-    void insert_gradient(LayerBackPropagation*,
+    void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          const Index&,
                          Tensor<type, 1>&) const final;
 
     // Squared errors
 
-    void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
-        const Index&,
-        Tensor<type, 2>&) const final;
+    void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
+                                           const Index&,
+                                           Tensor<type, 2>&) const final;
 
     // Expression
 

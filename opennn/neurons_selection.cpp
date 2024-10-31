@@ -29,27 +29,13 @@ NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy)
 
 TrainingStrategy* NeuronsSelection::get_training_strategy() const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!training_strategy)
-        throw runtime_error("Training strategy pointer is nullptr.\n");
-
-#endif
-
     return training_strategy;
 }
 
 
 bool NeuronsSelection::has_training_strategy() const
 {
-    if(training_strategy != nullptr)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return training_strategy;
 }
 
 
@@ -103,20 +89,17 @@ void NeuronsSelection::set_training_strategy(TrainingStrategy* new_training_stra
 
 void NeuronsSelection::set_default()
 {
-    Index inputs_number;
-    Index outputs_number;
+    if(!training_strategy)
+        return;
 
-    if(training_strategy == nullptr
-            || !training_strategy->has_neural_network())
-    {
-        inputs_number = 0;
-        outputs_number = 0;
-    }
-    else
-    {
-        inputs_number = training_strategy->get_neural_network()->get_inputs_number();
-        outputs_number = training_strategy->get_neural_network()->get_outputs_number();
-    }
+    NeuralNetwork* neural_network = training_strategy->get_neural_network();
+
+    if(!neural_network)
+        return;
+
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
+
     // MEMBERS
 
     minimum_neurons = 1;
@@ -139,33 +122,12 @@ void NeuronsSelection::set_default()
 
 void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neurons)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_neurons <= 0)
-        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") must be greater than 0.\n");
-
-    if(new_maximum_neurons < minimum_neurons)
-        throw runtime_error("maximum_neurons(" + to_string(new_maximum_neurons) + ") "
-                            "must be equal or greater than minimum_neurons(" + to_string(minimum_neurons) + ").\n");
-
-#endif
-
     maximum_neurons = new_maximum_neurons;
 }
 
 
 void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_neurons <= 0)
-        throw runtime_error("minimum_neurons(" + to_string(new_minimum_neurons) + ") must be greater than 0.\n");
-
-    if(new_minimum_neurons >= maximum_neurons)
-        throw runtime_error("minimum_neurons(" + to_string(new_minimum_neurons) + ") must be less than maximum_neurons(" + to_string(maximum_neurons) + ").\n");
-
-#endif
-
     minimum_neurons = new_minimum_neurons;
 }
 
@@ -184,39 +146,18 @@ void NeuronsSelection::set_display(const bool& new_display)
 
 void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_selection_error_goal < 0)
-        throw runtime_error("Selection loss goal must be greater or equal than 0.\n");
-
-#endif
-
     selection_error_goal = new_selection_error_goal;
 }
 
 
 void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_epochs_number <= 0)
-        throw runtime_error("Maximum epochs number must be greater than 0.\n");
-
-#endif
-
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
 
 void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < 0)
-        throw runtime_error("Maximum time must be greater than 0.\n");
-
-#endif
-
     maximum_time = new_maximum_time;
 }
 
@@ -284,16 +225,6 @@ void NeuronsSelection::check() const
 
 string NeuronsSelection::write_time(const type& time) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(time > type(3600e5))
-        throw runtime_error("Time must be lower than 10e5 seconds.\n");
-
-    if(time < type(0))
-        throw runtime_error("Time must be greater than 0.\n");
-
-#endif
-
     const int hours = int(time) / 3600;
     int seconds = int(time) % 3600;
     const int minutes = seconds / 60;
@@ -301,10 +232,11 @@ string NeuronsSelection::write_time(const type& time) const
 
     ostringstream elapsed_time;
 
-    elapsed_time << setfill('0') << setw(2) << hours << ":"
-                 << setfill('0') << setw(2) << minutes << ":"
-                 << setfill('0') << setw(2) << seconds << endl;
-
+    elapsed_time << setfill('0') 
+        << setw(2) << hours << ":"
+        << setw(2) << minutes << ":"
+        << setw(2) << seconds << endl;
+    
     return elapsed_time.str();
 }
 
@@ -327,6 +259,8 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_num
 
 void NeuronsSelectionResults::resize_history(const Index& new_size)
 {
+    const Index old_size = neurons_number_history.size();
+
     const Tensor<Index, 1> old_neurons_number_history(neurons_number_history);
     const Tensor<type, 1> old_training_error_history(training_error_history);
     const Tensor<type, 1> old_selection_error_history(selection_error_history);
@@ -335,7 +269,9 @@ void NeuronsSelectionResults::resize_history(const Index& new_size)
     training_error_history.resize(new_size);
     selection_error_history.resize(new_size);
 
-    for(Index i = 0; i < new_size; i++)
+    const Index copy_size = min(old_size, new_size);
+
+    for(Index i = 0; i < copy_size; i++)
     {
         neurons_number_history(i) = old_neurons_number_history(i);
         training_error_history(i) = old_training_error_history(i);

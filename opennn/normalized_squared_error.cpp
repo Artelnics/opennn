@@ -44,27 +44,17 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
     data_set = new_data_set;
 
     if(neural_network->has_recurrent_layer() || neural_network->has_long_short_term_memory_layer())
-    {
         set_time_series_normalization_coefficient();
-    }
     else
-    {
         set_normalization_coefficient();
-    }
 }
 
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    // Data set
-
     const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
 
-    // Targets matrix
-
     const Tensor<type, 2> targets = data_set->get_target_data();
-
-    // Normalization coefficient
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
 }
@@ -72,8 +62,6 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
-    //Targets matrix
-
     const Tensor<type, 2> targets = data_set->get_target_data();
 
     const Index rows = targets.dimension(0)-1;
@@ -83,18 +71,14 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     Tensor<type, 2> targets_t_1(rows, columns);
 
     for(Index i = 0; i < columns; i++)
-    {
         copy(targets.data() + targets.dimension(0) * i,
              targets.data() + targets.dimension(0) * i + rows,
              targets_t_1.data() + targets_t_1.dimension(0) * i);
-    }
 
     for(Index i = 0; i < columns; i++)
-    {
         copy(targets.data() + targets.dimension(0) * i + 1,
              targets.data() + targets.dimension(0) * i + 1 + rows,
              targets_t.data() + targets_t.dimension(0) * i);
-    }
 
     normalization_coefficient = calculate_time_series_normalization_coefficient(targets_t_1, targets_t);
 }
@@ -111,12 +95,8 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
     // @todo add pragma 
 
     for(Index i = 0; i < target_samples_number; i++)
-    {
         for(Index j = 0; j < target_variables_number; j++)
-        {
             normalization_coefficient += (targets_t_1(i, j) - targets_t(i, j)) * (targets_t_1(i, j) - targets_t(i, j));
-        }
-    }
 
     return normalization_coefficient;
 }
@@ -185,7 +165,8 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
         normalization_coefficient += norm(0);
     }
 
-    if(type(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1);
+    if(type(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) 
+        normalization_coefficient = type(1);
 
     return normalization_coefficient;
 }
@@ -203,31 +184,27 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
     Tensor<type, 2>& errors = back_propagation.errors;
 
-    type& error = back_propagation.error;
+    Tensor<type,0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = outputs - targets;
 
-    Tensor<type, 0> sum_squared_error;
-
-    sum_squared_error.device(*thread_pool_device) =  errors.contract(errors, SSE);
-
     const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
-        
-    error = sum_squared_error(0)*coefficient;
 
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    error.device(*thread_pool_device) =  errors.contract(errors, SSE) * coefficient;
+
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -244,17 +221,13 @@ void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
     // Back propagation
 
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
-    type& error = back_propagation.error;
-
-    Tensor<type, 0> sum_squared_error;
-
-    sum_squared_error.device(*thread_pool_device) = squared_errors.square().sum();
+    Tensor<type, 0>& error = back_propagation.error;
 
     const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
 
-    error = sum_squared_error(0)*coefficient;
+    error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
 
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -274,9 +247,9 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 
-    const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();  
+    const pair<type*, dimensions> delta_pairs = back_propagation.get_output_deltas_pair();  
 
-    TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
     const type coefficient = type(2*total_samples_number) / (type(batch_samples_number)*normalization_coefficient);
 
@@ -293,7 +266,7 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device) = errors;
 
@@ -324,14 +297,8 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
 
 void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
-                                                             BackPropagationLM& back_propagation_lm) const
+                                                        BackPropagationLM& back_propagation_lm) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index total_samples_number = data_set->get_samples_number();
 
     // Batch
@@ -364,8 +331,6 @@ string NormalizedSquaredError::get_error_type_text() const
 
 void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // Error type
-
     file_stream.OpenElement("NormalizedSquaredError");
 
     file_stream.CloseElement();

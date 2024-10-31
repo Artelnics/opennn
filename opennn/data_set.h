@@ -11,11 +11,11 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
-// System includes
+
 
 #include <string>
 
-// OpenNN includes
+
 
 #include "tinyxml2.h"
 #include "histogram.h"
@@ -103,6 +103,13 @@ public:
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const Tensor<string, 1>& = Tensor<string, 1>());
 
+        void set(const string&,
+            const DataSet::VariableUse&,
+            const DataSet::RawVariableType & = DataSet::RawVariableType::Numeric,
+            const Scaler & = Scaler::MeanStandardDeviation,
+            const Tensor<string, 1> & = Tensor<string, 1>());
+
+
         string name;
 
         DataSet::VariableUse use = DataSet::VariableUse::None;
@@ -129,7 +136,7 @@ public:
 
         void set_type(const string&);
 
-        void add_category(const string&);
+        //void add_category(const string&);
 
         void set_categories(const Tensor<string, 1>&);
 
@@ -205,7 +212,7 @@ public:
     Tensor<Index, 1> get_unused_raw_variables_indices() const;
     Tensor<Index, 1> get_used_raw_variables_indices() const;
 
-    Tensor<string, 1> get_raw_variables_names() const;
+    Tensor<string, 1> get_raw_variable_names() const;
 
     Tensor<string, 1> get_input_raw_variable_names() const;
     Tensor<string, 1> get_target_raw_variables_names() const;
@@ -291,12 +298,6 @@ public:
     string get_sample_category(const Index&, const Index&) const;
     Tensor<type, 1> get_sample(const Index&) const;
     void add_sample(const Tensor<type, 1>&);
-
-    Tensor<type, 1> get_variable_data(const Index&) const;
-    Tensor<type, 1> get_variable_data(const string&) const;
-
-    Tensor<type, 1> get_variable_data(const Index&, const Tensor<Index, 1>&) const;
-    Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
     Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
 
@@ -412,7 +413,6 @@ public:
     // Variables set
 
     void set_variables_names(const Tensor<string, 1>&);
-    void set_variables_names_from_raw_variables(const Tensor<string, 1>&, const Tensor<DataSet::RawVariable, 1>&);
     void set_variable_name(const Index&, const string&);
 
     void set_input();
@@ -749,8 +749,6 @@ protected:
     Tensor<Index, 1> raw_variables_missing_values_number;
 
     Index rows_missing_values_number = 0;
-
-    bool augmentation = false;
 
     bool display = true;     
 };

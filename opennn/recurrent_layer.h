@@ -9,11 +9,7 @@
 #ifndef RECURRENTLAYER_H
 #define RECURRENTLAYER_H
 
-// System includes
-
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "layer.h"
@@ -66,20 +62,12 @@ public:
 
    Index get_timesteps() const;
 
-   Tensor<type, 1> get_biases() const;
-   const Tensor<type, 2>& get_input_weights() const;
-   const Tensor<type, 2>& get_recurrent_weights() const;
-
    Index get_biases_number() const;
    Index get_input_weights_number() const;
    Index get_recurrent_weights_number() const;
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
-
-   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_input_weights(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_recurrent_weights(const Tensor<type, 1>&) const;
 
    // Activation functions
 
@@ -109,12 +97,6 @@ public:
 
    void set_timesteps(const Index&);
 
-   void set_biases(const Tensor<type, 1>&);
-
-   void set_input_weights(const Tensor<type, 2>&);
-
-   void set_recurrent_weights(const Tensor<type, 2>&);
-
    void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
 
    // Activation functions
@@ -140,20 +122,20 @@ public:
    void calculate_activations(Tensor<type, 2>&,
                               Tensor<type, 2>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                          LayerForwardPropagation*,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Back propagation
 
-   void insert_gradient(LayerBackPropagation*,
+   void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index& ,
                         Tensor<type, 1>&) const final;
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                       const vector<pair<type*, dimensions>>&,
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
    // Expression
 
@@ -225,15 +207,13 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     {
     }
 
-    virtual ~RecurrentLayerBackPropagation()
-    {
-    }
-
     explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer);
     }
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

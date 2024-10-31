@@ -11,7 +11,6 @@
 namespace opennn
 {
 
-
 string sj2utf8(const string &input_string)
 {
     string output(3 * input_string.length(), ' '); //ShiftJis won't give 4byte UTF8, so max. 3 byte per input char are needed

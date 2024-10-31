@@ -24,13 +24,7 @@ public:
 
    explicit BoundingLayerTest();
 
-   virtual ~BoundingLayerTest();
-
-   // Constructor and destructor
-
    void test_constructor();
-
-   void test_destructor();
 
    // Output
 

@@ -17,11 +17,6 @@ UnscalingLayerTest::UnscalingLayerTest() : UnitTesting()
 }
 
 
-UnscalingLayerTest::~UnscalingLayerTest()
-{
-}
-
-
 void UnscalingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -39,23 +34,6 @@ void UnscalingLayerTest::test_constructor()
 
     assert_true(unscaling_layer_2.get_descriptives().size() == 3, LOG);
 
-    // Test
-/*
-    descriptives.resize(2);
-
-    UnscalingLayer unscaling_layer_3(descriptives);
-
-    assert_true(unscaling_layer_3.get_descriptives().size() == 2, LOG);
-*/
-}
-
-
-void UnscalingLayerTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    UnscalingLayer* unscaling_layer = new UnscalingLayer;
-    delete unscaling_layer;
 }
 
 
@@ -64,7 +42,6 @@ void UnscalingLayerTest::run_test_case()
     cout << "Running unscaling layer test case...\n";
 
     test_constructor();
-    test_destructor();
 
     cout << "End of unscaling layer test case.\n\n";
 }

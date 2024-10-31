@@ -9,10 +9,6 @@
 #ifndef EMBEDDINGLAYER_H
 #define EMBEDDINGLAYER_H
 
-// System includes
-
-// OpenNN includes
-
 #include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
@@ -20,6 +16,8 @@
 
 namespace opennn
 {
+
+class Layer;
 
 struct EmbeddingLayerForwardPropagation;
 struct EmbeddingLayerBackPropagation;
@@ -54,8 +52,6 @@ public:
     dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const final;
 
-    Tensor<type, 2> get_embedding_weights() const;
-
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
     Index get_neurons_number() const final;
@@ -70,7 +66,6 @@ public:
     void set(const Index&, const Index&, const Index&, const bool& = false);
 
     void set_default();
-    void set_name(const string&);
 
     // Architecture
 
@@ -99,20 +94,22 @@ public:
 
     // Embedding layer outputs
 
-    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&layer,
-                           LayerForwardPropagation*,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
     // Gradient
 
-    void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                  const Tensor<pair<type*, dimensions>, 1>&,
-                                  LayerForwardPropagation*,
-                                  LayerBackPropagation*) const final;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
-    void add_deltas(const Tensor<pair<type*, dimensions>, 1>&) const;
+    void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-    void insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
+    void insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
+                         const Index& index, 
+                         Tensor<type, 1>& gradient) const;
 
     // Serialization
 
@@ -149,7 +146,7 @@ protected:
 
 struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
     {
-        // Default constructor
+        
 
         explicit EmbeddingLayerForwardPropagation() : LayerForwardPropagation()
         {
@@ -161,34 +158,22 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
         {
             set(new_batch_samples_number, new_layer);
         }
-
-
-        virtual ~EmbeddingLayerForwardPropagation()
-        {
-        }
-        
-        
+                
         pair<type*, dimensions> get_outputs_pair() const final;
 
-
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
         void print() const
         {
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores.dimensions() << endl;
-
 //            cout << "Outputs dimensions:" << endl;
 //            cout << output_dimensions << endl;
-
 //            cout << "Outputs:" << endl;
 //            cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores << endl;
         }
-
 
         void build_positional_encoding_matrix();
 
@@ -204,7 +189,7 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 
 struct EmbeddingLayerBackPropagation : LayerBackPropagation
     {
-        // Default constructor
+        
 
         explicit EmbeddingLayerBackPropagation() : LayerBackPropagation()
         {
@@ -218,13 +203,12 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
             set(new_batch_samples_number, new_layer);
         }
 
-
-        virtual ~EmbeddingLayerBackPropagation()
+        vector<pair<type*, dimensions>> get_input_derivative_pairs() const
         {
+            return vector<pair<type*, dimensions>>();
         }
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
         void print() const
         {

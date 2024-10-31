@@ -9,12 +9,8 @@
 #ifndef ADAPTIVEMOMENTESTIMATION_H
 #define ADAPTIVEMOMENTESTIMATION_H
 
-// System includes
-
 #include <string>
 #include <limits>
-
-// OpenNN includes
 
 #include "config.h"
 #include "loss_index.h"
@@ -39,8 +35,6 @@ public:
    explicit AdaptiveMomentEstimation();
 
    explicit AdaptiveMomentEstimation(LossIndex*);   
-
-   //virtual ~AdaptiveMomentEstimation();
    
    // Training operators
 

@@ -9,12 +9,12 @@
 #ifndef PERCEPTRONLAYER3D_H
 #define PERCEPTRONLAYER3D_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "layer.h"
@@ -53,8 +53,6 @@ public:
 
    // Get
 
-   bool is_empty() const;
-
    Index get_inputs_number() const final;
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
@@ -62,12 +60,6 @@ public:
    dimensions get_output_dimensions() const final;
 
    // Parameters
-
-   const Tensor<type, 1>& get_biases() const;
-   const Tensor<type, 2>& get_synaptic_weights() const;
-
-   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
@@ -94,7 +86,6 @@ public:
             const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
    void set_default();
-   void set_name(const string&);
 
    // Architecture
 
@@ -103,9 +94,6 @@ public:
    void set_neurons_number(const Index&) final;
 
    // Parameters
-
-   void set_biases(const Tensor<type, 1>&);
-   void set_synaptic_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
@@ -128,8 +116,6 @@ public:
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 3>&,
-                               const Tensor<type, 1>&,
-                               const Tensor<type, 2>&,
                                Tensor<type, 3>&) const;
 
    void dropout(Tensor<type, 3>&) const;
@@ -137,20 +123,20 @@ public:
    void calculate_activations(Tensor<type, 3>&,
                               Tensor<type, 3>&) const;
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                          LayerForwardPropagation*,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Gradient
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                       const vector<pair<type*, dimensions>>&,
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
-   void add_deltas(const Tensor<pair<type*, dimensions>, 1>&) const;
+   void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-   void insert_gradient(LayerBackPropagation*,
+   void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index&,
                         Tensor<type, 1>&) const final;
 
@@ -178,35 +164,28 @@ protected:
    type dropout_rate = type(0);
 
    bool display = true;
+
+   Tensor<type, 3> empty;
 };
 
 
 struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 {
-    // Default constructor
+    
 
     explicit PerceptronLayer3DForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-
     explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
      : LayerForwardPropagation()
     {
-    set(new_batch_samples_number, new_layer);
+        set(new_batch_samples_number, new_layer);
     }
-
-
-    virtual ~PerceptronLayer3DForwardPropagation()
-    {
-    }
-
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
     void print() const;
 
@@ -218,13 +197,12 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 {
-    // Default constructor
+    
 
     explicit PerceptronLayer3DBackPropagation() : LayerBackPropagation()
     {
 
     }
-
 
     explicit PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
@@ -232,22 +210,16 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
         set(new_batch_samples_number, new_layer);
     }
 
-
-    virtual ~PerceptronLayer3DBackPropagation()
-    {
-    }
-
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
-
     void print() const
     {
-        cout << "Biases derivatives:" << endl;
-        cout << biases_derivatives << endl;
-
-        cout << "Synaptic weights derivatives:" << endl;
-        cout << synaptic_weights_derivatives << endl;
+        cout << "Biases derivatives:" << endl
+             << biases_derivatives << endl
+             << "Synaptic weights derivatives:" << endl
+             << synaptic_weights_derivatives << endl;
     }
 
     Tensor<type, 1> biases_derivatives;

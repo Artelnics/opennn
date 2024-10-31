@@ -9,12 +9,12 @@
 #ifndef ProbabilisticLayer3D_H
 #define ProbabilisticLayer3D_H
 
-// System includes
+
 
 #include <iostream>
 #include <string>
 
-// OpenNN includes
+
 
 #include "config.h"
 #include "layer.h"
@@ -73,14 +73,9 @@ public:
    void set(const Index&, const Index&, const Index&);
    void set(const ProbabilisticLayer3D&);
 
-   void set_name(const string&);
-
    void set_inputs_number(const Index&) final;
    void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;
-
-   void set_biases(const Tensor<type, 1>&);
-   void set_synaptic_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
    void set_decision_threshold(const type&);
@@ -91,9 +86,6 @@ public:
    void set_default();
 
    // Parameters
-
-   const Tensor<type, 1>& get_biases() const;
-   const Tensor<type, 2>& get_synaptic_weights() const;
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
@@ -108,8 +100,6 @@ public:
    void set_parameters_random() final;
    void set_parameters_glorot();
 
-   //void insert_parameters(const Tensor<type, 1>&, const Index&);
-
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 3>&,
@@ -119,23 +109,23 @@ public:
 
    // Outputs
 
-   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                          LayerForwardPropagation*,
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
    // Gradient
 
-   void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                                 const Tensor<pair<type*, dimensions>, 1>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
+   void back_propagate(const vector<pair<type*, dimensions>>&,
+                       const vector<pair<type*, dimensions>>&,
+                       unique_ptr<LayerForwardPropagation>&,
+                       unique_ptr<LayerBackPropagation>&) const final;
 
    void calculate_combinations_derivatives(const Tensor<type, 3>&,
                                                  const Tensor<type, 2>&,
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
 
-   void insert_gradient(LayerBackPropagation*, 
+   void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index&, 
                         Tensor<type, 1>&) const final;
 
@@ -172,37 +162,26 @@ protected:
 
 struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
+    
 
     explicit ProbabilisticLayer3DForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-
-    // Constructor
-
     explicit ProbabilisticLayer3DForwardPropagation(const Index new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer);
-    }
-
-
-    virtual ~ProbabilisticLayer3DForwardPropagation()
-    {
-    }
-    
+    }    
     
     pair<type*, dimensions> get_outputs_pair() const final;
 
-
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
+        cout << "Outputs:" << endl
+             << outputs << endl;
     }
 
     Tensor<type, 3> outputs;
@@ -213,13 +192,7 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 {
     explicit ProbabilisticLayer3DBackPropagation() : LayerBackPropagation()
     {
-
     }
-
-    virtual ~ProbabilisticLayer3DBackPropagation()
-    {
-    }
-
 
     explicit ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
@@ -227,8 +200,9 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
         set(new_batch_samples_number, new_layer);
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
     void print() const
     {

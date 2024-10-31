@@ -29,13 +29,7 @@ public:
 
     explicit GrowingInputsTest();
 
-    virtual ~GrowingInputsTest();
-
-    // Constructor and destructor
-
     void test_constructor();
-
-    void test_destructor();
 
     // Input selection
 

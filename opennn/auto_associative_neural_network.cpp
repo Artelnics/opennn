@@ -73,9 +73,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plo
     Tensor<type, 1> minimum_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         minimum_distances(i) = multivariate_distances_box_plot(i).minimum;
-    }
 
     return minimum_distances;
 }
@@ -86,9 +84,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plo
     Tensor<type, 1> first_quartile_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         first_quartile_distances(i) = multivariate_distances_box_plot(i).first_quartile;
-    }
 
     return first_quartile_distances;
 }
@@ -99,21 +95,18 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plo
     Tensor<type, 1> median_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         median_distances(i) = multivariate_distances_box_plot(i).median;
-    }
 
     return median_distances;
 }
+
 
 Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plot_third_quartile() const
 {
     Tensor<type, 1> third_quartile_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         third_quartile_distances(i) = multivariate_distances_box_plot(i).third_quartile;
-    }
 
     return third_quartile_distances;
 }
@@ -124,9 +117,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::get_multivariate_distances_box_plo
     Tensor<type, 1> maximum_distances(multivariate_distances_box_plot.size());
 
     for(Index i = 0; i < multivariate_distances_box_plot.size(); i++)
-    {
         maximum_distances(i) = multivariate_distances_box_plot(i).maximum;
-    }
 
     return maximum_distances;
 }
@@ -443,9 +434,7 @@ Tensor<type, 2> AutoAssociativeNeuralNetwork::calculate_multivariate_distances(t
             const type distance = l2_distance(variable_input_value, variable_output_value);
 
             if(!isnan(distance))
-            {
                 testing_samples_distances(i, j) = distance;
-            }
         }
     }
 
@@ -473,10 +462,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::calculate_samples_distances(type* 
         const type distance = l2_distance(input_row, output_row)/inputs_number;
 
         if(!isnan(distance))
-        {
-            distances(distance_index) = l2_distance(input_row, output_row)/inputs_number;
-            distance_index++;
-        }
+            distances(distance_index++) = l2_distance(input_row, output_row)/inputs_number;
     }
 
     return distances;
@@ -518,18 +504,18 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
     // Inputs number
 
     file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(inputs_name.size()).c_str());
+    file_stream.PushText(to_string(input_names.size()).c_str());
     file_stream.CloseElement();
 
     // Inputs names
 
-    for(Index i = 0; i < inputs_name.size(); i++)
+    for(Index i = 0; i < input_names.size(); i++)
     {
         file_stream.OpenElement("Input");
 
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
 
-        file_stream.PushText(inputs_name[i].c_str());
+        file_stream.PushText(input_names[i].c_str());
 
         file_stream.CloseElement();
     }
@@ -548,10 +534,12 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     buffer.str("");
 
-    for(Index i = 0; i < layers.size(); i++)
+    for(Index i = 0; i < Index(layers.size()); i++)
     {
         buffer << layers[i]->get_type_string();
-        if(i != layers.size()-1) buffer << " ";
+
+        if(i != layers.size()-1)
+            buffer << " ";
     }
 
     file_stream.PushText(buffer.str().c_str());
@@ -560,10 +548,8 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     // Layers information
 
-    for(Index i = 0; i < layers.size(); i++)
-    {
+    for(Index i = 0; i < Index(layers.size()); i++)
         layers[i]->to_XML(file_stream);
-    }
 
     // Layers (end tag)
 
@@ -775,10 +761,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument inputs_document;
-            tinyxml2::XMLNode* element_clone = element->DeepClone(&inputs_document);
-
-            inputs_document.InsertFirstChild(element_clone);
-
+            inputs_document.InsertFirstChild(element->DeepClone(&inputs_document));
             inputs_from_XML(inputs_document);
         }
     }
@@ -790,10 +773,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument layers_document;
-            tinyxml2::XMLNode* element_clone = element->DeepClone(&layers_document);
-
-            layers_document.InsertFirstChild(element_clone);
-
+            layers_document.InsertFirstChild(element->DeepClone(&layers_document));
             layers_from_XML(layers_document);
         }
     }
@@ -805,10 +785,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument outputs_document;
-            tinyxml2::XMLNode* element_clone = element->DeepClone(&outputs_document);
-
-            outputs_document.InsertFirstChild(element_clone);
-
+            outputs_document.InsertFirstChild(element->DeepClone(&outputs_document));
             outputs_from_XML(outputs_document);
         }
     }
@@ -820,10 +797,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument box_plot_document;
-            tinyxml2::XMLNode* element_clone = element->DeepClone(&box_plot_document);
-
-            box_plot_document.InsertFirstChild(element_clone);
-
+            box_plot_document.InsertFirstChild(element->DeepClone(&box_plot_document));
             box_plot_from_XML(box_plot_document);
         }
     }
@@ -834,10 +808,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
         if(element)
         {
             tinyxml2::XMLDocument distances_descriptives_document;
-            tinyxml2::XMLNode* element_clone = element->DeepClone(&distances_descriptives_document);
-
-            distances_descriptives_document.InsertFirstChild(element_clone);
-
+            distances_descriptives_document.InsertFirstChild(element->DeepClone(&distances_descriptives_document));
             distances_descriptives_from_XML(distances_descriptives_document);
         }
     }
@@ -847,9 +818,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
     if(element)
     {
         tinyxml2::XMLDocument multivariate_box_plot_document;
-        tinyxml2::XMLNode* element_clone = element->DeepClone(&multivariate_box_plot_document);
-
-        multivariate_box_plot_document.InsertFirstChild(element_clone);
+        multivariate_box_plot_document.InsertFirstChild(element->DeepClone(&multivariate_box_plot_document));
 
         multivariate_box_plot_from_XML(multivariate_box_plot_document);
     }

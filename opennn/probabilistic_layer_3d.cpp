@@ -45,9 +45,7 @@ Index ProbabilisticLayer3D::get_neurons_number() const
 
 dimensions ProbabilisticLayer3D::get_output_dimensions() const
 {
-    Index neurons_number = get_neurons_number();
-
-    return { inputs_number, neurons_number };
+    return { inputs_number, get_neurons_number() };
 }
 
 
@@ -109,18 +107,6 @@ const bool& ProbabilisticLayer3D::get_display() const
 }
 
 
-const Tensor<type, 1>& ProbabilisticLayer3D::get_biases() const
-{
-    return biases;
-}
-
-
-const Tensor<type, 2>& ProbabilisticLayer3D::get_synaptic_weights() const
-{
-    return synaptic_weights;
-}
-
-
 Index ProbabilisticLayer3D::get_parameters_number() const
 {
     return biases.size() + synaptic_weights.size();
@@ -177,12 +163,6 @@ void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_l
 }
 
 
-void ProbabilisticLayer3D::set_name(const string& new_layer_name)
-{
-    name = new_layer_name;
-}
-
-
 void ProbabilisticLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number = new_inputs_number;
@@ -209,18 +189,6 @@ void ProbabilisticLayer3D::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void ProbabilisticLayer3D::set_biases(const Tensor<type, 1>& new_biases)
-{
-    biases = new_biases;
-}
-
-
-void ProbabilisticLayer3D::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
-{
-    synaptic_weights = new_synaptic_weights;
-}
-
-
 void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index biases_number = biases.size();
@@ -239,16 +207,6 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
 
 void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_threshold)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_decision_threshold <= 0)
-        throw runtime_error("Decision threshold(" + to_string(new_decision_threshold) + ") must be greater than zero.\n");
-
-    if(new_decision_threshold >= 1)
-        throw runtime_error("Decision threshold(" + to_string(new_decision_threshold) + ") must be less than one.\n");
-
-#endif
-
     decision_threshold = new_decision_threshold;
 }
 
@@ -315,26 +273,11 @@ void ProbabilisticLayer3D::set_parameters_glorot()
     const type minimum = -limit;
     const type maximum = limit;
     
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < synaptic_weights.size(); i++)
-    {
-        const type random = type(rand() / (RAND_MAX + 1.0));
-
-        synaptic_weights(i) = minimum + (maximum - minimum) * random;
-    }
+        synaptic_weights(i) = minimum + (maximum - minimum) * type(rand() / (RAND_MAX + 1.0));
 }
-
-
-//void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, const Index&)
-//{
-//    const Index biases_number = get_biases_number();
-//    const Index synaptic_weights_number = get_synaptic_weights_number();
-
-//    memcpy(biases.data(), parameters.data(), biases_number*sizeof(type));
-
-//    memcpy(synaptic_weights.data(), parameters.data() + biases_number, synaptic_weights_number*sizeof(type));
-//}
 
 
 void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
@@ -350,21 +293,23 @@ void ProbabilisticLayer3D::calculate_activations(Tensor<type, 3>& activations) c
 {
     switch(activation_function)
     {
-    case ActivationFunction::Softmax: softmax(activations); return;
+    case ActivationFunction::Softmax: softmax(activations); 
+        return;
 
-    default: return;
+    default: 
+        return;
     }
 }
 
 
-void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                             LayerForwardPropagation* forward_propagation,
+void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                             unique_ptr<LayerForwardPropagation>& forward_propagation,
                                              const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation
-            = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
+    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
+        static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
     
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
     
@@ -376,27 +321,24 @@ void ProbabilisticLayer3D::forward_propagate(const Tensor<pair<type*, dimensions
 }
 
 
-void ProbabilisticLayer3D::back_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
-                                          const Tensor<pair<type*, dimensions>, 1>& deltas_pair,
-                                          LayerForwardPropagation* forward_propagation,
-                                          LayerBackPropagation* back_propagation) const
+void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                          const vector<pair<type*, dimensions>>& delta_pairs,
+                                          unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                          unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, 
-                                            inputs_pair(0).second[0], 
-                                            inputs_pair(0).second[1], 
-                                            inputs_pair(0).second[2]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     // Forward propagation
 
     ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
-            static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
+            static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
 
     // Back propagation
 
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
-            static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
+            static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.get());
 
     const Tensor<type, 2>& targets = probabilistic_layer_3d_back_propagation->targets;
     Tensor<type, 2>& mask = probabilistic_layer_3d_back_propagation->mask;
@@ -448,17 +390,17 @@ void ProbabilisticLayer3D::calculate_combinations_derivatives(const Tensor<type,
 
     combinations_derivatives.device(*thread_pool_device) = outputs;
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < batch_samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)
-            combinations_derivatives(i, j, Index(targets(i, j))) -= 1;
+            combinations_derivatives(i, j, Index(targets(i, j)))--;
 
     multiply_matrices(thread_pool_device, combinations_derivatives, mask);
 }
 
 
-void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
+void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                            const Index& index,
                                            Tensor<type, 1>& gradient) const
 {
@@ -466,7 +408,7 @@ void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     const ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
-        static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
+        static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.get());
 
     const type* synaptic_weights_derivatives_data = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_3d_back_propagation->biases_derivatives.data();
@@ -628,10 +570,9 @@ pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair
     ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
 
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
-
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
-    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, neurons_number });
+    return {outputs_data, {batch_samples_number, inputs_number, neurons_number}};
 }
 
 
@@ -644,7 +585,6 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
     batch_samples_number = new_batch_samples_number;
 
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
-
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
     
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
@@ -675,10 +615,17 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
 
-    inputs_derivatives.resize(1);
-    inputs_derivatives(0).first = input_derivatives.data();
-    inputs_derivatives(0).second = { batch_samples_number, inputs_number, inputs_depth };
+
+vector<pair<type*, dimensions>> ProbabilisticLayer3DBackPropagation::get_input_derivative_pairs() const
+{
+    ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
+
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+    const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
+
+    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number, inputs_depth}} };
 }
 
 }

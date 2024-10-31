@@ -19,17 +19,9 @@ QuasiNewtonMethodTest::QuasiNewtonMethodTest() : UnitTesting()
 }
 
 
-QuasiNewtonMethodTest::~QuasiNewtonMethodTest()
-{
-
-}
-
-
 void QuasiNewtonMethodTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    // Default constructor
 
     QuasiNewtonMethod quasi_newton_method_1;
 
@@ -39,15 +31,6 @@ void QuasiNewtonMethodTest::test_constructor()
 
     QuasiNewtonMethod quasi_newton_method_2(&sum_squared_error);
     assert_true(quasi_newton_method_2.has_loss_index(), LOG);
-}
-
-
-void QuasiNewtonMethodTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    QuasiNewtonMethod* quasi_newton_method = new QuasiNewtonMethod;
-    delete quasi_newton_method;
 }
 
 
@@ -240,10 +223,7 @@ void QuasiNewtonMethodTest::run_test_case()
 {
     cout << "Running quasi-Newton method test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Training
 

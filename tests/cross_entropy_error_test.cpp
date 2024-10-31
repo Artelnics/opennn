@@ -21,26 +21,11 @@ CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting()
 }
 
 
-CrossEntropyErrorTest::~CrossEntropyErrorTest()
-{
-}
-
-
 void CrossEntropyErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
 
     CrossEntropyError cross_entropy_error;
-}
-
-
-void CrossEntropyErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    CrossEntropyError* cross_entropy_error = new CrossEntropyError;
-
-    delete cross_entropy_error;
 }
 
 
@@ -74,7 +59,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, true);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
         // Loss index
 
@@ -86,7 +71,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.error >= 0, LOG);
+        assert_true(back_propagation.error() >= 0, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
@@ -118,7 +103,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -130,7 +115,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.error >= 0, LOG);
+        assert_true(back_propagation.error() >= 0, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
@@ -148,7 +133,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         image_data_set.set_display(false);
         image_data_set.set_data_source_path("data/conv_test");
-/*
+
         image_data_set.read_bmp();
         image_data_set.scale_input_variables();
 
@@ -162,7 +147,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
-
+/*
         neural_network.delete_layers();
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(image_data_set.get_input_dimensions(), { kernel_height,kernel_width,kernel_channels,kernels_number });
@@ -179,7 +164,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         neural_network.set_parameters_constant(type(0));
         //neural_network.set_parameters_random();
-/*
+
          { // debug
             image_data_set.set_display(true);
             image_data_set.print();
@@ -188,7 +173,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         }
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -207,7 +192,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0], LOG);
 
-        assert_true(back_propagation.error >= 0, LOG);
+        assert_true(back_propagation.error() >= 0, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
        */
@@ -263,7 +248,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         }
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -282,7 +267,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0], LOG);
 
-        assert_true(back_propagation.error >= 0, LOG);
+        assert_true(back_propagation.error() >= 0, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
 
@@ -343,7 +328,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         }
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -362,7 +347,7 @@ void CrossEntropyErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0], LOG);
 
-        assert_true(back_propagation.error >= 0, LOG);
+        assert_true(back_propagation.error() >= 0, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
@@ -375,7 +360,6 @@ void CrossEntropyErrorTest::run_test_case()
     cout << "Running cross-entropy error test case...\n";
 
     test_constructor();
-    test_destructor();
 
     test_back_propagate();
 

@@ -33,27 +33,23 @@ void SumSquaredError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     Tensor<type, 2>& errors = back_propagation.errors;
 
-    type& error = back_propagation.error;
+    Tensor<type, 0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = outputs - targets;
 
-    Tensor<type, 0> sum_squared_error;
+    error.device(*thread_pool_device) = errors.contract(errors, SSE);
 
-    sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
-
-    error = sum_squared_error(0);
-
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -62,15 +58,12 @@ void SumSquaredError::calculate_error_lm(const Batch&,
                      BackPropagationLM& back_propagation) const
 {
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
-    type& error = back_propagation.error;
 
-    Tensor<type, 0> sum_squared_error;
+    Tensor<type, 0>& error = back_propagation.error;
 
-    sum_squared_error.device(*thread_pool_device) = squared_errors.square().sum();
+    error.device(*thread_pool_device) = squared_errors.square().sum();
 
-    error = sum_squared_error(0);
-
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
+    if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -84,7 +77,7 @@ void SumSquaredError::calculate_output_delta(const Batch&,
 
      const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-     TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
+     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
      const type coefficient = type(2.0);
 
@@ -96,12 +89,6 @@ void SumSquaredError::calculate_output_delta_lm(const Batch&,
                                                 ForwardPropagation&,
                                                 BackPropagationLM& back_propagation) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     // Back propagation
 
     const Tensor<type, 2>& errors = back_propagation.errors;
@@ -109,7 +96,7 @@ void SumSquaredError::calculate_output_delta_lm(const Batch&,
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> output_deltas(output_deltas_pair.first, output_deltas_pair.second[0], output_deltas_pair.second[1]);
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device) = errors;
 
@@ -120,12 +107,6 @@ void SumSquaredError::calculate_output_delta_lm(const Batch&,
 void SumSquaredError::calculate_error_gradient_lm(const Batch& ,
                                                   BackPropagationLM& back_propagation_lm) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 

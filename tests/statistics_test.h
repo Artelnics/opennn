@@ -25,8 +25,6 @@ public:
 
    explicit StatisticsTest();  
 
-   virtual ~StatisticsTest();
-
    // Minimum
 
    void test_minimum();

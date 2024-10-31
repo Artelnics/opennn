@@ -23,11 +23,6 @@ LearningRateAlgorithmTest::LearningRateAlgorithmTest() : UnitTesting()
 }
 
 
-LearningRateAlgorithmTest::~LearningRateAlgorithmTest()
-{
-}
-
-
 void LearningRateAlgorithmTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -45,18 +40,6 @@ void LearningRateAlgorithmTest::test_constructor()
     LearningRateAlgorithm tra2;
 
     assert_true(!tra2.has_loss_index(), LOG);
-}
-
-
-void LearningRateAlgorithmTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    SumSquaredError sum_squared_error;
-
-    LearningRateAlgorithm* tra1 = new LearningRateAlgorithm(&sum_squared_error);
-
-    delete tra1;
 }
 
 
@@ -255,10 +238,7 @@ void LearningRateAlgorithmTest::run_test_case()
 {
     cout << "Running learning rate algorithm test case...\n";
 
-    // Constructor and destructor
-
     test_constructor();
-    test_destructor();
 
     // Training
 

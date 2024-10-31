@@ -49,7 +49,7 @@ void GrowingInputs::set_default()
 {
     maximum_selection_failures = 100;
 
-    if(training_strategy == nullptr || !training_strategy->has_neural_network())
+    if(!training_strategy || !training_strategy->has_neural_network())
     {
         maximum_inputs_number = 100;
     }
@@ -98,12 +98,6 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_sele
 
 InputsSelectionResults GrowingInputs::perform_inputs_selection()
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     InputsSelectionResults inputs_selection_results(maximum_epochs_number);
 
     if(display) cout << "Performing growing inputs selection..." << endl;
@@ -123,7 +117,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const Index original_input_raw_variables_number = data_set->get_input_raw_variables_number();
 
-    const Tensor<string, 1> raw_variables_names = data_set->get_raw_variables_names();
+    const Tensor<string, 1> raw_variables_names = data_set->get_raw_variable_names();
 
     Tensor<string, 1> input_raw_variables_names;
 
@@ -185,10 +179,10 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
             if(display)
             {
-                cout << endl;
-                cout << "Epoch: " << epoch << endl;
-                cout << "Input raw_variables number: " << input_raw_variables_number << endl;
-                cout << "Inputs: " << endl;
+                cout << endl
+                     << "Epoch: " << epoch << endl
+                     << "Input raw_variables number: " << input_raw_variables_number << endl
+                     << "Inputs: " << endl;
 
                 input_raw_variables_names = data_set->get_input_raw_variable_names();
 
@@ -203,9 +197,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 neural_network->set_parameters_random();
 
                 if(data_set->has_nan())
-                {
                     data_set->scrub_missing_values();
-                }
 
                 training_results = training_strategy->perform_training();
 
@@ -234,11 +226,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 }
 
                 if(display)
-                {
-                    cout << "Trial number: " << j+1 << endl;
-                    cout << "   Training error: " << training_results.get_training_error() << endl;
-                    cout << "   Selection error: " << training_results.get_selection_error() << endl;
-                }
+                    cout << "Trial number: " << j+1 << endl
+                         << "   Training error: " << training_results.get_training_error() << endl
+                         << "   Selection error: " << training_results.get_selection_error() << endl;
             }
 
             if(previus_training_error < minimum_training_error)
@@ -365,42 +355,26 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
     Tensor<string, 1> labels(8);
     Tensor<string, 1> values(8);
 
-    // Trials number
-
     labels(0) = "Trials number";
     values(0) = to_string(trials_number);
-
-    // Selection loss goal
 
     labels(1) = "Selection error goal";
     values(1) = to_string(selection_error_goal);
 
-    // Maximum selection failures
-
     labels(2) = "Maximum selection failures";
     values(2) = to_string(maximum_selection_failures);
-
-    // Maximum inputs number
 
     labels(3) = "Maximum inputs number";
     values(3) = to_string(maximum_inputs_number);
 
-    // Minimum correlation
-
     labels(4) = "Minimum correlations";
     values(4) = to_string(minimum_correlation);
-
-    // Maximum correlation
 
     labels(5) = "Maximum correlation";
     values(5) = to_string(maximum_correlation);
 
-    // Maximum epochs number
-
     labels(6) = "Maximum iterations number";
     values(6) = to_string(maximum_epochs_number);
-
-    // Maximum time
 
     labels(7) = "Maximum time";
     values(7) = to_string(maximum_time);
@@ -560,14 +534,14 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
 void GrowingInputs::save(const string& file_name) const
 {
-    FILE * file = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(file)
-    {
-        tinyxml2::XMLPrinter printer(file);
-        to_XML(printer);
-        fclose(file);
-    }
+    if (!file.is_open())
+        return;
+
+    tinyxml2::XMLPrinter printer;
+    to_XML(printer);
+    file << printer.CStr();
 }
 
 

@@ -21,11 +21,6 @@ WeightedSquaredErrorTest::WeightedSquaredErrorTest() : UnitTesting()
 }
 
 
-WeightedSquaredErrorTest::~WeightedSquaredErrorTest()
-{
-}
-
-
 void WeightedSquaredErrorTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -43,15 +38,6 @@ void WeightedSquaredErrorTest::test_constructor()
 
     assert_true(weighted_squared_error_2.has_neural_network(), LOG);
     assert_true(weighted_squared_error_2.has_data_set(), LOG);
-}
-
-
-void WeightedSquaredErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    WeightedSquaredError* weighted_squared_error = new WeightedSquaredError;
-    delete weighted_squared_error;
 }
 
 
@@ -86,7 +72,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -103,10 +89,9 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.errors.dimension(0) == 1, LOG);
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-        assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
+        assert_true(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
-
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -136,7 +121,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -160,7 +145,6 @@ void WeightedSquaredErrorTest::run_test_case()
     cout << "Running weighted squared error test case...\n";
 
     test_constructor();
-    test_destructor();
 
     test_back_propagate();
 

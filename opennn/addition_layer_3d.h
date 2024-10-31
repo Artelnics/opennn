@@ -9,12 +9,8 @@
 #ifndef ADDITIONLAYER3D_H
 #define ADDITIONLAYER3D_H
 
-// System includes
-
 #include <iostream>
 #include <string>
-
-// OpenNN includes
 
 #include "config.h"
 #include "layer.h"
@@ -24,8 +20,9 @@
 namespace opennn
 {
 
-    struct AdditionLayer3DForwardPropagation;
-    struct AdditionLayer3DBackPropagation;
+//    struct AdditionLayer3DForwardPropagation;
+//    struct AdditionLayer3DBackPropagation;
+//    struct AdditionLayer3DBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     struct AdditionLayer3DForwardPropagationCuda;
@@ -59,7 +56,6 @@ namespace opennn
         void set(const Index&, const Index&);
 
         void set_default();
-        void set_name(const string&);
 
         void set_inputs_depth(const Index&);
 
@@ -69,16 +65,16 @@ namespace opennn
 
         // Forward propagation
 
-        void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                               LayerForwardPropagation*,
+        void forward_propagate(const vector<pair<type*, dimensions>>&,
+                               unique_ptr<LayerForwardPropagation>&,
                                const bool&) final;
 
         // Gradient
 
-        void back_propagate(const Tensor<pair<type*, dimensions>, 1>&,
-                            const Tensor<pair<type*, dimensions>, 1>&,
-                            LayerForwardPropagation*,
-                            LayerBackPropagation*) const final;
+        void back_propagate(const vector<pair<type*, dimensions>>&,
+                            const vector<pair<type*, dimensions>>&,
+                            unique_ptr<LayerForwardPropagation>&,
+                            unique_ptr<LayerBackPropagation>&) const final;
 
         // Serialization
 
@@ -103,7 +99,7 @@ namespace opennn
 
     struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
     {
-        // Default constructor
+        
 
         explicit AdditionLayer3DForwardPropagation() : LayerForwardPropagation()
         {
@@ -113,10 +109,6 @@ namespace opennn
             : LayerForwardPropagation()
         {
             set(new_batch_samples_number, new_layer);
-        }
-
-        virtual ~AdditionLayer3DForwardPropagation()
-        {
         }
 
         pair<type*, dimensions> get_outputs_pair() const final;
@@ -135,8 +127,7 @@ namespace opennn
 
     struct AdditionLayer3DBackPropagation : LayerBackPropagation
     {
-        // Default constructor
-
+   
         explicit AdditionLayer3DBackPropagation() : LayerBackPropagation()
         {
 
@@ -149,13 +140,9 @@ namespace opennn
             set(new_batch_samples_number, new_layer);
         }
 
-
-        virtual ~AdditionLayer3DBackPropagation()
-        {
-        }
+        vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
 
         void print() const
         {
@@ -164,7 +151,6 @@ namespace opennn
         Tensor<type, 3> input_1_derivatives;
         Tensor<type, 3> input_2_derivatives;
     };
-
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_forward_propagation_cuda.h"
