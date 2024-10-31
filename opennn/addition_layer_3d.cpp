@@ -13,12 +13,6 @@
 namespace opennn
 {
 
-// AdditionLayer3D::AdditionLayer3D() : Layer()
-// {
-//     set();
-// }
-
-
 AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth) : Layer()
 {
     set(new_inputs_number, new_inputs_depth);
@@ -49,24 +43,12 @@ const bool& AdditionLayer3D::get_display() const
 }
 
 
-// void AdditionLayer3D::set()
-// {
-//     set_default();
-// }
-
-
 void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
     inputs_number = new_inputs_number;
 
     inputs_depth = new_inputs_depth;
 
-    set_default();
-}
-
-
-void AdditionLayer3D::set_default()
-{
     name = "addition_layer_3d";
 
     display = true;
@@ -156,6 +138,13 @@ void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
+AdditionLayer3DForwardPropagation::AdditionLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() const
 {
     AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
@@ -182,6 +171,13 @@ void AdditionLayer3DForwardPropagation::set(const Index& new_batch_samples_numbe
 }
 
 
+void AdditionLayer3DForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+         << outputs << endl;
+}
+
+
 void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -195,6 +191,18 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
 
     input_1_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
     input_2_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+}
+
+
+void AdditionLayer3DBackPropagation::print() const
+{
+}
+
+
+AdditionLayer3DBackPropagation::AdditionLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

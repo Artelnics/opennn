@@ -64,19 +64,15 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
     data_set = new_data_set;
 
-    set_default();
-}
+    delete thread_pool;
+    delete thread_pool_device;
 
+    const int n = omp_get_max_threads();
 
-void LossIndex::set(const LossIndex& other_error_term)
-{
-    neural_network = other_error_term.neural_network;
+    thread_pool = new ThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
-    data_set = other_error_term.data_set;
-
-    regularization_method = other_error_term.regularization_method;
-
-    display = other_error_term.display;
+    regularization_method = RegularizationMethod::L2;
 }
 
 
@@ -99,20 +95,6 @@ void LossIndex::set_neural_network(NeuralNetwork* new_neural_network)
 void LossIndex::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
-}
-
-
-void LossIndex::set_default()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-
-    const int n = omp_get_max_threads();
-
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-
-    regularization_method = RegularizationMethod::L2;
 }
 
 
@@ -553,12 +535,19 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+BackPropagation::BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index)
+{
+    set(new_batch_samples_number, new_loss_index);
+}
+
+
 void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_loss_index)
 {
+    batch_samples_number = new_batch_samples_number;
 
     loss_index = new_loss_index;
 
-    batch_samples_number = new_batch_samples_number;
+    if(!loss_index) return;
 
     // Neural network
 
@@ -1028,11 +1017,6 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
 BackPropagationLM::BackPropagationLM(const Index &new_batch_samples_number, LossIndex *new_loss_index) 
 {
     set(new_batch_samples_number, new_loss_index);
-}
-
-
-BackPropagationLM::BackPropagationLM() 
-{
 }
 
 } // namespace opennn

@@ -33,25 +33,15 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-   // Constructors
-
-   explicit StochasticGradientDescent(); 
-
-   explicit StochasticGradientDescent(LossIndex*);
-
-   //Training operators
+   explicit StochasticGradientDescent(LossIndex* = nullptr);
 
    const type& get_initial_learning_rate() const;
    const type& get_initial_decay() const;
    const type& get_momentum() const;
    const bool& get_nesterov() const;
 
-   // Stopping criteria
-
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
-
-   // Set
 
    void set_loss_index(LossIndex*) override;
 
@@ -62,11 +52,8 @@ public:
        batch_samples_number = new_batch_samples_number;
    }
 
-   // Get
 
    Index get_batch_samples_number() const;
-
-   //Training operators
 
    void set_initial_learning_rate(const type&);
    void set_initial_decay(const type&);
@@ -75,20 +62,15 @@ public:
 
    void set_maximum_epochs_number(const Index&);
 
-   // Stopping criteria
 
    void set_loss_goal(const type&);
    void set_maximum_time(const type&);
-
-   // Training
 
    void update_parameters(BackPropagation& , StochasticGradientDescentData&) const;
 
    TrainingResults perform_training() final;
 
    string write_optimization_algorithm_type() const final;
-
-   // Serialization
 
    Tensor<string, 2> to_string_matrix() const final;
 
@@ -97,8 +79,6 @@ public:
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
-
-   // Training operators
 
    type initial_learning_rate;
 
@@ -110,7 +90,6 @@ private:
 
    Index batch_samples_number = 1000;
 
-   // Stopping criteria
 
    type training_loss_goal = type(0);
 
@@ -129,16 +108,12 @@ private:
 
 struct StochasticGradientDescentData : public OptimizationAlgorithmData
 {
-    explicit StochasticGradientDescentData()
-    {
-    }
-
     explicit StochasticGradientDescentData(StochasticGradientDescent* new_stochastic_gradient_descent)
     {
         set(new_stochastic_gradient_descent);
     }
 
-    void set(StochasticGradientDescent* new_stochastic_gradient_descent);
+    void set(StochasticGradientDescent* = nullptr);
 
     StochasticGradientDescent* stochastic_gradient_descent = nullptr;
 

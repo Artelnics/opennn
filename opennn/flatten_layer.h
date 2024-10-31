@@ -33,13 +33,7 @@ class FlattenLayer : public Layer
 
 public:
 
-    // Constructors
-
-    explicit FlattenLayer();
-
-    explicit FlattenLayer(const dimensions&);
-
-    // Get
+    explicit FlattenLayer(const dimensions& = {0,0,0});
 
     dimensions get_input_dimensions() const;
     Index get_outputs_number() const;
@@ -52,20 +46,9 @@ public:
     Index get_input_width() const;
     Index get_neurons_number() const;
 
-    // Set
-
-    void set();
-    void set(const Index&);
-    void set(const dimensions&);
-    void set(const tinyxml2::XMLDocument&);
-
-    void set_default();
-
-    // Display messages
+    void set(const dimensions & = {0,0,0});
 
 //    void set_display(const bool&);
-
-    // Check
 
 //    bool is_empty() const;
 
@@ -104,34 +87,13 @@ protected:
 
 struct FlattenLayerForwardPropagation : LayerForwardPropagation
 {
-   
-
-   explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
-   {
-   }
-
-   
-
-   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-       : LayerForwardPropagation()
-   {
-       set(new_batch_samples_number, new_layer);
-   }
-   
-   
+   explicit FlattenLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+      
    pair<type*, dimensions> get_outputs_pair() const final;
 
+   void set(const Index& = 0, Layer* = nullptr) final;
 
-   void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-
-   void print() const
-   {
-       cout << "Flatten Outputs:" << endl;
-
-       cout << outputs.dimensions() << endl;
-   }
-
+   void print() const;
 
    Tensor<type, 2> outputs;
 };
@@ -139,27 +101,13 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
 struct FlattenLayerBackPropagation : LayerBackPropagation
 {
-
-    
-
-    explicit FlattenLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
-
-
-    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit FlattenLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 4> input_derivatives;
 };

@@ -20,10 +20,6 @@
 namespace opennn
 {
 
-//    struct AdditionLayer3DForwardPropagation;
-//    struct AdditionLayer3DBackPropagation;
-//    struct AdditionLayer3DBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct AdditionLayer3DForwardPropagationCuda;
     struct AdditionLayer3DBackPropagationCuda;
@@ -34,7 +30,6 @@ class AdditionLayer3D : public Layer
 
 public:
 
-//    explicit AdditionLayer3D();
     explicit AdditionLayer3D(const Index& = 0, const Index& = 0);
 
     Index get_inputs_number() const final;
@@ -44,10 +39,7 @@ public:
 
     const bool& get_display() const;
 
-//    void set();
     void set(const Index& = 0, const Index& = 0);
-
-    void set_default();
 
     void set_inputs_number(const Index&);
     void set_inputs_depth(const Index&);
@@ -82,25 +74,13 @@ protected:
 
 struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
 {
-    explicit AdditionLayer3DForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    explicit AdditionLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit AdditionLayer3DForwardPropagation(const Index& = 0, Layer* new_layer = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
-    }
+    void print() const;
 
     Tensor<type, 3> outputs;
 };
@@ -108,25 +88,13 @@ struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
 
 struct AdditionLayer3DBackPropagation : LayerBackPropagation
 {
-
-    explicit AdditionLayer3DBackPropagation() : LayerBackPropagation()
-    {
-
-    }
-
-    explicit AdditionLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit AdditionLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 3> input_1_derivatives;
     Tensor<type, 3> input_2_derivatives;

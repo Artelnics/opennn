@@ -13,13 +13,6 @@
 namespace opennn
 {
 
-GradientDescent::GradientDescent()
-    : OptimizationAlgorithm()
-{
-    set_default();
-}
-
-
 GradientDescent::GradientDescent(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {

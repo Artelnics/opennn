@@ -24,11 +24,7 @@ class BoundingLayer : public Layer
 
 public:
 
-   // Constructors
-
-   explicit BoundingLayer();
-
-   explicit BoundingLayer(const dimensions&);
+   explicit BoundingLayer(const dimensions& = {}, const string& = "bounding_layer");
 
    // Enumerations
 
@@ -57,9 +53,7 @@ public:
 
    // Variables bounds
 
-   void set();
-   void set(const Index&);
-   void set(const tinyxml2::XMLDocument&);
+   void set(const Index& = 0, const string& = "bounding_layer");
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -74,8 +68,6 @@ public:
    void set_upper_bound(const Index&, const type&);
 
    void set_display(const bool&);
-
-   void set_default();
 
    // Lower and upper bounds
 
@@ -111,27 +103,13 @@ private:
 
 struct BoundingLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit BoundingLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-
-    explicit BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit BoundingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
         
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Outputs:" << endl
-             << outputs << endl;
-    }
-
+    void print() const;
 
     Tensor<type, 2> outputs;
 };

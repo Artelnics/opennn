@@ -15,13 +15,6 @@
 namespace opennn
 {
 
-AdaptiveMomentEstimation::AdaptiveMomentEstimation()
-    :OptimizationAlgorithm()
-{
-     set_default();
-}
-
-
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
@@ -256,6 +249,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Optimization algorithm
 
     AdaptiveMomentEstimationData optimization_data(this);
+
 
     bool stop_training = false;
     bool is_training = true;

@@ -22,18 +22,10 @@
 namespace opennn
 {
 
-GeneticAlgorithm::GeneticAlgorithm()
-    : InputsSelection()
-{
-    set_default();
-}
-
 
 GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
 {
-//    set(new_training_strategy);
-
     set_default();
 }
 

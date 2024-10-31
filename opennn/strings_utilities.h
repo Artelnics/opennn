@@ -299,8 +299,6 @@ public:
 
     // Set
 
-    void set();
-
     void set_text(const string&);
 
     void set_data_tensor(const Tensor<type, 2>&);

@@ -17,13 +17,6 @@
 namespace opennn
 {
 
-ConjugateGradient::ConjugateGradient()
-    : OptimizationAlgorithm()
-{
-    set_default();
-}
-
-
 ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
@@ -659,12 +652,8 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
-{
-}
-
-
-ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) : OptimizationAlgorithmData()
+ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) 
+    : OptimizationAlgorithmData()
 {
     set(new_conjugate_gradient);
 }

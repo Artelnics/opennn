@@ -19,12 +19,6 @@
 namespace opennn
 {
 
-class Layer;
-
-struct EmbeddingLayerForwardPropagation;
-struct EmbeddingLayerBackPropagation;
-struct EmbeddingLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
 struct EmbeddingLayerForwardPropagationCuda;
 struct EmbeddingLayerBackPropagationCuda;
@@ -35,8 +29,6 @@ class EmbeddingLayer : public Layer
 {
 
 public:
-
-//    explicit EmbeddingLayer();
 
     explicit EmbeddingLayer(const Index& = 0,
                             const Index& = 0,
@@ -57,10 +49,7 @@ public:
 
     const bool& get_display() const;
 
-//    void set();
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
-
-    void set_default();
 
 //    void set_input_dimensions(const Index&);
 //    void set_inputs_number(const Index&);
@@ -124,38 +113,15 @@ protected:
 
 struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 {
-
-
-    explicit EmbeddingLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-
-    explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit EmbeddingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-       cout << "Attention scores:" << endl;
-//       cout << attention_scores.dimensions() << endl;
-       cout << "Outputs dimensions:" << endl;
-//       cout << output_dimensions << endl;
-       cout << "Outputs:" << endl;
-//       cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-       cout << "Attention scores:" << endl;
-//       cout << attention_scores << endl;
-    }
+    void print() const;
 
     void build_positional_encoding_matrix();
-
-    // Struct members
 
     bool built_positional_encoding_matrix = false;
 
@@ -167,28 +133,13 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 
 struct EmbeddingLayerBackPropagation : LayerBackPropagation
 {
+    explicit EmbeddingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    explicit EmbeddingLayerBackPropagation() : LayerBackPropagation()
-    {
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    explicit EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
-
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const
-    {
-        return vector<pair<type*, dimensions>>();
-    }
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-    void print() const
-    {
-    }
+    void print() const;
 
     Tensor<type, 2> sample_deltas;
     Tensor<type, 2> embedding_weights_derivatives;

@@ -31,11 +31,7 @@ public:
 
    enum class TrainingDirectionMethod{PR, FR};
 
-   // DEFAULT CONSTRUCTOR
-
-   explicit ConjugateGradient(); 
-
-   explicit ConjugateGradient(LossIndex*);   
+   explicit ConjugateGradient(LossIndex* = nullptr);   
 
    // Get
 
@@ -71,7 +67,6 @@ public:
    void set_loss_goal(const type&);
    void set_minimum_loss_decrease(const type&);
    void set_maximum_selection_failures(const Index&);
-
 
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
@@ -135,11 +130,9 @@ private:
 
 struct ConjugateGradientData : public OptimizationAlgorithmData
 {
-    explicit ConjugateGradientData();
+    explicit ConjugateGradientData(ConjugateGradient* = nullptr);
 
-    explicit ConjugateGradientData(ConjugateGradient*);
-
-    void set(ConjugateGradient*);
+    void set(ConjugateGradient* = nullptr);
 
     virtual void print() const;
 

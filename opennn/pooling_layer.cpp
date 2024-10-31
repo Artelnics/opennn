@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-PoolingLayer::PoolingLayer() : Layer()
-{
-    set_default();
-}
-
-
 PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions, 
                            const dimensions& new_pool_dimensions,
                            const dimensions& new_stride_dimensions,
@@ -27,6 +21,8 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions,
                            const PoolingMethod& new_pooling_method,
                            const string new_name) : Layer()
 {
+    layer_type = Layer::Type::Pooling;
+
     set(new_input_dimensions,
         new_pool_dimensions,
         new_stride_dimensions,
@@ -96,9 +92,9 @@ Index PoolingLayer::get_output_width() const
 }
 
 
-Index PoolingLayer::get_padding_heigth() const
+Index PoolingLayer::get_padding_height() const
 {
-    return padding_heigth;
+    return padding_height;
 }
 
 
@@ -176,9 +172,6 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
                        const PoolingMethod& new_pooling_method,
                        const string new_name)
 {
-    if(new_input_dimensions.size() != 3)
-        throw runtime_error("Input dimensions must be 3");
-
     if(new_pool_dimensions.size() != 2)
         throw runtime_error("Pool dimensions must be 2");
 
@@ -200,34 +193,38 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
     if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
         throw runtime_error("Padding dimensions cannot be lower than 0");
 
-    input_dimensions = new_input_dimensions;
+    set_input_dimensions(new_input_dimensions);
 
-    pool_height = new_pool_dimensions[0];
-    pool_width = new_pool_dimensions[1];
+    set_pool_size(new_pool_dimensions[0], new_pool_dimensions[1]);
+    
+    set_row_stride(new_stride_dimensions[0]);
+    set_column_stride(new_stride_dimensions[1]);
 
-    row_stride = new_stride_dimensions[0];
-    column_stride = new_stride_dimensions[1];
-
-    padding_heigth = new_padding_dimensions[0];
-    padding_width = new_padding_dimensions[1];
+    set_padding_height(new_padding_dimensions[0]);
+    set_padding_width(new_padding_dimensions[1]);
 
     set_pooling_method(new_pooling_method);
 
-    name = new_name;
+    set_name(new_name);
 
-    set_default();
+    layer_type = Layer::Type::Pooling;
+
+    name = "pooling_layer";
 }
 
 
 void PoolingLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+    if (new_input_dimensions.size() != 3)
+        throw runtime_error("Input dimensions must be 3");
+
     input_dimensions = new_input_dimensions;
 }
 
 
-void PoolingLayer::set_padding_heigth(const Index& new_padding_heigth)
+void PoolingLayer::set_padding_height(const Index& new_padding_height)
 {
-    padding_heigth = new_padding_heigth;
+    padding_height = new_padding_height;
 }
 
 
@@ -274,13 +271,6 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
         throw runtime_error("Unknown pooling type: " + new_pooling_method + ".\batch_index");
 }
 
-
-void PoolingLayer::set_default()
-{
-    layer_type = Layer::Type::Pooling;
-
-    name = "pooling_layer";
-}
 
 
 void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
@@ -379,9 +369,9 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
     {
-        Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0)
-                                                    .shuffle(shuffle_dimensions)
-                                                    .reshape(reshape_dimensions);
+        const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0)
+                                                          .shuffle(shuffle_dimensions)
+                                                          .reshape(reshape_dimensions);
 
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
     }
@@ -446,6 +436,7 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
     input_derivatives.setZero();
 
     #pragma omp parallel for collapse(2)
+
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
         for (Index channel_index = 0; channel_index < channels; channel_index++)
             for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
@@ -479,13 +470,6 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     const Eigen::array<Index, 4> grad_extents = { batch_samples_number, 1, 1, 1 };
 
-    Eigen::array<Index, 4> grad_offsets;
-
-    Eigen::array<Index, 4> broadcast_dims;
-
-    Eigen::array<Index, 4> offsets;
-    Eigen::array<Index, 4> extents;
-
     // Back propagation
 
     PoolingLayerBackPropagation* pooling_layer_back_propagation =
@@ -493,16 +477,13 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
-    Tensor<type, 4>& gradient_tensor = pooling_layer_back_propagation->gradient_tensor;
+    Tensor<type, 4>& deltas_by_pool_size = pooling_layer_back_propagation->deltas_by_pool_size;
 
-    gradient_tensor.device(*thread_pool_device) = deltas / type(pool_size);
-
-    Tensor<type, 4> gradient_tensor_slice;
-    Tensor<type, 4> gradient;
+    deltas_by_pool_size.device(*thread_pool_device) = deltas / type(pool_size);
 
     // Input derivatives
 
-    //#pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
 
     for (Index channel_index = 0; channel_index < channels; channel_index++)
         for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
@@ -516,17 +497,19 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
                 const Index width_end = min(width_start + pool_width, input_width);
 
                 const Eigen::array<Index, 4> grad_offsets = { 0, output_height_index, output_width_index, channel_index };
-
                 const Eigen::array<Index, 4> broadcast_dims = { 1, height_end - height_start, width_end - width_start, 1 };
 
-                gradient = gradient_tensor.slice(grad_offsets, grad_extents);
+                const Eigen::array<Index, 4> offsets = { 0, height_start, width_start, channel_index };
+                const Eigen::array<Index, 4> extents = { batch_samples_number, height_end - height_start, width_end - width_start, 1 };
 
-                gradient_tensor_slice = gradient.broadcast(broadcast_dims);
+                // @todo check times
 
-                offsets = { 0, height_start, width_start, channel_index };
-                extents = { batch_samples_number, height_end - height_start, width_end - width_start, 1 };
+                //const Tensor<type, 4> gradient = deltas_by_pool_size.slice(grad_offsets, grad_extents);
+                //const Tensor<type, 4> gradient_tensor_slice = gradient.broadcast(broadcast_dims);
+                //input_derivatives.slice(offsets, extents) += gradient_tensor_slice;
 
-                input_derivatives.slice(offsets, extents) += gradient_tensor_slice;
+                input_derivatives.slice(offsets, extents) +=
+                    deltas_by_pool_size.slice(grad_offsets, grad_extents).broadcast(broadcast_dims);
             }
         }
 }
@@ -534,17 +517,16 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
 void PoolingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("PoolingLayer");
+    printer.OpenElement("Pooling");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
-    add_xml_element(printer, "FiltersNumber", "9");  // @todo Static value; consider replacing with dynamic value if necessary
-    add_xml_element(printer, "FiltersSize", "9");    // Static value; consider replacing with dynamic value if necessary
+    add_xml_element(printer, "PoolHeight", to_string(get_pool_height()));
+    add_xml_element(printer, "PoolWidth", to_string(get_pool_width()));
     add_xml_element(printer, "PoolingMethod", write_pooling_method());
     add_xml_element(printer, "ColumnStride", to_string(get_column_stride()));
     add_xml_element(printer, "RowStride", to_string(get_row_stride()));
-    add_xml_element(printer, "PoolColumnsNumber", to_string(get_pool_width()));
-    add_xml_element(printer, "PoolRowsNumber", to_string(get_pool_height()));
+    add_xml_element(printer, "PaddingHeight", to_string(get_padding_height()));
     add_xml_element(printer, "PaddingWidth", to_string(get_padding_width()));
 
     printer.CloseElement();
@@ -553,34 +535,30 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* pooling_layer_element = document.FirstChildElement("PoolingLayer");
+    const tinyxml2::XMLElement* pooling_layer_element = document.FirstChildElement("Pooling");
 
     if(!pooling_layer_element)
         throw runtime_error("PoolingLayer layer element is nullptr.\batch_index");
 
+    set_name(read_xml_string(pooling_layer_element, "Name"));
+
+    set_input_dimensions(string_to_dimensions(read_xml_string(pooling_layer_element, "InputDimensions")));
+
+    set_pool_size(read_xml_index(pooling_layer_element, "PoolHeight"), read_xml_index(pooling_layer_element, "PoolWidth"));
+
     set_pooling_method(read_xml_string(pooling_layer_element, "PoolingMethod"));
 
-    // @todo Input dimensions (if needed in future, placeholder for now)
-
     set_column_stride(read_xml_index(pooling_layer_element, "ColumnStride"));
-
     set_row_stride(read_xml_index(pooling_layer_element, "RowStride"));
 
-    const Index pool_columns = read_xml_index(pooling_layer_element, "PoolColumnsNumber");
-    const Index pool_rows = read_xml_index(pooling_layer_element, "PoolRowsNumber");
-    set_pool_size(pool_rows, pool_columns);
-
+    set_padding_height(read_xml_index(pooling_layer_element, "PaddingHeight"));
     set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
+
 }
 
 
-PoolingLayerForwardPropagation::PoolingLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-}
-
-
-PoolingLayerForwardPropagation::PoolingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+PoolingLayerForwardPropagation::PoolingLayerForwardPropagation(const Index& new_batch_samples_number, 
+                                                               Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_samples_number, new_layer);
@@ -643,11 +621,6 @@ void PoolingLayerForwardPropagation::print() const
 }
 
 
-PoolingLayerBackPropagation::PoolingLayerBackPropagation() : LayerBackPropagation()
-{
-}
-
-
 PoolingLayerBackPropagation::PoolingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerBackPropagation()
 {
@@ -664,9 +637,9 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
     const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
     const dimensions& input_dimensions = pooling_layer->get_input_dimensions();
-    const dimensions& output_dimensions = pooling_layer->get_output_dimensions();
+    const dimensions& output_dimensions = pooling_layer->get_output_dimensions();   
 
-    gradient_tensor.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
+    deltas_by_pool_size.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
 
     input_derivatives.resize(batch_samples_number, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 }

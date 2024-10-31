@@ -44,20 +44,12 @@ public:
 
     enum class ConvolutionType{Valid, Same};
 
-    // Constructors
-
-    explicit ConvolutionalLayer();
-
-    explicit ConvolutionalLayer(const dimensions&,                                // Input dimensions {height,width,channels}
-                                const dimensions& = {1, 1, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
+    explicit ConvolutionalLayer(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
+                                const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                                 const ActivationFunction& = ActivationFunction::Linear,
                                 const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
                                 const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
                                 const string = "convolutional_layer");
-
-    // Destructor
-
-    // Get
 
     bool is_empty() const;
 
@@ -110,11 +102,11 @@ public:
 
     // Set
 
-    void set(const dimensions&,
-             const dimensions&,
-             const ActivationFunction&,
-             const dimensions&,
-             const ConvolutionType&,
+    void set(const dimensions& = {0, 0, 0},
+             const dimensions& = {3, 3, 1, 1},
+             const ActivationFunction& = ActivationFunction::Linear,
+             const dimensions& = {1, 1},
+             const ConvolutionType& = ConvolutionType::Valid,
              const string = "convolutional_layer");
 
     void set_activation_function(const ActivationFunction&);
@@ -221,13 +213,11 @@ protected:
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
    
-   explicit ConvolutionalLayerForwardPropagation();
-
-   explicit ConvolutionalLayerForwardPropagation(const Index&, Layer*);
+   explicit ConvolutionalLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
       
    pair<type*, dimensions> get_outputs_pair() const final;
 
-   void set(const Index&, Layer*) final;
+   void set(const Index& = 0, Layer* = nullptr) final;
 
    void print() const;
 
@@ -238,19 +228,17 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
    Tensor<type, 1> means;
    Tensor<type, 1> standard_deviations;
 
-   Tensor<type, 4> activations_derivatives;
+   Tensor<type, 4> activation_derivatives;
 };
 
 
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
-   explicit ConvolutionalLayerBackPropagation();
-
-   explicit ConvolutionalLayerBackPropagation(const Index&, Layer*);
+   explicit ConvolutionalLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-   void set(const Index&, Layer*) final;
+   void set(const Index& = 0, Layer* = nullptr) final;
 
    void print() const;
 

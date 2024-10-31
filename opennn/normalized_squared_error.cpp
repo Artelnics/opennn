@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-NormalizedSquaredError::NormalizedSquaredError() : LossIndex()
-{
-    set_default();
-}
-
-
 NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {

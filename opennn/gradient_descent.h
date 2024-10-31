@@ -27,11 +27,7 @@ class GradientDescent : public OptimizationAlgorithm
 
 public:
 
-   // Constructors
-
-   explicit GradientDescent(); 
-
-   explicit GradientDescent(LossIndex*);
+   explicit GradientDescent(LossIndex* = nullptr);
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm();
@@ -111,17 +107,12 @@ private:
 struct GradientDescentData : public OptimizationAlgorithmData
 {
 
-    explicit GradientDescentData()
-    {
-    }
-
-
-    explicit GradientDescentData(GradientDescent* new_gradient_descent)
+    explicit GradientDescentData(GradientDescent* new_gradient_descent = nullptr)
     {
         set(new_gradient_descent);
     }
 
-    void set(GradientDescent* new_gradient_descent);
+    void set(GradientDescent* = nullptr);
 
     virtual void print() const
     {
@@ -132,8 +123,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
     }
 
     GradientDescent* gradient_descent = nullptr;
-
-    // Optimization algorithm data
 
     Index epoch = 0;
 
