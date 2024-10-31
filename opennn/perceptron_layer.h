@@ -71,8 +71,6 @@ public:
              const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
              const string = "perceptron_layer");
 
-    void set_default();
-
     void set_inputs_number(const Index&) final;
     void set_neurons_number(const Index&) final;
 
@@ -159,7 +157,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 2> outputs;
 
-    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> activation_derivatives;
 };
 
 

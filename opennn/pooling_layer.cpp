@@ -209,7 +209,9 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
 
     name = new_name;
 
-    set_default();
+    layer_type = Layer::Type::Pooling;
+
+    name = "pooling_layer";
 }
 
 
@@ -268,13 +270,6 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
         throw runtime_error("Unknown pooling type: " + new_pooling_method + ".\batch_index");
 }
 
-
-void PoolingLayer::set_default()
-{
-    layer_type = Layer::Type::Pooling;
-
-    name = "pooling_layer";
-}
 
 
 void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,

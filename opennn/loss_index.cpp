@@ -535,12 +535,19 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+BackPropagation::BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index)
+{
+    set(new_batch_samples_number, new_loss_index);
+}
+
+
 void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_loss_index)
 {
+    batch_samples_number = new_batch_samples_number;
 
     loss_index = new_loss_index;
 
-    batch_samples_number = new_batch_samples_number;
+    if(!loss_index) return;
 
     // Neural network
 

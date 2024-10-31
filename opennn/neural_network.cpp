@@ -459,14 +459,10 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
     add_layer(make_unique<ScalingLayer2D>(input_dimensions));
 
     for (Index i = 0; i < complexity_size; i++)
-    {
-        const dimensions neurons_number = { complexity_dimensions[i] };
-
         add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
-                                               neurons_number,
-                                               PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                                               dimensions{ complexity_dimensions[i] },
+                                               PerceptronLayer::ActivationFunction::Linear,
                                                "perceptron_layer_" + to_string(i + 1)));
-    }
 
     add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
                                            output_dimensions,
@@ -487,14 +483,10 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
     const Index complexity_size = complexity_dimensions.size();
 
     for (Index i = 0; i < complexity_size; i++)
-    {
-        const dimensions neurons_number = { complexity_dimensions[i] };
-
         add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
-                                               neurons_number,
+                                               dimensions{complexity_dimensions[i]},
                                                PerceptronLayer::ActivationFunction::HyperbolicTangent,
                                                "perceptron_layer_" + to_string(i + 1)));
-    }
 
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
@@ -1845,6 +1837,8 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
 
     neural_network = new_neural_network;
 
+    if(!neural_network) return;
+
     const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
 
     const Index layers_number = neural_network_layers.size();
@@ -1943,11 +1937,21 @@ void NeuralNetworkBackPropagation::print() const
 }
 
 
+ForwardPropagation::ForwardPropagation(const Index& new_batch_samples_number,
+                                       NeuralNetwork* new_neural_network)
+{
+    set(new_batch_samples_number, new_neural_network);
+}
+
+
 void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
+
     batch_samples_number = new_batch_samples_number;
 
     neural_network = new_neural_network;
+
+    if(!neural_network) return;
 
     const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
 

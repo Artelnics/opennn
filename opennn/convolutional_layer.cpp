@@ -183,27 +183,27 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
 }
 */
 
-void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activations_derivatives) const
+void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activation_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: return;
     }
@@ -223,7 +223,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     Tensor<type, 4>& preprocessed_inputs = convolutional_layer_forward_propagation->preprocessed_inputs;
 
-    Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
+    Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
     preprocess_inputs(inputs, preprocessed_inputs); 
     
@@ -240,7 +240,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     }
 
     if(is_training)
-        calculate_activations(outputs, activations_derivatives);
+        calculate_activations(outputs, activation_derivatives);
     else
         calculate_activations(outputs, empty);
 }
@@ -276,7 +276,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
+    const Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
@@ -317,7 +317,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Convolutions derivatives
 
-    convolutions_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
+    convolutions_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
 
     // Biases synaptic weights and input derivatives
 
@@ -966,7 +966,7 @@ void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_nu
 
     standard_deviations.resize(kernels_number);
 
-    activations_derivatives.resize(batch_samples_number,
+    activation_derivatives.resize(batch_samples_number,
                                    output_height,
                                    output_width,
                                    kernels_number);
@@ -978,8 +978,8 @@ void ConvolutionalLayerForwardPropagation::print() const
     cout << "Convolutional layer" << endl
          << "Outputs:" << endl
          << outputs << endl
-         << "Activations derivatives:" << endl
-         << activations_derivatives << endl;
+         << "Activation derivatives:" << endl
+         << activation_derivatives << endl;
 }
 
 

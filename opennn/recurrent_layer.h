@@ -178,7 +178,7 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2> current_inputs;
     Tensor<type, 2> current_activations_derivatives;
 
-    Tensor<type, 3> activations_derivatives;
+    Tensor<type, 3> activation_derivatives;
 };
 
 

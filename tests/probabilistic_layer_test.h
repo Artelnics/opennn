@@ -44,7 +44,7 @@ private:
     Tensor<type, 2> outputs;
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
-    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> activation_derivatives;
 
     pair<type*, dimensions> input_pairs;
 

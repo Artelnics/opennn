@@ -228,7 +228,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
    Tensor<type, 1> means;
    Tensor<type, 1> standard_deviations;
 
-   Tensor<type, 4> activations_derivatives;
+   Tensor<type, 4> activation_derivatives;
 };
 
 

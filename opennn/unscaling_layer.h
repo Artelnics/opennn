@@ -25,7 +25,7 @@ class UnscalingLayer : public Layer
 
 public:
 
-   explicit UnscalingLayer(const dimensions& = {0});
+   explicit UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
    
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
@@ -44,7 +44,7 @@ public:
 
    const bool& get_display() const;
 
-   void set(const Index& = 0);
+   void set(const Index& = 0, const string& = "unscaling_layer");
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
 
    void set_inputs_number(const Index&) final;
