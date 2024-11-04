@@ -450,7 +450,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
             sample_transformed_input.device(*thread_pool_device)
                 = sample_matrix.contract(head_weights, A_B);
 
-            sum_columns(thread_pool_device, head_biases, sample_transformed_input);
+            sum_columns(thread_pool_device.get(), head_biases, sample_transformed_input);
         }
     }
 }
@@ -489,7 +489,7 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 
     outputs.device(*thread_pool_device) = projection_outputs.sum(projection_sum_index);
 
-    sum_matrices(thread_pool_device, projection_biases, outputs);
+    sum_matrices(thread_pool_device.get(), projection_biases, outputs);
 }
 
 
@@ -498,7 +498,7 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
                                                        Tensor<type, 4>& attention_scores,
                                                        Tensor<type, 4>& attention_weights) const
 {
-    batch_matrix_multiplication(thread_pool_device, key, query, attention_scores, A_BT);
+    batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_scores, A_BT);
 
     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
@@ -514,7 +514,7 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& v
                                                        const Tensor<type, 4>& attention_weights,
                                                        Tensor<type, 4>& attention_outputs) const 
 {
-    batch_matrix_multiplication(thread_pool_device, attention_weights, value, attention_outputs, AT_B);
+    batch_matrix_multiplication(thread_pool_device.get(), attention_weights, value, attention_outputs, AT_B);
 }
 
 
@@ -776,7 +776,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 
         // VALUE DERIVATIVES
         
-        batch_matrix_multiplication(thread_pool_device, head_attention_weights, head_attention_output_derivatives, head_value_derivatives, A_B);
+        batch_matrix_multiplication(thread_pool_device.get(), head_attention_weights, head_attention_output_derivatives, head_value_derivatives, A_B);
 
         // VALUE WEIGHTS DERIVATIVES
 
@@ -785,7 +785,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
         
         // ATTENTION WEIGHTS DERIVATIVES
         
-        batch_matrix_multiplication(thread_pool_device, head_value, head_attention_output_derivatives, head_attention_weights_derivatives, A_BT);
+        batch_matrix_multiplication(thread_pool_device.get(), head_value, head_attention_output_derivatives, head_attention_weights_derivatives, A_BT);
 
         // ATTENTION SCORES DERIVATIVES
         
@@ -795,11 +795,11 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 
         // QUERY DERIVATIVES
 
-        batch_matrix_multiplication(thread_pool_device, head_attention_scores_derivatives, head_key, head_query_derivatives, AT_B);
+        batch_matrix_multiplication(thread_pool_device.get(), head_attention_scores_derivatives, head_key, head_query_derivatives, AT_B);
     
         // KEY DERIVATIVES
 
-        batch_matrix_multiplication(thread_pool_device, head_attention_scores_derivatives, head_query, head_key_derivatives, A_B);
+        batch_matrix_multiplication(thread_pool_device.get(), head_attention_scores_derivatives, head_query, head_key_derivatives, A_B);
 
         // QUERY WEIGHTS DERIVATIVES
 

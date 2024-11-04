@@ -27,9 +27,7 @@ public:
 
    explicit UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
    
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
-
+   dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const final;
 
    Tensor<Descriptives, 1> get_descriptives() const; 
@@ -55,7 +53,6 @@ public:
    void set_item_descriptives(const Index&, const Descriptives&);
 
    void set_min_max_range(const type min, const type max);
-
 
    void set_scalers(const Tensor<Scaler,1>&);
    void set_scalers(const string&);

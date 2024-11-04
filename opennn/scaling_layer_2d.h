@@ -26,11 +26,8 @@ public:
 
    explicit ScalingLayer2D(const dimensions& = {0});
 
-   dimensions get_output_dimensions() const;
-
-   Index get_inputs_number() const final;
    dimensions get_input_dimensions() const;
-   Index get_neurons_number() const final;
+   dimensions get_output_dimensions() const;
 
    Tensor<Descriptives, 1> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
@@ -51,8 +48,6 @@ public:
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
-
-   void set_default();
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
    void set_item_descriptives(const Index&, const Descriptives&);

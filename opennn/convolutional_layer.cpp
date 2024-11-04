@@ -28,12 +28,6 @@ ConvolutionalLayer::ConvolutionalLayer(const dimensions& new_input_dimensions,
 }
 
 
-bool ConvolutionalLayer::is_empty() const
-{
-    return biases.size() == 0 && synaptic_weights.size() == 0;
-}
-
-
 bool ConvolutionalLayer::get_batch_normalization() const
 {
     return batch_normalization;
@@ -380,8 +374,8 @@ void ConvolutionalLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_
 {
     // Convolutional layer
 
-    const Index synaptic_weights_number = get_synaptic_weights_number();
-    const Index biases_number = get_biases_number();
+    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index biases_number = biases.size();
 
     // Back-propagation
 
@@ -568,22 +562,6 @@ Index ConvolutionalLayer::get_padding_width() const
     }
 
     throw runtime_error("Unknown convolution type");
-}
-
-
-Index ConvolutionalLayer::get_inputs_number() const
-{
-    return get_input_channels() * get_input_height() * get_input_width();
-}
-
-
-Index ConvolutionalLayer::get_neurons_number() const
-{
-    const Index kernels_number = get_kernels_number();
-    const Index kernel_height = get_kernel_height();
-    const Index kernel_width = get_kernel_width();
-
-    return kernels_number * kernel_height * kernel_width;
 }
 
 
@@ -774,12 +752,6 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 }
 
 
-Index ConvolutionalLayer::get_biases_number() const
-{
-    return biases.size();
-}
-
-
 pair<Index, Index> ConvolutionalLayer::get_padding() const
 {
     switch(convolution_type)
@@ -827,12 +799,6 @@ Eigen::array<pair<Index, Index>, 4> ConvolutionalLayer::get_paddings() const
 Eigen::array<ptrdiff_t, 4> ConvolutionalLayer::get_strides() const
 {   
     return Eigen::array<ptrdiff_t, 4>({1, row_stride, column_stride, 1});
-}
-
-
-Index ConvolutionalLayer::get_synaptic_weights_number() const
-{
-    return synaptic_weights.size();
 }
 
 

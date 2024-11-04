@@ -731,10 +731,13 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer() const
 
 Index NeuralNetwork::get_inputs_number() const
 {
+/*
     if(layers.empty())
         return 0;
 
     return layers[0]->get_inputs_number();
+*/
+    return 0;
 }
 
 
@@ -1170,8 +1173,8 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
         if (layer_type != Layer::Type::Perceptron) 
             continue;
 
-        information(perceptron_layer_index, 0) = to_string(layers[i]->get_inputs_number());
-        information(perceptron_layer_index, 1) = to_string(layers[i]->get_neurons_number());
+        information(perceptron_layer_index, 0) = to_string(layers[i]->get_input_dimensions()[0]);
+        information(perceptron_layer_index, 1) = to_string(layers[i]->get_output_dimensions()[0]);
 
         const PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(layers[i].get());
 
@@ -1201,8 +1204,8 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
         if (layer_type != Layer::Type::Probabilistic) 
             continue;
 
-        information(probabilistic_layer_index,0) = to_string(layers[i]->get_inputs_number());
-        information(probabilistic_layer_index,1) = to_string(layers[i]->get_neurons_number());
+        information(probabilistic_layer_index,0) = to_string(layers[i]->get_input_dimensions()[0]);
+        information(probabilistic_layer_index,1) = to_string(layers[i]->get_output_dimensions()[0]);
 
         const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(layers[i].get());
 

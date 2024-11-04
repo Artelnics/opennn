@@ -7,13 +7,6 @@
 namespace opennn
 {
 
-Batch::~Batch()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-}
-
-
 void Batch::fill(const Tensor<Index, 1>& samples_indices,
                  const Tensor<Index, 1>& inputs_indices,
                  const Tensor<Index, 1>& targets_indices,
@@ -114,16 +107,10 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 {
     const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    thread_pool = make_unique<ThreadPool>(n);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), n);
 
     set(new_samples_number, new_data_set);
-}
-
-
-bool Batch::is_empty() const
-{
-    return get_batch_samples_number() == 0;
 }
 
 

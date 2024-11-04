@@ -30,19 +30,6 @@ dimensions ScalingLayer4D::get_output_dimensions() const
 }
 
 
-Index ScalingLayer4D::get_inputs_number() const
-{
-    return input_dimensions[0]*input_dimensions[1]*input_dimensions[2];
-}
-
-
-Index ScalingLayer4D::get_neurons_number() const
-{
-    // ??
-    return 0;
-}
-
-
 const bool& ScalingLayer4D::get_display() const
 {
     return display;
@@ -78,7 +65,7 @@ void ScalingLayer4D::set_display(const bool& new_display)
 
 bool ScalingLayer4D::is_empty() const
 {
-    const Index inputs_number = get_neurons_number();
+    const Index inputs_number = get_output_dimensions()[0];
 
     return inputs_number == 0;
 }

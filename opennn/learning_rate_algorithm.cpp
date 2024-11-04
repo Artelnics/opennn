@@ -19,13 +19,6 @@ LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index)
 }
 
 
-LearningRateAlgorithm::~LearningRateAlgorithm()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-}
-
-
 LossIndex* LearningRateAlgorithm::get_loss_index() const
 {
     return loss_index;
@@ -81,13 +74,14 @@ void LearningRateAlgorithm::set(LossIndex* new_loss_index)
 
 void LearningRateAlgorithm::set_default()
 {
+/*
     delete thread_pool;
     delete thread_pool_device;
 
     const int n = omp_get_max_threads();
     thread_pool = new ThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-
+*/
     // TRAINING OPERATORS
 
     learning_rate_method = LearningRateMethod::BrentMethod;
@@ -107,11 +101,13 @@ void LearningRateAlgorithm::set_loss_index(LossIndex* new_loss_index)
 
 void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
 {
+/*
     if(thread_pool) delete thread_pool;
     if(thread_pool_device) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+*/
 }
 
 

@@ -58,18 +58,6 @@ dimensions PerceptronLayer3D::get_output_dimensions() const
 }
 
 
-Index PerceptronLayer3D::get_biases_number() const
-{
-    return biases.size();
-}
-
-
-Index PerceptronLayer3D::get_synaptic_weights_number() const
-{
-    return synaptic_weights.size();
-}
-
-
 Index PerceptronLayer3D::get_parameters_number() const
 {
     return biases.size() + synaptic_weights.size();
@@ -249,7 +237,7 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
-    sum_matrices(thread_pool_device, biases, combinations);
+    sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
 
@@ -393,8 +381,8 @@ void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_p
                                       const Index& index,
                                       Tensor<type, 1>& gradient) const
 {
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index biases_number = biases.size();
+    const Index synaptic_weights_number = synaptic_weights.size();
 
     PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
         static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());

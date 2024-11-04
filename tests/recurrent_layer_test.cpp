@@ -36,7 +36,6 @@ void RecurrentLayerTest::test_constructor()
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
     assert_true(recurrent_layer.get_parameters_number() == 3, LOG);
-    assert_true(recurrent_layer.get_biases_number() == 1, LOG);
 
     // Test
 
@@ -46,7 +45,6 @@ void RecurrentLayerTest::test_constructor()
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
     assert_true(recurrent_layer.get_parameters_number() == 18, LOG);
-    assert_true(recurrent_layer.get_biases_number() == 3, LOG);
 }
 
 

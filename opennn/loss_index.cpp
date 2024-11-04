@@ -21,13 +21,6 @@ LossIndex::LossIndex(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 }
 
 
-LossIndex::~LossIndex()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-}
-
-
 const type& LossIndex::get_regularization_weight() const
 {
     return regularization_weight;
@@ -64,13 +57,10 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
     data_set = new_data_set;
 
-    delete thread_pool;
-    delete thread_pool_device;
-
     const int n = omp_get_max_threads();
 
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    thread_pool = make_unique<ThreadPool>(n);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), n);
 
     regularization_method = RegularizationMethod::L2;
 }
@@ -78,11 +68,13 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
+/*
     if(thread_pool) delete thread_pool;
     if(thread_pool_device) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+*/
 }
 
 
@@ -172,7 +164,7 @@ void LossIndex::back_propagate(const Batch& batch,
                                ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
 {
-    if(batch.is_empty()) return;
+//    if(batch.is_empty()) return;
 
     // Loss index
 
@@ -347,10 +339,10 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
             return type(0);
 
         case RegularizationMethod::L1: 
-            return l1_norm(thread_pool_device, parameters);
+            return l1_norm(thread_pool_device.get(), parameters);
 
         case RegularizationMethod::L2: 
-            return l2_norm(thread_pool_device, parameters);
+            return l2_norm(thread_pool_device.get(), parameters);
 
         default: 
             return type(0);
@@ -368,10 +360,10 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
         regularization_gradient.setZero(); return;
 
     case RegularizationMethod::L1:
-        l1_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
+        l1_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient); return;
 
     case RegularizationMethod::L2:
-        l2_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
+        l2_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient); return;
 
     default:
         return;
@@ -384,11 +376,11 @@ void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Te
     switch(regularization_method)
     {
     case RegularizationMethod::L1:
-        l1_norm_hessian(thread_pool_device, parameters, regularization_hessian);
+        l1_norm_hessian(thread_pool_device.get(), parameters, regularization_hessian);
         return;
 
     case RegularizationMethod::L2:
-        l2_norm_hessian(thread_pool_device, parameters, regularization_hessian);
+        l2_norm_hessian(thread_pool_device.get(), parameters, regularization_hessian);
         return;
 
     default:

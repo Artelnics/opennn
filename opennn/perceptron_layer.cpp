@@ -18,42 +18,24 @@ namespace opennn
 PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
                                  const dimensions& new_output_dimensions,
                                  const ActivationFunction& new_activation_function,
-                                 const string new_layer_name)
+                                 const string new_layer_name) : Layer()
 {
-    set(new_input_dimensions[0],
-        new_output_dimensions[0],
+    set(new_input_dimensions,
+        new_output_dimensions,
         new_activation_function,
         new_layer_name);
 }
 
 
-Index PerceptronLayer::get_inputs_number() const
+dimensions PerceptronLayer::get_input_dimensions() const
 {
-    return synaptic_weights.dimension(0);
+    return { synaptic_weights.dimension(0) };
 }
 
 
 void PerceptronLayer::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
-}
-
-
-Index PerceptronLayer::get_neurons_number() const
-{
-    return biases.size();
-}
-
-
-Index PerceptronLayer::get_biases_number() const
-{
-    return biases.size();
-}
-
-
-Index PerceptronLayer::get_synaptic_weights_number() const
-{
-    return synaptic_weights.size();
 }
 
 
@@ -71,7 +53,7 @@ type PerceptronLayer::get_dropout_rate() const
 
 dimensions PerceptronLayer::get_output_dimensions() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     return { neurons_number };
 }
@@ -140,14 +122,20 @@ const bool& PerceptronLayer::get_display() const
 }
 
 
-void PerceptronLayer::set(const Index& new_inputs_number,
-                          const Index& new_neurons_number,
+void PerceptronLayer::set(const dimensions& new_input_dimensions,
+                          const dimensions& new_output_dimensions,
                           const PerceptronLayer::ActivationFunction& new_activation_function,
                           const string new_name)
 {
-    biases.resize(new_neurons_number);
+    if (new_input_dimensions.size() != 1) 
+        throw runtime_error("Input dimensions rank is not 1");
 
-    synaptic_weights.resize(new_inputs_number, new_neurons_number);
+    if (new_output_dimensions.size() != 1)
+        throw runtime_error("Output dimensions rank is not 1");
+
+    biases.resize(new_output_dimensions[0]);
+
+    synaptic_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
 
@@ -163,7 +151,7 @@ void PerceptronLayer::set(const Index& new_inputs_number,
 
 void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     biases.resize(neurons_number);
 
@@ -173,7 +161,7 @@ void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 
 void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 {
-    const Index inputs_number = get_inputs_number();
+    const Index inputs_number = get_input_dimensions()[0];
 
     biases.resize(new_neurons_number);
 
@@ -187,8 +175,8 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     type* synaptic_weights_data = synaptic_weights.data();
     type* biases_data = biases.data();
 
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index biases_number = biases.size();
+    const Index synaptic_weights_number = synaptic_weights.size();
 
     memcpy(synaptic_weights_data, new_parameters_data + index, synaptic_weights_number*sizeof(type));
 
@@ -254,7 +242,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
-    sum_columns(thread_pool_device, biases, combinations);
+    sum_columns(thread_pool_device.get(), biases, combinations);
 }
 
 
@@ -384,10 +372,10 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_input_dimensions()[0];
+    const Index neurons_number = get_output_dimensions()[0];
 
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index synaptic_weights_number = synaptic_weights.size();
 
     // Forward propagation
 
@@ -454,8 +442,8 @@ void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_pro
                                       const Index& index,
                                       Tensor<type, 1>& gradient) const
 {
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index biases_number = biases.size();
+    const Index synaptic_weights_number = synaptic_weights.size();
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
         static_cast<PerceptronLayerBackPropagation*>(back_propagation.get());
@@ -520,8 +508,8 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& input_names,
 void PerceptronLayer::print() const
 {
     cout << "Perceptron layer" << endl
-         << "Inputs number: " << get_inputs_number() << endl
-         << "Neurons number: " << get_neurons_number() << endl
+         << "Input dimensions: " << get_input_dimensions()[0] << endl
+         << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
 
@@ -552,8 +540,8 @@ void PerceptronLayer::to_XML(tinyxml2::XMLPrinter& printer) const
     printer.OpenElement("Perceptron");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
-    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "ActivationFunction", write_activation_function());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
@@ -604,7 +592,7 @@ void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_numbe
     
     batch_samples_number = new_batch_samples_number;
     
-    const Index neurons_number = layer->get_neurons_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
     
     outputs.resize(batch_samples_number, neurons_number);
        
@@ -616,9 +604,9 @@ void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_numbe
 
 pair<type *, dimensions> PerceptronLayerForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const dimensions output_dimensions = layer->get_output_dimensions();
     
-    return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, neurons_number}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, output_dimensions[0]}});
 }
 
 
@@ -653,8 +641,8 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
     
     batch_samples_number = new_batch_samples_number;
     
-    const Index neurons_number = layer->get_neurons_number();
-    const Index inputs_number = layer->get_inputs_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
 
     combinations_derivatives.resize(batch_samples_number, neurons_number);
     combinations_derivatives.setZero();
@@ -671,7 +659,7 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
 
 vector<pair<type*, dimensions>> PerceptronLayerBackPropagation::get_input_derivative_pairs() const
 {
-    const Index inputs_number = layer->get_inputs_number();
+    const Index inputs_number = layer->get_input_dimensions()[0];
 
     return { {(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
 }
@@ -702,8 +690,8 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_batch_samples_number
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index neurons_number = layer->get_neurons_number();
-    const Index inputs_number = layer->get_inputs_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
     const Index parameters_number = layer->get_parameters_number();
 
     squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
@@ -716,7 +704,7 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_batch_samples_number
 
 vector<pair<type*, dimensions>> PerceptronLayerBackPropagationLM::get_input_derivative_pairs() const
 {
-    const Index inputs_number = layer->get_inputs_number();
+    const Index inputs_number = layer->get_input_dimensions()[0];
 
     return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}}};
 }

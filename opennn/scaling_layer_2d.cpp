@@ -21,27 +21,15 @@ ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
 }
 
 
-dimensions ScalingLayer2D::get_output_dimensions() const
-{
-    return input_dimensions;
-}
-
-
-Index ScalingLayer2D::get_inputs_number() const
-{
-    return descriptives.size();
-}
-
-
 dimensions ScalingLayer2D::get_input_dimensions() const
 {
     return input_dimensions;
 }
 
 
-Index ScalingLayer2D::get_neurons_number() const
+dimensions ScalingLayer2D::get_output_dimensions() const
 {
-    return descriptives.size();
+    return input_dimensions;
 }
 
 
@@ -59,7 +47,7 @@ Descriptives ScalingLayer2D::get_descriptives(const Index& index) const
 
 Tensor<type, 1> ScalingLayer2D::get_minimums() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<type, 1> minimums(neurons_number);
 
@@ -73,7 +61,7 @@ Tensor<type, 1> ScalingLayer2D::get_minimums() const
 
 Tensor<type, 1> ScalingLayer2D::get_maximums() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<type, 1> maximums(neurons_number);
 
@@ -87,7 +75,7 @@ Tensor<type, 1> ScalingLayer2D::get_maximums() const
 
 Tensor<type, 1> ScalingLayer2D::get_means() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<type, 1> means(neurons_number);
 
@@ -101,7 +89,7 @@ Tensor<type, 1> ScalingLayer2D::get_means() const
 
 Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<type, 1> standard_deviations(neurons_number);
 
@@ -121,7 +109,7 @@ Tensor<Scaler, 1> ScalingLayer2D::get_scaling_methods() const
 
 Tensor<string, 1> ScalingLayer2D::write_scalers() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
@@ -146,7 +134,7 @@ Tensor<string, 1> ScalingLayer2D::write_scalers() const
 
 Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
@@ -177,6 +165,9 @@ const bool& ScalingLayer2D::get_display() const
 
 void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 {
+    if (new_input_dimensions.size() != 1)
+        throw runtime_error("Input dimensions rank is not 1");
+
     const Index new_inputs_number = accumulate(new_input_dimensions.begin(), new_input_dimensions.end(), 1, multiplies<Index>());
 
     descriptives.resize(new_inputs_number);
@@ -186,7 +177,15 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 
     input_dimensions = new_input_dimensions;
 
-    set_default();
+    name = "scaling_layer";
+
+    set_scalers(Scaler::MeanStandardDeviation);
+
+    set_min_max_range(type(-1), type(1));
+
+    set_display(true);
+
+    layer_type = Type::Scaling2D;
 }
 
 
@@ -207,20 +206,6 @@ void ScalingLayer2D::set_neurons_number(const Index& new_neurons_number)
     scalers.resize(new_neurons_number);
 
     scalers.setConstant(Scaler::MeanStandardDeviation);
-}
-
-
-void ScalingLayer2D::set_default()
-{
-    name = "scaling_layer";
-
-    set_scalers(Scaler::MeanStandardDeviation);
-
-    set_min_max_range(type(-1), type(1));
-
-    set_display(true);
-
-    layer_type = Type::Scaling2D;
 }
 
 
@@ -275,7 +260,7 @@ void ScalingLayer2D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
 
 void ScalingLayer2D::set_scalers(const Tensor<string, 1>& new_scaling_methods_string)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<Scaler, 1> new_scaling_methods(neurons_number);
 
@@ -323,7 +308,7 @@ void ScalingLayer2D::set_scaler(const Index& variable_index, const string& new_s
 
 void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
@@ -333,7 +318,7 @@ void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 
 void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
@@ -349,7 +334,7 @@ void ScalingLayer2D::set_display(const bool& new_display)
 
 bool ScalingLayer2D::is_empty() const
 {
-    return get_neurons_number() == 0;
+    return get_output_dimensions()[0] == 0;
 }
 
 
@@ -357,7 +342,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation =
         static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation.get());
@@ -433,7 +418,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
 string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
-    const Index inputs_number = get_neurons_number();
+    const Index inputs_number = get_output_dimensions()[0];
 
     ostringstream buffer;
 
@@ -448,7 +433,7 @@ string ScalingLayer2D::write_no_scaling_expression(const Tensor<string, 1>& inpu
 
 string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
-    const Index inputs_number = get_neurons_number();
+    const Index inputs_number = get_output_dimensions()[0];
 
     ostringstream buffer;
 
@@ -463,7 +448,7 @@ string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>&
 
 string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
-    const Index inputs_number = get_neurons_number();
+    const Index inputs_number = get_input_dimensions()[0];
 
     ostringstream buffer;
 
@@ -478,7 +463,7 @@ string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<str
 
 string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
-    const Index inputs_number = get_neurons_number();
+    const Index inputs_number = get_output_dimensions()[0];
 
     ostringstream buffer;
 
@@ -493,7 +478,7 @@ string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 
 
 string ScalingLayer2D::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>&) const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     ostringstream buffer;
 
@@ -540,7 +525,7 @@ void ScalingLayer2D::print() const
 {
     cout << "Scaling layer" << endl;
 
-    const Index inputs_number = get_inputs_number();
+    const Index inputs_number = get_input_dimensions()[0];
 
     const Tensor<string, 1> scalers_text = write_scalers_text();
 
@@ -559,9 +544,9 @@ void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& printer) const
     printer.OpenElement("Scaling2D");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
 
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
     const Tensor<string, 1> scaling_methods_string = write_scalers();
 
     for (Index i = 0; i < neurons_number; i++) 
@@ -640,9 +625,9 @@ ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& 
 
 pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return {(type*)outputs.data(), {batch_samples_number, neurons_number}};
+    return {(type*)outputs.data(), {batch_samples_number, output_dimensions[0]}};
 }
 
 
@@ -650,7 +635,7 @@ void ScalingLayer2DForwardPropagation::set(const Index& new_batch_samples_number
 {
     layer = new_layer;
 
-    const Index neurons_number = layer->get_neurons_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
 
     batch_samples_number = new_batch_samples_number;
 

@@ -32,8 +32,6 @@ public:
 
    explicit LearningRateAlgorithm(LossIndex* = nullptr);
 
-   virtual ~LearningRateAlgorithm();
-
    struct Triplet
    {
        Triplet()
@@ -198,8 +196,8 @@ protected:
 
    const type golden_ratio = type(1.618);
 
-   ThreadPool* thread_pool = nullptr;
-   ThreadPoolDevice* thread_pool_device = nullptr;
+   unique_ptr<ThreadPool> thread_pool;
+   unique_ptr<ThreadPoolDevice> thread_pool_device;
 };
 
 }
