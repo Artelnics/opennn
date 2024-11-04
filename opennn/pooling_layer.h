@@ -50,8 +50,6 @@ public:
     Index get_input_width() const;
     Index get_channels_number() const;
 
-    Index get_neurons_number() const;
-
     Index get_output_height() const;
     Index get_output_width() const;
 

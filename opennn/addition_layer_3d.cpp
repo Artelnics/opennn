@@ -115,10 +115,10 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
 void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const auto* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
+    const auto* addition_layer_element = document.FirstChildElement("Addition3D");
 
     if (!addition_layer_element)
-        throw runtime_error("AdditionLayer3D element is nullptr.\n");
+        throw runtime_error("Addition3D element is nullptr.\n");
 
     set_name(read_xml_string(addition_layer_element, "Name"));    
     set_inputs_number(read_xml_index(addition_layer_element, "InputsNumber"));
@@ -128,7 +128,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
 void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("AdditionLayer3D");
+    printer.OpenElement("Addition3D");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));

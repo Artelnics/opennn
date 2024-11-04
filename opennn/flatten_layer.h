@@ -44,7 +44,6 @@ public:
     Index get_input_channels() const;
     Index get_input_height() const;
     Index get_input_width() const;
-    Index get_neurons_number() const;
 
     void set(const dimensions & = {0,0,0});
 

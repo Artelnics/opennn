@@ -13,7 +13,9 @@
 namespace opennn
 {
 
-ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
+ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, 
+                                           const Index& new_inputs_depth, 
+                                           const Index& new_neurons_number)
 {
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
 }
@@ -40,18 +42,6 @@ Index ProbabilisticLayer3D::get_neurons_number() const
 dimensions ProbabilisticLayer3D::get_output_dimensions() const
 {
     return { inputs_number, get_neurons_number() };
-}
-
-
-Index ProbabilisticLayer3D::get_biases_number() const
-{
-    return biases.size();
-}
-
-
-Index ProbabilisticLayer3D::get_synaptic_weights_number() const
-{
-    return synaptic_weights.size();
 }
 
 
@@ -119,7 +109,9 @@ Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
 }
 
 
-void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
+void ProbabilisticLayer3D::set(const Index& new_inputs_number, 
+                               const Index& new_inputs_depth, 
+                               const Index& new_neurons_number)
 {
     inputs_number = new_inputs_number;
 
@@ -249,7 +241,7 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
-    sum_matrices(thread_pool_device, biases, combinations);
+    sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
 
@@ -357,7 +349,7 @@ void ProbabilisticLayer3D::calculate_combinations_derivatives(const Tensor<type,
         for(Index j = 0; j < outputs_number; j++)
             combinations_derivatives(i, j, Index(targets(i, j)))--;
 
-    multiply_matrices(thread_pool_device, combinations_derivatives, mask);
+    multiply_matrices(thread_pool_device.get(), combinations_derivatives, mask);
 }
 
 
@@ -365,8 +357,8 @@ void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
                                            const Index& index,
                                            Tensor<type, 1>& gradient) const
 {
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index biases_number = biases.size();
+    const Index synaptic_weights_number = synaptic_weights.size();
 
     const ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.get());
@@ -389,10 +381,10 @@ void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
 
 void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer3D");
+    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic3D");
 
     if(!probabilistic_layer_element)
-        throw runtime_error("ProbabilisticLayer3D element is nullptr.\n");
+        throw runtime_error("Probabilistic3D element is nullptr.\n");
 
     set_name(read_xml_string(probabilistic_layer_element, "Name"));
     set_inputs_number(read_xml_index(probabilistic_layer_element, "InputsNumber"));
@@ -406,7 +398,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
 void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("ProbabilisticLayer3D");
+    printer.OpenElement("Probabilistic3D");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
@@ -456,7 +448,7 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
 void ProbabilisticLayer3DForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
-        << outputs << endl;
+         << outputs << endl;
 }
 
 

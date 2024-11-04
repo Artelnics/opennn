@@ -23,8 +23,6 @@ public:
 
    explicit UnitTesting();
 
-   virtual ~UnitTesting();
-
    // Get
 
    Index get_tests_count() const;

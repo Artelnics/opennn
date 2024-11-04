@@ -51,13 +51,7 @@ public:
                                 const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
                                 const string = "convolutional_layer");
 
-    bool is_empty() const;
-
     bool get_batch_normalization() const;
-
-    Index get_biases_number() const;
-
-    Index get_synaptic_weights_number() const;
 
     ActivationFunction get_activation_function() const;
 
@@ -93,9 +87,6 @@ public:
     Index get_input_channels() const;
     Index get_input_height() const;
     Index get_input_width() const;
-
-    Index get_inputs_number() const;
-    Index get_neurons_number() const;
 
     Tensor<type, 1> get_parameters() const final;
     Index get_parameters_number() const final;

@@ -40,22 +40,12 @@ public:
 
    explicit RecurrentLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   bool is_empty() const;
-
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
-
+   dimensions get_input_dimensions() const final;
    dimensions get_output_dimensions() const final;
-
-   const Tensor<type, 3>& get_hidden_states() const;
 
    // Parameters
 
    Index get_timesteps() const;
-
-   Index get_biases_number() const;
-   Index get_input_weights_number() const;
-   Index get_recurrent_weights_number() const;
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
@@ -135,7 +125,6 @@ public:
    // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&) final;
-
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:

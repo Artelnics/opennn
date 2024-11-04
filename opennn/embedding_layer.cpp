@@ -86,10 +86,10 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 }
 
 
-Index EmbeddingLayer::get_neurons_number() const
-{
-    return inputs_number * depth;
-}
+//Index EmbeddingLayer::get_neurons_number() const
+//{
+//    return inputs_number * depth;
+//}
 
 
 const bool& EmbeddingLayer::get_display() const
@@ -139,26 +139,32 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 }
 
 
-// void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
-// {
-//     input_dimensions = new_inputs_dimension;
+void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
+{
+    input_dimensions = new_inputs_dimension;
 
-//     set_embedding_weights();
-// }
-
-
-// void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
-// {
-//     inputs_number = new_inputs_number;
-// }
+    set_embedding_weights();
+}
 
 
-// void EmbeddingLayer::set_depth(const Index& new_depth)
-// {
-//     depth = new_depth;
+void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
+{
+    inputs_number = new_inputs_number;
+}
 
-//     set_embedding_weights();
-// }
+
+void EmbeddingLayer::set_depth(const Index& new_depth)
+{
+    depth = new_depth;
+
+    set_embedding_weights();
+}
+
+
+void EmbeddingLayer::set_positional_encoding(const bool& new_positional_encoding)
+{
+    positional_encoding = new_positional_encoding;
+}
 
 
 void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
@@ -332,25 +338,23 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     // Embedding layer
 
-    const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("EmbeddingLayer");
+    const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("Embedding");
 
     if(!embedding_layer_element)
-        throw runtime_error("EmbeddingLayer element is nullptr.\n");
+        throw runtime_error("Embedding element is nullptr.\n");
 
     set_name(read_xml_string(embedding_layer_element, "Name"));
-//    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
-//    set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
-//    set_depth(read_xml_index(embedding_layer_element, "Depth"));
-
-    positional_encoding = read_xml_bool(embedding_layer_element, "PositionalEncoding");
-
+    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
+    set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
+    set_depth(read_xml_index(embedding_layer_element, "Depth"));
+    set_positional_encoding(read_xml_bool(embedding_layer_element, "PositionalEncoding"));
     set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "));
 }
 
 
 void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("EmbeddingLayer");
+    printer.OpenElement("Embedding");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));

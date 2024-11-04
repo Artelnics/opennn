@@ -45,15 +45,15 @@ public:
 
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
-    Index get_neurons_number() const final;
 
     const bool& get_display() const;
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
-//    void set_input_dimensions(const Index&);
-//    void set_inputs_number(const Index&);
-//    void set_depth(const Index&);
+    void set_input_dimensions(const Index&);
+    void set_inputs_number(const Index&);
+    void set_depth(const Index&);
+    void set_positional_encoding(const bool&);
 
     void set_dropout_rate(const type&);
 

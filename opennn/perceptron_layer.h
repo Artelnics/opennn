@@ -43,22 +43,18 @@ public:
         HardSigmoid
     };
 
-    explicit PerceptronLayer(const dimensions& = {0},
-                             const dimensions& = {0},
-                             const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
-                             const string = "perceptron");
+    PerceptronLayer(const dimensions& = {0},
+                    const dimensions& = {0},
+                    const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                    const string = "perceptron");
 
-    Index get_inputs_number() const final;
-    Index get_neurons_number() const final;
+    dimensions get_input_dimensions() const final;
+    dimensions get_output_dimensions() const final;
 
     Tensor<type, 1> get_parameters() const final;
 
-    Index get_biases_number() const;
-    Index get_synaptic_weights_number() const;
     Index get_parameters_number() const final;
     type get_dropout_rate() const;
-
-    dimensions get_output_dimensions() const final;
 
     const PerceptronLayer::ActivationFunction& get_activation_function() const;
 
@@ -66,8 +62,8 @@ public:
 
     const bool& get_display() const;
 
-    void set(const Index& = 0,
-             const Index& = 0,
+    void set(const dimensions& = {0},
+             const dimensions& = {0},
              const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
              const string = "perceptron_layer");
 
@@ -135,7 +131,7 @@ protected:
 
     Tensor<type, 2> synaptic_weights;
 
-    ActivationFunction activation_function;
+    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
     type dropout_rate = type(0);
 

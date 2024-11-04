@@ -193,9 +193,9 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
     outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
 
-    multiply_matrices(thread_pool_device, outputs, gammas);
+    multiply_matrices(thread_pool_device.get(), outputs, gammas);
 
-    sum_matrices(thread_pool_device, betas, outputs);
+    sum_matrices(thread_pool_device.get(), betas, outputs);
 }
 
 
@@ -252,11 +252,11 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     scaled_deltas.device(*thread_pool_device) = deltas;
 
-    multiply_matrices(thread_pool_device, scaled_deltas, gammas);
+    multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
     aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * normalized_inputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
 
-    multiply_matrices(thread_pool_device, standard_deviation_derivatives, aux_2d);
+    multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
     scaled_deltas.device(*thread_pool_device) = scaled_deltas / (standard_deviations + epsilon);
 
@@ -264,7 +264,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * scaled_deltas.sum(sum_dimensions_1);
 
-    substract_matrices(thread_pool_device, aux_2d, input_derivatives);
+    substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
 }
 
 
@@ -304,10 +304,10 @@ void NormalizationLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
 
 void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* normalization_layer_element = document.FirstChildElement("NormalizationLayer3D");
+    const tinyxml2::XMLElement* normalization_layer_element = document.FirstChildElement("Normalization3D");
 
     if(!normalization_layer_element)
-        throw runtime_error("NormalizationLayer3D element is nullptr.\n");
+        throw runtime_error("Normalization3D element is nullptr.\n");
 
     set_name(read_xml_string(normalization_layer_element, "Name"));
     set_inputs_number(read_xml_index(normalization_layer_element, "InputsNumber"));
@@ -318,7 +318,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
 void NormalizationLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("NormalizationLayer3D");
+    printer.OpenElement("Normalization3D");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));

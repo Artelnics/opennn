@@ -81,13 +81,6 @@ DataSet::DataSet(const string& data_path,
 }
 
 
-DataSet::~DataSet()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-}
-
-
 const bool& DataSet::get_display() const
 {
     return display;
@@ -1482,12 +1475,6 @@ void DataSet::set_target_dimensions(const dimensions& new_targets_dimensions)
 }
 
 
-bool DataSet::is_empty() const
-{
-    return data.dimension(0) == 0 || data.dimension(1) == 0;
-}
-
-
 const Tensor<type, 2>& DataSet::get_data() const
 {
     return data;
@@ -2049,8 +2036,8 @@ void DataSet::set_display(const bool& new_display)
 void DataSet::set_default()
 {
     const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    thread_pool = make_unique<ThreadPool>(n);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), n);
 
     has_header = false;
 
@@ -2204,11 +2191,13 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
+/*
     if(thread_pool) delete thread_pool;
     if(thread_pool_device) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+*/
 }
 
 
@@ -2707,7 +2696,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
             const Tensor<type, 2> target_raw_variable_data 
                 = get_raw_variable_data(target_raw_variable_index, used_samples_indices);
             
-            correlations(i, j) = correlation(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -2739,7 +2728,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_cor
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_samples_indices);
 
-            correlations(i, j) = correlation_spearman(thread_pool_device, input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation_spearman(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -2859,7 +2848,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlation
             const Index current_input_index_j = input_raw_variables_indices(j);
 
             const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-                correlations_pearson(i, j) = correlation(thread_pool_device, input_i, input_j);
+                correlations_pearson(i, j) = correlation(thread_pool_device.get(), input_i, input_j);
 
             if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
                 correlations_pearson(i, j).r = type(1);
@@ -2899,7 +2888,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlatio
 
             const Tensor<type, 2> input_j = get_raw_variable_data(input_raw_variable_index_j);
 
-            correlations_spearman(i, j) = correlation_spearman(thread_pool_device, input_i, input_j);
+            correlations_spearman(i, j) = correlation_spearman(thread_pool_device.get(), input_i, input_j);
 
             if(correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
                 correlations_spearman(i, j).r = type(1);
