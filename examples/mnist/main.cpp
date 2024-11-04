@@ -27,19 +27,19 @@ int main()
         // Data set
         
         //Random image data set 
-        //onst Index samples_number = 10;
+        //const Index samples_number = 10;
         //const Index image_height = 4;
         //const Index image_width = 4;
         //const Index channels = 1;
 
-        //ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 2);
+        //ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 5);
 
         //image_data_set.set_image_data_random();
         
         ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        //image_data_set.set_data_source_path("C:/mnist/train");
-        image_data_set.set_data_source_path("C:/binary_mnist");
+        image_data_set.set_data_source_path("C:/mnist/train");
+        //image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
@@ -47,9 +47,7 @@ int main()
 
         image_data_set.read_bmp();
 
-        //image_data_set.print();      
-        
-        //image_data_set.set(DataSet::SampleUse::Training);
+        //image_data_set.print();
 
         // Neural network
 

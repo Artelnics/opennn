@@ -40,11 +40,7 @@ public:
 
    explicit LongShortTermMemoryLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   bool is_empty() const;
-
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
-
+   dimensions get_input_dimensions() const final;
    dimensions get_output_dimensions() const final;
 
    Index get_timesteps() const;

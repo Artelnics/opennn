@@ -109,29 +109,14 @@ class ProbabilisticLayer : public Layer
 
 public:
 
-    // Enumerations
-
     enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
 
-    // Constructors
+    explicit ProbabilisticLayer(const dimensions& = {0},
+                                const dimensions& = {0},
+                                const string& = "probabilistic_layer");
 
-    explicit ProbabilisticLayer();
-
-    explicit ProbabilisticLayer(const Index&, const Index&);
-
-    explicit ProbabilisticLayer(const dimensions&,
-                                const dimensions&,
-                                const string = "probabilistic_layer");
-
-    // Get
-
-    Index get_inputs_number() const final;
-    Index get_neurons_number() const final;
-
+    dimensions get_input_dimensions() const final;
     dimensions get_output_dimensions() const final;
-
-    Index get_biases_number() const;
-    Index get_synaptic_weights_number() const;
 
     const type& get_decision_threshold() const;
 
@@ -141,11 +126,9 @@ public:
 
     const bool& get_display() const;
 
-    // Set
-
-    void set(const Index& = 0, 
-             const Index& = 0, 
-             const string = "probabilistic_layer");
+    void set(const dimensions& = {0},
+             const dimensions & = {0},
+             const string& = "probabilistic_layer");
 
     void set_inputs_number(const Index&) final;
     void set_neurons_number(const Index&) final;
@@ -156,22 +139,14 @@ public:
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
 
-    // Parameters
-
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
 
-    // Display messages
-
     void set_display(const bool&);
-
-    // Parameters initialization
 
     void set_parameters_constant(const type&) final;
 
     void set_parameters_random() final;
-
-    // Forward propagation
 
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
@@ -179,13 +154,9 @@ public:
     void calculate_activations(const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
-    // Outputs
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
-
-    // Gradient
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
@@ -196,13 +167,9 @@ public:
                          const Index&,
                          Tensor<type, 1>&) const final;
 
-    // Squared errors
-
     void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                            const Index&,
                                            Tensor<type, 2>&) const final;
-
-    // Expression
 
     string write_binary_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
     string write_logistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
@@ -212,8 +179,6 @@ public:
     string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
     string write_combinations(const Tensor<string, 1>&) const;
     string write_activations(const Tensor<string, 1>&) const;
-
-    // Serialization
 
     void from_XML(const tinyxml2::XMLDocument&) final;
 
