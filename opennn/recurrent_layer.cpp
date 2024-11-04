@@ -594,10 +594,10 @@ string RecurrentLayer::write_activation_function_expression() const
 
 void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* recurrent_layer_element = document.FirstChildElement("RecurrentLayer");
+    const tinyxml2::XMLElement* recurrent_layer_element = document.FirstChildElement("Recurrent");
 
     if(!recurrent_layer_element)
-        throw runtime_error("RecurrentLayer element is nullptr.\n");
+        throw runtime_error("Recurrent element is nullptr.\n");
 
     set_inputs_number(read_xml_index(recurrent_layer_element, "InputsNumber"));
     set_neurons_number(read_xml_index(recurrent_layer_element, "NeuronsNumber"));
@@ -608,7 +608,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("RecurrentLayer");
+    printer.OpenElement("Recurrent");
 
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));

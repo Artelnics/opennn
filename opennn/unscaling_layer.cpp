@@ -399,29 +399,6 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
-{
-    printer.OpenElement("UnscalingLayer");
-
-    const Index neurons_number = get_neurons_number();
-    add_xml_element(printer, "UnscalingNeuronsNumber", to_string(neurons_number));
-
-    const Tensor<string, 1> scalers = write_unscaling_methods();
-
-    for (Index i = 0; i < neurons_number; i++) {
-        printer.OpenElement("UnscalingNeuron");
-        printer.PushAttribute("Index", int(i + 1));
-
-        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives(i).to_tensor()));
-        add_xml_element(printer, "Scaler", scalers(i));
-
-        printer.CloseElement();  
-    }
-
-    printer.CloseElement();
-}
-
-
 Tensor<string, 1> UnscalingLayer::write_scalers_text() const
 {
     const Index neurons_number = get_neurons_number();
@@ -464,12 +441,35 @@ void UnscalingLayer::print() const
 }
 
 
+void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+{
+    printer.OpenElement("Unscaling");
+
+    const Index neurons_number = get_neurons_number();
+    add_xml_element(printer, "UnscalingNeuronsNumber", to_string(neurons_number));
+
+    const Tensor<string, 1> scalers = write_unscaling_methods();
+
+    for (Index i = 0; i < neurons_number; i++) {
+        printer.OpenElement("UnscalingNeuron");
+        printer.PushAttribute("Index", int(i + 1));
+
+        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives(i).to_tensor()));
+        add_xml_element(printer, "Scaler", scalers(i));
+
+        printer.CloseElement();
+    }
+
+    printer.CloseElement();
+}
+
+
 void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("UnscalingLayer");
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Unscaling");
 
     if(!root_element)
-        throw runtime_error("Unscaling layer element is nullptr.\n");
+        throw runtime_error("Unscaling element is nullptr.\n");
 
     Index neurons_number = read_xml_index(root_element, "UnscalingNeuronsNumber");
     set(neurons_number);

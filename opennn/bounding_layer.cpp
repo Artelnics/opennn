@@ -238,7 +238,7 @@ void BoundingLayer::print() const
 
 void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("BoundingLayer");
+    printer.OpenElement("Bounding");
 
     add_xml_element(printer, "BoundingNeuronsNumber", to_string(get_neurons_number()));
 
@@ -263,10 +263,10 @@ void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const auto* root_element = document.FirstChildElement("BoundingLayer");
+    const auto* root_element = document.FirstChildElement("Bounding");
     
     if (!root_element)
-        throw runtime_error("BoundingLayer element is nullptr.\n");
+        throw runtime_error("Bounding element is nullptr.\n");
 
     const Index neurons_number = read_xml_index(root_element, "BoundingNeuronsNumber");
 

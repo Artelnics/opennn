@@ -2119,10 +2119,10 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
 void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* lstm_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
+    const tinyxml2::XMLElement* lstm_layer_element = document.FirstChildElement("LongShortTermMemory");
 
     if(!lstm_layer_element)
-        throw runtime_error("PerceptronLayer element is nullptr.\n");
+        throw runtime_error("LongShortTermMemory element is nullptr.\n");
 
     set_name(read_xml_string(lstm_layer_element, "Name"));
     set_inputs_number(read_xml_index(lstm_layer_element, "InputsNumber"));
@@ -2136,7 +2136,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("LongShortTermMemoryLayer");
+    printer.OpenElement("LongShortTermMemory");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));

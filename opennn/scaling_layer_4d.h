@@ -50,8 +50,7 @@ public:
 
    void print() const;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&) final;
-
+   void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:

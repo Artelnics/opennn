@@ -556,7 +556,7 @@ void ScalingLayer2D::print() const
 
 void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("ScalingLayer2D");
+    printer.OpenElement("Scaling2D");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
@@ -580,12 +580,12 @@ void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("ScalingLayer2D");
+    const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("Scaling2D");
 
     if(!scaling_layer_element)
-        throw runtime_error("Scaling layer element is nullptr.\n");
+        throw runtime_error("Scaling2D element is nullptr.\n");
 
-    name = read_xml_string(scaling_layer_element, "Name");
+    set_name(read_xml_string(scaling_layer_element, "Name"));
 
     const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
     set({ neurons_number });

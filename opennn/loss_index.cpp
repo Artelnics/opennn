@@ -759,7 +759,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     const vector<pair<type*, dimensions>>& input_pairs = batch.get_input_pairs();
 
-    TensorMap<Tensor<type, 1>> inputs_vector = tensor_map_1(input_pairs[0]);
+    TensorMap<Tensor<type, 4>> inputs_vector = tensor_map_4(input_pairs[0]);
 
     for (Index i = 0; i < inputs_number; i++)
     {

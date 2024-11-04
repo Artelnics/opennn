@@ -51,9 +51,10 @@ public:
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
-//    void set_input_dimensions(const Index&);
-//    void set_inputs_number(const Index&);
-//    void set_depth(const Index&);
+    void set_input_dimensions(const Index&);
+    void set_inputs_number(const Index&);
+    void set_depth(const Index&);
+    void set_positional_encoding(const bool&);
 
     void set_dropout_rate(const type&);
 

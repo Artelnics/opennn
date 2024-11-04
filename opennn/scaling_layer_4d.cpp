@@ -124,8 +124,6 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");
 
-    // Input dimensions
-
     set(string_to_dimensions(read_xml_string(scaling_layer_element, "InputDimensions")));
 
 }
