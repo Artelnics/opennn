@@ -73,12 +73,6 @@ Tensor<type, 1> NormalizationLayer3D::get_parameters() const
 }
 
 
-const bool& NormalizationLayer3D::get_display() const
-{
-    return display;
-}
-
-
 void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
     inputs_number = new_inputs_number;
@@ -119,12 +113,6 @@ void NormalizationLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
     memcpy(gammas.data(), new_parameters.data() + index, gammas.size()*sizeof(type));
 
     memcpy(betas.data(), new_parameters.data() + index + gammas.size(), betas.size()*sizeof(type));
-}
-
-
-void NormalizationLayer3D::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 

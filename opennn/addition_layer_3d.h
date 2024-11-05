@@ -37,14 +37,10 @@ public:
 
     dimensions get_output_dimensions() const final;
 
-    const bool& get_display() const;
-
     void set(const Index& = 0, const Index& = 0);
 
     void set_inputs_number(const Index&);
     void set_inputs_depth(const Index&);
-
-    void set_display(const bool&);
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,

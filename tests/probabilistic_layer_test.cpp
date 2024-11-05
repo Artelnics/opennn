@@ -33,7 +33,7 @@ void ProbabilisticLayerTest::test_constructor()
 
     ProbabilisticLayer probabilistic_layer_2;
 
-    probabilistic_layer_2.set_neurons_number(0);
+    probabilistic_layer_2.set_output_dimensions(0);
 
     assert_true(
         probabilistic_layer_2.get_inputs_number() == 0 &&
@@ -42,7 +42,7 @@ void ProbabilisticLayerTest::test_constructor()
 
     ProbabilisticLayer probabilistic_layer_3;
 
-    probabilistic_layer_3.set_neurons_number(3);
+    probabilistic_layer_3.set_output_dimensions(3);
 
     assert_true(
         probabilistic_layer_3.get_inputs_number() == 0 &&

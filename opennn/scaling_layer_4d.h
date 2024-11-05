@@ -29,15 +29,11 @@ public:
    dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const;
 
-   const bool& get_display() const;
-
    void set(const dimensions& = { 0, 0, 0, 0 });
 
    void set_default();
 
    void set_min_max_range(const type& min, const type& max);
-
-   void set_display(const bool&);
 
    bool is_empty() const;
 

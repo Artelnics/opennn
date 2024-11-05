@@ -40,13 +40,11 @@ public:
    Tensor<string, 1> write_unscaling_methods() const;
    Tensor<string, 1> write_unscaling_method_text() const;
 
-   const bool& get_display() const;
-
    void set(const Index& = 0, const string& = "unscaling_layer");
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
 
@@ -61,8 +59,6 @@ public:
 
    void set_scaler(const Index&, const string&);
 
-   void set_display(const bool&);
-
    bool is_empty() const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
@@ -76,7 +72,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
 protected:
 

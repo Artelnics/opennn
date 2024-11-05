@@ -84,7 +84,7 @@ const RecurrentLayer::ActivationFunction& RecurrentLayer::get_activation_functio
 }
 
 
-string RecurrentLayer::write_activation_function() const
+string RecurrentLayer::get_activation_function_string() const
 {
     switch(activation_function)
     {
@@ -109,12 +109,6 @@ string RecurrentLayer::write_activation_function() const
     default:
         return string();
     }
-}
-
-
-const bool& RecurrentLayer::get_display() const
-{
-    return display;
 }
 
 
@@ -144,31 +138,23 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 }
 
 
-void RecurrentLayer::set_inputs_number(const Index& new_inputs_number)
+void RecurrentLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     const Index neurons_number = get_output_dimensions()[0];
 
-    input_weights.resize(new_inputs_number, neurons_number);
+    input_weights.resize(new_input_dimensions[0], neurons_number);
 }
 
 
-void RecurrentLayer::set_input_shape(const Tensor<Index, 1>& size)
-{
-    const Index new_size = size[0];
-
-    set_inputs_number(new_size);
-}
-
-
-void RecurrentLayer::set_neurons_number(const Index& new_neurons_number)
+void RecurrentLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     const Index inputs_number = get_input_dimensions()[0];
 
-    biases.resize(new_neurons_number);
+    biases.resize(new_output_dimensions[0]);
 
-    input_weights.resize(inputs_number, new_neurons_number);
+    input_weights.resize(inputs_number, new_output_dimensions[0]);
 
-    recurrent_weights.resize(new_neurons_number, new_neurons_number);
+    recurrent_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
 }
 
 
@@ -226,12 +212,6 @@ void RecurrentLayer::set_activation_function(const string& new_activation_functi
         activation_function = ActivationFunction::ExponentialLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-}
-
-
-void RecurrentLayer::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -525,7 +505,7 @@ void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
 }
 
 
-string RecurrentLayer::write_expression(const Tensor<string, 1>& input_names,
+string RecurrentLayer::get_expression(const Tensor<string, 1>& input_names,
                                         const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
@@ -534,7 +514,7 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& input_names,
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
 
-        buffer << output_names(j) << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
+        buffer << output_names(j) << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < input_names.size() - 1; i++)
            buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
@@ -546,7 +526,7 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& input_names,
 }
 
 
-string RecurrentLayer::write_activation_function_expression() const
+string RecurrentLayer::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
@@ -554,7 +534,7 @@ string RecurrentLayer::write_activation_function_expression() const
 
         case ActivationFunction::Linear: return string();
 
-        default: return write_activation_function();
+        default: return get_activation_function_string();
     }
 }
 
@@ -566,8 +546,8 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!recurrent_layer_element)
         throw runtime_error("Recurrent element is nullptr.\n");
 
-    set_inputs_number(read_xml_index(recurrent_layer_element, "InputsNumber"));
-    set_neurons_number(read_xml_index(recurrent_layer_element, "NeuronsNumber"));
+    set_input_dimensions({ read_xml_index(recurrent_layer_element, "InputsNumber") });
+    set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "));
 }
@@ -579,7 +559,7 @@ void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
-    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();

@@ -54,7 +54,7 @@ namespace opennn
     vector<string> get_words_in_a_string(const string&);
     string replace_non_allowed_programming_expressions(string&);
 
-    Tensor<string, 1> fix_write_expression_outputs(const string&, const Tensor<string, 1>&, const string&);
+    Tensor<string, 1> fix_get_expression_outputs(const string&, const Tensor<string, 1>&, const string&);
     Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>&, Tensor<string, 1>&, ostringstream&);
 
     //int WordOccurrence(char *sentence, char *word);

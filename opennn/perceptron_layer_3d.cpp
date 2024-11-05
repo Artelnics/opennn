@@ -88,7 +88,7 @@ const PerceptronLayer3D::ActivationFunction& PerceptronLayer3D::get_activation_f
 }
 
 
-string PerceptronLayer3D::write_activation_function() const
+string PerceptronLayer3D::get_activation_function_string() const
 {
     switch(activation_function)
     {
@@ -103,12 +103,6 @@ string PerceptronLayer3D::write_activation_function() const
     }
 
     return string();
-}
-
-
-const bool& PerceptronLayer3D::get_display() const
-{
-    return display;
 }
 
 
@@ -137,9 +131,11 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 }
 
 
-void PerceptronLayer3D::set_inputs_number(const Index& new_inputs_number)
+void PerceptronLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+/*
     inputs_number = new_inputs_number;
+*/
 }
 
 
@@ -153,13 +149,15 @@ void PerceptronLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 }
 
 
-void PerceptronLayer3D::set_neurons_number(const Index& new_neurons_number)
+void PerceptronLayer3D::set_output_dimensions(const dimensions& new_output_dimensions)
 {
+/*
     const Index inputs_depth = get_inputs_depth();
 
     biases.resize(new_neurons_number);
 
     synaptic_weights.resize(inputs_depth, new_neurons_number);
+*/
 }
 
 
@@ -192,12 +190,6 @@ void PerceptronLayer3D::set_activation_function(const string& new_activation_fun
         activation_function = ActivationFunction::RectifiedLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-}
-
-
-void PerceptronLayer3D::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -408,13 +400,14 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!perceptron_layer_element)
         throw runtime_error("Perceptron3D element is nullptr.\n");
-
+/*
     set_name(read_xml_string(perceptron_layer_element, "Name"));
     set_inputs_number(read_xml_index(perceptron_layer_element, "InputsNumber"));
     set_inputs_depth(read_xml_index(perceptron_layer_element, "InputsDepth"));
-    set_neurons_number(read_xml_index(perceptron_layer_element, "NeuronsNumber"));
+    set_output_dimensions(read_xml_index(perceptron_layer_element, "NeuronsNumber"));
     set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "));
+*/
 }
 
 
@@ -426,7 +419,7 @@ void PerceptronLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
-    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();

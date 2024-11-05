@@ -33,19 +33,19 @@ void PerceptronLayerTest::test_constructor()
     // Architecture constructor
 
     PerceptronLayer perceptron_layer_3({10}, {3}, PerceptronLayer::ActivationFunction::Linear);
-    assert_true(perceptron_layer_3.write_activation_function() == "Linear", LOG);
+    assert_true(perceptron_layer_3.get_activation_function_string() == "Linear", LOG);
     assert_true(perceptron_layer_3.get_inputs_number() == 10, LOG);
     assert_true(perceptron_layer_3.get_neurons_number() == 3, LOG);
     assert_true(perceptron_layer_3.get_parameters_number() == 33, LOG);
 
     PerceptronLayer perceptron_layer_4({0}, {0}, PerceptronLayer::ActivationFunction::Logistic);
-    assert_true(perceptron_layer_4.write_activation_function() == "Logistic", LOG);
+    assert_true(perceptron_layer_4.get_activation_function_string() == "Logistic", LOG);
     assert_true(perceptron_layer_4.get_inputs_number() == 0, LOG);
     assert_true(perceptron_layer_4.get_neurons_number() == 0, LOG);
     assert_true(perceptron_layer_4.get_parameters_number() == 0, LOG);
 
     PerceptronLayer perceptron_layer_5({1}, {1}, PerceptronLayer::ActivationFunction::Linear);
-    assert_true(perceptron_layer_5.write_activation_function() == "Linear", LOG);
+    assert_true(perceptron_layer_5.get_activation_function_string() == "Linear", LOG);
     assert_true(perceptron_layer_5.get_inputs_number() == 1, LOG);
     assert_true(perceptron_layer_5.get_neurons_number() == 1, LOG);
     assert_true(perceptron_layer_5.get_parameters_number() == 2, LOG);

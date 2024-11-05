@@ -47,8 +47,6 @@ public:
 
     void set(const dimensions & = {0,0,0});
 
-//    void set_display(const bool&);
-
 //    bool is_empty() const;
 
     // Forward propagation

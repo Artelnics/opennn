@@ -25,7 +25,6 @@ namespace opennn
     struct PerceptronLayerBackPropagationCuda;
 #endif
 
-
 class PerceptronLayer : public Layer
 {
 
@@ -46,7 +45,7 @@ public:
     PerceptronLayer(const dimensions& = {0},
                     const dimensions& = {0},
                     const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
-                    const string = "perceptron");
+                    const string& = "perceptron_layer");
 
     dimensions get_input_dimensions() const final;
     dimensions get_output_dimensions() const final;
@@ -58,32 +57,26 @@ public:
 
     const PerceptronLayer::ActivationFunction& get_activation_function() const;
 
-    string write_activation_function() const;
-
-    const bool& get_display() const;
+    string get_activation_function_string() const;
 
     void set(const dimensions& = {0},
              const dimensions& = {0},
              const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
-             const string = "perceptron_layer");
+             const string& = "perceptron_layer");
 
-    void set_inputs_number(const Index&) final;
-    void set_neurons_number(const Index&) final;
+    void set_input_dimensions(const dimensions&) final;
+    void set_output_dimensions(const dimensions&) final;
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+    void set_parameters_constant(const type&) final;
+    void set_parameters_random() final;
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
-    void set_display(const bool&);
-
-    void set_parameters_constant(const type&) final;
-
-    void set_parameters_random() final;
-
     void calculate_combinations(const Tensor<type, 2>&,
-        Tensor<type, 2>&) const;
+                                Tensor<type, 2>&) const;
 
     void dropout(Tensor<type, 2>&) const;
 
@@ -112,9 +105,9 @@ public:
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
-    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+    string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-    string write_activation_function_expression() const;
+    string get_activation_function_string_expression() const;
 
     void print() const;
 
@@ -134,8 +127,6 @@ protected:
     ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
     type dropout_rate = type(0);
-
-    bool display = true;
 
     const Eigen::array<Index, 1> sum_dimensions_1 = {0};
 };

@@ -142,7 +142,7 @@ public:
    void set_inputs_names(const Tensor<string, 1>&);
    void set_output_namess(const Tensor<string, 1>&);
 
-   void set_inputs_number(const Index&);
+   void set_input_dimensions(const dimensions&);
 
    void set_default();
 

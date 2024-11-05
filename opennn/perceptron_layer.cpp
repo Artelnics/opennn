@@ -18,7 +18,7 @@ namespace opennn
 PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
                                  const dimensions& new_output_dimensions,
                                  const ActivationFunction& new_activation_function,
-                                 const string new_layer_name) : Layer()
+                                 const string& new_layer_name) : Layer()
 {
     set(new_input_dimensions,
         new_output_dimensions,
@@ -80,7 +80,7 @@ const PerceptronLayer::ActivationFunction& PerceptronLayer::get_activation_funct
 }
 
 
-string PerceptronLayer::write_activation_function() const
+string PerceptronLayer::get_activation_function_string() const
 {
     switch(activation_function)
     {
@@ -116,16 +116,10 @@ string PerceptronLayer::write_activation_function() const
 }
 
 
-const bool& PerceptronLayer::get_display() const
-{
-    return display;
-}
-
-
 void PerceptronLayer::set(const dimensions& new_input_dimensions,
                           const dimensions& new_output_dimensions,
                           const PerceptronLayer::ActivationFunction& new_activation_function,
-                          const string new_name)
+                          const string& new_name)
 {
     if (new_input_dimensions.size() != 1) 
         throw runtime_error("Input dimensions rank is not 1");
@@ -145,27 +139,29 @@ void PerceptronLayer::set(const dimensions& new_input_dimensions,
 
     display = true;
 
-    layer_type = Type::Perceptron;
+    layer_type = Layer::Type::Perceptron;
 }
 
 
-void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
+void PerceptronLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+    const Index inputs_number = new_input_dimensions[0];
     const Index neurons_number = get_output_dimensions()[0];
 
     biases.resize(neurons_number);
 
-    synaptic_weights.resize(new_inputs_number, neurons_number);
+    synaptic_weights.resize(inputs_number, neurons_number);
 }
 
 
-void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
+void PerceptronLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     const Index inputs_number = get_input_dimensions()[0];
+    const Index neurons_number = new_output_dimensions[0];
 
-    biases.resize(new_neurons_number);
+    biases.resize(neurons_number);
 
-    synaptic_weights.resize(inputs_number, new_neurons_number);
+    synaptic_weights.resize(inputs_number, neurons_number);
 }
 
 
@@ -212,12 +208,6 @@ void PerceptronLayer::set_activation_function(const string& new_activation_funct
         activation_function = ActivationFunction::ExponentialLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
-}
-
-
-void PerceptronLayer::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -484,7 +474,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackProp
 }
 
 
-string PerceptronLayer::write_expression(const Tensor<string, 1>& input_names,
+string PerceptronLayer::get_expression(const Tensor<string, 1>& input_names,
                                          const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
@@ -493,7 +483,7 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& input_names,
     {
         const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j, 1);
 
-        buffer << output_names[j] << " = " << write_activation_function_expression() << "( " << biases(j) << " +";
+        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < input_names.size() - 1; i++)
             buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
@@ -528,8 +518,8 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("PerceptronLayer element is nullptr.\n");
 
     set_name(read_xml_string(perceptron_layer_element, "Name"));
-    set_inputs_number(read_xml_index(perceptron_layer_element, "InputsNumber"));
-    set_neurons_number(read_xml_index(perceptron_layer_element, "NeuronsNumber"));
+    set_input_dimensions({ read_xml_index(perceptron_layer_element, "InputsNumber") });
+    set_output_dimensions({ read_xml_index(perceptron_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "));
 }
@@ -542,14 +532,14 @@ void PerceptronLayer::to_XML(tinyxml2::XMLPrinter& printer) const
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
-    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();  
 }
 
 
-string PerceptronLayer::write_activation_function_expression() const
+string PerceptronLayer::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {

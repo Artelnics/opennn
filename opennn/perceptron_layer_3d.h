@@ -52,26 +52,22 @@ public:
 
    const PerceptronLayer3D::ActivationFunction& get_activation_function() const;
 
-   string write_activation_function() const;
-
-   const bool& get_display() const;
+   string get_activation_function_string() const;
 
    void set(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
             const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
-   void set_inputs_number(const Index&) final;
+   void set_input_dimensions(const dimensions&) final;
    void set_inputs_depth(const Index&);
-   void set_neurons_number(const Index&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
-
-   void set_display(const bool&);
 
    void set_parameters_constant(const type&) final;
    void set_parameters_random() final;

@@ -60,8 +60,6 @@ public:
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
 
-    const bool& get_display() const;
-
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const Index& = 0);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
@@ -78,8 +76,6 @@ public:
 
     void set_dropout_rate(const type&);
     void set_causal_mask(const bool&);
-
-    void set_display(const bool&);
 
     void build_causal_mask();
     void apply_causal_mask(Tensor<type, 4>&) const;

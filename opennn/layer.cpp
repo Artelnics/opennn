@@ -21,6 +21,12 @@ Layer::Layer()
 }
 
 
+const bool& Layer::get_display() const
+{
+    return display;
+}
+
+
 string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
 {
     switch(this_layer_type)
@@ -228,6 +234,12 @@ void Layer::set_name(const string& new_name)
 }
 
 
+void Layer::set_display(const bool& new_display)
+{
+    display = new_display;
+}
+
+
 void Layer::set_threads_number(const int& new_threads_number)
 {
 /*
@@ -290,13 +302,13 @@ void Layer::forward_propagate(const vector<pair<type*, dimensions>>&,
 
 
 
-void Layer::set_inputs_number(const Index&)
+void Layer::set_input_dimensions(const dimensions&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
 
 
-void Layer::set_neurons_number(const Index&)
+void Layer::set_output_dimensions(const dimensions&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }

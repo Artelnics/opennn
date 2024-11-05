@@ -55,7 +55,7 @@ public:
 
     ActivationFunction get_activation_function() const;
 
-    string write_activation_function() const;
+    string get_activation_function_string() const;
 
     dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const;

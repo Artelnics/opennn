@@ -42,16 +42,12 @@ public:
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
 
-    const bool& get_display() const;
-
     void set(const Index& = 0, const Index& = 0);
 
     void set_inputs_number(const Index&);
     void set_inputs_depth(const Index&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
-
-    void set_display(const bool&);
 
     void set_gammas_constant(const type&);
     void set_betas_constant(const type&);
