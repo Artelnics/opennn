@@ -110,9 +110,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
     #endif
 
-protected:
-
-    // MEMBERS
+private:
 
     Index input_size;
 

@@ -141,7 +141,7 @@ public:
 
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
-protected:
+private:
 
    Index time_steps = 3;
 

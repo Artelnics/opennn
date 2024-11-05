@@ -81,8 +81,6 @@ public:
 
 private:
 
-   // MEMBERS
-
    BoundingMethod bounding_method = BoundingMethod::Bounding;
 
    Tensor<type, 1> lower_bounds;

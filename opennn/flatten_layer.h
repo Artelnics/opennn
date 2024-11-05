@@ -74,7 +74,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     dimensions input_dimensions;
 };

@@ -74,9 +74,7 @@ public:
 
    string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-protected:
-
-   // MEMBERS
+private:
 
    Tensor<Descriptives, 1> descriptives;
 

@@ -80,7 +80,7 @@ But AVX instructions (at least the ones that %Eigen uses, which are the fast one
 Otherwise you get a segmentation fault.
 
 For this reason, %Eigen takes care by itself to require 256-bit alignment for Eigen::Vector4d, by doing two things:
-\li %Eigen requires 256-bit alignment for the Eigen::Vector4d's array (of 4 doubles). With \cpp11 this is done with the <a href="https://en.cppreference.com/w/cpp/keyword/alignas">alignas</a> keyword, or compiler's extensions for c++98/03.
+\li %Eigen requires 256-bit alignment for the Eigen::Vector4d's array (of 4 doubles). This is done with the <a href="https://en.cppreference.com/w/cpp/keyword/alignas">alignas</a> keyword.
 \li %Eigen overloads the `operator new` of Eigen::Vector4d so it will always return 256-bit aligned pointers. (removed in \cpp17)
 
 Thus, normally, you don't have to worry about anything, %Eigen handles alignment of operator new for you...

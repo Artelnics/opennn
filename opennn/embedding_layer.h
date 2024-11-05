@@ -87,7 +87,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     Index input_dimensions;
 

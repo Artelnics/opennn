@@ -55,7 +55,7 @@ public:
 
     void load_transformer(const string&);
 
-protected:
+private:
 
     string name = "transformer";
 

@@ -6,7 +6,7 @@ using namespace opennn;
 
 class PerceptronLayerTest : public ::testing::Test 
 {
-protected:
+private:
 
     PerceptronLayer perceptron_layer;
 

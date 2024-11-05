@@ -118,7 +118,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     Tensor<type, 1> biases;
 

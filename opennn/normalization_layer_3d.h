@@ -78,9 +78,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_cuda.h"
     #endif
 
-protected:
-
-    // MEMBERS
+private:
 
     Index inputs_number;
 

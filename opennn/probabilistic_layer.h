@@ -167,7 +167,7 @@ public:
 
     void to_XML(tinyxml2::XMLPrinter&) const final;
 
-protected:
+private:
 
     Tensor<type, 1> biases;
 

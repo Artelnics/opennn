@@ -103,7 +103,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_cuda.h"
     #endif
 
-protected:
+private:
 
    Index inputs_number;
 

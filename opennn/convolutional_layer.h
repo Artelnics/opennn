@@ -160,7 +160,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
     #endif
 
-protected:
+private:
 
    Tensor<type, 4> synaptic_weights;
 
