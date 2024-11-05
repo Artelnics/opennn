@@ -44,16 +44,14 @@ public:
    const type& get_decision_threshold() const;
 
    const ActivationFunction& get_activation_function() const;
-   string write_activation_function() const;
-   string write_activation_function_text() const;
-
-   const bool& get_display() const;
+   string get_activation_function_string() const;
+   string get_activation_function_string_text() const;
 
    void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   void set_inputs_number(const Index&) final;
+   void set_input_dimensions(const dimensions&) final;
    void set_inputs_depth(const Index&);
-   void set_neurons_number(const Index&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
    void set_decision_threshold(const type&);
@@ -65,10 +63,6 @@ public:
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
-
-   // Display messages
-
-   void set_display(const bool&);
 
    // Parameters initialization
 
@@ -114,7 +108,7 @@ public:
        #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_cuda.h"
     #endif
 
-protected:
+private:
 
    Index inputs_number;
 
@@ -125,8 +119,6 @@ protected:
    ActivationFunction activation_function = ActivationFunction::Softmax;
 
    type decision_threshold;
-
-   bool display = true;
 
    Tensor<type, 3> empty;
 

@@ -54,17 +54,21 @@ public:
 
     string get_name() const;
 
+    const bool& get_display() const;
+
     string layer_type_to_string(const Layer::Type&);
     Type string_to_layer_type(const string&);
-
-    virtual void set_inputs_number(const Index&);
-    virtual void set_neurons_number(const Index&);
 
     Type get_type() const;
 
     string get_type_string() const;
 
+    virtual void set_input_dimensions(const dimensions&);
+    virtual void set_output_dimensions(const dimensions&);
+
     void set_name(const string&);
+
+    void set_display(const bool&);
 
     // Parameters initialization
 
@@ -121,7 +125,7 @@ public:
 
     // Expression
 
-    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const 
+    virtual string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const 
     {
         return string();
     }
@@ -136,6 +140,8 @@ protected:
     string name = "layer";
 
     Type layer_type = Type::None;
+
+    bool display = true;
 
     template <int rank>
     void binary(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type threshold) const

@@ -19,7 +19,7 @@
 namespace opennn
 {
 
-string write_expression() 
+string get_expression() 
 {
 /*
     const Index layers_number = get_layers_number();
@@ -71,7 +71,7 @@ string write_expression()
                 }
             }
 			
-            buffer << layers[i]->write_expression(inputs_names_vector, output_namess_vector) << endl;
+            buffer << layers[i]->get_expression(inputs_names_vector, output_namess_vector) << endl;
         }
         else
         {
@@ -92,7 +92,7 @@ string write_expression()
                 }
             }
 			
-            buffer << layers[i]->write_expression(inputs_names_vector, output_namess_vector) << endl;
+            buffer << layers[i]->get_expression(inputs_names_vector, output_namess_vector) << endl;
             inputs_names_vector = output_namess_vector;
             unscaled_output_namess = inputs_names_vector;
         }
@@ -328,7 +328,7 @@ void auto_association_c()
 }
 
 
-string write_expression_c(const NeuralNetwork& neural_network)
+string get_expression_c(const NeuralNetwork& neural_network)
 {
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
@@ -363,7 +363,7 @@ string write_expression_c(const NeuralNetwork& neural_network)
     
 
     string token;
-    string expression = write_expression();
+    string expression = get_expression();
 
     stringstream ss(expression);
 
@@ -462,7 +462,7 @@ string write_expression_c(const NeuralNetwork& neural_network)
 
     buffer << outputs_espresion;
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "c");
+    const Tensor<string, 1> fixed_outputs = fix_get_expression_outputs(expression, output_names, "c");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
         buffer << fixed_outputs(i) << endl;
@@ -747,7 +747,7 @@ string soft_sign()
     "\n";
 }
 
-string write_expression_api(const NeuralNetwork& neural_network) 
+string get_expression_api(const NeuralNetwork& neural_network) 
 {
 
     ostringstream buffer;
@@ -782,7 +782,7 @@ string write_expression_api(const NeuralNetwork& neural_network)
         output_names(i) = inputs_outputs_buffer(1)(i);
 
     string token;
-    string expression = write_expression();
+    string expression = get_expression();
 
     stringstream ss(expression);
     Tensor<string, 1> tokens;
@@ -900,7 +900,7 @@ string write_expression_api(const NeuralNetwork& neural_network)
         buffer << t << endl;
     }
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "php");
+    const Tensor<string, 1> fixed_outputs = fix_get_expression_outputs(expression, output_names, "php");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
         buffer << fixed_outputs(i) << endl;
@@ -1043,7 +1043,7 @@ string autoassociaton_javascript()
 }
 
 
-string write_expression_javascript(const NeuralNetwork& neural_network)
+string get_expression_javascript(const NeuralNetwork& neural_network)
 {
 
     Tensor<string, 1> tokens;
@@ -1060,7 +1060,7 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
     ostringstream buffer_to_fix;
 
     string token;
-    string expression = write_expression();
+    string expression = get_expression();
 
     const int maximum_output_variable_numbers = 5;
 
@@ -1459,7 +1459,7 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
     if(LSTM_number>0)
         buffer << "\t" << "time_step_counter += 1" << "\n" << endl;
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, output_names, "javascript");
+    const Tensor<string, 1> fixed_outputs = fix_get_expression_outputs(expression, output_names, "javascript");
 
     for(int i = 0; i < fixed_outputs.dimension(0); i++)
         buffer << fixed_outputs(i) << endl;
@@ -1576,7 +1576,7 @@ string write_expression_javascript(const NeuralNetwork& neural_network)
 }
 
 
-string write_expression_python(const NeuralNetwork& neural_network) 
+string get_expression_python(const NeuralNetwork& neural_network) 
 {
     ostringstream buffer;
 
@@ -1643,7 +1643,7 @@ string write_expression_python(const NeuralNetwork& neural_network)
 
     Tensor<string, 1> tokens;
 
-    string expression = write_expression();
+    string expression = get_expression();
     string token;
 
     stringstream ss(expression);
@@ -1905,7 +1905,7 @@ string write_expression_python(const NeuralNetwork& neural_network)
         buffer << "\t\t" << t << endl;
     }
 
-    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "python");
+    const Tensor<string, 1> fixed_outputs = fix_get_expression_outputs(expression, outputs, "python");
 
     if(model_type != NeuralNetwork::ModelType::AutoAssociation)
         for(int i = 0; i < fixed_outputs.dimension(0); i++)
@@ -2083,7 +2083,7 @@ string replace_reserved_keywords(const string& str)
 }
 
 
-Tensor<string, 1> fix_write_expression_outputs(const string& str,
+Tensor<string, 1> fix_get_expression_outputs(const string& str,
                                                const Tensor<string, 1>& outputs,
                                                const string& programming_languaje)
 {

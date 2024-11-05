@@ -18,9 +18,8 @@
 
 #include <Eigen/CXX11/src/Tensor/TensorGpuHipCudaDefines.h>
 
-void test_gpu_random_uniform()
-{
-  Tensor<float, 2> out(72,97);
+void test_gpu_random_uniform() {
+  Tensor<float, 2> out(72, 97);
   out.setZero();
 
   std::size_t out_bytes = out.size() * sizeof(float);
@@ -31,7 +30,7 @@ void test_gpu_random_uniform()
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  Eigen::TensorMap<Eigen::Tensor<float, 2> > gpu_out(d_out, 72,97);
+  Eigen::TensorMap<Eigen::Tensor<float, 2> > gpu_out(d_out, 72, 97);
 
   gpu_out.device(gpu_device) = gpu_out.random();
 
@@ -42,10 +41,8 @@ void test_gpu_random_uniform()
   // TODO: come up with a valid test of randomness
 }
 
-
-void test_gpu_random_normal()
-{
-  Tensor<float, 2> out(72,97);
+void test_gpu_random_normal() {
+  Tensor<float, 2> out(72, 97);
   out.setZero();
 
   std::size_t out_bytes = out.size() * sizeof(float);
@@ -56,7 +53,7 @@ void test_gpu_random_normal()
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  Eigen::TensorMap<Eigen::Tensor<float, 2> > gpu_out(d_out, 72,97);
+  Eigen::TensorMap<Eigen::Tensor<float, 2> > gpu_out(d_out, 72, 97);
 
   Eigen::internal::NormalRandomGenerator<float> gen(true);
   gpu_out.device(gpu_device) = gpu_out.random(gen);
@@ -65,21 +62,18 @@ void test_gpu_random_normal()
   assert(gpuStreamSynchronize(gpu_device.stream()) == gpuSuccess);
 }
 
-static void test_complex()
-{
+static void test_complex() {
   Tensor<std::complex<float>, 1> vec(6);
   vec.setRandom();
 
   // Fixme: we should check that the generated numbers follow a uniform
   // distribution instead.
   for (int i = 1; i < 6; ++i) {
-    VERIFY_IS_NOT_EQUAL(vec(i), vec(i-1));
+    VERIFY_IS_NOT_EQUAL(vec(i), vec(i - 1));
   }
 }
 
-
-EIGEN_DECLARE_TEST(cxx11_tensor_random_gpu)
-{
+EIGEN_DECLARE_TEST(cxx11_tensor_random_gpu) {
   CALL_SUBTEST(test_gpu_random_uniform());
   CALL_SUBTEST(test_gpu_random_normal());
   CALL_SUBTEST(test_complex());

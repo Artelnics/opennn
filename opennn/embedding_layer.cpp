@@ -92,12 +92,6 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 //}
 
 
-const bool& EmbeddingLayer::get_display() const
-{
-    return display;
-}
-
-
 // void EmbeddingLayer::set()
 // {
 //     input_dimensions = 0;
@@ -132,8 +126,6 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
     positional_encoding = new_positional_encoding;
 
     name = "embedding_layer";
-
-    display = true;
 
     layer_type = Type::Embedding;
 }
@@ -207,12 +199,6 @@ void EmbeddingLayer::set_parameters_random()
 void EmbeddingLayer::set_parameters_constant(const type& value)
 {
     embedding_weights.setConstant(value);
-}
-
-
-void EmbeddingLayer::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 

@@ -37,12 +37,9 @@ void test_cuda_nullary() {
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  Eigen::TensorMap<Eigen::Tensor<std::complex<float>, 1, 0, int>, Eigen::Aligned> gpu_in1(
-      d_in1, 2);
-  Eigen::TensorMap<Eigen::Tensor<std::complex<float>, 1, 0, int>, Eigen::Aligned> gpu_in2(
-      d_in2, 2);
-  Eigen::TensorMap<Eigen::Tensor<float, 1, 0, int>, Eigen::Aligned> gpu_out2(
-      d_out2, 2);
+  Eigen::TensorMap<Eigen::Tensor<std::complex<float>, 1, 0, int>, Eigen::Aligned> gpu_in1(d_in1, 2);
+  Eigen::TensorMap<Eigen::Tensor<std::complex<float>, 1, 0, int>, Eigen::Aligned> gpu_in2(d_in2, 2);
+  Eigen::TensorMap<Eigen::Tensor<float, 1, 0, int>, Eigen::Aligned> gpu_out2(d_out2, 2);
 
   gpu_in1.device(gpu_device) = gpu_in1.constant(std::complex<float>(3.14f, 2.7f));
   gpu_out2.device(gpu_device) = gpu_in2.abs();
@@ -50,10 +47,9 @@ void test_cuda_nullary() {
   Tensor<std::complex<float>, 1, 0, int> new1(2);
   Tensor<float, 1, 0, int> new2(2);
 
-  assert(cudaMemcpyAsync(new1.data(), d_in1, complex_bytes, cudaMemcpyDeviceToHost,
-                         gpu_device.stream()) == cudaSuccess);
-  assert(cudaMemcpyAsync(new2.data(), d_out2, float_bytes, cudaMemcpyDeviceToHost,
-                         gpu_device.stream()) == cudaSuccess);
+  assert(cudaMemcpyAsync(new1.data(), d_in1, complex_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) ==
+         cudaSuccess);
+  assert(cudaMemcpyAsync(new2.data(), d_out2, float_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
 
   assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
 
@@ -67,14 +63,12 @@ void test_cuda_nullary() {
   cudaFree(d_out2);
 }
 
-
 static void test_cuda_sum_reductions() {
-
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  const int num_rows = internal::random<int>(1024, 5*1024);
-  const int num_cols = internal::random<int>(1024, 5*1024);
+  const int num_rows = internal::random<int>(1024, 5 * 1024);
+  const int num_cols = internal::random<int>(1024, 5 * 1024);
 
   Tensor<std::complex<float>, 2> in(num_rows, num_cols);
   in.setRandom();
@@ -105,12 +99,11 @@ static void test_cuda_sum_reductions() {
 }
 
 static void test_cuda_mean_reductions() {
-
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  const int num_rows = internal::random<int>(1024, 5*1024);
-  const int num_cols = internal::random<int>(1024, 5*1024);
+  const int num_rows = internal::random<int>(1024, 5 * 1024);
+  const int num_cols = internal::random<int>(1024, 5 * 1024);
 
   Tensor<std::complex<float>, 2> in(num_rows, num_cols);
   in.setRandom();
@@ -141,12 +134,11 @@ static void test_cuda_mean_reductions() {
 }
 
 static void test_cuda_product_reductions() {
-
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  const int num_rows = internal::random<int>(1024, 5*1024);
-  const int num_cols = internal::random<int>(1024, 5*1024);
+  const int num_rows = internal::random<int>(1024, 5 * 1024);
+  const int num_cols = internal::random<int>(1024, 5 * 1024);
 
   Tensor<std::complex<float>, 2> in(num_rows, num_cols);
   in.setRandom();
@@ -176,9 +168,7 @@ static void test_cuda_product_reductions() {
   gpu_device.deallocate(gpu_out_ptr);
 }
 
-
-EIGEN_DECLARE_TEST(test_cxx11_tensor_complex)
-{
+EIGEN_DECLARE_TEST(test_cxx11_tensor_complex) {
   CALL_SUBTEST(test_cuda_nullary());
   CALL_SUBTEST(test_cuda_sum_reductions());
   CALL_SUBTEST(test_cuda_mean_reductions());

@@ -13,9 +13,9 @@ namespace opennn
 {
 
 
-BoundingLayer::BoundingLayer(const dimensions& neurons_number, const string& new_name) : Layer()
+BoundingLayer::BoundingLayer(const dimensions& output_dimensions, const string& new_name) : Layer()
 {
-    set(neurons_number[0]);
+    set(output_dimensions);
 }
 
 
@@ -61,9 +61,9 @@ const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 }
 
 
-void BoundingLayer::set(const Index& new_neurons_number, const string& new_name)
+void BoundingLayer::set(const dimensions& new_output_dimensions, const string& new_name)
 {
-    set_neurons_number(new_neurons_number);
+    set_output_dimensions(new_output_dimensions);
 
     name = new_name;
 
@@ -90,16 +90,10 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 }
 
 
-void BoundingLayer::set_display(const bool& new_display)
+void BoundingLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-    display = new_display;
-}
-
-
-void BoundingLayer::set_inputs_number(const Index& new_inputs_number)
-{
-    lower_bounds.resize(new_inputs_number);
-    upper_bounds.resize(new_inputs_number);
+    lower_bounds.resize(new_input_dimensions[0]);
+    upper_bounds.resize(new_input_dimensions[0]);
 }
 
 
@@ -123,10 +117,10 @@ void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 }
 
 
-void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
+void BoundingLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    lower_bounds.resize(new_neurons_number);
-    upper_bounds.resize(new_neurons_number);
+    lower_bounds.resize(new_output_dimensions[0]);
+    upper_bounds.resize(new_output_dimensions[0]);
 
     lower_bounds.setConstant(-numeric_limits<type>::max());
     upper_bounds.setConstant(numeric_limits<type>::max());
@@ -197,7 +191,7 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
+string BoundingLayer::get_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     if (bounding_method == BoundingMethod::NoBounding)
         return string();
@@ -258,7 +252,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const Index neurons_number = read_xml_index(root_element, "BoundingNeuronsNumber");
 
-    set(neurons_number);
+    set({ neurons_number });
 
     const auto* item_element = root_element->FirstChildElement("Item");
 

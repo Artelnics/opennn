@@ -57,7 +57,7 @@ const ProbabilisticLayer3D::ActivationFunction& ProbabilisticLayer3D::get_activa
 }
 
 
-string ProbabilisticLayer3D::write_activation_function() const
+string ProbabilisticLayer3D::get_activation_function_string() const
 {
     switch (activation_function)
     {
@@ -71,7 +71,7 @@ string ProbabilisticLayer3D::write_activation_function() const
 }
 
 
-string ProbabilisticLayer3D::write_activation_function_text() const
+string ProbabilisticLayer3D::get_activation_function_string_text() const
 {
     switch (activation_function)
     {
@@ -82,12 +82,6 @@ string ProbabilisticLayer3D::write_activation_function_text() const
     default:
         throw runtime_error("Unknown probabilistic method.\n");
     }
-}
-
-
-const bool& ProbabilisticLayer3D::get_display() const
-{
-    return display;
 }
 
 
@@ -128,14 +122,14 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
     activation_function = ActivationFunction::Softmax;
 
     decision_threshold = type(0.5);
-
-    display = true;
 }
 
 
-void ProbabilisticLayer3D::set_inputs_number(const Index& new_inputs_number)
+void ProbabilisticLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+/*
     inputs_number = new_inputs_number;
+*/
 }
 
 
@@ -149,13 +143,15 @@ void ProbabilisticLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 }
 
 
-void ProbabilisticLayer3D::set_neurons_number(const Index& new_neurons_number)
+void ProbabilisticLayer3D::set_output_dimensions(const dimensions& new_output_dimensions)
 {
+/*
     const Index inputs_depth = get_inputs_depth();
 
     biases.resize(new_neurons_number);
 
     synaptic_weights.resize(inputs_depth, new_neurons_number);
+*/
 }
 
 
@@ -195,12 +191,6 @@ void ProbabilisticLayer3D::set_activation_function(const string& new_activation_
         set_activation_function(ActivationFunction::Softmax);
     else
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
-}
-
-
-void ProbabilisticLayer3D::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -385,14 +375,15 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic3D element is nullptr.\n");
-
+/*
     set_name(read_xml_string(probabilistic_layer_element, "Name"));
     set_inputs_number(read_xml_index(probabilistic_layer_element, "InputsNumber"));
     set_inputs_depth(read_xml_index(probabilistic_layer_element, "InputsDepth"));
-    set_neurons_number(read_xml_index(probabilistic_layer_element, "NeuronsNumber"));
+    set_output_dimensions(read_xml_index(probabilistic_layer_element, "NeuronsNumber"));
     set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
+*/
 }
 
 
@@ -405,7 +396,7 @@ void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
     add_xml_element(printer, "DecisionThreshold", to_string(get_decision_threshold()));
-    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();
