@@ -73,7 +73,7 @@ Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 }
 
 
-string UnscalingLayer::write_expression(const Tensor<string, 1>& input_names, 
+string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names, 
                                         const Tensor<string, 1>& output_names) const
 {
     const Index neurons_number = get_output_dimensions()[0];
@@ -190,21 +190,15 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
 }
 
 
-const bool& UnscalingLayer::get_display() const
+void UnscalingLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-    return display;
+    descriptives.resize(new_input_dimensions[0]);
 }
 
 
-void UnscalingLayer::set_inputs_number(const Index& new_inputs_number)
+void UnscalingLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    descriptives.resize(new_inputs_number);
-}
-
-
-void UnscalingLayer::set_neurons_number(const Index& new_neurons_number)
-{
-    descriptives.resize(new_neurons_number);
+    descriptives.resize(new_output_dimensions[0]);
 }
 
 
@@ -221,8 +215,6 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
     set_scalers(Scaler::MinimumMaximum);
 
     set_min_max_range(type(-1), type(1));
-
-    set_display(true);
 
     layer_type = Type::Unscaling;
 }
@@ -309,12 +301,6 @@ void UnscalingLayer::set_scaler(const Index& variable_index, const string& new_s
         scalers(variable_index) = Scaler::Logarithm;
     else
         throw runtime_error("Unknown scaling method: " + new_scaler + ".\n");
-}
-
-
-void UnscalingLayer::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 

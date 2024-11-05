@@ -103,8 +103,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
-        neural_network->get_layer(last_trainable_layer_index-1).get()->set_neurons_number(neurons_number);
-        neural_network->get_layer(last_trainable_layer_index).get()->set_inputs_number(neurons_number);
+        neural_network->get_layer(last_trainable_layer_index - 1).get()->set_output_dimensions({ neurons_number });
+        neural_network->get_layer(last_trainable_layer_index).get()->set_input_dimensions({ neurons_number });
 
         neurons_selection_results.neurons_number_history(epoch) = neurons_number;
 
@@ -216,8 +216,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Save neural network
 
-    neural_network->get_layer(last_trainable_layer_index - 1).get()->set_neurons_number(neurons_number);
-    neural_network->get_layer(last_trainable_layer_index).get()->set_inputs_number(neurons_number);
+    neural_network->get_layer(last_trainable_layer_index - 1).get()->set_output_dimensions({ neurons_number });
+    neural_network->get_layer(last_trainable_layer_index).get()->set_input_dimensions({ neurons_number });
 
     neural_network->set_parameters(neurons_selection_results.optimal_parameters);
 

@@ -625,8 +625,9 @@ void NeuralNetwork::set_output_namess(const Tensor<string, 1>& new_output_namess
 }
 
 
-void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
+void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+/*
     input_names.resize(new_inputs_number);
 
     if(has(Layer::Type::Scaling2D))
@@ -639,6 +640,7 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
 
     layers[first_trainable_layer_index]->set_inputs_number(new_inputs_number);
+*/
 }
 
 
@@ -1178,7 +1180,7 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
 
         const PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(layers[i].get());
 
-        information(perceptron_layer_index, 2) = perceptron_layer->write_activation_function();
+        information(perceptron_layer_index, 2) = perceptron_layer->get_activation_function_string();
 
         perceptron_layer_index++;
     }
@@ -1209,7 +1211,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 
         const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(layers[i].get());
 
-        information(probabilistic_layer_index,2) = probabilistic_layer->write_activation_function();
+        information(probabilistic_layer_index,2) = probabilistic_layer->get_activation_function_string();
 
         probabilistic_layer_index++;
     }
@@ -1691,7 +1693,7 @@ void NeuralNetwork::save_expression_c(const string& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
     /*
-    file << write_expression_c();
+    file << get_expression_c();
     */
     file.close();
 }
@@ -1704,7 +1706,7 @@ void NeuralNetwork::save_expression_api(const string& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
     /*
-    file << write_expression_api();
+    file << get_expression_api();
     */
     file.close();
 }
@@ -1717,7 +1719,7 @@ void NeuralNetwork::save_expression_javascript(const string& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
     /*
-    file << write_expression_javascript();
+    file << get_expression_javascript();
     */
     file.close();
 }
@@ -1730,7 +1732,7 @@ void NeuralNetwork::save_expression_python(const string& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
 /*
-    file << write_expression_python();
+    file << get_expression_python();
 */
     file.close();
 }

@@ -168,7 +168,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         if(input_raw_variables_number >= minimum_inputs_number)
         {
             long long epoch = input_raw_variables_number - minimum_inputs_number + 1;
-            neural_network->set_inputs_number(input_variables_number);
+            neural_network->set_input_dimensions({ input_variables_number });
 
             if(display)
             {
@@ -324,7 +324,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Set neural network stuff
 
-    neural_network->set_inputs_number(data_set->get_variables_number(DataSet::VariableUse::Input));
+    neural_network->set_input_dimensions({ data_set->get_variables_number(DataSet::VariableUse::Input) });
 
     neural_network->set_inputs_names(data_set->get_variable_names(DataSet::VariableUse::Input));
 

@@ -12,21 +12,19 @@
 
 #include <Eigen/KLUSupport>
 
-template<typename T> void test_klu_support_T()
-{
+template <typename T>
+void test_klu_support_T() {
   KLU<SparseMatrix<T, ColMajor> > klu_colmajor;
   KLU<SparseMatrix<T, RowMajor> > klu_rowmajor;
-  
+
   check_sparse_square_solving(klu_colmajor);
   check_sparse_square_solving(klu_rowmajor);
-  
-  //check_sparse_square_determinant(umfpack_colmajor);
-  //check_sparse_square_determinant(umfpack_rowmajor);
+
+  // check_sparse_square_determinant(umfpack_colmajor);
+  // check_sparse_square_determinant(umfpack_rowmajor);
 }
 
-EIGEN_DECLARE_TEST(klu_support)
-{
+EIGEN_DECLARE_TEST(klu_support) {
   CALL_SUBTEST_1(test_klu_support_T<double>());
   CALL_SUBTEST_2(test_klu_support_T<std::complex<double> >());
 }
-

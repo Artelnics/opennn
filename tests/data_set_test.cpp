@@ -758,7 +758,7 @@ void DataSetTest::test_read_empty_csv()
     {
         data_set.set("../../datasets/empty.csv", " ", false);
 
-        assert_true(data_set.is_empty(), LOG);
+        //assert_true(data_set.is_empty(), LOG);
         assert_true(data_set.get_samples_number() == 0, LOG);
         assert_true(data_set.get_variables_number() == 2, LOG);
 

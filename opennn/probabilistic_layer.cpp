@@ -30,6 +30,12 @@ dimensions ProbabilisticLayer::get_input_dimensions() const
 }
 
 
+dimensions ProbabilisticLayer::get_output_dimensions() const
+{
+    return { biases.size() };
+}
+
+
 const type& ProbabilisticLayer::get_decision_threshold() const
 {
     return decision_threshold;
@@ -42,7 +48,7 @@ const ProbabilisticLayer::ActivationFunction& ProbabilisticLayer::get_activation
 }
 
 
-string ProbabilisticLayer::write_activation_function() const
+string ProbabilisticLayer::get_activation_function_string() const
 {
     if(activation_function == ActivationFunction::Binary)
         return "Binary";
@@ -54,27 +60,6 @@ string ProbabilisticLayer::write_activation_function() const
         return "Softmax";
     else
         throw runtime_error("Unknown probabilistic method.\n");
-}
-
-
-string ProbabilisticLayer::write_activation_function_text() const
-{
-    if(activation_function == ActivationFunction::Binary)
-        return "binary";
-    else if(activation_function == ActivationFunction::Logistic)
-        return "logistic";
-    else if(activation_function == ActivationFunction::Competitive)
-        return "competitive";
-    else if(activation_function == ActivationFunction::Softmax)
-        return "softmax";
-    else
-        throw runtime_error("Unknown probabilistic method.\n");
-}
-
-
-const bool& ProbabilisticLayer::get_display() const
-{
-    return display;
 }
 
 
@@ -124,29 +109,27 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     decision_threshold = type(0.5);
 
     name = new_name;
-
-    display = true;
 }
 
 
 
-void ProbabilisticLayer::set_inputs_number(const Index& new_inputs_number)
+void ProbabilisticLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     const dimensions output_dimensions = get_output_dimensions();
 
     biases.resize(output_dimensions[0]);
 
-    synaptic_weights.resize(new_inputs_number, output_dimensions[0]);
+    synaptic_weights.resize(new_input_dimensions[0], output_dimensions[0]);
 }
 
 
-void ProbabilisticLayer::set_neurons_number(const Index& new_neurons_number)
+void ProbabilisticLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     const dimensions input_dimensions = get_input_dimensions();
 
-    biases.resize(new_neurons_number);
+    biases.resize(new_output_dimensions[0]);
 
-    synaptic_weights.resize(input_dimensions[0], new_neurons_number);
+    synaptic_weights.resize(input_dimensions[0], new_output_dimensions[0]);
 }
 
 
@@ -185,12 +168,6 @@ void ProbabilisticLayer::set_activation_function(const string& new_activation_fu
         set_activation_function(ActivationFunction::Softmax);
     else
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
-}
-
-
-void ProbabilisticLayer::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -369,7 +346,7 @@ void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
-    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
     add_xml_element(printer, "DecisionThreshold", to_string(decision_threshold));
 
@@ -519,7 +496,7 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& output_nam
 }
 
 
-string ProbabilisticLayer::write_expression(const Tensor<string, 1>& input_names,
+string ProbabilisticLayer::get_expression(const Tensor<string, 1>& input_names,
                                             const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
@@ -630,6 +607,19 @@ void ProbabilisticLayerBackPropagation::print() const
 }
 
 
+ProbabilisticLayerBackPropagationLM::ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagationLM()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
+vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagationLM::get_input_derivative_pairs() const
+{
+    return vector<pair<type*, dimensions>>();
+}
+
+
 void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -645,6 +635,13 @@ void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_num
     squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
 
     combinations_derivatives.resize(batch_samples_number, neurons_number);
+}
+
+
+void ProbabilisticLayerBackPropagationLM::print() const
+{
+    cout << "Squared errors Jacobian: " << endl
+        << squared_errors_Jacobian << endl;
 }
 } // namespace opennn
 

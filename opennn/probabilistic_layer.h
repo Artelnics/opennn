@@ -69,24 +69,13 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
     explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number = 0, 
-                                                 Layer* new_layer = nullptr)
-        : LayerBackPropagationLM()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+                                                 Layer* new_layer = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const
-    {
-        return vector<pair<type*, dimensions>>();
-    }
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
     void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-        cout << "Squared errors Jacobian: " << endl
-             << squared_errors_Jacobian << endl;
-    }
+    void print() const;
 
     Tensor<type, 1> deltas_row;
 
@@ -121,17 +110,17 @@ public:
     const type& get_decision_threshold() const;
 
     const ActivationFunction& get_activation_function() const;
-    string write_activation_function() const;
-    string write_activation_function_text() const;
+    string get_activation_function_string() const;
 
-    const bool& get_display() const;
+    Index get_parameters_number() const final;
+    Tensor<type, 1> get_parameters() const final;
 
     void set(const dimensions& = {0},
              const dimensions & = {0},
              const string& = "probabilistic_layer");
 
-    void set_inputs_number(const Index&) final;
-    void set_neurons_number(const Index&) final;
+    void set_input_dimensions(const dimensions&) final;
+    void set_output_dimensions(const dimensions&) final;
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
     void set_decision_threshold(const type&);
@@ -139,13 +128,7 @@ public:
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
 
-    Index get_parameters_number() const final;
-    Tensor<type, 1> get_parameters() const final;
-
-    void set_display(const bool&);
-
     void set_parameters_constant(const type&) final;
-
     void set_parameters_random() final;
 
     void calculate_combinations(const Tensor<type, 2>&,
@@ -176,7 +159,7 @@ public:
     string write_competitive_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
     string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+    string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
     string write_combinations(const Tensor<string, 1>&) const;
     string write_activations(const Tensor<string, 1>&) const;
 
@@ -184,8 +167,7 @@ public:
 
     void to_XML(tinyxml2::XMLPrinter&) const final;
 
-
-protected:
+private:
 
     Tensor<type, 1> biases;
 
@@ -194,8 +176,6 @@ protected:
     ActivationFunction activation_function = ActivationFunction::Logistic;
 
     type decision_threshold;
-
-    bool display = true;
 
     Tensor<type, 2> empty;
 

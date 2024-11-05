@@ -402,7 +402,7 @@ ConvolutionalLayer::ActivationFunction ConvolutionalLayer::get_activation_functi
 }
 
 
-string ConvolutionalLayer::write_activation_function() const
+string ConvolutionalLayer::get_activation_function_string() const
 {
     switch(activation_function)
     {
@@ -841,7 +841,7 @@ void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
     add_xml_element(printer, "KernelsHeight", to_string(get_kernel_height()));
     add_xml_element(printer, "KernelsWidth", to_string(get_kernel_width()));
     add_xml_element(printer, "KernelsChannels", to_string(get_kernel_channels()));
-    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "ConvolutionType", write_convolution_type());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));

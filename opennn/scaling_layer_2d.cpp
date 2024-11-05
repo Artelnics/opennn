@@ -157,12 +157,6 @@ Tensor<string, 1> ScalingLayer2D::write_scalers_text() const
 }
 
 
-const bool& ScalingLayer2D::get_display() const
-{
-    return display;
-}
-
-
 void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 {
     if (new_input_dimensions.size() != 1)
@@ -183,29 +177,23 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 
     set_min_max_range(type(-1), type(1));
 
-    set_display(true);
-
     layer_type = Type::Scaling2D;
 }
 
 
-void ScalingLayer2D::set_inputs_number(const Index& new_inputs_number)
+void ScalingLayer2D::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-    descriptives.resize(new_inputs_number);
+    descriptives.resize(new_input_dimensions[0]);
 
-    scalers.resize(new_inputs_number);
+    scalers.resize(new_input_dimensions[0]);
 
     scalers.setConstant(Scaler::MeanStandardDeviation);
 }
 
 
-void ScalingLayer2D::set_neurons_number(const Index& new_neurons_number)
+void ScalingLayer2D::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    descriptives.resize(new_neurons_number);
-
-    scalers.resize(new_neurons_number);
-
-    scalers.setConstant(Scaler::MeanStandardDeviation);
+    set_input_dimensions(new_output_dimensions);
 }
 
 
@@ -323,12 +311,6 @@ void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
     #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
         scalers(i) = new_scaling_method;
-}
-
-
-void ScalingLayer2D::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -476,7 +458,7 @@ string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 
 }
 
 
-string ScalingLayer2D::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>&) const
+string ScalingLayer2D::get_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>&) const
 {
     const Index neurons_number = get_output_dimensions()[0];
 

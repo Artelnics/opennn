@@ -483,7 +483,7 @@ void GeneticAlgorithm::evaluate_population()
 
         input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-        neural_network->set_inputs_number(data_set->get_variables_number(DataSet::VariableUse::Input));
+        neural_network->set_input_dimensions({ data_set->get_variables_number(DataSet::VariableUse::Input) });
 
         neural_network->set_inputs_names(input_names);
 
@@ -928,7 +928,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     // Set neural network stuff
 
-    neural_network->set_inputs_number( data_set->get_variables_number(DataSet::VariableUse::Input));
+    neural_network->set_input_dimensions({ data_set->get_variables_number(DataSet::VariableUse::Input) });
 
     neural_network->set_inputs_names(data_set->get_variable_names(DataSet::VariableUse::Input));
 
