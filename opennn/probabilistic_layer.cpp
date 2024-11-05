@@ -30,6 +30,12 @@ dimensions ProbabilisticLayer::get_input_dimensions() const
 }
 
 
+dimensions ProbabilisticLayer::get_output_dimensions() const
+{
+    return { biases.size() };
+}
+
+
 const type& ProbabilisticLayer::get_decision_threshold() const
 {
     return decision_threshold;

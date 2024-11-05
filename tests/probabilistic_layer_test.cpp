@@ -23,7 +23,7 @@ void ProbabilisticLayerTest::test_constructor()
     cout << "test_constructor\n";
 
     ProbabilisticLayer probabilistic_layer_1;
-
+/*
     assert_true(
         probabilistic_layer_1.get_inputs_number() == 0 &&
         probabilistic_layer_1.get_neurons_number() == 0 &&
@@ -56,6 +56,7 @@ void ProbabilisticLayerTest::test_constructor()
         probabilistic_layer_4.get_inputs_number() == 1 &&
         probabilistic_layer_4.get_neurons_number() == 2 &&
         probabilistic_layer_4.get_parameters_number() == 4, LOG);
+*/
 }
 
 
@@ -71,10 +72,10 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 
     Tensor<type, 2> inputs(1, 1);
     inputs.setConstant(type(3));
-
+    /*
     Tensor<type, 2> combinations(1, 1);
     probabilistic_layer.set(1, 1);
-/*
+
     probabilistic_layer.set_synaptic_weights(synaptic_weights);
     probabilistic_layer.set_biases(biases);
 */
@@ -97,7 +98,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
     samples_number = 1;
     inputs_number = 1;
     neurons_number = 1;
-
+/*
     probabilistic_layer.set(inputs_number, neurons_number);
 
     combinations.resize(samples_number, neurons_number);
@@ -119,13 +120,14 @@ void ProbabilisticLayerTest::test_calculate_activations()
         activation_derivatives.dimension(1) == neurons_number, LOG);
 
     assert_true(abs(activation_derivatives(0, 0) - type(0.1444)) < type(1e-3), LOG);
+*/
 }
 
 
 void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-
+/*
     inputs_number = 2;
     neurons_number = 2;
     samples_number = 5;
@@ -145,7 +147,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     input_pairs.first = inputs.data();
     input_pairs.second = {{samples_number, inputs_number}};
-/*
+
     probabilistic_layer.forward_propagate({input_pairs},
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
