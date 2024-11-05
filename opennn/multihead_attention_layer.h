@@ -144,8 +144,6 @@ protected:
 
     type dropout_rate = type(0);
 
-    bool display = true;
-
     const Eigen::array<Index, 1> projection_sum_index = { 3 };
     const Eigen::array<Index, 2> biases_derivatives_sum_indices = { 0, 2 };
     const Eigen::array<Index, 2> projection_biases_derivatives_sum_indices = { 0, 1 };

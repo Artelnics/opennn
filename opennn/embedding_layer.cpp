@@ -127,8 +127,6 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 
     name = "embedding_layer";
 
-    display = true;
-
     layer_type = Type::Embedding;
 }
 

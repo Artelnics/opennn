@@ -101,8 +101,6 @@ protected:
 
     bool positional_encoding;
 
-    bool display = true;
-
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
 };
 

@@ -87,8 +87,6 @@ void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_
 
     name = "normalization_layer_3d";
 
-    display = true;
-
     layer_type = Type::Normalization3D;
 }
 

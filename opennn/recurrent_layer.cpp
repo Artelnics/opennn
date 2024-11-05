@@ -132,8 +132,6 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 
     name = "recurrent_layer";
 
-    display = true;
-
     layer_type = Type::Recurrent;
 }
 

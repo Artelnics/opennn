@@ -77,8 +77,6 @@ public:
 protected:
 
     dimensions input_dimensions;
-
-    bool display = true;
 };
 
 

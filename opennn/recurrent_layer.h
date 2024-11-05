@@ -132,8 +132,6 @@ protected:
 
    Tensor<type, 3> hidden_states;
 
-   bool display = true;
-
    Tensor<type, 2> empty;
 
 #ifdef OPENNN_CUDA

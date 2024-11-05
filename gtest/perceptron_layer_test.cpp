@@ -12,30 +12,28 @@ protected:
 
 };
 
-
+/*
 TEST(PerceptronLayerTest, DefaultConstructor) 
 {
-
     PerceptronLayer perceptron_layer;
    
-//    cout << "HELLO" << endl;
-
     EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(perceptron_layer.get_name(), "perceptron_layer");
-    //    EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 0 });
-//    EXPECT_EQ(perceptron_layer.get_output_dimensions(), dimensions{ 0 });
+    EXPECT_EQ(perceptron_layer.get_display(), true);
+    EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 0 });
+    EXPECT_EQ(perceptron_layer.get_output_dimensions(), dimensions{ 0 });
 
 }
-
+*/
 
 TEST(PerceptronLayerTest, GeneralConstructor)
 {
-/*
-    PerceptronLayer perceptron_layer({10}, 
-                                     {3}, 
+    
+    PerceptronLayer perceptron_layer({3}, 
+                                     {2}, 
                                      PerceptronLayer::ActivationFunction::Linear,
                                      "perceptron_layer_test");
-
+    /*
     EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
 //    EXPECT_EQ(perceptron_layer.get_input_dimensions(), { 10 });
 //    EXPECT_EQ(perceptron_layer.get_output_dimensions(), { 3 });

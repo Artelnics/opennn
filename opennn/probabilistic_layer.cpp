@@ -103,8 +103,6 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     decision_threshold = type(0.5);
 
     name = new_name;
-
-    display = true;
 }
 
 

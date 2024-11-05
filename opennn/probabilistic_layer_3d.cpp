@@ -122,8 +122,6 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
     activation_function = ActivationFunction::Softmax;
 
     decision_threshold = type(0.5);
-
-    display = true;
 }
 
 

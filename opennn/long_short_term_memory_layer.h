@@ -163,8 +163,6 @@ protected:
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
    ActivationFunction recurrent_activation_function = ActivationFunction::HardSigmoid;
 
-   bool display = true;
-
    Tensor<type, 1> empty;
 
 #ifdef OPENNN_CUDA

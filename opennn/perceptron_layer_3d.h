@@ -115,8 +115,6 @@ protected:
 
    type dropout_rate = type(0);
 
-   bool display = true;
-
    Tensor<type, 3> empty;
 
    const Eigen::array<Index, 2> sum_dimensions = { 0, 1 };

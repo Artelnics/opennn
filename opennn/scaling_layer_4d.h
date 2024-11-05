@@ -31,8 +31,6 @@ public:
 
    void set(const dimensions& = { 0, 0, 0, 0 });
 
-   void set_default();
-
    void set_min_max_range(const type& min, const type& max);
 
    bool is_empty() const;
@@ -52,8 +50,6 @@ protected:
 
    type min_range;
    type max_range;
-
-   bool display = true;
 
 };
 

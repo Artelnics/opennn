@@ -88,8 +88,6 @@ private:
    Tensor<type, 1> lower_bounds;
 
    Tensor<type, 1> upper_bounds;
-
-   bool display = true;
 };
 
 

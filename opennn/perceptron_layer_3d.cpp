@@ -123,8 +123,6 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     name = "perceptron_layer_3d";
 
-    display = true;
-
     layer_type = Type::Perceptron3D;
 
     dropout_rate = 0;

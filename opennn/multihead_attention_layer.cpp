@@ -182,8 +182,6 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
     name = "multihead_attention_layer";
 
-    display = true;
-
     layer_type = Type::MultiheadAttention;
 
     dropout_rate = 0;

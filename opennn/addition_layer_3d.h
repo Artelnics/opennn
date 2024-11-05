@@ -63,8 +63,6 @@ protected:
     Index inputs_number = 0;
 
     Index inputs_depth = 0;
-
-    bool display = true;
 };
 
 

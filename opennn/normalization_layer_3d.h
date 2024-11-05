@@ -92,8 +92,6 @@ protected:
 
     Tensor<type, 1> betas;
 
-    bool display = true;
-
     const Eigen::array<Index, 1> sum_dimensions_1 = {2};
     const Eigen::array<Index, 2> sum_dimensions_2 = {0, 1};
 

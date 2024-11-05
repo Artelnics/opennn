@@ -45,8 +45,6 @@ void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_input
 
     name = "addition_layer_3d";
 
-    display = true;
-
     layer_type = Type::Addition3D;
 }
 

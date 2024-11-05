@@ -20,10 +20,12 @@ PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
                                  const ActivationFunction& new_activation_function,
                                  const string& new_layer_name) : Layer()
 {
+
     set(new_input_dimensions,
         new_output_dimensions,
         new_activation_function,
         new_layer_name);
+
 }
 
 
@@ -53,9 +55,7 @@ type PerceptronLayer::get_dropout_rate() const
 
 dimensions PerceptronLayer::get_output_dimensions() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
-
-    return { neurons_number };
+    return {biases.size()};
 }
 
 
@@ -121,14 +121,14 @@ void PerceptronLayer::set(const dimensions& new_input_dimensions,
                           const PerceptronLayer::ActivationFunction& new_activation_function,
                           const string& new_name)
 {
+
     if (new_input_dimensions.size() != 1) 
         throw runtime_error("Input dimensions rank is not 1");
 
     if (new_output_dimensions.size() != 1)
-        throw runtime_error("Output dimensions rank is not 1");
+        throw runtime_error("Output dimensions rank is not 1");   
 
-    biases.resize(new_output_dimensions[0]);
-
+    biases.resize(new_output_dimensions[0]);    
     synaptic_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
@@ -136,8 +136,6 @@ void PerceptronLayer::set(const dimensions& new_input_dimensions,
     activation_function = new_activation_function;
 
     name = new_name;
-
-    display = true;
 
     layer_type = Layer::Type::Perceptron;
 }

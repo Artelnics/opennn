@@ -177,8 +177,6 @@ protected:
 
     type decision_threshold;
 
-    bool display = true;
-
     Tensor<type, 2> empty;
 
     const Eigen::array<Index, 1> sum_dimensions = {0};

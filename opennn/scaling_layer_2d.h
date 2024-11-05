@@ -96,8 +96,6 @@ protected:
 
    type min_range;
    type max_range;
-
-   bool display = true;
 };
 
 

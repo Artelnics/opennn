@@ -120,8 +120,6 @@ protected:
 
    type decision_threshold;
 
-   bool display = true;
-
    Tensor<type, 3> empty;
 
    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
