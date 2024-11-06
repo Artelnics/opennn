@@ -26,7 +26,6 @@ int main()
         srand(unsigned(time(nullptr)));
 
         cout << "Airfoil self noise" << endl;
-<<<<<<< HEAD
 /*
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
@@ -39,8 +38,6 @@ int main()
 
         neural_network.calculate_outputs(inputs);
 */
-=======
->>>>>>> a0e0be6ac2809a11528b6c820b9dd7edfe076c35
 
         // Data set
 

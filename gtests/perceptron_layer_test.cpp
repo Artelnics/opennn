@@ -33,14 +33,13 @@ TEST(PerceptronLayerTest, GeneralConstructor)
                                      {2}, 
                                      PerceptronLayer::ActivationFunction::Linear,
                                      "perceptron_layer_test");
-    /*
+
     EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
-//    EXPECT_EQ(perceptron_layer.get_input_dimensions(), { 10 });
+    EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 3 });
 //    EXPECT_EQ(perceptron_layer.get_output_dimensions(), { 3 });
     EXPECT_EQ(perceptron_layer.get_parameters_number(), 33);
     EXPECT_EQ(perceptron_layer.get_activation_function(), PerceptronLayer::ActivationFunction::Linear);
     EXPECT_EQ(perceptron_layer.get_name(), "perceptron_layer_test");
-*/
 }
 
 
