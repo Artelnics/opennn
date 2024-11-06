@@ -1,45 +1,43 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L E A R N I N G   R A T E   A L G O R I T H M   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-#include "learning_rate_algorithm_test.h"
+#include "pch.h"
 
 #include "../opennn/neural_network_forward_propagation.h"
 #include "../opennn/back_propagation.h"
 #include "../opennn/learning_rate_algorithm.h"
+#include "../opennn/mean_squared_error.h"
 
-namespace opennn
+
+TEST(LearningRateAlgorithmTest, DefaultConstructor)
 {
+    LearningRateAlgorithm learning_rate_algorithm;
 
-LearningRateAlgorithmTest::LearningRateAlgorithmTest() : UnitTesting()
-{
-    sum_squared_error.set(&neural_network, &data_set);
-
-    learning_rate_algorithm.set(&sum_squared_error);
+    EXPECT_EQ(learning_rate_algorithm.has_loss_index(), false);
 }
 
+
+TEST(LearningRateAlgorithmTest, GeneralConstructor)
+{
+    MeanSquaredError mean_squared_error;
+    LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
+
+    EXPECT_EQ(learning_rate_algorithm.has_loss_index(), true);
+}
+
+/*
+namespace opennn
+{
 
 void LearningRateAlgorithmTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    SumSquaredError sum_squared_error;
-
     // Test
 
-    LearningRateAlgorithm tra1(&sum_squared_error);
+    LearningRateAlgorithm tra1;
 
     assert_true(tra1.has_loss_index(), LOG);
 
     // Test
 
-    LearningRateAlgorithm tra2;
-
-    assert_true(!tra2.has_loss_index(), LOG);
 }
 
 
@@ -102,7 +100,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     //loss = sum_squared_error.calculate_training_loss();
     //training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
 
-    initial_learning_rate = static_cast<type>(0.01);
+    initial_learning_rate = 0.01;
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -115,7 +113,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     neural_network.set_parameters_constant(type(0));
 
-    initial_learning_rate = static_cast<type>(0.01);
+    initial_learning_rate = 0.01;
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -123,7 +121,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     neural_network.set_parameters_constant(type(1));
 
-    initial_learning_rate = static_cast<type>(0.0);
+    initial_learning_rate = 0.0;
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -135,7 +133,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
-    initial_learning_rate = static_cast<type>(0.001);
+    initial_learning_rate = 0.001;
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -152,7 +150,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
-    initial_learning_rate = static_cast<type>(0.001);
+    initial_learning_rate = 0.001;
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
@@ -174,7 +172,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
     Index neurons_number;
 
     data_set.set(1, 1, 1);
-/*
+
     Tensor<Index, 1> indices(1, 1, data_set.get_samples_number()-1);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 1});
@@ -194,7 +192,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
     assert_true(directional_point.first >= type(0), LOG);
     assert_true(directional_point.second < loss, LOG);
-*/
+
 }
 
 
@@ -218,54 +216,20 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
     neural_network.set_parameters_constant(type(1));
 
     // @todo loss_index.calculate_training_loss not available
-/*
+
     Tensor<type, 1> gradient = sum_squared_error.calculate_numerical_gradient();
 
     Tensor<type, 1> training_direction = gradient*(type(-1.0));
-*/
-    type initial_learning_rate = static_cast<type>(0.001);
-/*
+
+    type initial_learning_rate = 0.001;
+
     pair<type, type> directional_point
            = learning_rate_algorithm.calculate_directional_point(1e-2, training_direction, initial_learning_rate);
 
     assert_true(directional_point.first >= type(0), LOG);
     assert_true(directional_point.second < 1e-2, LOG);
+
+}
+
+}
 */
-}
-
-
-void LearningRateAlgorithmTest::run_test_case()
-{
-    cout << "Running learning rate algorithm test case...\n";
-
-    test_constructor();
-
-    // Training
-
-    test_calculate_bracketing_triplet();
-
-    test_calculate_golden_section_directional_point();
-
-    test_calculate_Brent_method_directional_point();
-
-    cout << "End of learning rate algorithm test case.\n\n";
-}
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

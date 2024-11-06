@@ -14,10 +14,10 @@ namespace opennn
 
 Layer::Layer()
 {
-    const int n = omp_get_max_threads();
+    const unsigned int threads_number = thread::hardware_concurrency();
 
-    thread_pool = make_unique<ThreadPool>(n);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), n);
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
 

@@ -57,10 +57,10 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
     data_set = new_data_set;
 
-    const int n = omp_get_max_threads();
+    const unsigned int threads_number = thread::hardware_concurrency();
 
-    thread_pool = make_unique<ThreadPool>(n);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), n);
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     regularization_method = RegularizationMethod::L2;
 }
@@ -68,13 +68,8 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-/*
-    if(thread_pool) delete thread_pool;
-    if(thread_pool_device) delete thread_pool_device;
-
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
-*/
+//    thread_pool = make_unique<ThreadPool>(new_threads_number);
+//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
 }
 
 

@@ -106,9 +106,9 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 
 Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 {
-    const int n = omp_get_max_threads();
-    thread_pool = make_unique<ThreadPool>(n);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), n);
+    const unsigned int threads_number = thread::hardware_concurrency();
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     set(new_samples_number, new_data_set);
 }
