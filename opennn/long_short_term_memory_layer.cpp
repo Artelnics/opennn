@@ -26,30 +26,27 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_numbe
 }
 
 
-Index LongShortTermMemoryLayer::get_inputs_number() const
+dimensions LongShortTermMemoryLayer::get_input_dimensions() const
 {
-    return input_weights.dimension(0);
-}
-
-
-Index LongShortTermMemoryLayer::get_neurons_number() const
-{
-    return output_biases.size();
+    return { input_weights.dimension(0) };
 }
 
 
 dimensions LongShortTermMemoryLayer::get_output_dimensions() const
 {
-    Index neurons_number = get_neurons_number();
+/*
+    const Index neurons_number = get_neurons_number();
 
     return { neurons_number };
+*/
+    return {};
 }
 
 
 Index LongShortTermMemoryLayer::get_parameters_number() const
 {
-    Index neurons_number = get_neurons_number();
-    Index inputs_number = get_inputs_number();
+    const Index inputs_number = get_input_dimensions()[0];
+    const Index neurons_number = get_output_dimensions()[0];
 
     return 4 * neurons_number * (1 + inputs_number + neurons_number);
 }
@@ -223,7 +220,7 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 
 void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
     const Index time_steps = get_timesteps();
 
     set(new_inputs_number, neurons_number, time_steps);
@@ -232,7 +229,7 @@ void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 
 void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_number)
 {
-    const Index inputs_number = get_inputs_number();
+    const Index inputs_number = get_input_dimensions()[0];
     const Index time_steps = get_timesteps();
 
     set(inputs_number, new_neurons_number, time_steps);
@@ -241,8 +238,8 @@ void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_numbe
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    const Index neurons_number = get_neurons_number();
-    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_output_dimensions()[0];
+    const Index inputs_number = get_input_dimensions()[0];
 
     Index current_index = index;
 
@@ -1969,8 +1966,8 @@ void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>&
                                                const Index& index,
                                                Tensor<type, 1>& gradient) const
 {    
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_input_dimensions()[0];
+    const Index neurons_number = get_output_dimensions()[0];
 
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation.get());
@@ -2035,10 +2032,11 @@ void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>&
 
 string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
+    ostringstream buffer;
+
+/*
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
-
-    ostringstream buffer;
 
     // Forget gate
 
@@ -2112,7 +2110,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
     for(Index i = 0; i < neurons_number; i++)
        buffer << output_names[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
-
+*/
     return buffer.str();
 }
 
@@ -2139,8 +2137,8 @@ void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& printer) const
     printer.OpenElement("LongShortTermMemory");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
-    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "TimeStep", to_string(get_timesteps()));
     add_xml_element(printer, "ActivationFunction", write_activation_function());
     add_xml_element(printer, "RecurrentActivationFunction", write_recurrent_activation_function());
@@ -2187,9 +2185,9 @@ LongShortTermMemoryLayerForwardPropagation::LongShortTermMemoryLayerForwardPropa
 
 pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return {(type*)outputs.data(), {{batch_samples_number, neurons_number}}};
+    return {(type*)outputs.data(), {{batch_samples_number, output_dimensions[0]}}};
 }
 
 
@@ -2197,8 +2195,8 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
 {
     layer = new_layer;
 
-    const Index inputs_number = layer->get_inputs_number();
-    const Index neurons_number = layer->get_neurons_number();
+    const Index inputs_number = layer->get_input_dimensions()[0];
+    const Index neurons_number = layer->get_output_dimensions()[0];
 
     batch_samples_number = new_batch_samples_number;
 
@@ -2257,7 +2255,7 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
     layer = new_layer;
 
     batch_samples_number = new_batch_samples_number;
-
+/*
     const Index neurons_number = layer->get_neurons_number();
     const Index inputs_number = layer->get_inputs_number();
 
@@ -2303,6 +2301,7 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
     output_combinations_biases_derivatives.resize(neurons_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number);
+*/
 }
 
 
@@ -2315,9 +2314,9 @@ LongShortTermMemoryLayerBackPropagation::LongShortTermMemoryLayerBackPropagation
 
 vector<pair<type*, dimensions>> LongShortTermMemoryLayerBackPropagation::get_input_derivative_pairs() const
 {
-    const Index inputs_number = layer->get_inputs_number();
+    const dimensions input_dimensions = layer->get_input_dimensions();
 
-    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}}};
+    return {{(type*)(input_derivatives.data()), {batch_samples_number, input_dimensions[0]}}};
 }
 
 

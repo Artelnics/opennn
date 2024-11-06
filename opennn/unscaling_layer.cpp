@@ -21,23 +21,15 @@ UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions, const str
 }
 
 
-Index UnscalingLayer::get_inputs_number() const
+dimensions UnscalingLayer::get_input_dimensions() const
 {
-    return descriptives.size();
-}
-
-
-Index UnscalingLayer::get_neurons_number() const
-{
-    return descriptives.size();
+    return { descriptives.size()};
 }
 
 
 dimensions UnscalingLayer::get_output_dimensions() const
 {
-    const Index neurons_number = get_neurons_number();
-
-    return { neurons_number };
+    return { descriptives.size()};
 }
 
 
@@ -49,7 +41,7 @@ Tensor<Descriptives, 1> UnscalingLayer::get_descriptives() const
 
 Tensor<type, 1> UnscalingLayer::get_minimums() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<type, 1> minimums(neurons_number);
 
@@ -63,7 +55,7 @@ Tensor<type, 1> UnscalingLayer::get_minimums() const
 
 Tensor<type, 1> UnscalingLayer::get_maximums() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<type, 1> maximums(neurons_number);
 
@@ -84,7 +76,7 @@ Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 string UnscalingLayer::write_expression(const Tensor<string, 1>& input_names, 
                                         const Tensor<string, 1>& output_names) const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     ostringstream buffer;
 
@@ -152,7 +144,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& input_names,
 
 Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
@@ -176,7 +168,7 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 
 Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
@@ -287,7 +279,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 
 void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_scalers)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     for(Index i = 0; i < neurons_number; i++)
         set_scaler(i, new_scalers(i));
@@ -296,7 +288,7 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_scalers)
 
 void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     for(Index i = 0; i < neurons_number; i++)
         scalers(i) = new_unscaling_method;
@@ -328,7 +320,7 @@ void UnscalingLayer::set_display(const bool& new_display)
 
 bool UnscalingLayer::is_empty() const
 {
-    return get_neurons_number() == 0;
+    return get_output_dimensions()[0] == 0;
 }
 
 
@@ -336,7 +328,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation =
             static_cast<UnscalingLayerForwardPropagation*>(forward_propagation.get());
@@ -401,7 +393,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
 Tensor<string, 1> UnscalingLayer::write_scalers_text() const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
@@ -427,7 +419,7 @@ void UnscalingLayer::print() const
 {
     cout << "Unscaling layer" << endl;
 
-    const Index inputs_number = get_inputs_number();
+    const Index inputs_number = get_input_dimensions()[0];
 
     const Tensor<string, 1> scalers_text = write_scalers_text();
 
@@ -445,12 +437,14 @@ void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
     printer.OpenElement("Unscaling");
 
-    const Index neurons_number = get_neurons_number();
-    add_xml_element(printer, "UnscalingNeuronsNumber", to_string(neurons_number));
+    const dimensions output_dimensions = get_output_dimensions();
+
+    add_xml_element(printer, "UnscalingNeuronsNumber", to_string(output_dimensions[0]));
 
     const Tensor<string, 1> scalers = write_unscaling_methods();
 
-    for (Index i = 0; i < neurons_number; i++) {
+    for (Index i = 0; i < output_dimensions[0]; i++) 
+    {
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
 
@@ -516,9 +510,9 @@ UnscalingLayerForwardPropagation::UnscalingLayerForwardPropagation(const Index& 
 
 pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return { (type*)outputs.data(), { batch_samples_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, output_dimensions[0]}};
 }
 
 
@@ -526,11 +520,11 @@ void UnscalingLayerForwardPropagation::set(const Index& new_batch_samples_number
 {
     layer = new_layer;
 
-    const Index neurons_number = static_cast<UnscalingLayer*>(layer)->get_neurons_number();
+    const dimensions output_dimensions = static_cast<UnscalingLayer*>(layer)->get_output_dimensions();
 
     batch_samples_number = new_batch_samples_number;
 
-    outputs.resize(batch_samples_number, neurons_number);
+    outputs.resize(batch_samples_number, output_dimensions[0]);
 }
 
 

@@ -62,12 +62,6 @@ Index FlattenLayer::get_input_channels() const
 }
 
 
-Index FlattenLayer::get_neurons_number() const
-{
-    return input_dimensions[0]* input_dimensions[1] * input_dimensions[2];
-}
-
-
 void FlattenLayer::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
@@ -80,7 +74,7 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 {
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
             static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.get());
@@ -101,7 +95,7 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_samples_number = input_pairs[0].second[0];
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
@@ -166,9 +160,9 @@ FlattenLayerForwardPropagation::FlattenLayerForwardPropagation(const Index& new_
 
 pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return {(type*)outputs.data(), {batch_samples_number, neurons_number}};
+    return {(type*)outputs.data(), {batch_samples_number, output_dimensions[0]}};
 }
 
 
@@ -178,9 +172,9 @@ void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, 
 
     layer = new_layer;
 
-    const Index neurons_number = layer->get_neurons_number();
+    const dimensions output_dimensions = layer->get_output_dimensions();
 
-    outputs.resize(batch_samples_number, neurons_number);
+    outputs.resize(batch_samples_number, output_dimensions[0]);
 }
 
 

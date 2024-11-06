@@ -45,7 +45,6 @@ public:
 
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
-    Index get_neurons_number() const final;
 
     const bool& get_display() const;
 

@@ -32,12 +32,6 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions,
 }
 
 
-Index PoolingLayer::get_neurons_number() const
-{
-    return get_output_height() * get_output_width() * get_channels_number();
-}
-
-
 dimensions PoolingLayer::get_output_dimensions() const
 {
     const Index rows_number = get_output_height();

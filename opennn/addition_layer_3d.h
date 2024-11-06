@@ -32,7 +32,7 @@ public:
 
     explicit AdditionLayer3D(const Index& = 0, const Index& = 0);
 
-    Index get_inputs_number() const final;
+    Index get_inputs_number() const;
     Index get_inputs_depth() const;
 
     dimensions get_output_dimensions() const final;

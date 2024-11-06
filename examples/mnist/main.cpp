@@ -38,8 +38,8 @@ int main()
         
         ImageDataSet image_data_set;
         //image_data_set.set_data_source_path("data");
-        image_data_set.set_data_source_path("C:/mnist/train");
-        //image_data_set.set_data_source_path("C:/binary_mnist");
+        //image_data_set.set_data_source_path("C:/mnist/train");
+        image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
@@ -72,6 +72,11 @@ int main()
         training_strategy.perform_training();
 
         // Testing analysis
+
+        Index prediction = neural_network.calculate_image_output("C:/binary_mnist/1/3.bmp");
+        cout << "C:/binary_mnist/1/3.bmp is a : " << prediction << endl;
+        prediction = neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
+        cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
         
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         

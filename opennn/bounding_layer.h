@@ -30,15 +30,9 @@ public:
 
    enum class BoundingMethod{NoBounding, Bounding};
 
-   // Check
-
-   bool is_empty() const;
-
    // Get
 
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
-
+   dimensions get_input_dimensions() const final;
    dimensions get_output_dimensions() const final;
 
    const BoundingMethod& get_bounding_method() const;

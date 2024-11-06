@@ -86,10 +86,10 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 }
 
 
-Index EmbeddingLayer::get_neurons_number() const
-{
-    return inputs_number * depth;
-}
+//Index EmbeddingLayer::get_neurons_number() const
+//{
+//    return inputs_number * depth;
+//}
 
 
 const bool& EmbeddingLayer::get_display() const

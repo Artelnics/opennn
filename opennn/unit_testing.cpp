@@ -19,13 +19,6 @@ UnitTesting::UnitTesting()
 }
 
 
-UnitTesting::~UnitTesting()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-}
-
-
 Index UnitTesting::get_tests_count() const
 {
     return tests_count;

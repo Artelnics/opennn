@@ -40,14 +40,12 @@ public:
                               const Index& = 0,
                               const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
-   Index get_inputs_number() const final;
+   Index get_inputs_number() const;
    Index get_inputs_depth() const;
-   Index get_neurons_number() const final;
+   Index get_neurons_number() const;
 
    dimensions get_output_dimensions() const final;
 
-   Index get_biases_number() const;
-   Index get_synaptic_weights_number() const;
    Index get_parameters_number() const final;
    type get_dropout_rate() const;
    Tensor<type, 1> get_parameters() const final;

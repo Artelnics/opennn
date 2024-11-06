@@ -69,10 +69,6 @@ public:
                      const bool& = false,
                      const Codification& = Codification::UTF8);
 
-    // Destructor
-
-    virtual ~DataSet();
-
     // Enumerations
 
     enum class Separator{None, Space, Tab, Comma, Semicolon};
@@ -365,10 +361,6 @@ public:
 
     void set_display(const bool&);
 
-    // Check
-
-    bool is_empty() const;
-
     bool is_sample_used(const Index&) const;
 
     bool has_binary_raw_variables() const;
@@ -588,8 +580,8 @@ protected:
 
     DataSet::ModelType model_type;
 
-    ThreadPool* thread_pool = nullptr;
-    ThreadPoolDevice* thread_pool_device = nullptr;
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
 
     // DATA
 

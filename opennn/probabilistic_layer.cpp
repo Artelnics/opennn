@@ -13,62 +13,26 @@
 namespace opennn
 {
 
-ProbabilisticLayer::ProbabilisticLayer()
-{
-    set();
-}
-
-
-ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number,
-                                       const Index& new_neurons_number)
-{
-    set(new_inputs_number, new_neurons_number);
-
-    if(new_neurons_number > 1)
-        activation_function = ActivationFunction::Softmax;
-}
-
-
 ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_output_dimensions,
-                                       const string new_name)
+                                       const string& new_name) : Layer()
 {
-    set(new_input_dimensions[0], new_output_dimensions[0]);
+    set(new_input_dimensions, 
+        new_output_dimensions, 
+        new_name);
 
-    if(new_output_dimensions[0] > 1)
-        activation_function = ActivationFunction::Softmax;
-
-    name = new_name;
 }
 
 
-Index ProbabilisticLayer::get_inputs_number() const
+dimensions ProbabilisticLayer::get_input_dimensions() const
 {
-    return synaptic_weights.dimension(0);
-}
-
-
-Index ProbabilisticLayer::get_neurons_number() const
-{
-    return biases.size();
+    return { synaptic_weights.dimension(0) };
 }
 
 
 dimensions ProbabilisticLayer::get_output_dimensions() const
 {
-    return { get_neurons_number() };
-}
-
-
-Index ProbabilisticLayer::get_biases_number() const
-{
-    return biases.size();
-}
-
-
-Index ProbabilisticLayer::get_synaptic_weights_number() const
-{
-    return synaptic_weights.size();
+    return { synaptic_weights.dimension(1) };
 }
 
 
@@ -141,25 +105,31 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 }
 
 
-void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const string new_name)
+void ProbabilisticLayer::set(const dimensions& new_input_dimensions, 
+                             const dimensions& new_output_dimensions, 
+                             const string& new_name)
 {
-    biases.resize(new_neurons_number);
+    if (new_input_dimensions.size() != 1)
+        throw runtime_error("Input dimensions rank is not 1");
 
-    synaptic_weights.resize(new_inputs_number, new_neurons_number);
+    if (new_output_dimensions.size() != 1)
+        throw runtime_error("Output dimensions rank is not 1");
+
+    biases.resize(new_output_dimensions[0]);
+
+    synaptic_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
 
-    name = new_name;
-
     layer_type = Layer::Type::Probabilistic;
 
-    const Index neurons_number = get_neurons_number();
-
-    neurons_number == 1
+    new_output_dimensions[0] == 1
         ? activation_function = ActivationFunction::Logistic
         : activation_function = ActivationFunction::Softmax;
 
     decision_threshold = type(0.5);
+
+    name = new_name;
 
     display = true;
 }
@@ -168,21 +138,21 @@ void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_ne
 
 void ProbabilisticLayer::set_inputs_number(const Index& new_inputs_number)
 {
-    const Index neurons_number = get_neurons_number();
+    const dimensions output_dimensions = get_output_dimensions();
 
-    biases.resize(neurons_number);
+    biases.resize(output_dimensions[0]);
 
-    synaptic_weights.resize(new_inputs_number, neurons_number);
+    synaptic_weights.resize(new_inputs_number, output_dimensions[0]);
 }
 
 
 void ProbabilisticLayer::set_neurons_number(const Index& new_neurons_number)
 {
-    const Index inputs_number = get_inputs_number();
+    const dimensions input_dimensions = get_input_dimensions();
 
     biases.resize(new_neurons_number);
 
-    synaptic_weights.resize(inputs_number, new_neurons_number);
+    synaptic_weights.resize(input_dimensions[0], new_neurons_number);
 }
 
 
@@ -251,7 +221,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
-    sum_columns(thread_pool_device, biases, combinations);
+    sum_columns(thread_pool_device.get(), biases, combinations);
 }
 
 
@@ -276,7 +246,7 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
                                            unique_ptr<LayerForwardPropagation>& forward_propagation,
                                            const bool& is_training)
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
@@ -313,7 +283,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
     
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
@@ -363,8 +333,8 @@ void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_
                                          const Index& index,
                                          Tensor<type, 1>& gradient) const
 {
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index biases_number = biases.size();
+    const Index synaptic_weights_number = synaptic_weights.size();
 
     const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
         static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
@@ -403,8 +373,8 @@ void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
     printer.OpenElement("Probabilistic");
 
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
-    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "ActivationFunction", write_activation_function());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
     add_xml_element(printer, "DecisionThreshold", to_string(decision_threshold));
@@ -423,7 +393,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     const Index new_inputs_number = read_xml_index(probabilistic_layer_element, "InputsNumber");
     const Index new_neurons_number = read_xml_index(probabilistic_layer_element, "NeuronsNumber");
 
-    set(new_inputs_number, new_neurons_number);
+    set({ new_inputs_number }, { new_neurons_number });
 
     set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));    
     set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
@@ -480,8 +450,8 @@ string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& input_nam
 {
     ostringstream buffer;
 
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_input_dimensions()[0];
+    const Index neurons_number = get_output_dimensions()[0];
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -503,7 +473,7 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& output_nam
 {
     ostringstream buffer;
 
-    const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_output_dimensions()[0];
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -578,7 +548,7 @@ ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
 
 pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
 
     return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, neurons_number}});
 }
@@ -590,7 +560,7 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index neurons_number = layer->get_neurons_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
 
     outputs.resize(batch_samples_number, neurons_number);
 
@@ -607,7 +577,7 @@ void ProbabilisticLayerForwardPropagation::print() const
          << "Outputs dimensions:" << endl
          << outputs.dimensions() << endl;
 
-    const Index neurons_number = layer->get_neurons_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
 
     if(neurons_number == 1)
        cout << "Activation derivatives:" << endl
@@ -628,8 +598,8 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index neurons_number = layer->get_neurons_number();
-    const Index inputs_number = layer->get_inputs_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
 
     if(neurons_number > 1)
         targets.resize(batch_samples_number, neurons_number);
@@ -651,7 +621,7 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
 
 vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagation::get_input_derivative_pairs() const
 {
-    const Index inputs_number = layer->get_inputs_number();
+    const Index inputs_number = layer->get_input_dimensions()[0];
 
     return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
 }
@@ -672,7 +642,7 @@ void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_num
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index neurons_number = layer->get_neurons_number();
+    const Index neurons_number = layer->get_output_dimensions()[0];
     const Index parameters_number = layer->get_parameters_number();
 
     //deltas.resize(batch_samples_number, neurons_number);

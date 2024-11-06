@@ -193,9 +193,9 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
     outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
 
-    multiply_matrices(thread_pool_device, outputs, gammas);
+    multiply_matrices(thread_pool_device.get(), outputs, gammas);
 
-    sum_matrices(thread_pool_device, betas, outputs);
+    sum_matrices(thread_pool_device.get(), betas, outputs);
 }
 
 
@@ -252,11 +252,11 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     scaled_deltas.device(*thread_pool_device) = deltas;
 
-    multiply_matrices(thread_pool_device, scaled_deltas, gammas);
+    multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
     aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * normalized_inputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
 
-    multiply_matrices(thread_pool_device, standard_deviation_derivatives, aux_2d);
+    multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
     scaled_deltas.device(*thread_pool_device) = scaled_deltas / (standard_deviations + epsilon);
 
@@ -264,7 +264,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * scaled_deltas.sum(sum_dimensions_1);
 
-    substract_matrices(thread_pool_device, aux_2d, input_derivatives);
+    substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
 }
 
 
