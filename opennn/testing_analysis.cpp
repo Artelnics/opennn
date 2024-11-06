@@ -52,7 +52,7 @@ void TestingAnalysis::set_default()
     delete thread_pool;
     delete thread_pool_device;
 
-    const int n = omp_get_max_threads();
+    const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = new ThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 */
@@ -61,13 +61,8 @@ void TestingAnalysis::set_default()
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-/*
-    if(thread_pool) delete thread_pool;
-    if(thread_pool_device) delete thread_pool_device;
-
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
-*/
+//    thread_pool = make_unique<ThreadPool>(new_threads_number);
+//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
 }
 
 

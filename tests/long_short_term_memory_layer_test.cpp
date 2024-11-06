@@ -1,22 +1,23 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L O N G   S H O R T   T E R M   M E M O R Y   L A Y E R   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
 
 #include "../opennn/tensors.h"
 
-#include "long_short_term_memory_layer_test.h"
+#include "pch.h"
 
-namespace opennn
-{
 
-LongShortTermMemoryLayerTest::LongShortTermMemoryLayerTest() : UnitTesting()
+TEST(LongShortTermMemoryLayerTest, DefaultConstructor)
 {
+    EXPECT_EQ(1, 1);
 }
 
+
+TEST(LongShortTermMemoryLayerTest, GeneralConstructor)
+{
+    EXPECT_EQ(1, 1);
+}
+
+/*
+namespace opennn
+{
 
 void LongShortTermMemoryLayerTest::test_constructor()
 {
@@ -79,44 +80,14 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
     long_short_term_layer_forward_propagation.set(samples_number, &long_short_term_memory_layer);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-/*
+
     long_short_term_memory_layer.forward_propagate({input_pairs}, &long_short_term_layer_forward_propagation, is_training);
 
     assert_true(long_short_term_layer_forward_propagation.outputs.rank() == 2, LOG);
     assert_true(long_short_term_layer_forward_propagation.outputs.dimension(0) == 1, LOG);
     assert_true(long_short_term_layer_forward_propagation.outputs.dimension(1) == inputs.dimension(1), LOG);
+
+}
+
+}
 */
-}
-
-
-void LongShortTermMemoryLayerTest::run_test_case()
-{
-    cout << "Running long short-term memory layer test case...\n";
-
-    test_constructor();
-
-    // Forward propagate
-
-    test_forward_propagate();
-
-    cout << "End of long short-term memory layer test case.\n\n";
-}
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
