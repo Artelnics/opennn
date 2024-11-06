@@ -1180,11 +1180,11 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
         throw runtime_error("Error: Different channels number " + image_path + "\n");
 
     Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
-
+/*
     (current_height != height || current_width != width)
         ? bilinear_interpolation_resize_image(image_data, resized_image_data, height, width)
         : resized_image_data = image_data;
-
+*/
     Tensor<type, 4> input_data(1, height, width, image_channels);
 
     const Index pixels_number = height * width * image_channels;
