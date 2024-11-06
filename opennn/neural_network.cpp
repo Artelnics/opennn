@@ -734,13 +734,18 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer() const
 
 Index NeuralNetwork::get_inputs_number() const
 {
-/*
+
     if(layers.empty())
         return 0;
 
-    return layers[0]->get_inputs_number();
-*/
-    return 0;
+    dimensions input_dimensions = layers[0]->get_input_dimensions();
+
+    Index inputs_number = 1;
+    for (Index dimension : input_dimensions) {
+        inputs_number *= dimension;
+    }
+
+    return inputs_number;
 }
 
 
@@ -1163,9 +1168,9 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
 {
     const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
 
-    Index height = this->get_scaling_layer_4d()->get_input_dimensions()[0];
-    Index width = this->get_scaling_layer_4d()->get_input_dimensions()[1];
-    Index image_channels = this->get_scaling_layer_4d()->get_input_dimensions()[2];
+    const Index height = this->get_scaling_layer_4d()->get_input_dimensions()[0];
+    const Index width = this->get_scaling_layer_4d()->get_input_dimensions()[1];
+    const Index image_channels = this->get_scaling_layer_4d()->get_input_dimensions()[2];
 
     const Index current_height = image_data.dimension(0);
     const Index current_width = image_data.dimension(1);
@@ -1176,22 +1181,34 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
 
     Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
 
-    if (current_height != height || current_width != width)
-        bilinear_interpolation_resize_image(image_data, resized_image_data, height, width);
-    else
-        resized_image_data = image_data;
+    (current_height != height || current_width != width)
+        ? bilinear_interpolation_resize_image(image_data, resized_image_data, height, width)
+        : resized_image_data = image_data;
 
     Tensor<type, 4> input_data(1, height, width, image_channels);
 
     const Index pixels_number = height * width * image_channels;
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (Index j = 0; j < pixels_number; j++)
         input_data(j) = resized_image_data(j);
 
     const Tensor<type, 2> outputs = calculate_outputs(input_data);
 
-    Index predicted_index = outputs(0);
+    Index predicted_index = -1;
+
+    if (outputs.size() > 1)
+    {
+        type max_value = outputs(0);
+        for (Index i = 1; i < outputs.dimension(1); ++i) {
+            if (outputs(i) > max_value) {
+                max_value = outputs(i);
+                predicted_index = i;
+            }
+        }
+    }
+    else
+        predicted_index = outputs(0);
 
     return predicted_index;
 }

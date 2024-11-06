@@ -73,9 +73,14 @@ int main()
 
         // Testing analysis
 
-        Index prediction = neural_network.calculate_image_output("C:/binary_mnist/1/3.bmp");
+        neural_network.save("C:/xmltest/outputs.xml");
+
+        NeuralNetwork imported_neural_network;
+        imported_neural_network.load("C:/xmltest/outputs.xml");
+
+        Index prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/1/3.bmp");
         cout << "C:/binary_mnist/1/3.bmp is a : " << prediction << endl;
-        prediction = neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
+        prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
         cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
         
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
