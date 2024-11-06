@@ -9,7 +9,6 @@
 #ifndef UNSCALINGLAYER_H
 #define UNSCALINGLAYER_H
 
-#include <iostream>
 #include <string>
 
 #include "config.h"

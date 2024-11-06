@@ -349,6 +349,8 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
     {
         const Scaler& scaler = scalers(i);
 
+        const Descriptives& descriptive = descriptives(i);
+
         const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
 
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
@@ -369,22 +371,23 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
         switch(scaler)
         {
         case Scaler::None:
+            output_column.device(*thread_pool_device) = input_column;
             break;
 
         case Scaler::MinimumMaximum:
-            slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
-            intercept = -(min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(max_range-min_range);
+            slope = (descriptive.maximum-descriptive.minimum)/(max_range-min_range);
+            intercept = -(min_range*descriptive.maximum-max_range*descriptive.minimum)/(max_range-min_range);
             output_column.device(*thread_pool_device) = intercept + slope * input_column;
             break;
 
         case Scaler::MeanStandardDeviation:
-            slope = descriptives(i).standard_deviation;
-            intercept = descriptives(i).mean;
+            slope = descriptive.standard_deviation;
+            intercept = descriptive.mean;
             output_column.device(*thread_pool_device) = intercept + slope*input_column;
             break;
 
         case Scaler::StandardDeviation:
-            standard_deviation = descriptives(i).standard_deviation;
+            standard_deviation = descriptive.standard_deviation;
             output_column.device(*thread_pool_device) = standard_deviation*input_column;
             break;
 
@@ -456,8 +459,8 @@ void UnscalingLayer::print() const
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        cout << "Neuron " << i << endl;
-        cout << "Scaler " << scalers_text(i) << endl;
+        cout << "Neuron " << i << endl
+             << "Scaler " << scalers_text(i) << endl;
 
         descriptives(i).print();
     }
@@ -489,8 +492,10 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         }
 
         const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
-        if (descriptives_element->GetText()) {
-            Tensor<string, 1> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
+
+        if (descriptives_element->GetText())
+        {
+            const Tensor<string, 1> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
             descriptives[i].set(
                 type(stof(splitted_descriptives[0])),
                 type(stof(splitted_descriptives[1])),

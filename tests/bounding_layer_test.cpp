@@ -56,8 +56,7 @@ void BoundingLayerTest::test_forward_propagate()
     inputs.resize(1, 1);
     inputs(0) = type(-2.0);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 /*
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
     bounding_layer.forward_propagate({ input_pairs }, &bounding_layer_forward_propagation, is_training);
@@ -70,8 +69,7 @@ void BoundingLayerTest::test_forward_propagate()
 
     inputs(0) = type(2.0);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
     bounding_layer.forward_propagate({ input_pairs }, &bounding_layer_forward_propagation, is_training);

@@ -461,7 +461,7 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
     for (Index i = 0; i < complexity_size; i++)
         add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
                                                dimensions{ complexity_dimensions[i] },
-                                               PerceptronLayer::ActivationFunction::Linear,
+                                               PerceptronLayer::ActivationFunction::RectifiedLinear,
                                                "perceptron_layer_" + to_string(i + 1)));
 
     add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),

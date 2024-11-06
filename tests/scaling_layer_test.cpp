@@ -8,6 +8,8 @@
 
 #include "scaling_layer_test.h"
 
+#include "../opennn/neural_network.h"
+#include "../opennn/neural_network_forward_propagation.h".h"
 #include "../opennn/tensors.h"
 #include "../opennn/descriptives.h"
 #include "../opennn/statistics.h"
@@ -53,7 +55,11 @@ void ScalingLayer2DTest::test_forward_propagate()
     
     inputs_number = 1;
     samples_number = 1;
-    bool is_training = true;
+    NeuralNetwork neural_network;
+
+    neural_network.add_layer(make_unique<ScalingLayer2D>(dimensions{inputs_number}));
+
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
 
     inputs.resize(samples_number, inputs_number);
     inputs.setRandom();
@@ -64,14 +70,12 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
-/*
-    scaling_layer.forward_propagate({input_pairs},
-                                    scaling_layer_forward_propagation,
-                                    is_training);
-    
-    outputs = scaling_layer_forward_propagation.outputs;
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+
+    neural_network.forward_propagate({input_pairs},
+                                     forward_propagation);
+
+    outputs = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -92,12 +96,10 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
-
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+/*
     scaling_layer.forward_propagate({input_pairs},
-                                    &scaling_layer_forward_propagation,
-                                    is_training);
+                                    &scaling_layer_forward_propagation, true);
 
     outputs = scaling_layer_forward_propagation.outputs;
 
@@ -123,8 +125,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     scaling_layer.forward_propagate({input_pairs},
                                     &scaling_layer_forward_propagation,
@@ -160,8 +161,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     scaling_layer.forward_propagate({input_pairs},
                                     &scaling_layer_forward_propagation,
@@ -196,8 +196,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     scaling_layer.forward_propagate({input_pairs},
                                     &scaling_layer_forward_propagation,
@@ -232,8 +231,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     scaling_layer.forward_propagate({input_pairs},
                                     &scaling_layer_forward_propagation,
@@ -267,8 +265,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     scaling_layer.forward_propagate({input_pairs},
                                     &scaling_layer_forward_propagation,
