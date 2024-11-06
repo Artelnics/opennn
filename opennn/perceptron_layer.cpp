@@ -37,7 +37,7 @@ dimensions PerceptronLayer::get_input_dimensions() const
 
 dimensions PerceptronLayer::get_output_dimensions() const
 {
-    return { synaptic_weights.dimension(1) };
+    return { biases.size() };
 }
 
 
@@ -56,12 +56,6 @@ Index PerceptronLayer::get_parameters_number() const
 type PerceptronLayer::get_dropout_rate() const
 {
     return dropout_rate;
-}
-
-
-dimensions PerceptronLayer::get_output_dimensions() const
-{
-    return {biases.size()};
 }
 
 
